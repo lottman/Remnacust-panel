@@ -23,19 +23,19 @@
 
 ## Требования
 
-Для установщика: Debian 12/13 или Ubuntu 22.04/24.04, root и домен панели. Docker и Compose добавляются при отсутствии. PostgreSQL, Valkey и Caddy для HTTPS входят в новую установку; собственный reverse proxy выбирается через `--proxy existing`.
+Для установщика: только Ubuntu 22.04 LTS или 24.04 LTS, amd64/arm64, root и домен панели. Docker и Compose добавляются при отсутствии. PostgreSQL, Valkey и Caddy для HTTPS входят в новую установку; собственный reverse proxy выбирается через `--proxy existing`.
 
 Для планирования сервера используйте [требования Remnawave](https://docs.rw/install/requirements/): от 2 ядер CPU, 2 ГБ RAM и 20 ГБ диска; рекомендуются 4 ядра и 4 ГБ RAM. Сборка из исходников может потребовать дополнительную память и место.
 
 ## Установка через скрипт
 
-Скачайте установщик по команде из [корневого README](../README.md), затем выполните:
+Скопируйте всю строку в консоль сервера:
 
 ```bash
-sudo bash installer.sh install-panel
+curl -fsSL --proto '=https' --proto-redir '=https' https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh -o installer.sh && sudo bash installer.sh install-panel
 ```
 
-Скрипт предложит выбрать версию; Enter выбирает `latest`. Для конкретного выпуска добавьте `--version 1.1.1`. Настройка доменов и reverse proxy: [INSTALLER.md](../docs/INSTALLER.md).
+[Скачать installer.sh](https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh). Скрипт предложит выбрать версию выпуска установщика; Enter выбирает `latest`. Для конкретного выпуска добавьте `--version 1.1.2` (панель, нода и ядро 1.1.1). Настройка доменов и reverse proxy: [INSTALLER.md](../docs/INSTALLER.md).
 
 ## Установка из исходников
 

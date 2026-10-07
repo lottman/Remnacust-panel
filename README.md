@@ -22,16 +22,15 @@
 
 ## Установка
 
-Поддерживаются Debian 12/13 и Ubuntu 22.04/24.04, amd64/arm64. Для сборки выделите 2 CPU, 4 GiB RAM и 20 GiB диска. Подготовьте домен с DNS на сервер; для HTTPS нужны порты 80 и 443.
+Установщик работает только на Ubuntu 22.04 LTS и 24.04 LTS, amd64/arm64. Для панели нужны минимум 2 CPU, 2 GiB RAM и 20 GiB диска; рекомендуются 4 CPU и 4 GiB RAM. Для сборки выделите не менее 4 GiB RAM. Подготовьте домен с DNS на сервер; для HTTPS нужны порты 80 и 443.
+
+Скопируйте всю строку в консоль сервера:
 
 ```bash
-curl --fail --show-error --location --proto '=https' --proto-redir '=https' \
-  https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh \
-  -o installer.sh
-sudo bash installer.sh install-panel
+curl -fsSL --proto '=https' --proto-redir '=https' https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh -o installer.sh && sudo bash installer.sh install-panel
 ```
 
-Скрипт спросит домен и версию. Enter выбирает `latest`; `--version 1.1.1` закрепляет выпуск. Он проверяет архив по SHA-256, собирает образ и запускает PostgreSQL, Valkey, панель и Caddy. При собственном reverse proxy используйте `--proxy existing`. HWID включён по умолчанию. После запуска откройте домен панели и создайте администратора.
+[Скачать installer.sh](https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh). Скрипт спросит домен и версию выпуска установщика. Enter выбирает `latest`; `--version 1.1.2` закрепляет выпуск с компонентами 1.1.1. Он проверяет архив по SHA-256, собирает образ и запускает PostgreSQL, Valkey, панель и Caddy. При собственном reverse proxy используйте `--proxy existing`. HWID включён по умолчанию. После запуска откройте домен панели и создайте администратора.
 
 Обновление и перенос существующей установки:
 

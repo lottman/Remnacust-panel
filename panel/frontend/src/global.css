@@ -284,7 +284,8 @@ body {
     }
     .mantine-Modal-body,
     .mantine-Drawer-body {
-        padding-bottom: max(20px, env(safe-area-inset-bottom));
+        --panel-overlay-bottom-padding: max(20px, env(safe-area-inset-bottom, 0px));
+        padding-bottom: var(--panel-overlay-bottom-padding);
     }
     .mantine-Modal-title,
     .mantine-Drawer-title {

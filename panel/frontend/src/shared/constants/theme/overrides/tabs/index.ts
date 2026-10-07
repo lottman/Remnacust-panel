@@ -10,7 +10,9 @@ export default {
             tabLabel: classes.tabLabel
         },
         defaultProps: {
-            variant: 'unstyled'
+            variant: 'unstyled',
+            // Monaco and terminal widgets must retain their effects while a tab is hidden.
+            keepMountedMode: 'display-none'
         }
     })
 }

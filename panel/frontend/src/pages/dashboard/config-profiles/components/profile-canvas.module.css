@@ -130,7 +130,10 @@
     color: var(--mantine-color-text);
     text-align: left;
     cursor: pointer;
-    transition: background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+    transition:
+        background-color 180ms ease,
+        border-color 180ms ease,
+        box-shadow 180ms ease;
 }
 .navigatorItem:hover,
 .navigatorItem[aria-current='true'],
@@ -197,6 +200,12 @@
     min-height: 0;
     overflow: hidden;
     background: var(--mantine-color-body);
+    background-image: radial-gradient(
+        color-mix(in srgb, var(--mantine-color-dimmed) 19%, transparent) 1px,
+        transparent 1px
+    );
+    background-size: var(--canvas-grid-size, 24px) var(--canvas-grid-size, 24px);
+    background-position: var(--canvas-grid-x, 0px) var(--canvas-grid-y, 0px);
 }
 .transformWrapper {
     width: 100% !important;
@@ -208,13 +217,8 @@
 .graph {
     position: relative;
     isolation: isolate;
-    background-image: radial-gradient(
-        color-mix(in srgb, var(--mantine-color-dimmed) 19%, transparent) 1px,
-        transparent 1px
-    );
-    background-size: 24px 24px;
 }
-.graph::before {
+.canvasFrame::before {
     content: '';
     position: absolute;
     inset: 0;
@@ -225,7 +229,8 @@
         color-mix(in srgb, var(--panel-accent) 75%, white) 2.2px,
         transparent 2.8px
     );
-    background-size: 24px 24px;
+    background-size: inherit;
+    background-position: inherit;
     mask-image: radial-gradient(
         circle 160px at var(--cursor-dot-x, 0px) var(--cursor-dot-y, 0px),
         black 0%,
@@ -305,7 +310,10 @@
     text-align: left;
     cursor: pointer;
     box-shadow: 0 5px 18px #0001;
-    transition: border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+    transition:
+        border-color 180ms ease,
+        box-shadow 180ms ease,
+        background-color 180ms ease;
 }
 .graphNode:hover,
 .graphNode[aria-pressed='true'],
@@ -590,7 +598,7 @@
     }
 }
 @media (prefers-reduced-motion: reduce) {
-    .graph::before {
+    .canvasFrame::before {
         transition: none;
     }
 }

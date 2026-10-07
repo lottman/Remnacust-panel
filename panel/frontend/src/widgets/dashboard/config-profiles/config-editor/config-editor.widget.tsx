@@ -243,6 +243,10 @@ export function ConfigEditorWidget(props: IProps) {
                     }}
                     onMount={(editor) => {
                         editorRef.current = editor
+                        editor.onDidDispose(() => {
+                            if (editorRef.current === editor) editorRef.current = null
+                            if (validationTimer.current) clearTimeout(validationTimer.current)
+                        })
                         applyRestoreDraft()
 
                         editor.getAction('editor.foldLevel7')?.run()

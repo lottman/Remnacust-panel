@@ -29,8 +29,8 @@ npm run cb
 
 `npm run docs:generate` пересоздаёт руководство и справочник из актуальных исходников. Frontend dev-сервер запускается через `npm run start:dev` и требует тестового backend.
 
-Полный образ из корня: `docker build -f panel/Dockerfile -t remnacust-panel:1.1.3 .`. Проверка запуска: `bash scripts/test-production-startup.sh remnacust-panel:1.1.3`. Она создаёт временные контейнеры и отдельную БД.
+Полный образ из корня: `docker build -f panel/Dockerfile -t remnacust-panel:1.1.4 .`. Проверка запуска: `bash scripts/test-production-startup.sh remnacust-panel:1.1.4`. Она создаёт временные контейнеры и отдельную БД.
 
-Страница подписки: `docker build -t remnacust-subscription-page:1.1.3 subscription-page`. Для разработки выполните `npm ci` и `npm run typecheck` в `subscription-page/backend` и `subscription-page/frontend`, затем `NODE_ENV=production npm run cb` во frontend и `node --test tests/*.test.cjs` в backend.
+Страница подписки: `docker build -t remnacust-subscription-page:1.1.4 subscription-page`. Для разработки выполните `npm ci` и `npm run typecheck` в `subscription-page/backend` и `subscription-page/frontend`, затем `NODE_ENV=production npm run cb` во frontend и `node --test tests/*.test.cjs` в backend.
 
 Ядро и редактор находятся в [Remnacust-core](https://github.com/lottman/Remnacust-core). После обновления WASM пересоберите панель. Порядок выпуска всех компонентов: [Remnacust-installer/docs/PUBLISHING.md](https://github.com/lottman/Remnacust-installer/blob/main/docs/PUBLISHING.md).

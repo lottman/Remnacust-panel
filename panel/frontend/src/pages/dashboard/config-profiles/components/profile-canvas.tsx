@@ -1370,6 +1370,11 @@ export function ProfileCanvas({
                         if (zoomLabelRef.current)
                             zoomLabelRef.current.textContent = `${Math.round(state.scale * 100)}%`
                         const frame = canvasRef.current
+                        if (frame) {
+                            frame.style.setProperty('--canvas-grid-size', `${24 * state.scale}px`)
+                            frame.style.setProperty('--canvas-grid-x', `${state.positionX}px`)
+                            frame.style.setProperty('--canvas-grid-y', `${state.positionY}px`)
+                        }
                         const viewport = miniViewportRef.current
                         if (frame && viewport) {
                             viewport.setAttribute('x', String(-state.positionX / state.scale))
@@ -1428,7 +1433,31 @@ export function ProfileCanvas({
                                     )}
                                 </div>
                             </aside>
-                            <div className={classes.canvasFrame} ref={canvasRef}>
+                            <div
+                                className={classes.canvasFrame}
+                                ref={canvasRef}
+                                onPointerLeave={(event) => {
+                                    event.currentTarget.style.setProperty(
+                                        '--cursor-dots-opacity',
+                                        '0'
+                                    )
+                                }}
+                                onPointerMove={(event) => {
+                                    const rect = event.currentTarget.getBoundingClientRect()
+                                    event.currentTarget.style.setProperty(
+                                        '--cursor-dot-x',
+                                        `${event.clientX - rect.left}px`
+                                    )
+                                    event.currentTarget.style.setProperty(
+                                        '--cursor-dot-y',
+                                        `${event.clientY - rect.top}px`
+                                    )
+                                    event.currentTarget.style.setProperty(
+                                        '--cursor-dots-opacity',
+                                        '1'
+                                    )
+                                }}
+                            >
                                 <div className={classes.controls}>
                                     <Tooltip label={uiText('zoom-in-0e47f09')}>
                                         <ActionIcon
@@ -1467,27 +1496,6 @@ export function ProfileCanvas({
                                 >
                                     <div
                                         className={classes.graph}
-                                        onPointerLeave={(event) => {
-                                            event.currentTarget.style.setProperty(
-                                                '--cursor-dots-opacity',
-                                                '0'
-                                            )
-                                        }}
-                                        onPointerMove={(event) => {
-                                            const rect = event.currentTarget.getBoundingClientRect()
-                                            event.currentTarget.style.setProperty(
-                                                '--cursor-dot-x',
-                                                `${(event.clientX - rect.left) / transformState.current.scale}px`
-                                            )
-                                            event.currentTarget.style.setProperty(
-                                                '--cursor-dot-y',
-                                                `${(event.clientY - rect.top) / transformState.current.scale}px`
-                                            )
-                                            event.currentTarget.style.setProperty(
-                                                '--cursor-dots-opacity',
-                                                '1'
-                                            )
-                                        }}
                                         style={{ height: graphHeight, width: graphWidth }}
                                     >
                                         {Object.entries(column)

@@ -11,6 +11,7 @@
 .modalBody {
     --panel-overlay-padding: 24px;
     padding: 24px;
+    padding-bottom: var(--panel-overlay-bottom-padding, var(--panel-overlay-padding));
 }
 .modalRoot[data-full-screen] .modalContent {
     border-radius: 0;
@@ -25,5 +26,6 @@
     .modalBody {
         --panel-overlay-padding: 16px;
         padding: 16px;
+        padding-bottom: var(--panel-overlay-bottom-padding, var(--panel-overlay-padding));
     }
 }

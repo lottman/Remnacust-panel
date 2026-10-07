@@ -96,6 +96,7 @@ export function ConfigProfileByUuidPageConnector() {
     return (
         <Suspense fallback={<LoadingScreen />}>
             <ConfigProfileByUuidPageComponent
+                key={configProfile.uuid}
                 configProfile={configProfile}
                 isWasmCrashed={isWasmCrashed}
                 isWasmLoading={isWasmLoading}

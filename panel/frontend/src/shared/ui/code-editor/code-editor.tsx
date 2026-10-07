@@ -5,7 +5,7 @@ import { notifications } from '@mantine/notifications'
 import Editor, { EditorProps, OnMount } from '@monaco-editor/react'
 import clsx from 'clsx'
 import { parse } from 'jsonc-parser'
-import { Fragment, ReactNode, useRef, useState } from 'react'
+import { Fragment, ReactNode, useId, useRef, useState } from 'react'
 
 import { BASE_MONACO_OPTIONS, MONACO_THEME_NAME } from '@shared/constants/monaco-theme'
 import { translateUiText as uiText } from '@shared/i18n/interface-text'
@@ -53,14 +53,20 @@ export function CodeEditor(props: Props) {
     const reducedMotion = usePanelReducedMotion()
     const {
         defaultLanguage,
+        defaultPath,
         footer,
         language,
         onMount,
         options,
+        path,
         withJsonPath,
         wrapperProps,
         ...rest
     } = props
+
+    const instanceId = encodeURIComponent(useId())
+    const modelPath = path?.replaceAll('*', instanceId)
+    const defaultModelPath = defaultPath?.replaceAll('*', instanceId)
 
     const [jsonPath, setJsonPath] = useState<string[]>([])
     const documentTextRef = useRef('')
@@ -179,8 +185,11 @@ export function CodeEditor(props: Props) {
             )}
 
             <Editor
+                key={modelPath ?? defaultModelPath}
                 defaultLanguage={defaultLanguage}
+                defaultPath={defaultModelPath}
                 language={language}
+                path={modelPath}
                 loading={<LoaderModalShared mih="100%" />}
                 onMount={handleMount}
                 theme={colorScheme === 'light' ? 'vs' : MONACO_THEME_NAME}

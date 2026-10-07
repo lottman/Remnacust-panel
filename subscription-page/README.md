@@ -8,6 +8,14 @@
 
 ## Сборка
 
+Для установки самой панели на Ubuntu 22.04 LTS или 24.04 LTS выполните:
+
+```bash
+curl -fsSL --proto '=https' --proto-redir '=https' https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh -o installer.sh && sudo bash installer.sh install-panel
+```
+
+[Скачать installer.sh](https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh) · [Руководство установщика](https://github.com/lottman/Remnacust-installer#readme). Отдельная страница подписки устанавливается вручную по шагам ниже; команда `install-panel` устанавливает API выдачи подписок и панель.
+
 Из этой папки:
 
 ```bash

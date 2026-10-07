@@ -2,15 +2,15 @@
 
 Скрипт находится в [`installer/installer.sh`](https://github.com/lottman/Remnacust-installer/blob/main/installer/installer.sh); полное руководство, команды, параметры, миграция и восстановление — в [`installer/README.md`](https://github.com/lottman/Remnacust-installer/blob/main/installer/README.md).
 
-Скачайте установщик из последнего стабильного выпуска:
+Запуск меню из консоли сервера:
 
 ```bash
-curl --fail --show-error --location --proto '=https' --proto-redir '=https' \
-  https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh -o installer.sh
-sudo bash installer.sh
+curl -fsSL --proto '=https' --proto-redir '=https' https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh -o installer.sh && sudo bash installer.sh
 ```
 
-Панель устанавливается через `install-panel`, нода с нашим Xray — через `install-node`. Обновление: `upgrade-panel` и `upgrade-node`. Enter в запросе версии выбирает `latest`; `--version 1.1.1` закрепляет выпуск. Все команды остаются видимыми в меню.
+[Скачать installer.sh](https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh). Установка, обновление и миграция доступны только на Ubuntu 22.04 LTS и 24.04 LTS (amd64/arm64). На другой ОС приложение и системные пакеты не меняются.
+
+Панель устанавливается через `install-panel`, нода с нашим Xray — через `install-node`. Обновление: `upgrade-panel` и `upgrade-node`. Enter в запросе версии выбирает `latest`; `--version 1.1.2` закрепляет выпуск установщика с компонентами 1.1.1. Все команды остаются видимыми в меню.
 
 Переход с существующей Remnawave выполняется через `migrate-remnawave-panel` или `migrate-remnawave-node`. Установщик сохраняет проект Compose, инфраструктуру, секреты, сети и тома. Для панели требуется исходный `APP_SECRET`. Перед обновлением создаётся резервная копия; после миграций проверяется сохранность данных.
 

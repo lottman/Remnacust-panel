@@ -35,7 +35,7 @@
 curl -fsSL --proto '=https' --proto-redir '=https' https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh -o installer.sh && sudo bash installer.sh install-panel
 ```
 
-[Скачать installer.sh](https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh). Скрипт предложит выбрать версию выпуска установщика; Enter выбирает `latest`. Для конкретного выпуска добавьте `--version 1.1.3` (панель 1.1.2, нода и ядро 1.1.1). Настройка доменов и reverse proxy: [INSTALLER.md](../docs/INSTALLER.md).
+[Скачать installer.sh](https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh). Скрипт предложит выбрать версию выпуска установщика; Enter выбирает `latest`. Для конкретного выпуска добавьте `--version 1.1.4` (панель 1.1.2, нода и ядро 1.1.1). Настройка доменов и reverse proxy: [INSTALLER.md](../docs/INSTALLER.md).
 
 ## Установка из исходников
 
@@ -103,3 +103,5 @@ docker compose -f docker-compose-prod.yml logs --tail=100 remnawave
 [Разработка](../docs/BUILDING.md) · [Обновления upstream](../docs/REMNAWAVE-UPDATES.md) · [Поддержка](https://t.me/lottman)
 
 Лицензии backend и frontend сохранены в их каталогах. Исходные проекты: [NOTICE.md](../NOTICE.md).
+
+Установщик использует готовые образы GHCR с проверкой версии и архитектуры. Для новой панели HTTPS обслуживает Caddy в Docker, а не системный `nginx.service`. При обновлении или переносе существующей панели прежний Caddy/Nginx и его сертификаты сохраняются. Проверка контейнеров: `sudo remnacust status`.

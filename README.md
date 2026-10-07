@@ -22,7 +22,7 @@
 
 ## Установка
 
-Установщик работает только на Ubuntu 22.04 LTS и 24.04 LTS, amd64/arm64. Для панели нужны минимум 2 CPU, 2 GiB RAM и 20 GiB диска; рекомендуются 4 CPU и 4 GiB RAM. Для сборки выделите не менее 4 GiB RAM. Подготовьте домен с DNS на сервер; для HTTPS нужны порты 80 и 443.
+Установщик работает только на Ubuntu 22.04 LTS и 24.04 LTS, amd64/arm64. Для панели нужны минимум 2 CPU, 2 GiB RAM и 20 GiB диска; рекомендуются 4 CPU и 4 GiB RAM. Установщик скачивает готовый Docker-образ; компиляции на сервере нет. Подготовьте домен с DNS на сервер; для HTTPS нужны порты 80 и 443.
 
 Скопируйте всю строку в консоль сервера:
 
@@ -30,7 +30,7 @@
 curl -fsSL --proto '=https' --proto-redir '=https' https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh -o installer.sh && sudo bash installer.sh install-panel
 ```
 
-[Скачать installer.sh](https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh). Скрипт спросит домен и версию выпуска установщика. Enter выбирает `latest`; `--version 1.1.3` закрепляет выпуск с панелью 1.1.2, нодой и ядром 1.1.1. Он проверяет архив по SHA-256, собирает образ и запускает PostgreSQL, Valkey, панель и Caddy. При собственном reverse proxy используйте `--proxy existing`. HWID включён по умолчанию. После запуска откройте домен панели и создайте администратора.
+[Скачать installer.sh](https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh). Скрипт спросит домен и версию выпуска установщика. Enter выбирает `latest`; `--version 1.1.4` закрепляет выпуск с панелью 1.1.2, нодой и ядром 1.1.1. Он проверяет готовый образ и запускает PostgreSQL, Valkey, панель и Caddy. При собственном reverse proxy используйте `--proxy existing`. HWID включён по умолчанию. После запуска откройте домен панели и создайте администратора.
 
 Обновление и перенос существующей установки:
 
@@ -64,3 +64,5 @@ docker build -f panel/Dockerfile -t remnacust-panel:1.1.2 .
 ## Лицензия
 
 Backend, frontend и страница подписки сохраняют лицензии Remnawave AGPL-3.0. Исходное авторство и лицензии зависимостей перечислены в [NOTICE.md](NOTICE.md). Официальные материалы Remnawave: [remna.st](https://remna.st/) и [docs.rw](https://docs.rw/).
+
+Установщик использует готовые образы GHCR с проверкой версии и архитектуры. Для новой панели HTTPS обслуживает Caddy в Docker, а не системный `nginx.service`. При обновлении или переносе существующей панели прежний Caddy/Nginx и его сертификаты сохраняются. Проверка контейнеров: `sudo remnacust status`.

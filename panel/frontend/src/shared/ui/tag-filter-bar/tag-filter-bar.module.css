@@ -13,11 +13,8 @@
     min-width: 0;
     overflow-x: auto;
     overscroll-behavior-x: contain;
-    scrollbar-width: none;
+
     scroll-padding-inline: 10px;
-}
-.viewport::-webkit-scrollbar {
-    display: none;
 }
 .content {
     width: max-content;

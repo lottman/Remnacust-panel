@@ -5,6 +5,7 @@ import { notifications } from '@mantine/notifications'
 import { UpdateConfigProfileCommand } from '@remnawave/backend-contract'
 import { KeypairGeneratorWidget } from '@widgets/dashboard/config-profiles/keypair-generator/keypair-generator.widget'
 import consola from 'consola/browser'
+import { useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiCheck, PiCheckSquareOffset, PiCopy, PiFloppyDisk } from 'react-icons/pi'
 import {
@@ -30,6 +31,7 @@ export function ConfigEditorActionsFeature(props: Props) {
     const {
         editorRef,
         isConfigValid,
+        validationMessage,
         setResult,
         setIsConfigValid,
         configProfile,
@@ -43,6 +45,7 @@ export function ConfigEditorActionsFeature(props: Props) {
     const clipboard = useClipboard({ timeout: 500 })
 
     const [opened, handlers] = useDisclosure(false)
+    const submittedValue = useRef<string | null>(null)
 
     const { mutate: updateConfig, isPending: isUpdating } = useUpdateConfigProfile({
         mutationFns: {
@@ -56,14 +59,14 @@ export function ConfigEditorActionsFeature(props: Props) {
                     queryKey: ['config-profile-revisions', configProfile.uuid]
                 })
 
-                setIsConfigValid(true)
-
                 const newValue = JSON.stringify(updatedConfigProfile.config, null, 2)
 
+                let changedSinceSave = false
                 if (editorRef.current) {
                     const instance = editorRef.current
+                    changedSinceSave = instance.getValue() !== submittedValue.current
 
-                    if (instance.getValue() !== newValue) {
+                    if (!changedSinceSave && instance.getValue() !== newValue) {
                         const viewState = instance.saveViewState()
 
                         instance.setValue(newValue)
@@ -80,7 +83,7 @@ export function ConfigEditorActionsFeature(props: Props) {
                     updatedConfigProfile
                 )
 
-                setHasUnsavedChanges(false)
+                setHasUnsavedChanges(changedSinceSave)
             },
             onError: (error) => {
                 setIsConfigValid(false)
@@ -113,6 +116,7 @@ export function ConfigEditorActionsFeature(props: Props) {
         }
 
         if (currentValue) {
+            submittedValue.current = currentValue
             updateConfig({
                 variables: {
                     uuid: configProfile.uuid,
@@ -120,6 +124,30 @@ export function ConfigEditorActionsFeature(props: Props) {
                 }
             })
         }
+    }
+
+    const requestSave = () => {
+        if (isConfigValid) {
+            handleSave()
+            return
+        }
+        modals.openConfirmModal({
+            title: t('common.action.confirm-action'),
+            children: (
+                <>
+                    <Text>{t('config-editor-actions.feature.save-anyway-description')}</Text>
+                    {validationMessage && (
+                        <Text mt="sm" size="sm" style={{ overflowWrap: 'anywhere' }}>
+                            {validationMessage}
+                        </Text>
+                    )}
+                </>
+            ),
+            centered: true,
+            labels: { confirm: t('common.action.save'), cancel: t('common.action.cancel') },
+            confirmProps: { color: 'red' },
+            onConfirm: handleSave
+        })
     }
 
     const handleCopyConfig = () => {
@@ -188,44 +216,14 @@ export function ConfigEditorActionsFeature(props: Props) {
         <Group grow={isMobile} preventGrowOverflow={false} wrap="wrap">
             <Button
                 color={!hasUnsavedChanges ? 'gray' : 'teal'}
-                disabled={!isConfigValid && !hasUnsavedChanges}
+                disabled={!hasUnsavedChanges}
                 leftSection={<PiFloppyDisk size={16} />}
                 loading={isUpdating}
-                onClick={handleSave}
+                onClick={requestSave}
                 variant="soft"
             >
                 {t('common.action.save')}
             </Button>
-
-            {!isConfigValid && !isUpdating && (
-                <Button
-                    color="red"
-                    disabled={isConfigValid || isUpdating}
-                    leftSection={<PiFloppyDisk size={16} />}
-                    loading={isUpdating}
-                    onClick={() => {
-                        modals.openConfirmModal({
-                            title: t('common.action.confirm-action'),
-                            children: (
-                                <Text>
-                                    {t('config-editor-actions.feature.save-anyway-description')}
-                                </Text>
-                            ),
-                            centered: true,
-                            labels: {
-                                confirm: t('common.action.save'),
-                                cancel: t('common.action.cancel')
-                            },
-                            confirmProps: {
-                                color: 'red'
-                            },
-                            onConfirm: handleSave
-                        })
-                    }}
-                >
-                    {t('config-editor-actions.feature.save-anyway')}
-                </Button>
-            )}
 
             <Group gap={0} wrap="nowrap">
                 <Menu

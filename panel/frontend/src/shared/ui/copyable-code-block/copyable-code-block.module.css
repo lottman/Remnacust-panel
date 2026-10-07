@@ -42,12 +42,9 @@
     overflow-x: auto;
     white-space: nowrap;
     user-select: none;
-    scrollbar-width: none;
+
 }
 
-.code::-webkit-scrollbar {
-    display: none;
-}
 
 .copyButton {
     position: relative;

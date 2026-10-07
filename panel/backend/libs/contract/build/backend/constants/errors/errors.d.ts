@@ -322,7 +322,7 @@ export declare const ERRORS: {
     readonly CONFIG_VALIDATION_ERROR: {
         readonly code: "A061";
         readonly message: "Config validation error";
-        readonly httpCode: 500;
+        readonly httpCode: 422;
         readonly withMessage: (message: string) => {
             code: string;
             message: string;

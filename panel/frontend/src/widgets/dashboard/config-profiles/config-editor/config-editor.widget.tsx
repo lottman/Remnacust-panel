@@ -281,6 +281,7 @@ export function ConfigEditorWidget(props: IProps) {
                         editorRef={editorRef}
                         hasUnsavedChanges={hasUnsavedChanges}
                         isConfigValid={isConfigValid}
+                        validationMessage={result}
                         originalValue={originalValue}
                         setHasUnsavedChanges={setHasUnsavedChanges}
                         setIsConfigValid={setIsConfigValid}

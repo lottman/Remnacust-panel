@@ -180,7 +180,7 @@
     min-height: 0;
     overflow-x: hidden;
     overflow-y: auto;
-    scrollbar-width: thin;
+
     overscroll-behavior: contain;
 }
 
@@ -370,7 +370,7 @@
 
 .terminalHost :global(.xterm:not(.allow-transparency) .xterm-viewport) {
     background-color: transparent;
-    scrollbar-width: thin;
+
 }
 
 .log {
@@ -528,7 +528,7 @@
     max-height: 260px;
     overflow-x: hidden;
     overflow-y: auto;
-    scrollbar-width: thin;
+
     overscroll-behavior: contain;
 }
 

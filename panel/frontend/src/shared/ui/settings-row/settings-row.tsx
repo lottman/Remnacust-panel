@@ -6,7 +6,7 @@ import classes from './SettingsRow.module.css'
 
 interface ISettingsRowControl {
     id: string
-    labelId: string
+    'aria-labelledby': string
 }
 
 const SettingsRowControlContext = createContext<ISettingsRowControl | null>(null)
@@ -93,7 +93,7 @@ export function SettingsRow(props: IProps) {
             )}
 
             <div className={classes.control}>
-                <SettingsRowControlContext.Provider value={{ id: controlId, labelId }}>
+                <SettingsRowControlContext.Provider value={{ id: controlId, 'aria-labelledby': labelId }}>
                     {children}
                 </SettingsRowControlContext.Provider>
             </div>

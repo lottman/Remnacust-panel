@@ -300,12 +300,14 @@
             "format": "Format",
             "failed-to-save-invalid-json": "Failed to save, invalid JSON.",
             "save-anyway": "Save anyway",
-            "save-anyway-description": "Are you sure you want to save an invalid Xray config? This action can lead to unexpected behavior. Continue only if you know what you are doing.",
+            "save-anyway-description": "Browser validation reports an error. Save this config? The server will check required fields; invalid JSON or an inbound without protocol cannot be saved. Applying a saved config on nodes is a separate step; check their status.",
             "tools": "Tools",
             "copy-all-content": "Copy all content",
             "cut-selection": "Cut selection",
             "paste-from-clipboard": "Paste from clipboard",
-            "generate-keypair": "Generate keypair"
+            "generate-keypair": "Generate keypair",
+            "saved-sync-queued": "Config saved. Applying it on nodes has been queued; check node status and logs for the result.",
+            "saved-sync-failed": "Config saved, but applying it on nodes could not be queued. Check panel logs and restart the affected nodes."
         }
     },
     "action-group": {
@@ -2173,7 +2175,9 @@
         "invalidResponse": "The server response does not match this panel version. Refresh the page; if it continues, check the panel and API versions.",
         "forbidden": "You do not have permission for this action.",
         "unknown": "The request failed unexpectedly.",
-        "failed": "Request failed."
+        "failed": "Request failed.",
+        "protocolRequired": "Inbound \"{{tag}}\": the protocol field is required. The protol field does not replace it.",
+        "configValidation": "Xray configuration error: {{reason}}"
     },
     "limitsTrafficAction": {
         "blockHost": "Block traffic on host",

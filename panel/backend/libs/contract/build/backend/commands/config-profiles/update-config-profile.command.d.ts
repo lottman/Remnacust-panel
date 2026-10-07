@@ -32,6 +32,11 @@ export declare namespace UpdateConfigProfileCommand {
             }, z.core.$strip>>;
             createdAt: z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>;
             updatedAt: z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>;
+            applyStatus: z.ZodOptional<z.ZodEnum<{
+                queued: "queued";
+                failed: "failed";
+                unchanged: "unchanged";
+            }>>;
         }, z.core.$strip>;
     }, z.core.$strip>;
     type RequestBody = z.infer<typeof RequestBodySchema>;

@@ -21,6 +21,8 @@ var UpdateConfigProfileCommand;
         config: zod_1.z.looseObject({}).optional(),
     });
     UpdateConfigProfileCommand.ResponseSchema = zod_1.z.object({
-        response: models_1.ConfigProfileSchema,
+        response: models_1.ConfigProfileSchema.extend({
+            applyStatus: zod_1.z.enum(['queued', 'failed', 'unchanged']).optional(),
+        }),
     });
 })(UpdateConfigProfileCommand || (exports.UpdateConfigProfileCommand = UpdateConfigProfileCommand = {}));

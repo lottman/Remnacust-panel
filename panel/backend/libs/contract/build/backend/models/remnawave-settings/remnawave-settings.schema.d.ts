@@ -42,6 +42,7 @@ export declare const RemnawaveSettingsSchema: z.ZodObject<{
             withPkce: z.ZodBoolean;
             authorizationUrl: z.ZodNullable<z.ZodString>;
             tokenUrl: z.ZodNullable<z.ZodString>;
+            expectedIssuer: z.ZodDefault<z.ZodNullable<z.ZodString>>;
             frontendDomain: z.ZodNullable<z.ZodString>;
             allowedEmails: z.ZodArray<z.ZodString>;
         }, z.core.$strip>>;

@@ -30,7 +30,9 @@ export namespace UpdateConfigProfileCommand {
     });
 
     export const ResponseSchema = z.object({
-        response: ConfigProfileSchema,
+        response: ConfigProfileSchema.extend({
+            applyStatus: z.enum(['queued', 'failed', 'unchanged']).optional(),
+        }),
     });
 
     export type RequestBody = z.infer<typeof RequestBodySchema>;

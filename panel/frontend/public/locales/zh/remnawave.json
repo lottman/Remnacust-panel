@@ -300,12 +300,14 @@
             "format": "格式化",
             "failed-to-save-invalid-json": "保存失败，无效的 JSON。",
             "save-anyway": "仍然保存",
-            "save-anyway-description": "您确定要保存无效的 Xray 配置吗？ 此操作可能导致意外问题。请您清楚自己在做什么。",
+            "save-anyway-description": "浏览器校验报告了错误。是否保存配置？服务器仍会检查必填字段；无效 JSON 或缺少 protocol 的入站无法保存。配置保存后会另行应用到节点，请检查节点状态。",
             "tools": "工具",
             "copy-all-content": "复制全部内容",
             "cut-selection": "剪切选中项",
             "paste-from-clipboard": "从剪切板中粘贴",
-            "generate-keypair": "生成密钥"
+            "generate-keypair": "生成密钥",
+            "saved-sync-queued": "配置已保存。应用到节点的任务已加入队列；请在节点状态和日志中查看结果。",
+            "saved-sync-failed": "配置已保存，但应用到节点的任务未能加入队列。请检查面板日志并重新启动相关节点。"
         }
     },
     "action-group": {
@@ -2158,7 +2160,9 @@
         "invalidResponse": "服务器响应与当前面板版本不匹配。请刷新页面；如果问题仍然存在，请检查面板和 API 版本。",
         "forbidden": "您没有执行此操作的权限。",
         "unknown": "请求意外失败。",
-        "failed": "请求失败。"
+        "failed": "请求失败。",
+        "protocolRequired": "入站“{{tag}}”：必须填写 protocol 字段，protol 不能替代它。",
+        "configValidation": "Xray 配置错误：{{reason}}"
     },
     "limitsTrafficAction": {
         "blockHost": "阻止此主机的流量",

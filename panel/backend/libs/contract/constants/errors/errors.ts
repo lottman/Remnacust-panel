@@ -299,11 +299,11 @@ export const ERRORS = {
     CONFIG_VALIDATION_ERROR: {
         code: 'A061',
         message: 'Config validation error',
-        httpCode: 500,
+        httpCode: 422,
         withMessage: (message: string) => ({
             code: 'A061',
             message,
-            httpCode: 500,
+            httpCode: 422,
         }),
     },
     USERS_NOT_FOUND: {

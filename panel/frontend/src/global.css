@@ -423,43 +423,6 @@ body {
     border-radius: var(--mantine-radius-default);
 }
 
-::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-}
-
-::-webkit-scrollbar-track {
-    background: var(--panel-background, #161b23);
-    border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb {
-    background: color-mix(
-        in srgb,
-        var(--panel-accent, #6366f1) 45%,
-        var(--panel-background, #161b23)
-    );
-    border-radius: 4px;
-    border: 1px solid var(--panel-background, #161b23);
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: color-mix(
-        in srgb,
-        var(--panel-accent, #6366f1) 65%,
-        var(--panel-background, #161b23)
-    );
-}
-
-::-webkit-scrollbar-corner {
-    background: var(--panel-background, #161b23);
-}
-
-* {
-    scrollbar-width: thin;
-    scrollbar-color: var(--panel-accent, #6366f1) var(--panel-background, #161b23);
-}
-
 /* Shared workspace foundations. Colors follow the user's selected appearance. */
 html.panel-themed {
     --panel-overlay-shadow: 0 20px 64px rgb(0 0 0 / 24%), 0 4px 12px rgb(0 0 0 / 12%);
@@ -497,6 +460,9 @@ html.panel-themed .mantine-Input-input {
 }
 html.panel-themed .mantine-Input-input:focus-within {
     border-color: var(--panel-accent);
+}
+html.panel-themed .mantine-Input-input:focus-visible {
+    outline: none;
 }
 html.panel-themed .mantine-Input-input[data-error] {
     border-color: var(--mantine-color-red-6);

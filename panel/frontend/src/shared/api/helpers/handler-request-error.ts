@@ -10,9 +10,17 @@ export function handleRequestError(error: unknown): never {
         const status = error.response?.status
         const templateNameConflict =
             (status === 400 || status === 409) && errorData?.errorCode === 'A176'
+        const configValidation = status === 422 && errorData?.errorCode === 'A061' && typeof errorData.message === 'string'
+        const protocolMissing = configValidation
+            ? errorData.message.match(/^Inbound "(.+)": field "protocol" is required\.$/)
+            : null
         const message = templateNameConflict
             ? i18n.t('requestErrors.templateNameExists')
-            : status === 401
+            : configValidation
+              ? protocolMissing
+                  ? i18n.t('requestErrors.protocolRequired', { tag: protocolMissing[1] })
+                  : i18n.t('requestErrors.configValidation', { reason: errorData.message.slice(0, 1500) })
+              : status === 401
               ? i18n.t('requestErrors.unauthorized')
               : status === 403
                 ? i18n.t('requestErrors.forbidden')

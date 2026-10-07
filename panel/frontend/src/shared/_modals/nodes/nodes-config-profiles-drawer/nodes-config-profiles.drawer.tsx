@@ -156,8 +156,12 @@ export const NodesConfigProfilesDrawer = NiceModal.create((props: IProps) => {
             position="right"
             size="480px"
             styles={{
+                content: { display: 'flex', flexDirection: 'column', overflow: 'hidden' },
+                header: { flexShrink: 0 },
                 body: {
-                    height: 'calc(100% - 60px)',
+                    flex: 1,
+                    minHeight: 0,
+                    overflow: 'hidden',
                     display: 'flex',
                     flexDirection: 'column'
                 }

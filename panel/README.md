@@ -2,7 +2,7 @@
 
 Панель управления пользователями, подписками, хостами и нодами Xray. Backend хранит данные в PostgreSQL, выполняет фоновые задачи и передаёт конфигурации нодам. Frontend предоставляет веб-интерфейс и документацию.
 
-**Версия: 1.1.6** · **Основа: Remnawave 3.4.4**
+**Версия: 1.1.7** · **Основа: Remnawave 3.4.4**
 
 При первом входе создайте администратора. Пароль должен содержать минимум 24 символа, заглавные и строчные латинские буквы и цифры. Кнопка в форме генерирует и копирует подходящий пароль из 32 символов. Ошибки ввода показываются под соответствующими полями до отправки запроса.
 
@@ -23,6 +23,12 @@
 
 Для квот хостов, тегов и отзыва доступа устройств используйте [Remnacust Node](https://github.com/lottman/Remnacust-node/blob/main/node/README.md) с [нашим Xray](https://github.com/lottman/Remnacust-core/blob/main/xray/README.md). Подключение стандартных нод описано в [NODE-COMPATIBILITY.md](../docs/NODE-COMPATIBILITY.md).
 
+## Сохранение профиля Xray
+
+«Сохранить» проверяет JSON на сервере. Ошибка в поле `protocol` отклоняется с пояснением; профиль и история остаются прежними. Если проверка встроенного Xray показывает предупреждение, панель просит подтверждение сохранения. Оно не отключает серверную проверку.
+
+После записи панель отдельно сообщает, поставлена ли конфигурация в очередь на ноды. Сообщение об очереди не означает, что Xray уже применил конфигурацию: итог смотрите в состоянии и журнале ноды. Старый ошибочный профиль можно открыть и исправить.
+
 ## Требования
 
 Для установщика: только Ubuntu 22.04 LTS, 24.04 LTS или 26.04 LTS, amd64/arm64, root и домен панели. Docker и Compose добавляются при отсутствии. PostgreSQL, Valkey и Caddy для HTTPS входят в новую установку; собственный reverse proxy выбирается через `--proxy existing`.
@@ -37,7 +43,7 @@
 curl -fsSL --proto '=https' --proto-redir '=https' https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh -o installer.sh && sudo bash installer.sh install-panel
 ```
 
-[Скачать installer.sh](https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh). Скрипт предложит выбрать версию выпуска установщика; Enter выбирает `latest`. Для конкретного выпуска добавьте `--version 1.2.10` (панель 1.1.6, нода и ядро 1.1.1). Настройка доменов и reverse proxy: [INSTALLER.md](../docs/INSTALLER.md).
+[Скачать installer.sh](https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh). Скрипт предложит выбрать версию выпуска установщика; Enter выбирает `latest`. Для конкретного выпуска добавьте `--version 1.2.15` (панель 1.1.7, нода и ядро 1.1.1). Настройка доменов и reverse proxy: [INSTALLER.md](../docs/INSTALLER.md).
 
 ## Установка из исходников
 

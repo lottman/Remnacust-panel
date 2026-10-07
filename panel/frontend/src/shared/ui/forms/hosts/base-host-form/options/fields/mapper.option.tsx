@@ -27,7 +27,7 @@ export function MapperOption() {
             rightSection={<TbPencil size={14} />}
             size="compact-sm"
             variant="soft"
-            aria-labelledby={`${rowControl.labelId} ${rowControl.id}`}
+            aria-labelledby={`${rowControl['aria-labelledby']} ${rowControl.id}`}
             id={rowControl.id}
         >
             {isValueSet('mapper') ? t('common.message.configured') : t('common.message.not-set')}

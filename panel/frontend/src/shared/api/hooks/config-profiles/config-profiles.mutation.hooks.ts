@@ -17,11 +17,15 @@ export const useUpdateConfigProfile = createMutationHook({
     responseSchema: UpdateConfigProfileCommand.ResponseSchema,
     requestMethod: UpdateConfigProfileCommand.endpointDetails.REQUEST_METHOD,
     rMutationParams: {
-        onSuccess: () => {
+        onSuccess: (data) => {
             notifications.show({
-                title: i18next.t('common.message.success'),
-                message: translateMutationMessage('Config updated successfully'),
-                color: 'teal'
+                title: i18next.t(data.applyStatus === 'failed' ? 'common.message.warning' : 'common.message.success'),
+                message: data.applyStatus === 'failed'
+                    ? i18next.t('config-editor-actions.feature.saved-sync-failed')
+                    : data.applyStatus === 'queued'
+                      ? i18next.t('config-editor-actions.feature.saved-sync-queued')
+                      : translateMutationMessage('Config updated successfully'),
+                color: data.applyStatus === 'failed' ? 'yellow' : 'teal'
             })
         },
         onError: (error) => {

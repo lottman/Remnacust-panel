@@ -101,27 +101,27 @@ export default function NodesPageComponent(props: IProps) {
                         />
                         <NodesRealtimeUsageMetrics isLoading={isLoading} nodes={nodes} />
                         <NodeHealthOverview nodes={nodes} />
-                    </Stack>
 
-                    {isLoading ? (
-                        <LoadingScreen height="60vh" />
-                    ) : (
-                        <ViewModeTransition mode={viewMode}>
-                            {viewMode === NODES_VIEW_MODE.TABLE ? (
-                                <NodesDataTableWidget
-                                    nodes={nodes}
-                                    selectedRecords={selectedRecords}
-                                    setSelectedRecords={setSelectedRecords}
-                                />
-                            ) : (
-                                <NodesTableWidget
-                                    nodes={nodes}
-                                    nodePlugins={nodePlugins}
-                                    nodeIntegrations={nodeIntegrations}
-                                />
-                            )}
-                        </ViewModeTransition>
-                    )}
+                        {isLoading ? (
+                            <LoadingScreen height="60vh" />
+                        ) : (
+                            <ViewModeTransition mode={viewMode}>
+                                {viewMode === NODES_VIEW_MODE.TABLE ? (
+                                    <NodesDataTableWidget
+                                        nodes={nodes}
+                                        selectedRecords={selectedRecords}
+                                        setSelectedRecords={setSelectedRecords}
+                                    />
+                                ) : (
+                                    <NodesTableWidget
+                                        nodes={nodes}
+                                        nodePlugins={nodePlugins}
+                                        nodeIntegrations={nodeIntegrations}
+                                    />
+                                )}
+                            </ViewModeTransition>
+                        )}
+                    </Stack>
                 </Grid.Col>
             </Grid>
 

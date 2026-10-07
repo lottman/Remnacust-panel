@@ -7,6 +7,7 @@ export class GetConfigProfileByUuidResponseModel {
     public readonly name: string;
     public readonly tags: string[];
     public readonly config: object;
+    public applyStatus?: 'queued' | 'failed' | 'unchanged';
     public readonly inbounds: ConfigProfileInboundEntity[];
     public readonly nodes: {
         uuid: string;

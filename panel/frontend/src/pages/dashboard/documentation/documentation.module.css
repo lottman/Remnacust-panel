@@ -27,7 +27,7 @@
     overflow: auto;
     overscroll-behavior: contain;
     padding-inline-end: 12px;
-    scrollbar-width: thin;
+
 }
 .category {
     padding: 12px 10px 6px;
@@ -210,7 +210,7 @@
 .related {
     max-height: 280px;
     overflow: auto;
-    scrollbar-width: thin;
+
 }
 .relatedLink {
     display: flex;

@@ -14,7 +14,7 @@ const booleanString = (def: 'true' | 'false' = 'false') =>
 
 export const configSchema = z
     .object({
-        __RW_METADATA_VERSION: z.string().default('1.1.6'),
+        __RW_METADATA_VERSION: z.string().default('1.1.7'),
         __RW_METADATA_GIT_BACKEND_COMMIT: z
             .string()
             .default('unknown'),

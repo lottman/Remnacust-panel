@@ -21,7 +21,7 @@ function handler(language) {
             if (name === 'i18next') return { default: { t(key, values = {}) {
                 const value = key.split('.').reduce((part, name) => part?.[name], locale)
                 assert.equal(typeof value, 'string', `${language}: ${key}`)
-                return value.replace('{{status}}', String(values.status ?? ''))
+                return value.replace(/\{\{(\w+)\}\}/g, (_, name) => String(values[name] ?? ''))
             } } }
             throw Error(`Unexpected dependency: ${name}`)
         }
@@ -30,6 +30,19 @@ function handler(language) {
 }
 
 for (const language of ['en', 'ru', 'fa', 'zh']) {
+    test(`${language}: config validation explains the missing protocol and preserves the cause`, () => {
+        const { handle, locale } = handler(language)
+        const data = { errorCode: 'A061', message: 'Inbound "SERVICE": field "protocol" is required.' }
+        assert.throws(() => handle({ isAxiosError: true, response: { status: 422, data } }), error => {
+            assert.equal(error.message, locale.requestErrors.protocolRequired.replace('{{tag}}', 'SERVICE') + ' [A061]')
+            assert.equal(error.cause, data)
+            return true
+        })
+        assert.throws(() => handle({ isAxiosError: true, response: { status: 500, data } }), error => {
+            assert.ok(!error.message.includes('SERVICE'))
+            return true
+        })
+    })
     test(`${language}: duplicate template names show a translated explanation`, () => {
         const { handle, locale } = handler(language)
         for (const status of [400, 409]) {

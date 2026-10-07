@@ -42,7 +42,7 @@
     padding: 4px;
     overflow-x: hidden;
     overflow-y: auto;
-    scrollbar-width: thin;
+
     overscroll-behavior: contain;
 }
 
@@ -56,7 +56,7 @@
     padding: var(--mantine-spacing-md);
     overflow-x: hidden;
     overflow-y: auto;
-    scrollbar-width: thin;
+
     overscroll-behavior: contain;
 }
 

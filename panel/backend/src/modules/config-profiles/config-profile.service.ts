@@ -4,7 +4,7 @@ import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { Injectable, Logger } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 
-import { XRayConfig } from '@common/helpers/xray-config';
+import { XRayConfig, XrayConfigValidationError } from '@common/helpers/xray-config';
 import { RawCacheService } from '@common/raw-cache';
 import { fail, ok, TResult } from '@common/types';
 import { diffInbounds } from '@common/utils/inbounds';
@@ -38,12 +38,6 @@ export class ConfigProfileService {
         try {
             const configProfiles = await this.configProfileRepository.getAllConfigProfiles();
 
-            for (const configProfile of configProfiles) {
-                configProfile.config = new XRayConfig(
-                    configProfile.config as object,
-                ).getSortedConfig();
-            }
-
             const total = await this.configProfileRepository.getTotalConfigProfiles();
 
             return ok(new GetConfigProfilesResponseModel(configProfiles, total));
@@ -62,8 +56,6 @@ export class ConfigProfileService {
             if (!configProfile) {
                 return fail(ERRORS.CONFIG_PROFILE_NOT_FOUND);
             }
-
-            configProfile.config = new XRayConfig(configProfile.config as object).getSortedConfig();
 
             return ok(new GetConfigProfileByUuidResponseModel(configProfile));
         } catch (error) {
@@ -188,6 +180,9 @@ export class ConfigProfileService {
 
             return await this.getConfigProfileByUUID(uuid);
         } catch (error) {
+            if (error instanceof XrayConfigValidationError) {
+                return fail(ERRORS.CONFIG_VALIDATION_ERROR.withMessage(error.message));
+            }
             if (
                 error instanceof PrismaClientKnownRequestError &&
                 error.code === 'P2002' &&
@@ -227,23 +222,26 @@ export class ConfigProfileService {
 
             await this.updateConfigProfileTransactional(existingConfigProfile, uuid, name, config);
 
+            let applyStatus: 'queued' | 'failed' | 'unchanged' = 'unchanged';
             if (config) {
-                // No need for now
-                // await this.commandBus.execute(new SyncActiveProfileCommand());
-
-                await this.nodesQueuesService.startAllNodesByProfile({
-                    profileUuid: existingConfigProfile.uuid,
-                    emitter: 'updateConfigProfile',
-                });
-
-                await this.rawCache.delMany(
-                    existingConfigProfile.inbounds.map((inbound) =>
-                        CACHE_KEYS.RAW_INBOUND(inbound.uuid),
-                    ),
-                );
+                try {
+                    await this.rawCache.delMany(
+                        existingConfigProfile.inbounds.map((inbound) => CACHE_KEYS.RAW_INBOUND(inbound.uuid)),
+                    );
+                    await this.nodesQueuesService.startAllNodesByProfile({
+                        profileUuid: existingConfigProfile.uuid,
+                        emitter: 'updateConfigProfile',
+                    });
+                    applyStatus = 'queued';
+                } catch (error) {
+                    applyStatus = 'failed';
+                    this.logger.error('Profile saved, but node synchronization could not be queued', error);
+                }
             }
 
-            return this.getConfigProfileByUUID(existingConfigProfile.uuid);
+            const result = await this.getConfigProfileByUUID(existingConfigProfile.uuid);
+            if (result.isOk) result.response.applyStatus = applyStatus;
+            return result;
         } catch (error) {
             this.logger.error(error);
 
@@ -263,7 +261,7 @@ export class ConfigProfileService {
                 }
             }
 
-            if (error instanceof Error) {
+            if (error instanceof XrayConfigValidationError) {
                 return fail(ERRORS.CONFIG_VALIDATION_ERROR.withMessage(error.message));
             }
 

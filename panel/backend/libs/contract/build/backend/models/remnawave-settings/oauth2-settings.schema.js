@@ -85,6 +85,16 @@ exports.Oauth2SettingsSchema = zod_1.default.object({
         withPkce: zod_1.default.boolean(),
         authorizationUrl: zod_1.default.nullable(zod_1.default.string()),
         tokenUrl: zod_1.default.nullable(zod_1.default.string()),
+        expectedIssuer: zod_1.default.string().refine((value) => {
+            try {
+                const url = new URL(value);
+                return url.protocol === 'https:' && !url.username && !url.password &&
+                    !url.search && !url.hash && value === value.trim();
+            }
+            catch {
+                return false;
+            }
+        }, { message: 'Issuer must be an HTTPS URL without credentials, query or fragment.' }).nullable().default(null),
         frontendDomain: zod_1.default.nullable(zod_1.default.string().refine((val) => {
             if (val.startsWith('127.0.0.1') || val.startsWith('localhost')) {
                 return true;
@@ -107,6 +117,7 @@ exports.Oauth2SettingsSchema = zod_1.default.object({
         clientSecret: null,
         withPkce: false,
         authorizationUrl: null,
+        expectedIssuer: null,
         allowedEmails: [],
     }),
     telegram: zod_1.default

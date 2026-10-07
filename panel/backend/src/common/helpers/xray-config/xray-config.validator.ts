@@ -75,6 +75,8 @@ interface InboundsWithTagsAndType {
 
 type TCtrXRayConfig = object | Record<string, unknown> | string;
 
+export class XrayConfigValidationError extends Error {}
+
 export class XRayConfig {
     private config: XrayConfig;
     private inbounds: InboundConfig[] = [];
@@ -308,7 +310,7 @@ export class XRayConfig {
             }
 
             default:
-                throw new Error(`Protocol ${inbound.protocol} is not supported.`);
+                throw new XrayConfigValidationError(`Protocol ${inbound.protocol} is not supported.`);
         }
     }
 
@@ -352,8 +354,8 @@ export class XRayConfig {
     }
 
     public validateOutbounds(): void {
-        if (!this.config.outbounds || this.config.outbounds.length === 0) {
-            throw new Error("Config doesn't have outbounds.");
+        if (!Array.isArray(this.config.outbounds) || this.config.outbounds.length === 0) {
+            throw new XrayConfigValidationError("Config doesn't have outbounds.");
         }
     }
 
@@ -412,29 +414,37 @@ export class XRayConfig {
     private parseConfig(configInput: TCtrXRayConfig): XrayConfig {
         if (typeof configInput === 'string') {
             try {
-                return JSON.parse(configInput) as XrayConfig;
+                const parsed = JSON.parse(configInput);
+                if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+                    throw new XrayConfigValidationError('Invalid configuration format.');
+                }
+                return parsed as XrayConfig;
             } catch (error) {
-                throw new Error(`Invalid JSON input: ${error}`);
+                if (error instanceof XrayConfigValidationError) throw error;
+                throw new XrayConfigValidationError('Invalid JSON input.');
             }
         }
 
-        if (typeof configInput === 'object') {
+        if (configInput && typeof configInput === 'object' && !Array.isArray(configInput)) {
             return configInput as XrayConfig;
         }
 
-        throw new Error('Invalid configuration format.');
+        throw new XrayConfigValidationError('Invalid configuration format.');
     }
 
     private validate(): void {
-        if (!this.config.inbounds || this.config.inbounds.length === 0) {
-            throw new Error("Config doesn't have inbounds.");
+        if (!Array.isArray(this.config.inbounds) || this.config.inbounds.length === 0) {
+            throw new XrayConfigValidationError("Config doesn't have inbounds.");
         }
 
         const seenTags = new Set<string>();
 
         for (const inbound of this.config.inbounds) {
-            this.validateNetwork(inbound);
+            if (!inbound || typeof inbound !== 'object' || Array.isArray(inbound)) {
+                throw new XrayConfigValidationError('Each inbound must be an object.');
+            }
             this.validateProtocol(inbound);
+            this.validateNetwork(inbound);
             this.validateMasque(inbound);
             this.validateTag(inbound, seenTags);
             this.validateShadowsocks(inbound);
@@ -442,9 +452,16 @@ export class XRayConfig {
     }
 
     private validateNetwork(inbound: InboundConfig): void {
+        if (inbound.streamSettings && (typeof inbound.streamSettings !== 'object' || Array.isArray(inbound.streamSettings))) {
+            throw new XrayConfigValidationError(`Inbound "${inbound.tag}": streamSettings must be an object.`);
+        }
+        const transport = (inbound.streamSettings as { method?: string } | undefined)?.method ?? inbound.streamSettings?.network;
+        if (transport !== undefined && typeof transport !== 'string') {
+            throw new XrayConfigValidationError(`Inbound "${inbound.tag}": network must be a string.`);
+        }
         const network = ((inbound.streamSettings as { method?: string } | undefined)?.method ?? inbound.streamSettings?.network)?.toLowerCase();
         if (network && !ALLOWED_NETWORKS.has(network)) {
-            throw new Error(
+            throw new XrayConfigValidationError(
                 `Invalid network type "${network}" in inbound "${inbound.tag}". ` +
                     `Allowed values are: ${[...ALLOWED_NETWORKS].join(', ')}.`,
             );
@@ -452,8 +469,11 @@ export class XRayConfig {
     }
 
     private validateProtocol(inbound: InboundConfig): void {
-        if (inbound.protocol && !ALLOWED_PROTOCOLS.has(inbound.protocol)) {
-            throw new Error(
+        if (typeof inbound.protocol !== 'string' || !inbound.protocol.trim()) {
+            throw new XrayConfigValidationError(`Inbound "${inbound.tag ?? '?'}": field "protocol" is required.`);
+        }
+        if (!ALLOWED_PROTOCOLS.has(inbound.protocol)) {
+            throw new XrayConfigValidationError(
                 `Invalid protocol in inbound "${inbound.tag}". ` +
                     `Allowed values are: ${[...ALLOWED_PROTOCOLS].join(', ')}.`,
             );
@@ -463,23 +483,23 @@ export class XRayConfig {
     private validateMasque(inbound: InboundConfig): void {
         const network = ((inbound.streamSettings as { method?: string } | undefined)?.method ?? inbound.streamSettings?.network)?.toLowerCase();
         if (network === 'masque' && inbound.protocol !== 'masque') {
-            throw new Error('The masque transport requires the masque protocol.');
+            throw new XrayConfigValidationError('The masque transport requires the masque protocol.');
         }
         if (inbound.protocol === 'masque' &&
             (network !== 'masque' || inbound.streamSettings?.security !== 'tls')) {
-            throw new Error('MASQUE requires network masque and TLS security.');
+            throw new XrayConfigValidationError('MASQUE requires network masque and TLS security.');
         }
     }
 
     private validateTag(inbound: InboundConfig, seenTags: Set<string>): void {
-        if (!inbound.tag) {
-            throw new Error('All inbounds must have a unique tag.');
+        if (typeof inbound.tag !== 'string' || !inbound.tag.trim()) {
+            throw new XrayConfigValidationError('All inbounds must have a unique tag.');
         }
         if (inbound.tag.includes(',')) {
-            throw new Error("Character ',' is not allowed in inbound tag.");
+            throw new XrayConfigValidationError("Character ',' is not allowed in inbound tag.");
         }
         if (seenTags.has(inbound.tag)) {
-            throw new Error(
+            throw new XrayConfigValidationError(
                 `Duplicate inbound tag "${inbound.tag}" found. All inbound tags must be unique.`,
             );
         }
@@ -492,14 +512,14 @@ export class XRayConfig {
         const settings = inbound.settings;
 
         if (!settings) {
-            throw new Error('Shadowsocks settings are required.');
+            throw new XrayConfigValidationError('Shadowsocks settings are required.');
         }
 
         const method = settings.method;
         if (!method) return;
 
         if (!SHADOWSOCKS_METHODS.some((m) => m === method)) {
-            throw new Error(
+            throw new XrayConfigValidationError(
                 `Unsupported Shadowsocks method "${method}". ` +
                     `Allowed methods are: ${SHADOWSOCKS_METHODS.join(', ')}.`,
             );
@@ -508,14 +528,14 @@ export class XRayConfig {
         if (isSS2022MethodFromMethod(method)) {
             const keySize = getSS2022KeySize(method);
             if (!settings.password) {
-                throw new Error(
+                throw new XrayConfigValidationError(
                     `Shadowsocks password is required for 2022-blake3-* methods. ` +
                         `(inbound → settings → password – generate with: openssl rand -base64 ${keySize})`,
                 );
             }
             // https://xtls.github.io/config/inbounds/shadowsocks.html#inboundconfigurationobject
             if (getDecodedKeySize(settings.password) !== keySize) {
-                throw new Error(
+                throw new XrayConfigValidationError(
                     `Shadowsocks password for "${method}" must be a base64 string that decodes to exactly ${keySize} bytes. ` +
                         `(inbound → settings → password – generate with: openssl rand -base64 ${keySize})`,
                 );

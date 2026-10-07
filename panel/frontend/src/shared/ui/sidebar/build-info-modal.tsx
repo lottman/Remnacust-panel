@@ -62,7 +62,7 @@ export function BuildInfoModal({ remnawaveMetadata, isNewVersionAvailable }: Bui
                         <Button
                             color="teal"
                             component="a"
-                            href="https://github.com/lottman/remnacust/releases"
+                            href="https://github.com/lottman/Remnacust-panel/releases"
                             leftSection={<TbBrandGithub size={14} />}
                             ml="auto"
                             radius="md"
@@ -231,7 +231,7 @@ export function BuildInfoModal({ remnawaveMetadata, isNewVersionAvailable }: Bui
                 </Button>
                 <Button
                     component="a"
-                    href="https://github.com/lottman"
+                    href="https://github.com/lottman/Remnacust-panel"
                     leftSection={<TbBrandGithub size={16} />}
                     radius="md"
                     size="sm"

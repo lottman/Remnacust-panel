@@ -1,6 +1,6 @@
 # Remnacust Subscription Page
 
-Страница с данными подписки и инструкциями подключения. Для VPN-приложений тот же адрес возвращает конфигурацию в выбранном формате. Основа — Remnawave Subscription Page 8.0.0; версия этой сборки — 1.1.5.
+Страница с данными подписки и инструкциями подключения. Для VPN-приложений тот же адрес возвращает конфигурацию в выбранном формате. Основа — Remnawave Subscription Page 8.0.0; версия этой сборки — 1.1.6.
 
 В этой сборке исправлено отображение русского, персидского и китайского текста. Ошибка загрузки больше не оставляет бесконечный индикатор. Запросы страницы к панели выполняются параллельно; HTML и статические файлы сжимаются. Данные пользователя не кешируются, секретная часть ссылки не записывается в журнал доступа. SVG и HTML инструкций очищаются перед показом.
 
@@ -19,7 +19,7 @@ curl -fsSL --proto '=https' --proto-redir '=https' https://github.com/lottman/Re
 Из этой папки:
 
 ```bash
-docker build -t remnacust-subscription-page:1.1.5 .
+docker build -t remnacust-subscription-page:1.1.6 .
 ```
 
 Образ самостоятельно собирает backend и frontend. Исходники панели для этой сборки не нужны.
@@ -30,7 +30,7 @@ docker build -t remnacust-subscription-page:1.1.5 .
 
 При размещении в Docker-сети панели адрес может быть `http://remnawave:3000`. Публичный домен направьте через HTTPS reverse proxy на порт `3010`. API и секреты панели в браузер не передаются.
 
-Для существующей установки замените только образ сервиса `remnawave-subscription-page` на `remnacust-subscription-page:1.1.5`. Сохраните окружение, Docker-сеть, порт и `CUSTOM_SUB_PREFIX`. Затем запустите только этот сервис:
+Для существующей установки замените только образ сервиса `remnawave-subscription-page` на `remnacust-subscription-page:1.1.6`. Сохраните окружение, Docker-сеть, порт и `CUSTOM_SUB_PREFIX`. Затем запустите только этот сервис:
 
 ```bash
 docker compose up -d --no-deps --pull never remnawave-subscription-page

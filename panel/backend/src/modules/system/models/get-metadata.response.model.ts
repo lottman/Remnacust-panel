@@ -36,14 +36,14 @@ export class GetMetadataResponseModel {
                 commitSha: data.backendCommitSha,
                 branch: data.branch,
                 commitUrl: /^[\da-f]{40}$/i.test(data.backendCommitSha)
-                    ? `https://github.com/lottman/remnacust/commit/${data.backendCommitSha}`
-                    : 'https://github.com/lottman/remnacust',
+                    ? `https://github.com/lottman/Remnacust-panel/commit/${data.backendCommitSha}`
+                    : 'https://github.com/lottman/Remnacust-panel',
             },
             frontend: {
                 commitSha: data.frontendCommitSha,
                 commitUrl: /^[\da-f]{40}$/i.test(data.frontendCommitSha)
-                    ? `https://github.com/lottman/remnacust/commit/${data.frontendCommitSha}`
-                    : 'https://github.com/lottman/remnacust',
+                    ? `https://github.com/lottman/Remnacust-panel/commit/${data.frontendCommitSha}`
+                    : 'https://github.com/lottman/Remnacust-panel',
             },
         };
     }

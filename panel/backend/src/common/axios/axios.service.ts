@@ -41,7 +41,7 @@ import {
 } from '@remnawave/node-contract';
 
 import { RawCacheService } from '@common/raw-cache';
-import { TypedConfigService } from '@common/config/app-config';
+import { TypedConfigService } from '@common/config/app-config/typed-config.service';
 import { prettyBytesUtil } from '@common/utils/bytes';
 import { deriveSni } from '@common/utils/certs';
 import { formatExecutionTime, getTime } from '@common/utils/get-elapsed-time';

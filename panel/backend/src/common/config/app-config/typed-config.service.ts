@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
-import { ConfigSchema } from '@common/config/app-config';
+import type { ConfigSchema } from './config.schema';
 
 type BooleanConfigKey = {
     [K in keyof ConfigSchema]-?: ConfigSchema[K] extends boolean ? K : never;

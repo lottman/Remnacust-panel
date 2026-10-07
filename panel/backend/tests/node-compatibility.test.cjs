@@ -33,7 +33,7 @@ const { AxiosService } = load(path.join(__dirname, '../src/common/axios/axios.se
         },
     },
     '@common/raw-cache': {},
-    '@common/config/app-config': {},
+    '@common/config/app-config/typed-config.service': {},
     '@modules/keygen/commands/get-node-jwt': { GetNodeJwtCommand: class {} },
     './mtls-agent': {},
     '../types': result,

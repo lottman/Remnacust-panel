@@ -2,7 +2,7 @@
 
 Панель управления пользователями, подписками и нодами Xray на основе Remnawave. Backend хранит данные в PostgreSQL, frontend предоставляет интерфейс и встроенное руководство. В этом репозитории также находится отдельная страница подписки.
 
-**Версия 1.1.1** · **Основа: Remnawave 3.4.4** · [Установщик](https://github.com/lottman/Remnacust-installer) · [Telegram](https://t.me/lottman)
+**Версия 1.1.2** · **Основа: Remnawave 3.4.4** · [Установщик](https://github.com/lottman/Remnacust-installer) · [Telegram](https://t.me/lottman)
 
 ![Главная Remnacust](panel/assets/overview.png)
 
@@ -30,7 +30,7 @@
 curl -fsSL --proto '=https' --proto-redir '=https' https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh -o installer.sh && sudo bash installer.sh install-panel
 ```
 
-[Скачать installer.sh](https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh). Скрипт спросит домен и версию выпуска установщика. Enter выбирает `latest`; `--version 1.1.2` закрепляет выпуск с компонентами 1.1.1. Он проверяет архив по SHA-256, собирает образ и запускает PostgreSQL, Valkey, панель и Caddy. При собственном reverse proxy используйте `--proxy existing`. HWID включён по умолчанию. После запуска откройте домен панели и создайте администратора.
+[Скачать installer.sh](https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh). Скрипт спросит домен и версию выпуска установщика. Enter выбирает `latest`; `--version 1.1.3` закрепляет выпуск с панелью 1.1.2, нодой и ядром 1.1.1. Он проверяет архив по SHA-256, собирает образ и запускает PostgreSQL, Valkey, панель и Caddy. При собственном reverse proxy используйте `--proxy existing`. HWID включён по умолчанию. После запуска откройте домен панели и создайте администратора.
 
 Обновление и перенос существующей установки:
 
@@ -46,7 +46,7 @@ sudo bash installer.sh migrate-remnawave-panel --container remnawave
 ```bash
 git clone https://github.com/lottman/Remnacust-panel.git
 cd Remnacust-panel
-docker build -f panel/Dockerfile -t remnacust-panel:1.1.1 .
+docker build -f panel/Dockerfile -t remnacust-panel:1.1.2 .
 ```
 
 Это сборка образа. Для ручного запуска подготовьте окружение, БД и HTTPS по [README панели](panel/README.md). Исходники страницы подписки и её отдельная установка: [subscription-page/README.md](subscription-page/README.md).

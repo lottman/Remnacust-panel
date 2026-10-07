@@ -8,7 +8,7 @@
 curl -fsSL --proto '=https' --proto-redir '=https' https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh -o installer.sh && sudo bash installer.sh
 ```
 
-[Скачать installer.sh](https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh). Установка, обновление и миграция доступны только на Ubuntu 22.04 LTS и 24.04 LTS (amd64/arm64). На другой ОС приложение и системные пакеты не меняются.
+[Скачать installer.sh](https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh). Установка, обновление и миграция доступны только на Ubuntu 22.04 LTS, 24.04 LTS и 26.04 LTS (amd64/arm64). На другой ОС приложение и системные пакеты не меняются.
 
 Панель устанавливается через `install-panel`, нода с нашим Xray — через `install-node`. Обновление: `upgrade-panel` и `upgrade-node`. Enter в запросе версии выбирает `latest`; `--version 1.1.6` закрепляет выпуск установщика с панелью 1.1.2, нодой и ядром 1.1.1. Все команды остаются видимыми в меню.
 

@@ -8,7 +8,7 @@
 
 ## Сборка
 
-Для установки самой панели на Ubuntu 22.04 LTS или 24.04 LTS выполните:
+Для установки самой панели на Ubuntu 22.04 LTS, 24.04 LTS или 26.04 LTS выполните:
 
 ```bash
 curl -fsSL --proto '=https' --proto-redir '=https' https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh -o installer.sh && sudo bash installer.sh install-panel

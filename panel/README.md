@@ -25,7 +25,7 @@
 
 ## Требования
 
-Для установщика: только Ubuntu 22.04 LTS или 24.04 LTS, amd64/arm64, root и домен панели. Docker и Compose добавляются при отсутствии. PostgreSQL, Valkey и Caddy для HTTPS входят в новую установку; собственный reverse proxy выбирается через `--proxy existing`.
+Для установщика: только Ubuntu 22.04 LTS, 24.04 LTS или 26.04 LTS, amd64/arm64, root и домен панели. Docker и Compose добавляются при отсутствии. PostgreSQL, Valkey и Caddy для HTTPS входят в новую установку; собственный reverse proxy выбирается через `--proxy existing`.
 
 Для планирования сервера используйте [требования Remnawave](https://docs.rw/install/requirements/): от 2 ядер CPU, 2 ГБ RAM и 20 ГБ диска; рекомендуются 4 ядра и 4 ГБ RAM. Сборка из исходников может потребовать дополнительную память и место.
 

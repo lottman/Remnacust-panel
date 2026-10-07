@@ -41,6 +41,7 @@ import {
 } from '@remnawave/node-contract';
 
 import { RawCacheService } from '@common/raw-cache';
+import { TypedConfigService } from '@common/config/app-config';
 import { prettyBytesUtil } from '@common/utils/bytes';
 import { deriveSni } from '@common/utils/certs';
 import { formatExecutionTime, getTime } from '@common/utils/get-elapsed-time';
@@ -150,12 +151,13 @@ export class AxiosService {
 
     public axiosInstance: AxiosInstance;
     private mtlsOptions: IMtlsOptions;
-    private servername: string;
+    private servername: string | undefined;
     private readonly socksAgentCache = new Map<string, MtlsSocksProxyAgent>();
 
     constructor(
         private readonly commandBus: CommandBus,
         private readonly rawCacheService: RawCacheService,
+        private readonly configService: TypedConfigService,
     ) {
         this.axiosInstance = axios.create({
             timeout: 45_000,
@@ -180,7 +182,9 @@ export class AxiosService {
 
             this.axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${jwt.jwtToken}`;
 
-            this.servername = deriveSni(jwt.caCert, jwt.jwtPublicKey);
+            this.servername = this.configService.getOrThrow('SERVICE_SNI_VERIFICATION')
+                ? deriveSni(jwt.caCert, jwt.jwtPublicKey)
+                : undefined;
 
             this.mtlsOptions = {
                 cert: jwt.clientCert,

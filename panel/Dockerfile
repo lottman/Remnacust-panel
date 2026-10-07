@@ -4,6 +4,7 @@ WORKDIR /opt/app
 
 COPY panel/backend/package*.json ./
 COPY panel/backend/patches ./patches
+COPY panel/backend/scripts ./scripts
 COPY panel/backend/vendor ./vendor
 COPY panel/backend/prisma ./prisma
 COPY panel/backend/rspack.config.mjs ./
@@ -63,7 +64,7 @@ FROM node:24.21-trixie-slim
 COPY --from=certificates /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 
 LABEL org.opencontainers.image.title="Remnacust"
-LABEL org.opencontainers.image.version="1.1.6"
+LABEL org.opencontainers.image.version="1.1.7.1"
 LABEL org.opencontainers.image.description="Powerful proxy management tool"
 LABEL org.opencontainers.image.url="https://github.com/lottman/Remnacust-panel"
 LABEL org.opencontainers.image.source="https://github.com/lottman/Remnacust-panel"
@@ -74,7 +75,7 @@ LABEL org.opencontainers.image.documentation="https://docs.rw"
 WORKDIR /opt/app
 
 ARG BRANCH=main
-ARG __RW_METADATA_VERSION=1.1.6
+ARG __RW_METADATA_VERSION=1.1.7.1
 ARG __RW_METADATA_GIT_BACKEND_COMMIT=unknown
 ARG __RW_METADATA_GIT_FRONTEND_COMMIT=unknown
 ARG __RW_METADATA_GIT_BRANCH=local

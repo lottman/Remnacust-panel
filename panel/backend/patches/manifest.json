@@ -1,0 +1,76 @@
+[
+  {
+    "path": "node_modules/nestjs-zod/dist/dto-CHeB-l1i.mjs",
+    "beforeSha256": "a0323bf203e56cfa7c9ab28c21b3e89659b5c2b220a6a8243d2d51bbb2e57fe1",
+    "afterSha256": "dcbb4055a79b66a2524ea5e1ab4900ee300856125a68b0791689abd72c48fee3",
+    "changes": [
+      {
+        "before": "\t}\n\treturn properties;\n}\nfunction generateJsonSchema(schema, io) {\n\tconst generatedJsonSchema = \"_zod\" in schema ? toJSONSchema(schema, { io }) : zodV3ToOpenAPI(schema);\n\tconst $defs = \"$defs\" in generatedJsonSchema && generatedJsonSchema.$defs ? generatedJsonSchema.$defs : void 0;\n\tconst newSchema = cleanupRefs(generatedJsonSchema, io);\n\tconst newDefs = {};\n\tObject.entries($defs || {}).forEach(([defKey, defValue]) => {\n\t\tconst newKey = io === \"output\" ? `${defKey}_Output` : defKey;\n\t\tif (newDefs[newKey]) throw new Error(`[nestjs-zod] Duplicate id in $defs: ${newKey}`);\n\t\tnewDefs[newKey] = cleanupRefs(defValue, io);\n\t});\n\tif ($defs) newSchema.$defs = newDefs;\n\treturn newSchema;\n",
+        "after": "\t}\n\treturn properties;\n}\nfunction normalizeTypeUnions(rootSchema) {\n\treturn walkJsonSchema(rootSchema, (schema) => {\n\t\tif (!Array.isArray(schema.type)) return schema;\n\t\tconst { type, ...rest } = schema;\n\t\treturn {\n\t\t\t...rest,\n\t\t\tanyOf: type.map((singleType) => ({ type: singleType }))\n\t\t};\n\t}, { clone: true });\n}\nfunction generateJsonSchema(schema, io) {\n\tconst generatedJsonSchema = \"_zod\" in schema ? toJSONSchema(schema, { io }) : zodV3ToOpenAPI(schema);\n\tconst $defs = \"$defs\" in generatedJsonSchema && generatedJsonSchema.$defs ? generatedJsonSchema.$defs : void 0;\n\tconst newSchema = cleanupRefs(normalizeTypeUnions(generatedJsonSchema), io);\n\tconst newDefs = {};\n\tObject.entries($defs || {}).forEach(([defKey, defValue]) => {\n\t\tconst newKey = io === \"output\" ? `${defKey}_Output` : defKey;\n\t\tif (newDefs[newKey]) throw new Error(`[nestjs-zod] Duplicate id in $defs: ${newKey}`);\n\t\tnewDefs[newKey] = cleanupRefs(normalizeTypeUnions(defValue), io);\n\t});\n\tif ($defs) newSchema.$defs = newDefs;\n\treturn newSchema;\n"
+      }
+    ]
+  },
+  {
+    "path": "node_modules/nestjs-zod/dist/dto-sWxCeI9D.cjs",
+    "beforeSha256": "170a5621186d9dfcef342832a8a52bed59240f2c0f0f689f76ca6d777e17b1ca",
+    "afterSha256": "570b9500f38732f3549e5bc918a2f46625d446e27abc6868c7d925ed26145e71",
+    "changes": [
+      {
+        "before": "\t}\n\treturn properties;\n}\nfunction generateJsonSchema(schema, io) {\n\tconst generatedJsonSchema = \"_zod\" in schema ? (0, zod_v4_core.toJSONSchema)(schema, { io }) : zodV3ToOpenAPI(schema);\n\tconst $defs = \"$defs\" in generatedJsonSchema && generatedJsonSchema.$defs ? generatedJsonSchema.$defs : void 0;\n\tconst newSchema = cleanupRefs(generatedJsonSchema, io);\n\tconst newDefs = {};\n\tObject.entries($defs || {}).forEach(([defKey, defValue]) => {\n\t\tconst newKey = io === \"output\" ? `${defKey}_Output` : defKey;\n\t\tif (newDefs[newKey]) throw new Error(`[nestjs-zod] Duplicate id in $defs: ${newKey}`);\n\t\tnewDefs[newKey] = cleanupRefs(defValue, io);\n\t});\n\tif ($defs) newSchema.$defs = newDefs;\n\treturn newSchema;\n",
+        "after": "\t}\n\treturn properties;\n}\nfunction normalizeTypeUnions(rootSchema) {\n\treturn walkJsonSchema(rootSchema, (schema) => {\n\t\tif (!Array.isArray(schema.type)) return schema;\n\t\tconst { type, ...rest } = schema;\n\t\treturn {\n\t\t\t...rest,\n\t\t\tanyOf: type.map((singleType) => ({ type: singleType }))\n\t\t};\n\t}, { clone: true });\n}\nfunction generateJsonSchema(schema, io) {\n\tconst generatedJsonSchema = \"_zod\" in schema ? (0, zod_v4_core.toJSONSchema)(schema, { io }) : zodV3ToOpenAPI(schema);\n\tconst $defs = \"$defs\" in generatedJsonSchema && generatedJsonSchema.$defs ? generatedJsonSchema.$defs : void 0;\n\tconst newSchema = cleanupRefs(normalizeTypeUnions(generatedJsonSchema), io);\n\tconst newDefs = {};\n\tObject.entries($defs || {}).forEach(([defKey, defValue]) => {\n\t\tconst newKey = io === \"output\" ? `${defKey}_Output` : defKey;\n\t\tif (newDefs[newKey]) throw new Error(`[nestjs-zod] Duplicate id in $defs: ${newKey}`);\n\t\tnewDefs[newKey] = cleanupRefs(normalizeTypeUnions(defValue), io);\n\t});\n\tif ($defs) newSchema.$defs = newDefs;\n\treturn newSchema;\n"
+      }
+    ]
+  },
+  {
+    "path": "node_modules/xray-typed/dist/config/inbound.d.ts",
+    "beforeSha256": "d5f856e136736caa02c1b13ff1bf1c57de90b1c3a5d88b9cf9fa67290bb6ed91",
+    "afterSha256": "ff6cdeb5a34fffe11746233be2abb6c63882ff0c7695f6beb32bb4fa4f2fa6e9",
+    "changes": [
+      {
+        "before": " *\n * @see https://xtls.github.io/en/config/inbound.html\n */\nexport type InboundConfig = InboundVLess | InboundVMess | InboundTrojan | InboundShadowsocks | InboundSocks | InboundHTTP | InboundDokodemo | InboundTunnel | InboundMixed | InboundHysteria;\nexport interface InboundVLess extends InboundConfigBase {\n    protocol: 'vless';\n    settings?: VLessInboundConfig;\n",
+        "after": " *\n * @see https://xtls.github.io/en/config/inbound.html\n */\nexport type InboundConfig = InboundVLess | InboundVMess | InboundTrojan | InboundShadowsocks | InboundSocks | InboundHTTP | InboundDokodemo | InboundTunnel | InboundMixed | InboundHysteria | InboundMasque;\nexport interface InboundVLess extends InboundConfigBase {\n    protocol: 'vless';\n    settings?: VLessInboundConfig;\n"
+      },
+      {
+        "before": "    protocol: 'hysteria';\n    settings?: HysteriaInboundConfig;\n}\n/** Fallback for unknown/custom protocols. */\nexport interface InboundGeneric extends InboundConfigBase {\n    protocol?: string;\n",
+        "after": "    protocol: 'hysteria';\n    settings?: HysteriaInboundConfig;\n}\nexport interface MasqueInboundConfig {\n    clients?: Array<{ email: string; pass: string; level?: number }>;\n    users?: Array<{ email: string; pass: string; level?: number }>;\n    address?: string[];\n    mtu?: number;\n}\nexport interface InboundMasque extends InboundConfigBase {\n    protocol: 'masque';\n    settings?: MasqueInboundConfig;\n}\n/** Fallback for unknown/custom protocols. */\nexport interface InboundGeneric extends InboundConfigBase {\n    protocol?: string;\n"
+      },
+      {
+        "before": " * Union type for all possible inbound protocol settings.\n */\nexport type InboundSettings = VLessInboundConfig | VMessInboundConfig | TrojanInboundConfig | ShadowsocksInboundConfig | SocksInboundConfig | HTTPInboundConfig | DokodemoInboundConfig | HysteriaInboundConfig;\nexport type InboundProtocol = 'vless' | 'vmess' | 'trojan' | 'shadowsocks' | 'socks' | 'http' | 'dokodemo-door' | 'tunnel' | 'mixed' | 'hysteria';\nexport {};\n//# sourceMappingURL=inbound.d.ts.map",
+        "after": " * Union type for all possible inbound protocol settings.\n */\nexport type InboundSettings = VLessInboundConfig | VMessInboundConfig | TrojanInboundConfig | ShadowsocksInboundConfig | SocksInboundConfig | HTTPInboundConfig | DokodemoInboundConfig | HysteriaInboundConfig;\nexport type InboundProtocol = 'vless' | 'vmess' | 'trojan' | 'shadowsocks' | 'socks' | 'http' | 'dokodemo-door' | 'tunnel' | 'mixed' | 'hysteria' | 'masque';\nexport {};\n//# sourceMappingURL=inbound.d.ts.map"
+      }
+    ]
+  },
+  {
+    "path": "node_modules/xray-typed/dist/index.d.ts",
+    "beforeSha256": "45dd31266841e006ba7ae8438323d1b206d1b0ba569502c209ad1d41f9a8d32a",
+    "afterSha256": "c844b15d5aab403b6f762d47f27b5f9a96fbc93aac46250994d2b87f3737500b",
+    "changes": [
+      {
+        "before": "export { WireGuardOutboundConfig, WireGuardPeer, } from './proxies/wireguard';\nexport { LoopbackOutboundConfig, } from './proxies/loopback';\nexport { HysteriaInboundConfig, HysteriaUser, HysteriaOutboundConfig, } from './proxies/hysteria';\n//# sourceMappingURL=index.d.ts.map",
+        "after": "export { WireGuardOutboundConfig, WireGuardPeer, } from './proxies/wireguard';\nexport { LoopbackOutboundConfig, } from './proxies/loopback';\nexport { HysteriaInboundConfig, HysteriaUser, HysteriaOutboundConfig, } from './proxies/hysteria';\nexport type { MasqueInboundConfig, InboundMasque } from './config/inbound';\n//# sourceMappingURL=index.d.ts.map"
+      }
+    ]
+  },
+  {
+    "path": "node_modules/xray-typed/dist/transport/common.d.ts",
+    "beforeSha256": "8e434cb036834a188f4401b9970ca2bd13fa3ea78aa4bd8bf0fb623684333f10",
+    "afterSha256": "90f211dccbdd914c4ace04d4dd03b981f71e493b83216172c5fd6df7e686dc67",
+    "changes": [
+      {
+        "before": "/**\n * Transport protocol type.\n */\nexport type TransportProtocol = 'tcp' | 'raw' | 'kcp' | 'ws' | 'grpc' | 'httpupgrade' | 'xhttp' | 'hysteria';\n/**\n * Security type for stream settings.\n */\n",
+        "after": "/**\n * Transport protocol type.\n */\nexport type TransportProtocol = 'tcp' | 'raw' | 'kcp' | 'ws' | 'grpc' | 'httpupgrade' | 'xhttp' | 'hysteria' | 'masque' | 'xdrive' | 'xera' | 'xera-http';\n/**\n * Security type for stream settings.\n */\n"
+      }
+    ]
+  },
+  {
+    "path": "node_modules/xray-typed/dist/transport/stream.d.ts",
+    "beforeSha256": "f6e71bd3ae764baf21abbc44e7ea3e4922383cd3b97b304cbd9fb936c76879da",
+    "afterSha256": "7fc92169d958f0c8d9a795c37585ca0cb00a9b9fbef504cc6e62029b1aece65b",
+    "changes": [
+      {
+        "before": "    hysteriaSettings?: HysteriaConfig;\n    /** Socket options. */\n    sockopt?: SocketConfig;\n}\n/**\n * Maps transport protocol to its corresponding settings type.\n",
+        "after": "    hysteriaSettings?: HysteriaConfig;\n    /** Socket options. */\n    sockopt?: SocketConfig;\n    masqueSettings?: { host?: string; path?: string; user?: string; pass?: string; headers?: Record<string, string> };\n    xdriveSettings?: Record<string, unknown>;\n    xeraHttpSettings?: Record<string, unknown>;\n}\n/**\n * Maps transport protocol to its corresponding settings type.\n"
+      }
+    ]
+  }
+]

@@ -246,9 +246,9 @@ for (const file of backendFiles)
 const manifest = {
     generatedAt: new Date().toISOString(),
     backendVersion: spec.info.version,
-    coreVersion: '1.1.1',
-    nodeVersion: '1.1.1',
-    upstreamPanelVersion: '3.4.4',
+    coreVersion: '1.1.2',
+    nodeVersion: '1.1.2',
+    upstreamPanelVersion: '3.4.5',
     upstreamBackendPatches: [
         {
             commit: 'dec0fcca4e47f13e835ebe7466dab68911d03273',
@@ -270,8 +270,14 @@ const manifest = {
                 zh: '用户及种子报告的精确 ID 筛选'
             }
         }
+        ,{ commit: 'ea12b0ba70d750b4e38c9be33dd55d5f155cdf95', date: '2026-10-06', description: { ru: 'Настройка SNI при подключении к ноде', en: 'SNI setting for node connections', fa: 'تنظیم SNI برای اتصال نود', zh: '节点连接 SNI 设置' } },
+        { commit: '8274de8d14ca7c8bafac5435e02dc6ca2da03095', date: '2026-10-06', description: { ru: 'Плагин postStart с уведомлением о запуске ядра', en: 'postStart plugin with core startup notification', fa: 'افزونه postStart برای اعلان شروع هسته', zh: 'postStart 内核启动通知插件' } }
     ],
-    upstreamNodeVersion: '3.4.1',
+    upstreamBackendCommit: '010b365ab1fabea01192b5e6ade4e98e66ee1dbd',
+    upstreamFrontendCommit: '36df977a8d985be2c35a586529250506c749c354',
+    upstreamNodeCommit: 'ea7a835485af81ec464ebbf7acaaa7d6dd486a05',
+    upstreamCorePatchCommit: '7da5dae6502b787fc6d903863e9a6c5043d107a2',
+    upstreamNodeVersion: '3.4.2',
     upstreamCoreVersion: '26.9.30',
     upstreamCoreCommit: 'b26a91de4f3294e26a0ad0a970b81a386a41f789',
     articles: registry.articles.length,

@@ -1,6 +1,6 @@
 {
   "name": "@remnacust/subscription-page-backend",
-  "version": "1.1.7",
+  "version": "1.1.7.1",
   "private": false,
   "description": "Remnawave Subscription Page",
   "homepage": "https://github.com/lottman/Remnacust-panel",
@@ -90,6 +90,9 @@
     "postcss-selector-parser": "7.1.6",
     "proxy-addr": "$proxy-addr",
     "fast-uri": "3.1.8",
-    "js-yaml": "5.4.2"
+    "js-yaml": "5.4.2",
+    "ts-checker-rspack-plugin": {
+      "chokidar": "4.0.3"
+    }
   }
 }

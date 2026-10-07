@@ -136,10 +136,17 @@ export default defineConfig({
                         },
                         {
                             name: 'prettier',
+                            includeDependenciesRecursively: false,
                             test: /node_modules[\\/](prettier|vscode-languageserver-types)[\\/]/
                         },
                         {
+                            name: 'editor-options',
+                            includeDependenciesRecursively: false,
+                            test: /src[\\/]shared[\\/]constants[\\/]monaco-theme[\\/]/
+                        },
+                        {
                             name: 'monaco',
+                            includeDependenciesRecursively: false,
                             test: /node_modules[\\/](monaco-editor|monaco-yaml|yaml)[\\/]/
                         },
                         {

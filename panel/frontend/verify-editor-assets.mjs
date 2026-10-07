@@ -42,7 +42,7 @@ if (!globalThis.XrayParseConfig('{invalid json')) {
     throw new Error('Xray WASM accepted invalid JSON')
 }
 
-if (globalThis.XrayGetVersion() !== '1.1.1') {
+if (globalThis.XrayGetVersion() !== '1.1.2') {
     throw new Error(`Stale editor core: ${globalThis.XrayGetVersion()}`)
 }
 const fixtures = JSON.parse(readFileSync(new URL('./tests/xray-config-fixtures.json', import.meta.url), 'utf8'))
@@ -56,5 +56,5 @@ for (const fixture of fixtures.invalid) {
     }
 }
 
-console.log(`Editor core 1.1.1 (upstream 26.9.30) and ${fixtures.valid.length + fixtures.invalid.length} configuration fixtures verified`)
+console.log(`Editor core 1.1.2 (upstream 26.9.30) and ${fixtures.valid.length + fixtures.invalid.length} configuration fixtures verified`)
 process.exit(0)

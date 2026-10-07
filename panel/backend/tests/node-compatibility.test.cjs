@@ -33,6 +33,7 @@ const { AxiosService } = load(path.join(__dirname, '../src/common/axios/axios.se
         },
     },
     '@common/raw-cache': {},
+    '@common/config/app-config': {},
     '@modules/keygen/commands/get-node-jwt': { GetNodeJwtCommand: class {} },
     './mtls-agent': {},
     '../types': result,
@@ -128,6 +129,7 @@ function client(profile, { failPath, status = 500 } = {}) {
             },
             get: async (key) => nodeCache.get(key),
         },
+        { getOrThrow: () => true },
     );
     const error = (status) =>
         new AxiosError(`HTTP ${status}`, 'ERR_BAD_RESPONSE', undefined, undefined, {

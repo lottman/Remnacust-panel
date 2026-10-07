@@ -6,6 +6,7 @@ import Editor, { EditorProps, OnMount } from '@monaco-editor/react'
 import clsx from 'clsx'
 import { parse } from 'jsonc-parser'
 import { Fragment, ReactNode, useId, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { BASE_MONACO_OPTIONS, MONACO_THEME_NAME } from '@shared/constants/monaco-theme'
 import { translateUiText as uiText } from '@shared/i18n/interface-text'
@@ -18,8 +19,6 @@ import { LoaderModalShared } from '../loader-modal/loader-model.shared'
 import styles from './CodeEditor.module.css'
 
 const REPAIR_ACTION_ID = 'remnawave.repairJson'
-
-const REPAIR_LABEL = 'Repair JSON'
 
 const RESULT_COLORS: Record<RepairResult, { color: string; message: string }> = {
     failed: {
@@ -49,6 +48,8 @@ interface Props extends Omit<EditorProps, 'wrapperProps'> {
 }
 
 export function CodeEditor(props: Props) {
+    const { t } = useTranslation()
+    const repairLabel = t('common.action.repair-json')
     const { colorScheme } = useMantineColorScheme()
     const reducedMotion = usePanelReducedMotion()
     const {
@@ -116,7 +117,7 @@ export function CodeEditor(props: Props) {
         if (isJson) {
             instance.addAction({
                 id: REPAIR_ACTION_ID,
-                label: REPAIR_LABEL,
+                label: repairLabel,
                 contextMenuGroupId: '1_modification',
                 contextMenuOrder: 1.32,
                 run: (target) => {
@@ -125,7 +126,7 @@ export function CodeEditor(props: Props) {
                     notifications.show({
                         color: RESULT_COLORS[result].color,
                         message: RESULT_COLORS[result].message,
-                        title: REPAIR_LABEL
+                        title: repairLabel
                     })
                 }
             })

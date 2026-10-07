@@ -8,7 +8,6 @@ var CipherType;
     CipherType[CipherType["AES_128_GCM"] = 5] = "AES_128_GCM";
     CipherType[CipherType["AES_256_GCM"] = 6] = "AES_256_GCM";
     CipherType[CipherType["CHACHA20_POLY1305"] = 7] = "CHACHA20_POLY1305";
-    CipherType[CipherType["NONE"] = 9] = "NONE";
     CipherType[CipherType["UNKNOWN"] = 0] = "UNKNOWN";
     CipherType[CipherType["UNRECOGNIZED"] = -1] = "UNRECOGNIZED";
     CipherType[CipherType["XCHACHA20_POLY1305"] = 8] = "XCHACHA20_POLY1305";

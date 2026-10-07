@@ -2,7 +2,6 @@ import { Box, Group, Text } from '@mantine/core'
 import { modals } from '@mantine/modals'
 import clsx from 'clsx'
 import { useMemo } from 'react'
-import semver from 'semver'
 
 import { useGetRemnawaveMetadata } from '@shared/api/hooks'
 import { useUiText } from '@shared/i18n/interface-text'
@@ -14,6 +13,7 @@ import { BaseOverlayHeader } from '../overlays/base-overlay-header'
 import { BuildInfoModal } from '../sidebar/build-info-modal'
 import { HeaderControl } from './HeaderControl'
 import { SkeletonHeaderControl } from './SkeletonHeaderControl'
+import { isPanelVersionNewer } from '@shared/utils/panel-version'
 import classes from './VersionControl.module.css'
 
 export function VersionControl() {
@@ -27,7 +27,7 @@ export function VersionControl() {
 
         const currentVersion = remnawaveMetadata.version
         const latest = remnawaveInfo.latestVersion || '0.0.0'
-        return [semver.gt(latest, currentVersion), remnawaveMetadata.git.backend.branch !== 'main']
+        return [isPanelVersionNewer(latest, currentVersion), remnawaveMetadata.git.backend.branch !== 'main']
     }, [remnawaveInfo.latestVersion, remnawaveMetadata])
 
     if (isLoading || !remnawaveMetadata) {

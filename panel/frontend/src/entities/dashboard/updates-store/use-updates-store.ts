@@ -2,6 +2,8 @@ import axios from 'axios'
 import { create } from 'zustand'
 import { createJSONStorage, devtools, persist } from 'zustand/middleware'
 
+import { isValidPanelVersion } from '@shared/utils/panel-version'
+
 import { sToMs } from '@shared/utils/time-utils'
 
 const CACHE_TIME = sToMs(24 * 60 * 60)
@@ -58,11 +60,11 @@ export const useUpdatesStore = create<IActions & IState>()(
 
                             const [repo, release] = await Promise.allSettled([
                                 axios.get<{ stargazers_count: number }>(
-                                    'https://api.github.com/repos/lottman/remnacust',
+                                    'https://api.github.com/repos/lottman/Remnacust-panel',
                                     { timeout: 8000 }
                                 ),
                                 axios.get<{ tag_name: string }>(
-                                    'https://api.github.com/repos/lottman/remnacust/releases/latest',
+                                    'https://api.github.com/repos/lottman/Remnacust-panel/releases/latest',
                                     { timeout: 8000 }
                                 )
                             ])
@@ -76,7 +78,7 @@ export const useUpdatesStore = create<IActions & IState>()(
                                     : undefined
                             set({
                                 remnawaveInfo: {
-                                    latestVersion: /^\d+\.\d+\.\d+(?:-[\w.-]+)?$/.test(tag)
+                                    latestVersion: isValidPanelVersion(tag)
                                         ? tag
                                         : remnawaveInfo.latestVersion,
                                     starsCount:

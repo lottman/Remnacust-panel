@@ -204,7 +204,8 @@
             "select-all": "انتخاب همه",
             "try-again": "تلاش دوباره",
             "update": "به‌روزرسانی",
-            "view": "مشاهده"
+            "view": "مشاهده",
+            "repair-json": "اصلاح JSON"
         },
         "field": {
             "active-sessions": "نشست‌های فعال",

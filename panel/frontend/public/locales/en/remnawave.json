@@ -204,7 +204,8 @@
             "select-all": "Select all",
             "try-again": "Try again",
             "update": "Update",
-            "view": "View"
+            "view": "View",
+            "repair-json": "Repair JSON"
         },
         "field": {
             "active-sessions": "Active sessions",

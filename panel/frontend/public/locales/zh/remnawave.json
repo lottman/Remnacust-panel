@@ -204,7 +204,8 @@
             "select-all": "全选",
             "try-again": "重试",
             "update": "更新",
-            "view": "查看"
+            "view": "查看",
+            "repair-json": "修复 JSON"
         },
         "field": {
             "active-sessions": "活跃会话",

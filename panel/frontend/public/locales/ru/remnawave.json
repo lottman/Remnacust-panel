@@ -204,7 +204,8 @@
             "select-all": "Выбрать все",
             "try-again": "Повторить",
             "update": "Обновить",
-            "view": "Просмотр"
+            "view": "Просмотр",
+            "repair-json": "Исправить JSON"
         },
         "field": {
             "active-sessions": "Активные сессии",

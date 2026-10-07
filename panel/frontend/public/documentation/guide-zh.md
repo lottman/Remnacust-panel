@@ -280,6 +280,10 @@ none、safe、balanced、performance 通过 SSH 终端运行内置脚本，修�
 
 共享列表可由多个配置引用。编辑后同步并检查已分配节点。删除或重命名被引用的列表可能影响多个插件。
 
+### 内核启动后
+
+插件 JSON 的 postStart 在 Xray 启动或重启后执行已启用操作。要发送通知，启用 postStart.enabled 和 postStart.webhook.enabled，并填写 webhook.url。节点发送包含 service.core_started、时间和节点元数据的 POST。请求在后台执行，超时为 5 秒；发送失败只记录日志，不停止 Xray。启用前核对接收地址。
+
 ## 节点统计与指标
 
 ### 用量历史
@@ -334,15 +338,52 @@ none、safe、balanced、performance 通过 SSH 终端运行内置脚本，修�
 
 ### 应用前检查
 
-验证可发现格式和参数错误。还应检查所选节点的地址、端口、密钥和证书路径。已安装核心与用户客户端必须支持配置中的功能。
+“保存”首先验证 JSON。缺少 protocol、字段拼写错误或结构错误时会显示原因，配置与历史保持不变。内置 Xray 验证器发现其他错误时，面板会显示错误并要求确认保存。确认不会跳过服务器的结构检查。已保存的无效配置可以重新打开并修正。
 
 ### 保存后
 
-修改影响使用此配置的节点。检查状态和日志，再刷新测试用户订阅并验证连接。准备独立配置方案时，先克隆配置文件。
+数据库保存与节点应用是两个步骤。进入队列的提示只表示任务已提交，请在节点状态和日志中检查结果。入队失败时配置仍已保存，面板会显示警告。保存期间的新修改保留在编辑器中。制作独立版本前先克隆配置。
 
 ### X25519 密钥
 
 工具中的 X25519 标签页分别显示 password、publicKey 和 privateKey，并提供复制按钮。password 与 publicKey 是同一个公钥，名称因版本和客户端而异。私钥用于 REALITY 服务端，公钥填入客户端支持的字段。“所有值”复制这三个字段。生成新密钥会同时更新它们，不会修改已保存的配置文件。
+
+## Xera HTTP 传输
+
+### 兼容性
+
+Xera HTTP 是我们 Xray 内核中的自定义 HTTP 传输。节点内核和客户端内核都必须支持它。普通 Xray 支持 XHTTP 不代表支持 Xera。确认两端构建都接受 network: "xera-http"。先克隆可用配置并测试独立主机，再为所有用户切换。
+
+### 配置设置
+
+在[配置](/dashboard/management/config-profiles)中打开 JSON，将对应入站的 streamSettings.network 设为 "xera-http"。传输参数放在 xeraHttpSettings 中。下面只是 streamSettings 片段，并非完整入站，请保留自己的 tlsSettings、用户、端口和其他设置。TLS 需要有效证书及匹配域名。使用 REALITY 时设置 security: "reality" 并保留自己的 realitySettings。
+
+```json
+{
+  "network": "xera-http",
+  "security": "tls",
+  "xeraHttpSettings": {
+    "path": "/connect",
+    "mode": "auto"
+  }
+}
+```
+
+### 节点、主机与订阅
+
+在兼容节点启用入站，在内部群组中授权，并关联一个[主机](/dashboard/management/hosts)。填写公网地址、端口和 SNI。主机的 Path 与 Host 可覆盖配置中发送给客户端的值，必须与服务器或代理接受的值一致。更新测试用户的订阅。Xray JSON 保留 xeraHttpSettings；分享链接包含 type=xera-http 和 xeraSettings，客户端必须识别此格式。Sing-box、Clash 和 Mihomo 生成器会跳过这些主机，因为它们不支持此传输。
+
+### 模式与 HTTP 代理
+
+先使用 mode: "auto"。还支持 stream-auto、packet-up、stream-up 和 stream-one。通过请求头或 cookie 上传数据，以及使用 GET 方法，都要求 packet-up。两端的 path、host 和自定义请求头参数必须一致。节点前有 HTTP 代理时，检查路径和请求头转发、长连接请求及流式响应是否禁用缓冲。HTTP 404 应检查路径与虚拟主机；TLS 错误应检查 SNI 和证书。
+
+### 额外流量填充
+
+customDownlinkPadding 在传输块中添加随机字节，会增加流量消耗。先不启用它。启用时两端设置相同的 header 和 token：header 必须以 X- 开头，长度 3–64 字符；token 为 16–128 个 base64url 字符。不要使用代理保留请求头。bytes 范围为 0–1024，blockBytes 为 1024–16384；budgetPercent 限制额外开销，最大 100%；burstBytes 为初始额度，最大 1 MiB；uplink 启用上传填充。这些参数不能代替 TLS/REALITY，也不保证绕过封锁。
+
+### 验证结果
+
+在编辑器验证 JSON 并保存配置。数据库保存与节点应用是不同阶段，请检查队列、节点状态和日志。重新下载订阅，比较客户端配置中的 network、path、mode 和 SNI。“未知传输”表示所选内核不支持 Xera。主机缺失时检查群组、访问权限、筛选条件和订阅格式。连接不稳定时回到 auto，关闭额外填充，每次只调整一个参数。
 
 ## 配置可视化画布
 

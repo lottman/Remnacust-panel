@@ -121,7 +121,7 @@ export function DisclaimerOverlay() {
                                 anchor: (
                                     <Anchor
                                         fw={600}
-                                        href="https://github.com/lottman/remnacust/blob/main/LICENSE"
+                                        href="https://github.com/lottman/Remnacust-panel/blob/main/LICENSE"
                                         rel="noopener noreferrer"
                                         size="xs"
                                         target="_blank"

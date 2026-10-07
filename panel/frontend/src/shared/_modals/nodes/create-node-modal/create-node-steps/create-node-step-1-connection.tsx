@@ -93,7 +93,7 @@ export const CreateNodeStep1Connection = ({ form, onNext, secretKey, port }: IPr
                     {t('create-node-step-1-connection.content-for-the-remnawave-node-below')}{' '}
                     <Anchor
                         fw="700"
-                        href="https://github.com/lottman/remnacust/blob/main/node/README.md"
+                        href="https://github.com/lottman/Remnacust-node/blob/main/node/README.md"
                         inherit
                         rel="noopener noreferrer"
                         target="_blank"

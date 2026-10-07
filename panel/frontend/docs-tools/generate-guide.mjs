@@ -9,12 +9,14 @@ import { articles as sourceArticles, categories } from './guide-source.mjs'
 import zh from './guide-zh.mjs'
 import { explainOperatorWorkflows, supportGuide } from './operator-guide.mjs'
 import { productionArticles } from './production-guide.mjs'
+import { xeraGuide } from './xera-guide.mjs'
+import { explainRelease1171 } from './release-1171-guide.mjs'
 
-const articles = productionArticles([...sourceArticles, supportGuide])
+const articles = productionArticles([...sourceArticles, xeraGuide, supportGuide])
 const translations = { fa, zh }
 for (const language of ['fa', 'zh']) {
     for (const article of articles) {
-        if (article.id === 'support') continue
+        if (article[language]) continue
         const translation = translations[language][article.id]
         if (!translation || translation[1].length !== article.sections.length)
             throw new Error(`Incomplete ${language} guide: ${article.id}`)
@@ -28,6 +30,7 @@ for (const language of ['fa', 'zh']) {
 
 explainOperatorWorkflows(articles)
 explainListInteractions(articles)
+explainRelease1171(articles)
 
 const target = path.resolve(import.meta.dirname, '../public/documentation')
 fs.mkdirSync(target, { recursive: true })

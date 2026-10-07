@@ -1,5 +1,6 @@
 import { ActionIcon, Box, CopyButton, Input, InputWrapperProps, MantineColor } from '@mantine/core'
 import clsx from 'clsx'
+import { useTranslation } from 'react-i18next'
 import { PiCheck, PiCopy } from 'react-icons/pi'
 
 import styles from './copyable-code-block.module.css'
@@ -12,6 +13,7 @@ interface IProps {
 }
 
 export function CopyableCodeBlock({ color, value, size = 'normal', inputWrapperProps }: IProps) {
+    const { t } = useTranslation()
     const isSmall = size === 'small'
     const iconSize = isSmall ? 14 : 18
 
@@ -31,6 +33,7 @@ export function CopyableCodeBlock({ color, value, size = 'normal', inputWrapperP
                             </Box>
                         </Box>
                         <ActionIcon
+                            aria-label={t(copied ? 'common.message.copied' : 'common.action.copy')}
                             className={styles.copyButton}
                             data-copied={copied}
                             size={isSmall ? 'xs' : 'sm'}

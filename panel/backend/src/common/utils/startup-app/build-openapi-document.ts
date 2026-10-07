@@ -67,7 +67,7 @@ export async function createOpenApiDocumentFactory(
         .setVersion(pkg.version!)
         .setLicense(
             'AGPL-3.0',
-            'https://github.com/lottman/remnacust/blob/main/panel/backend/LICENCE',
+            'https://github.com/lottman/Remnacust-panel/blob/main/LICENSE',
         )
         .addGlobalResponse({
             status: 404,

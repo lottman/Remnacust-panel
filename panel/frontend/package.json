@@ -1,6 +1,6 @@
 {
   "name": "@remnacust/frontend",
-  "version": "1.1.7",
+  "version": "1.1.7.1",
   "private": false,
   "homepage": "https://github.com/lottman/Remnacust-panel",
   "bugs": {
@@ -70,7 +70,7 @@
     "@noble/post-quantum": "^0.7.1",
     "@paralleldrive/cuid2": "3.3.0",
     "@remnawave/backend-contract": "file:vendor/backend-contract",
-    "@remnawave/node-plugins": "0.8.2",
+    "@remnawave/node-plugins": "0.8.3",
     "@remnawave/subscription-page-types": "0.6.2",
     "@scure/bip39": "^2.3.0",
     "@simplewebauthn/browser": "^13.3.0",

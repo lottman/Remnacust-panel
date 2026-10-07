@@ -23,6 +23,7 @@ export const panelArticleIds = [
     'billing',
     'profiles',
     'xray-editor',
+    'xera-transport',
     'canvases',
     'snippets',
     'keygen',

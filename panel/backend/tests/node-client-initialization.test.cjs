@@ -25,8 +25,9 @@ new Function('require', 'module', 'exports', output)((id) => {
 const { AxiosService } = ref.exports;
 const jwt = { isOk: true, response: { jwtToken: 'test-token', caCert: '', clientCert: '', clientKey: '', jwtPublicKey: '' } };
 const opts = { address: 'audit.invalid', port: 2222, proxyUrl: null };
+const config = { getOrThrow: () => true };
 test('node requests support raw and bracketed IPv6 addresses', async () => {
-    const service = new AxiosService({ execute: async () => jwt }, {});
+    const service = new AxiosService({ execute: async () => jwt }, {}, config);
     const urls = [];
     service.axiosInstance.get = async (url) => {
         urls.push(new URL(url).href);
@@ -39,7 +40,7 @@ test('node requests support raw and bracketed IPv6 addresses', async () => {
 });
 test('concurrent API node requests initialize mTLS and JWT exactly once', async () => {
     let initializations = 0;
-    const service = new AxiosService({ execute: async () => { initializations++; await new Promise(r => setTimeout(r, 10)); return jwt; } }, {});
+    const service = new AxiosService({ execute: async () => { initializations++; await new Promise(r => setTimeout(r, 10)); return jwt; } }, {}, config);
     service.axiosInstance.post = async (_url, _data, config) => {
         assert.equal(service.axiosInstance.defaults.headers.common.Authorization, 'Bearer test-token');
         assert.ok(config.httpsAgent);
@@ -51,7 +52,7 @@ test('concurrent API node requests initialize mTLS and JWT exactly once', async 
 });
 test('failed credential initialization fails closed and can retry', async () => {
     let attempts = 0;
-    const service = new AxiosService({ execute: async () => ++attempts === 1 ? { isOk: false } : jwt }, {});
+    const service = new AxiosService({ execute: async () => ++attempts === 1 ? { isOk: false } : jwt }, {}, config);
     service.axiosInstance.post = async () => ({ data: { response: { success: true } } });
     assert.equal((await service.deleteUser({}, opts)).isOk, false);
     assert.equal((await service.deleteUser({}, opts)).isOk, true);
@@ -59,7 +60,7 @@ test('failed credential initialization fails closed and can retry', async () => 
 });
 
 test('core status and actions use the node API prefix with initialized mTLS', async () => {
-    const service = new AxiosService({ execute: async () => jwt }, {});
+    const service = new AxiosService({ execute: async () => jwt }, {}, config);
     const requests = [];
     service.axiosInstance.get = async (url, config) => {
         requests.push(url);
@@ -80,4 +81,21 @@ test('core status and actions use the node API prefix with initialized mTLS', as
         'https://audit.invalid:2222/node/xray/managed-core',
         'https://audit.invalid:2222/node/xray/managed-core/actions',
     ]);
+});
+
+test('SNI compatibility switch preserves certificate and client authentication', async () => {
+    for (const enabled of [true, false]) {
+        const service = new AxiosService({ execute: async () => jwt }, {}, { getOrThrow: key => {
+            assert.equal(key, 'SERVICE_SNI_VERIFICATION');
+            return enabled;
+        } });
+        await service.setJwt();
+        const options = service.axiosInstance.defaults.httpsAgent.options;
+        assert.equal(options.servername, enabled ? 'audit.invalid' : undefined);
+        assert.equal(options.rejectUnauthorized, true);
+        assert.equal(options.minVersion, 'TLSv1.3');
+        assert.equal(options.cert, jwt.response.clientCert);
+        assert.equal(options.key, jwt.response.clientKey);
+        assert.equal(options.ca, jwt.response.caCert);
+    }
 });

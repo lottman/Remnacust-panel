@@ -1,6 +1,8 @@
 .container {
     position: relative;
     display: flex;
+    min-width: 0;
+    max-width: 100%;
     align-items: center;
     gap: 12px;
     padding: 12px 16px;
@@ -29,20 +31,16 @@
     position: relative;
     flex: 1;
     min-width: 0;
-    mask-image: linear-gradient(to right, black 85%, transparent 100%);
-    -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);
-}
-
-.container.small .codeWrapper {
-    mask-image: linear-gradient(to right, black 80%, transparent 100%);
-    -webkit-mask-image: linear-gradient(to right, black 80%, transparent 100%);
+    overflow: hidden;
 }
 
 .code {
-    overflow-x: auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
+    direction: ltr;
+    text-align: start;
     user-select: none;
-
 }
 
 

@@ -280,6 +280,10 @@ The beta section stores plugin configurations, tags and node assignments. Create
 
 Shared lists let multiple configurations reference the same list. Synchronize after editing and check assigned nodes. Deleting or renaming a referenced list can affect several plugins.
 
+### After core startup
+
+The postStart section in plugin JSON runs enabled actions after Xray starts or restarts. To send a notification, enable postStart.enabled and postStart.webhook.enabled and set webhook.url. The node sends a POST containing service.core_started, a timestamp and its metadata. Delivery runs in the background with a five-second timeout; failures are logged without stopping Xray. Verify the destination before enabling it.
+
 ## Node statistics and metrics
 
 ### Usage history
@@ -334,15 +338,52 @@ The Short ID tab in Tools generates 16 hex characters from 8 secure random bytes
 
 ### Checks before applying
 
-Configuration validation helps identify format and parameter errors. Also check addresses, ports, keys and certificate paths on the selected nodes. The installed core and the user’s client must support the profile’s features.
+Save validates JSON first. A missing protocol, a typo in it or a structural error produces an explanation without changing the profile or its history. If the built-in Xray validator reports another error, the panel displays it and asks you to confirm saving. Confirmation does not bypass server-side structural checks. A saved invalid profile can be reopened and corrected.
 
 ### After saving
 
-Profile changes affect nodes using that profile. Check their status and logs, then refresh a test user’s subscription and verify connectivity. Clone the profile first when preparing a separate configuration variant.
+Database persistence and node application are separate steps. A queued message means a job was submitted; check node status and logs for its outcome. If queuing fails, the profile has still been saved and the panel shows a warning. Edits made while saving remain in the editor. Clone a profile first when preparing a separate variant.
 
 ### X25519 keys
 
 The X25519 tab in Tools shows password, publicKey and privateKey with separate copy buttons. password and publicKey contain the same public key; the names are used by different versions and clients. Set the private key on the REALITY server and the public key in the field supported by the client. All values copies the three fields. Generating updates them together without changing the saved profile.
+
+## Xera HTTP transport
+
+### Compatibility
+
+Xera HTTP is a custom HTTP transport in our Xray core. Both the node core and the client application core must support it. XHTTP support in a regular Xray build does not imply Xera support. Check that both builds accept network: "xera-http". Clone a working profile and test a separate host before changing it for all users.
+
+### Profile configuration
+
+Open JSON in a [profile](/dashboard/management/config-profiles) and set network: "xera-http" in the inbound streamSettings. Transport options belong in xeraHttpSettings. The example below is a streamSettings fragment, not a complete inbound: retain your tlsSettings, clients, port and other settings. TLS requires a valid certificate and a matching domain. For REALITY, use security: "reality" and your realitySettings.
+
+```json
+{
+  "network": "xera-http",
+  "security": "tls",
+  "xeraHttpSettings": {
+    "path": "/connect",
+    "mode": "auto"
+  }
+}
+```
+
+### Node, host and subscription
+
+Activate the inbound on a compatible node, permit it in an internal squad and link a [host](/dashboard/management/hosts). Set the public address, port and SNI on the host. Path and Host fields can override profile values for the client; they must match what the server or proxy accepts. Refresh a test user subscription. Xray JSON retains xeraHttpSettings; share links carry type=xera-http and xeraSettings. The client must understand this format. Sing-box, Clash and Mihomo generators skip these hosts because they do not support this transport.
+
+### Modes and HTTP proxies
+
+Start with mode: "auto". Other modes are stream-auto, packet-up, stream-up and stream-one. Upload data in headers or cookies and the GET method require packet-up. Match path, host and any customized header options on both sides. With an HTTP proxy in front of the node, check forwarding of the chosen path and headers, long-running requests and unbuffered streaming responses. For HTTP 404, check the path and virtual host. For TLS errors, check SNI and the certificate.
+
+### Additional traffic padding
+
+customDownlinkPadding adds random bytes to transmitted blocks and increases traffic usage. Start without it. When enabled, set matching header and token values on both sides: header must start with X- and contain 3–64 characters; token must contain 16–128 base64url characters. Avoid reserved proxy headers. bytes accepts 0–1024 and blockBytes 1024–16384; budgetPercent caps overhead (up to 100%), burstBytes is the initial allowance (up to 1 MiB), and uplink enables upload padding. These settings do not replace TLS/REALITY or guarantee that a connection bypasses blocking.
+
+### Verify the result
+
+Validate JSON in the editor and save the profile. Database persistence and application on a node are separate stages: check the queue, node status and logs. Download the subscription again and compare network, path, mode and SNI in the client configuration. “Unknown transport” means the selected core does not support Xera. If the host is missing, check squads, access, filters and subscription format. For unstable connections, return to auto without additional padding and change one option at a time.
 
 ## Visual profile canvas
 

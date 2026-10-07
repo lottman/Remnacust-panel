@@ -8936,6 +8936,12 @@
         "name": {
           "type": "string"
         },
+        "names": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
         "types": {
           "items": {
             "type": "integer"
@@ -8948,7 +8954,21 @@
     "RemnacustCoreXDNSResolver": {
       "additionalProperties": true,
       "properties": {
-        "settings": {},
+        "addrs": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "settings": {
+          "additionalProperties": true,
+          "properties": {
+            "addr": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
         "type": {
           "type": "string"
         }
@@ -9331,6 +9351,8 @@
   },
   "x-remnacust-upstream": {
     "version": "v26.9.30",
-    "commit": "b26a91de4f3294e26a0ad0a970b81a386a41f789"
+    "commit": "b26a91de4f3294e26a0ad0a970b81a386a41f789",
+    "patchCommit": "7da5dae6502b787fc6d903863e9a6c5043d107a2",
+    "coreVersion": "1.1.2"
   }
 }

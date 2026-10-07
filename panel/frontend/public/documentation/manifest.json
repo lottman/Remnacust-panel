@@ -1,0 +1,38 @@
+{
+  "generatedAt": "2026-10-07T05:25:29.676Z",
+  "backendVersion": "1.1.1",
+  "coreVersion": "1.1.1",
+  "nodeVersion": "1.1.1",
+  "upstreamPanelVersion": "3.4.4",
+  "upstreamBackendPatches": [
+    {
+      "commit": "dec0fcca4e47f13e835ebe7466dab68911d03273",
+      "date": "2026-09-27",
+      "description": {
+        "ru": "Параметр multiMode для gRPC в подписке Xray JSON",
+        "en": "gRPC multiMode in Xray JSON subscriptions",
+        "fa": "پارامتر multiMode برای gRPC در اشتراک Xray JSON",
+        "zh": "Xray JSON 订阅中的 gRPC multiMode 参数"
+      }
+    },
+    {
+      "commit": "814fb05460b0205a781635872e8934356e15185b",
+      "date": "2026-09-27",
+      "description": {
+        "ru": "Точные фильтры ID пользователей и торрент-отчётов",
+        "en": "Exact ID filters for users and torrent reports",
+        "fa": "فیلتر دقیق شناسه کاربران و گزارش‌های تورنت",
+        "zh": "用户及种子报告的精确 ID 筛选"
+      }
+    }
+  ],
+  "upstreamNodeVersion": "3.4.1",
+  "upstreamCoreVersion": "26.9.30",
+  "upstreamCoreCommit": "b26a91de4f3294e26a0ad0a970b81a386a41f789",
+  "articles": 55,
+  "endpoints": 231,
+  "apiTokenEndpoints": 210,
+  "controls": 214,
+  "sourceFiles": 3621,
+  "specSha256": "627b1f139c3459080543784b6d22494adaeb1b13e16110c2c15210b697d51202"
+}

@@ -1,0 +1,25 @@
+.footer {
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+    width: calc(100% + 2 * var(--panel-overlay-padding, var(--mantine-spacing-lg)));
+    margin-top: var(--mantine-spacing-md);
+    margin-bottom: calc(-1 * var(--panel-overlay-padding, var(--mantine-spacing-lg)));
+    margin-inline-start: calc(-1 * var(--panel-overlay-padding, var(--mantine-spacing-lg)));
+
+    padding: var(--mantine-spacing-sm) var(--panel-overlay-padding, var(--mantine-spacing-lg));
+    border-top: 1px solid var(--panel-border, var(--mantine-color-default-border));
+    background-color: var(--panel-surface, var(--mantine-color-body));
+}
+
+@media (max-width: 48em) {
+    .footer {
+        margin-bottom: calc(-1 * var(--panel-overlay-padding, var(--mantine-spacing-lg)));
+    }
+}
+
+@supports (padding: env(safe-area-inset-bottom)) {
+    .footer {
+        padding-bottom: max(var(--mantine-spacing-sm), env(safe-area-inset-bottom, 0px));
+    }
+}

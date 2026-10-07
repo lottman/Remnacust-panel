@@ -1,0 +1,117 @@
+import { HostAccessService } from '@common/host-policy/host-access.service';
+import { Logger } from '@nestjs/common';
+import { IQueryHandler, QueryBus, QueryHandler } from '@nestjs/cqrs';
+
+import { HashedSet } from '@remnawave/hashed-set';
+
+import { XRayConfig } from '@common/helpers/xray-config/xray-config.validator';
+import { fail, ok, TResult } from '@common/types';
+import { ERRORS } from '@libs/contracts/constants';
+
+import { GetConfigProfileByUuidQuery } from '@modules/config-profiles/queries/get-config-profile-by-uuid';
+import { GetSnippetsQuery } from '@modules/config-profiles/queries/get-snippets';
+import { DeviceAccessService } from '@modules/hwid-user-devices/device-access.service';
+import { UsersRepository } from '@modules/users/repositories/users.repository';
+
+import { expandDeviceUsers } from './expand-device-users';
+
+import {
+    GetPreparedConfigWithUsersQuery,
+    IGetPreparedConfigWithUsersResponse,
+} from './get-prepared-config-with-users.query';
+
+@QueryHandler(GetPreparedConfigWithUsersQuery)
+export class GetPreparedConfigWithUsersHandler implements IQueryHandler<
+    GetPreparedConfigWithUsersQuery,
+    TResult<IGetPreparedConfigWithUsersResponse>
+> {
+    private readonly logger = new Logger(GetPreparedConfigWithUsersHandler.name);
+    constructor(
+        private readonly usersRepository: UsersRepository,
+        private readonly queryBus: QueryBus,
+        private readonly hostAccess:HostAccessService,
+        private readonly deviceAccess: DeviceAccessService,
+    ) {}
+
+    async execute(
+        query: GetPreparedConfigWithUsersQuery,
+    ): Promise<TResult<IGetPreparedConfigWithUsersResponse>> {
+        let config: XRayConfig | null = null;
+        const inboundsUserSets: Map<string, HashedSet> = new Map();
+        const snippetsMap: Map<string, unknown> = new Map();
+        try {
+            const { configProfileUuid, activeInbounds } = query;
+
+            const configProfile = await this.queryBus.execute(
+                new GetConfigProfileByUuidQuery(configProfileUuid),
+            );
+
+            const snippetsResponse = await this.queryBus.execute(new GetSnippetsQuery());
+
+            if (!configProfile.isOk || !snippetsResponse.isOk) {
+                return fail(ERRORS.INTERNAL_SERVER_ERROR);
+            }
+
+            for (const snippet of snippetsResponse.response) {
+                snippetsMap.set(snippet.name, snippet.snippet);
+            }
+
+            const activeInboundsTags = new Set(activeInbounds.map((inbound) => inbound.tag));
+
+            config = new XRayConfig(configProfile.response.config as object);
+
+            config.cleanInboundClients(true);
+
+            config.processCertificates();
+
+            config.replaceSnippets(snippetsMap);
+
+            const configHash = config.getConfigHash();
+
+            config.leaveInbounds(activeInboundsTags);
+
+            const usersStream = this.usersRepository.getUsersForConfigStream(activeInbounds);
+
+            for await (const userBatch of usersStream) {
+                if (!this.deviceAccess.enabled) {
+                    config.includeUserBatch(userBatch, inboundsUserSets);
+                    continue;
+                }
+
+                const records = await this.deviceAccess.devicesForConfig(userBatch.map((user) => BigInt(user.id)));
+                const identities = expandDeviceUsers(
+                    userBatch,
+                    records,
+                    (userId, hwid, parentKey) => this.deviceAccess.credentials(userId, hwid, parentKey),
+                );
+                config.includeUserBatch(identities, inboundsUserSets);
+            }
+
+            config.includeUserBatch(await this.hostAccess.configIdentities(configProfileUuid),inboundsUserSets);
+            for (const [tag, set] of inboundsUserSets) {
+                this.logger.debug(`Inbound ${tag}: hash ${set.hash64String} and ${set.size} users`);
+            }
+
+            return ok({
+                config: config.getConfig(),
+                hashesPayload: {
+                    emptyConfig: configHash,
+                    inbounds: Array.from(inboundsUserSets.entries()).map(([tag, set]) => ({
+                        usersCount: set.size,
+                        hash: set.hash64String,
+                        tag,
+                    })),
+                },
+            });
+        } catch (error) {
+            this.logger.error(error);
+            return fail(ERRORS.INTERNAL_SERVER_ERROR);
+        } finally {
+            config = null;
+            for (const [, set] of inboundsUserSets) {
+                set.clear();
+            }
+            inboundsUserSets.clear();
+        }
+    }
+}

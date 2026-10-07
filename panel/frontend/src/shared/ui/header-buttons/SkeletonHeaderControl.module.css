@@ -1,0 +1,12 @@
+.skeleton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    border: 1px solid var(--panel-border);
+    border-radius: var(--mantine-radius-lg);
+    background: var(--panel-subtle);
+    color: var(--panel-muted);
+    font-size: 20px;
+    line-height: 1;
+}

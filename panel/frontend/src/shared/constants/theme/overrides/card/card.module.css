@@ -1,0 +1,16 @@
+.root {
+    background: var(--panel-surface);
+}
+
+.root[data-with-border='true'] {
+    border: 1px solid var(--panel-border);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}

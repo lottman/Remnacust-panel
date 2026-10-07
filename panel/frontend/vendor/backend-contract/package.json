@@ -1,0 +1,27 @@
+{
+  "name": "@remnawave/backend-contract",
+  "version": "3.4.16-remnacust.26.9.30",
+  "private": true,
+  "description": "A contract library for Remnawave Backend. It can be used in backend and frontend.",
+  "keywords": [],
+  "homepage": "https://github.com/remnawave",
+  "bugs": {
+    "url": "https://github.com/remnawave/backend/issues"
+  },
+  "license": "AGPL-3.0-only",
+  "author": "REMNAWAVE <github.com/remnawave>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/remnawave/backend.git"
+  },
+  "files": [
+    "build/**/*"
+  ],
+  "main": "build/backend/index.js",
+  "browser": "build/frontend/index.js",
+  "types": "build/backend/index.d.ts",
+  "dependencies": {
+    "zod": "4.5.4"
+  },
+  "public": false
+}

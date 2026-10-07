@@ -1,0 +1,35 @@
+.root {
+    position: relative;
+    background: var(--panel-subtle);
+    border-color: var(--panel-border);
+    padding: var(--mantine-spacing-md);
+    transition: border-color 150ms ease;
+
+    &[data-checked] {
+        border-color: var(--panel-accent);
+        background: color-mix(in srgb, var(--panel-accent) 10%, var(--panel-surface));
+    }
+
+    @mixin hover {
+        @mixin light {
+            background-color: var(--panel-elevated);
+        }
+
+        @mixin dark {
+            background-color: var(--panel-elevated);
+        }
+    }
+}
+
+.label {
+    font-weight: bold;
+    font-size: var(--mantine-font-size-md);
+    line-height: 1.2;
+    color: var(--panel-text);
+}
+
+.description {
+    margin-top: 8px;
+    color: var(--mantine-color-dimmed);
+    font-size: var(--mantine-font-size-xs);
+}

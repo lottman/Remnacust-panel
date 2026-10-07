@@ -1,0 +1,67 @@
+.dragHandle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    z-index: 1;
+    position: absolute;
+    border-radius: 8px;
+    transition: color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
+}
+
+.dragHandle:hover {
+    color: var(--mantine-color-bright);
+    background: var(--mantine-color-default-hover);
+    box-shadow: 0 0 0 1px var(--panel-border);
+}
+
+.dragHandle:active {
+    cursor: grabbing;
+    transform: scale(0.95);
+}
+
+.dragHandleTopLeft {
+    top: 8px;
+    left: 8px;
+}
+
+.dragHandleTopRight {
+    top: 8px;
+    right: 8px;
+}
+
+.dragHandleBottomLeft {
+    bottom: 8px;
+    left: 8px;
+}
+
+.dragHandleBottomRight {
+    bottom: 8px;
+    right: 8px;
+}
+
+.inlineRoot {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.inlineRoot > *:last-child {
+    flex: 1;
+    min-width: 0;
+}
+
+.dragHandleInline {
+    position: static;
+    flex: none;
+}
+
+.dragHandleInlineEnd {
+    top: 50%;
+    right: 8px;
+    transform: translateY(-50%);
+}
+
+.dragHandleInlineEnd:active {
+    transform: translateY(-50%) scale(0.95);
+}

@@ -1,0 +1,19 @@
+.screen {
+    width: 100%;
+    min-width: 0;
+    min-height: clamp(
+        160px,
+        calc(var(--loading-height) - var(--app-shell-header-height, 0px) - 140px),
+        640px
+    );
+    padding: 24px 16px;
+}
+.content {
+    width: min(100%, 320px);
+    min-width: 0;
+}
+.label {
+    text-align: center;
+    overflow-wrap: anywhere;
+    color: var(--panel-muted);
+}

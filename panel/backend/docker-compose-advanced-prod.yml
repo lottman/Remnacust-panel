@@ -1,0 +1,126 @@
+x-base: &base
+  image: remnacust-panel:1.1.1
+  build:
+    context: ../..
+    dockerfile: panel/Dockerfile
+
+x-common: &common
+  ulimits:
+    nofile:
+      soft: 1048576
+      hard: 1048576
+  restart: always
+  networks:
+    - remnawave-network
+
+x-logging: &logging
+  logging:
+    driver: json-file
+    options:
+      max-size: 100m
+      max-file: 5
+
+x-env: &env
+  env_file: .env
+
+services:
+  remnawave-rest-api: # Scaling is OK
+    <<: [*base, *common, *logging, *env]
+    container_name: 'remnawave-rest-api'
+    hostname: remnawave-rest-api
+    entrypoint: []
+    command: 'pm2-runtime start ecosystem.config.js --env production --only remnawave-api' # Overrides CMD from Dockerfile
+    depends_on:
+      remnawave-db:
+        condition: service_healthy
+      remnawave-redis:
+        condition: service_healthy
+      remnawave-scheduler:
+        condition: service_healthy
+    ports:
+      - '127.0.0.1:3000:3000' # Expose Rest API port
+
+  remnawave-scheduler: # Do not scale this service!
+    <<: [*base, *common, *logging, *env]
+    container_name: 'remnawave-scheduler'
+    hostname: remnawave-scheduler
+    entrypoint: ['/bin/sh', 'docker-entrypoint.sh'] # Migrations, seeding, etc. IMPORTANT: Entrypoint needs to be in one of services. Its applies migrations and seeding database!
+    command: 'pm2-runtime start ecosystem.config.js --env production --only remnawave-scheduler' # Overrides CMD from Dockerfile
+    depends_on:
+      remnawave-db:
+        condition: service_healthy
+      remnawave-redis:
+        condition: service_healthy
+    ports:
+      - '127.0.0.1:3001:3001' # Expose metrics port
+    healthcheck: # Only scheduler service has metrics port
+      test: ['CMD-SHELL', 'curl -f http://localhost:${METRICS_PORT:-3001}/health']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  remnawave-processor: # Scaling is OK
+    <<: [*base, *common, *logging, *env]
+    container_name: 'remnawave-processor'
+    hostname: remnawave-processor
+    entrypoint: []
+    command: 'pm2-runtime start ecosystem.config.js --env production --only remnawave-jobs' # Overrides CMD from Dockerfile
+    depends_on:
+      remnawave-db:
+        condition: service_healthy
+      remnawave-redis:
+        condition: service_healthy
+      remnawave-scheduler:
+        condition: service_healthy
+
+  remnawave-db:
+    image: postgres:18.4
+    container_name: 'remnawave-db'
+    hostname: remnawave-db
+    shm_size: 512mb
+    <<: [*common, *logging, *env]
+
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - TZ=UTC
+    ports:
+      - '127.0.0.1:6767:5432'
+    volumes:
+      - remnawave-db-data:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}']
+      interval: 3s
+      timeout: 10s
+      retries: 3
+
+  remnawave-redis:
+    image: valkey/valkey:9-alpine
+    container_name: remnawave-redis
+    hostname: remnawave-redis
+    <<: [*common, *logging]
+    command: >
+      valkey-server
+      --save ""
+      --appendonly no
+      --maxmemory-policy noeviction
+      --loglevel warning
+    healthcheck:
+      test: ['CMD', 'valkey-cli', 'ping']
+      interval: 3s
+      timeout: 10s
+      retries: 3
+
+networks:
+  remnawave-network:
+    name: remnawave-network
+    driver: bridge
+    external: false
+
+volumes:
+  remnawave-db-data:
+    name: remnawave-db-data
+    driver: local
+    external: false

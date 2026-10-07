@@ -1,0 +1,32 @@
+import { Logger } from '@nestjs/common';
+import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+
+import { fail, ok, TResult } from '@common/types';
+import { ERRORS } from '@libs/contracts/constants';
+
+import { PasskeyEntity } from '@modules/admin/entities/passkey.entity';
+import { PasskeyRepository } from '@modules/admin/repositories/passkey.repository';
+
+import { GetPasskeysByAdminUuidQuery } from './get-passkeys-by-admin-uuid.query';
+
+@QueryHandler(GetPasskeysByAdminUuidQuery)
+export class GetPasskeysByAdminUuidHandler implements IQueryHandler<
+    GetPasskeysByAdminUuidQuery,
+    TResult<PasskeyEntity[]>
+> {
+    private readonly logger = new Logger(GetPasskeysByAdminUuidHandler.name);
+    constructor(private readonly passkeyRepository: PasskeyRepository) {}
+
+    async execute(query: GetPasskeysByAdminUuidQuery): Promise<TResult<PasskeyEntity[]>> {
+        try {
+            const passkeys = await this.passkeyRepository.findByCriteria({
+                adminUuid: query.adminUuid,
+            });
+
+            return ok(passkeys);
+        } catch (error) {
+            this.logger.error(error);
+            return fail(ERRORS.INTERNAL_SERVER_ERROR);
+        }
+    }
+}

@@ -1,0 +1,38 @@
+.list {
+    display: flex;
+    flex-wrap: wrap;
+    padding-inline: calc(var(--mantine-spacing-md) - 4px);
+    container-type: inline-size;
+}
+
+.item {
+    box-sizing: border-box;
+    flex: none;
+    width: 100%;
+    padding: 4px;
+}
+
+@container (min-width: 1000px) {
+    .item {
+        width: 50%;
+    }
+}
+
+.itemWrapper {
+    display: flex;
+    width: 100%;
+    animation: fadeIn 0.25s ease-out;
+}
+
+.itemWrapper > * {
+    width: 100%;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}

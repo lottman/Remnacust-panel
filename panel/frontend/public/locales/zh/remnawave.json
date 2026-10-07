@@ -1,0 +1,3206 @@
+{
+    "backups": {
+        "delivery-success": "备份已发送到 Telegram",
+        "delivery-failed": "无法发送备份。请检查机器人令牌、聊天 ID 和 Telegram 连接。"
+    },
+    "auth-localization": {
+        "login-title": "登录",
+        "server-unavailable": "服务器没有响应，请检查日志。",
+        "or": "或",
+        "passkey-authentication": "通行密钥认证",
+        "authentication-cancelled": "认证已取消",
+        "passkey-unsupported": "此设备不支持通行密钥",
+        "passkey": "通行密钥"
+    },
+    "mutation-entities": {
+        "api-token": "API 令牌",
+        "passkey": "通行密钥",
+        "config": "配置",
+        "external-squad": "外部分组",
+        "host": "主机",
+        "hosts": "主机",
+        "infra-provider": "基础设施提供商",
+        "billing-history": "账单历史记录",
+        "billing-node": "计费节点",
+        "internal-squad": "内部分组",
+        "node-integration": "节点集成",
+        "node-plugin": "节点插件",
+        "shared-list": "共享列表",
+        "node": "节点",
+        "node-traffic": "节点流量",
+        "nodes": "节点",
+        "settings": "Remnacust 设置",
+        "snippet": "代码片段",
+        "subscription-page-config": "订阅页面配置",
+        "subscription-settings": "订阅设置",
+        "subscription-template": "订阅模板",
+        "user": "用户",
+        "user-subscription": "用户订阅",
+        "user-traffic": "用户流量"
+    },
+    "mutation-messages": {
+        "operation-processing": "此操作可能需要一些时间...",
+        "task-processing": "任务已加入队列，请等待处理。",
+        "created": "{{entity}}创建成功",
+        "updated": "{{entity}}更新成功",
+        "deleted": "{{entity}}删除成功",
+        "enabled": "{{entity}}启用成功",
+        "disabled": "{{entity}}禁用成功",
+        "cloned": "{{entity}}复制成功",
+        "synced": "{{entity}}同步成功",
+        "restarted": "{{entity}}重启成功",
+        "reset": "{{entity}}重置成功",
+        "authenticated": "{{entity}}认证成功",
+        "revoked": "{{entity}}撤销成功",
+        "user-registered": "用户注册成功",
+        "request-sent": "请求已发送",
+        "reports-truncated": "报告已清除",
+        "plugin-sync-queued": "使用此插件的节点同步已加入队列",
+        "list-sync-queued": "使用此列表的节点同步已加入队列",
+        "wait-for-nodes": "请等待节点重新连接",
+        "task-queued": "任务已加入队列",
+        "actions-queued": "操作已加入队列",
+        "nodes-updated": "节点更新成功",
+        "passkey-verified": "通行密钥验证成功",
+        "users-expiration-extended": "用户到期时间已延长",
+        "all-users-expiration-extended": "所有用户的到期时间已延长"
+    },
+    "country-picker": {
+        "unknown": "未知"
+    },
+    "hwid-notifications": {
+        "device-deleted": "设备已成功删除",
+        "delete-failed-check-state": "删除未完成。请检查刷新的设备列表和节点状态，然后重试。",
+        "unblocked-devices-deleted": "未封禁的设备已删除；已封禁的设备已保留。",
+        "subscription-blocked": "HWID 已封禁。已连接节点会立即撤销其密钥；离线节点将在重新连接后应用封禁。",
+        "device-unblocked": "设备已解除封禁",
+        "delete-device": "删除设备",
+        "delete-all-devices": "删除所有设备",
+        "block-device": "封禁设备",
+        "unblock-device": "解除设备封禁",
+        "enforcement-unavailable": "无法确认设备封禁。请启用个人订阅，确保所有启用的节点均已连接且支持撤销活动会话，然后重试。",
+        "unknown-error": "请求失败，发生未知错误。"
+    },
+    "xera-node-health": {
+        "title": "节点健康状态",
+        "healthy": "正常",
+        "limited": "数据有限",
+        "attention": "需要关注",
+        "critical": "严重",
+        "disabled": "已禁用",
+        "signal-coverage": "检测项：{{checked}}/{{total}}",
+        "problem-nodes": "需要关注的节点",
+        "all-clear": "未发现节点问题",
+        "configuration": "没有启用的配置文件或入站",
+        "connection": "节点已断开连接",
+        "xray": "无法获取 Xray 运行时间",
+        "resources": "无法获取资源监测数据",
+        "high-memory": "内存使用率至少为 92%",
+        "high-load": "CPU 持续高负载：每个核心的 5 分钟平均负载至少为 1.5，或 1 分钟负载达到 2.5 且 5 分钟平均负载至少为 1.25",
+        "last-status": "最近的状态消息",
+        "last-change": "状态变更时间",
+        "not-measured": "未测量",
+        "filter": "健康状态",
+        "policy-pending-title": "配置等待应用",
+        "policy-pending-message": "主机策略未能应用。新配置未发送到节点；正在运行的 Xray 保留原配置。请检查节点和内核是否支持主机隔离 v2。恢复支持后，面板会重试。已配置的限制仍保持启用。",
+        "upgrade-required-title": "需要更新节点",
+        "upgrade-required-message": "请将节点更新至包含我们 Xray 的 Remnacust Node 1.1.1。此配置需要主机隔离 v2。更新前，其限制和新连接无法生效。当前运行配置会保留；更新后，面板将自动应用新配置。"
+    },
+    "xera-node-optimization": {
+        "title": "节点优化",
+        "level": "优化级别",
+        "intro": "选择四种配置之一。面板将通过已保存的 SSH 连接在节点上执行，并在终端显示结果。",
+        "none": "不优化",
+        "safe": "保守",
+        "balanced": "均衡",
+        "performance": "高性能",
+        "safe-description": "如果当前 TCP keepalive 空闲时间更长，则将其缩短至 10 分钟。",
+        "none-description": "如果之前应用过配置，则恢复原始设置。",
+        "balanced-description": "提高 TCP 缓冲区和队列的上限，但不会降低现有的较高数值。",
+        "performance-description": "允许更大的缓冲区和队列，并在支持时为新的 TCP 连接启用 BBR。",
+        "recommended": "推荐",
+        "keepalive": "长连接",
+        "buffers": "TCP 缓冲区",
+        "bbr": "支持时启用 BBR",
+        "backlog": "连接队列",
+        "safety": "不会重启 Xray、Docker、路由、防火墙或 SSH。可以恢复原始设置。"
+    },
+    "constants": {
+        "limits": "限额",
+        "home": "首页",
+        "hosts": "主机",
+        "nodes": "节点",
+        "nodes-statistics": "统计数据",
+        "nodes-metrics": "指标",
+        "users": "用户",
+        "overview": "概述",
+        "management": "管理",
+        "subscription-settings": "订阅设置",
+        "templates": "模板",
+        "subscription": "订阅",
+        "subscription-page": "订阅页面",
+        "config-profiles": "配置文件",
+        "internal-squads": "内部分组",
+        "external-squads": "外部分组",
+        "infra-billing": "网络供应商计费",
+        "hwid-inspector": "HWID 视图",
+        "tools": "工具",
+        "srh-inspector": "SRH 检查",
+        "response-rules": "请求订阅的应用",
+        "remnawave-settings": "Remnacust 设置",
+        "node-plugins": "插件",
+        "quick-open": "快捷方式",
+        "tb-reports": "Torrent 屏蔽报告",
+        "sessions-explorer": "会话管理器",
+        "http-stats": "HTTP 状态",
+        "quick-launcher": "开始菜单"
+    },
+    "common": {
+        "label": {
+            "used": "已使用",
+            "limit": "上限",
+            "remaining": "剩余",
+            "next-reset": "下次重置（∞ 表示永不）"
+        },
+        "action": {
+            "actions": "操作",
+            "add": "添加",
+            "add-users": "添加用户",
+            "bulk-actions": "批量操作",
+            "bulk-edit": "批量编辑",
+            "cancel": "取消",
+            "change": "更改",
+            "clear": "清除",
+            "clear-selection": "清除选择",
+            "clone": "克隆",
+            "close": "关闭",
+            "confirm-action": "确认操作",
+            "continue": "继续",
+            "copy": "复制",
+            "copy-link": "复制链接",
+            "copy-uuid": "复制 UUID",
+            "create": "创建",
+            "delete": "删除",
+            "disable": "禁用",
+            "documentation": "文档",
+            "download": "下载",
+            "edit": "编辑",
+            "enable": "启用",
+            "load-from-github": "从 GitHub 加载",
+            "more-actions": "更多操作",
+            "next": "下一步",
+            "open": "打开",
+            "paste": "粘贴",
+            "paste-default": "粘贴默认值",
+            "refresh": "刷新",
+            "remove": "删除",
+            "remove-users": "删除用户",
+            "rename": "重命名",
+            "reset": "重置",
+            "reset-traffic": "重置流量",
+            "save": "保存",
+            "search": "搜索",
+            "select": "选择",
+            "select-all": "全选",
+            "try-again": "重试",
+            "update": "更新",
+            "view": "查看"
+        },
+        "field": {
+            "active-sessions": "活跃会话",
+            "address": "地址",
+            "all": "全部",
+            "billing-node": "计费节点",
+            "color": "颜色",
+            "created-at": "创建时间",
+            "creation": "创建",
+            "description": "备注",
+            "first-connected-at": "首次连接时间",
+            "inbounds": "入站",
+            "inbounds-hosts": "入站 & 主机",
+            "interface": "接口",
+            "internal-squads": "内部分组",
+            "ip-address": "IP 地址",
+            "ip-addresses": "IP 地址",
+            "logo-url": "Logo 网址链接",
+            "name": "名称",
+            "os-version": "操作系统版本",
+            "password": "密码",
+            "platform": "平台",
+            "port": "端口",
+            "request-at": "请求时间",
+            "shared-lists": "共享列表",
+            "status": "状态",
+            "subscription-request-history": "订阅请求历史",
+            "subscription-url": "订阅 URL",
+            "svg-icon": "SVG 图标",
+            "system": "系统",
+            "tag": "标签",
+            "tags": "标签",
+            "untagged": "无标签",
+            "today": "今天",
+            "total": "总计",
+            "total-traffic": "流量总计",
+            "updated-at": "更新时间",
+            "usage-stats": "流量使用统计",
+            "user-agent": "User Agent",
+            "user-status": "用户状态",
+            "username": "用户名"
+        },
+        "message": {
+            "click-to-see-all": "点击查看全部",
+            "configured": "已配置",
+            "confirm-action-description": "您确定要执行此操作吗？此操作不能撤消。",
+            "copied": "已复制",
+            "error": "错误",
+            "event-sent": "发送事件",
+            "invalid-json": "无效的 JSON",
+            "last-error-message": "最后的错误消息",
+            "loading": "正在加载",
+            "no-config-profiles-available": "暂无可用配置文件",
+            "no-data-available": "无可用数据",
+            "no-data-available-for-the-selected-period": "所选时段无可用数据",
+            "no-inbound-selected": "未选择入站配置",
+            "no-profile-selected": "未选择配置文件",
+            "no-profiles-or-inbounds-found": "未找到配置文件或入站配置",
+            "not-set": "未设置",
+            "nothing-found": "未找到",
+            "operation-completed": "操作已完成",
+            "overdue": "已过期",
+            "processing": "处理中",
+            "unknown-error": "请求失败，发生未知错误。",
+            "search-profiles-or-inbounds": "搜索配置文件或入站配置……",
+            "selected": "已选 {{count}} 项",
+            "success": "成功",
+            "warning": "警告"
+        }
+    },
+    "bandwidth-metrics": {
+        "current-year": "今年",
+        "from-last-year": "对比去年",
+        "calendar-month": "日历月",
+        "last-30-days": "最近 30 天",
+        "from-last-month": "对比上月",
+        "last-7-days": "最近 7 天",
+        "from-last-week": "对比上周",
+        "from-yesterday": "对比昨日"
+    },
+    "online-metrics": {
+        "never-online": "从未在线",
+        "online-this-week": "最近一周上线",
+        "online-today": "今天在线过",
+        "online-now": "当前在线用户"
+    },
+    "simple-metrics": {
+        "ram-usage": "内存使用率",
+        "total-online-on-nodes": "所有节点在线用户总数"
+    },
+    "config-editor-actions": {
+        "feature": {
+            "format": "格式化",
+            "failed-to-save-invalid-json": "保存失败，无效的 JSON。",
+            "save-anyway": "仍然保存",
+            "save-anyway-description": "您确定要保存无效的 Xray 配置吗？ 此操作可能导致意外问题。请您清楚自己在做什么。",
+            "tools": "工具",
+            "copy-all-content": "复制全部内容",
+            "cut-selection": "剪切选中项",
+            "paste-from-clipboard": "从剪切板中粘贴",
+            "generate-keypair": "生成密钥"
+        }
+    },
+    "action-group": {
+        "feature": {
+            "reset-table": "重置表格样式",
+            "clear-filters": "清除筛选"
+        }
+    },
+    "use-table-columns": {
+        "last-connected-node": "最后连接节点",
+        "expire-at": "过期时间",
+        "data-usage": "数据用量",
+        "sub-link": "订阅链接",
+        "traffic-reset": "流量重置",
+        "never": "从不",
+        "online-at": "最后在线时间",
+        "lifetime-used": "累计使用量",
+        "sub-link-revoked-at": "订阅链接撤销于",
+        "created-at": "创建于",
+        "internal-squads": "内部分组",
+        "used-traffic": "已用流量（%）"
+    },
+    "header-buttons": {
+        "feature": {}
+    },
+    "header-action-buttons": {
+        "feature": {
+            "update-external-squads": "更新外部分组",
+            "external-squad-name": "外部分组名称",
+            "update-templates": "更新模板",
+            "template-name": "模板名称"
+        }
+    },
+    "nodes-header-action-buttons": {
+        "feature": {
+            "restart-all-nodes": "重启所有节点",
+            "search-nodes": "搜索节点",
+            "force-restart-description": "将保证所有节点完全重启 Xray 核心。",
+            "graceful-restart-description-1": "重启所有节点上的 Xray。 但如果节点哈希与当前的哈希相同，则请求可能无法实现。 这是默认的选项。",
+            "force": "强制执行",
+            "graceful": "平滑的"
+        }
+    },
+    "config-editor": {
+        "widget": {
+            "unsaved-changes": "修改未保存",
+            "your-changes-will-be-lost-if-you-leave-this-page-without-saving": "如果您离开此页面而不保存，您的更改将会丢失。",
+            "leave": "离开",
+            "stay": "留在当前页面"
+        }
+    },
+    "keypair": {
+        "widget": {
+            "generate-key-pair": "生成密钥对",
+            "both-keys": "双钥"
+        }
+    },
+    "create-host-modal": {
+        "widget": {
+            "new-host": "新建主机",
+            "please-select-the-config-profile-and-inbound": "请选择配置文件和入站配置"
+        }
+    },
+    "edit-host-modal": {
+        "widget": {
+            "edit-host": "编辑主机",
+            "dangling-host-cannot-be-cloned": "同名主机不能被克隆"
+        }
+    },
+    "create-node-modal": {
+        "widget": {
+            "create-node": "创建节点",
+            "back": "后退",
+            "connection-successful": "连接成功",
+            "connection-failed": "连接失败",
+            "open-node": "打开节点"
+        }
+    },
+    "edit-node-modal": {
+        "widget": {
+            "edit-node": "编辑节点"
+        }
+    },
+    "node-status-badge": {
+        "widget": {
+            "connected": "已连接",
+            "connecting": "连接中",
+            "disabled": "已禁用",
+            "disconnected": "已断开"
+        }
+    },
+    "create-user-modal": {
+        "widget": {
+            "user-description": "用户描述",
+            "expiry-date": "到期时间",
+            "pick-value": "选择值",
+            "traffic-reset-strategy": "流量重置策略",
+            "traffic-reset-strategy-description": "用户流量使用统计应多久重置一次",
+            "username-cannot-be-changed-later": "用户名之后无法更改",
+            "create-user": "创建用户",
+            "1-month": "+1 个月",
+            "3-months": "+3 个月",
+            "1-year": "+1 年",
+            "2099-year": "2099年",
+            "hwid-user-limit-description": "此功能只能在启用 <highlight>订阅 -> 设置 (HWID Limit)</highlight> 时才能正常工作。 <anchor>了解更多</anchor>。",
+            "disable-hwid-limit": "禁用 HWID 限制",
+            "hwid-device-limit": "HWID 设备限制",
+            "expire-at-description": "用户的订阅服务将于该时间结束。",
+            "internal-squads-description": "指定用户将加入的内部分组。"
+        }
+    },
+    "home-page": {},
+    "user-table": {
+        "widget": {
+            "error-loading-data": "数据加载错误",
+            "table-title": "用户"
+        }
+    },
+    "view-user-modal": {
+        "widget": {
+            "subscription-qr-code": "订阅二维码",
+            "edit-user-headline": "编辑用户",
+            "subscription-url-description-line-1": ".env 变量解析出的域名和路径：",
+            "subscription-url-description-line-2": "如需更改，请在 .env 文件中修改并使用以下命令重启 Remnacust：",
+            "management": "管理",
+            "danger-zone": "危险操作区",
+            "detailed-info": "用户详细信息",
+            "accessible-nodes": "授权访问节点",
+            "qr-code": "二维码"
+        }
+    },
+    "base-host-form": {
+        "remark": "备注",
+        "host": "主机",
+        "path": "路径",
+        "fingerprint": "浏览器指纹",
+        "security-layer": "安全层",
+        "tls-transport-layer-security": "TLS（传输层安全）",
+        "none": "无",
+        "inbounds-default": "入站默认值",
+        "extra-xhttp": "XHTTP 额外参数",
+        "xhttp-extra-params": "XHTTP 额外参数",
+        "address-description-line-1": "地址必须是连接目标的 IP 地址或域名。",
+        "address-description-line-2": "在大多数情况下，它应指向某一个在线节点。",
+        "port-description-line-1": "连接端口。",
+        "port-description-line-2": "在大多数情况下，必须与所选入站的端口匹配。",
+        "sni-description-line-1": "SNI 代表服务器名称。",
+        "sni-description-line-2": "如果未指定，将使用入站配置中的值。",
+        "host-visibility": "主机可见性",
+        "server-description-header": "服务器描述",
+        "server-description-placeholder": "最多 30 个字符",
+        "group-security": "安全",
+        "group-transport": "传输",
+        "group-subscription": "订阅",
+        "group-client": "客户端专用",
+        "group-advanced": "高级设置",
+        "hide-host": "隐藏主机",
+        "single-domain": "单个域名",
+        "default-mode-for-one-domain": "域名的默认模式",
+        "multi-domain": "多个域名",
+        "multi-domain-description": "多个域名用逗号分隔。Remnacust将随机选择其中一个域名。",
+        "wildcard-domain": "通配符域名",
+        "wildcard-domain-description": "子域的通配符模式。Remnacust将以 * 替换为随机生成的字符串。",
+        "override-sni-from-address": "从地址覆盖SNI地址",
+        "override-sni-from-address-description": "此选项用指定的地址字段值替换SNI值。这对于多域名配置或通配符域配置特别有用。",
+        "shuffled-hosts-hover-card": "随机排序的主机将放置在列表的顶端。",
+        "vless-route-description": "从 1 到 65535，0 或留空以禁用",
+        "shuffle-host": "随机排序主机",
+        "enable-x25519mlkem768": "启用 x25519mlkem768 ",
+        "pick-nodes-which-resolved-from-this-host-only-visual-assignment": "从主机中选择解析的节点。仅可视化。",
+        "nodes": "节点",
+        "select-a-xray-json-template": "选择一个 Xray JSON 模板",
+        "xray-json-template": "Xray JSON 模板",
+        "vital-parameters": "主要参数",
+        "exclude-this-host-from-specific-internal-squads": "从指定的内部小队排除此主机",
+        "excluded-internal-squads": "被排除的内部分组",
+        "keep-sni-blank": "保持SNI 为空",
+        "keep-sni-blank-description": "在某些情况下，SNI必须留空。使用此选项强制一个空的SNI。 请注意，此选项具有最高优先级，因此即使SNI已经设置，它也会被应用。",
+        "exclude-from-subscription-type": "从订阅类型中排除",
+        "hidden-host-description": "默认情况下，Remnacust 不会在订阅中包含隐藏主机。隐藏主机可用于 Mihomo、Xray-Json Advanced 和 Raw。",
+        "server-description-1": "在支持的客户端中，协议名称（如 vless）会被此处的描述替换。",
+        "server-description-2": "并非所有客户端都支持此功能。详情请参阅下列应用的文档。",
+        "supported-clients": "支持的客户端",
+        "mapper": "映射",
+        "internal-squads-mode-exclude": "排除",
+        "internal-squads-mode-allow-only": "仅允许",
+        "allowed-internal-squads": "获准的内部小组",
+        "allow-this-host-only-for-specific-internal-squads": "仅向所选内部小组显示此主机",
+        "group-assignment": "分配",
+        "access-mode": "访问模式",
+        "override-type": "覆盖类型",
+        "sni": "SNI",
+        "alpn": "ALPN",
+        "vless-route-id": "VLESS 路由 ID",
+        "mux-params": "MUX",
+        "sockopt-params": "SockOpt 参数",
+        "final-mask-params": "Final Mask 参数",
+        "pinned-peer-cert-sha256": "固定对端证书",
+        "verify-peer-cert-by-name": "按名称验证对端证书",
+        "mihomo-x25519": "Mihomo X25519",
+        "mihomo-ip-version": "Mihomo IP 版本",
+        "no-options-title": "未配置其他选项",
+        "no-options-description": "此主机使用入站及上方基本设置。添加选项可更改生成方式或适用用户。",
+        "no-bulk-options-title": "没有待应用的更改",
+        "no-bulk-options-description": "添加的每个选项均应用于所有选定主机。留空会清除所有这些主机的对应字段。",
+        "bulk-option-will-be-cleared": "将清除所有选定主机上的此值。",
+        "leave-field-untouched": "保持此字段不变",
+        "options": "选项"
+    },
+    "base-node-form": {
+        "country": "国家",
+        "select-country": "选择国家",
+        "internal-name": "内部名称",
+        "internal-name-placeholder": "例如：US-NY-Node-01 ",
+        "e-g-example-com": "例如 example.com",
+        "traffic-tracking": "跟踪流量使用",
+        "limit": "限制",
+        "reset-day": "重置日期",
+        "e-g-1-31": "例如 \"1-31\" ",
+        "notify-percent": "达量通知百分比",
+        "e-g-50": "例如 50",
+        "consumption-m-line-1": "将所选倍率应用于用户的流量消耗（1.0 = 正常，0.5 = 减半，2.0 = 加倍）。",
+        "consumption-m-line-2": "简单来说，如果用户的流量上限是 1 GiB，且倍率为 2.0，用户实际只能使用 0.5 GiB 流量，但 Remnacust 会显示为已使用 1 GiB，并限制其继续使用。",
+        "node-vitals": "节点状态",
+        "consumption": "流量消耗",
+        "core-configuration": "核心配置",
+        "tracking-and-billing": "跟踪与计费",
+        "management": "管理"
+    },
+    "home": {
+        "page": {
+            "online-stats": "在线统计",
+            "bandwidth": "流量使用情况",
+            "remnawave-usage": "Remnacust 使用情况",
+            "process-details": "进程详情"
+        },
+        "runtime-info": {
+            "title": "运行时指标指南",
+            "subtitle": "运行时卡片上各项数值的含义",
+            "intro": "每张卡片显示一个 <highlight>Remnacust 进程</highlight>的实时状态。本指南解释各指标的含义及何时需要关注。",
+            "instance-types-title": "进程类型",
+            "instance-types-description": "Remnacust 分为多个专用进程，每个进程拥有自己的职责、内存和事件循环。",
+            "api-description": "处理面板和订阅端点的 HTTP 请求。这是<highlight>主要面向用户的进程</highlight>，几乎所有面板和订阅请求均由其处理。",
+            "scheduler-description": "一个<highlight>由 cron 驱动的调度器</highlight>。自身不执行任务，只在计划时间将任务加入队列，交由<highlight>处理器</highlight>执行。",
+            "processor-description": "真正执行任务的<highlight>工作进程</highlight>。处理队列中的<highlight>节点健康检查</highlight>、按用户和节点<highlight>汇总流量</highlight>，以及不能阻塞 API 的其他耗时任务。",
+            "memory-description": "进程存储工作数据的空间。所有数值均由 Node.js 实时报告。",
+            "heap-description": "JavaScript 对象占用的内存，由 Node.js 引擎 <highlight>V8</highlight> 管理，显示为<highlight>已用 / 总量</highlight>。较高比例<highlight>通常是正常的</highlight>：V8 会保留内存直至需要更多，因此 <highlight>100 / 120 MB</highlight> 属于正常情况，而非警告。",
+            "rss-description": "<highlight>常驻内存集大小</highlight>：操作系统分配给进程的物理内存总量，包括堆、原生代码和共享库。它最能直接反映<highlight>进程实际使用的 RAM</highlight>。",
+            "external-description": "由绑定到 JavaScript 的原生 C++ 对象在 V8 外持有的内存，常见来源有<highlight>打开的套接字</highlight>、<highlight>流</highlight>和基于 Buffer 的数据。",
+            "array-buffers-description": "专门分配给 <highlight>ArrayBuffer</highlight> 和 <highlight>Buffer</highlight> 实例的内存（原始二进制数据），计入<highlight>外部内存</highlight>。",
+            "event-loop-description": "驱动 Node.js 异步工作的单线程循环的健康状况。循环阻塞时，整个进程会停滞。",
+            "delay-description": "相邻事件循环时刻的平均间隔。健康值接近 <highlight>0–2 毫秒</highlight>。较高数值说明长时间同步操作正在阻塞循环。",
+            "p99-description": "测量窗口内事件循环延迟的<highlight>第 99 百分位数</highlight>。可揭示平均值掩盖的高延迟，适合发现偶发尖峰。",
+            "active-handles-description": "保持事件循环运行的长期资源：<highlight>打开的套接字</highlight>、<highlight>定时器</highlight>和<highlight>文件描述符</highlight>。稳定数量是正常的；<highlight>持续无界增长</highlight>强烈暗示泄漏。"
+        }
+    },
+    "login-form": {
+        "feature": {
+            "sign-in": "登录",
+            "your-password": "您的密码"
+        }
+    },
+    "statistic-nodes": {
+        "component": {
+            "current-month": "本月",
+            "7-days": "7 天",
+            "14-days": "14 天",
+            "30-days": "30 天",
+            "60-days": "60 天",
+            "90-days": "90 天",
+            "180-days": "180 天",
+            "total-traffic": "总计使用流量",
+            "total-traffic-placeholder": "总计使用流量: {{totalTraffic}}",
+            "top-nodes": "活跃节点",
+            "node": "节点",
+            "traffic": "流量",
+            "3-days": "3 天"
+        }
+    },
+    "get-expiration-text": {
+        "util": {
+            "expires-in": "{{expiration}} 后过期",
+            "expired": "{{expiration}} 前已过期",
+            "unknown": "未知"
+        }
+    },
+    "reset-data": {
+        "constants": {
+            "reset-monthly": "每月重置",
+            "reset-weekly": "每周重置",
+            "reset-daily": "每日重置",
+            "never-reset": "永不重置",
+            "reset-monthly-by-creation-date": "每月重置（按创建日期）"
+        }
+    },
+    "data-usage": {
+        "column": {
+            "monthly": "每月",
+            "weekly": "周",
+            "daily": "日"
+        }
+    },
+    "get-time-ago": {
+        "util": {
+            "invalid-date": "无效日期",
+            "not-connected-yet": "尚未连接"
+        }
+    },
+    "bulk-user-actions-modal": {
+        "widget": {
+            "user-deletion-description": "删除所有特定状态的用户。如果您删除状态为“活跃”的用户，应重启所有节点以使更改生效。",
+            "select-status": "按状态删除"
+        }
+    },
+    "register-form": {
+        "feature": {
+            "generate": "生成并复制",
+            "confirm-password": "确认密码",
+            "sign-up": "注册",
+            "password-copied": "密码已复制",
+            "password-copied-message": "密码已复制到剪贴板",
+            "password-copied-error": "复制密码到剪贴板失败",
+            "passwords-do-not-match": "密码不匹配",
+            "password-too-short": "最少 24 个字符",
+            "register-description": "创建一个超级管理员账户以开始使用",
+            "registration": "注册"
+        }
+    },
+    "remarks-manager": {
+        "widget": {
+            "enter-remark": "输入备注"
+        }
+    },
+    "subscription-settings": {
+        "widget": {
+            "validation-error": "验证错误",
+            "main-settings": "基本设置",
+            "you-must-add-at-least-one-remark-with-text": "您必须至少添加一个带有文本的备注",
+            "user-status-remarks-description": "如果用户已过期、受限或禁用，以下信息将显示在订阅页面中。",
+            "user-status-remarks-description-line-2": "您可以为每种状态添加多个备注。",
+            "serve-json-at-base-subscription": "在基础订阅提供 JSON",
+            "serve-json-description": "在基础订阅路径（无需附加 /json）提供 JSON 配置。如果客户端支持，将提供 JSON，否则将照常提供。",
+            "custom-remarks": "自定义备注"
+        }
+    },
+    "multi-select-hosts": {
+        "feature": {
+            "dangling-hosts-skipped": "已跳过 {{count}} 个未关联主机，未进行克隆。"
+        }
+    },
+    "edit-many-hosts-drawer": {
+        "confirm-title": "确认批量更新",
+        "confirm-description": "将为 {{count}} 台主机更新以下字段：",
+        "no-changes-title": "没有可更新的内容",
+        "no-changes-description": "您尚未修改任何字段。"
+    },
+    "delete-all-users-by-status": {
+        "feature": {
+            "deleting-users": "正在删除用户..."
+        }
+    },
+    "bulk-all-user-actions-tabs": {
+        "update": {
+            "tab": {
+                "feature": {
+                    "select-status": "选择状态",
+                    "update-users": "更新用户"
+                }
+            }
+        },
+        "actions": {
+            "tab": {
+                "feature": {
+                    "reset-traffic-description": "将所有选定用户的流量使用重置为零"
+                }
+            }
+        },
+        "danger": {
+            "tab": {
+                "feature": {
+                    "delete-users-by-status": "按状态删除用户",
+                    "delete-users-by-status-description": "永久删除所有具有选定状态的用户"
+                }
+            }
+        }
+    },
+    "bulk-user-actions": {
+        "actions": {
+            "tab": {
+                "feature": {
+                    "revoke-subscription": "重置订阅",
+                    "perform-action-on-users": "对 {{usersCount}} 位选定用户执行操作",
+                    "revokes-subscription-for-all-selected-users": "撤销所有选定用户的订阅",
+                    "specify-internal-squads-that-will-be-assigned-to-the-user": "指定用户的内部分组",
+                    "extend-expiration-date": "延长到期日期",
+                    "enter-the-number-of-days-to-extend-the-expiration-date": "输入延长到期日的天数",
+                    "extend-days": "延长天数",
+                    "extend": "延长",
+                    "extend-expiration-date-description": "将天数添加到选定用户的到期日期。天数将添加到当前每个用户的到期日期。"
+                }
+            }
+        },
+        "danger": {
+            "tab": {
+                "feature": {
+                    "delete-users": "删除用户",
+                    "permanently-deletes-all-selected-users-and-their-data": "永久删除所有选定用户及其数据"
+                }
+            }
+        }
+    },
+    "get-user-subscription-links": {
+        "feature": {
+            "connection-keys": "连接密钥"
+        }
+    },
+    "active-sessions-drawer": {
+        "widget": {
+            "requirements": "需求",
+            "warning-activity": "当 <highlight>Xray Core</highlight> 认为<highlight>连接仍打开</highlight>时会显示 IP。因此部分显示的 IP 可能已断开。使用<highlight>时钟</highlight>图标查看该 IP 的最后活动时间。",
+            "warning-version": "Remnacust 节点版本 <highlight>{{version}}</highlight> 或者更高",
+            "warning-docker": "将以下内容添加到 Remnacust 节点的 <highlight>docker-compose.yml</highlight> 内(/opt/remnanode)",
+            "warning-patience": "获取数据可能需要一些时间，不要关闭此窗口！",
+            "warning-n-plus-one": "<highlight>请注意</highlight>：由于缺少批量数据获取方法，此请求会调用 <highlight>Xray Core</highlight> 的 gRPC API <highlight>N+1</highlight> 次。<highlight>N</highlight> 为该节点当前在线用户数。",
+            "fetching": "正在获取活动会话...",
+            "progress": "已完成 {{completed}} 个，共 {{total}} 个",
+            "job-failed-description": "无法获取活动会话",
+            "active-ips-across-nodes": "活跃的 IP 地址",
+            "distinct-ips": "独立的IP地址"
+        }
+    },
+    "detailed-user-info-drawer": {
+        "widget": {
+            "detailed-user-info": "用户详细信息",
+            "user-information": "用户信息",
+            "short-uuid": "短 UUID",
+            "email": "电子邮件",
+            "telegram-id": "Telegram ID",
+            "traffic-information": "流量使用信息",
+            "used-traffic": "已用流量",
+            "lifetime-used-traffic": "累计已用流量",
+            "traffic-limit": "流量限制",
+            "traffic-limit-strategy": "流量限制策略",
+            "last-traffic-reset": "上次流量重置日期",
+            "subscription-information": "订阅信息",
+            "expires-at": "到期时间",
+            "revoked-at": "重置时间",
+            "connection-information": "连接信息",
+            "trojan-password": "Trojan 密码",
+            "ss-password": "SS 密码",
+            "last-online": "最后在线",
+            "last-connected-node": "最后连接节点",
+            "timestamps": "时间戳",
+            "active-internal-squads": "激活的的内部分组"
+        }
+    },
+    "subscription-tabs": {
+        "widget": {
+            "show-custom-remarks": "显示自定义备注",
+            "show-custom-remark-description-line-2": "如果禁用此设置，过期、受限和禁用用户将收到实际为空的主机列表。",
+            "additional-response-headers": "响应头",
+            "headers-that-will-be-sent-with-subscription-content": "将与订阅内容一起发送的响应头。",
+            "location-template-hint": "不带 TEG 时读取主机配额；带 TEG 时读取标签配额，没有适用标签则读取主机。MB/GB 仅指定计算单位，结果只包含数字。",
+            "randomize-hosts": "随机排序主机",
+            "randomize-hosts-description": "在订阅内容中随机排序主机",
+            "additional-options": "附加选项",
+            "configure-additional-subscription-options": "配置附加订阅选项"
+        }
+    },
+    "nodes-realtime-metrics": {
+        "widget": {
+            "download-speed": "下载速率",
+            "upload-speed": "上传速率"
+        }
+    },
+    "internal-squads-usage-drawer": {
+        "info": {
+            "title": "用量计算方式",
+            "summary": "返回在所选时间段内用量达到阈值的内部小组成员，以及每人的<b>总流量</b>。",
+            "nodes-title": "计入哪些节点",
+            "nodes-intro": "小组不直接绑定节点，而是通过入站建立关联：",
+            "nodes-step-1": "获取属于内部小组的所有入站。",
+            "nodes-step-2": "确定每个入站所属的配置档。",
+            "nodes-step-3": "节点仅在其<b>活动</b>配置档匹配，且该入站在节点上启用时计入。",
+            "nodes-outro": "因此仅计入小组成员<hl>当前确实能够连接</hl>的节点。若没有任何节点提供该小组的入站，列表为空。",
+            "traffic-title": "流量计算方式",
+            "traffic-granularity": "统计按<b>天</b>存储：每条记录对应用户、节点和日期。节点数据约<hl>每 2 分钟</hl>写入数据库，因此当天数据接近实时，可能延迟几分钟。",
+            "traffic-sum": "对每位成员，汇总从 <code>start</code> 日开始至 <code>end</code> 日结束的各节点每日记录，两端日期均包含，按 UTC 计算。",
+            "traffic-threshold": "仅返回总量 <b>≥ minTotalBytes</b> 的用户。流量以<hl>原始字节</hl>返回，不作舍入。",
+            "caveats-title": "注意事项",
+            "caveats-per-node": "流量按<b>整个节点</b>统计，而非按入站。若节点供多个小组使用，则用户总量包含其在该节点上的全部流量，包括通过其他小组入站的流量。这是<hl>上限估计</hl>，不是精确的小组归属流量。",
+            "caveats-membership": "小组成员及节点集合以<b>请求时</b>的状态为准，不追溯历史。已退出成员不再显示；新成员显示整个期间的用量，包括加入前的日期。节点活动配置档变更也同样影响结果。",
+            "caveats-sorting": "列表按<b>用户 ID</b>而非流量排序。实时流量变化可能导致分页间的数据偏移。查找高用量用户时，请设置 <code>minTotalBytes</code> 阈值，而不是遍历所有用户。"
+        }
+    },
+    "get-hwid-user-devices": {
+        "feature": {
+            "unknown": "未知",
+            "model": "型号",
+            "added": "添加时间",
+            "delete-device": "删除设备",
+            "delete-device-confirmation": "删除此设备？如果节点不可用，删除可能无法完成；请检查刷新的列表。",
+            "devices": "设备",
+            "hwid-devices": "HWID 设备列表",
+            "delete-all-devices": "删除所有未封禁的设备",
+            "delete-unblocked-confirmation": "确定删除所有未封禁的设备吗？已封禁的设备会保留，可单独删除。",
+            "block-scope": "封禁会停止向此 HWID 提供订阅。若要撤销当前 VPN 会话，请在面板环境中设置 XERA_PERSONAL_SUBSCRIPTIONS=true 并使用兼容节点。使用共享凭据时，现有流量可能继续传输。"
+        }
+    },
+    "headers-manager": {
+        "widget": {
+            "key": "键",
+            "value": "值",
+            "add-header": "添加 header"
+        }
+    },
+    "template-selector": {
+        "search-templates": "搜索模板...",
+        "official-templates": "官方模板",
+        "author-templates": "{{author}} 模板",
+        "modal": {
+            "load-template": "加载模板"
+        },
+        "add-template": "添加模板"
+    },
+    "use-download-template": {
+        "failed-to-load-template": "加载模板失败",
+        "template-loaded": "模板已加载",
+        "template-name-has-been-loaded-into-the-editor": "{{name}} 已加载到编辑器中",
+        "load-failed": "加载失败",
+        "failed-to-load-template-please-try-again": "加载模板失败，请重试。",
+        "select-template-to-load": "选择要加载的模板"
+    },
+    "pm2-metrics": {
+        "total-processes": "进程总数",
+        "total-memory": "总内存使用"
+    },
+    "dashboard-ui": {
+        "heap-used": "已用堆内存",
+        "avg-event-loop": "平均事件循环延迟",
+        "total-ram": "总内存",
+        "active": "活跃",
+        "expired": "已过期",
+        "limited": "已达限额",
+        "disabled": "已禁用",
+        "runtime": "运行进程",
+        "canvases": "画布",
+        "backups": "备份"
+    },
+    "internal-squads-grid": {
+        "widget": {
+            "no-internal-squads": "暂无内部分组",
+            "create-your-first-internal-squad-to-get-started": "创建第一个内部分组，开始使用",
+            "delete-squad": "删除分组",
+            "users": "用户"
+        }
+    },
+    "config-profiles-grid": {
+        "widget": {
+            "no-config-profiles": "暂无配置文件",
+            "create-your-first-config-profile-to-get-started": "创建你的第一个配置文件以开始",
+            "delete-profile": "删除文件",
+            "nodes": "节点",
+            "quick-view": "快速查看",
+            "xray-config": "Xray 配置"
+        }
+    },
+    "view-infra-provider": {
+        "drawer": {
+            "widget": {
+                "infra-provider": "网络提供商",
+                "name-description": "提供商名称。用于在界面中识别该提供商。",
+                "enter-provider-name": "输入提供商名称",
+                "favicon-link": "Favicon 链接",
+                "enter-favicon-link": "输入 Favicon 链接",
+                "favicon-link-description": "Favicon 链接是提供商图标的链接。用于在界面中显示该提供商的图标。你也可以直接输入域名。",
+                "login-url": "登录网址",
+                "enter-login-url": "输入登录网址",
+                "login-url-description": "登录网址是该提供商登录页面的链接，可帮助你快速跳转到其登录页面。"
+            }
+        }
+    },
+    "update-billing-date-modal": {
+        "widget": {
+            "update-billing-date": "更新计费日期",
+            "current-date": "当前日期",
+            "new-date": "新日期",
+            "tomorrow": "明天",
+            "next-month": "下个月"
+        }
+    },
+    "infra-providers-table": {
+        "widget": {
+            "no-providers-found": "未找到提供商。"
+        }
+    },
+    "infra-billing-records-table": {
+        "widget": {
+            "no-billing-records-found": "未找到账单记录"
+        }
+    },
+    "infra-billing-nodes": {
+        "widget": {
+            "no-nodes-found": "未找到任何节点。",
+            "add-a-node": "添加一个节点",
+            "update-multiple-nodes": "升级多个节点"
+        }
+    },
+    "create-infra-billing-record": {
+        "modal": {
+            "widget": {
+                "please-select-a-provider": "请选择一个网络提供商",
+                "bill-record": "账单记录",
+                "billed-at": "账单日期",
+                "the-date-and-time-when-the-bill-was-paid": "账单支付的日期和时间。",
+                "payment-amount-usd": "付款金额（美元）",
+                "amount": "金额"
+            }
+        }
+    },
+    "create-infra-billing-node": {
+        "modal": {
+            "widget": {
+                "please-select-a-provider-and-billing-node": "请选择一个网络提供商和计费节点",
+                "next-billing-at": "下次计费时间",
+                "next-billing-at-description": "计费节点将被计费的日期和时间。Remnacust 将会通知你即将到来的账单。",
+                "existing": "已有",
+                "custom": "自定义",
+                "custom-name-description": "节点不由 Remnacust 管理时可使用自定义名称。"
+            }
+        }
+    },
+    "active-nodes-list": {
+        "modal": {
+            "shared": {
+                "this-profile-is-not-active-on-any-nodes": "该配置文件未在任何节点上激活"
+            }
+        }
+    },
+    "config-profile-card": {
+        "shared": {
+            "active-on-nodes": "已在节点上激活"
+        },
+        "widget": {
+            "loading-computed-config-profile": "正在加载配置文件……",
+            "computed-config-profile-loaded-successfully": "已成功加载配置文件",
+            "the-computed-config-profile-description": "显示所有片段合并后的最终配置文件。",
+            "view-computed": "查看视图"
+        }
+    },
+    "flat-inbound-checkbox-card": {
+        "shared": {
+            "inbound-config-inbound-tag": "入站配置：{{inboundTag}}"
+        }
+    },
+    "virtualized-flat-inbounds-list": {
+        "shared": {
+            "no-inbounds-found": "未找到入站连接"
+        }
+    },
+    "select-billing-node": {
+        "shared": {
+            "no-billing-nodes-available": "无可用计费节点",
+            "select-the-billing-node": "请选择计费节点。",
+            "select-billing-node": "选择计费节点..."
+        }
+    },
+    "select-infra-provider": {
+        "shared": {
+            "infrastructure-provider": "网络提供商",
+            "no-providers-available": "无可用网络提供商",
+            "select-the-infrastructure-provider": "请选择网络提供商。",
+            "select-provider": "选择网络提供商..."
+        }
+    },
+    "internal-squads-list": {
+        "widget": {
+            "search-internal-squads": "搜索内部分组……",
+            "no-squads-found": "未找到分组"
+        }
+    },
+    "user-accessible-nodes": {
+        "modal": {
+            "widget": {
+                "user-accessible-nodes": "用户可访问节点"
+            }
+        }
+    },
+    "internal-squads": {
+        "drawer": {
+            "widget": {
+                "config-profiles": "配置文件",
+                "flat-list": "扁平列表",
+                "selected": "已选择",
+                "unselected": "未选择",
+                "edit-internal-squad": "编辑内部分组",
+                "selected-inbounds": "已设置的入站：{{count}}"
+            }
+        }
+    },
+    "host-select-inbound": {
+        "feature": {
+            "choose-an-inbound-to-apply-to-the-host": "选择一个入站配置应用到该主机"
+        }
+    },
+    "show-config-profiles-with-inbounds": {
+        "feature": {
+            "no-config-profile-selected": "未选择配置文件",
+            "choose-a-profile-to-configure-inbounds-for-this-node": "选择一个配置文件以为该节点配置入站"
+        }
+    },
+    "access-settings-card": {
+        "access-settings": "访问设置",
+        "select-an-external-squad-to-apply-custom-settings-to-this-user": "为此用户选择外部分组来应用自定义设置。",
+        "external-squad": "外部分组",
+        "select-an-external-squad": "选择一个外部分组..."
+    },
+    "device-tag-settings-card": {
+        "device-and-tag-settings": "设备与标签设置"
+    },
+    "user-identity-creation-card": {
+        "user-identity": "用户身份"
+    },
+    "hosts-config-profiles": {
+        "drawer": {
+            "widget": {
+                "unknown-inbound": "未知的入站",
+                "assign-an-inbound-to-the-host": "为主机分配入站"
+            }
+        }
+    },
+    "stats": {
+        "widget": {
+            "upcoming-in": "{{month}} 即将到账",
+            "nodes-pending-payment": "待付款节点",
+            "payments-in": "{{month}} 的付款",
+            "total-payments-made": "已完成付款总数",
+            "total-spent": "总支出",
+            "lifetime-spending": "累计支出",
+            "payment-overdue": "付款逾期",
+            "all-up-to-date": "全部已更新"
+        }
+    },
+    "disclaimer-overlay": {
+        "title": "免责声明",
+        "subtitle": "继续前请阅读此声明。",
+        "intro": "Remnacust 是<highlight>开源、自托管</highlight>的代理和用户管理工具。软件<warning>按“原样”提供，不附带任何明示或暗示的保证</warning>。",
+        "responsibility": "您对部署和使用本软件的方式<highlight>承担全部责任</highlight>。",
+        "compliance": "您必须遵守所在司法辖区适用的<highlight>所有法律法规</highlight>。",
+        "liability": "开发者和贡献者对任何滥用、损害或数据丢失<warning>不承担责任</warning>。",
+        "license-acknowledgement": "继续即表示您已阅读并同意<anchor>许可证条款</anchor>。",
+        "accept-button": "我理解并接受"
+    },
+    "connection-status-overlay": {
+        "connection-lost": "连接已断开",
+        "reconnecting": "正在重新连接…"
+    },
+    "mobile-warning-overlay": {
+        "mobile-device-detected": "检测到移动设备",
+        "description-line-1": "此页面包含复杂的表格，可能不适合在移动设备上使用。",
+        "description-line-2": "以下是一些可在移动设备上管理表格的控制选项。",
+        "show-or-hide-columns": "显示或隐藏列",
+        "adjust-row-spacing-density": "调整行间距密度",
+        "toggle-fullscreen-table-view": "切换全屏表格视图",
+        "desktop-recommended": "推荐使用桌面设备",
+        "or": "或",
+        "rotate-device": "旋转设备",
+        "i-understand-continue-anyway": "我已了解，仍要继续"
+    },
+    "internal-squad-header-action-buttons": {
+        "feature": {
+            "squad-name": "分组名称",
+            "enter-squad-name": "输入分组名称"
+        }
+    },
+    "config-profiles-header-action-buttons": {
+        "feature": {
+            "create-a-new-config-profile-by-entering-a-name-below": "在下方输入名称以创建新的配置文件。",
+            "you-can-customize-xray-config-after-creation": "创建后，您可以自定义 Xray 配置。",
+            "profile-name": "配置文件名称",
+            "enter-profile-name": "输入配置文件名称"
+        }
+    },
+    "restart-node-button": {
+        "feature": {
+            "restart": "重新启动",
+            "restart-description-line-1": "确保节点完整重启 Xray Core。推荐使用此选项。",
+            "restart-description-line-2": "向此节点发送重启 Xray 请求；若节点哈希与当前值相同，请求可能不会执行。"
+        }
+    },
+    "node-details-card": {
+        "show-zero-values": "显示为 0 的值",
+        "hide-zero-values": "隐藏为 0 的值",
+        "no-inbound-traffic-data": "无入站流量数据",
+        "no-outbound-traffic-data": "无出站流量数据",
+        "widget": {
+            "node-details": "节点详情",
+            "enable-node": "启用节点",
+            "disable-node": "禁用节点",
+            "config-profile-or-inbounds-is-missing": "缺少配置文件或者入站配置",
+            "xray-core-version": "Xray 核心版本",
+            "remnawave-node-version": "节点版本，@remnawave/节点"
+        }
+    },
+    "config-profiles": {
+        "drawer": {
+            "widget": {
+                "config-profiles": "配置文件",
+                "no-inbounds-selected": "未选择入站配置"
+            }
+        }
+    },
+    "node-system-card": {
+        "widget": {
+            "system-info": "系统信息",
+            "memory": "内存",
+            "network": "网络",
+            "kernel": "内核"
+        }
+    },
+    "node-stats": {
+        "card": {
+            "traffic-refill-in-days": "流量重置(天)：",
+            "represents-the-uptime-of-the-xray-core": "表示Xray 核心的运行时间"
+        }
+    },
+    "host-tags-input": {
+        "tags-are-not-visible-to-end-users-tag-will-be-sent-with-raw-subscription-only": "标签对最终用户不可见。标签将只能与 Raw 订阅一起发送。"
+    },
+    "internal-squad-accessible-nodes": {
+        "modal": {
+            "widget": {
+                "internal-squad-accessible-nodes": "内置分组授权访问节点"
+            }
+        }
+    },
+    "config-profile-inbounds": {
+        "drawer": {
+            "widget": {
+                "fetching-inbounds": "正在获取入站配置...",
+                "inbounds-with-active-squads": "入站配置（活跃的内部分组）"
+            }
+        }
+    },
+    "get-user-subscription-request-history": {
+        "feature": {
+            "request-history": "请求历史"
+        }
+    },
+    "use-hwid-inspector-table-columns": {
+        "device-model": "设备型号"
+    },
+    "hwid-inspector-table": {
+        "widget": {
+            "hwid-devices-list": "HWID 设备列表"
+        }
+    },
+    "hwid-inspector-metrics": {
+        "widget": {
+            "total-unique-devices": "唯一设备总数",
+            "total-hwid-devices": "HWID 设备总数",
+            "avg-devices-per-user": "平均每个用户设备数",
+            "platform-distribution": "平台分布",
+            "app-distribution": "应用分布",
+            "no-platform-data": "无平台数据",
+            "no-app-data": "无可用数据"
+        }
+    },
+    "use-srh-inspector-table-columns": {
+        "request-ip": "请求IP地址",
+        "response-type": "响应类型",
+        "rule-name": "规则名称"
+    },
+    "srh-inspector-metrics": {
+        "widget": {
+            "requests": "请求数",
+            "hourly-request-statistics": "每小时请求统计",
+            "no-hourly-data-available": "没有可用的小时数据"
+        }
+    },
+    "linked-hosts-drawer": {
+        "widget": {
+            "assigned-hosts": "指定主机",
+            "no-hosts-assigned-to-this-node": "没有分配给此节点的主机"
+        }
+    },
+    "get-node-linked-hosts": {
+        "feature": {
+            "linked-hosts": "关联主机"
+        }
+    },
+    "snippets": {
+        "drawer": {
+            "widget": {
+                "snippet-cannot-be-empty": "片段不能为空",
+                "snippet-cannot-contain-empty-objects": "片段不能包含空对象",
+                "more-items": "更多项目...",
+                "create-snippet": "创建片段",
+                "snippet-name": "片段名称",
+                "enter-snippet-name-cannot-be-changed-later": "输入片段名称 (稍后不能更改)",
+                "snippet-is-valid": "片段有效",
+                "edit-snippet": "编辑片段",
+                "snippets": "片段",
+                "new-snippet": "新建片段"
+            }
+        }
+    },
+    "response-rules-editor-actions": {
+        "feature": {
+            "response-rules-debugger": "响应规则调试器",
+            "response-rules-debugger-description-1": "使用此 cURL 命令来测试您的响应规则如何匹配不同的请求头.",
+            "response-rules-debugger-description-2": "您可以将其导入到：",
+            "or": "，或",
+            "curl-command": "cURL 命令",
+            "copy-curl-command": "复制 cURL 命令",
+            "debugger": "调试器"
+        }
+    },
+    "copy-docker-compose": {
+        "widget": {
+            "copy-docker-compose-yml": "复制 docker-compose.yml",
+            "local-image-note": "此 Compose 使用本地构建的 Remnacust Node 1.1.1 镜像。请先按照节点指南构建镜像。公共安装脚本会自行生成 Compose 文件。"
+        }
+    },
+    "create-node-step-1-connection": {
+        "copy-the": "复制",
+        "content-for-the-remnawave-node-below": "以下是 Remnacust 节点的内容。",
+        "learn-more": "了解更多。",
+        "domain-or-ip": "域名或IP",
+        "additional-options": "附加参数"
+    },
+    "create-node-step-3-status": {
+        "establishing-mtls-connection": "正在建立mTLS连接...",
+        "xray-core-is-up-and-running": "Xray 核心正在运行！",
+        "remnawave-will-try-to-reconnect-shortly": "Remnacust 将很快尝试重新连接...",
+        "no-errors-so-far": "到目前为止没有错误"
+    },
+    "external-squad-card": {
+        "widget": {
+            "users": "用户"
+        }
+    },
+    "internal-squads-with-store": {
+        "drawer": {
+            "widget": {
+                "users": "用户"
+            }
+        }
+    },
+    "external-squads": {
+        "drawer": {
+            "widget": {
+                "subscription-templates": "订阅模板",
+                "subscription-templates-description-line-1": "为每个订阅类型选择一个模板。如果没有选择，默认模板将自动使用。",
+                "subscription-templates-description-line-2": "请注意，《响应规则》有更高的优先级别。",
+                "select-a-template": "选择一个模板",
+                "default-template-in-use": "正在使用默认模板...",
+                "edit-external-squad": "编辑外部分组",
+                "templates": "模板",
+                "settings": "设置",
+                "remarks": "备注"
+            }
+        }
+    },
+    "external-squads-grid": {
+        "widget": {
+            "no-external-squads": "暂无外部分组",
+            "no-external-squads-line-1": "外部分组允许您为特定用户组自定义设置。",
+            "no-external-squads-line-2": "你可以覆盖每个分组的默认订阅模板和其他设置。",
+            "no-external-squads-line-3": "创建一个分组并指定用户应用自定义配置。"
+        }
+    },
+    "external-squads-settings": {
+        "tab": {
+            "widget": {
+                "override-subscription-settings-for-this-external-squad": "覆盖此外部分组的订阅设置",
+                "add-override": "添加重写"
+            }
+        }
+    },
+    "srr-advanced-warning-overlay": {
+        "warning-line-1": "这个功能是为了解潜在风险和影响的高级用户设计的。",
+        "incorrect-configuration-line-1": "配置错误",
+        "incorrect-configuration-line-2": "可能导致异常行为",
+        "review-settings-carefully-line-1": "谨慎审查设置",
+        "review-settings-carefully-line-2": "应用更改前"
+    },
+    "auth-settings": {
+        "header": {
+            "title": "认证方式",
+            "description": "管理您的认证方式。"
+        },
+        "error-modal": {
+            "title": "更新失败",
+            "description": "更新身份验证设置时发生错误。请检查下面的错误详情，然后重试。",
+            "unknown-error": "请求失败，出现未知错误。"
+        },
+        "passkey": {
+            "title": "通行密钥",
+            "manage-button": "管理",
+            "rpId": {
+                "label": "前端域名",
+                "description": "不带http协议标头的前端域名 (如：example.com)"
+            },
+            "origin": {
+                "label": "后端域名",
+                "description": "符合https规则的后端域名 (如：https://api.example.com)"
+            }
+        },
+        "password": {
+            "title": "密码"
+        },
+        "telegram": {
+            "adminIds": {
+                "label": "允许的管理员 ID",
+                "placeholder": "输入管理员 ID"
+            }
+        },
+        "fields": {
+            "clientId": {
+                "label": "客户端 ID",
+                "description": "提供商 OAuth2 客户端 ID",
+                "placeholder": "输入客户端 ID"
+            },
+            "clientSecret": {
+                "label": "客户端密钥",
+                "description": "提供商 OAuth2 客户端密钥",
+                "placeholder": "输入客户端密钥"
+            },
+            "plainDomain": {
+                "label": "域名",
+                "description": "PocketID 的域名 (例如:example.com)",
+                "placeholder": "example.com"
+            },
+            "allowedEmails": {
+                "label": "允许的电子邮件",
+                "description": "允许的电子邮件地址列表。",
+                "placeholder": "请输入电子邮箱"
+            },
+            "realm": {
+                "label": "领域（realm）",
+                "description": "Keycloak realm 名"
+            },
+            "keycloakDomain": {
+                "label": "Keycloak 域",
+                "description": "无协议头的 Keycloak 服务器域 (例如keycloak.docs.rw)"
+            },
+            "expectedIssuer": {
+                "label": "身份提供方 issuer",
+                "description": "填写身份提供方 OpenID Connect 配置中的精确 issuer。路径和末尾的 / 必须一致。这不是令牌接口地址。"
+            }
+        }
+    },
+    "passkeys-drawer": {
+        "component": {
+            "passkeys": "通行密钥",
+            "no-passkeys-registered-yet": "尚无通行密钥注册",
+            "add-passkeys-description": "添加您的第一个通行密钥以启用无密码登录您的设备",
+            "register": "注册",
+            "last-used-at": "上次使用时间"
+        }
+    },
+    "branding-settings-card": {
+        "widget": {
+            "customize-your-remnawave-instance": "自定义您的 Remnacust 实例",
+            "branding-settings": "商标设置",
+            "the-title-that-will-be-displayed-on-login-page": "登录页面显示的标题",
+            "brand-name": "品牌名称",
+            "the-url-to-your-brand-logo-image": "品牌标志图片的 URL。支持普通 http(s) URL 或 base64 数据 URL（data:image/svg+xml;base64,...）。",
+            "colored-title-format": "彩色标题格式",
+            "colored-title-description": "您可以使用 {color}文字 语法为单个单词着色。支持十六进制颜色 (#RRGGBB) 和 MantineUI 颜色名称。",
+            "example-hex-colors": "十六进制颜色示例",
+            "example-mantine-colors": "MantineUI颜色示例",
+            "example-mixed": "混合颜色示例",
+            "color-format-note": "💡 颜色仅适用于标记后面的单词。没有标记，文本将为白色。"
+        }
+    },
+    "experimental-settings-card": {
+        "widget": {
+            "experimental-features": "实验功能",
+            "description": "仍在开发中的功能，可能随时更改或移除。",
+            "legacy-layout-style": "旧版布局"
+        }
+    },
+    "api-tokens-card": {
+        "widget": {
+            "api-tokens-description": "管理您的 API Token用于程序访问。",
+            "api-tokens": "API Tokens",
+            "no-api-tokens-found": "未找到 API Tokens",
+            "token-name": "Tokens 名称",
+            "create-api-token": "创建 API 令牌",
+            "full-access": "完全访问",
+            "col-scopes": "权限范围",
+            "col-created": "创建时间",
+            "col-expires": "过期",
+            "expired": "已过期",
+            "expires-in-days": "有效期（天）",
+            "one-time-notice": "出于安全原因，令牌仅在创建后<emphasis>显示一次</emphasis>。请复制并妥善保存，之后无法再次查看。"
+        }
+    },
+    "external-squads-hosts": {
+        "tab": {
+            "widget": {
+                "host-overrides": "主机覆写",
+                "override-host-settings-for-this-external-squad": "覆盖此外部分组的主机设置."
+            }
+        }
+    },
+    "reset-usage-user": {
+        "feature": {
+            "reset-usage": "重置使用量"
+        }
+    },
+    "help-action-icon": {
+        "shared": {
+            "help-article": "帮助"
+        }
+    },
+    "internal-squad-card": {
+        "widget": {
+            "available-nodes": "可用节点"
+        }
+    },
+    "help-drawer": {
+        "shared": {
+            "failed-to-load-documentation": "无法加载文档"
+        }
+    },
+    "external-squads-response-headers": {
+        "widget": {
+            "response-headers": "请求头",
+            "headers-inherited-description": "默认从订阅主设置继承响应头。",
+            "add-headers": "添加响应头",
+            "add-headers-description": "此处的响应头会添加到继承的响应头中。如果主设置已有同名键，则会覆盖。",
+            "remove-headers": "移除响应头",
+            "remove-headers-description": "此处列出的响应头键将从响应中移除，即使主设置提供了这些键。",
+            "enter-header-key": "输入响应头键"
+        }
+    },
+    "subscription-hwid-settings": {
+        "widget": {
+            "hwid-card-description": "在启用 HWID 功能之前仔细阅读文档。并非所有客户端应用程序都支持此功能。",
+            "hwid-settings": "HWID 设置",
+            "hwid-limit": "HWID 限制",
+            "fallback-device-limit-description": "输入可以通过订阅同时使用的最大设备数量",
+            "fallback-device-limit": "回退设备限制",
+            "max-devices-announce-description": "输入用户达到设备同时最大使用数量时将显示的消息",
+            "max-devices-announce": "最多设备通知",
+            "max-200-characters": "最多为200字符"
+        }
+    },
+    "external-squads-hwid-settings": {
+        "tab": {
+            "widget": {
+                "hwid-settings-override": "HWID 设置覆盖",
+                "override-hwid-description": "覆盖此外部分组的 HWID 设备限制设置。禁用时，将使用全局订阅设置。",
+                "enable-hwid-override": "启用 HWID 覆盖"
+            }
+        }
+    },
+    "external-squads-custom-remarks": {
+        "widget": {
+            "override-remarks-description": "覆盖此外部分组的用户状态注释。禁用时，将使用全局订阅设置。",
+            "enable-override": "启用覆写"
+        }
+    },
+    "subscription-user-remarks-card": {
+        "widget": {
+            "contact-support": "联系支持人员",
+            "subscription-limited": "订阅已受限",
+            "no-hosts-found": "未找到主机",
+            "deny-new-devices": "已禁止注册新设备",
+            "traffic-paused": "流量已暂时阻断",
+            "empty-hosts": "清空主机",
+            "hwid-max-devices-exceeded": "HWID：超过最大设备数量",
+            "hwid-not-supported": "HWID：不支持",
+            "combine-status-hwid": "合并订阅状态与 HWID 封禁信息",
+            "combine-status-hwid-description": "同时显示订阅状态和设备封禁信息。",
+            "remark-order": "消息顺序",
+            "subscription-expired": "订阅已过期",
+            "subscription-disabled": "订阅已停用",
+            "hwid-blocked": "设备已封禁（HWID）"
+        }
+    },
+    "multi-select-nodes": {
+        "feature": {
+            "profile-and-inbounds": "个人资料和入站"
+        }
+    },
+    "use-nodes-table-widget": {
+        "online": "在线",
+        "traffic-used": "流量使用",
+        "config-profile": "配置文件",
+        "xray-v": "Xray 版本",
+        "node-v": "节点 V.",
+        "provider": "服务商",
+        "total-ram": "内存总数",
+        "cpu-model": "CPU 型号"
+    },
+    "subpage-config-visual-editor": {
+        "widget": {
+            "configuration-saved-successfully": "配置保存成功",
+            "edit-your-subscription-page-configuration": "编辑您的订阅页面配置",
+            "subpage-editor": "订阅页面编辑器",
+            "brand-appearance": "商标外观",
+            "branding": "商标",
+            "brand-title": "商标标题",
+            "your-brand-name": "您的商标名称",
+            "support-url": "支持 URL",
+            "additional-languages": "其它语言",
+            "localization": "本地化设置",
+            "ui-configuration": "界面配置",
+            "subscription-info-block-design": "订阅信息块设计",
+            "configure-apps-for-each-platform": "配置各个平台的应用程序",
+            "platforms": "平台",
+            "add-platform": "添加平台",
+            "no-platforms-configured": "未配置平台",
+            "add-a-platform-to-get-started": "添加一个平台以开始",
+            "open-svg-library": "打开 SVG 库",
+            "installation-guides-design": "安装指南标题"
+        },
+        "subpage-config-saved-line-1": "若要应用更改，请重启Remnacust 订阅页面容器。",
+        "subpage-config-saved-line-2": "例如，您可以在终端中使用以下命令："
+    },
+    "app-editor-drawer-content": {
+        "component": {
+            "app-settings": "应用设置",
+            "featured": "精选",
+            "app-name": "应用名称",
+            "blocks": "块",
+            "add-block": "添加块"
+        }
+    },
+    "block-editor": {
+        "modal": {
+            "component": {
+                "untitled-block": "未命名块",
+                "edit-block": "编辑块",
+                "block-settings": "块设置",
+                "icon-color": "图标颜色",
+                "icon-color-help": "您可以使用任何 Mantine 主题颜色（{{colors}}）或任何有效的十六进制颜色代码（例如：#009688）。",
+                "title": "标题",
+                "buttons": "按钮",
+                "add-button": "添加按钮"
+            }
+        }
+    },
+    "button-editor": {
+        "component": {
+            "link": "链接",
+            "type": "类型",
+            "button-text": "按钮文本",
+            "link-placeholder": "https:// 或 app://"
+        }
+    },
+    "localized-text-editor": {
+        "component": {
+            "done": "完成"
+        }
+    },
+    "platform-editor": {
+        "component": {
+            "platform-svg-icon": "平台 SVG 图标",
+            "display-name": "显示名称",
+            "apps": "应用程序",
+            "add-app": "添加应用程序",
+            "unnamed-app": "未命名应用",
+            "edit-app": "编辑应用程序"
+        }
+    },
+    "svg-icon-select": {
+        "component": {
+            "select-icon": "选择图标...",
+            "no-icons-in-library": "库中没有图标"
+        }
+    },
+    "svg-library-modal": {
+        "component": {
+            "svg-library": "SVG 库",
+            "add-icon": "添加图标",
+            "add-icons-to-use-them-in-blocks-and-buttons": "添加图标以便在方块和按钮中使用",
+            "edit-icon": "编辑图标",
+            "only-latin-characters-no-spaces": "仅拉丁字符，无空格",
+            "only-latin-characters-allowed": "只允许拉丁字符",
+            "icon-key": "图标键值",
+            "svg-code": "SVG 代码",
+            "preview": "预览",
+            "where-to-find-icons": "从哪里找到图标？",
+            "you-can-find-beautiful-icons-at": "你可以找到精致的图标在",
+            "where-to-find-icons-description": "点击任何图标，选择\"复制 SVG\"并粘贴到这里。请确保选择\"轮廓\" 或 \"填充\" 样式。"
+        }
+    },
+    "external-squads-subpage-config": {
+        "tab": {
+            "widget": {
+                "subscription-page-config": "订阅页面配置",
+                "subscription-page-config-description": "您可以覆盖这个外部分组的订阅页面配置(Remnacust 订阅页面)。",
+                "subpage-config": "订阅页面配置",
+                "select-config": "选择配置..."
+            }
+        }
+    },
+    "subpage-config-editor-page": {
+        "component": {
+            "import-config": "导入配置",
+            "download-config": "下载配置",
+            "importing-config": "导入配置",
+            "this-may-take-a-while": "这可能需要一点时间。",
+            "config-imported-successfully": "配置导入成功",
+            "failed-to-parse-config-file": "解析配置文件失败"
+        }
+    },
+    "base-translations-drawer": {
+        "component": {
+            "base-translations": "基础翻译",
+            "completed": "{{count}}/{{total}} 已完成"
+        }
+    },
+    "statistic-sparkline-card": {
+        "widget": {
+            "peak": "最高单日使用量"
+        }
+    },
+    "base-settings-block": {
+        "component": {
+            "base-settings": "基础设置",
+            "meta-title": "元标题",
+            "meta-description": "元描述",
+            "show-connection-keys": "显示连接密钥",
+            "show-or-hide-raw-connection-keys": "是否显示原始连接密钥",
+            "hide-get-link-button": "隐藏“获取链接”按钮",
+            "hide-the-get-link-button-top-right-corner": "从右上角隐藏“获取链接”按钮"
+        }
+    },
+    "import-config-sections": {
+        "modal": {
+            "import-options-description": "选择您想要从配置文件导入的内容",
+            "replace-entire-config-with-imported-one": "用导入的配置替换整个配置",
+            "full-import": "全部导入",
+            "partial-import": "部分导入",
+            "merge-svg-library": "将 {{0}} 图标合并到您的收藏中 ({{1}} 存在)",
+            "import-svg-library": "导入 SVG 库",
+            "import-platforms-descriptions": "替换平台、本地、翻译 + 合并SVG 库",
+            "import-platforms": "导入平台",
+            "replace-base-translation-and-locales": "替换基础翻译和语言",
+            "import-base-translations": "导入基础翻译"
+        }
+    },
+    "revoke-subscription-user": {
+        "feature": {
+            "full-revoke": "完全撤销",
+            "revoke": "撤销",
+            "passwords-only": "仅密码",
+            "passwords-only-description": "只重新生成连接密码，订阅URL保持相同",
+            "full-revoke-description": "重新生成订阅的 URL 和连接密码"
+        }
+    },
+    "nodes-quick-stats": {
+        "widget": {
+            "users-online": "在线用户",
+            "online-nodes": "在线节点"
+        }
+    },
+    "template-info-popover": {
+        "shared": {
+            "template-variables": "模板变量",
+            "available-variables-are-listed-below": "以下列出了可用变量。",
+            "you-can-use-template-variables-in-this-field": "您可以在此字段中使用模板变量。",
+            "descriptions": {
+                "DAYS_LEFT": "订阅到期前的完整天数。到期后返回 0。",
+                "TRAFFIC_USED": "当前周期已消耗的订阅总配额，包含 GiB 等单位。",
+                "TRAFFIC_LEFT": "剩余订阅总配额，包含单位。耗尽或无限制时返回 0。",
+                "TRAFFICLOCATIONUSE": "用量 主机. 通用备注按名称列出各项数值。",
+                "TRAFFICLOCATIONUSETEG": "用量 标签；无适用标签时使用主机. 通用备注按名称列出各项数值。",
+                "TRAFFICLOCATIONLIMIT": "限额 主机. 通用备注按名称列出各项数值。",
+                "TRAFFICLOCATIONLIMITTEG": "限额 标签；无适用标签时使用主机. 通用备注按名称列出各项数值。",
+                "TRAFFICLOCATIONLEFT": "剩余量 主机. 通用备注按名称列出各项数值。",
+                "TRAFFICLOCATIONLEFTTEG": "剩余量 标签；无适用标签时使用主机. 通用备注按名称列出各项数值。",
+                "TRAFFICLOCATIONRESETAT": "下次配额重置日期： 主机. UTC 时间；支持 format；∞ 表示没有计划重置。",
+                "TRAFFICLOCATIONRESETATTEG": "下次配额重置日期： 标签；无适用标签时使用主机. UTC 时间；支持 format；∞ 表示没有计划重置。",
+                "STATUS": "考虑订阅到期后的用户状态：活跃、已禁用、已限额或已过期。可通过相应状态参数覆盖标签。",
+                "TOTAL_TRAFFIC": "订阅总流量限制，包含 GiB 等单位。0 表示无限制。",
+                "USERNAME": "用户在面板中的用户名。",
+                "EMAIL": "用户电子邮件地址。未设置时为空。",
+                "TELEGRAM_ID": "用户的数字 Telegram ID。未设置时为空。",
+                "SUBSCRIPTION_URL": "用户的完整 HTTPS 订阅 URL。",
+                "TAG": "用户标签，不是主机标签。未设置时为空。",
+                "EXPIRE_UNIX": "订阅到期时间的 Unix 时间戳：自 1970 年 1 月 1 日起的秒数。",
+                "SHORT_UUID": "订阅 URL 中使用的用户短标识符。",
+                "ID": "用户在面板中的内部数字 ID。",
+                "TRAFFIC_USED_BYTES": "当前周期已消耗的订阅总配额，以精确字节数表示。",
+                "TRAFFIC_LEFT_BYTES": "剩余订阅总配额，单位为字节。耗尽或无限制时返回 0。",
+                "TOTAL_TRAFFIC_BYTES": "订阅总流量限制，单位为字节。0 表示无限制。",
+                "RESET_STRATEGY": "订阅总配额重置规则：NO_RESET、DAY、WEEK、MONTH 或 MONTH_ROLLING。可通过这些参数覆盖标签。",
+                "LIFETIME_USED_BYTES": "用户历来总流量用量，单位为字节，包含以往周期。",
+                "CREATED_AT_UNIX": "用户创建时间的 Unix 时间戳，单位为秒。",
+                "LAST_TRAFFIC_RESET_AT_UNIX": "上次总流量重置的 Unix 时间戳，单位为秒。从未重置时返回 0。",
+                "LAST_TRAFFIC_RESET_AT": "上次总流量重置日期。默认为 DD.MM.YYYY，支持 format。从未重置时为空。",
+                "NEXT_TRAFFIC_RESET_AT_UNIX": "按重置规则计算的下次总配额重置 Unix 时间戳，单位为秒。禁用自动重置时返回 0。",
+                "NEXT_TRAFFIC_RESET_AT": "下次总配额重置日期。默认为 DD.MM.YYYY，支持 format。禁用自动重置时为空。",
+                "SS_HWID_LIMIT": "用户设备限制。未设置单独限制时使用订阅设置。0 表示无限制。",
+                "DESCRIPTION": "面板中的用户描述。未设置时为空。",
+                "HOST_SPEED": "每用户速率限制，单位为 Mbps，取主机或标签中最严格的限制。主机备注仅显示自身速率；全局备注列出可用主机。0 Mbps 表示无限制。这不是实测速率或主机共享限速。",
+                "SUBSCRIPTION_LINK": "订阅页面按钮使用的用户订阅链接。",
+                "HAPP_CRYPT3_LINK": "订阅页面按钮使用的 Happ crypt3 格式订阅链接。",
+                "HAPP_CRYPT4_LINK": "订阅页面按钮使用的 Happ crypt4 格式订阅链接。",
+                "INCY_CRYPT1_LINK": "订阅页面按钮使用的 Incy crypt1 格式订阅链接。",
+                "TRAFFICLOCATIONUSEDMB": "用量 主机 单位为 MB. 仅输出数字，不带单位后缀；以 1024 为基数，最多 3 位小数。 通用备注按名称列出各项数值。",
+                "TRAFFICLOCATIONUSEDMBTEG": "用量 标签；无适用标签时使用主机 单位为 MB. 仅输出数字，不带单位后缀；以 1024 为基数，最多 3 位小数。 通用备注按名称列出各项数值。",
+                "TRAFFICLOCATIONUSEDGB": "用量 主机 单位为 GB. 仅输出数字，不带单位后缀；以 1024 为基数，最多 3 位小数。 通用备注按名称列出各项数值。",
+                "TRAFFICLOCATIONUSEDGBTEG": "用量 标签；无适用标签时使用主机 单位为 GB. 仅输出数字，不带单位后缀；以 1024 为基数，最多 3 位小数。 通用备注按名称列出各项数值。",
+                "TRAFFICLOCATIONLIMITMB": "限额 主机 单位为 MB. 仅输出数字，不带单位后缀；以 1024 为基数，最多 3 位小数。 通用备注按名称列出各项数值。",
+                "TRAFFICLOCATIONLIMITMBTEG": "限额 标签；无适用标签时使用主机 单位为 MB. 仅输出数字，不带单位后缀；以 1024 为基数，最多 3 位小数。 通用备注按名称列出各项数值。",
+                "TRAFFICLOCATIONLIMITGB": "限额 主机 单位为 GB. 仅输出数字，不带单位后缀；以 1024 为基数，最多 3 位小数。 通用备注按名称列出各项数值。",
+                "TRAFFICLOCATIONLIMITGBTEG": "限额 标签；无适用标签时使用主机 单位为 GB. 仅输出数字，不带单位后缀；以 1024 为基数，最多 3 位小数。 通用备注按名称列出各项数值。",
+                "TRAFFICLOCATIONLEFTMB": "剩余量 主机 单位为 MB. 仅输出数字，不带单位后缀；以 1024 为基数，最多 3 位小数。 通用备注按名称列出各项数值。",
+                "TRAFFICLOCATIONLEFTMBTEG": "剩余量 标签；无适用标签时使用主机 单位为 MB. 仅输出数字，不带单位后缀；以 1024 为基数，最多 3 位小数。 通用备注按名称列出各项数值。",
+                "TRAFFICLOCATIONLEFTGB": "剩余量 主机 单位为 GB. 仅输出数字，不带单位后缀；以 1024 为基数，最多 3 位小数。 通用备注按名称列出各项数值。",
+                "TRAFFICLOCATIONLEFTGBTEG": "剩余量 标签；无适用标签时使用主机 单位为 GB. 仅输出数字，不带单位后缀；以 1024 为基数，最多 3 位小数。 通用备注按名称列出各项数值。",
+                "TRAFFIC_USED_MB": "订阅总配额的当前周期已用量，固定单位 MB，以 1024 为基数，最多 3 位小数。",
+                "TRAFFIC_USED_GB": "订阅总配额的当前周期已用量，固定单位 GB，以 1024 为基数，最多 3 位小数。",
+                "TRAFFIC_LEFT_MB": "订阅总配额的剩余量，固定单位 MB，以 1024 为基数，最多 3 位小数。耗尽或无限制时返回 0。",
+                "TRAFFIC_LEFT_GB": "订阅总配额的剩余量，固定单位 GB，以 1024 为基数，最多 3 位小数。耗尽或无限制时返回 0。",
+                "TOTAL_TRAFFIC_MB": "订阅总配额的总流量限制，固定单位 MB，以 1024 为基数，最多 3 位小数。0 表示无限制。",
+                "TOTAL_TRAFFIC_GB": "订阅总配额的总流量限制，固定单位 GB，以 1024 为基数，最多 3 位小数。0 表示无限制。"
+            }
+        }
+    },
+    "user-active-session-drawer": {
+        "widget": {
+            "drop-all-user-connections-all-nodes": "丢弃所有用户连接(所有节点)",
+            "drop-all-user-connections-this-node": "丢弃所有用户连接(此节点)",
+            "drop-this-connection-on-this-node": "在此节点上丢弃此连接"
+        }
+    },
+    "contact-information-card": {
+        "contact-information": "连接信息"
+    },
+    "traffic-limits-card": {
+        "traffic-and-limits": "流量限制",
+        "traffic-limit-description": "0 表示无限制",
+        "traffic-limit": "流量限制"
+    },
+    "node-vitals": {
+        "card": {
+            "plugin": "插件",
+            "review-documentation-for-more-information": "更多信息请参阅文档。",
+            "nothing-found": "未找到结果…",
+            "select-plugin": "选择插件",
+            "proxy-url": "代理 URL",
+            "proxy-url-description": "可选。设置后，面板到节点的内部 API 连接将通过此代理。"
+        }
+    },
+    "node-plugin-card": {
+        "widget": {
+            "active-on-nodes": "已在节点上启用"
+        }
+    },
+    "active-on-nodes": {
+        "modal": {
+            "shared": {
+                "this-plugin-is-not-active-on-any-nodes": "此插件未在任何节点启用。"
+            }
+        }
+    },
+    "node-plugins-grid": {
+        "widget": {
+            "node-plugins-are-an-advanced-feature-please-review-the-documentation-before-use": "节点插件是高级功能，使用前请阅读文档。",
+            "no-node-plugins-yet": "暂无节点插件",
+            "create-a-plugin-to-extend-node-capabilities-with": "创建插件以扩展节点功能，使用"
+        }
+    },
+    "node-plugin-executor": {
+        "content": {
+            "enter-at-least-one-ip-address": "请至少输入一个 IP 地址。",
+            "block-specific-ip-addresses-on-selected-nodes": "阻止所选节点上的指定 IP 地址",
+            "block-ips": "阻止 IP",
+            "remove-ip-blocks-on-selected-nodes": "解除所选节点上的 IP 阻止",
+            "unblock-ips": "解除 IP 阻止",
+            "executor-description": "IP 阻止是临时的，仅保留至节点或核心重启。更改插件配置也可能重置阻止规则。",
+            "recreate-nftables-rules-on-selected-nodes": "在所选节点上重新创建 nftables 规则",
+            "recreate-tables": "重新创建表",
+            "block-ips-description": "每行一项。超时 0 表示阻止至重启。",
+            "unblock-ips-description": "每行一个 IP 地址。",
+            "ips-to-block": "要阻止的 IP",
+            "ips-to-unblock": "要解除阻止的 IP",
+            "format-one-per-line": "格式（每行一项）：",
+            "no-connected-nodes-available": "没有可用的已连接节点。",
+            "deselect-all": "取消全选",
+            "execute": "执行"
+        }
+    },
+    "torrent-blocker-stats": {
+        "widget": {
+            "total-reports": "报告总数",
+            "distinct-nodes": "不同节点数",
+            "distinct-users": "不同用户数",
+            "last-24-hours": "最近 24 小时",
+            "by-report-count": "按报告数量",
+            "top-users": "用户排行"
+        }
+    },
+    "torrent-blocker-reports-table": {
+        "widget": {
+            "truncate-reports": "清空报告",
+            "truncate-reports-description": "将永久删除所有 BT 拦截报告。"
+        }
+    },
+    "node-active-session": {
+        "item": {
+            "widget": {
+                "view-user": "查看用户"
+            }
+        }
+    },
+    "node-active-sessions": {
+        "drawer": {
+            "widget": {
+                "active-users-on-this-node": "此节点上的活跃用户"
+            }
+        }
+    },
+    "nodes-datatable": {
+        "widget": {
+            "column-width": "列宽",
+            "column-order": "列顺序",
+            "column-toggle": "显示/隐藏列"
+        }
+    },
+    "user-torrent-blocker-report-item": {
+        "processed-at": "处理时间",
+        "unblocked-at": "解除阻止时间"
+    },
+    "get-user-torrent-blocker-reports": {
+        "feature": {
+            "blocker-reports": "BT 拦截报告"
+        }
+    },
+    "user-torrent-blocker-reports": {
+        "drawer": {
+            "widget": {
+                "total-reports": "报告总数"
+            }
+        }
+    },
+    "user-subscription-requests-drawer": {
+        "widget": {
+            "total-records": "记录总数"
+        }
+    },
+    "sessions-explorer-idle": {
+        "description-1": "操作耗时取决于节点和用户数量。为避免后端过载，会依次获取会话。",
+        "start-exploring": "开始检查"
+    },
+    "sessions-explorer-progress": {
+        "exploring-nodes": "正在检查节点…",
+        "nodes-processed": "已处理 {{completed}} / {{total}} 个节点",
+        "nodes-failed": "{{count}} 个失败"
+    },
+    "sessions-explorer": {
+        "widget": {
+            "all-nodes-failed-to-return-session-data": "所有节点均未能返回会话数据。",
+            "total-ips": "IP 总数",
+            "unique-ips": "唯一 IP 数",
+            "nodes-explored": "已检查节点",
+            "total-users": "用户总数",
+            "restart-scan": "重新扫描",
+            "clear-results": "清空结果",
+            "search-by-ip": "按 IP 地址搜索…",
+            "no-results-for-ip": "未找到 IP 匹配“{{ip}}”的用户"
+        }
+    },
+    "mobile-stats": {
+        "widget": {
+            "upcoming": "即将到来",
+            "per-month": "每月",
+            "total-spent": "合计花费"
+        }
+    },
+    "mobile-providers-list": {
+        "widget": {
+            "invoices": "账单"
+        }
+    },
+    "mobile-infra-billing": {
+        "widget": {
+            "history": "历史",
+            "providers": "服务商"
+        }
+    },
+    "hosts-datatable": {
+        "widget": {
+            "reset-sort": "重置排序"
+        }
+    },
+    "columns-visibility-popover": {
+        "show-all": "显示全部",
+        "hide-all": "隐藏全部"
+    },
+    "use-hosts-table-widget": {
+        "disabled": "已禁用",
+        "enabled": "已启用",
+        "hidden": "已隐藏",
+        "visible": "可见"
+    },
+    "node-tracking-and-billing": {
+        "card": {
+            "note": "备注"
+        }
+    },
+    "node-ips": {
+        "add-ip": "添加 IP",
+        "remove-ip": "移除 IP",
+        "invalid-ip": "不是有效的 IPv4 或 IPv6 地址",
+        "ip-is-required": "必须填写 IP 地址",
+        "max-ips-reached": "最多 {{max}} 个 IP 地址",
+        "no-ips-yet": "暂无 IP 地址"
+    },
+    "node-ip-statuses": {
+        "inbound": "入站",
+        "outbound": "出站",
+        "management": "管理",
+        "transit": "中转",
+        "monitoring": "监控",
+        "reserve": "备用",
+        "blocked": "禁止访问",
+        "flagged": "已标记",
+        "deprecated": "已弃用",
+        "unknown": "未知"
+    },
+    "node-consumption": {
+        "card": {
+            "node-consumption-multiplier-1": "将所选倍率应用于节点流量（1.0 = 正常，0.5 = 一半，2.0 = 两倍）。",
+            "node-consumption-multiplier-2": "主要用于开启流量跟踪时准确显示用量限制。节点用量倍率不影响图表中的详细统计。",
+            "node-consumption-multiplier": "节点用量倍率",
+            "user-consumption-multiplier": "用户用量倍率"
+        }
+    },
+    "keypair-generator": {
+        "widget": {
+            "generate": "生成",
+            "short-id-help": "16 个十六进制字符（8 个随机字节）。REALITY 服务端使用 shortIds，客户端使用 shortId。",
+            "server-config": "服务端配置",
+            "public-key-help": "在 X25519 中，password 是公钥的另一种名称，两者的值相同。",
+            "all-values": "所有值"
+        }
+    },
+    "bulk-all-users-actions": {
+        "modal": {
+            "perform-actions-on-all-users": "对所有用户执行操作"
+        }
+    },
+    "backend-tools-card": {
+        "widget": {
+            "queue-viewer": "队列查看器",
+            "queue-viewer-description": "监控和管理后台任务队列。",
+            "scalar-description": "现代交互式 API 文档。",
+            "swagger-description": "经典 OpenAPI 文档浏览器。",
+            "backend-tools-description": "访问队列查看器、Scalar 或 Swagger。",
+            "login": "登录",
+            "backend-tools": "后端工具"
+        }
+    },
+    "http-stats": {
+        "page": {
+            "component": {
+                "http-stats-description": "自面板上次重启以来各 API 路由的累计请求数。"
+            }
+        }
+    },
+    "http-stats-table": {
+        "widget": {
+            "total-requests": "请求总数",
+            "tracked-routes": "已跟踪路由",
+            "peak-requests": "最高请求数",
+            "avg-route": "平均 / 路由"
+        }
+    },
+    "node-inbounds-hosts-drawer": {
+        "widget": {
+            "no-active-config-profile": "此节点没有活动配置档",
+            "linked": "已关联"
+        }
+    },
+    "node-integrations": {
+        "modal": {
+            "title": "节点集成",
+            "delete-description": "将从所有节点移除此集成，并重启受影响的节点。"
+        },
+        "editor": {
+            "description-placeholder": "此集成的用途",
+            "config-must-be-an-object": "配置必须是 JSON 对象"
+        },
+        "select": {
+            "label": "集成",
+            "placeholder": "选择集成"
+        }
+    },
+    "shared-lists": {
+        "modal": {
+            "subtitle": "可复用的 IP 和 ASN 列表，插件使用 ext:name 引用",
+            "delete-description": "列表将被删除。引用它的插件仍保留 ext: 引用，在修复前无法通过验证。"
+        },
+        "editor": {
+            "name-description": "插件通过 ext:name 引用。创建后无法修改。"
+        }
+    },
+    "apply-to-nodes": {
+        "title": "应用到节点？",
+        "apply": "立即应用",
+        "apply-description": "受影响的节点立即接收新配置。",
+        "later": "以后再说",
+        "later-description": "保存更改，但节点在下次同步或重启前继续使用当前版本。"
+    },
+    "node-geocheck": {
+        "title": "GeoCheck",
+        "source-default": "默认",
+        "default-placeholder": "自动",
+        "default-description": "节点将使用默认出站路由。",
+        "ip-description": "选择节点 IP 或输入任意地址",
+        "interface-description": "选择节点接口或输入任意名称",
+        "run": "运行检查",
+        "running": "正在运行 GeoCheck",
+        "running-description": "节点正在测试连接，通常需要最多一分钟。",
+        "failed-description": "节点无法完成 GeoCheck。",
+        "view-image": "报告",
+        "no-image": "报告中无图片，请打开 JSON",
+        "requires-node-version": "适用于 Remnacust Node {{remnacustVersion}}+ 或 Remnawave Node {{version}}+"
+    },
+    "quick-open": {
+        "page": {
+            "description": "通过标识符打开任意对象，或复制直达链接分享"
+        }
+    },
+    "node-ssh": {
+        "title": "SSH 终端",
+        "key-imported": "您的密钥",
+        "key-description-imported": "使用您导入的密钥签名，密钥不会离开浏览器。请确保公钥已加入服务器的 authorized_keys。",
+        "key-use-own": "使用自己的密钥",
+        "key-generate-new": "生成新密钥",
+        "key-import": "导入密钥",
+        "key-import-title": "使用自己的密钥",
+        "key-import-label": "私钥",
+        "key-import-description": "密钥加密保存在此浏览器的密钥库中。不支持带密码的密钥。",
+        "key-error": {
+            "encrypted": "此密钥受密码保护。请移除密码或导入无密码副本。",
+            "malformed": "无法读取密钥。请复制完整文件，包括 BEGIN 和 END 行。",
+            "unsupported-algo": "仅支持 Ed25519 和 RSA 密钥。",
+            "unsupported-format": "这似乎不是私钥文件。"
+        },
+        "vault-setup-title": "设置密钥库",
+        "vault-unlock-title": "解锁密钥库",
+        "seed-warning": "请记下这 12 个单词并离线保存。这是恢复 SSH 密钥的唯一方法；面板无法看到这些词，也无法替您恢复。",
+        "create-vault": "创建密钥库",
+        "unlock": "解锁",
+        "unlock-description": "请输入创建密钥库时保存的 12 个单词。",
+        "seed-invalid": "这不是有效的 12 词恢复短语",
+        "seed-mismatch": "此短语与浏览器中保存的密钥库不匹配",
+        "key-title": "安装公钥",
+        "key-description": "已为此节点生成专用密钥，密钥不会离开浏览器。请将下方内容添加至服务器的 authorized_keys，然后连接。",
+        "authorized-keys": "authorized_keys 条目",
+        "host": "主机",
+        "host-hint": "留空以使用节点地址",
+        "connect": "连接",
+        "hostkey-new-title": "未知主机密钥",
+        "hostkey-new-description": "这是此浏览器首次连接该主机。信任前请通过独立渠道验证指纹。",
+        "hostkey-changed-title": "主机密钥已更改",
+        "hostkey-changed-description": "主机密钥与之前信任的密钥不一致。这可能意味着服务器被重装，也可能有人正在拦截连接。",
+        "fingerprint": "指纹",
+        "known-fingerprint": "先前信任的密钥",
+        "trust-and-connect": "信任并连接",
+        "abort": "中止",
+        "disconnected": "会话已关闭",
+        "passcode-required-description": "设置密码后才能在此浏览器中使用密钥库，也无需每次输入恢复短语。",
+        "passcode-save": "保存密码",
+        "passcode-title": "为此浏览器设置密码",
+        "passcode-description": "用于刷新后解锁此浏览器中的密钥库。",
+        "passcode-length": "{{length}} 个字符，至少包含一个字母。",
+        "passcode-needs-letter": "请至少添加一个字母。",
+        "passcode-unlock-description": "请输入为此浏览器设置的密码。",
+        "passcode-wrong": "密码错误",
+        "passcode-attempts": "剩余尝试次数：{{count}}",
+        "passcode-exhausted": "错误尝试过多，密码已停用。请使用恢复短语解锁并设置新密码。",
+        "use-phrase": "忘记密码？",
+        "use-passcode": "返回密码解锁",
+        "connection-settings": "设置",
+        "resize": "调整窗口大小",
+        "retry": "重试",
+        "ticket-failed": "面板拒绝打开会话。",
+        "vault-manage": "管理密钥库",
+        "export": "导出密钥库",
+        "export-locked": "请先解锁密钥库；仅可备份已解锁的密钥库。",
+        "export-description": "保存包含节点密钥和地址的加密文件。没有恢复短语无法读取，可安全保存。",
+        "import": "导入密钥库",
+        "import-description": "从备份文件恢复密钥。请输入创建该备份时的恢复短语。",
+        "import-select": "选择备份文件",
+        "import-ready": "{{date}} 的备份",
+        "create-new-instead": "改为创建新密钥库",
+        "reset-really": "是，删除所有密钥",
+        "import-invalid": "此文件不是密钥库备份",
+        "import-mismatch": "恢复短语无法解锁此备份",
+        "reset": "重置密钥库",
+        "reset-description": "删除密钥库及其中所有 SSH 密钥。私钥将永久丢失，节点上已安装的公钥将无法再使用，您需要为每个节点安装新密钥。面板访问不受影响。",
+        "lost-everything": "密码和恢复短语都丢失了？",
+        "snippets-title": "片段",
+        "snippets-empty": "暂无片段",
+        "snippet-command": "命令",
+        "snippet-add": "添加片段",
+        "snippet-edit": "编辑片段",
+        "connections-title": "已保存的连接",
+        "connections-empty": "暂无已保存的连接",
+        "connections-current": "当前"
+    },
+    "layoutActions": {
+        "oneCardPerRow": "每行一张卡片",
+        "twoCardsPerRow": "每行两张卡片",
+        "showTable": "以表格显示",
+        "showCards": "以卡片显示"
+    },
+    "trafficPaths": {
+        "profile": "配置：{{name}}",
+        "profileActive": "配置：{{name}}（已启用）"
+    },
+    "nodeHealthHistory": {
+        "ok": "正常",
+        "retry": "重试",
+        "unreachable": "无法连接",
+        "xrayMissing": "缺少 Xray 数据",
+        "error": "检查失败"
+    },
+    "nodeLoad": {
+        "title": "平均负载 · 核心数：{{cores}}",
+        "oneMinute": "1 分钟：{{value}}（{{percent}}%）",
+        "fiveMinutes": "5 分钟：{{value}}（{{percent}}%）",
+        "fifteenMinutes": "15 分钟：{{value}}（{{percent}}%）",
+        "thresholds": "0–70% 正常 · 70–100% 偏高 · 超过 100% 过载",
+        "noData": "暂无数据"
+    },
+    "requestErrors": {
+        "templateNameExists": "此类型中已存在同名模板，请选择其他名称。",
+        "unavailable": "无法连接服务器，请稍后重试。",
+        "http-status": "请求失败（HTTP {{status}}）。",
+        "unauthorized": "身份验证失败，请检查登录信息。",
+        "invalidResponse": "服务器响应与当前面板版本不匹配。请刷新页面；如果问题仍然存在，请检查面板和 API 版本。",
+        "forbidden": "您没有执行此操作的权限。",
+        "unknown": "请求意外失败。",
+        "failed": "请求失败。"
+    },
+    "limitsTrafficAction": {
+        "blockHost": "阻止此主机的流量",
+        "unblockHost": "解除此主机的流量阻止",
+        "blockTag": "阻止此标签的流量",
+        "unblockTag": "解除此标签的流量阻止",
+        "blockUser": "阻止该用户的流量",
+        "unblockUser": "解除该用户的流量阻止",
+        "blockedCount": "已阻止流量：{{blocked}} / {{total}} 位接收者"
+    },
+    "interface": {
+        "enter-valid-domain-ip-or-cidr-f42b6cd": "请输入有效的域名、IP 地址或 CIDR 网段。",
+        "ssh-connection-closed-before-operation": "操作开始前 SSH 连接已关闭",
+        "optimization-failed": "优化失败",
+        "routing-rule-description": "路由规则（用于 routing.rules[]）",
+        "navigation-3db65f8": "导航",
+        "close-navigation-99904db": "关闭导航",
+        "oauth2-login-ddeec07": "OAuth2 登录",
+        "unable-to-save-login-state-allow-session-storage-and-try-again-48ef435": "无法保存登录状态。请允许会话存储后重试。",
+        "remnawave-custom-core-02ce687": "Remnacust 自定义核心",
+        "core-url-b8f496b": "核心 URL",
+        "core-sha-256-c0d9ff5": "核心 SHA-256",
+        "remnawave-snippets-5591a07": "Remnacust 片段",
+        "snippet-name-1b08019": "片段名称",
+        "snippet-array-f0eb3d0": "片段数组",
+        "array-of-root-outbound-rule-or-balancer-objects-for-snippets-5b8ba5b": "用于片段的根对象、出站、规则或均衡器对象数组",
+        "outbound-object-9c0af1d": "出站对象",
+        "outbound-configuration-for-outbounds-b1c06c3": "用于 outbounds[] 的出站配置",
+        "rule-object-35c596a": "规则对象",
+        "balancer-object-c0dcb8b": "均衡器对象",
+        "balancer-configuration-for-routing-balancers-a14b13f": "用于 routing.balancers[] 的均衡器配置",
+        "root-object-5ab7a3d": "根对象",
+        "root-level-sections-for-configs-referencing-this-snippet-in-th-07e2f8a": "用于在根级 snippets 数组中引用此片段的配置的根级部分",
+        "move-to-top-349d5d6": "移至顶部",
+        "move-up-c66feb5": "上移",
+        "move-down-40bb50d": "下移",
+        "move-to-bottom-df93376": "移至底部",
+        "update-node-6216b74": "更新节点",
+        "update-node-value-9c42315": "更新节点 · {{value1}}",
+        "close-node-update-9f7e455": "关闭节点更新",
+        "node-directory-87cd969": "节点目录",
+        "directory-containing-docker-compose-yml-953b8bd": "包含 docker-compose.yml 的目录",
+        "node-settings-2f2dfb4": "节点设置",
+        "panel-settings-292ac00": "面板设置",
+        "installs-the-latest-node-image-and-core-over-ssh-requires-root-d74d053": "通过 SSH 更新 docker-compose.yml 中配置的节点镜像。需要 root 或免密码 sudo 权限。请保持 SSH 窗口打开直到完成。",
+        "update-this-node-and-restart-connections-1de075b": "更新此节点并重启连接",
+        "continue-over-ssh-f266499": "通过 SSH 继续",
+        "enter-tags-comma-space-semicolon-ed6e61b": "输入标签，以逗号、空格或分号分隔",
+        "export-users-e875475": "导出用户",
+        "import-users-f8e8e1b": "导入用户",
+        "min-dea7933": "最小值",
+        "max-a1a5936": "最大值",
+        "unit-4e54596": "单位",
+        "active-users-with-sort-47cbe5b": "已排序的活跃用户",
+        "toggle-view-mode-de9a6a9": "切换视图",
+        "executor-bb18675": "任务执行",
+        "oauth2-callback-2493959": "OAuth2 回调",
+        "login-state-is-missing-expired-or-invalid-start-login-again-7630c41": "登录状态缺失、已过期或无效。请重新登录。",
+        "oauth2-authentication-5df84fc": "OAuth2 身份验证",
+        "authenticating-1f6087c": "正在验证身份…",
+        "verifying-credentials-c4c1b4e": "正在验证凭据…",
+        "backups-3334fee": "备份",
+        "encrypted-database-backups-a7d7cca": "加密数据库备份",
+        "incorrect-backup-password-7e314a0": "备份密码错误",
+        "wait-a-minute-and-try-again-20060e1": "请等待一分钟后重试",
+        "could-not-unlock-backups-check-the-backup-verification-key-on--c5ef946": "无法解锁备份。请检查服务器上的备份验证密钥。",
+        "unlock-backups-ad83206": "解锁备份",
+        "enter-your-backup-password-you-will-need-it-again-on-your-next-456b306": "请输入备份密码。下次访问时需要重新输入。",
+        "backup-password-3e39703": "备份密码",
+        "could-not-encrypt-legacy-backups-2ddd492": "无法加密旧备份",
+        "encrypted-zip-backup-created-d2fdf96": "已创建加密 ZIP 备份",
+        "could-not-create-backup-check-the-database-connection-and-avai-c5759c9": "无法创建备份。请检查数据库连接和可用磁盘空间。",
+        "backup-handed-to-the-browser-for-saving-d68a198": "备份已交给浏览器保存",
+        "could-not-download-backup-e909158": "无法下载备份",
+        "password-protected-zip-backups-of-the-panel-database-scheduled-32d6028": "面板数据库的密码保护 ZIP 备份。可将定时备份发送至 Telegram。",
+        "lock-backups-2142035": "锁定备份",
+        "creating-backup-6a9c2e3": "正在创建备份…",
+        "create-zip-backup-8d2606e": "创建 ZIP 备份",
+        "creating-an-encrypted-zip-backup-the-file-will-appear-below-wh-bbda93b": "正在创建加密 ZIP 备份。完成后文件将显示在下方。",
+        "could-not-check-backup-availability-930fb48": "无法检查备份可用性",
+        "retry-942087c": "重试",
+        "legacy-backups-101ec81": "旧备份",
+        "convert-to-encrypted-zip-5e62e37": "转换为加密 ZIP",
+        "unencrypted-legacy-backups-exist-d767a2c": "存在未加密的旧备份",
+        "count-value-these-files-can-be-converted-to-aes-zip-6d38585": "数量：{{value1}}。可将这些文件转换为 AES 加密 ZIP。",
+        "convert-to-aes-zip-3860f5e": "转换为 AES ZIP",
+        "periodic-database-dumps-and-telegram-delivery-84bd8f9": "定期数据库转储并发送至 Telegram",
+        "automation-d909750": "自动化",
+        "off-ca7981b": "关闭",
+        "daily-b36c261": "每天",
+        "automatic-backups-20260929": "自动备份",
+        "weekly-2975132": "每周",
+        "schedule-f4830a1": "计划",
+        "send-to-telegram-4d932ac": "发送至 Telegram",
+        "backups-are-retained-for-up-to-7-days-plain-dumps-are-addition-bdcd58a": "自动备份默认关闭。可设置备份间隔和最长 7 天的保留时间；所有备份均保存在 dumps 中。",
+        "bot-token-5bb9aec": "机器人令牌",
+        "chat-group-id-f310e38": "聊天/群组 ID",
+        "save-settings-7f3a3b1": "保存设置",
+        "no-backups-yet-bb7381f": "暂无备份",
+        "encrypted-f45aef6": "已加密",
+        "unencrypted-d5c2819": "未加密",
+        "download-backup-6692112": "下载备份",
+        "delete-e2d0a54": "删除",
+        "delete-backup-86cf366": "删除备份",
+        "downloading-37b3455": "正在下载",
+        "download-progress-984b84c": "下载进度",
+        "configuration-b332c34": "配置",
+        "canvas-3824a9f": "画布",
+        "history-0e76960": "历史",
+        "select-profile-d42c243": "选择配置档",
+        "all-canvases-51c02d8": "所有画布",
+        "otherwise-first-outbound-73e387d": "否则：第一个出站",
+        "rule-without-conditions-39a0a61": "无条件规则",
+        "client-0c77fe0": "客户端",
+        "access-pending-or-unverified-91dc6c8": "访问待确认或未验证",
+        "illustrative-device-using-subscription-00e0d5b": "使用订阅的示例设备",
+        "status-920e413": "状态",
+        "visible-enabled-hosts-693ffb2": "可见且已启用的主机",
+        "expires-f6725f3": "到期时间",
+        "client-links-appear-only-after-access-is-verified-4c01a81": "验证访问权限后才会显示客户端连接。",
+        "illustrative-client-enter-a-short-id-to-inspect-accessible-hos-6742ba7": "示例客户端：输入短 ID 以查看可访问的主机。",
+        "default-template-0b1bdec": "默认模板",
+        "default-subscription-format-c8f5f80": "默认订阅格式",
+        "hosts-using-template-c4bb011": "使用此模板的主机",
+        "host-uses-the-default-subscription-settings-5faa262": "主机使用默认订阅设置。",
+        "client-profile-outbounds-13e1b05": "客户端配置档出站",
+        "loading-this-client-profile-s-outbounds-and-routes-0fc4a62": "正在加载客户端配置档的出站和路由。",
+        "client-profile-routes-f64f6b4": "客户端配置档路由",
+        "no-rule-matched-105129d": "未匹配任何规则",
+        "client-template-a8cd9ea": "客户端模板",
+        "disabled-79fb364": " · 已禁用",
+        "default-37a8eec": "默认",
+        "subscription-host-5f3e4ca": "订阅主机",
+        "address-56ef8f2": "地址",
+        "inbound-d17a5bd": "入站",
+        "state-a3b50c4": "状态",
+        "disabled-17eb3c0": "已禁用",
+        "enabled-fb9cf75": "已启用",
+        "in-subscription-a4d7dfe": "订阅中",
+        "hidden-e564b40": "已隐藏",
+        "visible-d42ef14": "可见",
+        "host-nodes-b17b61e": "主机节点",
+        "path-62fa5a5": "路径",
+        "host-domain-rules-0c0ad3c": "主机域名规则",
+        "brutal-target-speed-56b4f37": "Brutal 目标速率",
+        "accessible-inbounds-value-cded6a4": "可访问的入站：{{value1}}",
+        "inbounds-from-this-profile-711baf6": "此配置档中的入站",
+        "the-squad-grants-access-to-its-assigned-users-d287010": "小组向其成员授予访问权限。",
+        "config-profile-ee4e7b6": "配置档",
+        "inbounds-ccb7185": "入站",
+        "nodes-7ac3620": "节点",
+        "rules-4228aeb": "规则",
+        "outbounds-4788f08": "出站",
+        "config-sections-f9feceb": "配置部分",
+        "tags-1331275": "标签",
+        "type-baaddf7": "类型",
+        "port-72e9a59": "端口",
+        "network-1744b96": "网络",
+        "security-8f6fb4e": "安全",
+        "sniffing-9b17029": "流量嗅探",
+        "active-on-nodes-21240c8": "启用此项的节点",
+        "hosts-bba9af1": "主机",
+        "squads-258027a": "小组",
+        "exit-ip-not-listed-9848d0f": "未列出出口 IP",
+        "profile-relation-848c037": "配置档关联",
+        "assigned-directly-3cf81d0": "直接分配",
+        "listed-by-host-profile-not-assigned-70630de": "主机中已列出，但未分配配置档",
+        "inbound-ips-2dcc83e": "入站 IP",
+        "outbound-ips-fda66c2": "出站 IP",
+        "active-inbounds-9d8a08c": "活动入站",
+        "provider-472590a": "服务商",
+        "used-when-no-earlier-rule-matches-e9bc9a6": "未匹配前面的规则时使用。",
+        "evaluation-order-8c0c5f6": "评估顺序",
+        "selects-outbound-by-prefix-7ef6b10": "按前缀选择出站",
+        "outbound-prefixes-4cdbd5b": "出站前缀",
+        "fallback-outbound-25be968": "备用出站",
+        "the-selected-outbound-depends-on-balancer-state-e104f25": "选中的出站取决于均衡器状态。",
+        "client-profile-balancer-70c7415": "客户端配置档均衡器",
+        "direct-exits-from-node-5b4fc83": "DIRECT · 从节点出口连接",
+        "block-traffic-dropped-42367b8": "BLOCK · 丢弃流量",
+        "protocol-cf08833": "协议",
+        "server-aef7de2": "服务器",
+        "freedom-final-rules-1e94bd8": "Freedom 最终规则",
+        "block-response-43a0e8f": "阻断响应",
+        "explicit-rules-703ff35": "显式规则",
+        "first-outbound-used-if-no-rules-match-94443f0": "第一个出站：未匹配任何规则时使用。",
+        "blocked-18f2a09": "已阻止",
+        "direct-002c7c6": "直连",
+        "forwarded-to-outbound-04ff29e": "转发至出站",
+        "connection-dropped-9049f3d": "连接已丢弃",
+        "to-destination-from-node-ip-b219404": "从节点 IP 连接目标",
+        "outbound-0277321": "出站",
+        "traffic-is-dropped-by-xray-blackhole-c0aa93d": "流量由 Xray blackhole 丢弃。",
+        "the-node-dials-out-actual-ip-and-destination-depend-on-network-6c6ab19": "节点发起出站连接。实际 IP 和目标取决于网络和出站设置。",
+        "traffic-is-handed-to-this-outbound-the-final-address-is-not-me-671eee5": "流量交给此出站处理；此处不测量最终地址。",
+        "additional-finalrules-may-block-a-direct-connection-08be6b6": "额外的 finalRules 可能阻止直连。",
+        "exits-from-the-client-device-9073cc7": "从客户端设备出口连接",
+        "client-template-outbound-2fca86a": "客户端模板出站",
+        "direct-is-handled-by-the-client-according-to-xray-json-011478f": "客户端根据 XRAY_JSON 处理 DIRECT。",
+        "traffic-is-dropped-c07151a": "流量被丢弃。",
+        "the-route-ends-at-this-client-outbound-dbdea2e": "路由在此客户端出站结束。",
+        "snippet-unresolved-6616234": "片段未解析",
+        "host-disabled-5a8b830": "主机已禁用",
+        "no-allowed-squad-for-its-inbound-a3b1eef": "其入站没有获准的小组",
+        "not-active-on-any-node-4298c77": "未在任何节点启用",
+        "node-disabled-9ed5252": "节点已禁用",
+        "no-matching-outbounds-ccb79ca": "没有匹配的出站",
+        "outbound-not-found-6eb20b6": "找不到出站",
+        "balancer-not-found-b2655a5": "找不到均衡器",
+        "client-profile-e233471": "客户端配置档",
+        "squad-df6163f": "小组",
+        "profile-d696a35": "配置档",
+        "node-e933725": "节点",
+        "profile-rules-in-order-800f3bb": "配置档规则 · 按顺序",
+        "balancer-616a69d": "均衡器",
+        "xray-outbound-9100f3c": "Xray 出站",
+        "outcome-4e80abb": "结果",
+        "profile-canvas-d14ca6b": "配置档画布",
+        "profile-map-1112855": "配置档关系图",
+        "drag-the-empty-canvas-to-pan-use-the-wheel-to-zoom-4a49b93": "拖动画布空白处平移，滚动鼠标滚轮缩放。",
+        "items-5f3c4f8": "项",
+        "exit-fullscreen-37fd4e3": "退出全屏",
+        "fullscreen-c461dbb": "全屏",
+        "canvas-layer-391f9d9": "画布图层",
+        "all-a52ace4": "全部",
+        "access-ec5ba0a": "访问",
+        "routing-bcba696": "路由",
+        "select-a-block-to-inspect-its-properties-and-connections-2347bec": "选择一个块以查看其属性和连接。",
+        "client-short-id-62efa46": "客户端短 ID",
+        "check-access-abb9a17": "检查访问权限",
+        "clear-83b12c2": "清除",
+        "checking-client-access-a3880a4": "正在检查客户端访问权限…",
+        "could-not-load-the-client-path-check-the-id-and-traffic-paths--fb70989": "无法加载客户端路径。请检查 ID 和流量路径 API 权限。",
+        "accessible-profile-hosts-72b0b17": "可访问的配置档主机",
+        "this-client-has-no-accessible-hosts-in-this-profile-12cda92": "此客户端在此配置档中没有可访问的主机。",
+        "check-connections-5a8dc11": "检查连接",
+        "value-more-findings-39ca181": "另有 {{value1}} 项",
+        "loading-relations-5a4c580": "正在加载关联…",
+        "unable-to-load-relations-b37edfe": "无法加载关联。",
+        "canvas-navigation-579dfc8": "画布导航",
+        "find-item-15cb4f1": "查找项目",
+        "find-an-item-4871b5f": "查找项目…",
+        "no-matching-items-4d1d151": "没有匹配的项目",
+        "zoom-in-0e47f09": "放大",
+        "zoom-out-bc7b631": "缩小",
+        "fit-map-7d3b421": "适应关系图",
+        "navigate-using-minimap-44dd66c": "通过缩略图导航",
+        "go-to-selected-b5b8d43": "转到所选项",
+        "open-settings-ca381c1": "打开设置",
+        "loading-history-a960c43": "正在加载历史…",
+        "history-unavailable-cf319f4": "历史不可用",
+        "check-that-the-panel-and-its-database-are-up-to-date-e05ae6c": "请检查面板及其数据库是否已更新。",
+        "the-30-latest-versions-are-retained-restore-opens-an-unsaved-d-275da0f": "保留最近 30 个版本。恢复会在编辑器中打开未保存的草稿；请点击保存以应用。",
+        "no-snapshots-yet-the-first-edit-of-an-existing-profile-will-pr-6bf0903": "暂无快照。首次编辑已有配置档时会保留编辑前后的版本。",
+        "latest-8730d3c": "最新版本",
+        "open-in-editor-ea1d0f0": "在编辑器中打开",
+        "squads-inbounds-nodes-and-hosts-a83c761": "小组、入站、节点和主机",
+        "profile-relations-077ff52": "配置档关联",
+        "unable-to-load-all-relations-refresh-the-page-f4738e4": "无法加载所有关联。请刷新页面。",
+        "no-related-squads-8fe4caf": "没有关联的小组",
+        "profile-has-no-inbounds-e6811ad": "配置档没有入站",
+        "no-nodes-use-this-profile-eac5087": "没有节点使用此配置档",
+        "no-hosts-for-this-profile-221d046": "此配置档没有主机",
+        "these-are-saved-configuration-relations-they-do-not-verify-rea-2475ca8": "这些是已保存的配置关联，不代表已验证可达性或流量。",
+        "could-not-load-the-profile-or-snippets-d5bd769": "无法加载配置档或片段",
+        "canvases-811c4ef": "画布",
+        "failed-to-load-profiles-b623ebf": "加载配置档失败",
+        "no-profiles-yet-bd4729e": "暂无配置档",
+        "memory-c3963ae": "内存",
+        "heap-bb30cbe": "堆内存",
+        "external-68c114e": "外部内存",
+        "array-buffers-8f83231": "数组缓冲区",
+        "event-loop-f397de4": "事件循环",
+        "delay-fd9b6df": "延迟",
+        "ms-f785c3c": "毫秒",
+        "handles-9db6f24": "句柄",
+        "active-handles-be956a8": "活动句柄",
+        "scheduler-d3a27d9": "调度器",
+        "processor-54aac65": "处理器",
+        "tag-settings-9449b1a": "标签设置",
+        "could-not-load-retry-7e0704a": "无法加载。请重试",
+        "find-tag-8344cc6": "查找标签",
+        "new-tag-609117d": "新建标签",
+        "configure-6defafa": "配置",
+        "loading-ba3bbbe": "正在加载…",
+        "unlimited-11dde17": "无限制",
+        "create-a-tag-and-configure-it-before-adding-hosts-b4df42f": "先创建并配置标签，再添加主机。",
+        "close-tag-settings-f3b8745": "关闭标签设置",
+        "settings-for-value-saved-b164a5f": "已保存“{{value1}}”的设置",
+        "tag-settings-sync-on-compatible-nodes-a94e2f1": "更改将在与兼容节点同步后生效。",
+        "apply-to-tagged-hosts-with-the-corresponding-inheritance-switc-efe2579": "应用于带有此标签且启用了相应继承开关的主机。零表示无限制。",
+        "per-user-limit-gib-555cb5c": "每用户限额，GiB",
+        "combined-user-usage-across-all-tagged-hosts-including-multipli-aa5364d": "用户在所有带此标签的主机上的总用量，包含倍率。",
+        "per-user-speed-mbps-1824561": "每用户速率，Mbps",
+        "for-each-user-independently-on-each-host-1ea423d": "每台主机上的每位用户分别计算。",
+        "tag-traffic-multiplier-4ad10d9": "标签流量倍率",
+        "for-hosts-using-the-tag-multiplier-recalculates-the-current-pe-e2ad055": "适用于使用标签倍率的主机。重新计算当前周期；订阅用量保持不变。",
+        "whole-group-speed-mbps-3c36e77": "整组速率，Mbps",
+        "one-shared-cap-across-all-users-and-all-tagged-hosts-3a81bf7": "所有用户和带此标签的主机共用的速率上限。",
+        "reset-every-8c98f6a": "重置间隔",
+        "days-ab51004": "天",
+        "months-1683743": "月",
+        "save-1509f56": "保存",
+        "confirm-removing-settings-be691de": "确认删除设置",
+        "remove-tag-settings-12cb09d": "删除标签设置",
+        "cancel-19766ed": "取消",
+        "en-us-5c49f88": "zh-CN",
+        "metrics-overview-3e78a3c": "指标概览",
+        "refresh-0e91610": "刷新",
+        "add-location-db07192": "添加位置",
+        "unable-to-load-locations-f449888": "无法加载位置",
+        "check-the-panel-connection-and-press-refresh-f8ebbd1": "请检查面板连接并点击刷新。",
+        "configure-an-existing-host-544819d": "配置已有主机",
+        "host-4a82311": "主机",
+        "select-a-host-c8030cf": "选择主机",
+        "no-host-found-d3a8ed1": "找不到主机",
+        "search-locations-8492a8c": "搜索位置",
+        "search-name-country-or-carrier-63fbd36": "搜索名称、国家或运营商",
+        "no-matching-locations-267dceb": "没有匹配的位置",
+        "add-a-location-or-configure-an-existing-host-above-234eac3": "添加位置或在上方配置已有主机。",
+        "try-another-name-or-clear-the-search-d300b41": "尝试其他名称或清空搜索。",
+        "not-enabled-2b0e804": "未启用",
+        "host-disabled-b05fd9b": "主机已禁用",
+        "the-location-is-not-delivered-to-any-subscription-5c37a59": "此位置不会下发给任何订阅。",
+        "hidden-7e6feff": "已隐藏",
+        "hidden-hosts-are-not-delivered-to-subscriptions-c6cfe11": "隐藏的主机不会下发至订阅。",
+        "delivered-9061156": "已下发",
+        "only-to-matching-internal-squads-and-active-subscriptions-6a45063": "仅向匹配的内部小组和有效订阅下发。",
+        "to-active-users-with-a-valid-subscription-ccaa35c": "向拥有有效订阅的活跃用户下发。",
+        "no-city-set-fd1aefe": "未设置城市",
+        "room-4f0d12f": "房间：",
+        "location-settings-e49e4dc": "位置设置",
+        "apps-in-delivery-rules-df2b121": "下发规则中的应用",
+        "user-agent-conditions-in-enabled-delivery-rules-the-actual-res-9346c0b": "已启用下发规则中的 User-Agent 条件。实际响应取决于所有条件和规则顺序。",
+        "no-explicit-user-agent-conditions-in-delivery-rules-a0c8775": "下发规则中没有明确的 User-Agent 条件。",
+        "top-5-d9c3778": "前 5 名",
+        "top-10-18b38ae": "前 10 名",
+        "top-20-f80bebb": "前 20 名",
+        "top-30-c192e33": "前 30 名",
+        "top-40-17bbae2": "前 40 名",
+        "top-50-50ea9e3": "前 50 名",
+        "top-60-bba98b8": "前 60 名",
+        "top-70-23e7e5d": "前 70 名",
+        "top-80-170d26f": "前 80 名",
+        "top-90-c5c5619": "前 90 名",
+        "top-100-4e67739": "前 100 名",
+        "nothing-to-see-here-1a490b4": "页面未找到",
+        "page-you-are-trying-to-open-does-not-exist-you-may-have-mistyp-9e386c2": "您要打开的页面不存在。地址可能有误，或页面已移至其他地址。",
+        "take-me-back-to-home-page-4f5104e": "返回主页",
+        "something-bad-just-happened-ae00f3a": "发生错误",
+        "refresh-the-page-b5c2959": "刷新页面",
+        "active-9234069": "活跃",
+        "limited-e5125d9": "已限额",
+        "disabled-75081b5": "已禁用",
+        "expired-424a255": "已过期",
+        "sign-out-failed-cc017f6": "退出失败",
+        "the-server-could-not-confirm-session-revocation-please-try-aga-eee8add": "服务器无法确认会话已撤销。请重试。",
+        "theme-settings-697b009": "主题设置",
+        "appearance-3907fa7": "外观",
+        "accent-a5c6fb1": "强调色",
+        "font-64d0b3a": "字体",
+        "compact-interface-b1b6a87": "紧凑界面",
+        "reduce-motion-297ef4c": "减少动画",
+        "reset-daee760": "重置",
+        "launcher-22614ac": "启动器",
+        "could-not-repair-this-json-45b21e3": "无法修复 JSON",
+        "json-repaired-c6046c7": "JSON 已修复",
+        "nothing-to-repair-05924d7": "无需修复",
+        "create-or-select-a-tag-8c144e4": "创建或选择标签",
+        "tag-1503916": "标签",
+        "clear-value-01ae1c2": "清空值",
+        "yes-85a39ab": "是",
+        "no-1ea442a": "否",
+        "message-325906e": "社交网络",
+        "invalid-destination-c414988": "无效目标：",
+        "domains-include-subdomains-http-s-urls-ipv4-ipv6-cidr-and-inte-bd63ed5": "域名规则包含子域名。支持 HTTP(S) URL、IPv4、IPv6、CIDR 和国际化域名。如需不访问第三方网站，请在客户端（如 Happ 或 INCY）中选择 TCP 延迟测试。HTTP 测试需要允许的 URL。TCP 仅测试服务器连接，不验证 VPN 访问。",
+        "domains-and-ips-813c598": "域名和 IP",
+        "allow-only-selected-destinations-8f26f18": "仅允许所选目标",
+        "block-selected-destinations-b979531": "阻止所选目标",
+        "add-destination-48b7df1": "添加目标",
+        "address-and-ping-help-2b2063f": "地址和延迟测试帮助",
+        "destination-presets-27cd6c9": "目标预设",
+        "could-not-load-the-form-data-please-retry-7278c1c": "无法加载表单数据。请重试。",
+        "assign-a-tag-to-this-host-first-636effb": "请先为此主机分配标签。",
+        "the-host-s-own-limits-apply-independently-each-kind-of-limit-c-9735c38": "主机自身的限制独立生效。每类限制还可使用已分配标签的设置。适用限制中最严格的生效。",
+        "groups-176c620": "组：",
+        "traffic-limit-per-user-a5e049d": "每用户流量限额",
+        "per-user-within-this-host-zero-means-unlimited-82da8b7": "此主机内每位用户的限额。零表示无限制。",
+        "apply-tag-traffic-quota-3fb4646": "使用标签流量配额",
+        "one-user-s-shared-quota-across-participating-hosts-using-the-t-1b4551d": "单个用户在参与主机间共享配额，使用标签的重置周期。切换会重新计算当前周期用量，主机自身配额保持不变。",
+        "server-speed-limit-per-user-e6705eb": "服务器端每用户速率",
+        "shared-by-all-devices-and-connections-of-one-user-zero-means-u-9bbeda4": "同一用户的所有设备和连接共享。零表示无限制。",
+        "apply-tag-per-user-speed-4ad7483": "使用标签的每用户速率",
+        "the-same-limit-separately-on-each-host-shared-by-one-user-s-de-50737b5": "每台主机分别应用相同限制，由同一用户的设备共享。不同主机之间不共享速率。",
+        "whole-host-speed-limit-e5c8f33": "整台主机速率限制",
+        "shared-by-every-user-of-this-host-other-hosts-on-the-node-are--207fb7b": "此主机的所有用户共享。不影响节点上的其他主机。零表示无限制。",
+        "apply-tag-shared-speed-0471605": "使用标签共享速率",
+        "one-shared-speed-pool-for-all-users-and-participating-hosts-of-0e8ab7a": "标签下所有用户和参与主机共享速率。主机自身限制也会生效。",
+        "host-traffic-multiplier-629284f": "主机流量倍率",
+        "1-counts-normal-usage-2-charges-twice-the-traffic-to-host-and--92c312c": "1× 按正常用量计费，2× 从主机和标签配额中扣除双倍流量。订阅用量不变。更改会重新计算当前周期。",
+        "use-the-tag-multiplier-e071b5e": "使用标签倍率",
+        "the-host-s-own-quota-uses-1-218665d": "主机自身配额按 1× 计算。",
+        "reset-traffic-every-587e56d": "流量重置间隔",
+        "0-means-never-the-period-starts-on-the-day-the-setting-is-save-fc881dd": "0 表示永不重置。周期从保存设置当天（UTC）开始。",
+        "period-unit-f65d821": "周期单位",
+        "days-e08c0aa": "天",
+        "months-09ca755": "月",
+        "allow-only-43c63e5": "仅允许",
+        "deny-05a2d73": "拒绝",
+        "automatic-sni-and-shortid-regeneration-fa50b0e": "自动重新生成 SNI 和 shortId",
+        "sni-rotates-through-the-pool-shortid-is-regenerated-nodes-rest-aa632da": "轮换池中的 SNI，重新生成 shortId，并自动重启节点",
+        "interval-hours-e456194": "间隔，小时",
+        "backup-retention-days-20260929": "备份保留天数（1–7）",
+        "shortid-count-724ec96": "shortId 数量",
+        "shortid-length-a595758": "shortId 长度",
+        "sni-pool-42869d6": "SNI 池",
+        "regenerate-shortid-5b4336d": "重新生成 shortId",
+        "last-rotation-ffd71b1": "上次轮换：",
+        "available-after-subscription-expires-or-is-disabled-61afc39": "订阅过期或禁用后可用",
+        "can-share-an-inbound-with-ordinary-hosts-access-uses-separate--1881b29": "可与普通主机共用入站。访问使用独立的主机凭据；需要支持主机隔离的节点和 Xray。",
+        "unavailable-during-an-active-subscription-43ed8ab": "有效订阅期间不可用",
+        "only-for-expired-or-disabled-subscriptions-squad-access-restri-c5bbce7": "仅适用于过期或已禁用的订阅。小组访问限制仍然生效。",
+        "carrier-271c535": "运营商",
+        "room-911ea89": "房间",
+        "encryption-key-16b3c9d": "加密密钥",
+        "64-hexadecimal-characters-from-the-node-configuration-f5f9d5f": "节点配置中的 64 个十六进制字符",
+        "transport-aaead4a": "传输",
+        "vp8-channel-default-933cdaf": "VP8 通道 · 默认",
+        "video-channel-f2aa4de": "视频通道",
+        "sei-channel-171688a": "SEI 通道",
+        "data-channel-6d1ed8a": "数据通道",
+        "wb-stream-account-token-ef8a3f9": "WB Stream 账户令牌",
+        "client-token-optional-b408598": "客户端令牌（可选）",
+        "data-channel-requires-an-account-token-with-canpublishdata-tru-6bff50b": "数据通道需要具有 canPublishData=true 的账户令牌；访客令牌无法使用。",
+        "verify-the-token-before-enabling-the-host-the-panel-will-not-d-84f3448": "启用主机前请验证令牌：没有令牌时面板不会下发数据通道，避免用户收到已知不可用的位置。",
+        "country-code-b5bf7a5": "国家代码",
+        "city-fc33f73": "城市",
+        "latency-probe-address-4e2ade7": "延迟测试地址",
+        "name-description-squads-and-visibility-follow-this-host-the-ap-1a501e7": "名称、描述、小组和可见性跟随此主机。应用自动选择传输方式。",
+        "mihomo-flclash-x-flowvy-prizrak-box-koala-clash-46c8d64": "Mihomo: FlClash X, Flowvy, prizrak-box, Koala Clash",
+        "xray-happ-incy-02b99d3": "Xray: Happ, Incy",
+        "vless-route-id-5e33c03": "VLESS 路由 ID",
+        "unknown-setting-d7117ae": "未知设置",
+        "last-verified-0f68266": "上次已验证：",
+        "unknown-b764cdc": "未知",
+        "verified-77cae63": "验证时间：",
+        "the-latest-check-could-not-confirm-the-state-check-again-via-s-3e2b35f": "上次检查未能确认状态。请通过 SSH 再次检查。",
+        "check-via-ssh-1101731": "通过 SSH 检查",
+        "0-count-all-time-never-reset-d6cddc0": "0 — 累计全部时间，永不重置",
+        "node-port-42b685c": "节点端口",
+        "secret-key-secret-key-2f12318": "密钥（SECRET_KEY）",
+        "new-devices-denied-standalone-dcc8096": "禁止新设备",
+        "available-host-placement-c6e58c8": "可用主机的位置",
+        "before-remarks-1cae831": "备注之前",
+        "after-remarks-878b925": "备注之后",
+        "invalid-date-cd63c7d": "日期无效",
+        "please-select-a-valid-date-defaulting-to-1-month-from-now-f05123b": "请选择有效日期。已默认设置为从现在起一个月后。",
+        "telegram-id-68559c8": "Telegram 用户 ID",
+        "enter-user-s-telegram-id-optional-a4f21c4": "输入用户的 Telegram ID（可选）",
+        "email-969ccbd": "电子邮件",
+        "enter-user-s-email-optional-f372bfa": "输入用户的电子邮件（可选）",
+        "fallback-device-limit-in-use-3dae434": "正在使用备用设备限制",
+        "metadata-9eddf57": "元数据",
+        "recap-31056c3": "统计回顾",
+        "loading-dc38088": "正在加载",
+        "build-info-642ae0c": "构建信息",
+        "access-after-subscription-expiry-is-enabled-52c699c": "已启用订阅过期后访问",
+        "after-subscription-expiry-66a7704": "订阅过期后",
+        "message-324c53a": "导入用户至“",
+        "message-7e4abe1": "将小组用户导出至文件",
+        "message-0268a2c": "从文件导入用户到小组",
+        "language-a4fe652": "语言",
+        "error-loading-templates-from-github-try-again-later-995cfcc": "无法从 GitHub 加载模板。请稍后重试。",
+        "by-a7e2d26": "作者：",
+        "foreground-color-7760829": "前景色",
+        "background-color-3e314da": "背景色",
+        "update-available-ff8b555": "有可用更新",
+        "a-new-version-is-available-e848cbe": "有新版本可用",
+        "check-out-326e405": "查看",
+        "copy-build-info-04f3631": "复制构建信息",
+        "build-time-707cae7": "构建时间",
+        "build-bdd254b": "构建",
+        "backend-2fb4019": "后端",
+        "view-on-github-2067242": "在 GitHub 上查看",
+        "frontend-af48bcf": "前端",
+        "community-bb501d7": "社区",
+        "open-base64-editor-838c81d": "打开 Base64 编辑器",
+        "message-c736fb4": "禁止新设备",
+        "message-15a13be": "主机或标签流量已阻止",
+        "nice-try-afcca19": "此操作不可用",
+        "management-server-e1f23eb": "管理服务器",
+        "integration-9a42d40": "集成",
+        "base64-editor-8d692d6": "Base64 编辑器",
+        "connecting-5f04ae9": "正在连接…",
+        "settings-74a883a": "设置",
+        "health-and-logs-abdf03a": "健康状态和日志",
+        "clear-this-node-health-log-5ff36f0": "清除此节点的健康日志？",
+        "the-check-history-will-be-deleted-permanently-096cdeb": "检查历史将被永久删除。",
+        "node-health-checks-f44b4af": "节点健康检查",
+        "connection-attempts-node-responses-and-measured-resources-syst-77a7903": "连接尝试、节点响应和资源测量。系统和 Xray 日志与这些检查分开。",
+        "check-now-2937cff": "立即检查",
+        "filter-entries-9080dc7": "筛选条目",
+        "retries-ef21130": "重试",
+        "unreachable-abaa46a": "无法访问",
+        "errors-cb70237": "错误",
+        "could-not-load-health-checks-6e02827": "无法加载健康检查",
+        "no-entries-yet-they-will-appear-after-the-next-node-check-bade00e": "暂无条目。下次节点检查后将显示。",
+        "time-33b9347": "时间",
+        "result-6e7d50e": "结果",
+        "attempt-c934cc7": "尝试",
+        "load-memory-xray-955d5f3": "负载 / 内存 / Xray",
+        "message-2f77668": "消息",
+        "entries-shown-value-use-refresh-for-new-data-d452203": "已显示 {{value1}} 条。刷新以获取新数据。",
+        "load-more-ac8991e": "加载更多",
+        "xray-log-from-node-0af029d": "节点 Xray 日志",
+        "latest-200-lines-fetched-on-demand-and-not-stored-in-the-panel-f82c8f7": "按需获取最后 200 行，不存储在面板中。",
+        "load-log-5646a79": "加载日志",
+        "xray-log-unavailable-check-the-node-connection-and-version-8c26f1a": "Xray 日志不可用：请检查节点连接和版本。",
+        "no-lines-yet-4c1ac25": "暂无日志。",
+        "log-retention-46c385a": "日志保留期",
+        "old-entries-for-all-nodes-are-removed-automatically-this-setti-55fabec": "自动删除所有节点的旧条目。此设置作用于面板。",
+        "clear-this-node-ccdf4bb": "清除此节点",
+        "operation-failed-4e1af7c": "操作失败",
+        "default-21b111c": "默认",
+        "traceroute-5e472e4": "路由跟踪",
+        "anycast-11c3776": "任播",
+        "excess-ddd36ae": "超出值",
+        "jitter-16c7dc7": "延迟抖动",
+        "loss-2ea71c1": "丢包",
+        "score-a575b79": "评分",
+        "hops-98e0377": "跳数",
+        "floor-a3e1f49": "最低值",
+        "no-icmp-4fd6266": "无 ICMP",
+        "checking-installation-and-access-9ae1be6": "正在检查安装和访问权限",
+        "downloading-and-verifying-updater-e2ba68a": "正在下载并验证更新程序",
+        "updating-node-backup-and-startup-verification-81927ea": "正在更新节点、备份并验证启动",
+        "node-updated-298d17b": "节点已更新",
+        "update-not-confirmed-check-ssh-directory-token-and-node-state--2d230c4": "更新未确认。重试前请检查 SSH、目录、令牌和节点状态。",
+        "waiting-for-ssh-connection-309d2b4": "等待 SSH 连接",
+        "close-unused-ssh-tabs-and-retry-4a49f17": "请关闭未使用的 SSH 标签页后重试。",
+        "ssh-connection-failed-4dd3696": "SSH 连接失败。",
+        "command-finished-but-database-verification-is-missing-check-th-f160173": "命令已结束，但缺少数据库确认。请检查节点。",
+        "waiting-for-ssh-4456975": "等待 SSH",
+        "running-f4ccae2": "正在运行",
+        "done-11a6767": "完成",
+        "failed-031a8f0": "失败",
+        "cancelled-d353a99": "已取消",
+        "skipped-12698ce": "已跳过",
+        "new-job-was-not-accepted-wait-for-the-current-queue-to-finish-9d71dc7": "新任务未被接受：请等待当前队列完成。",
+        "cancel-remaining-56c2a17": "取消剩余任务",
+        "keep-ssh-open-ebe7e58": "保持 SSH 打开",
+        "node-results-9a3d72c": "节点结果",
+        "retry-unfinished-d1a0447": "重试未完成任务",
+        "session-ticket-2426a1b": "会话凭证",
+        "channel-69e3656": "通道",
+        "host-key-fb1b291": "主机密钥",
+        "public-key-f569a86": "公钥",
+        "shell-ce635c4": "终端 Shell",
+        "refused-to-sign-f9507d6": "拒绝签名",
+        "signing-failed-ac02245": "签名失败",
+        "docker-stats-c2c9ecf": "Docker 统计",
+        "already-open-in-another-tab-fa90add": "已在其他标签页打开",
+        "top-500-cb2691e": "前 500 名",
+        "top-1000-0e8c83c": "前 1000 名",
+        "top-2000-951e648": "前 2000 名",
+        "day-9fa246c": "日均",
+        "request-failed-fd46833": "请求失败",
+        "passkey-registration-efb614a": "注册通行密钥",
+        "registration-was-cancelled-0b92676": "注册已取消",
+        "passkeys-are-not-supported-on-this-device-c8afa17": "此设备不支持通行密钥",
+        "this-device-is-already-registered-1735ab9": "此设备已注册",
+        "passkey-registration-error-3f734fb": "通行密钥注册错误",
+        "an-unexpected-error-occurred-6615bf1": "发生意外错误",
+        "text-71988c4": "文本",
+        "my-awesome-squad-c19621e": "我的小组",
+        "my-node-plugin-0763cd5": "我的节点插件",
+        "my-subscription-page-config-380cfe3": "我的订阅页面",
+        "my-mihomo-template-86a53f7": "我的 Mihomo 模板",
+        "modals-3138cda": "对话框",
+        "routes-2c5b669": "页面",
+        "raw-subscription-9e7ce17": "原始订阅",
+        "could-not-change-new-device-access-01f1686": "无法更改新设备访问权限",
+        "device-registration-policy-is-unavailable-130c617": "设备注册策略不可用",
+        "deny-new-devices-48105ae": "禁止新设备",
+        "existing-devices-continue-working-allowing-registration-keeps--517c1bf": "现有设备可继续使用。允许注册后仍保留设备数量限制。",
+        "updated-3a5ecca": "已更新",
+        "raw-report-6d26b54": "原始报告",
+        "inbound-tag-bb8a8e8": "入站标签",
+        "xray-validator-is-loading-c1b8f5f": "正在加载 Xray 验证器…",
+        "xray-core-wasm-is-restarting-a544e56": "正在重启 Xray 核心（WASM）…",
+        "xray-core-wasm-crashed-validation-is-unavailable-32f2d4d": "配置验证不可用。请重试加载。",
+        "password-e7cf3ef": "密码",
+        "private-key-b593dff": "私钥",
+        "mldsa65seed-server-side-ad97048": "mldsa65Seed（服务器端）",
+        "mldsa65verify-client-side-pqv-a5843b5": "mldsa65Verify（客户端，pqv）",
+        "both-keys-8256d94": "两个密钥",
+        "server-side-used-in-decryption-d0768f2": "服务器端，用于解密",
+        "client-side-used-in-encryption-c5871bc": "客户端，用于加密",
+        "mux-params-d003e0a": "Mux 参数",
+        "sockopt-params-12a2ddf": "SockOpt 参数",
+        "filter-by-9d50c25": "筛选…",
+        "import-users-to-value-65bb3a8": "导入用户至“{{value1}}”",
+        "export-squad-users-file-0a3a333": "导出小组用户（文件）",
+        "import-users-from-file-514dd40": "从文件导入用户",
+        "torrent-blocker-bdcf6f6": "BT 流量拦截",
+        "ingress-filter-52853f6": "入站过滤",
+        "egress-filter-a22e397": "出站过滤",
+        "connection-drop-b46fa7e": "断开连接",
+        "dangling-1f52ec3": "未关联",
+        "rx-05c4497": "接收",
+        "tx-536939e": "发送",
+        "xray-uptime-ac0a1ea": "Xray 运行时间",
+        "plugin-ab1173e": "插件",
+        "cpu-cores-04fdfca": "CPU 核心数",
+        "free-ram-8cd6e27": "可用内存",
+        "used-ram-89dd5cb": "已用内存",
+        "server-uptime-ed0def1": "服务器运行时间",
+        "network-interfaces-9f43b24": "网络接口",
+        "rx-speed-6aaa2ac": "接收速率",
+        "tx-speed-2774f59": "发送速率",
+        "rx-total-d983b27": "接收总量",
+        "tx-total-6bbd46a": "发送总量",
+        "os-release-8ac3c26": "操作系统版本",
+        "inbound-traffic-d7a4bfd": "入站流量",
+        "up-55490a4": "上传",
+        "down-b86d11a": "下载",
+        "outbound-traffic-03f18cb": "出站流量",
+        "unable-to-load-metrics-06e0911": "无法加载指标",
+        "node-metrics-are-not-available-yet-7dc9df5": "节点指标暂不可用",
+        "nodes-with-metrics-d37b888": "有指标的节点",
+        "connected-nodes-2ed1e6f": "已连接节点",
+        "users-online-85517c0": "在线用户",
+        "inbounds-with-metrics-1e40621": "有指标的入站",
+        "additional-information-9276bb4": "其他信息",
+        "data-from-metrics-last-fetch-time-appears-on-the-right-bc1b674": "数据来自 /metrics；右侧显示上次获取时间",
+        "health-comes-from-node-status-user-count-comes-from-metrics-41e9f4f": "健康状态来自节点状态，用户数量来自指标",
+        "traffic-counters-accumulate-since-panel-or-node-startup-7925c82": "流量计数器从面板或节点启动时开始累计",
+        "node-metrics-d510954": "节点指标",
+        "fetched-0013b4c": "已获取",
+        "time-unknown-6f803fc": "时间未知",
+        "search-node-785c488": "搜索节点",
+        "search-node-or-provider-121e5e5": "搜索节点或服务商",
+        "metrics-filter-a6438ac": "指标筛选",
+        "no-users-online-928c5dd": "没有在线用户",
+        "needs-attention-c1ebc78": "需要关注",
+        "no-nodes-match-this-filter-5d5555a": "没有符合此筛选条件的节点",
+        "pick-a-user-to-visualize-the-traffic-path-b575fdc": "选择用户以显示流量路径",
+        "user-optional-a99b884": "用户（可选）",
+        "nothing-found-9f5cac3": "未找到结果",
+        "visible-hosts-value-value-2083f9d": "可见主机：{{value1}}/{{value2}}",
+        "inbounds-value-35f7340": "入站：{{value1}}",
+        "nodes-value-45d22b6": "节点：{{value1}}",
+        "outbounds-value-4613c6c": "出站：{{value1}}",
+        "routing-rules-value-31fa013": "路由规则：{{value1}}",
+        "all-hosts-e568a3c": "所有主机",
+        "ok-565339b": "正常",
+        "no-hosts-fe3c6a1": "无主机",
+        "path-value-6701191": "路径：{{value1}}",
+        "key-99a52df": "密钥",
+        "speed-c372fee": "速率",
+        "unlimited-2044fbd": "无限制",
+        "domains-ced6771": "域名",
+        "exits-5e56101": "出口",
+        "blocked-by-routing-rules-samples-c390eb9": "被路由规则阻止（示例）：",
+        "nodes-traffic-84537ea": "节点和流量",
+        "this-month-6436773": "本月",
+        "infrastructure-ce0cff7": "基础设施",
+        "solid-b8b311b": "纯色",
+        "gradient-2523561": "渐变",
+        "dots-6de335f": "圆点",
+        "grid-0d7d12a": "网格",
+        "users-6b0cc90": "用户",
+        "traffic-4876efb": "流量",
+        "new-users-bdbdb86": "新用户",
+        "month-traffic-0654a8f": "本月流量",
+        "countries-8faf7ec": "国家",
+        "cpu-cores-5dbed0b": "CPU 核心数",
+        "could-not-download-recap-659e20e": "无法下载统计回顾",
+        "sections-9bae918": "部分",
+        "mask-fields-f71dfc0": "隐藏字段值",
+        "early-adopter-c630122": "早期用户",
+        "total-users-d643aee": "用户总数",
+        "nodes-45978ec": "节点",
+        "traffic-075f4ab": "流量",
+        "new-users-c5ef14e": "新用户",
+        "countries-e45d4cb": "国家",
+        "since-98af1ed": "始于",
+        "background-ea2b8a8": "背景",
+        "custom-note-b11388e": "自定义备注",
+        "accent-color-baeefba": "强调色",
+        "base-translations-98825e5": "基础翻译",
+        "active-9687961": "已启用",
+        "icons-04ce686": "图标",
+        "blocks-2a12da1": "块",
+        "buttons-931eb6a": "按钮",
+        "button-707eab0": "按钮",
+        "validation-error-142762b": "验证错误",
+        "learn-more-1445799": "了解更多",
+        "link-with-button-e7deb61": "带按钮的链接",
+        "available-hosts-66c64ba": "可用主机",
+        "button-text-ec208ea": "按钮文字",
+        "https-url-c3cf95f": "HTTPS 链接",
+        "marked-hosts-appear-at-this-position-3b9cd38": "标记的主机将显示在此位置。",
+        "new-devices-denied-34c7816": "已禁止新设备",
+        "device-blocked-hwid-5bc86b1": "设备已阻止（HWID）",
+        "host-traffic-limit-reached-850782c": "已达到主机流量限额",
+        "host-or-tag-traffic-paused-9df80dc": "主机或标签流量已阻止",
+        "confirm-deletion-fa57243": "确认删除",
+        "import-finished-2194340": "导入完成",
+        "created-value-skipped-value-failed-value-2a9f657": "已创建：{{value1}}，已跳过：{{value2}}，失败：{{value3}}",
+        "no-users-array-in-file-f80eb52": "文件中没有用户数组",
+        "too-many-users-max-20000-b30882c": "用户过多（最多 20000 个）",
+        "file-error-98f5369": "文件错误",
+        "upload-a-json-file-exported-from-remnawave-xera-subscription-s-180157a": "上传从 Remnacust 导出的 JSON 文件。保留订阅短 UUID、VLESS UUID 和 trojan/ss 密钥，用户可继续使用原有密钥和链接。跳过用户名重复的用户。",
+        "export-file-d9d979c": "导出文件",
+        "restore-internal-squads-by-name-3fa079a": "按名称恢复内部小组",
+        "squads-missing-in-this-panel-are-skipped-8999934": "跳过此面板中不存在的小组",
+        "add-everyone-to-a-squad-fallback-7a2f868": "将所有用户加入额外群组",
+        "users-in-file-value-182a30f": "文件中的用户：{{value1}}",
+        "import-2cff9ba": "导入",
+        "nothing-to-show-aabc4af": "没有可显示的数据",
+        "scopes-pasted-a6e9e16": "已粘贴权限",
+        "invalid-scopes-400e90a": "权限无效",
+        "clipboard-must-contain-a-json-array-of-scope-strings-7d61090": "剪贴板必须包含权限字符串的 JSON 数组",
+        "service-bot-4d196c6": "服务机器人",
+        "subpage-9c141bb": "订阅页面",
+        "read-9b9a8d0": "读取",
+        "write-3f00927": "写入",
+        "master-fc613b4": "master",
+        "authorization-url-c70b5f2": "授权 URL",
+        "authorization-url-for-the-oauth2-provider-f217590": "OAuth2 提供方的授权 URL",
+        "token-url-431e003": "令牌 URL",
+        "token-url-for-the-oauth2-provider-aa98687": "OAuth2 提供方的令牌 URL",
+        "with-pkce-fd32ec9": "使用 PKCE",
+        "optimize-via-ssh-ea39a69": "通过 SSH 优化",
+        "install-release-1cef24f": "安装版本",
+        "roll-back-core-5635594": "回滚核心",
+        "bundled-core-063f5f7": "内置核心",
+        "follow-configuration-c5da704": "跟随配置",
+        "start-e4bb9f1": "启动",
+        "stop-cae7d57": "停止",
+        "restart-6b983a8": "重启",
+        "validate-configuration-7563534": "验证配置",
+        "queued-661ff40": "已排队",
+        "rolled-back-7159223": "已回滚",
+        "connecting-to-node-586f22e": "正在连接节点",
+        "preparing-cf1aa6c": "正在准备",
+        "verifying-binary-ffb60a2": "正在验证二进制文件",
+        "validating-configuration-b84c66a": "正在验证配置",
+        "switching-core-72d199b": "正在切换核心",
+        "starting-aeed4d2": "正在启动",
+        "stopping-a71ee1d": "正在停止",
+        "checking-readiness-68978eb": "正在检查就绪状态",
+        "xray-jobs-72b1110": "Xray 任务",
+        "node-tasks-7698fb5": "节点任务",
+        "close-node-tasks-15138a8": "关闭节点任务",
+        "by-tag-9effd8b": "按标签",
+        "untagged-9a28cbf": "无标签",
+        "select-2a78025": "选择",
+        "node-tag-14efe71": "节点标签",
+        "value-nodes-selected-5322c83": "已选择 {{value1}} 个节点",
+        "xray-updates-process-controls-and-node-optimization-d75cdea": "Xray 更新、进程控制和节点优化。",
+        "core-manager-unavailable-68fb1d3": "核心管理器不可用",
+        "the-panel-received-no-usable-response-check-node-connectivity--051d58f": "面板未收到可用响应。请检查节点连接和版本。",
+        "paused-by-administrator-f5d00fe": "管理员已暂停",
+        "stopped-1a4f630": "已停止",
+        "version-unavailable-c0a7f64": "版本不可用",
+        "source-1a5ac0b": "来源：",
+        "pinned-release-c741101": "固定版本",
+        "node-image-79c45a0": "节点镜像",
+        "build-verification-2a3ea42": "构建验证",
+        "running-core-sha-256-b6b0ef2": "运行中核心的 SHA-256",
+        "selected-binary-sha-256-9b8ea61": "所选二进制文件的 SHA-256",
+        "action-64cff13": "操作",
+        "optimization-profile-18535a9": "优化配置",
+        "no-optimization-3d082b3": "不优化",
+        "safe-4f9f0da": "保守",
+        "balanced-5386ea5": "均衡",
+        "performance-442aded": "高性能",
+        "approved-release-15ae27c": "已批准的版本",
+        "release-catalog-unavailable-467e68d": "版本目录不可用",
+        "could-not-load-the-release-catalog-9b6fbd1": "无法加载版本目录。",
+        "vpn-connections-will-stop-the-core-stays-paused-until-start-is-86557ef": "VPN 连接将停止。核心将保持暂停，直到选择启动；面板同步也不会恢复运行。",
+        "ssh-access-is-required-for-each-node-keep-the-terminal-window--1692ffc": "每个节点都需要 SSH 访问。请保持终端窗口打开直至队列完成。仅修改 sysctl 设置。",
+        "validates-configuration-without-restarting-vpn-35287d5": "验证配置，不重启 VPN。",
+        "the-configuration-geodata-core-controls-the-version-again-with-46b0190": "重新由配置中的 geodata.core 控制版本。未配置时使用内置核心。",
+        "connections-may-be-interrupted-binary-and-configuration-are-ch-aa90a8f": "连接可能中断。先验证二进制文件和配置；启动失败会触发回滚。更新会保持手动暂停的核心处于暂停状态。",
+        "affected-nodes-fbf8ff6": "受影响的节点",
+        "stop-queue-after-the-first-failure-30937ae": "首次失败后停止队列",
+        "apply-to-selected-nodes-value-24b8f51": "应用到所选节点（{{value1}}）",
+        "a-selected-node-already-has-a-job-follow-its-progress-below-a887e9f": "所选节点已有任务。请在下方查看进度。",
+        "could-not-confirm-job-creation-check-history-below-before-retr-591a3be": "无法确认任务是否已创建。重试前请检查下方历史。",
+        "run-00d60e3": "执行",
+        "up-to-1000-nodes-per-job-select-a-tag-or-a-subset-of-nodes-d06dbf1": "每项任务最多 1000 个节点。请选择标签或部分节点。",
+        "xray-jobs-continue-on-the-server-after-closing-this-window-can-2b1fc09": "关闭此窗口后 Xray 任务仍在服务器上继续。取消会跳过剩余节点，让当前操作完成。",
+        "could-not-load-job-status-c549b8b": "无法加载任务状态。",
+        "no-jobs-yet-38b840c": "暂无任务。",
+        "in-progress-c1f88e9": "进行中",
+        "has-failures-ee2613c": "存在失败",
+        "finished-7804f7a": "已完成",
+        "job-progress-6d04c76": "任务进度",
+        "cancellation-requested-c07f337": "已请求取消",
+        "prepare-retry-for-failed-nodes-928faa5": "准备重试失败节点",
+        "limits-dffb64d": "限额",
+        "host-and-tag-quotas-and-speeds-manage-all-users-a-squad-or-sel-dedaadc": "主机和标签的配额及速率。管理所有用户、某个小组或所选用户。",
+        "search-scopes-4072c9d": "搜索范围",
+        "find-a-host-or-tag-32f269c": "查找主机或标签",
+        "sort-limits-575f4cc": "限额排序",
+        "host-order-a7a00c3": "主机顺序",
+        "name-dcd1d52": "名称",
+        "traffic-used-355b28c": "已用流量",
+        "quota-6c105ca": "配额",
+        "user-speed-bbb06a4": "用户速率",
+        "total-speed-c3c0eb4": "总速率",
+        "ascending-7718459": "升序",
+        "descending-79479a6": "降序",
+        "reverse-sort-direction-b4d2088": "反转排序方向",
+        "could-not-load-limits-press-refresh-8e66afe": "无法加载限额。请点击刷新。",
+        "no-hosts-or-tags-found-5e14329": "未找到主机或标签",
+        "paused-for-all-d332b4f": "已为所有人阻止",
+        "current-period-usage-73e93ad": "当前周期用量：",
+        "quota-per-user-5c0ec2b": "每用户配额：",
+        "speed-per-user-host-f449280": "每用户 / 主机速率：",
+        "shared-speed-2012ee5": "共享速率：",
+        "tag-1-266d618": "标签 / 1",
+        "hosts-e365c9f": "主机：",
+        "users-and-actions-87dce8a": "用户和操作",
+        "add-allowance-4705372": "增加流量",
+        "reset-usage-956c967": "重置用量",
+        "pause-traffic-a604dca": "阻止流量",
+        "resume-traffic-50b5bc3": "解除流量阻止",
+        "saved-for-value-users-node-policy-synchronization-requested-d4d11b6": "已为 {{value1}} 位用户保存。已请求同步节点策略。",
+        "all-limits-6d1a1ed": "所有限额",
+        "refresh-users-7e079f1": "刷新用户",
+        "base-quota-per-user-d6b9f30": "每用户基础配额：",
+        "quota-combines-traffic-from-hosts-participating-in-the-tag-quo-669a173": "配额汇总参与标签配额的主机流量。耗尽后会阻止该用户访问这些主机。",
+        "actions-affect-this-host-only-other-tag-limits-still-apply-4659b5e": "操作仅影响此主机。其他标签限制仍然生效。",
+        "this-scope-is-paused-for-everyone-select-all-resume-traffic-to-05c8eaf": "此范围的流量已为所有人阻止。请选择“全部”并解除流量阻止。单独解除用户阻止无法覆盖整体阻止。",
+        "action-recipients-f6f5577": "操作对象",
+        "selected-57fd7a0": "已选用户",
+        "internal-3bed2cb": "内部",
+        "external-3c46238": "外部",
+        "choose-a-squad-1217e46": "选择小组",
+        "no-squad-found-d1d41dc": "找不到小组",
+        "could-not-load-squads-fb7f789": "无法加载小组。",
+        "all-users-entitled-to-this-scope-search-and-pagination-do-not--ad386c9": "有权访问此范围的所有用户。搜索和分页不会改变操作对象。整个范围的流量阻止也会影响未来用户。",
+        "select-one-or-more-users-in-the-table-selection-spans-pages-ma-d1f6a9b": "在表格中选择一个或多个用户。选择可跨页，最多 500 人。",
+        "recipients-a9aab54": "操作对象数：",
+        "clear-selection-cea4d2e": "清空选择",
+        "one-off-allowance-each-gib-964abcc": "每人一次性增加，GiB",
+        "traffic-is-unlimited-set-a-base-quota-in-host-or-tag-settings--96189bd": "流量无限制。增加流量前，请先在主机或标签设置中设定基础配额。",
+        "traffic-unit-e8fcf48": "流量单位",
+        "search-users-e4bb77a": "搜索用户",
+        "name-id-short-id-email-or-telegram-id-c7b3a50": "名称、ID、短 ID、电子邮件或 Telegram ID",
+        "subscription-status-f0723c4": "订阅状态",
+        "scope-state-1acf78e": "范围状态",
+        "paused-e159b06": "已阻止",
+        "quota-exhausted-8d99493": "配额耗尽",
+        "available-e674447": "可用",
+        "no-subscription-access-6fbdfa5": "无订阅访问权限",
+        "sort-by-c912902": "排序依据",
+        "usage-8d59829": "用量",
+        "remaining-f3e4352": "剩余",
+        "extra-allowance-a855328": "额外流量",
+        "username-e3b89e9": "用户名",
+        "page-size-bd69e66": "每页数量",
+        "reverse-sort-order-ac00159": "反转排序",
+        "filtered-usage-58fcf33": "筛选后的用量：",
+        "paused-ec7059d": "已阻止：",
+        "quota-exhausted-b910ef4": "配额耗尽：",
+        "statistics-cover-this-scope-s-current-period-including-multipl-25bc1d4": "统计覆盖此范围当前周期，包括倍率和重置。表格筛选不会更改批量操作对象。",
+        "could-not-load-users-refresh-the-list-e29d206": "无法加载用户。请刷新列表。",
+        "choose-a-squad-above-cee3096": "请在上方选择小组。",
+        "select-current-page-327d76c": "选择当前页",
+        "user-b512d97": "用户",
+        "usage-quota-a47c881": "用量 / 配额",
+        "actions-ff8059d": "操作",
+        "select-1f7133c": "选择",
+        "quota-usage-a0b5917": "配额用量",
+        "access-allowed-f505864": "允许访问",
+        "no-current-access-5ccd803": "当前无访问权限",
+        "actions-12ca9c2": "操作：",
+        "open-user-a030376": "打开用户",
+        "this-scope-only-698e023": "仅此范围",
+        "no-matching-users-579f8c3": "没有匹配的用户。",
+        "add-value-to-each-user-s-current-period-base-quota-is-unchange-7891f41": "为每位用户的当前周期增加 {{value1}}。基础配额不变。",
+        "reset-usage-in-this-scope-overall-subscription-statistics-are--6e727f4": "重置此范围的用量。保留订阅总统计。",
+        "pause-further-traffic-in-this-scope-until-manually-resumed-d906702": "阻止此范围的后续流量，直至手动解除。",
+        "clear-scope-and-individual-pauses-here-quotas-and-subscription-90cd1d0": "解除此范围的整体和单独流量阻止。配额和订阅限制仍然生效。",
+        "clear-individual-pauses-scope-pause-quotas-and-subscription-re-c6848d8": "解除单独的流量阻止。范围整体阻止、配额和订阅限制仍然生效。",
+        "could-not-confirm-the-result-retrying-this-operation-is-safe-a-368c1e5": "无法确认结果。可安全重试，不会重复增加流量。",
+        "retry-operation-9d39a36": "重试操作",
+        "confirm-eebdd24": "确认",
+        "ip-addresses": "IP 地址",
+        "powered-by-geocheck": "由 GeoCheck 提供支持",
+        "generic-oauth2": "通用 OAuth2 提供商"
+    },
+    "api-token-editor": {
+        "retry": "重试",
+        "saved": "API 令牌权限已保存",
+        "actions": "令牌 {{name}} 的操作",
+        "edit-title": "编辑令牌 {{name}}",
+        "edit-permissions": "编辑权限",
+        "existing-token": "更改从下一次请求生效。令牌值和到期时间不变。",
+        "read-only": "只读",
+        "full-description": "所有可用 API 方法，包括将来新增的方法。不包含仅限面板的操作。",
+        "exact-description": "仅授予勾选的权限。未来方法不会自动获权。未勾选任何项表示没有权限。",
+        "loading": "正在加载权限…",
+        "catalog-error": "无法加载权限。保存已禁用。",
+        "obsolete-scopes": "以下权限已不可用，保存时将移除：",
+        "search": "搜索方法、URL、权限范围或描述"
+    },
+    "limitsUnlimited": {
+        "grant": "授予无限流量",
+        "revoke": "恢复常规配额",
+        "active": "已授予无限流量",
+        "grantDescription": "向这些用户授予此主机或标签的无限流量配额，直到手动撤销。流量封锁、速率限制、订阅状态及其他范围的限制仍然有效。",
+        "revokeDescription": "撤销此主机或标签的个人无限流量。恢复基础配额及已有的额外流量，保留流量使用记录。",
+        "permission": "授予或撤销个人无限流量配额",
+        "write": "写入",
+        "read": "读取"
+    },
+    "design-ui": {
+        "more": "更多选项",
+        "support": "支持项目",
+        "recap": "活动概览",
+        "build": "面板版本",
+        "logout": "退出登录",
+        "skip-navigation": "跳转到内容",
+        "login-intro": "在同一工作区管理用户、路由和基础设施。",
+        "login-description": "登录您的管理面板。",
+        "test-version": "设计预览",
+        "previous-tags": "上一组标签",
+        "next-tags": "下一组标签",
+        "user-list": "用户列表",
+        "show-password": "显示密码",
+        "hide-password": "隐藏密码",
+        "toggle-password": "显示或隐藏密码",
+        "configured-apps": "已配置应用：{{count}}",
+        "node-offline": "离线",
+        "theme-light": "浅色",
+        "theme-dark": "深色",
+        "theme-purple": "紫色",
+        "theme-green": "绿色",
+        "theme-midnight": "午夜",
+        "theme-crimson": "绯红",
+        "theme-cyber": "赛博",
+        "theme-slate": "石板灰",
+        "color-purple": "紫色",
+        "color-indigo": "靛蓝",
+        "color-blue": "蓝色",
+        "color-cobalt": "钴蓝",
+        "color-cyan": "青色",
+        "color-teal": "蓝绿",
+        "color-green": "绿色",
+        "color-emerald": "翡翠绿",
+        "color-lime": "青柠绿",
+        "color-amber": "琥珀色",
+        "color-orange": "橙色",
+        "color-rose": "玫瑰色",
+        "color-pink": "粉色",
+        "color-crimson": "绯红",
+        "color-coral": "珊瑚色",
+        "color-slate": "石板灰",
+        "font-system": "系统字体"
+    },
+    "user-status": {
+        "active": "正常",
+        "disabled": "已禁用",
+        "expired": "已到期",
+        "limited": "流量已用尽"
+    },
+    "documentation": {
+        "title": "文档",
+        "guide": "面板指南",
+        "api": "API 参考",
+        "intro": "本版本的工作流程、设置和准确接口定义。",
+        "search": "搜索功能、字段和说明",
+        "apiSearch": "搜索路径、操作或权限",
+        "contents": "目录",
+        "onPage": "本页内容",
+        "language": "阅读语言",
+        "readingNote": "完整指南提供俄语和英语版本。可在上方选择阅读语言。",
+        "fields": "字段与控件",
+        "fieldNote": "此面板部分的字段和设置说明。",
+        "relatedApi": "相关 API 操作",
+        "openPage": "打开面板页面",
+        "permalink": "复制链接",
+        "copied": "链接已复制",
+        "copyFailed": "复制失败，请复制浏览器地址。",
+        "download": "下载指南",
+        "downloadSpec": "下载 OpenAPI",
+        "searchEmpty": "没有结果，请尝试功能名称、字段或 API 路径。",
+        "error": "文档加载失败。",
+        "retry": "重试",
+        "loading": "正在加载文档",
+        "articles": "{{count}} 篇文章",
+        "operations": "{{count}} 个操作",
+        "operation": "操作",
+        "schemas": "架构与事件",
+        "schema": "架构",
+        "access": "访问权限",
+        "token": "API 令牌",
+        "admin": "管理员会话",
+        "public": "公开 / 端点专用验证",
+        "special": "专用身份验证",
+        "authNote": "公开端点仍可能要求订阅密钥、登录凭据或一次性验证，请查看其架构。",
+        "scope": "所需权限",
+        "alternatives": "也接受：",
+        "params": "路径与查询参数",
+        "request": "请求体",
+        "response": "响应",
+        "example": "cURL 示例",
+        "exampleNote": "请替换占位值并检查接收者权限。示例不会执行请求，也不含真实凭据。",
+        "noSchema": "该数据未发布架构，发送前请检查操作定义。",
+        "none": "不适用",
+        "required": "必填",
+        "optional": "可选",
+        "default": "默认值",
+        "constraints": "约束",
+        "enum": "允许值",
+        "unresolved": "架构引用",
+        "contractNote": "技术说明保留自服务器 OpenAPI 定义。服务器还可能执行额外业务验证。",
+        "variables": "支持的 {{…}} 变量",
+        "noUnits": "数值，不含单位",
+        "referenceVersion": "构建参考",
+        "invalidLink": "找不到该文章或操作，请从目录选择。",
+        "clear": "清除搜索"
+    },
+    "project-support": {
+        "title": "支持项目",
+        "description": "感谢您支持 Remnacust。转账地址如下。",
+        "wallets": "钱包",
+        "network": "网络",
+        "wallet-address": "钱包地址",
+        "copy-address": "复制 {{coin}} 地址",
+        "copy-failed": "复制失败。请选中地址并手动复制。",
+        "network-note": "请使用名称旁标明的网络。",
+        "thank-you": "感谢您支持 Remnacust",
+        "contact-description": "有问题或建议？请联系项目作者。",
+        "contact": "通过 Telegram 联系"
+    },
+    "hosts-status-filter": {
+        "label": "主机状态",
+        "all": "全部状态",
+        "enabled": "已启用",
+        "disabled": "已禁用",
+        "hidden": "隐藏",
+        "visible": "可见"
+    }
+}

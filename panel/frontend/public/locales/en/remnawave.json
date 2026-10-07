@@ -1,0 +1,3206 @@
+{
+    "backups": {
+        "delivery-success": "Backup sent to Telegram",
+        "delivery-failed": "Could not send backup. Check the bot token, chat ID and Telegram connectivity."
+    },
+    "auth-localization": {
+        "login-title": "Login",
+        "server-unavailable": "Server is not responding. Check logs.",
+        "or": "OR",
+        "passkey-authentication": "Passkey authentication",
+        "authentication-cancelled": "Authentication was cancelled",
+        "passkey-unsupported": "Passkeys are not supported on this device",
+        "passkey": "Passkey"
+    },
+    "mutation-entities": {
+        "api-token": "API token",
+        "passkey": "Passkey",
+        "config": "Config",
+        "external-squad": "External squad",
+        "host": "Host",
+        "hosts": "Hosts",
+        "infra-provider": "Infrastructure provider",
+        "billing-history": "Billing history record",
+        "billing-node": "Billing node",
+        "internal-squad": "Internal squad",
+        "node-integration": "Node integration",
+        "node-plugin": "Node plugin",
+        "shared-list": "Shared list",
+        "node": "Node",
+        "node-traffic": "Node traffic",
+        "nodes": "Nodes",
+        "settings": "Remnacust settings",
+        "snippet": "Snippet",
+        "subscription-page-config": "Subscription page config",
+        "subscription-settings": "Subscription settings",
+        "subscription-template": "Subscription template",
+        "user": "User",
+        "user-subscription": "User subscription",
+        "user-traffic": "User traffic"
+    },
+    "mutation-messages": {
+        "operation-processing": "This operation may take some time...",
+        "task-processing": "Task added to queue. Please wait for it to be processed.",
+        "created": "{{entity}} created successfully",
+        "updated": "{{entity}} updated successfully",
+        "deleted": "{{entity}} deleted successfully",
+        "enabled": "{{entity}} enabled successfully",
+        "disabled": "{{entity}} disabled successfully",
+        "cloned": "{{entity}} cloned successfully",
+        "synced": "{{entity}} synced successfully",
+        "restarted": "{{entity}} restarted successfully",
+        "reset": "{{entity}} reset successfully",
+        "authenticated": "{{entity}} authenticated successfully",
+        "revoked": "{{entity}} revoked successfully",
+        "user-registered": "User registered successfully",
+        "request-sent": "Request sent",
+        "reports-truncated": "Reports cleared successfully",
+        "plugin-sync-queued": "Sync queued for nodes with this plugin",
+        "list-sync-queued": "Sync queued for nodes using this list",
+        "wait-for-nodes": "Please wait for the nodes to reconnect",
+        "task-queued": "Task added to queue successfully",
+        "actions-queued": "Actions added to queue successfully",
+        "nodes-updated": "Nodes updated successfully",
+        "passkey-verified": "Passkey verified successfully",
+        "users-expiration-extended": "Users' expiration dates extended successfully",
+        "all-users-expiration-extended": "All users' expiration dates extended successfully"
+    },
+    "country-picker": {
+        "unknown": "Unknown"
+    },
+    "hwid-notifications": {
+        "device-deleted": "Device deleted successfully",
+        "delete-failed-check-state": "Deletion did not finish. Check the refreshed device list and node status, then retry.",
+        "unblocked-devices-deleted": "Unblocked devices were deleted; blocked devices were kept.",
+        "subscription-blocked": "HWID blocked. Connected nodes revoke its key now; offline nodes apply the block when they reconnect.",
+        "device-unblocked": "Device unblocked successfully",
+        "delete-device": "Delete device",
+        "delete-all-devices": "Delete all devices",
+        "block-device": "Block device",
+        "unblock-device": "Unblock device",
+        "enforcement-unavailable": "The block could not be confirmed. Enable personal subscriptions and ensure every active node is connected and supports active-session revocation, then try again.",
+        "unknown-error": "Request failed with an unknown error."
+    },
+    "xera-node-health": {
+        "title": "Node health",
+        "healthy": "Healthy",
+        "limited": "Limited data",
+        "attention": "Needs attention",
+        "critical": "Critical",
+        "disabled": "Disabled",
+        "signal-coverage": "Signals: {{checked}}/{{total}}",
+        "problem-nodes": "Nodes requiring attention",
+        "all-clear": "No detected node issues",
+        "configuration": "No active config profile or inbounds",
+        "connection": "Node is disconnected",
+        "xray": "Xray uptime is unavailable",
+        "resources": "Resource telemetry is unavailable",
+        "high-memory": "Memory usage is at least 92%",
+        "high-load": "Sustained CPU load: 5-minute average at least 1.5 per core, or a 1-minute spike at 2.5 with a 5-minute average of at least 1.25",
+        "last-status": "Last status message",
+        "last-change": "Status changed",
+        "not-measured": "Not measured",
+        "filter": "Health",
+        "policy-pending-title": "Configuration pending",
+        "policy-pending-message": "Host policies could not be applied. The new configuration was not sent to the node; a running Xray keeps its previous configuration. Check host isolation v2 support in the node and core. The panel will retry once support is restored. The configured limits remain enabled.",
+        "upgrade-required-title": "Node update required",
+        "upgrade-required-message": "Update the node to Remnacust Node 1.1.1 with our Xray. This profile requires host isolation v2. Its limits and new connections will not work until the update. The running configuration is kept; after updating, the panel will apply the new one automatically."
+    },
+    "xera-node-optimization": {
+        "title": "Node optimization",
+        "level": "Optimization level",
+        "intro": "Choose one of four profiles. The panel runs it on the node over the saved SSH connection and shows the result in the terminal.",
+        "none": "No optimization",
+        "safe": "Conservative",
+        "balanced": "Balanced",
+        "performance": "Performance",
+        "safe-description": "Shortens TCP keepalive idle time to 10 minutes if the current value is longer.",
+        "none-description": "Restores the original values if a profile was previously applied.",
+        "balanced-description": "Raises TCP buffer ceilings and queue limits without reducing higher values.",
+        "performance-description": "Allows larger buffers and queues and enables BBR for new TCP connections when available.",
+        "recommended": "Recommended",
+        "keepalive": "Long connections",
+        "buffers": "TCP buffers",
+        "bbr": "BBR when available",
+        "backlog": "Connection backlog",
+        "safety": "Xray, Docker, routes, firewall and SSH are not restarted. Original settings can be restored."
+    },
+    "constants": {
+        "limits": "Limits",
+        "home": "Home",
+        "hosts": "Hosts",
+        "nodes": "Nodes",
+        "nodes-statistics": "Statistics",
+        "nodes-metrics": "Metrics",
+        "users": "Users",
+        "overview": "Overview",
+        "management": "Management",
+        "subscription-settings": "Settings",
+        "templates": "Templates",
+        "subscription": "Subscription",
+        "subscription-page": "Subscription Page",
+        "config-profiles": "Config Profiles",
+        "internal-squads": "Internal Squads",
+        "external-squads": "External Squads",
+        "infra-billing": "Infra Billing",
+        "hwid-inspector": "HWID Inspector",
+        "tools": "Tools",
+        "srh-inspector": "SRH Inspector",
+        "response-rules": "Response Rules",
+        "remnawave-settings": "Remnacust Settings",
+        "node-plugins": "Plugins",
+        "quick-open": "Quick open",
+        "tb-reports": "Torrent Blocker Reports",
+        "sessions-explorer": "Sessions Explorer",
+        "http-stats": "HTTP Stats",
+        "quick-launcher": "Launcher"
+    },
+    "common": {
+        "label": {
+            "used": "used",
+            "limit": "limit",
+            "remaining": "remaining",
+            "next-reset": "next reset (∞ = never)"
+        },
+        "action": {
+            "actions": "Actions",
+            "add": "Add",
+            "add-users": "Add users",
+            "bulk-actions": "Bulk actions",
+            "bulk-edit": "Bulk edit",
+            "cancel": "Cancel",
+            "change": "Change",
+            "clear": "Clear",
+            "clear-selection": "Clear selection",
+            "clone": "Clone",
+            "close": "Close",
+            "confirm-action": "Confirm action",
+            "continue": "Continue",
+            "copy": "Copy",
+            "copy-link": "Copy link",
+            "copy-uuid": "Copy UUID",
+            "create": "Create",
+            "delete": "Delete",
+            "disable": "Disable",
+            "documentation": "Documentation",
+            "download": "Download",
+            "edit": "Edit",
+            "enable": "Enable",
+            "load-from-github": "Load from GitHub",
+            "more-actions": "More actions",
+            "next": "Next",
+            "open": "Open",
+            "paste": "Paste",
+            "paste-default": "Paste default",
+            "refresh": "Refresh",
+            "remove": "Remove",
+            "remove-users": "Remove users",
+            "rename": "Rename",
+            "reset": "Reset",
+            "reset-traffic": "Reset traffic",
+            "save": "Save",
+            "search": "Search",
+            "select": "Select",
+            "select-all": "Select all",
+            "try-again": "Try again",
+            "update": "Update",
+            "view": "View"
+        },
+        "field": {
+            "active-sessions": "Active sessions",
+            "address": "Address",
+            "all": "All",
+            "billing-node": "Billing node",
+            "color": "Color",
+            "created-at": "Created at",
+            "creation": "Creation",
+            "description": "Description",
+            "first-connected-at": "First connected at",
+            "inbounds": "Inbounds",
+            "inbounds-hosts": "Inbounds & hosts",
+            "interface": "Interface",
+            "internal-squads": "Internal squads",
+            "ip-address": "IP address",
+            "ip-addresses": "IP addresses",
+            "logo-url": "Logo URL",
+            "name": "Name",
+            "os-version": "OS version",
+            "password": "Password",
+            "platform": "Platform",
+            "port": "Port",
+            "request-at": "Request at",
+            "shared-lists": "Shared lists",
+            "status": "Status",
+            "subscription-request-history": "Subscription request history",
+            "subscription-url": "Subscription URL",
+            "svg-icon": "SVG icon",
+            "system": "System",
+            "tag": "Tag",
+            "tags": "Tags",
+            "untagged": "Untagged",
+            "today": "Today",
+            "total": "Total",
+            "total-traffic": "Total traffic",
+            "updated-at": "Updated at",
+            "usage-stats": "Usage stats",
+            "user-agent": "User agent",
+            "user-status": "User status",
+            "username": "Username"
+        },
+        "message": {
+            "click-to-see-all": "Click to see all",
+            "configured": "Configured",
+            "confirm-action-description": "Are you sure you want to perform this action? This action cannot be undone.",
+            "copied": "Copied",
+            "error": "Error",
+            "event-sent": "Event sent",
+            "invalid-json": "Invalid JSON",
+            "last-error-message": "Last error message",
+            "loading": "Loading",
+            "no-config-profiles-available": "No config profiles available",
+            "no-data-available": "No data available",
+            "no-data-available-for-the-selected-period": "No data available for the selected period",
+            "no-inbound-selected": "No inbound selected",
+            "no-profile-selected": "No profile selected",
+            "no-profiles-or-inbounds-found": "No profiles or inbounds found",
+            "not-set": "Not set",
+            "nothing-found": "Nothing found",
+            "operation-completed": "Operation completed",
+            "overdue": "Overdue",
+            "processing": "Processing",
+            "unknown-error": "Request failed with an unknown error.",
+            "search-profiles-or-inbounds": "Search profiles or inbounds...",
+            "selected": "Selected: {{count}}",
+            "success": "Success",
+            "warning": "Warning"
+        }
+    },
+    "bandwidth-metrics": {
+        "current-year": "Current year",
+        "from-last-year": "vs last year",
+        "calendar-month": "Calendar month",
+        "last-30-days": "Last 30 days",
+        "from-last-month": "vs last month",
+        "last-7-days": "Last 7 days",
+        "from-last-week": "vs last week",
+        "from-yesterday": "vs yesterday"
+    },
+    "online-metrics": {
+        "never-online": "Never online",
+        "online-this-week": "Online this week",
+        "online-today": "Online today",
+        "online-now": "Online now"
+    },
+    "simple-metrics": {
+        "ram-usage": "RAM usage",
+        "total-online-on-nodes": "Total online on nodes"
+    },
+    "config-editor-actions": {
+        "feature": {
+            "format": "Format",
+            "failed-to-save-invalid-json": "Failed to save, invalid JSON.",
+            "save-anyway": "Save anyway",
+            "save-anyway-description": "Are you sure you want to save an invalid Xray config? This action can lead to unexpected behavior. Continue only if you know what you are doing.",
+            "tools": "Tools",
+            "copy-all-content": "Copy all content",
+            "cut-selection": "Cut selection",
+            "paste-from-clipboard": "Paste from clipboard",
+            "generate-keypair": "Generate keypair"
+        }
+    },
+    "action-group": {
+        "feature": {
+            "reset-table": "Reset table",
+            "clear-filters": "Clear filters"
+        }
+    },
+    "use-table-columns": {
+        "last-connected-node": "Last connected node",
+        "expire-at": "Expires at",
+        "data-usage": "Data usage",
+        "sub-link": "Sub-link",
+        "traffic-reset": "Traffic reset",
+        "never": "Never",
+        "online-at": "Online at",
+        "lifetime-used": "Lifetime usage",
+        "sub-link-revoked-at": "Sub-link revoked at",
+        "created-at": "Created at",
+        "internal-squads": "Internal squads",
+        "used-traffic": "Used traffic (%)"
+    },
+    "header-buttons": {
+        "feature": {}
+    },
+    "header-action-buttons": {
+        "feature": {
+            "update-external-squads": "Update external squads",
+            "external-squad-name": "External squad name",
+            "update-templates": "Update templates",
+            "template-name": "Template name"
+        }
+    },
+    "nodes-header-action-buttons": {
+        "feature": {
+            "restart-all-nodes": "Restart all nodes",
+            "search-nodes": "Search nodes",
+            "force-restart-description": "Guarantees that all nodes fully restart Xray Core.",
+            "graceful-restart-description-1": "Sends a request to all nodes to restart Xray, but the request may go unfulfilled if the node hash matches the current one. This is the default option.",
+            "force": "Force",
+            "graceful": "Graceful"
+        }
+    },
+    "config-editor": {
+        "widget": {
+            "unsaved-changes": "Unsaved changes",
+            "your-changes-will-be-lost-if-you-leave-this-page-without-saving": "Your changes will be lost if you leave this page without saving.",
+            "leave": "Leave",
+            "stay": "Stay"
+        }
+    },
+    "keypair": {
+        "widget": {
+            "generate-key-pair": "Generate key pair",
+            "both-keys": "Both keys"
+        }
+    },
+    "create-host-modal": {
+        "widget": {
+            "new-host": "New host",
+            "please-select-the-config-profile-and-inbound": "Please select the config profile and inbound"
+        }
+    },
+    "edit-host-modal": {
+        "widget": {
+            "edit-host": "Edit host",
+            "dangling-host-cannot-be-cloned": "Dangling host cannot be cloned"
+        }
+    },
+    "create-node-modal": {
+        "widget": {
+            "create-node": "Create node",
+            "back": "Back",
+            "connection-successful": "Connection successful",
+            "connection-failed": "Connection failed",
+            "open-node": "Open node"
+        }
+    },
+    "edit-node-modal": {
+        "widget": {
+            "edit-node": "Edit node"
+        }
+    },
+    "node-status-badge": {
+        "widget": {
+            "connected": "connected",
+            "connecting": "connecting",
+            "disabled": "disabled",
+            "disconnected": "disconnected"
+        }
+    },
+    "create-user-modal": {
+        "widget": {
+            "user-description": "User description",
+            "expiry-date": "Expiry date",
+            "pick-value": "Pick value",
+            "traffic-reset-strategy": "Traffic reset strategy",
+            "traffic-reset-strategy-description": "How often the user's traffic usage statistics should be reset",
+            "username-cannot-be-changed-later": "Username cannot be changed later",
+            "create-user": "Create user",
+            "1-month": "+1 month",
+            "3-months": "+3 months",
+            "1-year": "+1 year",
+            "2099-year": "year 2099",
+            "hwid-user-limit-description": "This feature will only work if <highlight>Subscription → Settings (HWID Limit)</highlight> is enabled. <anchor>Learn more</anchor>.",
+            "disable-hwid-limit": "Disable HWID limit",
+            "hwid-device-limit": "HWID device limit",
+            "expire-at-description": "The date and time when the user's subscription will expire.",
+            "internal-squads-description": "Specify which internal squads the user will be a member of."
+        }
+    },
+    "home-page": {},
+    "user-table": {
+        "widget": {
+            "error-loading-data": "Error loading data",
+            "table-title": "Users"
+        }
+    },
+    "view-user-modal": {
+        "widget": {
+            "subscription-qr-code": "Subscription QR code",
+            "edit-user-headline": "Edit user",
+            "subscription-url-description-line-1": "Domain and path resolved from .env variable:",
+            "subscription-url-description-line-2": "If you want to change it, please change it in the .env file and restart Remnacust using command:",
+            "management": "Management",
+            "danger-zone": "Danger zone",
+            "detailed-info": "Detailed info",
+            "accessible-nodes": "Accessible nodes",
+            "qr-code": "QR code"
+        }
+    },
+    "base-host-form": {
+        "remark": "Remark",
+        "host": "Host",
+        "path": "Path",
+        "fingerprint": "Fingerprint",
+        "security-layer": "Security layer",
+        "tls-transport-layer-security": "TLS (Transport Layer Security)",
+        "none": "None",
+        "inbounds-default": "Inbound's default",
+        "extra-xhttp": "XHTTP extra",
+        "xhttp-extra-params": "XHTTP extra parameters",
+        "address-description-line-1": "Address must be the IP address or a domain name pointing to the connection destination.",
+        "address-description-line-2": "In most cases, it should point to one of the connected nodes.",
+        "port-description-line-1": "Connection port.",
+        "port-description-line-2": "In most cases, must match the port of selected inbound.",
+        "sni-description-line-1": "SNI stands for Server Name Indication.",
+        "sni-description-line-2": "If not specified, the value from config's inbound will be used.",
+        "host-visibility": "Host visibility",
+        "server-description-header": "Server description",
+        "server-description-placeholder": "Maximum 30 characters",
+        "group-security": "Security",
+        "group-transport": "Transport",
+        "group-subscription": "Subscription",
+        "group-client": "Client-specific",
+        "group-advanced": "Advanced",
+        "hide-host": "Hide host",
+        "single-domain": "Single domain",
+        "default-mode-for-one-domain": "Default mode for one domain",
+        "multi-domain": "Multi domain",
+        "multi-domain-description": "Multiple domains separated by commas. Remnacust will randomly choose one of the domains.",
+        "wildcard-domain": "Wildcard domain",
+        "wildcard-domain-description": "Wildcard pattern for subdomains. Remnacust will replace * with the randomly generated string.",
+        "override-sni-from-address": "Override SNI from address",
+        "override-sni-from-address-description": "This option replaces the SNI value with the specified Address field value. This is particularly useful for multi-domain or wildcard domain configurations.",
+        "shuffled-hosts-hover-card": "Shuffled hosts will be placed at the top of the list and sorted randomly.",
+        "vless-route-description": "From 1 to 65535, 0/empty to disable",
+        "shuffle-host": "Shuffle host",
+        "enable-x25519mlkem768": "Enable x25519mlkem768",
+        "pick-nodes-which-resolved-from-this-host-only-visual-assignment": "Pick nodes which resolved from this host. Only visual assignment.",
+        "nodes": "Nodes",
+        "select-a-xray-json-template": "Select an Xray JSON template",
+        "xray-json-template": "Xray JSON template",
+        "vital-parameters": "Vital parameters",
+        "exclude-this-host-from-specific-internal-squads": "Exclude this host from specific internal squads",
+        "excluded-internal-squads": "Excluded internal squads",
+        "keep-sni-blank": "Keep SNI blank",
+        "keep-sni-blank-description": "In some cases, SNI must be left blank. Use this option to force an empty SNI. Note that this option has the highest priority, so it will be applied even if SNI is already set.",
+        "exclude-from-subscription-type": "Exclude from subscription type",
+        "hidden-host-description": "By default, Remnacust will not include hidden hosts in the subscription. Hidden hosts can be used with Mihomo, Xray-Json Advanced, and Raw.",
+        "server-description-1": "In supported clients, the protocol name (e.g. vless) will be replaced with the description specified here.",
+        "server-description-2": "Not all client applications support this feature. For more details, refer to the documentation of the apps listed below.",
+        "supported-clients": "Supported clients",
+        "mapper": "Mapper",
+        "internal-squads-mode-exclude": "Exclude",
+        "internal-squads-mode-allow-only": "Allow only",
+        "allowed-internal-squads": "Allowed internal squads",
+        "allow-this-host-only-for-specific-internal-squads": "Show this host only to the selected internal squads",
+        "group-assignment": "Assignment",
+        "access-mode": "Access mode",
+        "override-type": "Override type",
+        "sni": "SNI",
+        "alpn": "ALPN",
+        "vless-route-id": "Vless route ID",
+        "mux-params": "MUX",
+        "sockopt-params": "SockOpt",
+        "final-mask-params": "Final mask",
+        "pinned-peer-cert-sha256": "Pinned peer certificate",
+        "verify-peer-cert-by-name": "Verify peer certificate by name",
+        "mihomo-x25519": "Mihomo X25519",
+        "mihomo-ip-version": "Mihomo IP version",
+        "no-options-title": "Nothing else configured",
+        "no-options-description": "This host runs on its inbound and the essentials above. Add an option to change how it is generated, or who it reaches.",
+        "no-bulk-options-title": "No changes queued",
+        "no-bulk-options-description": "Every option you add is applied to all selected hosts. Leave one empty to clear that field on all of them.",
+        "bulk-option-will-be-cleared": "Will be cleared on all selected hosts.",
+        "leave-field-untouched": "Leave this field untouched",
+        "options": "Options"
+    },
+    "base-node-form": {
+        "country": "Country",
+        "select-country": "Select country",
+        "internal-name": "Internal name",
+        "internal-name-placeholder": "e.g. US-NY-Node-01",
+        "e-g-example-com": "e.g. example.com",
+        "traffic-tracking": "Track traffic usage",
+        "limit": "Limit",
+        "reset-day": "Reset day",
+        "e-g-1-31": "e.g. 1-31",
+        "notify-percent": "Notification %",
+        "e-g-50": "e.g. 50",
+        "consumption-m-line-1": "Applies the selected multiplier to the user's traffic (1.0 = normal, 0.5 = half, 2.0 = double).",
+        "consumption-m-line-2": "In simple terms, this means that if a user's traffic limit is 1 GiB and the consumption multiplier is 2.0, the user will be able to use only 0.5 GiB of traffic (real usage), but Remnacust will show usage as 1 GiB and the user will be LIMITED.",
+        "node-vitals": "Vitals",
+        "consumption": "Consumption",
+        "core-configuration": "Core configuration",
+        "tracking-and-billing": "Tracking & billing",
+        "management": "Management"
+    },
+    "home": {
+        "page": {
+            "online-stats": "Online stats",
+            "bandwidth": "Bandwidth",
+            "remnawave-usage": "Remnacust usage",
+            "process-details": "Process details"
+        },
+        "runtime-info": {
+            "title": "Runtime metrics guide",
+            "subtitle": "What every number on a runtime card actually means",
+            "intro": "Each card shows a live snapshot of a single <highlight>Remnacust process</highlight>. Use this guide to understand what each metric measures and when to worry about it.",
+            "instance-types-title": "Process types",
+            "instance-types-description": "Remnacust is split into several specialized processes. Each one has its own job, its own memory, and its own event loop.",
+            "api-description": "Handles every HTTP request from the dashboard and subscription endpoints. This is the <highlight>main user-facing process</highlight> — virtually every panel and subscription request is served here.",
+            "scheduler-description": "A <highlight>cron-driven dispatcher</highlight>. It does not run any work itself — at the scheduled moment it simply pushes a job into the queue for the <highlight>Processor</highlight> to pick up.",
+            "processor-description": "The actual <highlight>worker</highlight>. It consumes queued jobs and runs the heavy lifting: <highlight>node health checks</highlight>, <highlight>traffic aggregation</highlight> per user and per node, and other long-running tasks that must not block the API.",
+            "memory-description": "Where the process holds its working data. All values are reported by Node.js in real time.",
+            "heap-description": "Memory used by JavaScript objects, managed by <highlight>V8</highlight> — the Node.js engine. Shown as <highlight>used / total</highlight>. A high ratio is <highlight>expected and healthy</highlight> — V8 holds onto memory until it really needs more, so something like <highlight>100 / 120 MB</highlight> is normal, not a warning.",
+            "rss-description": "<highlight>Resident Set Size</highlight> — the total physical memory the OS has given to the process, including the heap, native code, and shared libraries. The best single signal of <highlight>how much RAM this process is actually using</highlight>.",
+            "external-description": "Memory held outside V8 by native C++ objects bound to JavaScript — typical sources are <highlight>open sockets</highlight>, <highlight>streams</highlight>, and Buffer-backed payloads.",
+            "array-buffers-description": "Memory specifically allocated for <highlight>ArrayBuffer</highlight> and <highlight>Buffer</highlight> instances (raw binary data). It is counted as a subset of <highlight>External</highlight>.",
+            "event-loop-description": "Health of the single-threaded loop that drives all asynchronous work in Node.js. If the loop is blocked, the whole process stalls.",
+            "delay-description": "Average time between consecutive event loop ticks. A healthy value sits close to <highlight>0–2 ms</highlight>. Higher numbers mean the loop is being blocked by long synchronous work.",
+            "p99-description": "<highlight>99th percentile</highlight> of event loop delay over the measurement window. Reveals worst-case latency that the average alone hides — useful for spotting occasional spikes.",
+            "active-handles-description": "Long-lived resources keeping the loop alive: <highlight>open sockets</highlight>, <highlight>timers</highlight>, <highlight>file descriptors</highlight>. A steady state is normal; <highlight>unbounded growth</highlight> is a strong leak signal."
+        }
+    },
+    "login-form": {
+        "feature": {
+            "sign-in": "Sign in",
+            "your-password": "Your password"
+        }
+    },
+    "statistic-nodes": {
+        "component": {
+            "current-month": "Current month",
+            "7-days": "7 days",
+            "14-days": "14 days",
+            "30-days": "30 days",
+            "60-days": "60 days",
+            "90-days": "90 days",
+            "180-days": "180 days",
+            "total-traffic": "Total traffic",
+            "total-traffic-placeholder": "Total traffic: {{totalTraffic}}",
+            "top-nodes": "Top nodes",
+            "node": "Node",
+            "traffic": "Traffic",
+            "3-days": "3 days"
+        }
+    },
+    "get-expiration-text": {
+        "util": {
+            "expires-in": "Expires in {{expiration}}",
+            "expired": "Expired {{expiration}}",
+            "unknown": "Unknown"
+        }
+    },
+    "reset-data": {
+        "constants": {
+            "reset-monthly": "Reset monthly",
+            "reset-weekly": "Reset weekly",
+            "reset-daily": "Reset daily",
+            "never-reset": "Never reset",
+            "reset-monthly-by-creation-date": "Reset monthly (by creation date)"
+        }
+    },
+    "data-usage": {
+        "column": {
+            "monthly": "Monthly",
+            "weekly": "Weekly",
+            "daily": "Daily"
+        }
+    },
+    "get-time-ago": {
+        "util": {
+            "invalid-date": "Invalid date",
+            "not-connected-yet": "Not connected yet"
+        }
+    },
+    "bulk-user-actions-modal": {
+        "widget": {
+            "user-deletion-description": "Delete all users with the selected status. If you delete users with the \"Active\" status, you should restart all nodes to apply the changes.",
+            "select-status": "Delete by status"
+        }
+    },
+    "register-form": {
+        "feature": {
+            "generate": "Generate & copy",
+            "confirm-password": "Confirm password",
+            "sign-up": "Sign up",
+            "password-copied": "Password copied",
+            "password-copied-message": "Password copied to clipboard",
+            "password-copied-error": "Failed to copy password to clipboard",
+            "passwords-do-not-match": "Passwords do not match",
+            "password-too-short": "Minimum 24 characters",
+            "register-description": "Create a super-admin account to get started",
+            "registration": "Registration"
+        }
+    },
+    "remarks-manager": {
+        "widget": {
+            "enter-remark": "Enter remark"
+        }
+    },
+    "subscription-settings": {
+        "widget": {
+            "validation-error": "Validation error",
+            "main-settings": "Main settings",
+            "you-must-add-at-least-one-remark-with-text": "You must add at least one remark with text",
+            "user-status-remarks-description": "The following values will be displayed on the subscription page if the user is expired, limited, or disabled.",
+            "user-status-remarks-description-line-2": "You can add multiple remarks for each status.",
+            "serve-json-at-base-subscription": "Serve JSON at base subscription",
+            "serve-json-description": "Serve JSON configurations at the base subscription path (without having to append /json). If the client supports it, it will be served JSON; otherwise, it will be served as usual.",
+            "custom-remarks": "Custom remarks"
+        }
+    },
+    "multi-select-hosts": {
+        "feature": {
+            "dangling-hosts-skipped": "{{count}} dangling host(s) were skipped and not cloned."
+        }
+    },
+    "edit-many-hosts-drawer": {
+        "confirm-title": "Confirm bulk update",
+        "confirm-description": "The following fields will be updated for {{count}} host(s):",
+        "no-changes-title": "Nothing to update",
+        "no-changes-description": "You haven't changed any fields."
+    },
+    "delete-all-users-by-status": {
+        "feature": {
+            "deleting-users": "Deleting users..."
+        }
+    },
+    "bulk-all-user-actions-tabs": {
+        "update": {
+            "tab": {
+                "feature": {
+                    "select-status": "Select status",
+                    "update-users": "Update users"
+                }
+            }
+        },
+        "actions": {
+            "tab": {
+                "feature": {
+                    "reset-traffic-description": "Resets the traffic usage to zero for all selected users"
+                }
+            }
+        },
+        "danger": {
+            "tab": {
+                "feature": {
+                    "delete-users-by-status": "Delete users by status",
+                    "delete-users-by-status-description": "Permanently deletes all users with the selected status"
+                }
+            }
+        }
+    },
+    "bulk-user-actions": {
+        "actions": {
+            "tab": {
+                "feature": {
+                    "revoke-subscription": "Revoke subscription",
+                    "perform-action-on-users": "Perform actions on {{usersCount}} selected users",
+                    "revokes-subscription-for-all-selected-users": "Revokes subscription for all selected users",
+                    "specify-internal-squads-that-will-be-assigned-to-the-user": "Specify internal squads that will be assigned to the user",
+                    "extend-expiration-date": "Extend expiration date",
+                    "enter-the-number-of-days-to-extend-the-expiration-date": "Enter the number of days to extend the expiration date",
+                    "extend-days": "Extend days",
+                    "extend": "Extend",
+                    "extend-expiration-date-description": "Add days to the expiration date for the selected users. Days will be added to the current expiration date of each user."
+                }
+            }
+        },
+        "danger": {
+            "tab": {
+                "feature": {
+                    "delete-users": "Delete users",
+                    "permanently-deletes-all-selected-users-and-their-data": "Permanently deletes all selected users and their data"
+                }
+            }
+        }
+    },
+    "get-user-subscription-links": {
+        "feature": {
+            "connection-keys": "Connection keys"
+        }
+    },
+    "active-sessions-drawer": {
+        "widget": {
+            "requirements": "Requirements",
+            "warning-activity": "An IP address will be shown when <highlight>Xray Core</highlight> considers the <highlight>connection still open</highlight>. As a result, some of the IP addresses shown may no longer be connected. Use the <highlight>clock</highlight> icon to track the last activity of a given IP.",
+            "warning-version": "Remnacust Node version <highlight>{{version}}</highlight> or higher",
+            "warning-docker": "Add the following to <highlight>docker-compose.yml</highlight> of Remnacust Node (/opt/remnanode)",
+            "warning-patience": "Fetching data may take some time, do not close this window!",
+            "warning-n-plus-one": "<highlight>Please note</highlight>: this request performs <highlight>N+1</highlight> calls to the gRPC API of <highlight>Xray Core</highlight> due to the lack of bulk data retrieval methods. <highlight>N</highlight> is the number of users currently online on the given node.",
+            "fetching": "Fetching active sessions...",
+            "progress": "Completed {{completed}} of {{total}} nodes",
+            "job-failed-description": "Failed to fetch active sessions.",
+            "active-ips-across-nodes": "Active IP addresses",
+            "distinct-ips": "Distinct IPs"
+        }
+    },
+    "detailed-user-info-drawer": {
+        "widget": {
+            "detailed-user-info": "Detailed user info",
+            "user-information": "User information",
+            "short-uuid": "Short UUID",
+            "email": "Email",
+            "telegram-id": "Telegram ID",
+            "traffic-information": "Traffic information",
+            "used-traffic": "Traffic usage",
+            "lifetime-used-traffic": "Lifetime traffic usage",
+            "traffic-limit": "Traffic limit",
+            "traffic-limit-strategy": "Traffic limit strategy",
+            "last-traffic-reset": "Last traffic reset",
+            "subscription-information": "Subscription information",
+            "expires-at": "Expires at",
+            "revoked-at": "Revoked at",
+            "connection-information": "Connection information",
+            "trojan-password": "Trojan password",
+            "ss-password": "SS password",
+            "last-online": "Last online",
+            "last-connected-node": "Last connected node",
+            "timestamps": "Timestamps",
+            "active-internal-squads": "Active internal squads"
+        }
+    },
+    "subscription-tabs": {
+        "widget": {
+            "show-custom-remarks": "Show custom remarks",
+            "show-custom-remark-description-line-2": "If this setting is disabled, EXPIRED, LIMITED, and DISABLED users will receive an actual empty host list instead.",
+            "additional-response-headers": "Response headers",
+            "headers-that-will-be-sent-with-subscription-content": "Headers that will be sent with the subscription content.",
+            "location-template-hint": "Without TEG, values refer to the host; with TEG, to the tag or the host if no tag applies. MB/GB sets the calculation unit; the result is a number without a suffix.",
+            "randomize-hosts": "Randomize hosts",
+            "randomize-hosts-description": "Randomize hosts in subscription content",
+            "additional-options": "Additional options",
+            "configure-additional-subscription-options": "Configure additional subscription options"
+        }
+    },
+    "nodes-realtime-metrics": {
+        "widget": {
+            "download-speed": "Download speed",
+            "upload-speed": "Upload speed"
+        }
+    },
+    "internal-squads-usage-drawer": {
+        "info": {
+            "title": "How usage is calculated",
+            "summary": "Returns internal squad members who spent at least the given threshold over the selected period, with the <b>total volume</b> for each of them.",
+            "nodes-title": "Which nodes are counted",
+            "nodes-intro": "A squad isn't tied to nodes directly — the link is derived through inbounds:",
+            "nodes-step-1": "All inbounds that belong to the internal squad are taken.",
+            "nodes-step-2": "For each inbound, the config profiles it belongs to are resolved.",
+            "nodes-step-3": "A node is counted when it has such a profile set as <b>active</b> and that inbound is enabled on the node itself.",
+            "nodes-outro": "So only the nodes a squad member can <hl>actually connect to right now</hl> are counted. If the squad has no inbound available on at least one node, the list is empty.",
+            "traffic-title": "How traffic is counted",
+            "traffic-granularity": "Stats are stored with <b>daily</b> granularity: one record = user + node + day. Node data is flushed to the database roughly <hl>every 2 minutes</hl>, so today's numbers are near real-time, lagging by up to a couple of minutes.",
+            "traffic-sum": "For each member, all of their daily per-node records are summed over the period from the start of <code>start</code> to the end of <code>end</code> (both dates inclusive, UTC).",
+            "traffic-threshold": "Only users whose total is <b>≥ minTotalBytes</b> make it into the response. Volume is returned in <hl>raw bytes</hl>, without rounding.",
+            "caveats-title": "What to keep in mind",
+            "caveats-per-node": "Traffic is counted <b>per whole node</b>, not per inbound. If a node is shared across squads (its active profile also serves other inbounds), the user's total includes all their traffic on that node — including what they poured through other squads' inbounds. It's an <hl>upper bound</hl>, not exact per-squad attribution.",
+            "caveats-membership": "Squad membership and the node set are taken <b>at request time</b>, not historically. A user who left the squad disappears from the response (even though they used traffic); a recently joined one shows all their traffic for the period, including days before joining. The same goes for a change of a node's active profile.",
+            "caveats-sorting": "The list is sorted by <b>user ID</b>, not by volume. Since traffic changes in real time, data may drift between pages — to hunt down abusers, set a <code>minTotalBytes</code> threshold instead of reading everyone."
+        }
+    },
+    "get-hwid-user-devices": {
+        "feature": {
+            "unknown": "Unknown",
+            "model": "Model",
+            "added": "Added",
+            "delete-device": "Delete device",
+            "delete-device-confirmation": "Delete this device? If a node is unavailable, deletion may not finish; check the refreshed list.",
+            "devices": "Devices",
+            "hwid-devices": "HWID devices",
+            "delete-all-devices": "Delete all unblocked devices",
+            "delete-unblocked-confirmation": "Delete all unblocked devices? Blocked devices will stay in the list and can be deleted individually.",
+            "block-scope": "Blocking always stops subscription delivery to this HWID. To revoke active VPN sessions, set XERA_PERSONAL_SUBSCRIPTIONS=true in the panel environment and use compatible nodes. With shared credentials, existing traffic can continue."
+        }
+    },
+    "headers-manager": {
+        "widget": {
+            "key": "Key",
+            "value": "Value",
+            "add-header": "Add header"
+        }
+    },
+    "template-selector": {
+        "search-templates": "Search templates...",
+        "official-templates": "Official templates",
+        "author-templates": "{{author}} templates",
+        "modal": {
+            "load-template": "Load template"
+        },
+        "add-template": "Add template"
+    },
+    "use-download-template": {
+        "failed-to-load-template": "Failed to load template",
+        "template-loaded": "Template loaded",
+        "template-name-has-been-loaded-into-the-editor": "{{name}} has been loaded into the editor",
+        "load-failed": "Load failed",
+        "failed-to-load-template-please-try-again": "Failed to load template. Please try again.",
+        "select-template-to-load": "Select template to load"
+    },
+    "pm2-metrics": {
+        "total-processes": "Total processes",
+        "total-memory": "Total memory"
+    },
+    "dashboard-ui": {
+        "heap-used": "Heap used",
+        "avg-event-loop": "Avg event loop",
+        "total-ram": "Total RAM",
+        "active": "Active",
+        "expired": "Expired",
+        "limited": "Limited",
+        "disabled": "Disabled",
+        "runtime": "Runtime",
+        "canvases": "Canvases",
+        "backups": "Backups"
+    },
+    "internal-squads-grid": {
+        "widget": {
+            "no-internal-squads": "No internal squads",
+            "create-your-first-internal-squad-to-get-started": "Create your first internal squad to get started",
+            "delete-squad": "Delete squad",
+            "users": "Users"
+        }
+    },
+    "config-profiles-grid": {
+        "widget": {
+            "no-config-profiles": "No config profiles",
+            "create-your-first-config-profile-to-get-started": "Create your first config profile to get started",
+            "delete-profile": "Delete profile",
+            "nodes": "Nodes",
+            "quick-view": "Quick view",
+            "xray-config": "Xray config"
+        }
+    },
+    "view-infra-provider": {
+        "drawer": {
+            "widget": {
+                "infra-provider": "Infra provider",
+                "name-description": "The name of the provider. This is used to identify the provider in the UI.",
+                "enter-provider-name": "Enter provider name",
+                "favicon-link": "Favicon link",
+                "enter-favicon-link": "Enter favicon link",
+                "favicon-link-description": "A link to the provider's favicon, used to display it in the UI. You can enter just the domain name.",
+                "login-url": "Login URL",
+                "enter-login-url": "Enter login URL",
+                "login-url-description": "The URL of the provider's login page. It lets you jump straight to that page."
+            }
+        }
+    },
+    "update-billing-date-modal": {
+        "widget": {
+            "update-billing-date": "Update billing date",
+            "current-date": "Current date",
+            "new-date": "New date",
+            "tomorrow": "Tomorrow",
+            "next-month": "Next month"
+        }
+    },
+    "infra-providers-table": {
+        "widget": {
+            "no-providers-found": "No providers found."
+        }
+    },
+    "infra-billing-records-table": {
+        "widget": {
+            "no-billing-records-found": "No billing records found."
+        }
+    },
+    "infra-billing-nodes": {
+        "widget": {
+            "no-nodes-found": "No nodes found.",
+            "add-a-node": "Add a node",
+            "update-multiple-nodes": "Update multiple nodes"
+        }
+    },
+    "create-infra-billing-record": {
+        "modal": {
+            "widget": {
+                "please-select-a-provider": "Please select a provider",
+                "bill-record": "Bill record",
+                "billed-at": "Billed at",
+                "the-date-and-time-when-the-bill-was-paid": "The date and time when the bill was paid.",
+                "payment-amount-usd": "Payment amount, USD",
+                "amount": "Amount"
+            }
+        }
+    },
+    "create-infra-billing-node": {
+        "modal": {
+            "widget": {
+                "please-select-a-provider-and-billing-node": "Please select a provider and billing node",
+                "next-billing-at": "Next billing at",
+                "next-billing-at-description": "The date and time for the next billing of this node. Remnacust will notify you about upcoming billing.",
+                "existing": "Existing",
+                "custom": "Custom",
+                "custom-name-description": "Use a custom name when the node is not managed by Remnacust."
+            }
+        }
+    },
+    "active-nodes-list": {
+        "modal": {
+            "shared": {
+                "this-profile-is-not-active-on-any-nodes": "This profile is not active on any nodes"
+            }
+        }
+    },
+    "config-profile-card": {
+        "shared": {
+            "active-on-nodes": "Active on nodes"
+        },
+        "widget": {
+            "loading-computed-config-profile": "Loading computed config profile...",
+            "computed-config-profile-loaded-successfully": "Computed config profile loaded successfully",
+            "the-computed-config-profile-description": "The computed config profile shows the final configuration after all snippets have been applied.",
+            "view-computed": "View computed"
+        }
+    },
+    "flat-inbound-checkbox-card": {
+        "shared": {
+            "inbound-config-inbound-tag": "Inbound config: {{inboundTag}}"
+        }
+    },
+    "virtualized-flat-inbounds-list": {
+        "shared": {
+            "no-inbounds-found": "No inbounds found"
+        }
+    },
+    "select-billing-node": {
+        "shared": {
+            "no-billing-nodes-available": "No billing nodes available",
+            "select-the-billing-node": "Select the billing node.",
+            "select-billing-node": "Select billing node..."
+        }
+    },
+    "select-infra-provider": {
+        "shared": {
+            "infrastructure-provider": "Infrastructure provider",
+            "no-providers-available": "No providers available",
+            "select-the-infrastructure-provider": "Select the infrastructure provider.",
+            "select-provider": "Select provider..."
+        }
+    },
+    "internal-squads-list": {
+        "widget": {
+            "search-internal-squads": "Search internal squads...",
+            "no-squads-found": "No squads found"
+        }
+    },
+    "user-accessible-nodes": {
+        "modal": {
+            "widget": {
+                "user-accessible-nodes": "User accessible nodes"
+            }
+        }
+    },
+    "internal-squads": {
+        "drawer": {
+            "widget": {
+                "config-profiles": "Config profiles",
+                "flat-list": "Flat list",
+                "selected": "Selected",
+                "unselected": "Unselected",
+                "edit-internal-squad": "Edit internal squad",
+                "selected-inbounds": "Selected inbounds: {{count}}"
+            }
+        }
+    },
+    "host-select-inbound": {
+        "feature": {
+            "choose-an-inbound-to-apply-to-the-host": "Choose an inbound to apply to the host"
+        }
+    },
+    "show-config-profiles-with-inbounds": {
+        "feature": {
+            "no-config-profile-selected": "No config profile selected",
+            "choose-a-profile-to-configure-inbounds-for-this-node": "Choose a profile to configure inbounds for this node"
+        }
+    },
+    "access-settings-card": {
+        "access-settings": "Access settings",
+        "select-an-external-squad-to-apply-custom-settings-to-this-user": "Select an external squad to apply custom settings to this user.",
+        "external-squad": "External squad",
+        "select-an-external-squad": "Select an external squad..."
+    },
+    "device-tag-settings-card": {
+        "device-and-tag-settings": "Device & tag settings"
+    },
+    "user-identity-creation-card": {
+        "user-identity": "User identity"
+    },
+    "hosts-config-profiles": {
+        "drawer": {
+            "widget": {
+                "unknown-inbound": "Unknown inbound",
+                "assign-an-inbound-to-the-host": "Assign an inbound to the host"
+            }
+        }
+    },
+    "stats": {
+        "widget": {
+            "upcoming-in": "Upcoming in {{month}}",
+            "nodes-pending-payment": "nodes pending payment",
+            "payments-in": "Payments in {{month}}",
+            "total-payments-made": "total payments made",
+            "total-spent": "Total spent",
+            "lifetime-spending": "lifetime spending",
+            "payment-overdue": "payment overdue",
+            "all-up-to-date": "all up to date"
+        }
+    },
+    "disclaimer-overlay": {
+        "title": "Disclaimer",
+        "subtitle": "Please read this notice before you continue.",
+        "intro": "Remnacust is an <highlight>open-source, self-hosted</highlight> proxy and user-management tool. It is provided <warning>\"as is\", without any warranty</warning> of any kind, express or implied.",
+        "responsibility": "You are <highlight>solely responsible</highlight> for how you deploy and use this software.",
+        "compliance": "You must comply with <highlight>all laws and regulations</highlight> applicable in your jurisdiction.",
+        "liability": "The developers and contributors accept <warning>no liability</warning> for any misuse, damage, or data loss.",
+        "license-acknowledgement": "By continuing you acknowledge that you have read and agree to the <anchor>license terms</anchor>.",
+        "accept-button": "I understand and accept"
+    },
+    "connection-status-overlay": {
+        "connection-lost": "Connection lost",
+        "reconnecting": "Reconnecting..."
+    },
+    "mobile-warning-overlay": {
+        "mobile-device-detected": "Mobile device detected",
+        "description-line-1": "This page contains complex tables that may not be comfortable to use on mobile devices.",
+        "description-line-2": "Here are some controls you can use to manage the table on mobile devices.",
+        "show-or-hide-columns": "Show or hide columns",
+        "adjust-row-spacing-density": "Adjust row spacing density",
+        "toggle-fullscreen-table-view": "Toggle fullscreen table view",
+        "desktop-recommended": "Desktop recommended",
+        "or": "or",
+        "rotate-device": "Rotate device",
+        "i-understand-continue-anyway": "I understand, continue anyway"
+    },
+    "internal-squad-header-action-buttons": {
+        "feature": {
+            "squad-name": "Squad name",
+            "enter-squad-name": "Enter squad name"
+        }
+    },
+    "config-profiles-header-action-buttons": {
+        "feature": {
+            "create-a-new-config-profile-by-entering-a-name-below": "Create a new config profile by entering a name below.",
+            "you-can-customize-xray-config-after-creation": "You can customize the Xray config after creation.",
+            "profile-name": "Profile name",
+            "enter-profile-name": "Enter profile name"
+        }
+    },
+    "restart-node-button": {
+        "feature": {
+            "restart": "Restart",
+            "restart-description-line-1": "Ensures that the node completely restarts Xray Core. This is the recommended option.",
+            "restart-description-line-2": "Sends a request to this node to restart Xray, but the request may go unfulfilled if the node hash matches the current one."
+        }
+    },
+    "node-details-card": {
+        "show-zero-values": "Show zero values",
+        "hide-zero-values": "Hide zero values",
+        "no-inbound-traffic-data": "No inbound traffic data",
+        "no-outbound-traffic-data": "No outbound traffic data",
+        "widget": {
+            "node-details": "Details",
+            "enable-node": "Enable node",
+            "disable-node": "Disable node",
+            "config-profile-or-inbounds-is-missing": "Config profile or inbounds is missing",
+            "xray-core-version": "Xray Core version",
+            "remnawave-node-version": "Node version, @remnawave/node"
+        }
+    },
+    "config-profiles": {
+        "drawer": {
+            "widget": {
+                "config-profiles": "Config profiles",
+                "no-inbounds-selected": "No inbounds selected"
+            }
+        }
+    },
+    "node-system-card": {
+        "widget": {
+            "system-info": "System info",
+            "memory": "Memory",
+            "network": "Network",
+            "kernel": "Kernel"
+        }
+    },
+    "node-stats": {
+        "card": {
+            "traffic-refill-in-days": "Traffic refill in (days):",
+            "represents-the-uptime-of-the-xray-core": "Represents the uptime of the Xray Core"
+        }
+    },
+    "host-tags-input": {
+        "tags-are-not-visible-to-end-users-tag-will-be-sent-with-raw-subscription-only": "Tags are not visible to end users. Tag will be sent with RAW subscription only."
+    },
+    "internal-squad-accessible-nodes": {
+        "modal": {
+            "widget": {
+                "internal-squad-accessible-nodes": "Internal squad accessible nodes"
+            }
+        }
+    },
+    "config-profile-inbounds": {
+        "drawer": {
+            "widget": {
+                "fetching-inbounds": "Fetching inbounds...",
+                "inbounds-with-active-squads": "Inbounds with active squads"
+            }
+        }
+    },
+    "get-user-subscription-request-history": {
+        "feature": {
+            "request-history": "Request history"
+        }
+    },
+    "use-hwid-inspector-table-columns": {
+        "device-model": "Device model"
+    },
+    "hwid-inspector-table": {
+        "widget": {
+            "hwid-devices-list": "HWID devices list"
+        }
+    },
+    "hwid-inspector-metrics": {
+        "widget": {
+            "total-unique-devices": "Total unique devices",
+            "total-hwid-devices": "Total HWID devices",
+            "avg-devices-per-user": "Avg devices per user",
+            "platform-distribution": "Platform distribution",
+            "app-distribution": "App distribution",
+            "no-platform-data": "No platform data available",
+            "no-app-data": "No app data available"
+        }
+    },
+    "use-srh-inspector-table-columns": {
+        "request-ip": "Request IP",
+        "response-type": "Response type",
+        "rule-name": "Rule name"
+    },
+    "srh-inspector-metrics": {
+        "widget": {
+            "requests": "Requests",
+            "hourly-request-statistics": "Hourly request statistics",
+            "no-hourly-data-available": "No hourly data available"
+        }
+    },
+    "linked-hosts-drawer": {
+        "widget": {
+            "assigned-hosts": "Assigned hosts",
+            "no-hosts-assigned-to-this-node": "No hosts assigned to this node"
+        }
+    },
+    "get-node-linked-hosts": {
+        "feature": {
+            "linked-hosts": "Linked hosts"
+        }
+    },
+    "snippets": {
+        "drawer": {
+            "widget": {
+                "snippet-cannot-be-empty": "Snippet cannot be empty",
+                "snippet-cannot-contain-empty-objects": "Snippet cannot contain empty objects",
+                "more-items": "more items...",
+                "create-snippet": "Create snippet",
+                "snippet-name": "Snippet name",
+                "enter-snippet-name-cannot-be-changed-later": "Enter snippet name (cannot be changed later)",
+                "snippet-is-valid": "Snippet is valid",
+                "edit-snippet": "Edit snippet",
+                "snippets": "Snippets",
+                "new-snippet": "New snippet"
+            }
+        }
+    },
+    "response-rules-editor-actions": {
+        "feature": {
+            "response-rules-debugger": "Response rules debugger",
+            "response-rules-debugger-description-1": "Use this cURL command to test how your response rules match different request headers.",
+            "response-rules-debugger-description-2": "You can import it into:",
+            "or": ", or",
+            "curl-command": "cURL command",
+            "copy-curl-command": "Copy cURL command",
+            "debugger": "Debugger"
+        }
+    },
+    "copy-docker-compose": {
+        "widget": {
+            "copy-docker-compose-yml": "Copy docker-compose.yml",
+            "local-image-note": "This Compose uses a locally built Remnacust Node 1.1.1 image. Build it using the node instructions first. The public installer creates its own Compose file."
+        }
+    },
+    "create-node-step-1-connection": {
+        "copy-the": "Copy the",
+        "content-for-the-remnawave-node-below": "content for the Remnacust Node below.",
+        "learn-more": "Learn more.",
+        "domain-or-ip": "Domain or IP",
+        "additional-options": "Additional options"
+    },
+    "create-node-step-3-status": {
+        "establishing-mtls-connection": "Establishing mTLS connection...",
+        "xray-core-is-up-and-running": "Xray Core is up and running!",
+        "remnawave-will-try-to-reconnect-shortly": "Remnacust will try to reconnect shortly...",
+        "no-errors-so-far": "No errors so far"
+    },
+    "external-squad-card": {
+        "widget": {
+            "users": "Users"
+        }
+    },
+    "internal-squads-with-store": {
+        "drawer": {
+            "widget": {
+                "users": "Users"
+            }
+        }
+    },
+    "external-squads": {
+        "drawer": {
+            "widget": {
+                "subscription-templates": "Subscription templates",
+                "subscription-templates-description-line-1": "Select one template for each subscription type. If not selected, the default template will be used automatically.",
+                "subscription-templates-description-line-2": "Please note, Response Rules have a higher priority.",
+                "select-a-template": "Select a template",
+                "default-template-in-use": "Default template in use...",
+                "edit-external-squad": "Edit external squad",
+                "templates": "Templates",
+                "settings": "Settings",
+                "remarks": "Remarks"
+            }
+        }
+    },
+    "external-squads-grid": {
+        "widget": {
+            "no-external-squads": "No external squads",
+            "no-external-squads-line-1": "External squads allow you to customize settings for specific groups of users.",
+            "no-external-squads-line-2": "You can override default subscription templates and other settings for each squad.",
+            "no-external-squads-line-3": "Create a squad and assign users to apply custom configurations."
+        }
+    },
+    "external-squads-settings": {
+        "tab": {
+            "widget": {
+                "override-subscription-settings-for-this-external-squad": "Override subscription settings for this external squad",
+                "add-override": "Add override"
+            }
+        }
+    },
+    "srr-advanced-warning-overlay": {
+        "warning-line-1": "This feature is designed for advanced users who understand the potential risks and implications.",
+        "incorrect-configuration-line-1": "Incorrect configuration",
+        "incorrect-configuration-line-2": "may cause unexpected behavior",
+        "review-settings-carefully-line-1": "Review settings carefully",
+        "review-settings-carefully-line-2": "before applying changes"
+    },
+    "auth-settings": {
+        "header": {
+            "title": "Authentication methods",
+            "description": "Manage your authentication methods."
+        },
+        "error-modal": {
+            "title": "Update failed",
+            "description": "An error occurred while updating authentication settings. Please review the error details below and try again.",
+            "unknown-error": "Request failed with unknown error."
+        },
+        "passkey": {
+            "title": "Passkey",
+            "manage-button": "Manage",
+            "rpId": {
+                "label": "Frontend domain",
+                "description": "Public domain of your frontend without protocol (e.g., example.com)"
+            },
+            "origin": {
+                "label": "Backend domain",
+                "description": "Fully qualified https origin of your backend (e.g., https://api.example.com)"
+            }
+        },
+        "password": {
+            "title": "Password"
+        },
+        "telegram": {
+            "adminIds": {
+                "label": "Allowed admin IDs",
+                "placeholder": "Enter admin IDs"
+            }
+        },
+        "fields": {
+            "clientId": {
+                "label": "Client ID",
+                "description": "Provider OAuth2 client ID",
+                "placeholder": "Enter client ID"
+            },
+            "clientSecret": {
+                "label": "Client secret",
+                "description": "Provider OAuth2 client secret",
+                "placeholder": "Enter client secret"
+            },
+            "plainDomain": {
+                "label": "Plain domain",
+                "description": "Plain domain for PocketID (e.g., example.com)",
+                "placeholder": "example.com"
+            },
+            "allowedEmails": {
+                "label": "Allowed emails",
+                "description": "List of allowed email addresses.",
+                "placeholder": "Enter email"
+            },
+            "realm": {
+                "label": "Realm",
+                "description": "Keycloak realm name"
+            },
+            "keycloakDomain": {
+                "label": "Keycloak domain",
+                "description": "Keycloak server domain without protocol (e.g., keycloak.docs.rw)"
+            },
+            "expectedIssuer": {
+                "label": "Provider issuer",
+                "description": "The exact issuer from the provider’s OpenID Connect configuration. The path and trailing / must match. This is not the token endpoint."
+            }
+        }
+    },
+    "passkeys-drawer": {
+        "component": {
+            "passkeys": "Passkeys",
+            "no-passkeys-registered-yet": "No passkeys registered yet",
+            "add-passkeys-description": "Add your first passkey to enable secure, passwordless sign-in across your devices",
+            "register": "Register",
+            "last-used-at": "Last used at"
+        }
+    },
+    "branding-settings-card": {
+        "widget": {
+            "customize-your-remnawave-instance": "Customize the look of your Remnacust instance",
+            "branding-settings": "Branding settings",
+            "the-title-that-will-be-displayed-on-login-page": "The title that will be displayed on login page",
+            "brand-name": "Brand name",
+            "the-url-to-your-brand-logo-image": "The URL to your brand logo image. Accepts a regular http(s) URL or a base64 data URL (data:image/svg+xml;base64,...).",
+            "colored-title-format": "Colored title format",
+            "colored-title-description": "You can color individual words using {color}word syntax. Supports both HEX colors (#RRGGBB) and Mantine color names.",
+            "example-hex-colors": "Example with HEX colors",
+            "example-mantine-colors": "Example with Mantine colors",
+            "example-mixed": "Example with mixed colors",
+            "color-format-note": "💡 Color applies only to the word immediately following the marker. Without markers, text will be white."
+        }
+    },
+    "experimental-settings-card": {
+        "widget": {
+            "experimental-features": "Experimental features",
+            "description": "Features that are still in development. They can change or disappear at any time.",
+            "legacy-layout-style": "Legacy layout style"
+        }
+    },
+    "api-tokens-card": {
+        "widget": {
+            "api-tokens-description": "Manage your API access tokens for programmatic access.",
+            "api-tokens": "API tokens",
+            "no-api-tokens-found": "No API tokens found",
+            "token-name": "Token name",
+            "create-api-token": "Create API token",
+            "full-access": "Full access",
+            "col-scopes": "Scopes",
+            "col-created": "Created",
+            "col-expires": "Expires",
+            "expired": "Expired",
+            "expires-in-days": "Expires in (days)",
+            "one-time-notice": "For security reasons, the token is shown <emphasis>only once</emphasis> right after creation. Make sure to copy and store it somewhere safe — you won't be able to see it again."
+        }
+    },
+    "external-squads-hosts": {
+        "tab": {
+            "widget": {
+                "host-overrides": "Host overrides",
+                "override-host-settings-for-this-external-squad": "Override host settings for this external squad."
+            }
+        }
+    },
+    "reset-usage-user": {
+        "feature": {
+            "reset-usage": "Reset usage"
+        }
+    },
+    "help-action-icon": {
+        "shared": {
+            "help-article": "Help"
+        }
+    },
+    "internal-squad-card": {
+        "widget": {
+            "available-nodes": "Available nodes"
+        }
+    },
+    "help-drawer": {
+        "shared": {
+            "failed-to-load-documentation": "Failed to load documentation"
+        }
+    },
+    "external-squads-response-headers": {
+        "widget": {
+            "response-headers": "Headers",
+            "headers-inherited-description": "By default, response headers are inherited from the main subscription settings.",
+            "add-headers": "Add headers",
+            "add-headers-description": "Headers listed here are added to the inherited ones. If a header with the same key already exists in the main settings, it will be overridden.",
+            "remove-headers": "Remove headers",
+            "remove-headers-description": "Header keys listed here will be removed from the response, even if they are provided by the main settings.",
+            "enter-header-key": "Enter header key"
+        }
+    },
+    "subscription-hwid-settings": {
+        "widget": {
+            "hwid-card-description": "Carefully review the documentation before enabling the HWID feature. Not all client applications support this feature.",
+            "hwid-settings": "HWID settings",
+            "hwid-limit": "HWID limit",
+            "fallback-device-limit-description": "Enter the maximum number of devices that can be used with a subscription",
+            "fallback-device-limit": "Fallback device limit",
+            "max-devices-announce-description": "Enter the message that will be displayed when the user has reached the maximum number of devices",
+            "max-devices-announce": "Max devices announce",
+            "max-200-characters": "Max. 200 characters"
+        }
+    },
+    "external-squads-hwid-settings": {
+        "tab": {
+            "widget": {
+                "hwid-settings-override": "HWID settings override",
+                "override-hwid-description": "Override HWID device limit settings for this external squad. When disabled, global subscription settings will be used.",
+                "enable-hwid-override": "Enable HWID override"
+            }
+        }
+    },
+    "external-squads-custom-remarks": {
+        "widget": {
+            "override-remarks-description": "Override user status remarks for this external squad. When disabled, global subscription settings will be used.",
+            "enable-override": "Enable override"
+        }
+    },
+    "subscription-user-remarks-card": {
+        "widget": {
+            "contact-support": "Contact support",
+            "subscription-limited": "Subscription limited",
+            "no-hosts-found": "No hosts found",
+            "deny-new-devices": "New device registration is blocked",
+            "traffic-paused": "Traffic is temporarily blocked",
+            "empty-hosts": "Empty hosts",
+            "hwid-max-devices-exceeded": "HWID: max devices exceeded",
+            "hwid-not-supported": "HWID: not supported",
+            "combine-status-hwid": "Combine subscription status and HWID block",
+            "combine-status-hwid-description": "Show the subscription status and device block at the same time.",
+            "remark-order": "Remark order",
+            "subscription-expired": "Subscription expired",
+            "subscription-disabled": "Subscription disabled",
+            "hwid-blocked": "Device blocked (HWID)"
+        }
+    },
+    "multi-select-nodes": {
+        "feature": {
+            "profile-and-inbounds": "Profile & inbounds"
+        }
+    },
+    "use-nodes-table-widget": {
+        "online": "Online",
+        "traffic-used": "Traffic used",
+        "config-profile": "Config profile",
+        "xray-v": "Xray V.",
+        "node-v": "Node V.",
+        "provider": "Provider",
+        "total-ram": "Total RAM",
+        "cpu-model": "CPU model"
+    },
+    "subpage-config-visual-editor": {
+        "widget": {
+            "configuration-saved-successfully": "Configuration saved successfully",
+            "edit-your-subscription-page-configuration": "Edit your subscription page configuration",
+            "subpage-editor": "Subpage editor",
+            "brand-appearance": "Brand appearance",
+            "branding": "Branding",
+            "brand-title": "Brand title",
+            "your-brand-name": "Your brand name",
+            "support-url": "Support URL",
+            "additional-languages": "Additional languages",
+            "localization": "Localization",
+            "ui-configuration": "UI configuration",
+            "subscription-info-block-design": "Subscription info block design",
+            "configure-apps-for-each-platform": "Configure apps for each platform",
+            "platforms": "Platforms",
+            "add-platform": "Add platform",
+            "no-platforms-configured": "No platforms configured",
+            "add-a-platform-to-get-started": "Add a platform to get started",
+            "open-svg-library": "Open SVG library",
+            "installation-guides-design": "Installation guides design"
+        },
+        "subpage-config-saved-line-1": "To apply the changes, please restart the Remnacust Subscription-page Docker container.",
+        "subpage-config-saved-line-2": "For example, you can use the following command in your terminal:"
+    },
+    "app-editor-drawer-content": {
+        "component": {
+            "app-settings": "App settings",
+            "featured": "Featured",
+            "app-name": "App name",
+            "blocks": "Blocks",
+            "add-block": "Add block"
+        }
+    },
+    "block-editor": {
+        "modal": {
+            "component": {
+                "untitled-block": "Untitled block",
+                "edit-block": "Edit block",
+                "block-settings": "Block settings",
+                "icon-color": "Icon color",
+                "icon-color-help": "You can use any Mantine theme color ({{colors}}) or any valid HEX color (for example: #009688).",
+                "title": "Title",
+                "buttons": "Buttons",
+                "add-button": "Add button"
+            }
+        }
+    },
+    "button-editor": {
+        "component": {
+            "link": "Link",
+            "type": "Type",
+            "button-text": "Button text",
+            "link-placeholder": "https:// or app://"
+        }
+    },
+    "localized-text-editor": {
+        "component": {
+            "done": "Done"
+        }
+    },
+    "platform-editor": {
+        "component": {
+            "platform-svg-icon": "Platform SVG icon",
+            "display-name": "Display name",
+            "apps": "Apps",
+            "add-app": "Add app",
+            "unnamed-app": "Unnamed app",
+            "edit-app": "Edit app"
+        }
+    },
+    "svg-icon-select": {
+        "component": {
+            "select-icon": "Select icon...",
+            "no-icons-in-library": "No icons in library"
+        }
+    },
+    "svg-library-modal": {
+        "component": {
+            "svg-library": "SVG library",
+            "add-icon": "Add icon",
+            "add-icons-to-use-them-in-blocks-and-buttons": "Add icons to use them in blocks and buttons",
+            "edit-icon": "Edit icon",
+            "only-latin-characters-no-spaces": "Only latin characters, no spaces",
+            "only-latin-characters-allowed": "Only latin characters allowed",
+            "icon-key": "Icon key",
+            "svg-code": "SVG code",
+            "preview": "Preview",
+            "where-to-find-icons": "Where to find icons?",
+            "you-can-find-beautiful-icons-at": "You can find beautiful icons at",
+            "where-to-find-icons-description": "Click on any icon, select \"Copy SVG\", and paste it here. Make sure to choose the \"Outline\" or \"Filled\" style."
+        }
+    },
+    "external-squads-subpage-config": {
+        "tab": {
+            "widget": {
+                "subscription-page-config": "Subscription page config",
+                "subscription-page-config-description": "You can override the subscription page configuration (Remnacust Subscription Page) for this external squad.",
+                "subpage-config": "Subpage config",
+                "select-config": "Select config..."
+            }
+        }
+    },
+    "subpage-config-editor-page": {
+        "component": {
+            "import-config": "Import config",
+            "download-config": "Download config",
+            "importing-config": "Importing config",
+            "this-may-take-a-while": "This may take a while...",
+            "config-imported-successfully": "Config imported successfully",
+            "failed-to-parse-config-file": "Failed to parse config file"
+        }
+    },
+    "base-translations-drawer": {
+        "component": {
+            "base-translations": "Base translations",
+            "completed": "{{count}}/{{total}} completed"
+        }
+    },
+    "statistic-sparkline-card": {
+        "widget": {
+            "peak": "Peak"
+        }
+    },
+    "base-settings-block": {
+        "component": {
+            "base-settings": "Base settings",
+            "meta-title": "Meta title",
+            "meta-description": "Meta description",
+            "show-connection-keys": "Show connection keys",
+            "show-or-hide-raw-connection-keys": "Show or hide raw connection keys",
+            "hide-get-link-button": "Hide \"Get Link\" button",
+            "hide-the-get-link-button-top-right-corner": "Hide the \"Get Link\" button from the top right corner"
+        }
+    },
+    "import-config-sections": {
+        "modal": {
+            "import-options-description": "Choose what you want to import from the config file",
+            "replace-entire-config-with-imported-one": "Replace entire config with imported one",
+            "full-import": "Full import",
+            "partial-import": "Partial import",
+            "merge-svg-library": "Merge {{0}} icons into your collection ({{1}} existing)",
+            "import-svg-library": "Import SVG library",
+            "import-platforms-descriptions": "Replaces platforms, locales, translations + merges SVG library",
+            "import-platforms": "Import platforms",
+            "replace-base-translation-and-locales": "Replace base translation and locales",
+            "import-base-translations": "Import base translations"
+        }
+    },
+    "revoke-subscription-user": {
+        "feature": {
+            "full-revoke": "Full revoke",
+            "revoke": "Revoke",
+            "passwords-only": "Passwords only",
+            "passwords-only-description": "Only regenerates Connection Passwords; the Subscription URL stays the same",
+            "full-revoke-description": "Regenerates subscription URL and connection passwords"
+        }
+    },
+    "nodes-quick-stats": {
+        "widget": {
+            "users-online": "Users online",
+            "online-nodes": "Online nodes"
+        }
+    },
+    "template-info-popover": {
+        "shared": {
+            "template-variables": "Template variables",
+            "available-variables-are-listed-below": "Hover over a variable to see what it does. Click to copy.",
+            "you-can-use-template-variables-in-this-field": "You can use template variables in this field.",
+            "descriptions": {
+                "DAYS_LEFT": "Whole days until the subscription expires. Returns 0 after expiry.",
+                "TRAFFIC_USED": "Traffic used from the subscription's overall quota in the current period, with units such as GiB.",
+                "TRAFFIC_LEFT": "Remaining overall subscription quota, with units. Returns 0 when exhausted or unlimited.",
+                "TRAFFICLOCATIONUSE": "Usage of the host. General remarks list values with their names.",
+                "TRAFFICLOCATIONUSETEG": "Usage of the tag, or of the host when no tag applies. General remarks list values with their names.",
+                "TRAFFICLOCATIONLIMIT": "Limit of the host. General remarks list values with their names.",
+                "TRAFFICLOCATIONLIMITTEG": "Limit of the tag, or of the host when no tag applies. General remarks list values with their names.",
+                "TRAFFICLOCATIONLEFT": "Remaining traffic of the host. General remarks list values with their names.",
+                "TRAFFICLOCATIONLEFTTEG": "Remaining traffic of the tag, or of the host when no tag applies. General remarks list values with their names.",
+                "TRAFFICLOCATIONRESETAT": "Next quota reset date of the host. UTC, accepts format; ∞ means no reset is scheduled.",
+                "TRAFFICLOCATIONRESETATTEG": "Next quota reset date of the tag, or of the host when no tag applies. UTC, accepts format; ∞ means no reset is scheduled.",
+                "STATUS": "User status accounting for subscription expiry: Active, Disabled, Limited or Expired. Labels can be overridden with the corresponding status parameters.",
+                "TOTAL_TRAFFIC": "Overall subscription traffic limit, with units such as GiB. 0 means unlimited.",
+                "USERNAME": "The user's username in the panel.",
+                "EMAIL": "The user's email address. Empty when not set.",
+                "TELEGRAM_ID": "The user's numeric Telegram ID. Empty when not set.",
+                "SUBSCRIPTION_URL": "The user's full HTTPS subscription URL.",
+                "TAG": "The user's tag, not a host tag. Empty when not set.",
+                "EXPIRE_UNIX": "Subscription expiry as a Unix timestamp: seconds since January 1, 1970.",
+                "SHORT_UUID": "The user's short identifier used in the subscription URL.",
+                "ID": "The user's internal numeric ID in the panel.",
+                "TRAFFIC_USED_BYTES": "Traffic used from the overall subscription quota in the current period, as an exact byte count.",
+                "TRAFFIC_LEFT_BYTES": "Remaining overall subscription quota in bytes. Returns 0 when exhausted or unlimited.",
+                "TOTAL_TRAFFIC_BYTES": "Overall subscription traffic limit in bytes. 0 means unlimited.",
+                "RESET_STRATEGY": "Overall subscription quota reset rule: NO_RESET, DAY, WEEK, MONTH or MONTH_ROLLING. Labels can be overridden with these parameters.",
+                "LIFETIME_USED_BYTES": "The user's lifetime traffic usage in bytes, including previous periods.",
+                "CREATED_AT_UNIX": "User creation time as a Unix timestamp in seconds.",
+                "LAST_TRAFFIC_RESET_AT_UNIX": "Last overall traffic reset as a Unix timestamp in seconds. Returns 0 if no reset has occurred.",
+                "LAST_TRAFFIC_RESET_AT": "Last overall traffic reset date. Defaults to DD.MM.YYYY; accepts format. Empty if no reset has occurred.",
+                "NEXT_TRAFFIC_RESET_AT_UNIX": "Next overall quota reset according to its reset rule, as a Unix timestamp in seconds. Returns 0 if automatic resets are disabled.",
+                "NEXT_TRAFFIC_RESET_AT": "Next overall quota reset date. Defaults to DD.MM.YYYY; accepts format. Empty if automatic resets are disabled.",
+                "SS_HWID_LIMIT": "The user's device limit, falling back to the subscription settings when no individual limit is set. 0 means unlimited.",
+                "DESCRIPTION": "The user's description from the panel. Empty when not set.",
+                "HOST_SPEED": "Per-user speed limit in Mbps: the strictest host or tag limit. A host remark shows only its speed; a general remark lists accessible hosts. 0 Mbps means unlimited. This is not measured speed or the host's shared limit.",
+                "SUBSCRIPTION_LINK": "The user's subscription link for a button on the subscription page.",
+                "HAPP_CRYPT3_LINK": "The subscription link in Happ crypt3 format for a subscription-page button.",
+                "HAPP_CRYPT4_LINK": "The subscription link in Happ crypt4 format for a subscription-page button.",
+                "INCY_CRYPT1_LINK": "The subscription link in Incy crypt1 format for a subscription-page button.",
+                "TRAFFICLOCATIONUSEDMB": "Usage of the host in MB. Number without a unit suffix, base 1024, up to 3 decimal places. General remarks list values with their names.",
+                "TRAFFICLOCATIONUSEDMBTEG": "Usage of the tag, or of the host when no tag applies in MB. Number without a unit suffix, base 1024, up to 3 decimal places. General remarks list values with their names.",
+                "TRAFFICLOCATIONUSEDGB": "Usage of the host in GB. Number without a unit suffix, base 1024, up to 3 decimal places. General remarks list values with their names.",
+                "TRAFFICLOCATIONUSEDGBTEG": "Usage of the tag, or of the host when no tag applies in GB. Number without a unit suffix, base 1024, up to 3 decimal places. General remarks list values with their names.",
+                "TRAFFICLOCATIONLIMITMB": "Limit of the host in MB. Number without a unit suffix, base 1024, up to 3 decimal places. General remarks list values with their names.",
+                "TRAFFICLOCATIONLIMITMBTEG": "Limit of the tag, or of the host when no tag applies in MB. Number without a unit suffix, base 1024, up to 3 decimal places. General remarks list values with their names.",
+                "TRAFFICLOCATIONLIMITGB": "Limit of the host in GB. Number without a unit suffix, base 1024, up to 3 decimal places. General remarks list values with their names.",
+                "TRAFFICLOCATIONLIMITGBTEG": "Limit of the tag, or of the host when no tag applies in GB. Number without a unit suffix, base 1024, up to 3 decimal places. General remarks list values with their names.",
+                "TRAFFICLOCATIONLEFTMB": "Remaining traffic of the host in MB. Number without a unit suffix, base 1024, up to 3 decimal places. General remarks list values with their names.",
+                "TRAFFICLOCATIONLEFTMBTEG": "Remaining traffic of the tag, or of the host when no tag applies in MB. Number without a unit suffix, base 1024, up to 3 decimal places. General remarks list values with their names.",
+                "TRAFFICLOCATIONLEFTGB": "Remaining traffic of the host in GB. Number without a unit suffix, base 1024, up to 3 decimal places. General remarks list values with their names.",
+                "TRAFFICLOCATIONLEFTGBTEG": "Remaining traffic of the tag, or of the host when no tag applies in GB. Number without a unit suffix, base 1024, up to 3 decimal places. General remarks list values with their names.",
+                "TRAFFIC_USED_MB": "Traffic used from the subscription's overall quota in the current period, with units such as GiB. Fixed MB unit, base 1024, up to 3 decimals.",
+                "TRAFFIC_USED_GB": "Traffic used from the subscription's overall quota in the current period, with units such as GiB. Fixed GB unit, base 1024, up to 3 decimals.",
+                "TRAFFIC_LEFT_MB": "Remaining overall subscription quota, with units. Returns 0 when exhausted or unlimited. Fixed MB unit, base 1024, up to 3 decimals.",
+                "TRAFFIC_LEFT_GB": "Remaining overall subscription quota, with units. Returns 0 when exhausted or unlimited. Fixed GB unit, base 1024, up to 3 decimals.",
+                "TOTAL_TRAFFIC_MB": "Overall subscription traffic limit, with units such as GiB. 0 means unlimited. Fixed MB unit, base 1024, up to 3 decimals.",
+                "TOTAL_TRAFFIC_GB": "Overall subscription traffic limit, with units such as GiB. 0 means unlimited. Fixed GB unit, base 1024, up to 3 decimals."
+            }
+        }
+    },
+    "user-active-session-drawer": {
+        "widget": {
+            "drop-all-user-connections-all-nodes": "Drop all user connections (all nodes)",
+            "drop-all-user-connections-this-node": "Drop all user connections (this node)",
+            "drop-this-connection-on-this-node": "Drop this connection on this node"
+        }
+    },
+    "contact-information-card": {
+        "contact-information": "Contact information"
+    },
+    "traffic-limits-card": {
+        "traffic-and-limits": "Traffic & limits",
+        "traffic-limit-description": "0 means unlimited",
+        "traffic-limit": "Traffic limit"
+    },
+    "node-vitals": {
+        "card": {
+            "plugin": "Plugin",
+            "review-documentation-for-more-information": "Review the documentation for more information.",
+            "nothing-found": "Nothing found...",
+            "select-plugin": "Select plugin",
+            "proxy-url": "Proxy URL",
+            "proxy-url-description": "Optional. If provided, internal API connection from panel to node will be proxied through this proxy."
+        }
+    },
+    "node-plugin-card": {
+        "widget": {
+            "active-on-nodes": "Active on nodes"
+        }
+    },
+    "active-on-nodes": {
+        "modal": {
+            "shared": {
+                "this-plugin-is-not-active-on-any-nodes": "This plugin is not active on any nodes."
+            }
+        }
+    },
+    "node-plugins-grid": {
+        "widget": {
+            "node-plugins-are-an-advanced-feature-please-review-the-documentation-before-use": "Node Plugins are an advanced feature. Please review the documentation before use.",
+            "no-node-plugins-yet": "No node plugins yet",
+            "create-a-plugin-to-extend-node-capabilities-with": "Create a plugin to extend node capabilities with"
+        }
+    },
+    "node-plugin-executor": {
+        "content": {
+            "enter-at-least-one-ip-address": "Enter at least one IP address.",
+            "block-specific-ip-addresses-on-selected-nodes": "Block specific IP addresses on selected nodes",
+            "block-ips": "Block IPs",
+            "remove-ip-blocks-on-selected-nodes": "Remove IP blocks on selected nodes",
+            "unblock-ips": "Unblock IPs",
+            "executor-description": "IP blocks are temporary — they persist only until the node or its core restarts. Blocks may also be reset if the plugin configuration changes.",
+            "recreate-nftables-rules-on-selected-nodes": "Recreate nftables rules on selected nodes",
+            "recreate-tables": "Recreate tables",
+            "block-ips-description": "One entry per line. Timeout 0 = block until restart.",
+            "unblock-ips-description": "One IP address per line.",
+            "ips-to-block": "IPs to block",
+            "ips-to-unblock": "IPs to unblock",
+            "format-one-per-line": "Format (one per line):",
+            "no-connected-nodes-available": "No connected nodes available.",
+            "deselect-all": "Deselect all",
+            "execute": "Execute"
+        }
+    },
+    "torrent-blocker-stats": {
+        "widget": {
+            "total-reports": "Total reports",
+            "distinct-nodes": "Distinct nodes",
+            "distinct-users": "Distinct users",
+            "last-24-hours": "Last 24 hours",
+            "by-report-count": "By report count",
+            "top-users": "Top users"
+        }
+    },
+    "torrent-blocker-reports-table": {
+        "widget": {
+            "truncate-reports": "Truncate reports",
+            "truncate-reports-description": "All Torrent Blocker reports will be permanently deleted."
+        }
+    },
+    "node-active-session": {
+        "item": {
+            "widget": {
+                "view-user": "View user"
+            }
+        }
+    },
+    "node-active-sessions": {
+        "drawer": {
+            "widget": {
+                "active-users-on-this-node": "Active users on this node"
+            }
+        }
+    },
+    "nodes-datatable": {
+        "widget": {
+            "column-width": "Column width",
+            "column-order": "Column order",
+            "column-toggle": "Column toggle"
+        }
+    },
+    "user-torrent-blocker-report-item": {
+        "processed-at": "Processed at",
+        "unblocked-at": "Unblocked at"
+    },
+    "get-user-torrent-blocker-reports": {
+        "feature": {
+            "blocker-reports": "Torrent Blocker reports"
+        }
+    },
+    "user-torrent-blocker-reports": {
+        "drawer": {
+            "widget": {
+                "total-reports": "Total reports"
+            }
+        }
+    },
+    "user-subscription-requests-drawer": {
+        "widget": {
+            "total-records": "Total records"
+        }
+    },
+    "sessions-explorer-idle": {
+        "description-1": "This operation may take a while depending on the number of nodes and users. Sessions are fetched sequentially to avoid overloading the backend.",
+        "start-exploring": "Start exploring"
+    },
+    "sessions-explorer-progress": {
+        "exploring-nodes": "Exploring nodes...",
+        "nodes-processed": "{{completed}} of {{total}} nodes processed",
+        "nodes-failed": "{{count}} failed"
+    },
+    "sessions-explorer": {
+        "widget": {
+            "all-nodes-failed-to-return-session-data": "All nodes failed to return session data.",
+            "total-ips": "Total IPs",
+            "unique-ips": "Unique IPs",
+            "nodes-explored": "Nodes explored",
+            "total-users": "Total users",
+            "restart-scan": "Restart scan",
+            "clear-results": "Clear results",
+            "search-by-ip": "Search by IP address...",
+            "no-results-for-ip": "No users found with IP matching \"{{ip}}\""
+        }
+    },
+    "mobile-stats": {
+        "widget": {
+            "upcoming": "Upcoming",
+            "per-month": "Per month",
+            "total-spent": "Total spent"
+        }
+    },
+    "mobile-providers-list": {
+        "widget": {
+            "invoices": "Invoices"
+        }
+    },
+    "mobile-infra-billing": {
+        "widget": {
+            "history": "History",
+            "providers": "Providers"
+        }
+    },
+    "hosts-datatable": {
+        "widget": {
+            "reset-sort": "Reset sort"
+        }
+    },
+    "columns-visibility-popover": {
+        "show-all": "Show all",
+        "hide-all": "Hide all"
+    },
+    "use-hosts-table-widget": {
+        "disabled": "Disabled",
+        "enabled": "Enabled",
+        "hidden": "Hidden",
+        "visible": "Visible"
+    },
+    "node-tracking-and-billing": {
+        "card": {
+            "note": "Note"
+        }
+    },
+    "node-ips": {
+        "add-ip": "Add IP",
+        "remove-ip": "Remove IP",
+        "invalid-ip": "Not a valid IPv4 or IPv6 address",
+        "ip-is-required": "IP address is required",
+        "max-ips-reached": "Maximum {{max}} IP addresses",
+        "no-ips-yet": "No IP addresses yet"
+    },
+    "node-ip-statuses": {
+        "inbound": "Inbound",
+        "outbound": "Outbound",
+        "management": "Management",
+        "transit": "Transit",
+        "monitoring": "Monitoring",
+        "reserve": "Reserve",
+        "blocked": "Blocked",
+        "flagged": "Flagged",
+        "deprecated": "Deprecated",
+        "unknown": "Unknown"
+    },
+    "node-consumption": {
+        "card": {
+            "node-consumption-multiplier-1": "Applies the selected multiplier to node traffic (1.0 = normal, 0.5 = half, 2.0 = double).",
+            "node-consumption-multiplier-2": "Mainly used for accurate display of usage limits when traffic tracking is enabled. The node consumption multiplier does not affect detailed statistics display (on graphs).",
+            "node-consumption-multiplier": "Node consumption multiplier",
+            "user-consumption-multiplier": "User consumption multiplier"
+        }
+    },
+    "keypair-generator": {
+        "widget": {
+            "generate": "Generate",
+            "short-id-help": "16 hexadecimal characters (8 random bytes). Use shortIds on the REALITY server and shortId on the client.",
+            "server-config": "Server configuration",
+            "public-key-help": "For X25519, password is another name for the public key. Both values are identical.",
+            "all-values": "All values"
+        }
+    },
+    "bulk-all-users-actions": {
+        "modal": {
+            "perform-actions-on-all-users": "Perform actions on all users"
+        }
+    },
+    "backend-tools-card": {
+        "widget": {
+            "queue-viewer": "Queue viewer",
+            "queue-viewer-description": "Monitor and manage background job queues.",
+            "scalar-description": "Modern interactive API reference.",
+            "swagger-description": "Classic OpenAPI documentation explorer.",
+            "backend-tools-description": "Access to Queue Viewer, Scalar, or Swagger.",
+            "login": "Login",
+            "backend-tools": "Backend tools"
+        }
+    },
+    "http-stats": {
+        "page": {
+            "component": {
+                "http-stats-description": "Aggregated request counts per API route since the last panel restart."
+            }
+        }
+    },
+    "http-stats-table": {
+        "widget": {
+            "total-requests": "Total requests",
+            "tracked-routes": "Tracked routes",
+            "peak-requests": "Peak requests",
+            "avg-route": "Avg / route"
+        }
+    },
+    "node-inbounds-hosts-drawer": {
+        "widget": {
+            "no-active-config-profile": "This node has no active config profile",
+            "linked": "Linked"
+        }
+    },
+    "node-integrations": {
+        "modal": {
+            "title": "Node integrations",
+            "delete-description": "The integration will be removed from all nodes and affected nodes will be restarted."
+        },
+        "editor": {
+            "description-placeholder": "What this integration does",
+            "config-must-be-an-object": "Config must be a JSON object"
+        },
+        "select": {
+            "label": "Integrations",
+            "placeholder": "Select integrations"
+        }
+    },
+    "shared-lists": {
+        "modal": {
+            "subtitle": "Reusable IP and ASN lists referenced by plugins as ext:name",
+            "delete-description": "The list will be deleted. Plugins referencing it keep the ext: reference and will fail validation until it is fixed."
+        },
+        "editor": {
+            "name-description": "Referenced in plugins as ext:name. Cannot be changed later."
+        }
+    },
+    "apply-to-nodes": {
+        "title": "Apply to nodes?",
+        "apply": "Apply now",
+        "apply-description": "Affected nodes receive the new configuration right away.",
+        "later": "Not now",
+        "later-description": "Changes are saved, but nodes keep the current version until their next sync or restart."
+    },
+    "node-geocheck": {
+        "title": "GeoCheck",
+        "source-default": "Default",
+        "default-placeholder": "Automatic",
+        "default-description": "The node will use its default outbound route.",
+        "ip-description": "Pick one of the node IPs or type any address",
+        "interface-description": "Pick one of the node interfaces or type any name",
+        "run": "Run check",
+        "running": "Running geoCheck",
+        "running-description": "The node is probing its connectivity, this usually takes up to a minute.",
+        "failed-description": "The node could not complete the GeoCheck.",
+        "view-image": "Report",
+        "no-image": "No image in the report, open JSON",
+        "requires-node-version": "Available with Remnacust Node {{remnacustVersion}}+ or Remnawave Node {{version}}+"
+    },
+    "quick-open": {
+        "page": {
+            "description": "Open any entity by its identifier, or copy a direct link to share"
+        }
+    },
+    "node-ssh": {
+        "title": "SSH terminal",
+        "key-imported": "your key",
+        "key-description-imported": "Signing uses the key you imported; it never leaves your browser. Make sure its public half is in authorized_keys on the server.",
+        "key-use-own": "Use my own key",
+        "key-generate-new": "Generate a new key",
+        "key-import": "Import key",
+        "key-import-title": "Use your own key",
+        "key-import-label": "Private key",
+        "key-import-description": "Stays in this browser, encrypted in the vault. Passphrase-protected keys are not supported.",
+        "key-error": {
+            "encrypted": "This key is passphrase-protected. Remove the passphrase, or import a copy without one.",
+            "malformed": "The key could not be read. Copy the whole file, including the BEGIN and END lines.",
+            "unsupported-algo": "Only Ed25519 and RSA keys are supported.",
+            "unsupported-format": "That does not look like a private key file."
+        },
+        "vault-setup-title": "Set up the key vault",
+        "vault-unlock-title": "Unlock the key vault",
+        "seed-warning": "Write these 12 words down and keep them offline. They are the only way to restore your SSH keys — the panel never sees them and cannot recover them for you.",
+        "create-vault": "Create vault",
+        "unlock": "Unlock",
+        "unlock-description": "Enter the 12 words you saved when the vault was created.",
+        "seed-invalid": "This is not a valid 12-word recovery phrase",
+        "seed-mismatch": "This phrase does not match the vault stored in this browser",
+        "key-title": "Install the public key",
+        "key-description": "A dedicated key was generated for this node and never leaves your browser. Add the line below to authorized_keys on the server, then connect.",
+        "authorized-keys": "authorized_keys entry",
+        "host": "Host",
+        "host-hint": "Leave empty to use the node address",
+        "connect": "Connect",
+        "hostkey-new-title": "Unknown host key",
+        "hostkey-new-description": "This is the first time you connect to this host from this browser. Verify the fingerprint out of band before trusting it.",
+        "hostkey-changed-title": "Host key changed",
+        "hostkey-changed-description": "The host key does not match the one you trusted earlier. This can mean the server was reinstalled — or that someone is intercepting the connection.",
+        "fingerprint": "Fingerprint",
+        "known-fingerprint": "Previously trusted",
+        "trust-and-connect": "Trust and connect",
+        "abort": "Abort",
+        "disconnected": "Session closed",
+        "passcode-required-description": "The vault cannot be used in this browser until you set a passcode. It also saves you from typing the recovery phrase every time.",
+        "passcode-save": "Save passcode",
+        "passcode-title": "Set a passcode for this browser",
+        "passcode-description": "Unlocks the vault on this browser after a reload.",
+        "passcode-length": "{{length}} characters, at least one of them a letter.",
+        "passcode-needs-letter": "Add at least one letter.",
+        "passcode-unlock-description": "Enter the passcode you set for this browser.",
+        "passcode-wrong": "Wrong passcode",
+        "passcode-attempts": "Attempts left: {{count}}",
+        "passcode-exhausted": "Too many wrong attempts, the passcode was turned off. Unlock with your recovery phrase and set a new one.",
+        "use-phrase": "Forgot your passcode?",
+        "use-passcode": "Back to passcode",
+        "connection-settings": "Settings",
+        "resize": "Resize window",
+        "retry": "Retry",
+        "ticket-failed": "The panel refused to open a session.",
+        "vault-manage": "Manage vault",
+        "export": "Export vault",
+        "export-locked": "Unlock the vault first — a backup can only be made from an open vault.",
+        "export-description": "Saves an encrypted file with your node keys and addresses. Nothing in it is readable without the recovery phrase, so it is safe to keep anywhere.",
+        "import": "Import vault",
+        "import-description": "Restores keys from a backup file. Enter the recovery phrase that the backup was created with.",
+        "import-select": "Choose backup file",
+        "import-ready": "Backup from {{date}}",
+        "create-new-instead": "Create a new vault instead",
+        "reset-really": "Yes, delete every key",
+        "import-invalid": "This file is not a vault backup",
+        "import-mismatch": "The recovery phrase does not open this backup",
+        "reset": "Reset vault",
+        "reset-description": "Deletes the vault and every SSH key in it. The private keys are gone for good, so the public keys already installed on your nodes become useless and you will have to install a new one on each. Panel access is not affected.",
+        "lost-everything": "Lost both the passcode and the phrase?",
+        "snippets-title": "Snippets",
+        "snippets-empty": "No snippets yet",
+        "snippet-command": "Command",
+        "snippet-add": "Add snippet",
+        "snippet-edit": "Edit snippet",
+        "connections-title": "Saved connections",
+        "connections-empty": "No saved connections yet",
+        "connections-current": "Current"
+    },
+    "api-token-editor": {
+        "saved": "API token permissions saved",
+        "actions": "Actions for token {{name}}",
+        "edit-title": "Edit token {{name}}",
+        "edit-permissions": "Edit permissions",
+        "existing-token": "Changes apply on the next request. The token value and expiration remain unchanged.",
+        "read-only": "Read only",
+        "full-description": "All available API methods, including future additions. Panel-only operations are excluded.",
+        "exact-description": "Only checked permissions are granted. Future methods are not granted automatically. No checkboxes means no permissions.",
+        "loading": "Loading permissions…",
+        "catalog-error": "Could not load permissions. Saving is disabled.",
+        "retry": "Retry",
+        "obsolete-scopes": "These permissions are no longer available and will be removed when saving:",
+        "search": "Search method, URL, scope or description"
+    },
+    "layoutActions": {
+        "oneCardPerRow": "One card per row",
+        "twoCardsPerRow": "Two cards per row",
+        "showTable": "Show as table",
+        "showCards": "Show as cards"
+    },
+    "trafficPaths": {
+        "profile": "Profile: {{name}}",
+        "profileActive": "Profile: {{name}} (active)"
+    },
+    "nodeHealthHistory": {
+        "ok": "Healthy",
+        "retry": "Retry",
+        "unreachable": "Unreachable",
+        "xrayMissing": "Xray data missing",
+        "error": "Check error"
+    },
+    "nodeLoad": {
+        "title": "Load average · cores: {{cores}}",
+        "oneMinute": "1 min: {{value}} ({{percent}}%)",
+        "fiveMinutes": "5 min: {{value}} ({{percent}}%)",
+        "fifteenMinutes": "15 min: {{value}} ({{percent}}%)",
+        "thresholds": "0–70% normal · 70–100% high · >100% overloaded",
+        "noData": "No data"
+    },
+    "requestErrors": {
+        "templateNameExists": "A template of this type already has that name. Choose another name.",
+        "unavailable": "Cannot reach the server. Try again shortly.",
+        "http-status": "Request failed (HTTP {{status}}).",
+        "unauthorized": "Authentication failed. Check your credentials.",
+        "invalidResponse": "The server response does not match this panel version. Refresh the page; if it continues, check the panel and API versions.",
+        "forbidden": "You do not have permission for this action.",
+        "unknown": "The request failed unexpectedly.",
+        "failed": "Request failed."
+    },
+    "limitsTrafficAction": {
+        "blockHost": "Block traffic on host",
+        "unblockHost": "Unblock traffic on host",
+        "blockTag": "Block traffic on tag",
+        "unblockTag": "Unblock traffic on tag",
+        "blockUser": "Block traffic for user",
+        "unblockUser": "Unblock traffic for user",
+        "blockedCount": "Traffic blocked: {{blocked}} of {{total}} recipients"
+    },
+    "interface": {
+        "enter-valid-domain-ip-or-cidr-f42b6cd": "Enter a valid domain, IP address, or CIDR range.",
+        "ssh-connection-closed-before-operation": "SSH connection closed before the operation started",
+        "optimization-failed": "Optimization failed",
+        "routing-rule-description": "Routing rule (for routing.rules[])",
+        "navigation-3db65f8": "Navigation",
+        "close-navigation-99904db": "Close navigation",
+        "oauth2-login-ddeec07": "OAuth2 Login",
+        "unable-to-save-login-state-allow-session-storage-and-try-again-48ef435": "Unable to save login state. Allow session storage and try again.",
+        "remnawave-custom-core-02ce687": "Remnacust Custom Core",
+        "core-url-b8f496b": "Core URL",
+        "core-sha-256-c0d9ff5": "Core SHA-256",
+        "remnawave-snippets-5591a07": "Remnacust Snippets",
+        "snippet-name-1b08019": "Snippet name",
+        "snippet-array-f0eb3d0": "Snippet Array",
+        "array-of-root-outbound-rule-or-balancer-objects-for-snippets-5b8ba5b": "Array of Root, Outbound, Rule or Balancer objects for snippets",
+        "outbound-object-9c0af1d": "Outbound Object",
+        "outbound-configuration-for-outbounds-b1c06c3": "Outbound configuration (for outbounds[])",
+        "rule-object-35c596a": "Rule Object",
+        "balancer-object-c0dcb8b": "Balancer Object",
+        "balancer-configuration-for-routing-balancers-a14b13f": "Balancer configuration (for routing.balancers[])",
+        "root-object-5ab7a3d": "Root Object",
+        "root-level-sections-for-configs-referencing-this-snippet-in-th-07e2f8a": "Root-level sections (for configs referencing this snippet in the root \"snippets\" array)",
+        "move-to-top-349d5d6": "Move to top",
+        "move-up-c66feb5": "Move up",
+        "move-down-40bb50d": "Move down",
+        "move-to-bottom-df93376": "Move to bottom",
+        "update-node-6216b74": "Update node",
+        "update-node-value-9c42315": "Update node · {{value1}}",
+        "close-node-update-9f7e455": "Close node update",
+        "node-directory-87cd969": "Node directory",
+        "directory-containing-docker-compose-yml-953b8bd": "Directory containing docker-compose.yml",
+        "node-settings-2f2dfb4": "Node settings",
+        "panel-settings-292ac00": "Panel settings",
+        "installs-the-latest-node-image-and-core-over-ssh-requires-root-d74d053": "Updates the node image configured in docker-compose.yml over SSH. Requires root or passwordless sudo. Keep the SSH window open until completion.",
+        "update-this-node-and-restart-connections-1de075b": "Update this node and restart connections",
+        "continue-over-ssh-f266499": "Continue over SSH",
+        "enter-tags-comma-space-semicolon-ed6e61b": "Enter tags (comma, space, semicolon)",
+        "export-users-e875475": "Export users",
+        "import-users-f8e8e1b": "Import users",
+        "min-dea7933": "Min",
+        "max-a1a5936": "Max",
+        "unit-4e54596": "Unit",
+        "active-users-with-sort-47cbe5b": "ACTIVE users with sort",
+        "toggle-view-mode-de9a6a9": "Toggle view mode",
+        "executor-bb18675": "Executor",
+        "oauth2-callback-2493959": "OAuth2 Callback",
+        "login-state-is-missing-expired-or-invalid-start-login-again-7630c41": "Login state is missing, expired, or invalid. Start login again.",
+        "oauth2-authentication-5df84fc": "OAuth2 Authentication",
+        "authenticating-1f6087c": "Authenticating...",
+        "verifying-credentials-c4c1b4e": "Verifying credentials...",
+        "backups-3334fee": "Backups",
+        "encrypted-database-backups-a7d7cca": "Encrypted database backups",
+        "incorrect-backup-password-7e314a0": "Incorrect backup password",
+        "wait-a-minute-and-try-again-20060e1": "Wait a minute and try again",
+        "could-not-unlock-backups-check-the-backup-verification-key-on--c5ef946": "Could not unlock backups. Check the backup verification key on the server.",
+        "unlock-backups-ad83206": "Unlock backups",
+        "enter-your-backup-password-you-will-need-it-again-on-your-next-456b306": "Enter your backup password. You will need it again on your next visit.",
+        "backup-password-3e39703": "Backup password",
+        "could-not-encrypt-legacy-backups-2ddd492": "Could not encrypt legacy backups",
+        "encrypted-zip-backup-created-d2fdf96": "Encrypted ZIP backup created",
+        "could-not-create-backup-check-the-database-connection-and-avai-c5759c9": "Could not create backup. Check the database connection and available disk space.",
+        "backup-handed-to-the-browser-for-saving-d68a198": "Backup handed to the browser for saving",
+        "could-not-download-backup-e909158": "Could not download backup",
+        "password-protected-zip-backups-of-the-panel-database-scheduled-32d6028": "Password-protected ZIP backups of the panel database. Scheduled copies can be sent to Telegram.",
+        "lock-backups-2142035": "Lock backups",
+        "creating-backup-6a9c2e3": "Creating backup…",
+        "create-zip-backup-8d2606e": "Create ZIP backup",
+        "creating-an-encrypted-zip-backup-the-file-will-appear-below-wh-bbda93b": "Creating an encrypted ZIP backup. The file will appear below when ready.",
+        "could-not-check-backup-availability-930fb48": "Could not check backup availability",
+        "retry-942087c": "Retry",
+        "legacy-backups-101ec81": "Legacy backups",
+        "convert-to-encrypted-zip-5e62e37": "Convert to encrypted ZIP",
+        "unencrypted-legacy-backups-exist-d767a2c": "Unencrypted legacy backups exist",
+        "count-value-these-files-can-be-converted-to-aes-zip-6d38585": "Count: {{value1}}. These files can be converted to AES ZIP.",
+        "convert-to-aes-zip-3860f5e": "Convert to AES ZIP",
+        "periodic-database-dumps-and-telegram-delivery-84bd8f9": "Periodic database dumps and Telegram delivery",
+        "automation-d909750": "Automation",
+        "off-ca7981b": "Off",
+        "daily-b36c261": "Daily",
+        "automatic-backups-20260929": "Automatic backups",
+        "weekly-2975132": "Weekly",
+        "schedule-f4830a1": "Schedule",
+        "send-to-telegram-4d932ac": "Send to Telegram",
+        "backups-are-retained-for-up-to-7-days-plain-dumps-are-addition-bdcd58a": "Automatic backups are off by default. Choose an interval and retention up to 7 days; all backups are stored in dumps.",
+        "bot-token-5bb9aec": "Bot token",
+        "chat-group-id-f310e38": "Chat/Group ID",
+        "save-settings-7f3a3b1": "Save settings",
+        "no-backups-yet-bb7381f": "No backups yet",
+        "encrypted-f45aef6": "Encrypted",
+        "unencrypted-d5c2819": "Unencrypted",
+        "download-backup-6692112": "Download backup",
+        "delete-e2d0a54": "Delete",
+        "delete-backup-86cf366": "Delete backup",
+        "downloading-37b3455": "Downloading",
+        "download-progress-984b84c": "Download progress",
+        "configuration-b332c34": "Configuration",
+        "canvas-3824a9f": "Canvas",
+        "history-0e76960": "History",
+        "select-profile-d42c243": "Select profile",
+        "all-canvases-51c02d8": "All canvases",
+        "otherwise-first-outbound-73e387d": "Otherwise: first outbound",
+        "rule-without-conditions-39a0a61": "Rule without conditions",
+        "client-0c77fe0": "Client",
+        "access-pending-or-unverified-91dc6c8": "Access pending or unverified",
+        "illustrative-device-using-subscription-00e0d5b": "Illustrative device using subscription",
+        "status-920e413": "Status",
+        "visible-enabled-hosts-693ffb2": "Visible enabled hosts",
+        "expires-f6725f3": "Expires",
+        "client-links-appear-only-after-access-is-verified-4c01a81": "Client links appear only after access is verified.",
+        "illustrative-client-enter-a-short-id-to-inspect-accessible-hos-6742ba7": "Illustrative client: enter a short ID to inspect accessible hosts.",
+        "default-template-0b1bdec": "Default template",
+        "default-subscription-format-c8f5f80": "Default subscription format",
+        "hosts-using-template-c4bb011": "Hosts using template",
+        "host-uses-the-default-subscription-settings-5faa262": "Host uses the default subscription settings.",
+        "client-profile-outbounds-13e1b05": "Client profile outbounds",
+        "loading-this-client-profile-s-outbounds-and-routes-0fc4a62": "Loading this client profile’s outbounds and routes.",
+        "client-profile-routes-f64f6b4": "Client profile routes",
+        "no-rule-matched-105129d": "no rule matched",
+        "client-template-a8cd9ea": "Client template",
+        "disabled-79fb364": " · disabled",
+        "default-37a8eec": "default",
+        "subscription-host-5f3e4ca": "Subscription host",
+        "address-56ef8f2": "Address",
+        "inbound-d17a5bd": "Inbound",
+        "state-a3b50c4": "State",
+        "disabled-17eb3c0": "disabled",
+        "enabled-fb9cf75": "enabled",
+        "in-subscription-a4d7dfe": "In subscription",
+        "hidden-e564b40": "hidden",
+        "visible-d42ef14": "visible",
+        "host-nodes-b17b61e": "Host nodes",
+        "path-62fa5a5": "Path",
+        "host-domain-rules-0c0ad3c": "Host domain rules",
+        "brutal-target-speed-56b4f37": "Brutal target speed",
+        "accessible-inbounds-value-cded6a4": "Accessible inbounds: {{value1}}",
+        "inbounds-from-this-profile-711baf6": "Inbounds from this profile",
+        "the-squad-grants-access-to-its-assigned-users-d287010": "The squad grants access to its assigned users.",
+        "config-profile-ee4e7b6": "Config profile",
+        "inbounds-ccb7185": "Inbounds",
+        "nodes-7ac3620": "Nodes",
+        "rules-4228aeb": "Rules",
+        "outbounds-4788f08": "Outbounds",
+        "config-sections-f9feceb": "Config sections",
+        "tags-1331275": "Tags",
+        "type-baaddf7": "Type",
+        "port-72e9a59": "Port",
+        "network-1744b96": "Network",
+        "security-8f6fb4e": "Security",
+        "sniffing-9b17029": "Sniffing",
+        "active-on-nodes-21240c8": "Active on nodes",
+        "hosts-bba9af1": "Hosts",
+        "squads-258027a": "Squads",
+        "exit-ip-not-listed-9848d0f": "exit IP not listed",
+        "profile-relation-848c037": "Profile relation",
+        "assigned-directly-3cf81d0": "assigned directly",
+        "listed-by-host-profile-not-assigned-70630de": "listed by host, profile not assigned",
+        "inbound-ips-2dcc83e": "Inbound IPs",
+        "outbound-ips-fda66c2": "Outbound IPs",
+        "active-inbounds-9d8a08c": "Active inbounds",
+        "provider-472590a": "Provider",
+        "used-when-no-earlier-rule-matches-e9bc9a6": "Used when no earlier rule matches.",
+        "evaluation-order-8c0c5f6": "Evaluation order",
+        "selects-outbound-by-prefix-7ef6b10": "Selects outbound by prefix",
+        "outbound-prefixes-4cdbd5b": "Outbound prefixes",
+        "fallback-outbound-25be968": "Fallback outbound",
+        "the-selected-outbound-depends-on-balancer-state-e104f25": "The selected outbound depends on balancer state.",
+        "client-profile-balancer-70c7415": "Client profile balancer",
+        "direct-exits-from-node-5b4fc83": "DIRECT · exits from node",
+        "block-traffic-dropped-42367b8": "BLOCK · traffic dropped",
+        "protocol-cf08833": "Protocol",
+        "server-aef7de2": "Server",
+        "freedom-final-rules-1e94bd8": "Freedom final rules",
+        "block-response-43a0e8f": "Block response",
+        "explicit-rules-703ff35": "Explicit rules",
+        "first-outbound-used-if-no-rules-match-94443f0": "First outbound: used if no rules match.",
+        "blocked-18f2a09": "Blocked",
+        "direct-002c7c6": "Direct",
+        "forwarded-to-outbound-04ff29e": "Forwarded to outbound",
+        "connection-dropped-9049f3d": "Connection dropped",
+        "to-destination-from-node-ip-b219404": "To destination from node IP",
+        "outbound-0277321": "Outbound",
+        "traffic-is-dropped-by-xray-blackhole-c0aa93d": "Traffic is dropped by Xray blackhole.",
+        "the-node-dials-out-actual-ip-and-destination-depend-on-network-6c6ab19": "The node dials out. Actual IP and destination depend on network and outbound settings.",
+        "traffic-is-handed-to-this-outbound-the-final-address-is-not-me-671eee5": "Traffic is handed to this outbound; the final address is not measured here.",
+        "additional-finalrules-may-block-a-direct-connection-08be6b6": "Additional finalRules may block a direct connection.",
+        "exits-from-the-client-device-9073cc7": "Exits from the client device",
+        "client-template-outbound-2fca86a": "Client template outbound",
+        "direct-is-handled-by-the-client-according-to-xray-json-011478f": "DIRECT is handled by the client according to XRAY_JSON.",
+        "traffic-is-dropped-c07151a": "Traffic is dropped.",
+        "the-route-ends-at-this-client-outbound-dbdea2e": "The route ends at this client outbound.",
+        "snippet-unresolved-6616234": "Snippet unresolved",
+        "host-disabled-5a8b830": "host disabled",
+        "no-allowed-squad-for-its-inbound-a3b1eef": "no allowed squad for its inbound",
+        "not-active-on-any-node-4298c77": "not active on any node",
+        "node-disabled-9ed5252": "node disabled",
+        "no-matching-outbounds-ccb79ca": "no matching outbounds",
+        "outbound-not-found-6eb20b6": "outbound not found",
+        "balancer-not-found-b2655a5": "balancer not found",
+        "client-profile-e233471": "Client profile",
+        "squad-df6163f": "Squad",
+        "profile-d696a35": "Profile",
+        "node-e933725": "Node",
+        "profile-rules-in-order-800f3bb": "Profile rules · in order",
+        "balancer-616a69d": "Balancer",
+        "xray-outbound-9100f3c": "Xray outbound",
+        "outcome-4e80abb": "Outcome",
+        "profile-canvas-d14ca6b": "Profile canvas",
+        "profile-map-1112855": "Profile map",
+        "drag-the-empty-canvas-to-pan-use-the-wheel-to-zoom-4a49b93": "Drag the empty canvas to pan. Use the wheel to zoom.",
+        "items-5f3c4f8": "items",
+        "exit-fullscreen-37fd4e3": "Exit fullscreen",
+        "fullscreen-c461dbb": "Fullscreen",
+        "canvas-layer-391f9d9": "Canvas layer",
+        "all-a52ace4": "All",
+        "access-ec5ba0a": "Access",
+        "routing-bcba696": "Routing",
+        "select-a-block-to-inspect-its-properties-and-connections-2347bec": "Select a block to inspect its properties and connections.",
+        "client-short-id-62efa46": "Client short ID",
+        "check-access-abb9a17": "Check access",
+        "clear-83b12c2": "Clear",
+        "checking-client-access-a3880a4": "Checking client access…",
+        "could-not-load-the-client-path-check-the-id-and-traffic-paths--fb70989": "Could not load the client path. Check the ID and traffic-paths API access.",
+        "accessible-profile-hosts-72b0b17": "accessible profile hosts",
+        "this-client-has-no-accessible-hosts-in-this-profile-12cda92": "This client has no accessible hosts in this profile.",
+        "check-connections-5a8dc11": "Check connections",
+        "value-more-findings-39ca181": "{{value1}} more findings",
+        "loading-relations-5a4c580": "Loading relations…",
+        "unable-to-load-relations-b37edfe": "Unable to load relations.",
+        "canvas-navigation-579dfc8": "Canvas navigation",
+        "find-item-15cb4f1": "Find item",
+        "find-an-item-4871b5f": "Find an item…",
+        "no-matching-items-4d1d151": "No matching items",
+        "zoom-in-0e47f09": "Zoom in",
+        "zoom-out-bc7b631": "Zoom out",
+        "fit-map-7d3b421": "Fit map",
+        "navigate-using-minimap-44dd66c": "Navigate using minimap",
+        "go-to-selected-b5b8d43": "Go to selected",
+        "open-settings-ca381c1": "Open settings",
+        "loading-history-a960c43": "Loading history…",
+        "history-unavailable-cf319f4": "History unavailable",
+        "check-that-the-panel-and-its-database-are-up-to-date-e05ae6c": "Check that the panel and its database are up to date.",
+        "the-30-latest-versions-are-retained-restore-opens-an-unsaved-d-275da0f": "The 30 latest versions are retained. Restore opens an unsaved draft in the editor; use Save to apply it.",
+        "no-snapshots-yet-the-first-edit-of-an-existing-profile-will-pr-6bf0903": "No snapshots yet. The first edit of an existing profile will preserve both versions.",
+        "latest-8730d3c": "Latest",
+        "open-in-editor-ea1d0f0": "Open in editor",
+        "squads-inbounds-nodes-and-hosts-a83c761": "Squads, inbounds, nodes and hosts",
+        "profile-relations-077ff52": "Profile relations",
+        "unable-to-load-all-relations-refresh-the-page-f4738e4": "Unable to load all relations. Refresh the page.",
+        "no-related-squads-8fe4caf": "No related squads",
+        "profile-has-no-inbounds-e6811ad": "Profile has no inbounds",
+        "no-nodes-use-this-profile-eac5087": "No nodes use this profile",
+        "no-hosts-for-this-profile-221d046": "No hosts for this profile",
+        "these-are-saved-configuration-relations-they-do-not-verify-rea-2475ca8": "These are saved configuration relations; they do not verify reachability or traffic.",
+        "could-not-load-the-profile-or-snippets-d5bd769": "Could not load the profile or snippets",
+        "canvases-811c4ef": "Canvases",
+        "failed-to-load-profiles-b623ebf": "Failed to load profiles",
+        "no-profiles-yet-bd4729e": "No profiles yet",
+        "memory-c3963ae": "Memory",
+        "heap-bb30cbe": "Heap",
+        "external-68c114e": "External",
+        "array-buffers-8f83231": "Array Buffers",
+        "event-loop-f397de4": "Event Loop",
+        "delay-fd9b6df": "Delay",
+        "ms-f785c3c": "ms",
+        "handles-9db6f24": "Handles",
+        "active-handles-be956a8": "Active Handles",
+        "scheduler-d3a27d9": "Scheduler",
+        "processor-54aac65": "Processor",
+        "tag-settings-9449b1a": "Tag settings",
+        "could-not-load-retry-7e0704a": "Could not load. Retry",
+        "find-tag-8344cc6": "Find tag",
+        "new-tag-609117d": "New tag",
+        "configure-6defafa": "Configure",
+        "loading-ba3bbbe": "Loading…",
+        "unlimited-11dde17": "Unlimited",
+        "create-a-tag-and-configure-it-before-adding-hosts-b4df42f": "Create a tag and configure it before adding hosts.",
+        "close-tag-settings-f3b8745": "Close tag settings",
+        "settings-for-value-saved-b164a5f": "Settings for “{{value1}}” saved",
+        "tag-settings-sync-on-compatible-nodes-a94e2f1": "Changes apply after synchronization with compatible nodes.",
+        "apply-to-tagged-hosts-with-the-corresponding-inheritance-switc-efe2579": "Apply to tagged hosts with the corresponding inheritance switch enabled. Zero means unlimited.",
+        "per-user-limit-gib-555cb5c": "Per-user limit, GiB",
+        "combined-user-usage-across-all-tagged-hosts-including-multipli-aa5364d": "Combined user usage across all tagged hosts, including multipliers.",
+        "per-user-speed-mbps-1824561": "Per-user speed, Mbps",
+        "for-each-user-independently-on-each-host-1ea423d": "For each user independently on each host.",
+        "tag-traffic-multiplier-4ad10d9": "Tag traffic multiplier",
+        "for-hosts-using-the-tag-multiplier-recalculates-the-current-pe-e2ad055": "For hosts using the tag multiplier. Recalculates the current period; subscription usage is unchanged.",
+        "whole-group-speed-mbps-3c36e77": "Whole-group speed, Mbps",
+        "one-shared-cap-across-all-users-and-all-tagged-hosts-3a81bf7": "One shared cap across all users and all tagged hosts.",
+        "reset-every-8c98f6a": "Reset every",
+        "days-ab51004": "days",
+        "months-1683743": "months",
+        "save-1509f56": "Save",
+        "confirm-removing-settings-be691de": "Confirm removing settings",
+        "remove-tag-settings-12cb09d": "Remove tag settings",
+        "cancel-19766ed": "Cancel",
+        "en-us-5c49f88": "en-US",
+        "metrics-overview-3e78a3c": "Metrics Overview",
+        "refresh-0e91610": "Refresh",
+        "add-location-db07192": "Add location",
+        "unable-to-load-locations-f449888": "Unable to load locations",
+        "check-the-panel-connection-and-press-refresh-f8ebbd1": "Check the panel connection and press Refresh.",
+        "configure-an-existing-host-544819d": "Configure an existing host",
+        "host-4a82311": "Host",
+        "select-a-host-c8030cf": "Select a host",
+        "no-host-found-d3a8ed1": "No host found",
+        "search-locations-8492a8c": "Search locations",
+        "search-name-country-or-carrier-63fbd36": "Search name, country or carrier",
+        "no-matching-locations-267dceb": "No matching locations",
+        "add-a-location-or-configure-an-existing-host-above-234eac3": "Add a location or configure an existing host above.",
+        "try-another-name-or-clear-the-search-d300b41": "Try another name or clear the search.",
+        "not-enabled-2b0e804": "Not enabled",
+        "host-disabled-b05fd9b": "Host disabled",
+        "the-location-is-not-delivered-to-any-subscription-5c37a59": "The location is not delivered to any subscription.",
+        "hidden-7e6feff": "Hidden",
+        "hidden-hosts-are-not-delivered-to-subscriptions-c6cfe11": "Hidden hosts are not delivered to subscriptions.",
+        "delivered-9061156": "Delivered",
+        "only-to-matching-internal-squads-and-active-subscriptions-6a45063": "Only to matching internal squads and active subscriptions.",
+        "to-active-users-with-a-valid-subscription-ccaa35c": "To active users with a valid subscription.",
+        "no-city-set-fd1aefe": "No city set",
+        "room-4f0d12f": "Room: ",
+        "location-settings-e49e4dc": "Location settings",
+        "apps-in-delivery-rules-df2b121": "Apps in delivery rules",
+        "user-agent-conditions-in-enabled-delivery-rules-the-actual-res-9346c0b": "User-Agent conditions in enabled delivery rules. The actual response depends on every condition and rule order.",
+        "no-explicit-user-agent-conditions-in-delivery-rules-a0c8775": "No explicit User-Agent conditions in delivery rules.",
+        "top-5-d9c3778": "Top 5",
+        "top-10-18b38ae": "Top 10",
+        "top-20-f80bebb": "Top 20",
+        "top-30-c192e33": "Top 30",
+        "top-40-17bbae2": "Top 40",
+        "top-50-50ea9e3": "Top 50",
+        "top-60-bba98b8": "Top 60",
+        "top-70-23e7e5d": "Top 70",
+        "top-80-170d26f": "Top 80",
+        "top-90-c5c5619": "Top 90",
+        "top-100-4e67739": "Top 100",
+        "nothing-to-see-here-1a490b4": "Nothing to see here",
+        "page-you-are-trying-to-open-does-not-exist-you-may-have-mistyp-9e386c2": "Page you are trying to open does not exist. You may have mistyped the address, or the page has been moved to another URL.",
+        "take-me-back-to-home-page-4f5104e": "Take me back to home page",
+        "something-bad-just-happened-ae00f3a": "Something bad just happened...",
+        "refresh-the-page-b5c2959": "Refresh the page",
+        "active-9234069": "Active",
+        "limited-e5125d9": "Limited",
+        "disabled-75081b5": "Disabled",
+        "expired-424a255": "Expired",
+        "sign-out-failed-cc017f6": "Sign-out failed",
+        "the-server-could-not-confirm-session-revocation-please-try-aga-eee8add": "The server could not confirm session revocation. Please try again.",
+        "theme-settings-697b009": "Theme settings",
+        "appearance-3907fa7": "Appearance",
+        "accent-a5c6fb1": "Accent",
+        "font-64d0b3a": "Font",
+        "compact-interface-b1b6a87": "Compact interface",
+        "reduce-motion-297ef4c": "Reduce motion",
+        "reset-daee760": "Reset",
+        "launcher-22614ac": "Launcher",
+        "could-not-repair-this-json-45b21e3": "Could not repair this JSON",
+        "json-repaired-c6046c7": "JSON repaired",
+        "nothing-to-repair-05924d7": "Nothing to repair",
+        "create-or-select-a-tag-8c144e4": "Create or select a tag",
+        "tag-1503916": "Tag",
+        "clear-value-01ae1c2": "Clear value",
+        "yes-85a39ab": "Yes",
+        "no-1ea442a": "No",
+        "message-325906e": "Social networks",
+        "invalid-destination-c414988": "Invalid destination: ",
+        "domains-include-subdomains-http-s-urls-ipv4-ipv6-cidr-and-inte-bd63ed5": "Domains include subdomains. HTTP(S) URLs, IPv4, IPv6, CIDR and international domains are supported. For checks without a third-party site, select TCP ping in your client (for example, Happ or INCY). HTTP checks require an allowed URL. TCP checks the server connection, not VPN access.",
+        "domains-and-ips-813c598": "Domains and IPs",
+        "allow-only-selected-destinations-8f26f18": "Allow only selected destinations",
+        "block-selected-destinations-b979531": "Block selected destinations",
+        "add-destination-48b7df1": "Add destination",
+        "address-and-ping-help-2b2063f": "Address and ping help",
+        "destination-presets-27cd6c9": "Destination presets",
+        "could-not-load-the-form-data-please-retry-7278c1c": "Could not load the form data. Please retry.",
+        "assign-a-tag-to-this-host-first-636effb": "Assign a tag to this host first.",
+        "the-host-s-own-limits-apply-independently-each-kind-of-limit-c-9735c38": "The host’s own limits apply independently. Each kind of limit can also use the assigned tags’ settings. The strictest applicable limit applies.",
+        "groups-176c620": "Groups: ",
+        "traffic-limit-per-user-a5e049d": "Traffic limit per user",
+        "per-user-within-this-host-zero-means-unlimited-82da8b7": "Per user within this host. Zero means unlimited.",
+        "apply-tag-traffic-quota-3fb4646": "Apply tag traffic quota",
+        "one-user-s-shared-quota-across-participating-hosts-using-the-t-1b4551d": "One user’s shared quota across participating hosts, using the tag’s reset period. Toggling recalculates current-period usage; the host’s own quota remains.",
+        "server-speed-limit-per-user-e6705eb": "Server speed limit per user",
+        "shared-by-all-devices-and-connections-of-one-user-zero-means-u-9bbeda4": "Shared by all devices and connections of one user. Zero means unlimited.",
+        "apply-tag-per-user-speed-4ad7483": "Apply tag per-user speed",
+        "the-same-limit-separately-on-each-host-shared-by-one-user-s-de-50737b5": "The same limit separately on each host, shared by one user’s devices. It is not pooled across hosts.",
+        "whole-host-speed-limit-e5c8f33": "Whole-host speed limit",
+        "shared-by-every-user-of-this-host-other-hosts-on-the-node-are--207fb7b": "Shared by every user of this host. Other hosts on the node are unaffected. Zero means unlimited.",
+        "apply-tag-shared-speed-0471605": "Apply tag shared speed",
+        "one-shared-speed-pool-for-all-users-and-participating-hosts-of-0e8ab7a": "One shared speed pool for all users and participating hosts of the tag. The host’s own limit also applies.",
+        "host-traffic-multiplier-629284f": "Host traffic multiplier",
+        "1-counts-normal-usage-2-charges-twice-the-traffic-to-host-and--92c312c": "1× counts normal usage; 2× charges twice the traffic to host and tag quotas. Subscription usage is unchanged. Changes recalculate the current period.",
+        "use-the-tag-multiplier-e071b5e": "Use the tag multiplier",
+        "the-host-s-own-quota-uses-1-218665d": "The host’s own quota uses 1×.",
+        "reset-traffic-every-587e56d": "Reset traffic every",
+        "0-means-never-the-period-starts-on-the-day-the-setting-is-save-fc881dd": "0 means never. The period starts on the day the setting is saved (UTC).",
+        "period-unit-f65d821": "Period unit",
+        "days-e08c0aa": "Days",
+        "months-09ca755": "Months",
+        "allow-only-43c63e5": "Allow only",
+        "deny-05a2d73": "Deny",
+        "automatic-sni-and-shortid-regeneration-fa50b0e": "Automatic SNI and shortId regeneration",
+        "sni-rotates-through-the-pool-shortid-is-regenerated-nodes-rest-aa632da": "SNI rotates through the pool, shortId is regenerated, nodes restart automatically",
+        "interval-hours-e456194": "Interval, hours",
+        "backup-retention-days-20260929": "Keep backups, days (1–7)",
+        "shortid-count-724ec96": "shortId count",
+        "shortid-length-a595758": "shortId length",
+        "sni-pool-42869d6": "SNI pool",
+        "regenerate-shortid-5b4336d": "Regenerate shortId",
+        "last-rotation-ffd71b1": "Last rotation: ",
+        "available-after-subscription-expires-or-is-disabled-61afc39": "Available after subscription expires or is disabled",
+        "can-share-an-inbound-with-ordinary-hosts-access-uses-separate--1881b29": "Can share an inbound with ordinary hosts. Access uses separate host credentials; requires a node and Xray with host isolation.",
+        "unavailable-during-an-active-subscription-43ed8ab": "Unavailable during an active subscription",
+        "only-for-expired-or-disabled-subscriptions-squad-access-restri-c5bbce7": "Only for expired or disabled subscriptions. Squad access restrictions still apply.",
+        "carrier-271c535": "Carrier",
+        "room-911ea89": "Room",
+        "encryption-key-16b3c9d": "Encryption key",
+        "64-hexadecimal-characters-from-the-node-configuration-f5f9d5f": "64 hexadecimal characters from the node configuration",
+        "transport-aaead4a": "Transport",
+        "vp8-channel-default-933cdaf": "VP8 channel · default",
+        "video-channel-f2aa4de": "Video channel",
+        "sei-channel-171688a": "SEI channel",
+        "data-channel-6d1ed8a": "Data channel",
+        "wb-stream-account-token-ef8a3f9": "WB Stream account token",
+        "client-token-optional-b408598": "Client token (optional)",
+        "data-channel-requires-an-account-token-with-canpublishdata-tru-6bff50b": "Data channel requires an account token with canPublishData=true; a guest token will not work.",
+        "verify-the-token-before-enabling-the-host-the-panel-will-not-d-84f3448": "Verify the token before enabling the host: the panel will not deliver Data channel without it, so users never receive a known-broken location.",
+        "country-code-b5bf7a5": "Country code",
+        "city-fc33f73": "City",
+        "latency-probe-address-4e2ade7": "Latency probe address",
+        "name-description-squads-and-visibility-follow-this-host-the-ap-1a501e7": "Name, description, squads and visibility follow this host. The app selects the transport automatically.",
+        "mihomo-flclash-x-flowvy-prizrak-box-koala-clash-46c8d64": "Mihomo: FlClash X, Flowvy, prizrak-box, Koala Clash",
+        "xray-happ-incy-02b99d3": "Xray: Happ, Incy",
+        "vless-route-id-5e33c03": "Vless Route ID",
+        "unknown-setting-d7117ae": "Unknown setting",
+        "last-verified-0f68266": "Last verified: ",
+        "unknown-b764cdc": "Unknown",
+        "verified-77cae63": "Verified: ",
+        "the-latest-check-could-not-confirm-the-state-check-again-via-s-3e2b35f": "The latest check could not confirm the state. Check again via SSH.",
+        "check-via-ssh-1101731": "Check via SSH",
+        "0-count-all-time-never-reset-d6cddc0": "0 — count all time, never reset",
+        "node-port-42b685c": "Node Port",
+        "secret-key-secret-key-2f12318": "Secret Key (SECRET_KEY)",
+        "new-devices-denied-standalone-dcc8096": "New devices denied",
+        "available-host-placement-c6e58c8": "Available host placement",
+        "before-remarks-1cae831": "Before remarks",
+        "after-remarks-878b925": "After remarks",
+        "invalid-date-cd63c7d": "Invalid date",
+        "please-select-a-valid-date-defaulting-to-1-month-from-now-f05123b": "Please select a valid date. Defaulting to 1 month from now.",
+        "telegram-id-68559c8": "Telegram ID",
+        "enter-user-s-telegram-id-optional-a4f21c4": "Enter user's Telegram ID (optional)",
+        "email-969ccbd": "Email",
+        "enter-user-s-email-optional-f372bfa": "Enter user's email (optional)",
+        "fallback-device-limit-in-use-3dae434": "Fallback Device Limit in use",
+        "metadata-9eddf57": "Metadata",
+        "recap-31056c3": "Recap",
+        "loading-dc38088": "Loading",
+        "build-info-642ae0c": "Build Info",
+        "access-after-subscription-expiry-is-enabled-52c699c": "Access after subscription expiry is enabled",
+        "after-subscription-expiry-66a7704": "After subscription expiry",
+        "message-324c53a": "Import users into “",
+        "message-7e4abe1": "Export squad users to a file",
+        "message-0268a2c": "Import users from a file into the squad",
+        "language-a4fe652": "Language",
+        "error-loading-templates-from-github-try-again-later-995cfcc": "Error loading templates from Github. Try again later.",
+        "by-a7e2d26": "by",
+        "foreground-color-7760829": "Foreground color",
+        "background-color-3e314da": "Background color",
+        "update-available-ff8b555": "Update available",
+        "a-new-version-is-available-e848cbe": "A new version is available",
+        "check-out-326e405": "Check out",
+        "copy-build-info-04f3631": "Copy build info",
+        "build-time-707cae7": "Build Time",
+        "build-bdd254b": "Build",
+        "backend-2fb4019": "Backend",
+        "view-on-github-2067242": "View on GitHub",
+        "frontend-af48bcf": "Frontend",
+        "community-bb501d7": "Community",
+        "open-base64-editor-838c81d": "Open base64 editor",
+        "message-c736fb4": "Deny new devices",
+        "message-15a13be": "Host or tag traffic is blocked",
+        "nice-try-afcca19": "Nice try!",
+        "management-server-e1f23eb": "Management Server",
+        "integration-9a42d40": "Integration",
+        "base64-editor-8d692d6": "Base64 editor",
+        "connecting-5f04ae9": "Connecting...",
+        "settings-74a883a": "Settings",
+        "health-and-logs-abdf03a": "Health and logs",
+        "clear-this-node-health-log-5ff36f0": "Clear this node health log?",
+        "the-check-history-will-be-deleted-permanently-096cdeb": "The check history will be deleted permanently.",
+        "node-health-checks-f44b4af": "Node health checks",
+        "connection-attempts-node-responses-and-measured-resources-syst-77a7903": "Connection attempts, node responses and measured resources. System and Xray logs are separate from these checks.",
+        "check-now-2937cff": "Check now",
+        "filter-entries-9080dc7": "Filter entries",
+        "retries-ef21130": "Retries",
+        "unreachable-abaa46a": "Unreachable",
+        "errors-cb70237": "Errors",
+        "could-not-load-health-checks-6e02827": "Could not load health checks",
+        "no-entries-yet-they-will-appear-after-the-next-node-check-bade00e": "No entries yet. They will appear after the next node check.",
+        "time-33b9347": "Time",
+        "result-6e7d50e": "Result",
+        "attempt-c934cc7": "Attempt",
+        "load-memory-xray-955d5f3": "Load / memory / Xray",
+        "message-2f77668": "Message",
+        "entries-shown-value-use-refresh-for-new-data-d452203": "Entries shown: {{value1}}. Use Refresh for new data.",
+        "load-more-ac8991e": "Load more",
+        "xray-log-from-node-0af029d": "Xray log from node",
+        "latest-200-lines-fetched-on-demand-and-not-stored-in-the-panel-f82c8f7": "Latest 200 lines, fetched on demand and not stored in the panel.",
+        "load-log-5646a79": "Load log",
+        "xray-log-unavailable-check-the-node-connection-and-version-8c26f1a": "Xray log unavailable: check the node connection and version.",
+        "no-lines-yet-4c1ac25": "No lines yet.",
+        "log-retention-46c385a": "Log retention",
+        "old-entries-for-all-nodes-are-removed-automatically-this-setti-55fabec": "Old entries for all nodes are removed automatically. This setting applies to the panel.",
+        "clear-this-node-ccdf4bb": "Clear this node",
+        "operation-failed-4e1af7c": "Operation failed",
+        "default-21b111c": "Default",
+        "traceroute-5e472e4": "Traceroute",
+        "anycast-11c3776": "anycast",
+        "excess-ddd36ae": "excess",
+        "jitter-16c7dc7": "jitter",
+        "loss-2ea71c1": "loss",
+        "score-a575b79": "score",
+        "hops-98e0377": "hops",
+        "floor-a3e1f49": "floor",
+        "no-icmp-4fd6266": "no icmp",
+        "checking-installation-and-access-9ae1be6": "Checking installation and access",
+        "downloading-and-verifying-updater-e2ba68a": "Downloading and verifying updater",
+        "updating-node-backup-and-startup-verification-81927ea": "Updating node, backup and startup verification",
+        "node-updated-298d17b": "Node updated",
+        "update-not-confirmed-check-ssh-directory-token-and-node-state--2d230c4": "Update not confirmed. Check SSH, directory, token and node state before retrying.",
+        "waiting-for-ssh-connection-309d2b4": "Waiting for SSH connection",
+        "close-unused-ssh-tabs-and-retry-4a49f17": "Close unused SSH tabs and retry.",
+        "ssh-connection-failed-4dd3696": "SSH connection failed.",
+        "command-finished-but-database-verification-is-missing-check-th-f160173": "Command finished, but database verification is missing. Check the node.",
+        "waiting-for-ssh-4456975": "Waiting for SSH",
+        "running-f4ccae2": "Running",
+        "done-11a6767": "Done",
+        "failed-031a8f0": "Failed",
+        "cancelled-d353a99": "Cancelled",
+        "skipped-12698ce": "Skipped",
+        "new-job-was-not-accepted-wait-for-the-current-queue-to-finish-9d71dc7": "New job was not accepted: wait for the current queue to finish.",
+        "cancel-remaining-56c2a17": "Cancel remaining",
+        "keep-ssh-open-ebe7e58": "Keep SSH open",
+        "node-results-9a3d72c": "Node results",
+        "retry-unfinished-d1a0447": "Retry unfinished",
+        "session-ticket-2426a1b": "session ticket",
+        "channel-69e3656": "channel",
+        "host-key-fb1b291": "host key",
+        "public-key-f569a86": "public key",
+        "shell-ce635c4": "shell",
+        "refused-to-sign-f9507d6": "Refused to sign",
+        "signing-failed-ac02245": "Signing failed",
+        "docker-stats-c2c9ecf": "Docker Stats",
+        "already-open-in-another-tab-fa90add": "Already open in another tab",
+        "top-500-cb2691e": "Top 500",
+        "top-1000-0e8c83c": "Top 1000",
+        "top-2000-951e648": "Top 2000",
+        "day-9fa246c": "Ø / day",
+        "request-failed-fd46833": "Request Failed",
+        "passkey-registration-efb614a": "Passkey Registration",
+        "registration-was-cancelled-0b92676": "Registration was cancelled",
+        "passkeys-are-not-supported-on-this-device-c8afa17": "Passkeys are not supported on this device",
+        "this-device-is-already-registered-1735ab9": "This device is already registered",
+        "passkey-registration-error-3f734fb": "Passkey Registration Error",
+        "an-unexpected-error-occurred-6615bf1": "An unexpected error occurred",
+        "text-71988c4": "Text",
+        "my-awesome-squad-c19621e": "My Awesome Squad",
+        "my-node-plugin-0763cd5": "My Node Plugin",
+        "my-subscription-page-config-380cfe3": "My Subscription Page Config",
+        "my-mihomo-template-86a53f7": "My Mihomo template",
+        "modals-3138cda": "Modals",
+        "routes-2c5b669": "Routes",
+        "raw-subscription-9e7ce17": "Raw Subscription",
+        "could-not-change-new-device-access-01f1686": "Could not change new device access",
+        "device-registration-policy-is-unavailable-130c617": "Device registration policy is unavailable",
+        "deny-new-devices-48105ae": "Deny new devices",
+        "existing-devices-continue-working-allowing-registration-keeps--517c1bf": "Existing devices continue working. Allowing registration keeps the device limit.",
+        "updated-3a5ecca": "Updated",
+        "raw-report-6d26b54": "Raw Report",
+        "inbound-tag-bb8a8e8": "Inbound Tag",
+        "xray-validator-is-loading-c1b8f5f": "Xray validator is loading…",
+        "xray-core-wasm-is-restarting-a544e56": "Xray Core (WASM) is restarting…",
+        "xray-core-wasm-crashed-validation-is-unavailable-32f2d4d": "Configuration validation is unavailable. Retry loading.",
+        "password-e7cf3ef": "Password",
+        "private-key-b593dff": "Private Key",
+        "mldsa65seed-server-side-ad97048": "mldsa65Seed (server side)",
+        "mldsa65verify-client-side-pqv-a5843b5": "mldsa65Verify (Client side, pqv)",
+        "both-keys-8256d94": "Both keys",
+        "server-side-used-in-decryption-d0768f2": "Server side, used in decryption",
+        "client-side-used-in-encryption-c5871bc": "Client side, used in encryption",
+        "mux-params-d003e0a": "Mux Params",
+        "sockopt-params-12a2ddf": "SockOpt Params",
+        "filter-by-9d50c25": "Filter by...",
+        "import-users-to-value-65bb3a8": "Import users to \"{{value1}}\"",
+        "export-squad-users-file-0a3a333": "Export squad users (file)",
+        "import-users-from-file-514dd40": "Import users from file",
+        "torrent-blocker-bdcf6f6": "Torrent Blocker",
+        "ingress-filter-52853f6": "Ingress Filter",
+        "egress-filter-a22e397": "Egress Filter",
+        "connection-drop-b46fa7e": "Connection Drop",
+        "dangling-1f52ec3": "DANGLING",
+        "rx-05c4497": "RX",
+        "tx-536939e": "TX",
+        "xray-uptime-ac0a1ea": "Xray Uptime",
+        "plugin-ab1173e": "Plugin",
+        "cpu-cores-04fdfca": "CPU Cores",
+        "free-ram-8cd6e27": "Free RAM",
+        "used-ram-89dd5cb": "Used RAM",
+        "server-uptime-ed0def1": "Server Uptime",
+        "network-interfaces-9f43b24": "Network Interfaces",
+        "rx-speed-6aaa2ac": "RX Speed",
+        "tx-speed-2774f59": "TX Speed",
+        "rx-total-d983b27": "RX Total",
+        "tx-total-6bbd46a": "TX Total",
+        "os-release-8ac3c26": "OS Release",
+        "inbound-traffic-d7a4bfd": "Inbound Traffic",
+        "up-55490a4": "Up",
+        "down-b86d11a": "Down",
+        "outbound-traffic-03f18cb": "Outbound Traffic",
+        "unable-to-load-metrics-06e0911": "Unable to load metrics",
+        "node-metrics-are-not-available-yet-7dc9df5": "Node metrics are not available yet",
+        "nodes-with-metrics-d37b888": "Nodes with metrics",
+        "connected-nodes-2ed1e6f": "Connected nodes",
+        "users-online-85517c0": "Users online",
+        "inbounds-with-metrics-1e40621": "Inbounds with metrics",
+        "additional-information-9276bb4": "Additional Information",
+        "data-from-metrics-last-fetch-time-appears-on-the-right-bc1b674": "Data from /metrics; last fetch time appears on the right",
+        "health-comes-from-node-status-user-count-comes-from-metrics-41e9f4f": "Health comes from node status; user count comes from metrics",
+        "traffic-counters-accumulate-since-panel-or-node-startup-7925c82": "Traffic counters accumulate since panel or node startup",
+        "node-metrics-d510954": "Node metrics",
+        "fetched-0013b4c": "Fetched",
+        "time-unknown-6f803fc": "Time unknown",
+        "search-node-785c488": "Search node",
+        "search-node-or-provider-121e5e5": "Search node or provider",
+        "metrics-filter-a6438ac": "Metrics filter",
+        "no-users-online-928c5dd": "No users online",
+        "needs-attention-c1ebc78": "Needs attention",
+        "no-nodes-match-this-filter-5d5555a": "No nodes match this filter",
+        "pick-a-user-to-visualize-the-traffic-path-b575fdc": "Pick a user to visualize the traffic path",
+        "user-optional-a99b884": "User (optional)",
+        "nothing-found-9f5cac3": "Nothing found",
+        "visible-hosts-value-value-2083f9d": "Visible hosts: {{value1}}/{{value2}}",
+        "inbounds-value-35f7340": "Inbounds: {{value1}}",
+        "nodes-value-45d22b6": "Nodes: {{value1}}",
+        "outbounds-value-4613c6c": "Outbounds: {{value1}}",
+        "routing-rules-value-31fa013": "Routing rules: {{value1}}",
+        "all-hosts-e568a3c": "all hosts",
+        "ok-565339b": "OK",
+        "no-hosts-fe3c6a1": "No hosts",
+        "path-value-6701191": "Path: {{value1}}",
+        "key-99a52df": "Key",
+        "speed-c372fee": "Speed",
+        "unlimited-2044fbd": "unlimited",
+        "domains-ced6771": "Domains",
+        "exits-5e56101": "Exits",
+        "blocked-by-routing-rules-samples-c390eb9": "Blocked by routing rules (samples):",
+        "nodes-traffic-84537ea": "Nodes & Traffic",
+        "this-month-6436773": "This Month",
+        "infrastructure-ce0cff7": "Infrastructure",
+        "solid-b8b311b": "Solid",
+        "gradient-2523561": "Gradient",
+        "dots-6de335f": "Dots",
+        "grid-0d7d12a": "Grid",
+        "users-6b0cc90": "Users",
+        "traffic-4876efb": "Traffic",
+        "new-users-bdbdb86": "New users",
+        "month-traffic-0654a8f": "Month traffic",
+        "countries-8faf7ec": "Countries",
+        "cpu-cores-5dbed0b": "CPU cores",
+        "could-not-download-recap-659e20e": "Could not download Recap",
+        "sections-9bae918": "Sections",
+        "mask-fields-f71dfc0": "Mask fields",
+        "early-adopter-c630122": "Early Adopter",
+        "total-users-d643aee": "total users",
+        "nodes-45978ec": "nodes",
+        "traffic-075f4ab": "traffic",
+        "new-users-c5ef14e": "new users",
+        "countries-e45d4cb": "countries",
+        "since-98af1ed": "Since",
+        "background-ea2b8a8": "Background",
+        "custom-note-b11388e": "Custom note",
+        "accent-color-baeefba": "Accent color",
+        "base-translations-98825e5": "Base Translations",
+        "active-9687961": "active",
+        "icons-04ce686": "icons",
+        "blocks-2a12da1": "blocks",
+        "buttons-931eb6a": "buttons",
+        "button-707eab0": "Button",
+        "validation-error-142762b": "Validation Error",
+        "learn-more-1445799": "Learn more",
+        "link-with-button-e7deb61": "Link with button",
+        "available-hosts-66c64ba": "Available hosts",
+        "button-text-ec208ea": "Button text",
+        "https-url-c3cf95f": "HTTPS URL",
+        "marked-hosts-appear-at-this-position-3b9cd38": "Marked hosts appear at this position.",
+        "new-devices-denied-34c7816": "New devices denied",
+        "device-blocked-hwid-5bc86b1": "Device blocked (HWID)",
+        "host-traffic-limit-reached-850782c": "Host traffic limit reached",
+        "host-or-tag-traffic-paused-9df80dc": "Host or tag traffic blocked",
+        "confirm-deletion-fa57243": "Confirm deletion",
+        "import-finished-2194340": "Import finished",
+        "created-value-skipped-value-failed-value-2a9f657": "Created: {{value1}}, skipped: {{value2}}, failed: {{value3}}",
+        "no-users-array-in-file-f80eb52": "No users array in file",
+        "too-many-users-max-20000-b30882c": "Too many users (max 20000)",
+        "file-error-98f5369": "File error",
+        "upload-a-json-file-exported-from-remnawave-xera-subscription-s-180157a": "Upload a JSON file exported from Remnacust. Subscription short UUID, VLESS UUID, trojan/ss keys are preserved — users keep the same keys and links. Duplicates by username are skipped.",
+        "export-file-d9d979c": "Export file",
+        "restore-internal-squads-by-name-3fa079a": "Restore internal squads by name",
+        "squads-missing-in-this-panel-are-skipped-8999934": "Squads missing in this panel are skipped",
+        "add-everyone-to-a-squad-fallback-7a2f868": "Add everyone to an additional squad",
+        "users-in-file-value-182a30f": "Users in file: {{value1}}",
+        "import-2cff9ba": "Import",
+        "nothing-to-show-aabc4af": "Nothing to show...",
+        "scopes-pasted-a6e9e16": "Scopes pasted",
+        "invalid-scopes-400e90a": "Invalid scopes",
+        "clipboard-must-contain-a-json-array-of-scope-strings-7d61090": "Clipboard must contain a JSON array of scope strings",
+        "service-bot-4d196c6": "Service Bot",
+        "subpage-9c141bb": "Subpage",
+        "read-9b9a8d0": "Read",
+        "write-3f00927": "Write",
+        "master-fc613b4": "master",
+        "authorization-url-c70b5f2": "Authorization URL",
+        "authorization-url-for-the-oauth2-provider-f217590": "Authorization URL for the OAuth2 provider",
+        "token-url-431e003": "Token URL",
+        "token-url-for-the-oauth2-provider-aa98687": "Token URL for the OAuth2 provider",
+        "with-pkce-fd32ec9": "With PKCE",
+        "optimize-via-ssh-ea39a69": "Optimize via SSH",
+        "install-release-1cef24f": "Install release",
+        "roll-back-core-5635594": "Roll back core",
+        "bundled-core-063f5f7": "Bundled core",
+        "follow-configuration-c5da704": "Follow configuration",
+        "start-e4bb9f1": "Start",
+        "stop-cae7d57": "Stop",
+        "restart-6b983a8": "Restart",
+        "validate-configuration-7563534": "Validate configuration",
+        "queued-661ff40": "Queued",
+        "rolled-back-7159223": "Rolled back",
+        "connecting-to-node-586f22e": "Connecting to node",
+        "preparing-cf1aa6c": "Preparing",
+        "verifying-binary-ffb60a2": "Verifying binary",
+        "validating-configuration-b84c66a": "Validating configuration",
+        "switching-core-72d199b": "Switching core",
+        "starting-aeed4d2": "Starting",
+        "stopping-a71ee1d": "Stopping",
+        "checking-readiness-68978eb": "Checking readiness",
+        "xray-jobs-72b1110": "Xray jobs",
+        "node-tasks-7698fb5": "Node tasks",
+        "close-node-tasks-15138a8": "Close node tasks",
+        "by-tag-9effd8b": "By tag",
+        "untagged-9a28cbf": "Untagged",
+        "select-2a78025": "Select",
+        "node-tag-14efe71": "Node tag",
+        "value-nodes-selected-5322c83": "{{value1}} nodes selected",
+        "xray-updates-process-controls-and-node-optimization-d75cdea": "Xray updates, process controls and node optimization.",
+        "core-manager-unavailable-68fb1d3": "Core manager unavailable",
+        "the-panel-received-no-usable-response-check-node-connectivity--051d58f": "The panel received no usable response. Check node connectivity and its version.",
+        "paused-by-administrator-f5d00fe": "Paused by administrator",
+        "stopped-1a4f630": "Stopped",
+        "version-unavailable-c0a7f64": "Version unavailable",
+        "source-1a5ac0b": "Source: ",
+        "pinned-release-c741101": "Pinned release",
+        "node-image-79c45a0": "Node image",
+        "build-verification-2a3ea42": "Build verification",
+        "running-core-sha-256-b6b0ef2": "Running core SHA-256",
+        "selected-binary-sha-256-9b8ea61": "Selected binary SHA-256",
+        "action-64cff13": "Action",
+        "optimization-profile-18535a9": "Optimization profile",
+        "no-optimization-3d082b3": "No optimization",
+        "safe-4f9f0da": "Safe",
+        "balanced-5386ea5": "Balanced",
+        "performance-442aded": "Performance",
+        "approved-release-15ae27c": "Approved release",
+        "release-catalog-unavailable-467e68d": "Release catalog unavailable",
+        "could-not-load-the-release-catalog-9b6fbd1": "Could not load the release catalog.",
+        "vpn-connections-will-stop-the-core-stays-paused-until-start-is-86557ef": "VPN connections will stop. The core stays paused until Start is selected, including during panel synchronization.",
+        "ssh-access-is-required-for-each-node-keep-the-terminal-window--1692ffc": "SSH access is required for each node. Keep the terminal window open until the queue finishes. Only sysctl settings change.",
+        "validates-configuration-without-restarting-vpn-35287d5": "Validates configuration without restarting VPN.",
+        "the-configuration-geodata-core-controls-the-version-again-with-46b0190": "The configuration geodata.core controls the version again. Without it, the bundled core is used.",
+        "connections-may-be-interrupted-binary-and-configuration-are-ch-aa90a8f": "Connections may be interrupted. Binary and configuration are checked first; failed starts trigger rollback. Updates keep manually paused cores paused.",
+        "affected-nodes-fbf8ff6": "Affected nodes",
+        "stop-queue-after-the-first-failure-30937ae": "Stop queue after the first failure",
+        "apply-to-selected-nodes-value-24b8f51": "Apply to selected nodes ({{value1}})",
+        "a-selected-node-already-has-a-job-follow-its-progress-below-a887e9f": "A selected node already has a job. Follow its progress below.",
+        "could-not-confirm-job-creation-check-history-below-before-retr-591a3be": "Could not confirm job creation. Check history below before retrying.",
+        "run-00d60e3": "Run",
+        "up-to-1000-nodes-per-job-select-a-tag-or-a-subset-of-nodes-d06dbf1": "Up to 1000 nodes per job. Select a tag or a subset of nodes.",
+        "xray-jobs-continue-on-the-server-after-closing-this-window-can-2b1fc09": "Xray jobs continue on the server after closing this window. Cancellation skips remaining nodes and lets the current operation finish.",
+        "could-not-load-job-status-c549b8b": "Could not load job status.",
+        "no-jobs-yet-38b840c": "No jobs yet.",
+        "in-progress-c1f88e9": "In progress",
+        "has-failures-ee2613c": "Has failures",
+        "finished-7804f7a": "Finished",
+        "job-progress-6d04c76": "Job progress",
+        "cancellation-requested-c07f337": "Cancellation requested",
+        "prepare-retry-for-failed-nodes-928faa5": "Prepare retry for failed nodes",
+        "limits-dffb64d": "Limits",
+        "host-and-tag-quotas-and-speeds-manage-all-users-a-squad-or-sel-dedaadc": "Host and tag quotas and speeds. Manage all users, a squad or selected people.",
+        "search-scopes-4072c9d": "Search scopes",
+        "find-a-host-or-tag-32f269c": "Find a host or tag",
+        "sort-limits-575f4cc": "Sort limits",
+        "host-order-a7a00c3": "Host order",
+        "name-dcd1d52": "Name",
+        "traffic-used-355b28c": "Traffic used",
+        "quota-6c105ca": "Quota",
+        "user-speed-bbb06a4": "User speed",
+        "total-speed-c3c0eb4": "Total speed",
+        "ascending-7718459": "Ascending",
+        "descending-79479a6": "Descending",
+        "reverse-sort-direction-b4d2088": "Reverse sort direction",
+        "could-not-load-limits-press-refresh-8e66afe": "Could not load limits. Press Refresh.",
+        "no-hosts-or-tags-found-5e14329": "No hosts or tags found",
+        "paused-for-all-d332b4f": "Blocked for everyone",
+        "current-period-usage-73e93ad": "Current period usage: ",
+        "quota-per-user-5c0ec2b": "Quota per user: ",
+        "speed-per-user-host-f449280": "Speed per user / host: ",
+        "shared-speed-2012ee5": "Shared speed: ",
+        "tag-1-266d618": "Tag / 1",
+        "hosts-e365c9f": "Hosts: ",
+        "users-and-actions-87dce8a": "Users and actions",
+        "add-allowance-4705372": "Add allowance",
+        "reset-usage-956c967": "Reset usage",
+        "pause-traffic-a604dca": "Block traffic",
+        "resume-traffic-50b5bc3": "Unblock traffic",
+        "saved-for-value-users-node-policy-synchronization-requested-d4d11b6": "Saved for {{value1}} users. Node policy synchronization requested.",
+        "all-limits-6d1a1ed": "All limits",
+        "refresh-users-7e079f1": "Refresh users",
+        "base-quota-per-user-d6b9f30": "Base quota per user: ",
+        "quota-combines-traffic-from-hosts-participating-in-the-tag-quo-669a173": "Quota combines traffic from hosts participating in the tag quota. Exhaustion blocks those hosts for that user.",
+        "actions-affect-this-host-only-other-tag-limits-still-apply-4659b5e": "Actions affect this host only. Other tag limits still apply.",
+        "this-scope-is-paused-for-everyone-select-all-resume-traffic-to-05c8eaf": "Traffic is blocked for everyone in this scope. Select All and unblock traffic to remove the scope block. Unblocking an individual does not override it.",
+        "action-recipients-f6f5577": "Action recipients",
+        "selected-57fd7a0": "Selected",
+        "internal-3bed2cb": "internal",
+        "external-3c46238": "external",
+        "choose-a-squad-1217e46": "Choose a squad",
+        "no-squad-found-d1d41dc": "No squad found",
+        "could-not-load-squads-fb7f789": "Could not load squads.",
+        "all-users-entitled-to-this-scope-search-and-pagination-do-not--ad386c9": "All users entitled to this scope. Search and pagination do not change recipients. A scope pause includes future users.",
+        "select-one-or-more-users-in-the-table-selection-spans-pages-ma-d1f6a9b": "Select one or more users in the table. Selection spans pages; maximum 500.",
+        "recipients-a9aab54": "Recipients: ",
+        "clear-selection-cea4d2e": "Clear selection",
+        "one-off-allowance-each-gib-964abcc": "One-off allowance each, GiB",
+        "traffic-is-unlimited-set-a-base-quota-in-host-or-tag-settings--96189bd": "Traffic is unlimited. Set a base quota in host or tag settings before adding allowance.",
+        "traffic-unit-e8fcf48": "Traffic unit",
+        "search-users-e4bb77a": "Search users",
+        "name-id-short-id-email-or-telegram-id-c7b3a50": "Name, ID, short ID, email or Telegram ID",
+        "subscription-status-f0723c4": "Subscription status",
+        "scope-state-1acf78e": "Scope state",
+        "paused-e159b06": "Blocked",
+        "quota-exhausted-8d99493": "Quota exhausted",
+        "available-e674447": "Available",
+        "no-subscription-access-6fbdfa5": "No subscription access",
+        "sort-by-c912902": "Sort by",
+        "usage-8d59829": "Usage",
+        "remaining-f3e4352": "Remaining",
+        "extra-allowance-a855328": "Extra allowance",
+        "username-e3b89e9": "Username",
+        "page-size-bd69e66": "Page size",
+        "reverse-sort-order-ac00159": "Reverse sort order",
+        "filtered-usage-58fcf33": "Filtered usage: ",
+        "paused-ec7059d": "Blocked: ",
+        "quota-exhausted-b910ef4": "Quota exhausted: ",
+        "statistics-cover-this-scope-s-current-period-including-multipl-25bc1d4": "Statistics cover this scope’s current period, including multipliers and resets. Table filters do not change bulk action recipients.",
+        "could-not-load-users-refresh-the-list-e29d206": "Could not load users. Refresh the list.",
+        "choose-a-squad-above-cee3096": "Choose a squad above.",
+        "select-current-page-327d76c": "Select current page",
+        "user-b512d97": "User",
+        "usage-quota-a47c881": "Usage / quota",
+        "actions-ff8059d": "Actions",
+        "select-1f7133c": "Select ",
+        "quota-usage-a0b5917": "Quota usage",
+        "access-allowed-f505864": "Access allowed",
+        "no-current-access-5ccd803": "No current access",
+        "actions-12ca9c2": "Actions: ",
+        "open-user-a030376": "Open user",
+        "this-scope-only-698e023": "This scope only",
+        "no-matching-users-579f8c3": "No matching users.",
+        "add-value-to-each-user-s-current-period-base-quota-is-unchange-7891f41": "Add {{value1}} to each user's current period. Base quota is unchanged.",
+        "reset-usage-in-this-scope-overall-subscription-statistics-are--6e727f4": "Reset usage in this scope. Overall subscription statistics are preserved.",
+        "pause-further-traffic-in-this-scope-until-manually-resumed-d906702": "Block further traffic in this scope until manually unblocked.",
+        "clear-scope-and-individual-pauses-here-quotas-and-subscription-90cd1d0": "Clear scope and individual traffic blocks here. Quotas and subscription restrictions still apply.",
+        "clear-individual-pauses-scope-pause-quotas-and-subscription-re-c6848d8": "Clear individual traffic blocks. Scope blocks, quotas and subscription restrictions still apply.",
+        "could-not-confirm-the-result-retrying-this-operation-is-safe-a-368c1e5": "Could not confirm the result. Retrying this operation is safe and will not credit twice.",
+        "retry-operation-9d39a36": "Retry operation",
+        "confirm-eebdd24": "Confirm",
+        "ip-addresses": "IP addresses",
+        "powered-by-geocheck": "Powered by GeoCheck",
+        "generic-oauth2": "Generic OAuth2"
+    },
+    "limitsUnlimited": {
+        "grant": "Grant unlimited quota",
+        "revoke": "Restore regular quota",
+        "active": "Unlimited quota granted",
+        "grantDescription": "Grant unlimited traffic quota to these users in this host or tag until revoked. Traffic blocks, speed limits, subscription status and other scopes still apply.",
+        "revokeDescription": "Remove the personal unlimited override in this host or tag. Its base quota and existing allowance apply again; usage is preserved.",
+        "permission": "Grant or revoke personal unlimited quota",
+        "write": "Write",
+        "read": "Read"
+    },
+    "design-ui": {
+        "more": "More options",
+        "support": "Support the project",
+        "recap": "Activity summary",
+        "build": "Panel version",
+        "logout": "Sign out",
+        "skip-navigation": "Skip to content",
+        "login-intro": "Manage users, routing and infrastructure in one workspace.",
+        "login-description": "Sign in to your control panel.",
+        "test-version": "Design preview",
+        "previous-tags": "Previous tags",
+        "next-tags": "Next tags",
+        "user-list": "User directory",
+        "show-password": "Show password",
+        "hide-password": "Hide password",
+        "toggle-password": "Show or hide password",
+        "configured-apps": "Configured apps: {{count}}",
+        "node-offline": "Offline",
+        "theme-light": "Light",
+        "theme-dark": "Dark",
+        "theme-purple": "Purple",
+        "theme-green": "Green",
+        "theme-midnight": "Midnight",
+        "theme-crimson": "Crimson",
+        "theme-cyber": "Cyber",
+        "theme-slate": "Slate",
+        "color-purple": "Purple",
+        "color-indigo": "Indigo",
+        "color-blue": "Blue",
+        "color-cobalt": "Cobalt",
+        "color-cyan": "Cyan",
+        "color-teal": "Teal",
+        "color-green": "Green",
+        "color-emerald": "Emerald",
+        "color-lime": "Lime",
+        "color-amber": "Amber",
+        "color-orange": "Orange",
+        "color-rose": "Rose",
+        "color-pink": "Pink",
+        "color-crimson": "Crimson",
+        "color-coral": "Coral",
+        "color-slate": "Slate",
+        "font-system": "System"
+    },
+    "user-status": {
+        "active": "Active",
+        "disabled": "Disabled",
+        "expired": "Expired",
+        "limited": "Limit reached"
+    },
+    "documentation": {
+        "title": "Documentation",
+        "guide": "Panel guide",
+        "api": "API reference",
+        "intro": "Workflows, settings and the exact contract of this build.",
+        "search": "Search functions, fields and explanations",
+        "apiSearch": "Search path, operation or permission",
+        "contents": "Contents",
+        "onPage": "On this page",
+        "language": "Reading language",
+        "readingNote": "The complete guide is available in Russian and English. Choose the reading language above.",
+        "fields": "Fields and controls",
+        "fieldNote": "Explanations of the fields and settings in this panel section.",
+        "relatedApi": "Related API operations",
+        "openPage": "Open this section",
+        "permalink": "Copy a link",
+        "copied": "Link copied",
+        "copyFailed": "Could not copy. Copy the address from the browser.",
+        "download": "Download guide",
+        "downloadSpec": "Download OpenAPI",
+        "searchEmpty": "No matches. Try a function name, field or API path.",
+        "error": "Documentation could not be loaded.",
+        "retry": "Retry",
+        "loading": "Loading documentation",
+        "articles": "{{count}} articles",
+        "operations": "{{count}} operations",
+        "operation": "Operation",
+        "schemas": "Schemas and events",
+        "schema": "Schema",
+        "access": "Access",
+        "token": "API token",
+        "admin": "Administrator session",
+        "public": "Public / endpoint-specific checks",
+        "special": "Special authentication",
+        "authNote": "Public endpoints may still require a subscription secret, login credentials or a one-time challenge. Read their schema.",
+        "scope": "Required permission",
+        "alternatives": "Also accepted: ",
+        "params": "Path and query parameters",
+        "request": "Request body",
+        "response": "Responses",
+        "example": "cURL example",
+        "exampleNote": "Replace placeholders and check recipient access. Examples never execute requests and contain no real credentials.",
+        "noSchema": "No schema published for this payload. Review the operation contract before sending it.",
+        "none": "Not applicable",
+        "required": "Required",
+        "optional": "Optional",
+        "default": "Default",
+        "constraints": "Constraints",
+        "enum": "Allowed values",
+        "unresolved": "Reference",
+        "contractNote": "Technical descriptions are retained from the server OpenAPI contract. Business validation can impose additional checks.",
+        "variables": "Supported {{…}} variables",
+        "noUnits": "Numeric value, without unit",
+        "referenceVersion": "Build reference",
+        "invalidLink": "This article or operation was not found. Choose an entry from the contents.",
+        "clear": "Clear search"
+    },
+    "project-support": {
+        "title": "Support the project",
+        "description": "Thank you for supporting Remnacust. Transfer addresses are listed below.",
+        "wallets": "Wallets",
+        "network": "Network",
+        "wallet-address": "Wallet address",
+        "copy-address": "Copy {{coin}} address",
+        "copy-failed": "Could not copy. Select the address and copy it manually.",
+        "network-note": "Use the network shown beside the name.",
+        "thank-you": "Thank you for supporting Remnacust",
+        "contact-description": "Questions or suggestions? Contact the project author.",
+        "contact": "Contact on Telegram"
+    },
+    "hosts-status-filter": {
+        "label": "Host status",
+        "all": "All statuses",
+        "enabled": "Enabled",
+        "disabled": "Disabled",
+        "hidden": "Hidden",
+        "visible": "Visible"
+    }
+}

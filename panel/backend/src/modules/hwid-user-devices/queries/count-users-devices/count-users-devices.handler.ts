@@ -1,0 +1,28 @@
+import { Logger } from '@nestjs/common';
+import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+
+import { fail, ok, TResult } from '@common/types';
+import { ERRORS } from '@libs/contracts/constants';
+
+import { HwidUserDevicesRepository } from '../../repositories/hwid-user-devices.repository';
+import { CountUsersDevicesQuery } from './count-users-devices.query';
+
+@QueryHandler(CountUsersDevicesQuery)
+export class CountUsersDevicesHandler implements IQueryHandler<
+    CountUsersDevicesQuery,
+    TResult<number>
+> {
+    private readonly logger = new Logger(CountUsersDevicesHandler.name);
+    constructor(private readonly hwidUserDevicesRepository: HwidUserDevicesRepository) {}
+
+    async execute(query: CountUsersDevicesQuery): Promise<TResult<number>> {
+        try {
+            const count = await this.hwidUserDevicesRepository.countByUserId(query.userId);
+
+            return ok(count);
+        } catch (error) {
+            this.logger.error(error);
+            return fail(ERRORS.INTERNAL_SERVER_ERROR);
+        }
+    }
+}

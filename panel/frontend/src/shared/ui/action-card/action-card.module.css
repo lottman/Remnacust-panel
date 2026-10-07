@@ -1,0 +1,59 @@
+.card {
+    cursor: pointer;
+    transition:
+        background-color 150ms ease,
+        border-color 150ms ease;
+    background: var(--panel-surface);
+    border: 1px solid var(--panel-border);
+
+    &:hover {
+        background-color: var(--panel-subtle);
+    }
+}
+
+.loading {
+    pointer-events: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.06) 50%,
+        transparent 100%
+    );
+    animation: shimmer 1.5s infinite;
+}
+
+.card.confirming {
+    background: rgba(250, 82, 82, 0.04);
+    border-color: rgba(250, 82, 82, 0.4);
+}
+
+.card.confirming:hover {
+    background: rgba(250, 82, 82, 0.08);
+}
+
+@keyframes shimmer {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+.loading :global(.mantine-ThemeIcon-root) > svg {
+    animation: operation-pulse 900ms ease-in-out infinite;
+}
+@keyframes operation-pulse {
+    50% {
+        transform: scale(1.12);
+        opacity: 0.6;
+    }
+}

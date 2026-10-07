@@ -1,0 +1,30 @@
+{
+  "valid": [
+    {"name":"SS2022 AES-128 empty managed clients", "config":{"inbounds":[{"port":8388,"protocol":"shadowsocks","settings":{"method":"2022-blake3-aes-128-gcm","password":"BwcHBwcHBwcHBwcHBwcHBw==","clients":[]}}],"outbounds":[{"protocol":"freedom"}]}},
+    {"name":"SS2022 AES-256 empty managed clients", "config":{"inbounds":[{"port":8388,"protocol":"shadowsocks","settings":{"method":"2022-blake3-aes-256-gcm","password":"BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc=","clients":[]}}],"outbounds":[{"protocol":"freedom"}]}},
+    {"name":"MASQUE inbound", "config":{"inbounds":[{"tag":"M","port":4443,"protocol":"masque","settings":{"address":["10.99.0.1/24"],"clients":[{"email":"42","pass":"test"}]},"streamSettings":{"network":"masque","security":"tls","masqueSettings":{"path":"/ip/{?target,ipproto}"},"tlsSettings":{"alpn":["h3","h2"]}}}],"outbounds":[{"protocol":"freedom"}]}},
+    {"name":"MASQUE outbound and UDP hopping", "config":{"outbounds":[{"protocol":"masque","settings":{"address":"example.test","port":443,"remoteDNS":["1.1.1.1"]},"streamSettings":{"network":"masque","security":"tls","masqueSettings":{"user":"42","pass":"test"},"finalmask":{"udp":[{"type":"udphop","settings":{"mode":"intervalRemote,perConnRemote","interval":30,"remotePorts":"443,5000-5010"}}]}}}]}},
+    {"name":"XDRIVE", "config":{"inbounds":[{"port":4443,"protocol":"vless","settings":{"decryption":"none","clients":[]},"streamSettings":{"network":"xdrive","xdriveSettings":{"service":"local","remoteFolder":"/tmp/remnacust-smoke"}}}],"outbounds":[{"protocol":"freedom"}]}},
+    {"name":"custom XERA-HTTP and legacy hopper", "config":{"inbounds":[{"port":4443,"protocol":"vless","settings":{"decryption":"none","clients":[]},"streamSettings":{"network":"xera-http","xeraHttpSettings":{"path":"/test","mode":"auto"},"finalmask":{"quicParams":{"udpHop":{"ports":"443,5000-5010","interval":30}}}}}],"outbounds":[{"protocol":"freedom"}]}},
+    {"name":"TUN DNS and WFP options", "config":{"inbounds":[{"protocol":"tun","settings":{"name":"remnacust-test","gateway":["10.99.0.1/24"],"dns":["10.99.0.1"],"autoSystemDnsToGateway":true,"autoSystemRoutingTable":["0.0.0.0/0"],"autoSystemWfpBlockLeak":["dns","misconfigtun"]}}],"outbounds":[{"protocol":"freedom"}]}},
+    {"name":"blackhole custom response and OS route", "config":{"outbounds":[{"tag":"B","protocol":"blackhole","settings":{"response":{"type":"custom","customResponseData":"T0s="}}}],"routing":{"rules":[{"type":"field","localOS":["linux","windows"],"outboundTag":"B"}]}}},
+    {"name":"routing geosite category-ru", "config":{"outbounds":[{"protocol":"freedom","tag":"DIRECT"}],"routing":{"rules":[{"type":"field","domain":["geosite:category-ru"],"outboundTag":"DIRECT"}]}}},
+    {"name":"routing geoip ru and private", "config":{"outbounds":[{"protocol":"freedom","tag":"DIRECT"}],"routing":{"rules":[{"type":"field","ip":["geoip:ru","geoip:private"],"outboundTag":"DIRECT"}]}}},
+    {"name":"routing embedded external geodata", "config":{"outbounds":[{"protocol":"freedom","tag":"DIRECT"}],"routing":{"rules":[{"type":"field","domain":["ext:geosite.dat:category-ru"],"outboundTag":"DIRECT"},{"type":"field","ip":["ext:geoip.dat:ru"],"outboundTag":"DIRECT"}]}}},
+    {"name":"DNS geosite and expected geoip", "config":{"outbounds":[{"protocol":"freedom"}],"dns":{"servers":[{"address":"1.1.1.1","domains":["geosite:category-ru"],"expectIPs":["geoip:ru"]}]}}},
+    {"name":"sniffing geosite exclusions", "config":{"inbounds":[{"port":4443,"protocol":"vless","settings":{"decryption":"none","clients":[]},"sniffing":{"enabled":true,"destOverride":["http","tls"],"domainsExcluded":["geosite:category-ru"]}}],"outbounds":[{"protocol":"freedom"}]}}
+  ],
+  "invalid": [
+    {"name":"SS2022 ChaCha cannot manage multiple users", "config":{"inbounds":[{"port":8388,"protocol":"shadowsocks","settings":{"method":"2022-blake3-chacha20-poly1305","password":"BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc=","clients":[]}}]}},
+    {"name":"MASQUE invalid network binding", "config":{"inbounds":[{"port":4443,"protocol":"vless","settings":{"decryption":"none"},"streamSettings":{"network":"masque"}}]}},
+    {"name":"MASQUE mux", "config":{"outbounds":[{"protocol":"masque","settings":{"address":"example.test","port":443},"mux":{"enabled":true},"streamSettings":{"network":"masque","security":"tls"}}]}},
+    {"name":"MASQUE duplicate account", "config":{"inbounds":[{"port":4443,"protocol":"masque","settings":{"address":["10.99.0.1/24"],"clients":[{"email":"42","pass":"a"},{"email":"42","pass":"b"}]},"streamSettings":{"network":"masque","security":"tls"}}]}},
+    {"name":"XDRIVE missing OAuth parameters", "config":{"outbounds":[{"protocol":"vless","settings":{"vnext":[{"address":"example.test","port":443,"users":[{"id":"44444444-4444-4444-8444-444444444444","encryption":"none"}]}]},"streamSettings":{"network":"xdrive","xdriveSettings":{"service":"Google Drive","secrets":["missing"]}}}]}},
+    {"name":"invalid UDP hopping interval", "config":{"outbounds":[{"protocol":"freedom","streamSettings":{"finalmask":{"udp":[{"type":"udphop","settings":{"mode":"intervalRemote","interval":1,"remotePorts":443}}]}}}]}},
+    {"name":"invalid WFP option", "config":{"inbounds":[{"protocol":"tun","settings":{"name":"test","autoSystemWfpBlockLeak":["invalid"]}}]}},
+    {"name":"unknown geosite category", "config":{"outbounds":[{"protocol":"freedom","tag":"DIRECT"}],"routing":{"rules":[{"type":"field","domain":["geosite:remnacust-no-such-category-20261006"],"outboundTag":"DIRECT"}]}}},
+    {"name":"unknown geoip country", "config":{"outbounds":[{"protocol":"freedom","tag":"DIRECT"}],"routing":{"rules":[{"type":"field","ip":["geoip:remnacust-no-such-country-20261006"],"outboundTag":"DIRECT"}]}}},
+    {"name":"empty geosite category", "config":{"outbounds":[{"protocol":"freedom","tag":"DIRECT"}],"routing":{"rules":[{"type":"field","domain":["geosite:"],"outboundTag":"DIRECT"}]}}},
+    {"name":"empty geoip country", "config":{"outbounds":[{"protocol":"freedom","tag":"DIRECT"}],"routing":{"rules":[{"type":"field","ip":["geoip:"],"outboundTag":"DIRECT"}]}}}
+  ]
+}

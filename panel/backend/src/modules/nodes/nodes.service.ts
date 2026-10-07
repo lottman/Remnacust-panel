@@ -1,0 +1,603 @@
+import { ERRORS, EVENTS, NODES_BULK_ACTIONS } from '@contract/constants';
+import { Prisma } from '@prisma/client';
+
+import { Injectable, Logger } from '@nestjs/common';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+
+import { fail, ok, TResult } from '@common/types';
+import { atLeastOneDefined, mapDefined, wrapBigInt } from '@common/utils';
+import { toNano } from '@common/utils/nano';
+
+import { NodeEvent } from '@integration-modules/notifications/interfaces';
+
+import { GetConfigProfileByUuidQuery } from '@modules/config-profiles/queries/get-config-profile-by-uuid';
+
+import { NodesQueuesService } from '@queue/_nodes';
+
+import {
+    BulkNodesActionsBodyDto,
+    BulkNodesUpdateBodyDto,
+    CreateNodeBodyDto,
+    ProfileModificationBodyDto,
+    ReorderNodesBodyDto,
+    UpdateNodeBodyDto,
+} from './dtos';
+import { NodesEntity } from './entities';
+import { NodeResponseModel } from './models';
+import { NodesSystemCacheService } from './nodes-system-cache.service';
+import { NodesRepository } from './repositories/nodes.repository';
+
+@Injectable()
+export class NodesService {
+    private readonly logger = new Logger(NodesService.name);
+
+    constructor(
+        private readonly nodesRepository: NodesRepository,
+        private readonly eventEmitter: EventEmitter2,
+        private readonly nodesQueuesService: NodesQueuesService,
+        private readonly queryBus: QueryBus,
+        private readonly commandBus: CommandBus,
+        private readonly nodesSystemCacheService: NodesSystemCacheService,
+    ) {}
+
+    public async createNode(body: CreateNodeBodyDto): Promise<TResult<NodeResponseModel>> {
+        try {
+            const { configProfile, ...nodeData } = body;
+
+            const nodeEntity = new NodesEntity({
+                ...nodeData,
+                address: nodeData.address.trim(),
+                isConnected: false,
+                isConnecting: false,
+                isDisabled: false,
+                trafficLimitBytes: wrapBigInt(nodeData.trafficLimitBytes),
+                consumptionMultiplier: mapDefined(nodeData.consumptionMultiplier, toNano),
+                nodeConsumptionMultiplier: mapDefined(nodeData.nodeConsumptionMultiplier, toNano),
+                activeConfigProfileUuid: configProfile.activeConfigProfileUuid,
+            });
+
+            const result = await this.nodesRepository.create(nodeEntity);
+
+            if (configProfile) {
+                const configProfileResponse = await this.queryBus.execute(
+                    new GetConfigProfileByUuidQuery(configProfile.activeConfigProfileUuid),
+                );
+
+                if (configProfileResponse.isOk) {
+                    const inbounds = configProfileResponse.response.inbounds;
+
+                    const areAllInboundsFromConfigProfile = configProfile.activeInbounds.every(
+                        (activeInboundUuid) =>
+                            inbounds.some((inbound) => inbound.uuid === activeInboundUuid),
+                    );
+
+                    if (areAllInboundsFromConfigProfile) {
+                        await this.nodesRepository.addInboundsToNode(
+                            result.uuid,
+                            configProfile.activeInbounds,
+                        );
+                    } else {
+                        return fail(ERRORS.CONFIG_PROFILE_INBOUND_NOT_FOUND_IN_SPECIFIED_PROFILE);
+                    }
+                }
+            }
+
+            const node = await this.nodesRepository.findByUUID(result.uuid);
+
+            if (!node) {
+                throw new Error('Node not found');
+            }
+
+            await this.nodesQueuesService.startNode({
+                nodeUuid: node.uuid,
+            });
+
+            this.eventEmitter.emit(EVENTS.NODE.CREATED, new NodeEvent(node, EVENTS.NODE.CREATED));
+
+            return ok(
+                new NodeResponseModel(node, await this.nodesSystemCacheService.getOne(node.uuid)),
+            );
+        } catch (error) {
+            if (
+                error instanceof Prisma.PrismaClientKnownRequestError &&
+                error.code === 'P2002' &&
+                error.meta?.modelName === 'Nodes' &&
+                Array.isArray(error.meta.target)
+            ) {
+                const fields = error.meta.target as string[];
+                if (fields.includes('name')) {
+                    return fail(ERRORS.NODE_NAME_ALREADY_EXISTS);
+                }
+                if (fields.includes('address')) {
+                    return fail(ERRORS.NODE_ADDRESS_ALREADY_EXISTS);
+                }
+            }
+            this.logger.error(error);
+            return fail(ERRORS.CREATE_NODE_ERROR);
+        }
+    }
+
+    public async getAllNodes(): Promise<TResult<NodeResponseModel[]>> {
+        try {
+            const nodes = await this.nodesRepository.findByCriteria({});
+
+            const systemInfoMap = await this.nodesSystemCacheService.getMany(nodes);
+
+            return ok(
+                nodes.map(
+                    (node) =>
+                        new NodeResponseModel(
+                            node,
+                            systemInfoMap.get(node.uuid) ?? {
+                                system: null,
+                                onlineUsers: 0,
+                                versions: null,
+                                xrayUptime: 0,
+                            },
+                        ),
+                ),
+            );
+        } catch (error) {
+            this.logger.error(error);
+            return fail(ERRORS.GET_ALL_NODES_ERROR);
+        }
+    }
+
+    public async restartNode(uuid: string, force: boolean): Promise<TResult<boolean>> {
+        try {
+            const node = await this.nodesRepository.findByUUID(uuid);
+            if (!node) {
+                return fail(ERRORS.NODE_NOT_FOUND);
+            }
+
+            if (node.isDisabled) {
+                return fail(ERRORS.NODE_IS_DISABLED);
+            }
+
+            await this.nodesQueuesService.startNode({
+                nodeUuid: node.uuid,
+                force,
+            });
+
+            return ok(true);
+        } catch (error) {
+            this.logger.error(JSON.stringify(error));
+            return fail(ERRORS.RESTART_NODE_ERROR);
+        }
+    }
+
+    public async resetNodeTraffic(uuid: string): Promise<TResult<boolean>> {
+        try {
+            const node = await this.nodesRepository.findByUUID(uuid);
+            if (!node) {
+                return fail(ERRORS.NODE_NOT_FOUND);
+            }
+
+            await this.nodesRepository.update({
+                uuid: node.uuid,
+                trafficUsedBytes: BigInt(0),
+            });
+
+            return ok(true);
+        } catch (error) {
+            this.logger.error(JSON.stringify(error));
+            return fail(ERRORS.RESET_NODE_TRAFFIC_ERROR);
+        }
+    }
+
+    public async restartAllNodes(forceRestart: boolean): Promise<TResult<boolean>> {
+        try {
+            const nodes = await this.nodesRepository.findByCriteria({
+                isDisabled: false,
+            });
+            if (nodes.length === 0) {
+                return fail(ERRORS.ENABLED_NODES_NOT_FOUND);
+            }
+
+            await this.nodesQueuesService.startAllNodes({
+                emitter: NodesService.name,
+                force: forceRestart,
+            });
+
+            return ok(true);
+        } catch (error) {
+            this.logger.error(JSON.stringify(error));
+            return fail(ERRORS.RESTART_NODE_ERROR);
+        }
+    }
+
+    public async getOneNode(uuid: string): Promise<TResult<NodeResponseModel>> {
+        try {
+            const node = await this.nodesRepository.findByUUID(uuid);
+            if (!node) {
+                return fail(ERRORS.NODE_NOT_FOUND);
+            }
+
+            return ok(
+                new NodeResponseModel(node, await this.nodesSystemCacheService.getOne(node.uuid)),
+            );
+        } catch (error) {
+            this.logger.error(error);
+            return fail(ERRORS.GET_ONE_NODE_ERROR);
+        }
+    }
+
+    public async deleteNode(uuid: string): Promise<TResult<boolean>> {
+        try {
+            const node = await this.nodesRepository.findByUUID(uuid);
+            if (!node) {
+                return fail(ERRORS.NODE_NOT_FOUND);
+            }
+
+            await this.nodesQueuesService.stopNode({
+                nodeUuid: node.uuid,
+                isNeedToBeDeleted: true,
+            });
+
+            this.eventEmitter.emit(EVENTS.NODE.DELETED, new NodeEvent(node, EVENTS.NODE.DELETED));
+
+            await this.nodesSystemCacheService.delete(node.uuid);
+
+            return ok(true);
+        } catch (error) {
+            this.logger.error(error);
+            return fail(ERRORS.DELETE_NODE_ERROR);
+        }
+    }
+
+    public async updateNode(body: UpdateNodeBodyDto): Promise<TResult<NodeResponseModel>> {
+        try {
+            const { configProfile, ...nodeData } = body;
+
+            const node = await this.nodesRepository.findByUUID(body.uuid);
+            if (!node) {
+                return fail(ERRORS.NODE_NOT_FOUND);
+            }
+
+            if (configProfile) {
+                const configProfileResponse = await this.queryBus.execute(
+                    new GetConfigProfileByUuidQuery(configProfile.activeConfigProfileUuid),
+                );
+
+                if (configProfileResponse.isOk) {
+                    const inbounds = configProfileResponse.response.inbounds;
+
+                    const areAllInboundsFromConfigProfile = configProfile.activeInbounds.every(
+                        (activeInboundUuid) =>
+                            inbounds.some((inbound) => inbound.uuid === activeInboundUuid),
+                    );
+
+                    if (areAllInboundsFromConfigProfile) {
+                        await this.nodesRepository.removeInboundsFromNode(node.uuid);
+
+                        await this.nodesRepository.addInboundsToNode(
+                            node.uuid,
+                            configProfile.activeInbounds,
+                        );
+                    } else {
+                        return fail(ERRORS.CONFIG_PROFILE_INBOUND_NOT_FOUND_IN_SPECIFIED_PROFILE);
+                    }
+                }
+            }
+
+            const result = await this.nodesRepository.update({
+                ...nodeData,
+                name: nodeData.name ? nodeData.name.trim() : undefined,
+                address: nodeData.address ? nodeData.address.trim() : undefined,
+                trafficLimitBytes: wrapBigInt(nodeData.trafficLimitBytes),
+                consumptionMultiplier: mapDefined(nodeData.consumptionMultiplier, toNano),
+                nodeConsumptionMultiplier: mapDefined(nodeData.nodeConsumptionMultiplier, toNano),
+                activeConfigProfileUuid: configProfile?.activeConfigProfileUuid,
+            });
+
+            if (!result) {
+                return fail(ERRORS.UPDATE_NODE_ERROR);
+            }
+
+            if (
+                !node.isDisabled &&
+                atLeastOneDefined(
+                    nodeData.integrationUuids,
+                    nodeData.proxyUrl,
+                    nodeData.port,
+                    nodeData.address,
+                    nodeData.activePluginUuid,
+                    configProfile,
+                )
+            ) {
+                await this.nodesQueuesService.startNode({
+                    nodeUuid: result.uuid,
+                    force: nodeData.integrationUuids !== undefined,
+                });
+            }
+
+            this.eventEmitter.emit(
+                EVENTS.NODE.MODIFIED,
+                new NodeEvent(result, EVENTS.NODE.MODIFIED),
+            );
+
+            return ok(
+                new NodeResponseModel(
+                    result,
+                    await this.nodesSystemCacheService.getOne(result.uuid),
+                ),
+            );
+        } catch (error) {
+            if (
+                error instanceof Prisma.PrismaClientKnownRequestError &&
+                error.code === 'P2002' &&
+                error.meta?.modelName === 'Nodes' &&
+                Array.isArray(error.meta.target)
+            ) {
+                const fields = error.meta.target as string[];
+                if (fields.includes('name')) {
+                    return fail(ERRORS.NODE_NAME_ALREADY_EXISTS);
+                }
+                if (fields.includes('address')) {
+                    return fail(ERRORS.NODE_ADDRESS_ALREADY_EXISTS);
+                }
+            }
+            this.logger.error(error);
+            return fail(ERRORS.UPDATE_NODE_ERROR);
+        }
+    }
+
+    public async enableNode(uuid: string): Promise<TResult<NodeResponseModel>> {
+        try {
+            const node = await this.nodesRepository.findByUUID(uuid);
+            if (!node) {
+                return fail(ERRORS.NODE_NOT_FOUND);
+            }
+
+            await this.nodesSystemCacheService.delete(node.uuid);
+
+            if (!node.activeConfigProfileUuid || node.activeInbounds.length === 0) {
+                const result = await this.nodesRepository.update({
+                    uuid: node.uuid,
+                    isDisabled: true,
+                    activeConfigProfileUuid: null,
+                    isConnecting: false,
+                    isConnected: false,
+                    lastStatusMessage: null,
+                    lastStatusChange: new Date(),
+                });
+
+                if (!result) {
+                    return fail(ERRORS.ENABLE_NODE_ERROR);
+                }
+
+                return ok(
+                    new NodeResponseModel(
+                        result,
+                        await this.nodesSystemCacheService.getOne(result.uuid),
+                    ),
+                );
+            }
+
+            const result = await this.nodesRepository.update({
+                uuid: node.uuid,
+                isDisabled: false,
+            });
+
+            if (!result) {
+                return fail(ERRORS.ENABLE_NODE_ERROR);
+            }
+
+            await this.nodesQueuesService.startNode({
+                nodeUuid: result.uuid,
+            });
+
+            this.eventEmitter.emit(EVENTS.NODE.ENABLED, new NodeEvent(result, EVENTS.NODE.ENABLED));
+
+            return ok(
+                new NodeResponseModel(
+                    result,
+                    await this.nodesSystemCacheService.getOne(result.uuid),
+                ),
+            );
+        } catch (error) {
+            this.logger.error(error);
+            return fail(ERRORS.ENABLE_NODE_ERROR);
+        }
+    }
+
+    public async disableNode(uuid: string): Promise<TResult<NodeResponseModel>> {
+        try {
+            const node = await this.nodesRepository.findByUUID(uuid);
+            if (!node) {
+                return fail(ERRORS.NODE_NOT_FOUND);
+            }
+
+            if (!node.activeConfigProfileUuid || node.activeInbounds.length === 0) {
+                await this.nodesRepository.update({
+                    uuid: node.uuid,
+                    activeConfigProfileUuid: null,
+                });
+            }
+
+            await this.nodesSystemCacheService.delete(node.uuid);
+
+            const result = await this.nodesRepository.update({
+                uuid: node.uuid,
+                isDisabled: true,
+                isConnecting: false,
+                isConnected: false,
+                lastStatusMessage: null,
+                lastStatusChange: new Date(),
+            });
+
+            if (!result) {
+                return fail(ERRORS.DISABLE_NODE_ERROR);
+            }
+
+            await this.nodesQueuesService.stopNode({
+                nodeUuid: result.uuid,
+                isNeedToBeDeleted: false,
+            });
+
+            this.eventEmitter.emit(
+                EVENTS.NODE.DISABLED,
+                new NodeEvent(result, EVENTS.NODE.DISABLED),
+            );
+
+            return ok(
+                new NodeResponseModel(
+                    result,
+                    await this.nodesSystemCacheService.getOne(result.uuid),
+                ),
+            );
+        } catch (error) {
+            this.logger.error(error);
+            return fail(ERRORS.ENABLE_NODE_ERROR);
+        }
+    }
+
+    public async reorderNodes(dto: ReorderNodesBodyDto): Promise<TResult<NodeResponseModel[]>> {
+        try {
+            await this.nodesRepository.reorderMany(dto.nodes);
+
+            const nodes = await this.nodesRepository.findByCriteria({});
+            const systemInfoMap = await this.nodesSystemCacheService.getMany(nodes);
+            return ok(
+                nodes.map(
+                    (node) =>
+                        new NodeResponseModel(
+                            node,
+                            systemInfoMap.get(node.uuid) ?? {
+                                system: null,
+                                onlineUsers: 0,
+                                versions: null,
+                                xrayUptime: 0,
+                            },
+                        ),
+                ),
+            );
+        } catch (error) {
+            this.logger.error(error);
+            return fail(ERRORS.REORDER_NODES_ERROR);
+        }
+    }
+
+    public async getAllNodesTags(): Promise<TResult<string[]>> {
+        try {
+            return ok(await this.nodesRepository.findAllTags());
+        } catch (error) {
+            this.logger.error(error);
+            return fail(ERRORS.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public async profileModification(body: ProfileModificationBodyDto): Promise<TResult<boolean>> {
+        try {
+            const { uuids, configProfile } = body;
+
+            const configProfileResponse = await this.queryBus.execute(
+                new GetConfigProfileByUuidQuery(configProfile.activeConfigProfileUuid),
+            );
+
+            if (!configProfileResponse.isOk) {
+                return fail(ERRORS.CONFIG_PROFILE_NOT_FOUND);
+            }
+
+            const inbounds = configProfileResponse.response.inbounds;
+
+            const allActiveInboundsExistInProfile = configProfile.activeInbounds.every(
+                (activeInboundUuid) =>
+                    inbounds.some((inbound) => inbound.uuid === activeInboundUuid),
+            );
+
+            if (!allActiveInboundsExistInProfile) {
+                return fail(ERRORS.CONFIG_PROFILE_INBOUND_NOT_FOUND_IN_SPECIFIED_PROFILE);
+            }
+
+            await this.nodesRepository.updateMany(uuids, {
+                activeConfigProfileUuid: configProfile.activeConfigProfileUuid,
+            });
+
+            await this.nodesRepository.removeInboundsFromNodes(uuids);
+
+            await this.nodesRepository.addInboundsToNodes(uuids, configProfile.activeInbounds);
+
+            await this.nodesQueuesService.startAllNodesByProfile({
+                profileUuid: configProfile.activeConfigProfileUuid,
+                emitter: 'bulkProfileModification',
+            }); // no need to restart all nodes
+
+            return ok(true);
+        } catch (error) {
+            this.logger.error(error);
+            return fail(ERRORS.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public async bulkNodesActions(body: BulkNodesActionsBodyDto): Promise<TResult<boolean>> {
+        try {
+            const { uuids, action } = body;
+
+            const actionMap: Record<string, (uuid: string) => Promise<unknown>> = {
+                [NODES_BULK_ACTIONS.ENABLE]: (uuid) => this.enableNode(uuid),
+                [NODES_BULK_ACTIONS.DISABLE]: (uuid) => this.disableNode(uuid),
+                [NODES_BULK_ACTIONS.RESTART]: (uuid) => this.restartNode(uuid, true),
+                [NODES_BULK_ACTIONS.RESET_TRAFFIC]: (uuid) => this.resetNodeTraffic(uuid),
+            };
+
+            const handler = actionMap[action];
+            if (!handler) {
+                this.logger.error(`Invalid action: ${action}`);
+                return fail(ERRORS.INTERNAL_SERVER_ERROR);
+            }
+
+            for (const uuid of uuids) {
+                await handler(uuid);
+            }
+
+            return ok(true);
+        } catch (error) {
+            this.logger.error(error);
+            return fail(ERRORS.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public async bulkNodesUpdate(body: BulkNodesUpdateBodyDto): Promise<TResult<boolean>> {
+        try {
+            const { uuids, fields } = body;
+
+            const fieldsToUpdate: Partial<NodesEntity> = {
+                countryCode: fields.countryCode,
+                consumptionMultiplier: mapDefined(fields.consumptionMultiplier, toNano),
+                nodeConsumptionMultiplier: mapDefined(fields.nodeConsumptionMultiplier, toNano),
+                providerUuid: fields.providerUuid,
+                tags: fields.tags,
+                activePluginUuid: fields.activePluginUuid,
+                integrationUuids: fields.integrationUuids,
+                note: fields.note,
+            };
+
+            await this.nodesRepository.updateMany(uuids, fieldsToUpdate);
+
+            if (fieldsToUpdate.activePluginUuid !== undefined) {
+                await this.nodesQueuesService.syncNodePluginsBulk(
+                    uuids.map((uuid) => ({ nodeUuid: uuid })),
+                );
+            }
+
+            if (fieldsToUpdate.integrationUuids !== undefined) {
+                const profileUuids = await this.nodesRepository.getProfileUuidsByNodeUuids(uuids);
+
+                for (const profileUuid of profileUuids) {
+                    await this.nodesQueuesService.startAllNodesByProfile({
+                        profileUuid,
+                        emitter: 'bulkNodesUpdate',
+                        force: true,
+                    });
+                }
+            }
+
+            return ok(true);
+        } catch (error) {
+            this.logger.error(error);
+            return fail(ERRORS.INTERNAL_SERVER_ERROR);
+        }
+    }
+}

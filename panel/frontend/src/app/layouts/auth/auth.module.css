@@ -1,0 +1,165 @@
+.shell {
+    min-height: 100dvh;
+    display: grid;
+    align-items: center;
+    padding: max(88px, calc(env(safe-area-inset-top) + 72px)) max(32px, env(safe-area-inset-right))
+        max(48px, env(safe-area-inset-bottom)) max(32px, env(safe-area-inset-left));
+    background: var(--panel-background);
+    position: relative;
+    min-width: 0;
+    isolation: isolate;
+    transition: background-color 1200ms ease;
+}
+.ambient {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+    contain: strict;
+}
+.orb {
+    position: absolute;
+    width: clamp(340px, 45vw, 620px);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    color: var(--panel-accent);
+    background: radial-gradient(
+        circle,
+        color-mix(in srgb, currentColor 66%, transparent) 0%,
+        color-mix(in srgb, currentColor 36%, transparent) 24%,
+        color-mix(in srgb, currentColor 10%, transparent) 46%,
+        transparent 70%
+    );
+    transition: color 1800ms ease;
+    will-change: transform, opacity;
+    animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1);
+    animation-iteration-count: infinite;
+}
+.orb:nth-child(1) {
+    inset-inline-start: 2%;
+    top: 2%;
+    opacity: 0.58;
+    animation-name: light-one;
+    animation-duration: 22s;
+    animation-delay: -5s;
+}
+.orb:nth-child(2) {
+    inset-inline-end: 2%;
+    bottom: 0;
+    width: clamp(320px, 38vw, 540px);
+    color: color-mix(in srgb, var(--panel-accent) 70%, var(--panel-text));
+    opacity: 0.46;
+    animation-name: light-two;
+    animation-duration: 26s;
+    animation-delay: -14s;
+}
+.orb:nth-child(3) {
+    inset-inline-start: 42%;
+    top: 18%;
+    width: clamp(220px, 29vw, 400px);
+    color: color-mix(in srgb, var(--panel-accent) 60%, var(--panel-surface));
+    opacity: 0.5;
+    animation-name: light-three;
+    animation-duration: 20s;
+    animation-delay: -11s;
+}
+@keyframes light-one {
+    0%,
+    100% {
+        transform: translate3d(-8%, 4%, 0) scale(0.94);
+        opacity: 0.5;
+    }
+    48% {
+        transform: translate3d(24%, 28%, 0) scale(1.12);
+        opacity: 0.7;
+    }
+}
+@keyframes light-two {
+    0%,
+    100% {
+        transform: translate3d(14%, 10%, 0) scale(0.86);
+        opacity: 0.42;
+    }
+    52% {
+        transform: translate3d(-20%, -25%, 0) scale(1.1);
+        opacity: 0.6;
+    }
+}
+@keyframes light-three {
+    0%,
+    100% {
+        transform: translate3d(18%, -12%, 0) scale(0.82);
+        opacity: 0.34;
+    }
+    52% {
+        transform: translate3d(-28%, 24%, 0) scale(1.06);
+        opacity: 0.55;
+    }
+}
+.controls {
+    position: absolute;
+    top: max(20px, env(safe-area-inset-top));
+    inset-inline-end: max(32px, env(safe-area-inset-right));
+    z-index: 2;
+}
+.controls :global(.mantine-ActionIcon-root) {
+    min-width: 44px;
+    min-height: 44px;
+}
+.content {
+    width: 100%;
+    max-width: 1000px;
+    margin-inline: auto;
+    min-width: 0;
+    position: relative;
+    z-index: 1;
+}
+@media (max-width: 48em) {
+    .shell {
+        padding: max(88px, calc(env(safe-area-inset-top) + 72px))
+            max(20px, env(safe-area-inset-right)) max(28px, env(safe-area-inset-bottom))
+            max(20px, env(safe-area-inset-left));
+    }
+    .controls {
+        inset-inline-end: max(16px, env(safe-area-inset-right));
+        top: max(16px, env(safe-area-inset-top));
+    }
+    .orb:nth-child(1) {
+        width: 440px;
+        inset-inline-start: -30%;
+        top: -6%;
+    }
+    .orb:nth-child(2) {
+        width: 380px;
+        inset-inline-end: -48%;
+        bottom: 5%;
+    }
+    .orb:nth-child(3) {
+        width: 280px;
+        inset-inline-start: 24%;
+        top: 22%;
+    }
+}
+:global(html[data-panel-reduced-motion='true']) .orb {
+    animation: none;
+    transform: none;
+    opacity: 0.4;
+    transition: none;
+    will-change: auto;
+}
+:global(html[data-panel-reduced-motion='true']) .shell {
+    transition: none;
+}
+@media (prefers-reduced-motion: reduce) {
+    .ambient .orb {
+        animation: none;
+        transform: none;
+        opacity: 0.4;
+        transition: none;
+        will-change: auto;
+    }
+    .shell {
+        transition: none;
+    }
+}

@@ -1,0 +1,52 @@
+import z from 'zod';
+export declare const Oauth2SettingsSchema: z.ZodObject<{
+    github: z.ZodObject<{
+        enabled: z.ZodBoolean;
+        clientId: z.ZodNullable<z.ZodString>;
+        clientSecret: z.ZodNullable<z.ZodString>;
+        allowedEmails: z.ZodArray<z.ZodString>;
+    }, z.core.$strip>;
+    pocketid: z.ZodObject<{
+        enabled: z.ZodBoolean;
+        clientId: z.ZodNullable<z.ZodString>;
+        clientSecret: z.ZodNullable<z.ZodString>;
+        frontendDomain: z.ZodNullable<z.ZodString>;
+        plainDomain: z.ZodNullable<z.ZodString>;
+        allowedEmails: z.ZodArray<z.ZodString>;
+    }, z.core.$strip>;
+    yandex: z.ZodObject<{
+        enabled: z.ZodBoolean;
+        clientId: z.ZodNullable<z.ZodString>;
+        clientSecret: z.ZodNullable<z.ZodString>;
+        allowedEmails: z.ZodArray<z.ZodString>;
+    }, z.core.$strip>;
+    keycloak: z.ZodDefault<z.ZodObject<{
+        enabled: z.ZodBoolean;
+        realm: z.ZodNullable<z.ZodString>;
+        clientId: z.ZodNullable<z.ZodString>;
+        clientSecret: z.ZodNullable<z.ZodString>;
+        frontendDomain: z.ZodNullable<z.ZodString>;
+        keycloakDomain: z.ZodNullable<z.ZodString>;
+        allowedEmails: z.ZodArray<z.ZodString>;
+    }, z.core.$strip>>;
+    generic: z.ZodDefault<z.ZodObject<{
+        enabled: z.ZodBoolean;
+        clientId: z.ZodNullable<z.ZodString>;
+        clientSecret: z.ZodNullable<z.ZodString>;
+        withPkce: z.ZodBoolean;
+        authorizationUrl: z.ZodNullable<z.ZodString>;
+        tokenUrl: z.ZodNullable<z.ZodString>;
+        expectedIssuer: z.ZodDefault<z.ZodNullable<z.ZodString>>;
+        frontendDomain: z.ZodNullable<z.ZodString>;
+        allowedEmails: z.ZodArray<z.ZodString>;
+    }, z.core.$strip>>;
+    telegram: z.ZodDefault<z.ZodObject<{
+        enabled: z.ZodBoolean;
+        clientId: z.ZodNullable<z.ZodString>;
+        clientSecret: z.ZodNullable<z.ZodString>;
+        allowedIds: z.ZodArray<z.ZodString>;
+        frontendDomain: z.ZodNullable<z.ZodString>;
+    }, z.core.$strip>>;
+}, z.core.$strip>;
+export type TOauth2Settings = z.infer<typeof Oauth2SettingsSchema>;
+//# sourceMappingURL=oauth2-settings.schema.d.ts.map

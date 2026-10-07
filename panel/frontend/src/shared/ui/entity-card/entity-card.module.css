@@ -1,0 +1,143 @@
+.card {
+    position: relative;
+    display: flex;
+    gap: 6px;
+    background: var(--panel-surface);
+    transition:
+        border-color 150ms ease,
+        background-color 150ms ease;
+}
+
+.card[data-layout='row'] {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+}
+
+.card[data-layout='row'] .header {
+    flex: 1;
+    min-width: 0;
+}
+
+.card[data-layout='row'] .content {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+}
+
+.card[data-layout='row'] .title {
+    flex: 1;
+    margin-right: 0;
+}
+
+.card[data-layout='row'] .meta {
+    flex: none;
+}
+
+.card[data-layout='row'] .actions {
+    flex: none;
+    margin-right: 40px;
+}
+
+[data-drag-handle='hidden'] .card[data-layout='row'] .actions {
+    margin-right: 0;
+}
+
+.card[data-clickable] {
+    cursor: pointer;
+}
+
+.card[data-clickable]:focus-visible {
+    outline: 2px solid var(--mantine-color-cyan-outline);
+    outline-offset: -2px;
+}
+
+.card:hover,
+:global([data-sortable-hover='true']:hover) .card {
+    background-color: var(--mantine-color-gray-outline-hover);
+}
+
+.rail {
+    position: absolute;
+    top: 8px;
+    bottom: 8px;
+    left: 0;
+    width: 2px;
+    border-radius: 0 2px 2px 0;
+    background: var(--mantine-color-cyan-5);
+}
+
+.railInactive {
+    background: var(--mantine-color-dark-4);
+}
+
+.icon {
+    flex-shrink: 0;
+}
+
+.content {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex: 1;
+    min-width: 0;
+}
+
+.title {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    color: var(--mantine-color-bright);
+    font-size: var(--mantine-font-size-md);
+    line-height: 22px;
+}
+
+.meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 26px;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.tags {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.card[data-layout='row'] .tags {
+    flex: none;
+    max-width: 220px;
+}
+
+.subtitle {
+    overflow: hidden;
+    color: var(--mantine-color-dimmed);
+    font-size: 10px;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.menuControl {
+    border: 0;
+}
+
+@media (max-width: 48em) {
+    .card[data-layout='row'] .content {
+        flex-wrap: wrap;
+        row-gap: 5px;
+    }
+
+    .card[data-layout='row'] .title {
+        flex: 1 0 100%;
+    }
+
+    .card[data-layout='row'] .tags {
+        max-width: 100%;
+    }
+}

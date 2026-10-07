@@ -1,0 +1,66 @@
+import { Badge, Button, Card, Group } from '@mantine/core'
+import { UseFormReturnType } from '@mantine/form'
+import { useDisclosure } from '@mantine/hooks'
+import { TSubscriptionPageRawConfig } from '@remnawave/subscription-page-types'
+import { IconPhoto } from '@tabler/icons-react'
+import { useTranslation } from 'react-i18next'
+
+import { useUiText } from '@shared/i18n/interface-text'
+import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+
+import { SvgLibraryModal } from '../editor-components/svg-library-modal.component'
+import styles from '../subpage-config-visual-editor.module.css'
+
+interface IProps {
+    form: UseFormReturnType<TSubscriptionPageRawConfig>
+}
+
+export function SvgLibraryBlockComponent(props: IProps) {
+    const uiText = useUiText()
+
+    const { form } = props
+    const values = form.getValues()
+    const [svgLibraryOpened, { close: closeSvgLibrary, open: openSvgLibrary }] =
+        useDisclosure(false)
+
+    const { t } = useTranslation()
+
+    const iconCount = Object.keys(values.svgLibrary || {}).length
+
+    return (
+        <>
+            <Card className={styles.sectionCard} p="md" radius="lg">
+                <Group justify="space-between">
+                    <Group gap="sm" wrap="nowrap">
+                        <BaseOverlayHeader
+                            iconColor="violet"
+                            IconComponent={IconPhoto}
+                            iconSize={20}
+                            iconVariant="soft"
+                            title={t('svg-library-modal.component.svg-library')}
+                            titleOrder={5}
+                        />
+                        <Badge color="violet" size="sm" variant="light">
+                            {iconCount} {uiText('icons-04ce686')}
+                        </Badge>
+                    </Group>
+
+                    <Button
+                        className={styles.saveButton}
+                        leftSection={<IconPhoto size={16} />}
+                        onClick={openSvgLibrary}
+                    >
+                        {t('subpage-config-visual-editor.widget.open-svg-library')}
+                    </Button>
+                </Group>
+            </Card>
+
+            <SvgLibraryModal
+                onChange={(library) => form.setFieldValue('svgLibrary', library)}
+                onClose={closeSvgLibrary}
+                opened={svgLibraryOpened}
+                svgLibrary={values.svgLibrary}
+            />
+        </>
+    )
+}

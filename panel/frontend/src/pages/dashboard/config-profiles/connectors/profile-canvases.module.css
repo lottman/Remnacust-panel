@@ -1,0 +1,30 @@
+.canvasCard {
+    background: var(--panel-surface, var(--mantine-color-body));
+    border-color: var(--panel-border, var(--mantine-color-default-border));
+    animation: canvasCardIn 420ms ease both;
+    transition:
+        border-color 160ms ease,
+        transform 160ms ease,
+        box-shadow 160ms ease;
+}
+.canvasCard:hover {
+    border-color: var(--panel-accent);
+    box-shadow: 0 8px 24px rgb(0 0 0 / 10%);
+    transform: translateY(-3px);
+}
+@keyframes canvasCardIn {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .canvasCard {
+        animation: none;
+        transition: none;
+    }
+}

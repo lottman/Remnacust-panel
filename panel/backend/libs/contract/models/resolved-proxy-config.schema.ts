@@ -1,0 +1,252 @@
+import { z } from 'zod';
+
+import { MIHOMO_IP_VERSION, SUBSCRIPTION_TEMPLATE_TYPE } from '../constants';
+import { HostMapperSchema } from './host-mapper';
+
+export const VlessProtocolOptionsSchema = z.object({
+    encryption: z.string(),
+    id: z.string(),
+    flow: z.enum(['', 'xtls-rprx-vision', 'xtls-rprx-vision-udp443']),
+});
+
+export const TrojanProtocolOptionsSchema = z.object({
+    password: z.string(),
+});
+
+export const ShadowsocksProtocolOptionsSchema = z.object({
+    method: z.string(),
+    password: z.string(),
+    uot: z.boolean(),
+    uotVersion: z.int(),
+});
+
+const TcpHeaderNoneSchema = z.object({
+    type: z.literal('none'),
+});
+
+const TcpHeaderHttpRequestSchema = z.object({
+    version: z.string().optional(),
+    method: z.string().optional(),
+    path: z.array(z.string()).optional(),
+    headers: z.record(z.string(), z.unknown()).optional(),
+});
+
+const TcpHeaderHttpResponseSchema = z.object({
+    version: z.string().optional(),
+    status: z.string().optional(),
+    reason: z.string().optional(),
+    headers: z.record(z.string(), z.unknown()).optional(),
+});
+
+const TcpHeaderHttpSchema = z.object({
+    type: z.literal('http'),
+    request: TcpHeaderHttpRequestSchema.optional(),
+    response: TcpHeaderHttpResponseSchema.optional(),
+});
+
+const TcpHeaderSchema = z.discriminatedUnion('type', [TcpHeaderNoneSchema, TcpHeaderHttpSchema]);
+
+export const TcpTransportOptionsSchema = z.object({
+    header: TcpHeaderSchema.nullable(),
+});
+
+export const XhttpTransportOptionsSchema = z.object({
+    path: z.string().nullable(),
+    host: z.string().nullable(),
+    mode: z.enum(['auto', 'packet-up', 'stream-up', 'stream-one']),
+    extra: z.record(z.string(), z.unknown()).nullable(),
+});
+
+export const WsTransportOptionsSchema = z.object({
+    path: z.string().nullable(),
+    host: z.string().nullable(),
+    headers: z.record(z.string(), z.string()).nullable(),
+    heartbeatPeriod: z.number().nullable(),
+});
+
+export const HttpUpgradeTransportOptionsSchema = z.object({
+    path: z.string().nullable(),
+    host: z.string().nullable(),
+    headers: z.record(z.string(), z.string()).nullable(),
+});
+
+export const GrpcTransportOptionsSchema = z.object({
+    authority: z.string().nullable(),
+    serviceName: z.string().nullable(),
+    multiMode: z.boolean(),
+});
+
+export const KcpTransportOptionsSchema = z.object({
+    clientMtu: z.int(),
+    clientTti: z.int(),
+    congestion: z.boolean(),
+});
+
+export const HysteriaProtocolOptionsSchema = z.object({
+    version: z.int(),
+});
+
+export const HysteriaTransportOptionsSchema = z.object({
+    version: z.int(),
+    auth: z.string(),
+});
+
+export const TlsSecurityOptionsSchema = z.object({
+    pinnedPeerCertSha256: z.string().nullable(),
+    verifyPeerCertByName: z.string().nullable(),
+    alpn: z.string().nullable(),
+    enableSessionResumption: z.boolean(),
+    fingerprint: z.string().nullable(),
+    serverName: z.string().nullable(),
+    echConfigList: z.string().nullable(),
+    echForceQuery: z.string().nullable(),
+    echSockopt: z.nullable(z.unknown()),
+    cipherSuites: z.string().nullable(),
+});
+
+export const RealitySecurityOptionsSchema = z.object({
+    fingerprint: z.string(),
+    publicKey: z.string(),
+    shortId: z.string().nullable(),
+    serverName: z.string(),
+    spiderX: z.string().nullable(),
+    mldsa65Verify: z.string().nullable(),
+});
+
+const VlessProtocolSchema = z.object({
+    protocol: z.literal('vless'),
+    protocolOptions: VlessProtocolOptionsSchema,
+});
+
+const TrojanProtocolSchema = z.object({
+    protocol: z.literal('trojan'),
+    protocolOptions: TrojanProtocolOptionsSchema,
+});
+
+const ShadowsocksProtocolSchema = z.object({
+    protocol: z.literal('shadowsocks'),
+    protocolOptions: ShadowsocksProtocolOptionsSchema,
+});
+
+const HysteriaProtocolSchema = z.object({
+    protocol: z.literal('hysteria'),
+    protocolOptions: HysteriaProtocolOptionsSchema,
+});
+
+export const ProtocolVariantSchema = z.discriminatedUnion('protocol', [
+    VlessProtocolSchema.meta({ title: 'vless' }),
+    z.object({ protocol: z.literal('masque'), protocolOptions: z.object({ username: z.string(), password: z.string(), remoteDNS: z.array(z.string()) }) }).meta({ title: 'masque' }),
+    TrojanProtocolSchema.meta({ title: 'trojan' }),
+    ShadowsocksProtocolSchema.meta({ title: 'shadowsocks' }),
+    HysteriaProtocolSchema.meta({ title: 'hysteria' }),
+]);
+
+const TcpTransportSchema = z.object({
+    transport: z.literal('tcp'),
+    transportOptions: TcpTransportOptionsSchema,
+});
+
+const XHttpTransportSchema = z.object({
+    transport: z.literal('xhttp'),
+    transportOptions: XhttpTransportOptionsSchema,
+});
+
+const WsTransportSchema = z.object({
+    transport: z.literal('ws'),
+    transportOptions: WsTransportOptionsSchema,
+});
+
+const HttpUpgradeTransportSchema = z.object({
+    transport: z.literal('httpupgrade'),
+    transportOptions: HttpUpgradeTransportOptionsSchema,
+});
+
+const GrpcTransportSchema = z.object({
+    transport: z.literal('grpc'),
+    transportOptions: GrpcTransportOptionsSchema,
+});
+
+const KcpTransportSchema = z.object({
+    transport: z.literal('kcp'),
+    transportOptions: KcpTransportOptionsSchema,
+});
+
+const HysteriaTransportSchema = z.object({
+    transport: z.literal('hysteria'),
+    transportOptions: HysteriaTransportOptionsSchema,
+});
+
+export const TransportVariantSchema = z.discriminatedUnion('transport', [
+    TcpTransportSchema.meta({ title: 'tcp' }),
+    ...(['masque', 'xdrive'] as const).map((transport) => z.object({ transport: z.literal(transport), transportOptions: z.object({ settings: z.record(z.string(), z.unknown()) }) }).meta({ title: transport })),
+    XHttpTransportSchema.meta({ title: 'xhttp' }),
+    z.object({ transport: z.literal('xera-http'), transportOptions: z.object({ settings: z.record(z.string(), z.unknown()) }) }).meta({ title: 'xera-http' }),
+    WsTransportSchema.meta({ title: 'ws' }),
+    HttpUpgradeTransportSchema.meta({ title: 'httpupgrade' }),
+    GrpcTransportSchema.meta({ title: 'grpc' }),
+    KcpTransportSchema.meta({ title: 'kcp' }),
+    HysteriaTransportSchema.meta({ title: 'hysteria' }),
+]);
+
+const TlsSecuritySchema = z.object({
+    security: z.literal('tls'),
+    securityOptions: TlsSecurityOptionsSchema,
+});
+
+const RealitySecuritySchema = z.object({
+    security: z.literal('reality'),
+    securityOptions: RealitySecurityOptionsSchema,
+});
+
+const NoneSecuritySchema = z.object({
+    security: z.literal('none'),
+});
+
+export const SecurityVariantSchema = z.discriminatedUnion('security', [
+    TlsSecuritySchema.meta({ title: 'tls' }),
+    RealitySecuritySchema.meta({ title: 'reality' }),
+    NoneSecuritySchema.meta({ title: 'none' }),
+]);
+
+export const ProxyEntryMetadataSchema = z.object({
+    uuid: z.uuid(),
+    tags: z.array(z.string()),
+    excludeFromSubscriptionTypes: z.array(z.enum(SUBSCRIPTION_TEMPLATE_TYPE)),
+    inboundTag: z.string(),
+    configProfileUuid: z.uuid().nullable(),
+    configProfileInboundUuid: z.uuid().nullable(),
+    isDisabled: z.boolean(),
+    isHidden: z.boolean(),
+    viewPosition: z.int(),
+    remark: z.string(),
+    vlessRouteId: z.int().nullable(),
+    rawInbound: z.nullable(z.unknown()),
+});
+
+export const ResolvedProxyConfigBaseSchema = z.object({
+    finalRemark: z.string(),
+    address: z.string(),
+    port: z.int().positive(),
+
+    streamOverrides: z.object({
+        finalMask: z.nullable(z.unknown()),
+        sockopt: z.nullable(z.unknown()),
+    }),
+
+    mux: z.nullable(z.unknown()),
+
+    clientOverrides: z.object({
+        shuffleHost: z.boolean(),
+        mihomoX25519: z.boolean(),
+        mihomoIpVersion: z.enum(MIHOMO_IP_VERSION).nullable(),
+        serverDescription: z.string().nullable(),
+        xrayJsonTemplate: z.nullable(z.unknown()),
+        mapper: HostMapperSchema,
+    }),
+
+    metadata: ProxyEntryMetadataSchema,
+});
+
+export const ResolvedProxyConfigSchema = ResolvedProxyConfigBaseSchema.and(ProtocolVariantSchema)
+    .and(TransportVariantSchema)
+    .and(SecurityVariantSchema);

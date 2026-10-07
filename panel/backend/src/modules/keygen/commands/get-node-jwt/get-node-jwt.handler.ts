@@ -1,0 +1,53 @@
+import type { IJWTAuthPayload } from 'src/modules/auth/interfaces';
+
+import * as jwt from 'jsonwebtoken';
+
+import { Logger } from '@nestjs/common';
+import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+
+import { fail, ok } from '@common/types';
+import { ERRORS, ROLE } from '@libs/contracts/constants';
+
+import { KeygenService } from '../../keygen.service';
+import { GetNodeJwtCommand } from './get-node-jwt.command';
+
+@CommandHandler(GetNodeJwtCommand)
+export class GetNodeJwtHandler implements ICommandHandler<GetNodeJwtCommand> {
+    private readonly logger = new Logger(GetNodeJwtHandler.name);
+
+    constructor(private readonly keygenService: KeygenService) {}
+
+    async execute() {
+        const response = await this.keygenService.generateKey();
+
+        if (!response.isOk) {
+            return fail(ERRORS.INTERNAL_SERVER_ERROR);
+        }
+
+        const { privKey, clientCert, clientKey, caCert, pubKey } = response.response;
+
+        const payload: IJWTAuthPayload = {
+            uuid: null,
+            username: null,
+            role: ROLE.API,
+        };
+
+        const token = jwt.sign(payload, privKey, {
+            algorithm: 'RS256',
+            expiresIn: '9999d',
+        });
+
+        try {
+            return ok({
+                jwtToken: token,
+                clientCert: clientCert!,
+                clientKey: clientKey!,
+                caCert: caCert!,
+                jwtPublicKey: pubKey!,
+            });
+        } catch (error) {
+            this.logger.error(`Error getting node jwt: ${error}`);
+            return fail(ERRORS.INTERNAL_SERVER_ERROR);
+        }
+    }
+}

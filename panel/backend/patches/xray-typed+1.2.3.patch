@@ -1,0 +1,77 @@
+diff --git a/node_modules/xray-typed/dist/config/inbound.d.ts b/node_modules/xray-typed/dist/config/inbound.d.ts
+index fe08e15..e2343b4 100644
+--- a/node_modules/xray-typed/dist/config/inbound.d.ts
++++ b/node_modules/xray-typed/dist/config/inbound.d.ts
+@@ -36,7 +36,7 @@ interface InboundConfigBase {
+  *
+  * @see https://xtls.github.io/en/config/inbound.html
+  */
+-export type InboundConfig = InboundVLess | InboundVMess | InboundTrojan | InboundShadowsocks | InboundSocks | InboundHTTP | InboundDokodemo | InboundTunnel | InboundMixed | InboundHysteria;
++export type InboundConfig = InboundVLess | InboundVMess | InboundTrojan | InboundShadowsocks | InboundSocks | InboundHTTP | InboundDokodemo | InboundTunnel | InboundMixed | InboundHysteria | InboundMasque;
+ export interface InboundVLess extends InboundConfigBase {
+     protocol: 'vless';
+     settings?: VLessInboundConfig;
+@@ -79,6 +79,16 @@ export interface InboundHysteria extends InboundConfigBase {
+     protocol: 'hysteria';
+     settings?: HysteriaInboundConfig;
+ }
++export interface MasqueInboundConfig {
++    clients?: Array<{ email: string; pass: string; level?: number }>;
++    users?: Array<{ email: string; pass: string; level?: number }>;
++    address?: string[];
++    mtu?: number;
++}
++export interface InboundMasque extends InboundConfigBase {
++    protocol: 'masque';
++    settings?: MasqueInboundConfig;
++}
+ /** Fallback for unknown/custom protocols. */
+ export interface InboundGeneric extends InboundConfigBase {
+     protocol?: string;
+@@ -88,6 +98,6 @@ export interface InboundGeneric extends InboundConfigBase {
+  * Union type for all possible inbound protocol settings.
+  */
+ export type InboundSettings = VLessInboundConfig | VMessInboundConfig | TrojanInboundConfig | ShadowsocksInboundConfig | SocksInboundConfig | HTTPInboundConfig | DokodemoInboundConfig | HysteriaInboundConfig;
+-export type InboundProtocol = 'vless' | 'vmess' | 'trojan' | 'shadowsocks' | 'socks' | 'http' | 'dokodemo-door' | 'tunnel' | 'mixed' | 'hysteria';
++export type InboundProtocol = 'vless' | 'vmess' | 'trojan' | 'shadowsocks' | 'socks' | 'http' | 'dokodemo-door' | 'tunnel' | 'mixed' | 'hysteria' | 'masque';
+ export {};
+ //# sourceMappingURL=inbound.d.ts.map
+\ No newline at end of file
+diff --git a/node_modules/xray-typed/dist/index.d.ts b/node_modules/xray-typed/dist/index.d.ts
+index 9198aa0..f029411 100644
+--- a/node_modules/xray-typed/dist/index.d.ts
++++ b/node_modules/xray-typed/dist/index.d.ts
+@@ -41,4 +41,5 @@ export { DokodemoInboundConfig, } from './proxies/dokodemo';
+ export { WireGuardOutboundConfig, WireGuardPeer, } from './proxies/wireguard';
+ export { LoopbackOutboundConfig, } from './proxies/loopback';
+ export { HysteriaInboundConfig, HysteriaUser, HysteriaOutboundConfig, } from './proxies/hysteria';
++export type { MasqueInboundConfig, InboundMasque } from './config/inbound';
+ //# sourceMappingURL=index.d.ts.map
+\ No newline at end of file
+diff --git a/node_modules/xray-typed/dist/transport/common.d.ts b/node_modules/xray-typed/dist/transport/common.d.ts
+index 4547c96..39dbeea 100644
+--- a/node_modules/xray-typed/dist/transport/common.d.ts
++++ b/node_modules/xray-typed/dist/transport/common.d.ts
+@@ -13,7 +13,7 @@ export type Bandwidth = string | number;
+ /**
+  * Transport protocol type.
+  */
+-export type TransportProtocol = 'tcp' | 'raw' | 'kcp' | 'ws' | 'grpc' | 'httpupgrade' | 'xhttp' | 'hysteria';
++export type TransportProtocol = 'tcp' | 'raw' | 'kcp' | 'ws' | 'grpc' | 'httpupgrade' | 'xhttp' | 'hysteria' | 'masque' | 'xdrive' | 'xera' | 'xera-http';
+ /**
+  * Security type for stream settings.
+  */
+diff --git a/node_modules/xray-typed/dist/transport/stream.d.ts b/node_modules/xray-typed/dist/transport/stream.d.ts
+index 1c05384..2e33792 100644
+--- a/node_modules/xray-typed/dist/transport/stream.d.ts
++++ b/node_modules/xray-typed/dist/transport/stream.d.ts
+@@ -53,6 +53,9 @@ export interface StreamSettingsConfig {
+     hysteriaSettings?: HysteriaConfig;
+     /** Socket options. */
+     sockopt?: SocketConfig;
++    masqueSettings?: { host?: string; path?: string; user?: string; pass?: string; headers?: Record<string, string> };
++    xdriveSettings?: Record<string, unknown>;
++    xeraHttpSettings?: Record<string, unknown>;
+ }
+ /**
+  * Maps transport protocol to its corresponding settings type.

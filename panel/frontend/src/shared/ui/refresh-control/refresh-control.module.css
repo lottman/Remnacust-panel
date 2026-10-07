@@ -1,0 +1,35 @@
+.control[data-refreshing] {
+    cursor: progress;
+    opacity: 0.8;
+}
+.control[data-refreshing] :global(.mantine-ActionIcon-icon) > svg,
+.control[data-refreshing] :global(.mantine-Button-section)[data-position='left'] > svg {
+    animation: refresh-turn 720ms linear infinite;
+    transform-origin: center;
+}
+@keyframes refresh-turn {
+    to {
+        transform: rotate(360deg);
+    }
+}
+html[data-panel-reduced-motion='true'] .control[data-refreshing] svg {
+    animation: none !important;
+    transform: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+    .control[data-refreshing] svg {
+        animation: none !important;
+        transform: none !important;
+    }
+}
+
+:global(.mantine-ActionIcon-root).control[data-refreshing] {
+    background: var(--ai-bg);
+    color: var(--ai-color);
+    border: var(--ai-bd);
+}
+:global(.mantine-Button-root).control[data-refreshing] {
+    background: var(--button-bg);
+    color: var(--button-color);
+    border: var(--button-bd);
+}

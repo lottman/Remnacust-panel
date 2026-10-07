@@ -1,0 +1,59 @@
+.grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 400px);
+    gap: clamp(40px, 6vw, 88px);
+    align-items: center;
+    min-width: 0;
+}
+.brand {
+    min-width: 0;
+}
+.brandTitle {
+    font-size: clamp(28px, 3.2vw, 40px);
+    letter-spacing: -0.045em;
+    overflow-wrap: anywhere;
+    line-height: 1.15;
+}
+.intro {
+    font-size: clamp(20px, 2vw, 24px);
+    font-weight: 400;
+    line-height: 1.55;
+    max-width: 30ch;
+    color: var(--panel-muted);
+    text-wrap: pretty;
+}
+.form {
+    min-width: 0;
+    box-shadow: 0 12px 40px rgb(0 0 0 / 6%);
+}
+@media (max-width: 48em) {
+    .grid {
+        grid-template-columns: minmax(0, 1fr);
+        max-width: 440px;
+        margin-inline: auto;
+        gap: 28px;
+    }
+    .intro {
+        font-size: 16px;
+        max-width: 38ch;
+    }
+    .brandTitle {
+        font-size: 28px;
+    }
+}
+
+:global(html.panel-themed) .form :global(.mantine-Input-input) {
+    min-height: 44px;
+}
+:global(html.panel-themed) .form :global(.mantine-PasswordInput-visibilityToggle) {
+    width: 40px;
+    height: 40px;
+}
+:global(html.panel-themed) .form :global(.mantine-Button-root) {
+    min-height: 44px;
+}
+@media (pointer: coarse) {
+    :global(html.panel-themed) .form :global(input) {
+        font-size: 16px;
+    }
+}

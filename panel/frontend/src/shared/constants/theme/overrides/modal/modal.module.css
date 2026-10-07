@@ -1,0 +1,29 @@
+.modalContent {
+    border: 1px solid var(--panel-border);
+    border-radius: 18px;
+    box-shadow: var(--panel-overlay-shadow);
+}
+.modalHeader {
+    background: var(--panel-surface);
+    border-bottom: 1px solid var(--panel-border);
+    padding: 18px 24px;
+}
+.modalBody {
+    --panel-overlay-padding: 24px;
+    padding: 24px;
+}
+.modalRoot[data-full-screen] .modalContent {
+    border-radius: 0;
+}
+.modalRoot[data-full-screen] .modalHeader {
+    padding-top: max(18px, env(safe-area-inset-top));
+}
+@media (max-width: 48em) {
+    .modalHeader {
+        padding-inline: 16px;
+    }
+    .modalBody {
+        --panel-overlay-padding: 16px;
+        padding: 16px;
+    }
+}

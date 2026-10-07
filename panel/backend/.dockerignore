@@ -1,0 +1,13 @@
+node_modules
+dist
+.git
+.env
+.env.*
+*.log
+backups/**
+plain-dumps/**
+coverage
+
+**/xera-backup-*
+**/.xera-backups
+dumps/**

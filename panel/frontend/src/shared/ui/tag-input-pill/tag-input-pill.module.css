@@ -1,0 +1,24 @@
+.pill {
+    height: 28px;
+    max-width: 100%;
+    padding-inline: 6px 8px;
+    border-color: color-mix(in srgb, var(--panel-accent) 28%, var(--panel-border));
+    background: color-mix(in srgb, var(--panel-accent) 12%, var(--panel-surface));
+    color: var(--panel-accent-text);
+    text-transform: none;
+}
+.pill:has(.remove) {
+    padding-inline-start: 2px;
+}
+.pill :global(.mantine-Badge-section) {
+    margin-inline: 0 2px;
+}
+.pill :global(.mantine-Badge-label) {
+    min-width: 0;
+}
+.remove {
+    color: inherit;
+}
+.remove:hover {
+    background: color-mix(in srgb, var(--panel-accent) 16%, transparent);
+}

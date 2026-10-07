@@ -1,0 +1,79 @@
+.card {
+    min-width: 0;
+}
+.header {
+    gap: 12px;
+}
+.identity {
+    flex: 1;
+    min-width: 0;
+}
+.status {
+    flex-shrink: 0;
+    max-width: 100%;
+}
+.actions {
+    justify-content: flex-start;
+    gap: 12px;
+}
+.actionGroup {
+    flex-wrap: nowrap;
+    gap: 6px;
+}
+.actionGroup :global(.mantine-ActionIcon-root) {
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+}
+.details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+    gap: 10px;
+}
+.detailTile {
+    --detail-color: var(--panel-accent-text);
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    border-radius: var(--mantine-radius-md);
+}
+.detailTile[data-expiration='valid'] {
+    --detail-color: light-dark(var(--mantine-color-teal-8), var(--mantine-color-teal-4));
+}
+.detailTile[data-expiration='soon'] {
+    --detail-color: light-dark(var(--mantine-color-orange-8), var(--mantine-color-yellow-4));
+}
+.detailTile[data-expiration='expired'] {
+    --detail-color: light-dark(var(--mantine-color-red-8), var(--mantine-color-red-4));
+}
+.detailTile[data-expiration='unknown'] {
+    --detail-color: var(--panel-muted);
+}
+.detailTile > svg {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+.detailTile :global(.mantine-Stack-root) {
+    min-width: 0;
+}
+.detailTile :global(.mantine-Text-root) {
+    overflow-wrap: anywhere;
+}
+@media (max-width: 30em) {
+    .header {
+        align-items: flex-start;
+    }
+    .status :global(.mantine-Badge-label) {
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+}
+@media (pointer: coarse) {
+    :global(html.panel-themed) .card :global(.mantine-ActionIcon-root) {
+        min-width: 44px;
+        min-height: 44px;
+    }
+}

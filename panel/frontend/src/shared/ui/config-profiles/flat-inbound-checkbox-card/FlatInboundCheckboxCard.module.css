@@ -1,0 +1,73 @@
+.root {
+    position: relative;
+    background: var(--panel-subtle);
+    border-color: var(--panel-border);
+    padding: var(--mantine-spacing-xs);
+    transition: border-color 150ms ease;
+
+    &[data-checked] {
+        border-color: var(--panel-accent);
+        background: color-mix(in srgb, var(--panel-accent) 10%, var(--panel-surface));
+    }
+
+    @mixin hover {
+        @mixin light {
+            background-color: var(--panel-elevated);
+        }
+
+        @mixin dark {
+            background-color: var(--panel-elevated);
+        }
+    }
+}
+
+.label {
+    font-family: var(--mantine-font-family-monospace);
+    font-weight: bold;
+    font-size: var(--mantine-font-size-md);
+    line-height: 1.2;
+    color: var(--panel-text);
+    max-width: 13ch;
+}
+
+.compactRoot {
+    position: relative;
+    background: var(--panel-subtle);
+    border-color: var(--panel-border);
+    padding: 8px 12px;
+    transition:
+        background-color 150ms ease,
+        border-color 150ms ease,
+        color 150ms ease,
+        opacity 150ms ease,
+        box-shadow 150ms ease,
+        transform 150ms ease;
+    min-height: 48px;
+    border: 1px solid var(--panel-border);
+
+    &[data-checked] {
+        border-color: var(--panel-accent);
+        background: color-mix(in srgb, var(--panel-accent) 10%, var(--panel-surface));
+        background-color: color-mix(in srgb, var(--panel-accent) 10%, var(--panel-surface));
+    }
+
+    @mixin hover {
+        @mixin light {
+            background-color: var(--panel-elevated);
+            border-color: var(--panel-accent);
+        }
+
+        @mixin dark {
+            background-color: var(--panel-elevated);
+            border-color: var(--panel-accent);
+        }
+    }
+}
+
+.compactLabel {
+    font-family: var(--mantine-font-family-monospace);
+    font-weight: 600;
+    color: var(--panel-text);
+    min-width: 0;
+    flex: 1;
+}

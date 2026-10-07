@@ -1,0 +1,1 @@
+{"version":3,"file":"stop.command.d.ts","sourceRoot":"","sources":["../../../commands/xray/stop.command.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,CAAC,EAAE,MAAM,KAAK,CAAC;AAGxB,yBAAiB,eAAe,CAAC;IACtB,MAAM,GAAG,mBAAqB,CAAC;IAE/B,MAAM,cAAc;;;;qBAIzB,CAAC;IAEH,KAAY,QAAQ,GAAG,CAAC,CAAC,KAAK,CAAC,OAAO,cAAc,CAAC,CAAC;CACzD"}

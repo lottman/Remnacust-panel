@@ -1,0 +1,1 @@
+{"version":3,"file":"get-node-health-check.command.d.ts","sourceRoot":"","sources":["../../../commands/xray/get-node-health-check.command.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,CAAC,EAAE,MAAM,KAAK,CAAC;AAIxB,yBAAiB,yBAAyB,CAAC;IAChC,MAAM,GAAG,0BAAkC,CAAC;IAE5C,MAAM,cAAc;;;;;;;qBAOzB,CAAC;IAEH,KAAY,QAAQ,GAAG,CAAC,CAAC,KAAK,CAAC,OAAO,cAAc,CAAC,CAAC;CACzD"}

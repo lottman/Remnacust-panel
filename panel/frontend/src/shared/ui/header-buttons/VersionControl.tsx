@@ -1,0 +1,78 @@
+import { Box, Group, Text } from '@mantine/core'
+import { modals } from '@mantine/modals'
+import clsx from 'clsx'
+import { useMemo } from 'react'
+import semver from 'semver'
+
+import { useGetRemnawaveMetadata } from '@shared/api/hooks'
+import { useUiText } from '@shared/i18n/interface-text'
+
+import { useRemnawaveInfo } from '@entities/dashboard/updates-store'
+
+import { Logo } from '../logo'
+import { BaseOverlayHeader } from '../overlays/base-overlay-header'
+import { BuildInfoModal } from '../sidebar/build-info-modal'
+import { HeaderControl } from './HeaderControl'
+import { SkeletonHeaderControl } from './SkeletonHeaderControl'
+import classes from './VersionControl.module.css'
+
+export function VersionControl() {
+    const uiText = useUiText()
+
+    const remnawaveInfo = useRemnawaveInfo()
+    const { data: remnawaveMetadata, isLoading } = useGetRemnawaveMetadata()
+
+    const [isNewVersionAvailable, isDev] = useMemo(() => {
+        if (!remnawaveMetadata) return [false, false]
+
+        const currentVersion = remnawaveMetadata.version
+        const latest = remnawaveInfo.latestVersion || '0.0.0'
+        return [semver.gt(latest, currentVersion), remnawaveMetadata.git.backend.branch !== 'main']
+    }, [remnawaveInfo.latestVersion, remnawaveMetadata])
+
+    if (isLoading || !remnawaveMetadata) {
+        return <SkeletonHeaderControl width={85} />
+    }
+
+    const handleClick = () => {
+        modals.open({
+            title: (
+                <BaseOverlayHeader
+                    iconColor="teal"
+                    IconComponent={Logo}
+                    iconVariant="soft"
+                    title={uiText('build-info-642ae0c')}
+                />
+            ),
+            centered: true,
+            size: 'md',
+            withCloseButton: true,
+            children: (
+                <BuildInfoModal
+                    isNewVersionAvailable={isNewVersionAvailable}
+                    remnawaveMetadata={remnawaveMetadata}
+                />
+            )
+        })
+    }
+
+    return (
+        <HeaderControl
+            className={clsx(classes.version, {
+                [classes.newVersion]: isNewVersionAvailable && !isDev,
+                [classes.dev]: isDev
+            })}
+            onClick={handleClick}
+            w="auto"
+        >
+            <Group gap={8} ml={10} mr={10} wrap="nowrap">
+                <Box className={classes.icon} data-icon-motion-target aria-hidden="true">
+                    <Logo size={20} />
+                </Box>
+                <Text ff="text" fw={600} size="sm">
+                    {remnawaveMetadata.version}
+                </Text>
+            </Group>
+        </HeaderControl>
+    )
+}

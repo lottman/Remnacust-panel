@@ -1,0 +1,24 @@
+.toolbar {
+    gap: 12px;
+}
+.username {
+    width: 100%;
+    min-width: 0;
+    color: var(--panel-text);
+    border-radius: var(--mantine-radius-xs);
+}
+.username:focus-visible {
+    outline: 2px solid var(--mantine-primary-color-filled);
+    outline-offset: 2px;
+}
+.scopeCard {
+    padding: 20px;
+}
+.scopeCard :global(.mantine-Button-root) {
+    margin-top: 8px;
+}
+@media (max-width: 48em) {
+    .scopeCard {
+        padding: 16px;
+    }
+}

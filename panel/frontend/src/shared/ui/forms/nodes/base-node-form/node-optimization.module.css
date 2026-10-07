@@ -1,0 +1,37 @@
+.header {
+    gap: 12px;
+    min-width: 0;
+}
+
+.levels {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.level {
+    width: 100%;
+    min-width: 0;
+    height: auto;
+    min-height: 34px;
+    white-space: normal;
+}
+
+.safety {
+    min-width: 0;
+    padding: 10px 12px;
+    border: 1px solid var(--panel-border, var(--mantine-color-default-border));
+    border-radius: var(--mantine-radius-sm);
+}
+
+.safety > svg {
+    flex: 0 0 auto;
+    margin-top: 2px;
+    color: var(--panel-accent);
+}
+
+@media (max-width: 440px) {
+    .levels {
+        grid-template-columns: 1fr;
+    }
+}

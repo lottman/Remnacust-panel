@@ -5,6 +5,8 @@ permissions:
 jobs:
   frontend:
     runs-on: ubuntu-latest
+    env:
+      NODE_PATH: ${{ github.workspace }}/panel/frontend/node_modules
     defaults:
       run:
         working-directory: panel/frontend
@@ -23,6 +25,8 @@ jobs:
       - run: npm run cb
   backend:
     runs-on: ubuntu-latest
+    env:
+      REMNACUST_NODE_SOURCE: ${{ github.workspace }}/node-repository/node
     services:
       postgres:
         image: postgres:17.6
@@ -40,10 +44,16 @@ jobs:
         working-directory: panel/backend
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: lottman/Remnacust-node
+          ref: v1.1.1
+          path: node-repository
       - uses: actions/setup-node@v4
         with:
           node-version: 24
       - run: npm ci
+      - run: npm ci --prefix ../frontend
       - run: npm run migrate:generate
       - run: npm run typecheck
       - run: node --test tests/*.test.cjs
@@ -64,7 +74,7 @@ jobs:
           node-version: 24
       - run: npm ci && npm run typecheck
         working-directory: subscription-page/backend
-      - run: npm ci && npm run typecheck && npm run cb
+      - run: npm ci --include=dev && npm run typecheck && npm run cb
         working-directory: subscription-page/frontend
         env:
           NODE_ENV: production

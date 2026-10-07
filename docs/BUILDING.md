@@ -2,6 +2,8 @@
 
 Нужны Node.js 24 и Docker Engine с Compose v2. Для локальной разработки используйте отдельную PostgreSQL и собственный `.env`; файл с рабочими секретами не добавляйте в Git.
 
+Часть проверок сравнивает панель с агентом. Клонируйте `Remnacust-node` рядом с панелью либо задайте `REMNACUST_NODE_SOURCE` на его каталог `node`. Установите зависимости frontend командой `npm ci --prefix panel/frontend` из корня.
+
 Backend:
 
 ```bash
@@ -21,7 +23,7 @@ npm ci
 npm run docs:check
 npm run i18n:check
 npm run typecheck
-node --test tests/*.test.cjs tests/*.test.mjs
+NODE_PATH="$PWD/node_modules" node --test tests/*.test.cjs tests/*.test.mjs
 npm run cb
 ```
 

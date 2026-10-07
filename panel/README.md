@@ -35,7 +35,7 @@
 curl -fsSL --proto '=https' --proto-redir '=https' https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh -o installer.sh && sudo bash installer.sh install-panel
 ```
 
-[Скачать installer.sh](https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh). Скрипт предложит выбрать версию выпуска установщика; Enter выбирает `latest`. Для конкретного выпуска добавьте `--version 1.1.5` (панель 1.1.2, нода и ядро 1.1.1). Настройка доменов и reverse proxy: [INSTALLER.md](../docs/INSTALLER.md).
+[Скачать installer.sh](https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh). Скрипт предложит выбрать версию выпуска установщика; Enter выбирает `latest`. Для конкретного выпуска добавьте `--version 1.1.6` (панель 1.1.2, нода и ядро 1.1.1). Настройка доменов и reverse proxy: [INSTALLER.md](../docs/INSTALLER.md).
 
 ## Установка из исходников
 

@@ -30,7 +30,7 @@
 curl -fsSL --proto '=https' --proto-redir '=https' https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh -o installer.sh && sudo bash installer.sh install-panel
 ```
 
-[Скачать installer.sh](https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh). Скрипт спросит домен и версию выпуска установщика. Enter выбирает `latest`; `--version 1.1.5` закрепляет выпуск с панелью 1.1.2, нодой и ядром 1.1.1. Он проверяет готовый образ и запускает PostgreSQL, Valkey, панель и Caddy. При собственном reverse proxy используйте `--proxy existing`. HWID включён по умолчанию. После запуска откройте домен панели и создайте администратора.
+[Скачать installer.sh](https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh). Скрипт спросит домен и версию выпуска установщика. Enter выбирает `latest`; `--version 1.1.6` закрепляет выпуск с панелью 1.1.2, нодой и ядром 1.1.1. Он проверяет готовый образ и запускает PostgreSQL, Valkey, панель и Caddy. При собственном reverse proxy используйте `--proxy existing`. HWID включён по умолчанию. После запуска откройте домен панели и создайте администратора.
 
 Обновление и перенос существующей установки:
 

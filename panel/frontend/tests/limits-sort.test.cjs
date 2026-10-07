@@ -1,7 +1,7 @@
 const assert = require('node:assert/strict');
 const { test } = require('node:test');
 const path = require('node:path');
-const load = require('../../backend-3.4.4-xera/tests/load-typescript.cjs');
+const load = require('../../backend/tests/load-typescript.cjs');
 const { sortLimitScopes } = load(path.join(__dirname, '../src/pages/dashboard/limits/limits-sort.ts'));
 const row = (key, extra = {}) => ({kind:'HOST',key,name:key,limitBytes:'0',usedBytes:'0',viewPosition:0,speedLimitMbps:null,totalSpeedLimitMbps:null,...extra});
 test('natural locale sorting handles numbers, Cyrillic and stable ties without mutating inputs', () => {

@@ -1,7 +1,7 @@
 const assert = require('node:assert/strict');
 const { test } = require('node:test');
 const path = require('node:path');
-const load = require('../../backend-3.4.4-xera/tests/load-typescript.cjs');
+const load = require('../../backend/tests/load-typescript.cjs');
 const { hasVisibleLimit } = load(path.join(__dirname, '../src/pages/dashboard/limits/visible-limit-scope.ts'));
 const scope = (extra = {}) => ({
     limitBytes: '0', speedLimitMbps: null, totalSpeedLimitMbps: null, paused: false,

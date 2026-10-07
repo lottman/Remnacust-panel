@@ -14,7 +14,7 @@ const presets = load(path.join(frontend, 'src/shared/ui/forms/hosts/base-host-fo
 
 test('panel, form and node validate the same international domains, IPs and CIDRs', () => {
     for (const file of [path.join(frontend, 'src/shared/utils/destination-rule.ts'),
-        path.join(__dirname, '../../../node/src/common/utils/destination-rule.ts')])
+        path.join(require('./component-paths.cjs').nodeSource, 'src/common/utils/destination-rule.ts')])
         assert.equal(fs.readFileSync(file, 'utf8'), fs.readFileSync(source, 'utf8'));
     for (const [input, output] of [
         ['ПРИМЕР.РФ.', 'xn--e1afmkfd.xn--p1ai'], ['*.Example.org', 'example.org'],

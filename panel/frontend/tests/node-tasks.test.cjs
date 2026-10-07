@@ -1,7 +1,7 @@
 const assert = require('node:assert/strict');
 const { test } = require('node:test');
 const path = require('node:path');
-const load = require('../../backend-3.4.4-xera/tests/load-typescript.cjs');
+const load = require('../../backend/tests/load-typescript.cjs');
 const { selectNodeTargets } = load(path.join(__dirname, '../src/features/dashboard/nodes/core-management/node-selection.ts'));
 const { OptimizationRunner, optimizationCommand } = load(path.join(__dirname, '../src/shared/ui/forms/nodes/base-node-form/optimization-runner.ts'));
 const id = '12345678-1234-4234-9234-123456789abc';

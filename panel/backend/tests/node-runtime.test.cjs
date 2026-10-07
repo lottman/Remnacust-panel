@@ -1,6 +1,7 @@
 const test=require('node:test'), assert=require('node:assert/strict'), path=require('node:path');
 const load=require('./load-typescript.cjs');
-const metrics=load(path.join(__dirname,'../../../node/src/modules/stats/runtime-metrics.ts'));
+const {nodeSource}=require('./component-paths.cjs');
+const metrics=load(path.join(nodeSource,'src/modules/stats/runtime-metrics.ts'));
 test('CPU deltas, stopped collection and missing disks never invent readings',async()=>{
     const cpu=(idle,user)=>({times:{idle,user,nice:0,sys:0,irq:0}});
     assert.equal(metrics.cpuUsage([cpu(20,10)],[cpu(25,25)]),75);
@@ -13,7 +14,7 @@ test('CPU deltas, stopped collection and missing disks never invent readings',as
     assert.equal(await metrics.bounded(new Promise(()=>{}),5),null);
 });
 test('node runtime keeps system metrics when Xray and network statistics are unavailable',async()=>{
-    const {RuntimeService}=load(path.join(__dirname,'../../../node/src/modules/stats/runtime.service.ts'),{
+    const {RuntimeService}=load(path.join(nodeSource,'src/modules/stats/runtime.service.ts'),{
         '@nestjs/common':require('@nestjs/common'),'@nestjs/cqrs':{},
         '@remnawave/xtls-sdk':{},'@remnawave/xtls-sdk-nestjs':{InjectXtls:()=>()=>{}},
         '@common/utils/read-core-version':{readCoreVersion:async()=>({semver:'26.7.28',raw:'Xray 26.7.28 custom'})},

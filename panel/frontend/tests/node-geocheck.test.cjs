@@ -1,7 +1,7 @@
 const assert = require('node:assert/strict');
 const { test } = require('node:test');
 const path = require('node:path');
-const load = require('../../backend-3.4.4-xera/tests/load-typescript.cjs');
+const load = require('../../backend/tests/load-typescript.cjs');
 const { supportsNodeGeocheck } = load(path.join(__dirname, '../src/features/ui/dashboard/nodes/get-node-geocheck/node-geocheck-support.ts'));
 
 test('Remnacust 1.1.1 supports geocheck with prerelease or build metadata branding', () => {

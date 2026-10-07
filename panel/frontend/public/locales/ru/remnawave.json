@@ -631,7 +631,13 @@
             "passwords-do-not-match": "Пароли не совпадают",
             "password-too-short": "Минимум 24 символа",
             "register-description": "Создайте аккаунт супер-админа, чтобы начать",
-            "registration": "Регистрация"
+            "registration": "Регистрация",
+            "username-required": "Введите имя пользователя.",
+            "username-too-long": "Имя пользователя — не более 256 символов.",
+            "password-requirements": "Не менее 24 символов, включая заглавные и строчные латинские буквы и цифры.",
+            "password-too-long": "Пароль — не более 1024 символов.",
+            "check-fields": "Проверьте выделенные поля.",
+            "password-generation-error": "Не удалось сгенерировать пароль. Введите его вручную."
         }
     },
     "remarks-manager": {

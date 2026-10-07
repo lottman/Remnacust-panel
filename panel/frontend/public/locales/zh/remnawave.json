@@ -631,7 +631,13 @@
             "passwords-do-not-match": "密码不匹配",
             "password-too-short": "最少 24 个字符",
             "register-description": "创建一个超级管理员账户以开始使用",
-            "registration": "注册"
+            "registration": "注册",
+            "username-required": "请输入用户名。",
+            "username-too-long": "用户名不得超过 256 个字符。",
+            "password-requirements": "至少 24 个字符，包含大写和小写拉丁字母及数字。",
+            "password-too-long": "密码不得超过 1024 个字符。",
+            "check-fields": "请检查标出的字段。",
+            "password-generation-error": "无法生成密码，请手动输入。"
         }
     },
     "remarks-manager": {

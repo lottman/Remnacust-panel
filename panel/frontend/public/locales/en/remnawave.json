@@ -631,7 +631,13 @@
             "passwords-do-not-match": "Passwords do not match",
             "password-too-short": "Minimum 24 characters",
             "register-description": "Create a super-admin account to get started",
-            "registration": "Registration"
+            "registration": "Registration",
+            "username-required": "Enter a username.",
+            "username-too-long": "The username must be at most 256 characters.",
+            "password-requirements": "At least 24 characters, including uppercase and lowercase Latin letters and numbers.",
+            "password-too-long": "The password must be at most 1024 characters.",
+            "check-fields": "Check the highlighted fields.",
+            "password-generation-error": "Could not generate a password. Enter one manually."
         }
     },
     "remarks-manager": {

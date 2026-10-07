@@ -1,5 +1,3 @@
-import i18next from 'i18next'
-import { translateMutationMessage } from '@shared/utils/translate-mutation-message'
 import { notifications } from '@mantine/notifications'
 import {
     LoginCommand,
@@ -8,6 +6,10 @@ import {
     RegisterCommand,
     VerifyPasskeyAuthenticationCommand
 } from '@remnawave/backend-contract'
+import i18next from 'i18next'
+import { ZodError } from 'zod'
+
+import { translateMutationMessage } from '@shared/utils/translate-mutation-message'
 
 import { setToken } from '@entities/auth/session-store'
 
@@ -51,7 +53,14 @@ export const useRegister = createMutationHook({
         onError: (error) => {
             notifications.show({
                 title: i18next.t('common.message.error'),
-                message: error.message,
+                message:
+                    error instanceof ZodError
+                        ? error.issues.every((issue) =>
+                              ['username', 'password'].includes(String(issue.path[0]))
+                          )
+                            ? i18next.t('register-form.feature.check-fields')
+                            : i18next.t('requestErrors.invalidResponse')
+                        : error.message,
                 color: 'red'
             })
         }

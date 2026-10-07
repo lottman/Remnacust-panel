@@ -631,7 +631,13 @@
             "passwords-do-not-match": "پسوردها مطابقت ندارند",
             "password-too-short": "حداقل 24 کاراکتر",
             "register-description": "برای شروع یک اکانت سوپرادمین ایجاد کنید",
-            "registration": "ثبت نام"
+            "registration": "ثبت نام",
+            "username-required": "نام کاربری را وارد کنید.",
+            "username-too-long": "نام کاربری باید حداکثر ۲۵۶ نویسه باشد.",
+            "password-requirements": "حداقل ۲۴ نویسه، شامل حروف بزرگ و کوچک لاتین و اعداد.",
+            "password-too-long": "گذرواژه باید حداکثر ۱۰۲۴ نویسه باشد.",
+            "check-fields": "فیلدهای مشخص‌شده را بررسی کنید.",
+            "password-generation-error": "ساخت گذرواژه ممکن نشد. آن را دستی وارد کنید."
         }
     },
     "remarks-manager": {

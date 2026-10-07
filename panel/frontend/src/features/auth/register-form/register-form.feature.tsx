@@ -1,15 +1,17 @@
 import { Button, Paper, PasswordInput, Stack, TextInput } from '@mantine/core'
-import { useForm, schemaResolver } from '@mantine/form'
+import { useForm } from '@mantine/form'
 import { useClipboard } from '@mantine/hooks'
 import { notifications } from '@mantine/notifications'
-import { RegisterCommand } from '@remnawave/backend-contract'
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiShuffleDuotone, PiSignpostDuotone } from 'react-icons/pi'
+import { ZodError } from 'zod'
 
 import { useRegister } from '@shared/api/hooks'
 import { useAuth } from '@shared/hooks/use-auth'
 import { handleFormErrors } from '@shared/utils/misc'
+
+import { generateRegistrationPassword, registrationErrors } from './registration'
 
 export const RegisterFormFeature = () => {
     const { t } = useTranslation()
@@ -19,15 +21,14 @@ export const RegisterFormFeature = () => {
     const { copy, copied, error } = useClipboard()
 
     const form = useForm({
-        validate: {
-            ...schemaResolver(RegisterCommand.RequestBodySchema),
-            confirmPassword: (value, values) =>
-                value !== values.password
-                    ? t('register-form.feature.passwords-do-not-match')
-                    : null,
-            password: (value) =>
-                value.length < 12 ? t('register-form.feature.password-too-short') : null
-        },
+        validateInputOnBlur: true,
+        validate: (values) =>
+            Object.fromEntries(
+                Object.entries(registrationErrors(values)).map(([field, message]) => [
+                    field,
+                    t(message)
+                ])
+            ),
         initialValues: {
             username: '',
             password: '',
@@ -39,21 +40,39 @@ export const RegisterFormFeature = () => {
         mutationFns: {
             onSuccess: () => setIsAuthenticated(true),
             onError: (error) => {
-                handleFormErrors(form, error)
+                if (error instanceof ZodError) {
+                    form.setErrors(
+                        Object.fromEntries(
+                            Object.entries(registrationErrors(form.values)).map(
+                                ([field, message]) => [field, t(message)]
+                            )
+                        )
+                    )
+                } else handleFormErrors(form, error)
             }
         }
     })
 
     const handleGeneratePassword = () => {
-        const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-        const bytes = crypto.getRandomValues(new Uint8Array(32))
-        const newPassword = Array.from(bytes, (b) => charset[b % charset.length]).join('')
+        let newPassword: string
+        try {
+            newPassword = generateRegistrationPassword()
+        } catch {
+            notifications.show({
+                title: t('common.message.error'),
+                message: t('register-form.feature.password-generation-error'),
+                color: 'red'
+            })
+            return
+        }
 
         form.setValues({
             ...form.values,
             password: newPassword,
             confirmPassword: newPassword
         })
+        form.clearFieldError('password')
+        form.clearFieldError('confirmPassword')
 
         copy(newPassword)
     }
@@ -72,7 +91,7 @@ export const RegisterFormFeature = () => {
                 message: t('register-form.feature.password-copied-message')
             })
         }
-    }, [error, copied])
+    }, [error, copied, t])
 
     const handleSubmit = form.onSubmit((variables) => {
         register({
@@ -102,6 +121,11 @@ export const RegisterFormFeature = () => {
                     <PasswordInput
                         label={t('common.field.password')}
                         placeholder={t('common.field.password')}
+                        description={
+                            form.errors.password
+                                ? undefined
+                                : t('register-form.feature.password-requirements')
+                        }
                         autoComplete="new-password"
                         readOnly={isLoading}
                         visibilityToggleButtonProps={{
@@ -130,6 +154,7 @@ export const RegisterFormFeature = () => {
                         fullWidth
                         leftSection={<PiShuffleDuotone size="16px" />}
                         onClick={handleGeneratePassword}
+                        disabled={isLoading}
                         size="md"
                     >
                         {t('register-form.feature.generate')}

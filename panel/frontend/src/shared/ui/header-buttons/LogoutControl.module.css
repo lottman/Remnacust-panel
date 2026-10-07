@@ -1,0 +1,9 @@
+.logout {
+    border-color: color-mix(in srgb, var(--panel-accent) 38%, var(--panel-border));
+    color: var(--panel-accent-text);
+}
+
+.logout:hover {
+    border-color: var(--panel-accent);
+    background: color-mix(in srgb, var(--panel-accent) 12%, var(--panel-elevated));
+}

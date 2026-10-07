@@ -1,0 +1,19 @@
+.stat {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+}
+
+.statRow {
+    min-width: 0;
+    max-width: 100%;
+}
+
+.statRow > svg {
+    flex-shrink: 0;
+}
+
+.statRow > :global(.mantine-Text-root) {
+    min-width: 0;
+}

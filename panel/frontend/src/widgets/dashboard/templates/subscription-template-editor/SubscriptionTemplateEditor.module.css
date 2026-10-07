@@ -1,0 +1,25 @@
+.container {
+    display: flex;
+    flex-direction: column;
+}
+
+.validationMessage {
+    flex-shrink: 0;
+}
+
+.editorWrapper {
+    height: 60vh;
+    min-height: 320px;
+    overflow: hidden;
+    resize: vertical;
+    display: flex;
+    flex-direction: column;
+    z-index: 1;
+}
+
+.monacoEditor {
+    flex: 1;
+    height: 100%;
+    width: 100%;
+    z-index: 50;
+}

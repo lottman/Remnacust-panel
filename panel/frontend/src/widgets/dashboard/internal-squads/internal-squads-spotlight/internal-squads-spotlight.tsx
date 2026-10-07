@@ -1,0 +1,58 @@
+import { Badge, Group } from '@mantine/core'
+import { GetInternalSquadsCommand } from '@remnawave/backend-contract'
+import { PiTag, PiUsers } from 'react-icons/pi'
+import { TbCirclesRelation } from 'react-icons/tb'
+
+import { showModal } from '@shared/_modals/show-modal'
+import { UniversalSpotlightContentShared } from '@shared/ui/universal-spotlight'
+import { formatInt } from '@shared/utils/misc'
+
+interface IProps {
+    internalSquads: GetInternalSquadsCommand.Response['response']['internalSquads']
+}
+
+export const InternalSquadsSpotlightWidget = (props: IProps) => {
+    const { internalSquads } = props
+
+    const handleOpenEditModal = (squadUuid: string) => {
+        showModal('internalSquads_internalSquadsInboundsDrawer', {
+            squadUuid
+        })
+    }
+
+    return (
+        <UniversalSpotlightContentShared
+            actions={internalSquads.map((item) => ({
+                label: item.name,
+                id: item.uuid,
+                leftSection: <TbCirclesRelation color="var(--mantine-color-gray-5)" size={16} />,
+                rightSection: (
+                    <Group gap="xs" wrap="nowrap">
+                        <Badge
+                            color="blue"
+                            leftSection={<PiTag size={12} />}
+                            size="lg"
+                            variant="light"
+                        >
+                            {formatInt(item.info.inboundsCount, {
+                                thousandSeparator: ','
+                            })}
+                        </Badge>
+
+                        <Badge
+                            color={item.info.membersCount > 0 ? 'teal' : 'gray'}
+                            leftSection={<PiUsers size={12} />}
+                            size="lg"
+                            variant="light"
+                        >
+                            {formatInt(item.info.membersCount, {
+                                thousandSeparator: ','
+                            })}
+                        </Badge>
+                    </Group>
+                ),
+                onClick: () => handleOpenEditModal(item.uuid)
+            }))}
+        />
+    )
+}

@@ -1,0 +1,39 @@
+.container {
+    position: relative;
+    width: 100%;
+    min-width: 0;
+}
+
+.section {
+    z-index: 2;
+}
+
+.input {
+    cursor: copy;
+    font-family: monospace;
+    padding-inline-end: calc(var(--input-right-section-size, 44px) + 4px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.inputWrapper {
+    position: relative;
+    min-width: 0;
+    overflow: visible;
+}
+
+.copyButton {
+    position: relative;
+    z-index: 10;
+}
+
+@media (pointer: coarse) {
+    :global(html.panel-themed) .inputWrapper .input {
+        min-height: 44px;
+    }
+    :global(html.panel-themed) .copyButton {
+        min-width: 44px;
+        min-height: 44px;
+    }
+}

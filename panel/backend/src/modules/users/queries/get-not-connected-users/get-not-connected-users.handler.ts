@@ -1,0 +1,33 @@
+import { Logger } from '@nestjs/common';
+import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+
+import { fail, ok, TResult } from '@common/types';
+import { ERRORS } from '@libs/contracts/constants';
+
+import { UserEntity } from '@modules/users/entities';
+
+import { UsersRepository } from '../../repositories/users.repository';
+import { GetNotConnectedUsersQuery } from './get-not-connected-users.query';
+
+@QueryHandler(GetNotConnectedUsersQuery)
+export class GetNotConnectedUsersHandler implements IQueryHandler<
+    GetNotConnectedUsersQuery,
+    TResult<UserEntity[]>
+> {
+    private readonly logger = new Logger(GetNotConnectedUsersHandler.name);
+    constructor(private readonly usersRepository: UsersRepository) {}
+
+    async execute(query: GetNotConnectedUsersQuery): Promise<TResult<UserEntity[]>> {
+        try {
+            const users = await this.usersRepository.findNotConnectedUsers(
+                query.startDate,
+                query.endDate,
+            );
+
+            return ok(users);
+        } catch (error) {
+            this.logger.error(error);
+            return fail(ERRORS.INTERNAL_SERVER_ERROR);
+        }
+    }
+}

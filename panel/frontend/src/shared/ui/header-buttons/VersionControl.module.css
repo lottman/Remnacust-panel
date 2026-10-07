@@ -1,0 +1,23 @@
+.version {
+    min-width: 85px;
+    font-variant-numeric: tabular-nums;
+    color: var(--panel-muted);
+}
+.icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 20px;
+    width: 20px;
+    height: 20px;
+}
+.icon svg {
+    display: block;
+}
+.newVersion {
+    color: var(--panel-accent-text);
+    border-color: var(--panel-border);
+}
+.dev {
+    color: var(--mantine-color-yellow-6);
+}

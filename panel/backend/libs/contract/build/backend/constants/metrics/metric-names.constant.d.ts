@@ -1,0 +1,36 @@
+export declare const METRIC_NAMES: {
+    readonly NODE_ONLINE_USERS: "node_online_users";
+    readonly NODE_STATUS: "node_status";
+    readonly USERS_STATUS: "users_status";
+    readonly USERS_ONLINE_STATS: "users_online_stats";
+    readonly USERS_TOTAL: "users_total";
+    readonly NODE_INBOUND_UPLOAD_BYTES: "node_inbound_upload_bytes";
+    readonly NODE_INBOUND_DOWNLOAD_BYTES: "node_inbound_download_bytes";
+    readonly NODE_OUTBOUND_UPLOAD_BYTES: "node_outbound_upload_bytes";
+    readonly NODE_OUTBOUND_DOWNLOAD_BYTES: "node_outbound_download_bytes";
+    readonly PROCESS_RSS_BYTES: "process_rss_bytes";
+    readonly PROCESS_HEAP_USED_BYTES: "process_heap_used_bytes";
+    readonly PROCESS_HEAP_TOTAL_BYTES: "process_heap_total_bytes";
+    readonly PROCESS_EXTERNAL_BYTES: "process_external_bytes";
+    readonly PROCESS_ARRAY_BUFFERS_BYTES: "process_array_buffers_bytes";
+    readonly PROCESS_EVENT_LOOP_DELAY_MS: "process_event_loop_delay_ms";
+    readonly PROCESS_EVENT_LOOP_P99_MS: "process_event_loop_p99_ms";
+    readonly PROCESS_ACTIVE_HANDLES: "process_active_handles";
+    readonly PROCESS_UPTIME_SECONDS: "process_uptime_seconds";
+    readonly NODE_NETWORK_RX_BYTES_PER_SEC: "node_network_rx_bytes_per_sec";
+    readonly NODE_NETWORK_TX_BYTES_PER_SEC: "node_network_tx_bytes_per_sec";
+    readonly NODE_NETWORK_RX_BYTES_TOTAL: "node_network_rx_bytes_total";
+    readonly NODE_NETWORK_TX_BYTES_TOTAL: "node_network_tx_bytes_total";
+    readonly NODE_MEMORY_TOTAL_BYTES: "node_memory_total_bytes";
+    readonly NODE_MEMORY_FREE_BYTES: "node_memory_free_bytes";
+    readonly NODE_UPTIME_SECONDS: "node_uptime_seconds";
+    readonly NODE_CPU_COUNT: "node_cpu_count";
+    readonly NODE_CPU_LOAD_AVG_1M: "node_cpu_load_avg_1m";
+    readonly NODE_CPU_LOAD_AVG_5M: "node_cpu_load_avg_5m";
+    readonly NODE_CPU_LOAD_AVG_15M: "node_cpu_load_avg_15m";
+    readonly NODE_BASIC_INFO: "node_basic_info";
+    readonly NODE_SYSTEM_INFO: "node_system_info";
+};
+export type TMetricNames = typeof METRIC_NAMES;
+export type TMetricNamesKeys = (typeof METRIC_NAMES)[keyof typeof METRIC_NAMES];
+//# sourceMappingURL=metric-names.constant.d.ts.map

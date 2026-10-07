@@ -1,0 +1,106 @@
+.card {
+    height: 100%;
+    min-width: 0;
+    padding: 14px;
+    justify-content: center;
+}
+.content {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 36px;
+    grid-template-rows: auto auto;
+    align-items: center;
+    column-gap: 10px;
+    row-gap: 4px;
+}
+.content > .icon {
+    grid-column: 2;
+    grid-row: 1 / -1;
+    min-width: 0;
+    min-height: 0;
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    line-height: 0;
+    border-radius: 9px;
+    background: color-mix(in srgb, var(--ti-color) 10%, transparent);
+}
+.withFooter {
+    grid-template-rows: auto auto auto;
+}
+.icon svg {
+    width: 20px;
+    height: 20px;
+    display: block;
+    transition: transform 180ms ease;
+    transform-origin: center;
+}
+html[data-panel-reduced-motion='true'] .icon svg {
+    transform: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+    .icon svg {
+        transform: none !important;
+    }
+}
+.title {
+    grid-column: 1;
+    grid-row: 1;
+    min-width: 0;
+    color: var(--panel-muted);
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.4;
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+.value {
+    grid-column: 1;
+    grid-row: 2;
+    align-self: start;
+    min-width: 0;
+    font-weight: 600;
+    font-size: clamp(22px, 1.8vw, 24px);
+    line-height: 1.2;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+    overflow-wrap: anywhere;
+    color: var(--panel-text);
+}
+.subtitle {
+    grid-column: 1;
+    color: var(--panel-muted);
+    font-size: 12px;
+    overflow-wrap: anywhere;
+}
+.trendContainer {
+    grid-column: 1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    margin-top: 2px;
+}
+.trendValue {
+    font-size: 12px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+.trendText {
+    color: var(--panel-muted);
+    font-size: 12px;
+}
+@media (max-width: 48em) {
+    .value {
+        font-size: 20px;
+    }
+}
+@media (max-width: 23em) {
+    .card {
+        padding: 12px;
+    }
+    .value {
+        font-size: 18px;
+    }
+}

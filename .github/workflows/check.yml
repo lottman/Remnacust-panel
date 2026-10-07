@@ -1,0 +1,72 @@
+name: Source checks
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: panel/frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: panel/frontend/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: node --test tests/*.test.cjs tests/*.test.mjs
+      - run: npm run i18n:check
+      - run: npm run docs:check
+      - run: npm run cb
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17.6
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 55439:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    defaults:
+      run:
+        working-directory: panel/backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm ci
+      - run: npm run migrate:generate
+      - run: npm run typecheck
+      - run: node --test tests/*.test.cjs
+      - run: npm run build
+      - name: Apply migrations to the disposable test database
+        run: npm run migrate:deploy
+        env:
+          DATABASE_URL: postgresql://postgres@127.0.0.1:55439/postgres
+          DIRECT_URL: postgresql://postgres@127.0.0.1:55439/postgres
+      - name: Check access policies and limits with PostgreSQL
+        run: node tests/host-policy-database.integration.cjs && node tests/limit-management-database.integration.cjs
+  subscription-page:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm ci && npm run typecheck
+        working-directory: subscription-page/backend
+      - run: npm ci && npm run typecheck && npm run cb
+        working-directory: subscription-page/frontend
+        env:
+          NODE_ENV: production
+      - run: node --test tests/*.test.cjs
+        working-directory: subscription-page/backend

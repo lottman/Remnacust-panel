@@ -1,0 +1,112 @@
+{
+  "name": "@remnacust/subscription-page-frontend",
+  "version": "1.1.1",
+  "private": false,
+  "homepage": "https://github.com/lottman/Remnacust-panel",
+  "bugs": {
+    "url": "https://github.com/remnawave/subscription-page/issues"
+  },
+  "license": "AGPL-3.0-only",
+  "author": "REMNAWAVE <github.com/remnawave>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lottman/Remnacust-panel.git",
+    "directory": "subscription-page/frontend"
+  },
+  "type": "module",
+  "scripts": {
+    "start:dev": "vite",
+    "start:build": "NODE_ENV=production tsc && vite build",
+    "cb": "vite build",
+    "start:preview": "vite preview --port 3334",
+    "serve": "NODE_ENV=production tsc && vite build && vite preview --port 3334",
+    "serve:dev": "cross-env NODE_ENV=production DOMAIN_OVERRIDE=1 tsc && vite build && vite preview --port 3334",
+    "typecheck": "tsc --noEmit",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "format": "oxfmt --write",
+    "format:check": "oxfmt --check"
+  },
+  "dependencies": {
+    "@gfazioli/mantine-spinner": "4.1.8",
+    "@kastov/cryptohapp": "^1.1.2",
+    "@mantine/core": "9.4.1",
+    "@mantine/hooks": "9.4.1",
+    "@mantine/modals": "9.4.1",
+    "@mantine/notifications": "9.4.1",
+    "@mantine/nprogress": "9.4.1",
+    "@remnawave/backend-contract": "3.1.1",
+    "@remnawave/subscription-page-types": "0.5.0",
+    "@tabler/icons-react": "^3.44.0",
+    "clsx": "^2.1.1",
+    "color-hash": "^2.0.2",
+    "consola": "^3.4.2",
+    "country-flag-emoji-polyfill": "^0.1.8",
+    "dayjs": "^1.11.21",
+    "ejs": "6.0.1",
+    "i18next-browser-languagedetector": "8.2.1",
+    "ios-vibrator-pro-max": "^1.3.2",
+    "jsencrypt": "^3.5.4",
+    "ofetch": "^1.5.1",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "react-error-boundary": "6.1.2",
+    "react-icons": "^5.7.0",
+    "react-router": "7.18.4",
+    "ufo": "^1.6.4",
+    "uqr": "^0.1.3",
+    "xbytes": "^1.9.1",
+    "zod": "4.4.3",
+    "zustand": "^5.0.14",
+    "dompurify": "3.4.16"
+  },
+  "devDependencies": {
+    "@types/byte-size": "^8.1.2",
+    "@types/bytes": "^3.1.5",
+    "@types/color-hash": "^2.0.0",
+    "@types/crypto-js": "^4.2.2",
+    "@types/mdx": "^2.0.14",
+    "@types/node": "^24.10.2",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "6.0.2",
+    "cross-env": "^10.1.0",
+    "dependency-cruiser": "^17.3.4",
+    "dotenv": "^17.2.3",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "identity-obj-proxy": "^3.0.0",
+    "jsdom": "^27.3.0",
+    "oxfmt": "^0.61.0",
+    "oxlint": "^1.76.0",
+    "postcss": "^8.5.15",
+    "postcss-preset-mantine": "1.18.0",
+    "postcss-simple-vars": "^7.0.1",
+    "prettier": "^3.7.4",
+    "prop-types": "^15.8.1",
+    "rollup-plugin-visualizer": "^6.0.5",
+    "typescript": "~5.9.3",
+    "vite": "8.0.16",
+    "vite-plugin-ejs": "^1.7.0",
+    "vite-plugin-remove-console": "^2.2.0",
+    "vite-plugin-webfont-dl": "^3.12.0"
+  },
+  "optionalDependencies": {
+    "@rollup/rollup-linux-x64-gnu": "4.9.5"
+  },
+  "overrides": {
+    "node-plop": {
+      "inquirer": "9.3.5"
+    },
+    "tinypool": "2.1.2",
+    "source-map-js": "1.2.2",
+    "postcss-selector-parser": "7.1.6",
+    "proxy-addr": "2.0.8",
+    "axios": "1.20.0",
+    "nanoid": "6.0.1"
+  },
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
+  }
+}

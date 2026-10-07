@@ -1,0 +1,54 @@
+import { ERRORS } from '@contract/constants';
+
+import { Logger } from '@nestjs/common';
+import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+
+import { fail, ok, TResult } from '@common/types';
+
+import { InternalSquadRepository } from '../../repositories/internal-squad.repository';
+import { InternalSquadBulkActionsCommand } from './internal-squad-bulk-actions.command';
+
+@CommandHandler(InternalSquadBulkActionsCommand)
+export class InternalSquadBulkActionsHandler implements ICommandHandler<
+    InternalSquadBulkActionsCommand,
+    TResult<{
+        affectedRows: number;
+    }>
+> {
+    public readonly logger = new Logger(InternalSquadBulkActionsHandler.name);
+
+    constructor(private readonly internalSquadRepository: InternalSquadRepository) {}
+
+    async execute(command: InternalSquadBulkActionsCommand): Promise<
+        TResult<{
+            affectedRows: number;
+        }>
+    > {
+        try {
+            const { action, internalSquadUuid } = command;
+
+            let affectedRows = 0;
+            if (action === 'add') {
+                const result =
+                    await this.internalSquadRepository.addUsersToInternalSquad(internalSquadUuid);
+                affectedRows = result.affectedCount;
+            } else if (action === 'remove') {
+                const result =
+                    await this.internalSquadRepository.removeUsersFromInternalSquad(
+                        internalSquadUuid,
+                    );
+                affectedRows = result.affectedCount;
+            }
+
+            return ok({ affectedRows });
+        } catch (error: unknown) {
+            this.logger.error('Error:', {
+                message: (error as Error).message,
+                name: (error as Error).name,
+                stack: (error as Error).stack,
+                ...(error as object),
+            });
+            return fail(ERRORS.INTERNAL_SQUAD_BULK_ACTIONS_ERROR);
+        }
+    }
+}

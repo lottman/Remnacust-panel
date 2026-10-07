@@ -1,0 +1,79 @@
+.item,
+.item[data-active] {
+    border-color: var(--panel-border);
+    background: var(--panel-surface);
+    border-radius: var(--mantine-radius-md);
+}
+
+.control {
+    min-height: 68px;
+    padding: 14px 16px;
+    border-radius: var(--mantine-radius-md);
+    text-align: start;
+    transition: background-color 160ms ease;
+}
+
+@media (hover: hover) {
+    .control:not(:disabled):hover {
+        background: var(--panel-subtle);
+    }
+}
+
+.control:active {
+    background: var(--panel-subtle);
+}
+
+.control:focus-visible {
+    outline: 2px solid var(--panel-accent);
+    outline-offset: -2px;
+}
+
+.item[data-active] .control {
+    border-end-start-radius: 0;
+    border-end-end-radius: 0;
+}
+
+.label {
+    min-width: 0;
+    padding-block: 0;
+    overflow: visible;
+}
+
+.title,
+.description {
+    overflow-wrap: anywhere;
+}
+
+.description {
+    margin-top: 2px;
+}
+
+.icon {
+    flex-shrink: 0;
+    margin-inline-end: 12px;
+}
+
+.chevron {
+    flex-shrink: 0;
+    margin-inline-start: 12px;
+    color: var(--panel-muted);
+}
+
+.content {
+    padding: 16px;
+    border-top: 1px solid var(--panel-border);
+}
+
+@media (max-width: 36em) {
+    .control,
+    .content {
+        padding: 12px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .control,
+    .chevron {
+        transition: none;
+    }
+}

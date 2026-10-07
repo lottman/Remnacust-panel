@@ -1,0 +1,263 @@
+import {
+    type PublicKeyCredentialCreationOptionsJSON,
+    RegistrationResponseJSON,
+    generateRegistrationOptions,
+    verifyRegistrationResponse,
+} from '@simplewebauthn/server';
+import { findAuthenticatorById } from 'passkey-authenticator-aaguids';
+
+import { Injectable, Logger } from '@nestjs/common';
+import { QueryBus } from '@nestjs/cqrs';
+
+import { RawCacheService } from '@common/raw-cache';
+import { fail, ok, TResult } from '@common/types';
+import { CACHE_KEYS } from '@libs/contracts/constants';
+import { ERRORS } from '@libs/contracts/constants/errors';
+
+import { PasskeyEntity } from '@modules/admin/entities';
+import type { IJWTAuthPayload } from '@modules/auth/interfaces';
+import { GetCachedRemnawaveSettingsQuery } from '@modules/remnawave-settings/queries/get-cached-remnawave-settings';
+
+import { UpdatePasskeyBodyDto, VerifyPasskeyRegistrationBodyDto } from '../dtos';
+import { GetActivePasskeysResponseModel } from '../models/get-active-passkeys.model';
+import { AdminRepository } from '../repositories/admin.repository';
+import { PasskeyRepository } from '../repositories/passkey.repository';
+
+const RP_NAME = 'Remnawave';
+
+@Injectable()
+export class PasskeyService {
+    private readonly logger = new Logger(PasskeyService.name);
+
+    constructor(
+        private readonly rawCacheService: RawCacheService,
+        private readonly adminRepository: AdminRepository,
+        private readonly passkeyRepository: PasskeyRepository,
+        private readonly queryBus: QueryBus,
+    ) {}
+
+    public async generatePasskeyRegistrationOptions(
+        payload: IJWTAuthPayload,
+    ): Promise<TResult<PublicKeyCredentialCreationOptionsJSON>> {
+        try {
+            const { uuid } = payload;
+
+            if (!uuid) {
+                return fail(ERRORS.FORBIDDEN);
+            }
+
+            const admin = await this.adminRepository.findByUUID(uuid);
+
+            if (!admin) {
+                return fail(ERRORS.ADMIN_NOT_FOUND);
+            }
+
+            const { passkeySettings } = await this.queryBus.execute(
+                new GetCachedRemnawaveSettingsQuery(),
+            );
+
+            if (!passkeySettings.enabled) {
+                return fail(ERRORS.PASSKEYS_NOT_ENABLED);
+            }
+
+            if (!passkeySettings.rpId || !passkeySettings.origin) {
+                return fail(ERRORS.PASSKEYS_NOT_CONFIGURED);
+            }
+
+            const existingPasskeys = await this.passkeyRepository.findByCriteria({
+                adminUuid: uuid,
+            });
+
+            const options = await generateRegistrationOptions({
+                rpName: RP_NAME,
+                rpID: passkeySettings.rpId,
+                userName: admin.username,
+                userDisplayName: 'Remnawave Administrator',
+                userID: new Uint8Array(Buffer.from(admin.uuid)),
+                attestationType: 'none',
+                excludeCredentials: existingPasskeys.map((passkey) => ({
+                    id: passkey.id,
+                    transports: passkey.getTransports(),
+                })),
+                authenticatorSelection: {
+                    residentKey: 'preferred',
+                    userVerification: 'required',
+                },
+            });
+
+            await this.rawCacheService.set(
+                CACHE_KEYS.PASSKEY_REGISTRATION_OPTIONS(uuid),
+                options.challenge,
+                300,
+            );
+
+            return ok(options);
+        } catch (error) {
+            this.logger.error(`Passkey registration options error: ${error}`);
+            return fail(ERRORS.GENERATE_PASSKEY_REGISTRATION_OPTIONS);
+        }
+    }
+
+    public async verifyPasskeyRegistration(
+        jwtPayload: IJWTAuthPayload,
+        dto: VerifyPasskeyRegistrationBodyDto,
+    ): Promise<TResult<{ verified: boolean; message: string }>> {
+        try {
+            const response = dto.response as unknown as RegistrationResponseJSON;
+
+            const { uuid } = jwtPayload;
+
+            if (!uuid) {
+                return fail(ERRORS.FORBIDDEN);
+            }
+
+            const admin = await this.adminRepository.findByUUID(uuid);
+
+            if (!admin) {
+                return fail(ERRORS.ADMIN_NOT_FOUND);
+            }
+
+            const expectedChallenge = await this.rawCacheService.getDel<string>(
+                CACHE_KEYS.PASSKEY_REGISTRATION_OPTIONS(admin.uuid),
+            );
+
+            if (!expectedChallenge) {
+                return fail({
+                    ...ERRORS.FORBIDDEN,
+                    message: 'Challenge not found or expired',
+                });
+            }
+
+            const { passkeySettings } = await this.queryBus.execute(
+                new GetCachedRemnawaveSettingsQuery(),
+            );
+
+            if (!passkeySettings.enabled) {
+                return fail(ERRORS.PASSKEYS_NOT_ENABLED);
+            }
+
+            if (!passkeySettings.rpId || !passkeySettings.origin) {
+                return fail(ERRORS.PASSKEYS_NOT_CONFIGURED);
+            }
+
+            const verification = await verifyRegistrationResponse({
+                response,
+                expectedChallenge,
+                expectedOrigin: passkeySettings.origin,
+                expectedRPID: passkeySettings.rpId,
+                requireUserVerification: true,
+            });
+
+            if (!verification.verified || !verification.registrationInfo) {
+                this.logger.error(`Passkey registration verification error.`);
+                return fail(ERRORS.VERIFY_PASSKEY_REGISTRATION_ERROR);
+            }
+
+            const { credential, credentialDeviceType, credentialBackedUp } =
+                verification.registrationInfo;
+
+            const authenticator = findAuthenticatorById({
+                authenticatorId: verification.registrationInfo.aaguid,
+            });
+
+            const provider = authenticator?.name;
+
+            await this.passkeyRepository.create(
+                new PasskeyEntity({
+                    id: credential.id,
+                    adminUuid: admin.uuid,
+                    publicKey: Buffer.from(credential.publicKey),
+                    counter: BigInt(credential.counter),
+                    deviceType: credentialDeviceType,
+                    backedUp: credentialBackedUp,
+                    transports: credential.transports?.join(',') ?? null,
+                    passkeyProvider: provider,
+                }),
+            );
+
+            return ok({
+                verified: true,
+                message: 'Passkey registered successfully',
+            });
+        } catch (error) {
+            this.logger.error(`Passkey registration verification error: ${error}`);
+            return fail(ERRORS.VERIFY_PASSKEY_REGISTRATION_ERROR);
+        }
+    }
+
+    public async getActivePasskeys(
+        payload: IJWTAuthPayload,
+    ): Promise<TResult<GetActivePasskeysResponseModel>> {
+        try {
+            const { uuid } = payload;
+
+            if (!uuid) return fail(ERRORS.FORBIDDEN);
+
+            const admin = await this.adminRepository.findByUUID(uuid);
+
+            if (!admin) return fail(ERRORS.ADMIN_NOT_FOUND);
+
+            const passkeys = await this.passkeyRepository.findByCriteria({
+                adminUuid: admin.uuid,
+            });
+
+            return ok(
+                new GetActivePasskeysResponseModel({
+                    passkeys: passkeys.map((passkey) => ({
+                        id: passkey.id,
+                        name: passkey.passkeyProvider ?? 'Unknown',
+                        createdAt: passkey.createdAt,
+                        lastUsedAt: passkey.updatedAt,
+                    })),
+                }),
+            );
+        } catch (error) {
+            this.logger.error(`Get active passkeys error: ${error}`);
+            return fail(ERRORS.GET_ACTIVE_PASSKEYS_ERROR);
+        }
+    }
+
+    public async deletePasskey(payload: IJWTAuthPayload, id: string): Promise<TResult<boolean>> {
+        try {
+            const { uuid } = payload;
+
+            if (!uuid) return fail(ERRORS.FORBIDDEN);
+
+            const admin = await this.adminRepository.findByUUID(uuid);
+
+            if (!admin) return fail(ERRORS.ADMIN_NOT_FOUND);
+
+            await this.passkeyRepository.deleteByUUID(id);
+
+            return ok(true);
+        } catch (error) {
+            this.logger.error(`Delete passkey error: ${error}`);
+            return fail(ERRORS.DELETE_PASSKEY_ERROR);
+        }
+    }
+
+    public async updatePasskey(
+        jwtPayload: IJWTAuthPayload,
+        dto: UpdatePasskeyBodyDto,
+    ): Promise<TResult<GetActivePasskeysResponseModel>> {
+        try {
+            const { uuid } = jwtPayload;
+
+            if (!uuid) return fail(ERRORS.FORBIDDEN);
+
+            const passkey = await this.passkeyRepository.findByUUID(dto.id);
+
+            if (!passkey) return fail(ERRORS.PASSKEY_NOT_FOUND);
+
+            await this.passkeyRepository.update({
+                id: passkey.id,
+                passkeyProvider: dto.name,
+            });
+
+            return await this.getActivePasskeys(jwtPayload);
+        } catch (error) {
+            this.logger.error(`Update passkey error: ${error}`);
+            return fail(ERRORS.UPDATE_PASSKEY_ERROR);
+        }
+    }
+}

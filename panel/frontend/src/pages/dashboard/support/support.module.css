@@ -1,0 +1,163 @@
+.layout {
+    width: 100%;
+    max-width: 1200px;
+    min-width: 0;
+}
+
+.description {
+    margin-block: -4px 24px;
+    color: var(--panel-muted);
+    font-size: 14px;
+    line-height: 1.65;
+    max-width: 68ch;
+}
+
+.walletList {
+    container-type: inline-size;
+    overflow: visible;
+}
+
+.listHeader {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--panel-border);
+}
+
+.networkNote {
+    margin-top: 6px;
+    color: var(--panel-muted);
+    line-height: 1.6;
+}
+
+.rows {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.wallet {
+    display: grid;
+    grid-template-columns: 180px minmax(0, 1fr) 120px;
+    align-items: center;
+    gap: 20px;
+    min-width: 0;
+    padding: 20px 24px;
+    transition: background-color 160ms ease;
+}
+
+.wallet + .wallet {
+    border-top: 1px solid var(--panel-border);
+}
+
+.identity {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.coinIcon {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--panel-border);
+    border-radius: var(--mantine-radius-md);
+    color: var(--panel-text);
+    background: var(--panel-background);
+}
+
+.coinName {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.5;
+}
+
+.network {
+    color: var(--panel-muted);
+    margin-top: 2px;
+    overflow-wrap: anywhere;
+}
+
+.address {
+    min-width: 0;
+    color: var(--panel-text);
+    background: transparent;
+    font-size: 13px;
+    line-height: 1.8;
+    overflow-wrap: anywhere;
+    text-align: start;
+    user-select: all;
+    unicode-bidi: isolate;
+}
+
+.copyButton {
+    width: 120px;
+    min-height: 40px;
+    padding-inline: 12px;
+}
+
+.copyButton[data-copied] {
+    color: var(--panel-accent-text);
+    border-color: color-mix(in srgb, var(--panel-accent) 45%, var(--panel-border));
+    background: color-mix(in srgb, var(--panel-accent) 8%, var(--panel-surface));
+}
+
+.error {
+    grid-column: 1 / -1;
+}
+
+@container (max-width: 760px) {
+    .wallet {
+        grid-template-columns: minmax(0, 1fr) 120px;
+        gap: 14px 16px;
+    }
+
+    .identity {
+        grid-column: 1;
+        grid-row: 1;
+    }
+
+    .copyButton {
+        grid-column: 2;
+        grid-row: 1;
+    }
+
+    .address {
+        grid-column: 1 / -1;
+        padding-inline-start: 52px;
+    }
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .wallet:hover {
+        background: color-mix(in srgb, var(--panel-accent) 3%, transparent);
+    }
+}
+
+@media (max-width: 640px) {
+    .listHeader,
+    .wallet {
+        padding: 18px 16px;
+    }
+
+    .address {
+        padding-inline-start: 0;
+        font-size: 12px;
+    }
+
+    .contactButton,
+    .copyButton {
+        min-height: 44px;
+    }
+}
+
+:global(html[data-panel-reduced-motion='true']) .wallet {
+    transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .wallet {
+        transition: none;
+    }
+}

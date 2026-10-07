@@ -1,0 +1,1 @@
+{"version":3,"file":"recreate-tables.schema.d.ts","sourceRoot":"","sources":["../../../../commands/plugin/nftables/recreate-tables.schema.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,CAAC,EAAE,MAAM,KAAK,CAAC;AAIxB,yBAAiB,qBAAqB,CAAC;IAC5B,MAAM,GAAG,yCAA2C,CAAC;IAErD,MAAM,cAAc;;;;qBAA8D,CAAC;IAC1F,KAAY,QAAQ,GAAG,CAAC,CAAC,KAAK,CAAC,OAAO,cAAc,CAAC,CAAC;CACzD"}

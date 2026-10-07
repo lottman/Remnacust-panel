@@ -1,0 +1,81 @@
+# compiled output
+/dist
+/node_modules
+/.rspack-binding
+/.prisma-bin
+.env
+.idea
+/pgdata
+/libs/contract/build
+/libs/contract/node_modules
+/libs/contract/dist
+/libs/hashed-set/build
+/libs/hashed-set/node_modules
+/libs/hashed-set/dist
+/libs/subscription-page/build
+/libs/subscription-page/node_modules
+/libs/subscription-page/dist
+/libs/node-plugins/build
+/libs/node-plugins/node_modules
+/libs/node-plugins/dist
+# Logs
+logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# OS
+.DS_Store
+
+# Tests
+/coverage
+/.nyc_output
+
+# IDEs and editors
+/.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+.env.production
+.env.prod
+
+samples
+
+documentation
+schemes
+
+frontend
+
+
+.vscode/settings.json
+
+openapi.json
+.clinic
+
+.wip
+
+
+prisma/generated/types.ts
+
+frontend/
+f.json
+
+# Public contracts and schema shipped with this source distribution.
+!/libs/contract/build/
+!/libs/contract/build/**
+!/openapi.json
+!/prisma/generated/types.ts

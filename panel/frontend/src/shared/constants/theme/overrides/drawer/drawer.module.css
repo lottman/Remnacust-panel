@@ -1,0 +1,25 @@
+.drawerContent {
+    border-inline-start: 1px solid var(--panel-border);
+    border-radius: var(--drawer-radius, 14px);
+}
+.drawerHeader {
+    background: var(--panel-surface);
+    border-bottom: 1px solid var(--panel-border);
+    padding: max(18px, env(safe-area-inset-top)) 24px 18px;
+}
+.drawerBody {
+    --panel-overlay-padding: 24px;
+    padding: 24px;
+}
+@media (max-width: 48em) {
+    .drawerContent {
+        border-radius: 0;
+    }
+    .drawerHeader {
+        padding-inline: 16px;
+    }
+    .drawerBody {
+        --panel-overlay-padding: 16px;
+        padding: 16px;
+    }
+}

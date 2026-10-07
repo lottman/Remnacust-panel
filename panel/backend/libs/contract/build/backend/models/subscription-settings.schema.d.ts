@@ -1,0 +1,112 @@
+import { z } from 'zod';
+export declare const SubscriptionSettingsSchema: z.ZodObject<{
+    uuid: z.ZodUUID;
+    serveJsonAtBaseSubscription: z.ZodBoolean;
+    isShowCustomRemarks: z.ZodBoolean;
+    customRemarks: z.ZodObject<{
+        alwaysAvailableHostsPosition: z.ZodOptional<z.ZodEnum<{
+            before: "before";
+            after: "after";
+        }>>;
+        combineSubscriptionAndHwidRemarks: z.ZodDefault<z.ZodBoolean>;
+        subscriptionAndHwidRemarkOrder: z.ZodDefault<z.ZodArray<z.ZodEnum<{
+            DISABLED: "DISABLED";
+            EXPIRED: "EXPIRED";
+            HWID_BLOCKED: "HWID_BLOCKED";
+            HWID_REGISTRATION_BLOCKED: "HWID_REGISTRATION_BLOCKED";
+        }>>>;
+        action: z.ZodOptional<z.ZodNullable<z.ZodObject<{
+            text: z.ZodString;
+            buttonText: z.ZodString;
+            url: z.ZodString;
+        }, z.core.$strip>>>;
+        expiredUsers: z.ZodArray<z.ZodString>;
+        limitedUsers: z.ZodArray<z.ZodString>;
+        disabledUsers: z.ZodArray<z.ZodString>;
+        emptyHosts: z.ZodArray<z.ZodString>;
+        HWIDMaxDevicesExceeded: z.ZodArray<z.ZodString>;
+        HWIDNotSupported: z.ZodArray<z.ZodString>;
+        HWIDRegistrationBlocked: z.ZodDefault<z.ZodArray<z.ZodString>>;
+        HWIDBlocked: z.ZodDefault<z.ZodArray<z.ZodString>>;
+        hostTrafficPaused: z.ZodDefault<z.ZodArray<z.ZodString>>;
+        hostTrafficLimit: z.ZodDefault<z.ZodArray<z.ZodString>>;
+    }, z.core.$strip>;
+    customResponseHeaders: z.ZodNullable<z.ZodRecord<z.ZodString, z.ZodString>>;
+    randomizeHosts: z.ZodBoolean;
+    responseRules: z.ZodNullable<z.ZodObject<{
+        version: z.ZodEnum<{
+            readonly 1: "1";
+        }>;
+        settings: z.ZodOptional<z.ZodObject<{
+            disableSubscriptionAccessByPath: z.ZodOptional<z.ZodBoolean>;
+        }, z.core.$strip>>;
+        rules: z.ZodArray<z.ZodObject<{
+            name: z.ZodString;
+            description: z.ZodOptional<z.ZodString>;
+            enabled: z.ZodBoolean;
+            operator: z.ZodEnum<{
+                readonly AND: "AND";
+                readonly OR: "OR";
+            }>;
+            conditions: z.ZodArray<z.ZodObject<{
+                headerName: z.ZodString;
+                operator: z.ZodEnum<{
+                    readonly EQUALS: "EQUALS";
+                    readonly NOT_EQUALS: "NOT_EQUALS";
+                    readonly CONTAINS: "CONTAINS";
+                    readonly NOT_CONTAINS: "NOT_CONTAINS";
+                    readonly STARTS_WITH: "STARTS_WITH";
+                    readonly NOT_STARTS_WITH: "NOT_STARTS_WITH";
+                    readonly ENDS_WITH: "ENDS_WITH";
+                    readonly NOT_ENDS_WITH: "NOT_ENDS_WITH";
+                    readonly REGEX: "REGEX";
+                    readonly NOT_REGEX: "NOT_REGEX";
+                }>;
+                value: z.ZodString;
+                caseSensitive: z.ZodBoolean;
+            }, z.core.$strip>>;
+            responseType: z.ZodEnum<{
+                readonly BROWSER: "BROWSER";
+                readonly BLOCK: "BLOCK";
+                readonly STATUS_CODE_404: "STATUS_CODE_404";
+                readonly STATUS_CODE_451: "STATUS_CODE_451";
+                readonly SOCKET_DROP: "SOCKET_DROP";
+                readonly XRAY_JSON: "XRAY_JSON";
+                readonly XRAY_BASE64: "XRAY_BASE64";
+                readonly MIHOMO: "MIHOMO";
+                readonly STASH: "STASH";
+                readonly CLASH: "CLASH";
+                readonly SINGBOX: "SINGBOX";
+            }>;
+            responseModifications: z.ZodOptional<z.ZodObject<{
+                headers: z.ZodOptional<z.ZodArray<z.ZodObject<{
+                    key: z.ZodString;
+                    value: z.ZodString;
+                }, z.core.$strip>>>;
+                applyHeadersToEnd: z.ZodOptional<z.ZodBoolean>;
+                subscriptionTemplate: z.ZodOptional<z.ZodString>;
+                ignoreHostXrayJsonTemplate: z.ZodOptional<z.ZodBoolean>;
+                ignoreServeJsonAtBaseSubscription: z.ZodOptional<z.ZodBoolean>;
+                additionalExtendedClientsRegex: z.ZodOptional<z.ZodArray<z.ZodString>>;
+                disableHwidCheck: z.ZodOptional<z.ZodBoolean>;
+                encryption: z.ZodOptional<z.ZodObject<{
+                    method: z.ZodEnum<{
+                        age1: "age1";
+                        age1pq1: "age1pq1";
+                    }>;
+                    key: z.ZodString;
+                }, z.core.$strip>>;
+                excludeHostsByTags: z.ZodOptional<z.ZodArray<z.ZodString>>;
+                respondWithRemarks: z.ZodOptional<z.ZodArray<z.ZodString>>;
+            }, z.core.$strip>>;
+        }, z.core.$strip>>;
+    }, z.core.$strip>>;
+    hwidSettings: z.ZodNullable<z.ZodObject<{
+        enabled: z.ZodBoolean;
+        fallbackDeviceLimit: z.ZodNumber;
+        maxDevicesAnnounce: z.ZodNullable<z.ZodString>;
+    }, z.core.$strip>>;
+    createdAt: z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>;
+    updatedAt: z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>;
+}, z.core.$strip>;
+//# sourceMappingURL=subscription-settings.schema.d.ts.map

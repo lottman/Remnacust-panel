@@ -1,0 +1,31 @@
+.card {
+    padding: var(--mantine-spacing-md);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--mantine-radius-md);
+    background: rgba(255, 255, 255, 0.02);
+
+    cursor: pointer;
+    transition:
+        border-color 150ms ease,
+        background-color 150ms ease;
+}
+
+.card:hover {
+    border-color: rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.035);
+}
+
+.card:focus-visible {
+    outline: 2px solid var(--mantine-color-default-border);
+    outline-offset: 2px;
+}
+
+.cardEmpty,
+.cardEmpty:hover {
+    border-color: var(--mantine-color-error);
+}
+
+.affordance {
+    flex-shrink: 0;
+    color: var(--mantine-color-dark-2);
+}

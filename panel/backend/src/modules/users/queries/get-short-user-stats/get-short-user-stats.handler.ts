@@ -1,0 +1,33 @@
+import { Logger } from '@nestjs/common';
+import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+
+import { fail, ok, TResult } from '@common/types';
+import { ERRORS } from '@libs/contracts/constants';
+
+import { ShortUserStats } from '../../interfaces/user-stats.interface';
+import { UsersRepository } from '../../repositories/users.repository';
+import { GetShortUserStatsQuery } from './get-short-user-stats.query';
+
+@QueryHandler(GetShortUserStatsQuery)
+export class GetShortUserStatsHandler implements IQueryHandler<
+    GetShortUserStatsQuery,
+    TResult<ShortUserStats>
+> {
+    private readonly logger = new Logger(GetShortUserStatsHandler.name);
+    constructor(private readonly usersRepository: UsersRepository) {}
+
+    async execute(): Promise<TResult<ShortUserStats>> {
+        try {
+            const statusCounts = await this.usersRepository.getUserStats();
+            const onlineStats = await this.usersRepository.getUserOnlineStats();
+
+            return ok({
+                statusCounts,
+                onlineStats,
+            });
+        } catch (error) {
+            this.logger.error(error);
+            return fail(ERRORS.INTERNAL_SERVER_ERROR);
+        }
+    }
+}

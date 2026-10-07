@@ -1,0 +1,11 @@
+.logoTitle {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: var(--mantine-font-family);
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: -0.04em;
+    user-select: none;
+}

@@ -1,0 +1,581 @@
+import { DataTableColumn } from '@kastov/mantine-datatable'
+import { ActionIcon, Avatar, Badge, Group, MultiSelect, Text, TextInput } from '@mantine/core'
+import {
+    GetNodesCommand,
+    GetConfigProfilesCommand,
+    GetNodeIntegrationsCommand,
+    GetNodePluginsCommand
+} from '@remnawave/backend-contract'
+import { TFunction } from 'i18next'
+import sortBy from 'lodash/sortBy'
+import ReactCountryFlag from 'react-country-flag'
+import {
+    PiCloudArrowUpDuotone,
+    PiProhibitDuotone,
+    PiPulseDuotone,
+    PiUsersDuotone,
+    PiWarningCircle
+} from 'react-icons/pi'
+import { TbEdit, TbSearch, TbX } from 'react-icons/tb'
+
+import { translateUiText as uiText } from '@shared/i18n/interface-text'
+import { NodeHealthBadge } from '@shared/ui/node-health/node-health'
+import { NodeIpsCompactView } from '@shared/ui/node-ips'
+import {
+    prettifyBytesUtil,
+    prettySiBytesUtil,
+    prettySiRealtimeBytesUtil
+} from '@shared/utils/bytes'
+import { faviconResolver } from '@shared/utils/misc'
+import { NodeHealthLevel } from '@shared/utils/node-health'
+import { formatDurationUtil } from '@shared/utils/time-utils'
+
+import { NodeStatusSimplfiedBadgeWidget } from '../node-status-simplfied-badge'
+
+export type NodeStatusFilter = 'connected' | 'connecting' | 'disabled' | 'disconnected'
+
+export interface NodesTableFilters {
+    availableConfigProfiles: { label: string; value: string }[]
+    availableInbounds: string[]
+    availableIntegrations: { label: string; value: string }[]
+    availablePlugins: { label: string; value: string }[]
+    availableProviders: string[]
+    availableTags: string[]
+    nameQuery: string
+    selectedConfigProfiles: string[]
+    selectedInbounds: string[]
+    selectedIntegrations: string[]
+    selectedPlugins: string[]
+    selectedProviders: string[]
+    selectedStatuses: NodeStatusFilter[]
+    selectedHealth: NodeHealthLevel[]
+    selectedTags: string[]
+    setNameQuery: (value: string) => void
+    setSelectedConfigProfiles: (value: string[]) => void
+    setSelectedInbounds: (value: string[]) => void
+    setSelectedIntegrations: (value: string[]) => void
+    setSelectedPlugins: (value: string[]) => void
+    setSelectedProviders: (value: string[]) => void
+    setSelectedStatuses: (value: NodeStatusFilter[]) => void
+    setSelectedHealth: (value: NodeHealthLevel[]) => void
+    setSelectedTags: (value: string[]) => void
+}
+
+export function getNodesTableColumns(
+    t: TFunction,
+    configProfiles: GetConfigProfilesCommand.Response['response']['configProfiles'],
+    nodePlugins: GetNodePluginsCommand.Response['response']['nodePlugins'],
+    nodeIntegrations: GetNodeIntegrationsCommand.Response['response']['nodeIntegrations'],
+    handleViewNode: (nodeUuid: string) => void,
+    filters: NodesTableFilters
+): DataTableColumn<GetNodesCommand.Response['response'][number]>[] {
+    return [
+        {
+            accessor: 'name',
+            sortable: true,
+            title: t('common.field.name'),
+            filter: (
+                <TextInput
+                    label={t('common.field.name')}
+                    leftSection={<TbSearch size={16} />}
+                    onChange={(e) => filters.setNameQuery(e.currentTarget.value)}
+                    rightSection={
+                        filters.nameQuery ? (
+                            <ActionIcon
+                                c="dimmed"
+                                onClick={() => filters.setNameQuery('')}
+                                size="sm"
+                                variant="transparent"
+                            >
+                                <TbX size={14} />
+                            </ActionIcon>
+                        ) : null
+                    }
+                    value={filters.nameQuery}
+                />
+            ),
+            draggable: false,
+            resizable: true,
+            filtering: filters.nameQuery !== '',
+            render: ({ name, countryCode }) => (
+                <Group gap={6} wrap="nowrap">
+                    {countryCode && countryCode !== 'XX' && (
+                        <ReactCountryFlag
+                            countryCode={countryCode}
+                            style={{
+                                fontSize: '1.1em',
+                                borderRadius: '2px'
+                            }}
+                        />
+                    )}
+                    <Text
+                        size="sm"
+                        style={{
+                            maxWidth: '100%',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap'
+                        }}
+                    >
+                        {name}
+                    </Text>
+                </Group>
+            )
+        },
+        {
+            accessor: 'isConnected',
+            sortable: true,
+            title: '',
+            filter: (
+                <MultiSelect
+                    clearable
+                    comboboxProps={{ withinPortal: false }}
+                    data={[
+                        {
+                            label: t('node-status-badge.widget.connected'),
+                            value: 'connected'
+                        },
+                        {
+                            label: t('node-status-badge.widget.connecting'),
+                            value: 'connecting'
+                        },
+                        {
+                            label: t('node-status-badge.widget.disabled'),
+                            value: 'disabled'
+                        },
+                        {
+                            label: t('node-status-badge.widget.disconnected'),
+                            value: 'disconnected'
+                        }
+                    ]}
+                    leftSection={<TbSearch size={16} />}
+                    onChange={(value) => filters.setSelectedStatuses(value as NodeStatusFilter[])}
+                    renderOption={({ option }) => (
+                        <Group gap="xs" wrap="nowrap">
+                            {option.value === 'connected' && (
+                                <PiPulseDuotone
+                                    size={16}
+                                    style={{ color: 'var(--mantine-color-teal-6)' }}
+                                />
+                            )}
+                            {option.value === 'connecting' && (
+                                <PiCloudArrowUpDuotone
+                                    size={16}
+                                    style={{ color: 'var(--mantine-color-yellow-3)' }}
+                                />
+                            )}
+                            {option.value === 'disabled' && (
+                                <PiProhibitDuotone
+                                    size={16}
+                                    style={{ color: 'var(--mantine-color-gray-6)' }}
+                                />
+                            )}
+                            {option.value === 'disconnected' && (
+                                <PiWarningCircle
+                                    size={16}
+                                    style={{ color: 'var(--mantine-color-red-3)' }}
+                                />
+                            )}
+                            <Text size="sm">{option.label}</Text>
+                        </Group>
+                    )}
+                    searchable
+                    value={filters.selectedStatuses}
+                />
+            ),
+            filtering: filters.selectedStatuses.length > 0,
+            render: ({ isConnected, isConnecting, isDisabled, uuid, lastStatusMessage }) => (
+                <NodeStatusSimplfiedBadgeWidget
+                    isConnected={isConnected}
+                    isConnecting={isConnecting}
+                    isDisabled={isDisabled}
+                    nodeUuid={uuid}
+                    lastStatusMessage={lastStatusMessage}
+                />
+            )
+        },
+
+        {
+            accessor: 'health',
+            sortable: true,
+            title: t('xera-node-health.title'),
+            filter: (
+                <MultiSelect
+                    clearable
+                    comboboxProps={{ withinPortal: false }}
+                    data={(
+                        ['healthy', 'limited', 'attention', 'critical', 'disabled'] as const
+                    ).map((level) => ({ label: t(`xera-node-health.${level}`), value: level }))}
+                    label={t('xera-node-health.filter')}
+                    onChange={(value) => filters.setSelectedHealth(value as NodeHealthLevel[])}
+                    searchable
+                    value={filters.selectedHealth}
+                />
+            ),
+            filtering: filters.selectedHealth.length > 0,
+            render: (node) => <NodeHealthBadge node={node} />
+        },
+        {
+            accessor: 'usersOnline',
+            sortable: true,
+            title: t('use-nodes-table-widget.online'),
+            render: ({ usersOnline }) => (
+                <Badge
+                    color={(usersOnline ?? 0) > 0 ? 'teal' : 'gray'}
+                    leftSection={<PiUsersDuotone size={14} />}
+                    miw="10ch"
+                    size="lg"
+                    variant="outline"
+                >
+                    {usersOnline}
+                </Badge>
+            )
+        },
+
+        {
+            accessor: 'address',
+            sortable: true,
+            title: t('common.field.address'),
+            render: ({ address, port }) => `${address}:${port}`
+        },
+        {
+            accessor: 'ips',
+            sortable: false,
+            title: t('common.field.ip-addresses'),
+            render: ({ ips }) => <NodeIpsCompactView ips={ips} />
+        },
+        {
+            accessor: 'trafficUsedBytes',
+            sortable: true,
+            title: t('use-nodes-table-widget.traffic-used'),
+            render: ({ trafficUsedBytes }) => prettifyBytesUtil(trafficUsedBytes, false)
+        },
+        {
+            accessor: 'configProfile.activeConfigProfileUuid',
+            filter: (
+                <MultiSelect
+                    clearable
+                    comboboxProps={{ withinPortal: false }}
+                    data={filters.availableConfigProfiles}
+                    label={t('use-nodes-table-widget.config-profile')}
+                    leftSection={<TbSearch size={16} />}
+                    onChange={filters.setSelectedConfigProfiles}
+                    searchable
+                    value={filters.selectedConfigProfiles}
+                />
+            ),
+            filtering: filters.selectedConfigProfiles.length > 0,
+            title: t('use-nodes-table-widget.config-profile'),
+            render: ({ configProfile: { activeConfigProfileUuid } }) =>
+                configProfiles.find((profile) => profile.uuid === activeConfigProfileUuid)?.name
+        },
+        {
+            accessor: 'configProfile.activeInbounds',
+            filter: (
+                <MultiSelect
+                    clearable
+                    comboboxProps={{ withinPortal: false }}
+                    data={filters.availableInbounds}
+                    label={t('common.field.inbounds')}
+                    leftSection={<TbSearch size={16} />}
+                    onChange={filters.setSelectedInbounds}
+                    searchable
+                    value={filters.selectedInbounds}
+                />
+            ),
+            filtering: filters.selectedInbounds.length > 0,
+            title: t('common.field.inbounds'),
+            render: ({ configProfile: { activeInbounds } }) =>
+                sortBy(activeInbounds, 'tag')
+                    .map((inbound) => inbound.tag)
+                    .join(', ')
+        },
+        {
+            accessor: 'consumptionMultiplier',
+            sortable: false,
+            defaultToggle: false,
+            title: t('node-consumption.card.user-consumption-multiplier'),
+            render: ({ consumptionMultiplier }) => consumptionMultiplier.toFixed(1)
+        },
+        {
+            accessor: 'nodeConsumptionMultiplier',
+            sortable: false,
+            defaultToggle: false,
+            title: t('node-consumption.card.node-consumption-multiplier'),
+            render: ({ nodeConsumptionMultiplier }) => nodeConsumptionMultiplier.toFixed(1)
+        },
+        {
+            accessor: 'versions.xray',
+            sortable: true,
+            title: t('use-nodes-table-widget.xray-v'),
+            render: ({ versions }) => (versions ? versions.xray : '-')
+        },
+        {
+            accessor: 'xrayUptime',
+            sortable: true,
+            get title() {
+                return uiText('xray-uptime-ac0a1ea')
+            },
+            render: ({ xrayUptime }) => (xrayUptime !== 0 ? formatDurationUtil(xrayUptime) : '-')
+        },
+        {
+            accessor: 'versions.node',
+            sortable: true,
+            title: t('use-nodes-table-widget.node-v'),
+            render: ({ versions }) => (versions ? versions.node : '-')
+        },
+        {
+            accessor: 'provider.name',
+            sortable: true,
+            title: t('use-nodes-table-widget.provider'),
+            filter: (
+                <MultiSelect
+                    clearable
+                    comboboxProps={{ withinPortal: false }}
+                    data={filters.availableProviders}
+                    label={t('use-nodes-table-widget.provider')}
+                    leftSection={<TbSearch size={16} />}
+                    onChange={filters.setSelectedProviders}
+                    searchable
+                    value={filters.selectedProviders}
+                />
+            ),
+            filtering: filters.selectedProviders.length > 0,
+            render: ({ provider }) =>
+                provider ? (
+                    <Group gap="xs" wrap="nowrap">
+                        <Avatar
+                            alt={provider.name}
+                            color="initials"
+                            imageProps={{ decoding: 'async', loading: 'lazy' }}
+                            name={provider.name}
+                            onLoad={(event) => {
+                                const img = event.target as HTMLImageElement
+                                if (img.naturalWidth <= 16 && img.naturalHeight <= 16) {
+                                    img.src = ''
+                                }
+                            }}
+                            radius="sm"
+                            size={16}
+                            src={faviconResolver(provider.faviconLink)}
+                        />
+
+                        <Text size="sm">{provider.name}</Text>
+                    </Group>
+                ) : null
+        },
+        {
+            accessor: 'tags',
+            sortable: true,
+            title: t('common.field.tags'),
+            filter: (
+                <MultiSelect
+                    clearable
+                    comboboxProps={{ withinPortal: false }}
+                    data={filters.availableTags}
+                    label={t('common.field.tags')}
+                    leftSection={<TbSearch size={16} />}
+                    onChange={filters.setSelectedTags}
+                    searchable
+                    value={filters.selectedTags}
+                />
+            ),
+            filtering: filters.selectedTags.length > 0,
+            render: ({ tags }) => tags?.join(', ') ?? '-'
+        },
+        {
+            accessor: 'activePluginUuid',
+            filter: (
+                <MultiSelect
+                    clearable
+                    comboboxProps={{ withinPortal: false }}
+                    data={filters.availablePlugins}
+                    label={uiText('plugin-ab1173e')}
+                    leftSection={<TbSearch size={16} />}
+                    onChange={filters.setSelectedPlugins}
+                    searchable
+                    value={filters.selectedPlugins}
+                />
+            ),
+            filtering: filters.selectedPlugins.length > 0,
+            sortable: true,
+            get title() {
+                return uiText('plugin-ab1173e')
+            },
+            render: ({ activePluginUuid }) =>
+                nodePlugins.find((plugin) => plugin.uuid === activePluginUuid)?.name || '-'
+        },
+        {
+            accessor: 'integrationUuids',
+            defaultToggle: false,
+            filter: (
+                <MultiSelect
+                    clearable
+                    comboboxProps={{ withinPortal: false }}
+                    data={filters.availableIntegrations}
+                    label={t('node-integrations.modal.title')}
+                    leftSection={<TbSearch size={16} />}
+                    onChange={filters.setSelectedIntegrations}
+                    searchable
+                    value={filters.selectedIntegrations}
+                />
+            ),
+            filtering: filters.selectedIntegrations.length > 0,
+            title: t('node-integrations.modal.title'),
+            render: ({ integrationUuids }) =>
+                integrationUuids
+                    .map((uuid) => nodeIntegrations.find((i) => i.uuid === uuid)?.name)
+                    .filter((name) => name !== undefined)
+                    .join(', ') || '-'
+        },
+        {
+            accessor: 'system.info.cpus',
+            sortable: true,
+            defaultToggle: false,
+            get title() {
+                return uiText('cpu-cores-04fdfca')
+            }
+        },
+        {
+            accessor: 'system.stats.memoryFree',
+            sortable: true,
+            defaultToggle: false,
+            get title() {
+                return uiText('free-ram-8cd6e27')
+            },
+            render: ({ system }) =>
+                system ? prettifyBytesUtil(system.stats.memoryFree, false) : '-'
+        },
+        {
+            accessor: 'system.stats.memoryUsed',
+            sortable: true,
+            defaultToggle: false,
+            get title() {
+                return uiText('used-ram-89dd5cb')
+            },
+            render: ({ system }) =>
+                system ? prettifyBytesUtil(system.stats.memoryUsed, false) : '-'
+        },
+        {
+            accessor: 'system.info.memoryTotal',
+            sortable: true,
+            defaultToggle: false,
+            title: t('use-nodes-table-widget.total-ram'),
+            render: ({ system }) =>
+                system ? prettifyBytesUtil(system.info.memoryTotal, false) : '-'
+        },
+        {
+            accessor: 'system.info.cpuModel',
+            sortable: true,
+            defaultToggle: false,
+            title: t('use-nodes-table-widget.cpu-model')
+        },
+        {
+            accessor: 'system.stats.uptime',
+            sortable: true,
+            defaultToggle: false,
+            get title() {
+                return uiText('server-uptime-ed0def1')
+            },
+            render: ({ system }) => (system ? formatDurationUtil(system.stats.uptime) : '-')
+        },
+        {
+            accessor: 'system.info.networkInterfaces',
+            sortable: true,
+            defaultToggle: false,
+            get title() {
+                return uiText('network-interfaces-9f43b24')
+            },
+            render: ({ system }) => (system ? system.info.networkInterfaces.join(', ') : '-')
+        },
+        {
+            accessor: 'system.stats.interface.rxBytesPerSec',
+            sortable: true,
+            get title() {
+                return uiText('rx-speed-6aaa2ac')
+            },
+            render: ({ system }) =>
+                system && system.stats.interface
+                    ? prettySiRealtimeBytesUtil(system.stats.interface.rxBytesPerSec, true, true)
+                    : '-'
+        },
+        {
+            accessor: 'system.stats.interface.txBytesPerSec',
+            sortable: true,
+            get title() {
+                return uiText('tx-speed-2774f59')
+            },
+            render: ({ system }) =>
+                system && system.stats.interface
+                    ? prettySiRealtimeBytesUtil(system.stats.interface.txBytesPerSec, true, true)
+                    : '-'
+        },
+        {
+            accessor: 'system.stats.interface.rxTotal',
+            sortable: true,
+            defaultToggle: false,
+            get title() {
+                return uiText('rx-total-d983b27')
+            },
+            render: ({ system }) =>
+                system && system.stats.interface
+                    ? prettySiBytesUtil(system.stats.interface.rxTotal, true)
+                    : '-'
+        },
+        {
+            accessor: 'system.stats.interface.txTotal',
+            sortable: true,
+            defaultToggle: false,
+            get title() {
+                return uiText('tx-total-6bbd46a')
+            },
+            render: ({ system }) =>
+                system && system.stats.interface
+                    ? prettySiBytesUtil(system.stats.interface.txTotal, true)
+                    : '-'
+        },
+        {
+            accessor: 'system.info.release',
+            sortable: true,
+            defaultToggle: false,
+            get title() {
+                return uiText('os-release-8ac3c26')
+            },
+            render: ({ system }) => (system ? system.info.release : '-')
+        },
+        {
+            accessor: 'actions',
+            draggable: false,
+            resizable: false,
+            titleStyle: {
+                backgroundColor:
+                    'light-dark(var(--mantine-color-white), var(--mantine-color-dark-7))'
+            },
+            cellsStyle: () => {
+                return {
+                    backgroundColor:
+                        'light-dark(var(--mantine-color-white), var(--mantine-color-dark-7))'
+                }
+            },
+            title: (
+                <Group c="dimmed" gap={4} justify="flex-end" pr={4} wrap="nowrap">
+                    <TbEdit size={18} />
+                </Group>
+            ),
+
+            textAlign: 'right',
+            render: ({ uuid }) => (
+                <Group gap={4} justify="flex-end" wrap="nowrap">
+                    <ActionIcon
+                        color="teal"
+                        onClick={() => handleViewNode(uuid)}
+                        size="md"
+                        variant="outline"
+                    >
+                        <TbEdit size={18} />
+                    </ActionIcon>
+                </Group>
+            )
+        }
+    ]
+}

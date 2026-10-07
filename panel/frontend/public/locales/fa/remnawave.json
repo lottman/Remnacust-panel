@@ -1,0 +1,3206 @@
+{
+    "backups": {
+        "delivery-success": "نسخه پشتیبان به تلگرام ارسال شد",
+        "delivery-failed": "ارسال نسخه پشتیبان ناموفق بود. توکن ربات، شناسه چت و اتصال تلگرام را بررسی کنید."
+    },
+    "auth-localization": {
+        "login-title": "ورود",
+        "server-unavailable": "سرور پاسخ نمی‌دهد. گزارش‌ها را بررسی کنید.",
+        "or": "یا",
+        "passkey-authentication": "احراز هویت با کلید عبور",
+        "authentication-cancelled": "احراز هویت لغو شد",
+        "passkey-unsupported": "این دستگاه از کلید عبور پشتیبانی نمی‌کند",
+        "passkey": "کلید عبور"
+    },
+    "mutation-entities": {
+        "api-token": "توکن API",
+        "passkey": "کلید عبور",
+        "config": "پیکربندی",
+        "external-squad": "گروه خارجی",
+        "host": "هاست",
+        "hosts": "هاست‌ها",
+        "infra-provider": "ارائه‌دهنده زیرساخت",
+        "billing-history": "رکورد تاریخچه صورتحساب",
+        "billing-node": "نود صورتحساب",
+        "internal-squad": "گروه داخلی",
+        "node-integration": "یکپارچه‌سازی نود",
+        "node-plugin": "افزونه نود",
+        "shared-list": "فهرست مشترک",
+        "node": "نود",
+        "node-traffic": "ترافیک نود",
+        "nodes": "نودها",
+        "settings": "تنظیمات Remnacust",
+        "snippet": "قطعه کد",
+        "subscription-page-config": "پیکربندی صفحه اشتراک",
+        "subscription-settings": "تنظیمات اشتراک",
+        "subscription-template": "قالب اشتراک",
+        "user": "کاربر",
+        "user-subscription": "اشتراک کاربر",
+        "user-traffic": "ترافیک کاربر"
+    },
+    "mutation-messages": {
+        "operation-processing": "این عملیات ممکن است مدتی طول بکشد...",
+        "task-processing": "وظیفه به صف اضافه شد. لطفاً منتظر پردازش آن بمانید.",
+        "created": "{{entity}} ایجاد شد",
+        "updated": "{{entity}} به‌روزرسانی شد",
+        "deleted": "{{entity}} حذف شد",
+        "enabled": "{{entity}} فعال شد",
+        "disabled": "{{entity}} غیرفعال شد",
+        "cloned": "{{entity}} کپی شد",
+        "synced": "{{entity}} همگام‌سازی شد",
+        "restarted": "{{entity}} دوباره راه‌اندازی شد",
+        "reset": "{{entity}} بازنشانی شد",
+        "authenticated": "احراز هویت {{entity}} انجام شد",
+        "revoked": "{{entity}} لغو شد",
+        "user-registered": "کاربر ثبت‌نام شد",
+        "request-sent": "درخواست ارسال شد",
+        "reports-truncated": "گزارش‌ها پاک شدند",
+        "plugin-sync-queued": "همگام‌سازی نودهای دارای این افزونه در صف قرار گرفت",
+        "list-sync-queued": "همگام‌سازی نودهای دارای این فهرست در صف قرار گرفت",
+        "wait-for-nodes": "منتظر اتصال دوباره نودها بمانید",
+        "task-queued": "وظیفه به صف اضافه شد",
+        "actions-queued": "اقدامات به صف اضافه شدند",
+        "nodes-updated": "نودها به‌روزرسانی شدند",
+        "passkey-verified": "کلید عبور تأیید شد",
+        "users-expiration-extended": "تاریخ انقضای کاربران تمدید شد",
+        "all-users-expiration-extended": "تاریخ انقضای همه کاربران تمدید شد"
+    },
+    "country-picker": {
+        "unknown": "نامشخص"
+    },
+    "hwid-notifications": {
+        "device-deleted": "دستگاه با موفقیت حذف شد",
+        "delete-failed-check-state": "حذف کامل نشد. فهرست به‌روزشده دستگاه‌ها و وضعیت نودها را بررسی کنید و دوباره تلاش کنید.",
+        "unblocked-devices-deleted": "دستگاه‌های رفع‌مسدودشده حذف شدند؛ دستگاه‌های مسدودشده حفظ شدند.",
+        "subscription-blocked": "HWID مسدود شد. نودهای متصل کلید آن را فوراً لغو می‌کنند؛ نودهای آفلاین پس از اتصال دوباره این مسدودسازی را اعمال می‌کنند.",
+        "device-unblocked": "مسدودیت دستگاه برداشته شد",
+        "delete-device": "حذف دستگاه",
+        "delete-all-devices": "حذف همه دستگاه‌ها",
+        "block-device": "مسدود کردن دستگاه",
+        "unblock-device": "رفع مسدودیت دستگاه",
+        "enforcement-unavailable": "مسدودسازی تأیید نشد. اشتراک‌های شخصی را فعال کنید و اتصال همهٔ نودهای فعال و پشتیبانی آن‌ها از لغو نشست‌های فعال را بررسی کنید، سپس دوباره تلاش کنید.",
+        "unknown-error": "درخواست با خطای ناشناخته مواجه شد."
+    },
+    "xera-node-health": {
+        "title": "سلامت نودها",
+        "healthy": "سالم",
+        "limited": "داده‌های محدود",
+        "attention": "نیازمند توجه",
+        "critical": "بحرانی",
+        "disabled": "غیرفعال",
+        "signal-coverage": "سیگنال‌ها: {{checked}}/{{total}}",
+        "problem-nodes": "نودهای نیازمند بررسی",
+        "all-clear": "مشکلی در نودها شناسایی نشد",
+        "configuration": "پروفایل پیکربندی یا ورودی فعالی وجود ندارد",
+        "connection": "نود قطع است",
+        "xray": "زمان کارکرد Xray در دسترس نیست",
+        "resources": "داده‌های منابع سیستم در دسترس نیست",
+        "high-memory": "مصرف حافظه حداقل ۹۲٪ است",
+        "high-load": "بار پایدار CPU: میانگین ۵ دقیقه‌ای حداقل ۱٫۵ به‌ازای هر هسته، یا جهش یک‌دقیقه‌ای ۲٫۵ همراه با میانگین ۵ دقیقه‌ای حداقل ۱٫۲۵",
+        "last-status": "آخرین پیام وضعیت",
+        "last-change": "تغییر وضعیت",
+        "not-measured": "اندازه‌گیری نشده",
+        "filter": "سلامت",
+        "policy-pending-title": "پیکربندی در انتظار اعمال است",
+        "policy-pending-message": "اعمال سیاست‌های میزبان ممکن نشد. پیکربندی جدید به نود ارسال نشده است؛ Xray در حال اجرا پیکربندی قبلی را نگه می‌دارد. پشتیبانی از جداسازی میزبان نسخه ۲ را در نود و هسته بررسی کنید. پنل پس از بازیابی پشتیبانی دوباره تلاش می‌کند. محدودیت‌های تنظیم‌شده فعال می‌مانند.",
+        "upgrade-required-title": "به‌روزرسانی نود لازم است",
+        "upgrade-required-message": "نود را به Remnacust Node 1.1.1 همراه با Xray ما به‌روزرسانی کنید. این پروفایل به جداسازی میزبان نسخه ۲ نیاز دارد. تا زمان به‌روزرسانی، محدودیت‌های آن و اتصال‌های جدید کار نخواهند کرد. پیکربندی در حال اجرا حفظ می‌شود؛ پس از به‌روزرسانی، پنل پیکربندی جدید را خودکار اعمال می‌کند."
+    },
+    "xera-node-optimization": {
+        "title": "بهینه‌سازی نود",
+        "level": "سطح بهینه‌سازی",
+        "intro": "یکی از چهار پروفایل را انتخاب کنید. پنل آن را از طریق اتصال SSH ذخیره‌شده روی نود اجرا می‌کند و نتیجه را در ترمینال نشان می‌دهد.",
+        "none": "بدون بهینه‌سازی",
+        "safe": "محافظه‌کارانه",
+        "balanced": "متعادل",
+        "performance": "عملکرد بالا",
+        "safe-description": "اگر زمان انتظار TCP keepalive بیشتر باشد، آن را به ۱۰ دقیقه کاهش می‌دهد.",
+        "none-description": "اگر پروفایلی اعمال شده باشد، مقادیر اولیه را بازمی‌گرداند.",
+        "balanced-description": "حد بالای بافرهای TCP و صف‌ها را افزایش می‌دهد، بدون کاهش مقادیر بالاتر.",
+        "performance-description": "بافرها و صف‌های بزرگ‌تر را مجاز می‌کند و در صورت پشتیبانی، BBR را برای اتصال‌های جدید TCP فعال می‌کند.",
+        "recommended": "پیشنهادشده",
+        "keepalive": "اتصال‌های طولانی",
+        "buffers": "بافرهای TCP",
+        "bbr": "BBR در صورت پشتیبانی",
+        "backlog": "صف اتصال‌ها",
+        "safety": "Xray، Docker، مسیرها، دیوار آتش و SSH دوباره راه‌اندازی نمی‌شوند. تنظیمات اولیه را می‌توان بازگرداند."
+    },
+    "constants": {
+        "limits": "محدودیت‌ها",
+        "home": "خانه",
+        "hosts": "هاست‌ها",
+        "nodes": "نودها",
+        "nodes-statistics": "آمار نودها",
+        "nodes-metrics": "آمار",
+        "users": "کاربرها",
+        "overview": "نمای کلی",
+        "management": "مدیریت",
+        "subscription-settings": "تنظیمات اشتراک",
+        "templates": "قالب‌ها",
+        "subscription": "اشتراک",
+        "subscription-page": "صفحه اشتراک",
+        "config-profiles": "پروفایل‌های کانفیگ",
+        "internal-squads": "اسکوادهای داخلی",
+        "external-squads": "اسکوادهای خارجی",
+        "infra-billing": "صورتحساب‌های تجهیزات",
+        "hwid-inspector": "بازرسی HWID",
+        "tools": "ابزارها",
+        "srh-inspector": "بازرسی SRH",
+        "response-rules": "قوانین پاسخ",
+        "remnawave-settings": "تنظیمات Remnacust",
+        "node-plugins": "افزونه‌ها",
+        "quick-open": "باز کردن سریع",
+        "tb-reports": "گزارش‌های مسدودسازی تورنت",
+        "sessions-explorer": "کاوشگر نشست‌ها",
+        "http-stats": "آمار HTTP",
+        "quick-launcher": "راه‌انداز سریع"
+    },
+    "common": {
+        "label": {
+            "used": "مصرف‌شده",
+            "limit": "سقف",
+            "remaining": "باقی‌مانده",
+            "next-reset": "بازنشانی بعدی (∞ یعنی هرگز)"
+        },
+        "action": {
+            "actions": "اقدامات",
+            "add": "افزودن",
+            "add-users": "افزودن کاربران",
+            "bulk-actions": "اقدامات گروهی",
+            "bulk-edit": "ویرایش گروهی",
+            "cancel": "لغو",
+            "change": "تغییر دادن",
+            "clear": "پاک کردن",
+            "clear-selection": "لغو انتخاب",
+            "clone": "همانندسازی",
+            "close": "بستن",
+            "confirm-action": "تأیید اقدام",
+            "continue": "ادامه",
+            "copy": "کپی",
+            "copy-link": "کپی پیوند",
+            "copy-uuid": "کپی UUID",
+            "create": "ایجاد",
+            "delete": "حذف",
+            "disable": "غیرفعالسازی",
+            "documentation": "مستندات",
+            "download": "دانلود",
+            "edit": "ویرایش",
+            "enable": "فعالسازی",
+            "load-from-github": "بارگذاری از گیت‌هاب",
+            "more-actions": "عملیات بیشتر",
+            "next": "بعدی",
+            "open": "باز کردن",
+            "paste": "جای‌گذاری",
+            "paste-default": "جای‌گذاری پیش‌فرض",
+            "refresh": "تازه‌سازی",
+            "remove": "حذف کردن",
+            "remove-users": "پاک کردن کاربران",
+            "rename": "تغییر نام",
+            "reset": "بازنشانی",
+            "reset-traffic": "بازنشانی ترافیک",
+            "save": "ذخیره",
+            "search": "جستجو",
+            "select": "انتخاب",
+            "select-all": "انتخاب همه",
+            "try-again": "تلاش دوباره",
+            "update": "به‌روزرسانی",
+            "view": "مشاهده"
+        },
+        "field": {
+            "active-sessions": "نشست‌های فعال",
+            "address": "آدرس",
+            "all": "همه",
+            "billing-node": "نود صورتحساب",
+            "color": "رنگ",
+            "created-at": "ساخته شده در",
+            "creation": "ایجاد",
+            "description": "توضیحات",
+            "first-connected-at": "اولین اتصال",
+            "inbounds": "اینباندها",
+            "inbounds-hosts": "ورودی‌ها و هاست‌ها",
+            "interface": "رابط",
+            "internal-squads": "اسکوادهای داخلی",
+            "ip-address": "آدرس IP",
+            "ip-addresses": "آدرس‌های IP",
+            "logo-url": "آدرس URL لوگو",
+            "name": "اسم",
+            "os-version": "نسخه سیستم‌عامل",
+            "password": "گذرواژه",
+            "platform": "پلتفرم",
+            "port": "پورت",
+            "request-at": "درخواست شده در",
+            "shared-lists": "فهرست‌های مشترک",
+            "status": "وضعیت",
+            "subscription-request-history": "تاریخچه درخواست اشتراک",
+            "subscription-url": "لینک اشتراک",
+            "svg-icon": "آیکون SVG",
+            "system": "سیستم",
+            "tag": "برچسب",
+            "tags": "برچسب‌ها",
+            "untagged": "بدون برچسب",
+            "today": "امروز",
+            "total": "مجموع",
+            "total-traffic": "مصرف کل ترافیک",
+            "updated-at": "به‌روزرسانی شده در",
+            "usage-stats": "آمار مصرف",
+            "user-agent": "عامل کاربر",
+            "user-status": "وضعیت کاربر",
+            "username": "نام کاربر"
+        },
+        "message": {
+            "click-to-see-all": "برای دیدن همه کلیک کنید",
+            "configured": "پیکربندی‌شده",
+            "confirm-action-description": "آیا از انجام دادن این عملیات مطمئن هستید؟ این کار غیرقابل بازگشت است.",
+            "copied": "کپی شد",
+            "error": "خطا",
+            "event-sent": "رویداد ارسال شد",
+            "invalid-json": "JSON نامعتبر",
+            "last-error-message": "آخرین پیام خطا",
+            "loading": "در حال بارگذاری",
+            "no-config-profiles-available": "هیچ پروفایل پیکربندی‌ای موجود نیست",
+            "no-data-available": "داده‌ای در دسترس نیست",
+            "no-data-available-for-the-selected-period": "داده‌ای برای دوره انتخاب‌شده در دسترس نیست",
+            "no-inbound-selected": "هیچ اینباندی انتخاب نشده است",
+            "no-profile-selected": "هیچ پروفایلی انتخاب نشده",
+            "no-profiles-or-inbounds-found": "هیچ پروفایل یا اینباندی یافت نشد",
+            "not-set": "تنظیم نشده",
+            "nothing-found": "چیزی یافت نشد",
+            "operation-completed": "عملیات انجام شد",
+            "overdue": "موعد گذشته",
+            "processing": "در حال پردازش",
+            "unknown-error": "درخواست با خطای ناشناخته مواجه شد.",
+            "search-profiles-or-inbounds": "جستجوی پروفایل یا اینباند...",
+            "selected": "انتخاب‌شده: {{count}}",
+            "success": "با موفقیت انجام شد",
+            "warning": "هشدار"
+        }
+    },
+    "bandwidth-metrics": {
+        "current-year": "امسال",
+        "from-last-year": "در مقایسه با سال پیش",
+        "calendar-month": "این ماه تقویمی",
+        "last-30-days": "30 روز اخیر",
+        "from-last-month": "در مقایسه با ماه پیش",
+        "last-7-days": "7 روز اخیر",
+        "from-last-week": "در مقایسه با هفته قبل",
+        "from-yesterday": "در مقایسه با دیروز"
+    },
+    "online-metrics": {
+        "never-online": "آنلاین نشده",
+        "online-this-week": "آنلاین در این هفته",
+        "online-today": "آنلاین در امروز",
+        "online-now": "آنلاین"
+    },
+    "simple-metrics": {
+        "ram-usage": "مصرف رم",
+        "total-online-on-nodes": "کل افراد آنلاین روی تمام نودها"
+    },
+    "config-editor-actions": {
+        "feature": {
+            "format": "فرمت",
+            "failed-to-save-invalid-json": "به دلیل JSON نامتعتبر ذخیره نشد.",
+            "save-anyway": "ذخیره کانفیگ نامعتبر",
+            "save-anyway-description": "این آیا از ذخیره کانفیگ نامعتبر مطمئن هستید؟ این عملیات ممکن است باعث بروز مشکلاتی در نرم‌افزار شود. اگر مطمئن هستید، روی \"ذخیره کانفیگ نامعتبر\" کلیک کنید.",
+            "tools": "ابزارها",
+            "copy-all-content": "کپی همهٔ محتوا",
+            "cut-selection": "بریدن محتوای انتخاب شده",
+            "paste-from-clipboard": "جای‌گذاری از کلیپ‌بورد",
+            "generate-keypair": "ایجاد جفت‌کلید"
+        }
+    },
+    "action-group": {
+        "feature": {
+            "reset-table": "بازنشانی جدول",
+            "clear-filters": "پاک کردن فیلترها"
+        }
+    },
+    "use-table-columns": {
+        "last-connected-node": "آخرین نود متصل شده",
+        "expire-at": "تاریخ انقضا",
+        "data-usage": "مصرف داده",
+        "sub-link": "لینک ساب",
+        "traffic-reset": "بازنشانی ترافیک",
+        "never": "هرگز",
+        "online-at": "متصل در",
+        "lifetime-used": "مصرف کل",
+        "sub-link-revoked-at": "ساب لینک لفو شده در",
+        "created-at": "ساخته شده در",
+        "internal-squads": "اسکوادهای داخلی",
+        "used-traffic": "ترافیک مصرف‌شده (%)"
+    },
+    "header-buttons": {
+        "feature": {}
+    },
+    "header-action-buttons": {
+        "feature": {
+            "update-external-squads": "به روزرسانی اسکوادهای خارجی",
+            "external-squad-name": "نام اسکواد خارجی",
+            "update-templates": "به روزرسانی الگوها",
+            "template-name": "نام الگو"
+        }
+    },
+    "nodes-header-action-buttons": {
+        "feature": {
+            "restart-all-nodes": "ریستارت کردن تمامی نودها",
+            "search-nodes": "جست‌وجوی نودها",
+            "force-restart-description": "با این روش همه نودها هسته Xray را به صورت اجباری ری‌استارت خواهند کرد",
+            "graceful-restart-description-1": "با این روش درخواست ری‌استارت هسته به همه نودها ارسال خواهد شد اما درصورت یکسان بودن هش نود با هش فعلی ممکن است درخواست اجرا نشود. این، حالت پیشفرض ری‌استارت است",
+            "force": "اجباری",
+            "graceful": "آرام"
+        }
+    },
+    "config-editor": {
+        "widget": {
+            "unsaved-changes": "تغییرات ذخیره نشده",
+            "your-changes-will-be-lost-if-you-leave-this-page-without-saving": "اگر این صفحه را بدون ذخیره تغییرات ترک کنید، تغییرات ایجاد شده از دست خواهند رفت.",
+            "leave": "ترک",
+            "stay": "ماندن"
+        }
+    },
+    "keypair": {
+        "widget": {
+            "generate-key-pair": "ایجاد جفت کلید",
+            "both-keys": "هر دو"
+        }
+    },
+    "create-host-modal": {
+        "widget": {
+            "new-host": "هاست جدید",
+            "please-select-the-config-profile-and-inbound": "لطفا پروفایل پیکربندی و اینباند را انتخاب کنید"
+        }
+    },
+    "edit-host-modal": {
+        "widget": {
+            "edit-host": "ویرایش هاست",
+            "dangling-host-cannot-be-cloned": "نمی‌توان هاست معلق را کلون کرد"
+        }
+    },
+    "create-node-modal": {
+        "widget": {
+            "create-node": "ساخت نود",
+            "back": "بازگشت",
+            "connection-successful": "اتصال موفقیت‌آمیز بود",
+            "connection-failed": "اتصال ناموفق بود",
+            "open-node": "باز کردن نود"
+        }
+    },
+    "edit-node-modal": {
+        "widget": {
+            "edit-node": "ویرایش نود"
+        }
+    },
+    "node-status-badge": {
+        "widget": {
+            "connected": "متصل",
+            "connecting": "در حال اتصال",
+            "disabled": "غیرفعال",
+            "disconnected": "قطع شده"
+        }
+    },
+    "create-user-modal": {
+        "widget": {
+            "user-description": "توضیحات کاربر",
+            "expiry-date": "تاریخ انقضا",
+            "pick-value": "انتخاب مقدار",
+            "traffic-reset-strategy": "دوره بازنشانی ترافیک",
+            "traffic-reset-strategy-description": "هر چند وقت یک بار ترافیک کاربر بازنشانی شود",
+            "username-cannot-be-changed-later": "نام کاربری نمی تواند بعدا تغییر داده شود",
+            "create-user": "ساخت کاربر",
+            "1-month": "+1 ماه",
+            "3-months": "+3 ماه",
+            "1-year": "+1 سال",
+            "2099-year": "سال 2099",
+            "hwid-user-limit-description": "این ویژگی تنها درصورت فعال بودن <highlight>اشتراک ← تنظیمات (محدودیت HWID)</highlight> کار خواهد کرد. <anchor>کسب اطلاعات بیشتر</anchor>",
+            "disable-hwid-limit": "غیرفعالسازی لیمیت HWID",
+            "hwid-device-limit": "لیمیت دستگاه براساس HWID",
+            "expire-at-description": "تاریخ و ساعت منقضی شدن اشتراک کاربر.",
+            "internal-squads-description": "اسکوادهایی که کاربر عضو آن‌ها خواهد بود را مشخص کنید."
+        }
+    },
+    "home-page": {},
+    "user-table": {
+        "widget": {
+            "error-loading-data": "خطا در لود کردن اطلاعات",
+            "table-title": "کاربرها"
+        }
+    },
+    "view-user-modal": {
+        "widget": {
+            "subscription-qr-code": "اشتراک کد QR",
+            "edit-user-headline": "ویرایش کاربر",
+            "subscription-url-description-line-1": "دامنه و مسیر استخراج شده از فایل .env:",
+            "subscription-url-description-line-2": "برای تغییر این مقدار لطفا فایل .env را ویرایش کرده و سپس Remnacust را با این کامند ریستارت کنید:",
+            "management": "مدیریت",
+            "danger-zone": "هشدار",
+            "detailed-info": "اطلاعات دقیق",
+            "accessible-nodes": "نودهای قابل دسترسی",
+            "qr-code": "کد QR"
+        }
+    },
+    "base-host-form": {
+        "remark": "نام",
+        "host": "هاست",
+        "path": "مسیر",
+        "fingerprint": "اثر انگشت",
+        "security-layer": "لایه امنیتی",
+        "tls-transport-layer-security": "TLS (امنیت لایه انتقال)",
+        "none": "هیچ‌کدام",
+        "inbounds-default": "پیش فرض اینباند",
+        "extra-xhttp": "پارامترهای اضافی XHTTP",
+        "xhttp-extra-params": "XHTTP Extra پارامترهای",
+        "address-description-line-1": "آدرس باید یک آدرس IP یا دامنه برای مقصد اتصال باشد.",
+        "address-description-line-2": "در بیشتر موارد، باید به یکی از نود‌های متصل اشاره کند.",
+        "port-description-line-1": "پورت اتصال.",
+        "port-description-line-2": "در بیشتر موارد، باید با پورت اینباند انتخاب‌شده مطابقت داشته باشد.",
+        "sni-description-line-1": "SNI نشان‌دهنده نام سرور است.",
+        "sni-description-line-2": "اگر مشخص نشود، مقدار از کانفیگ اینباند استخراج خواهد شد.",
+        "host-visibility": "قابلیت دیده شدن هاست",
+        "server-description-header": "توضیحات سرور",
+        "server-description-placeholder": "حداکثر 30 کاراکتر",
+        "group-security": "امنیت",
+        "group-transport": "انتقال",
+        "group-subscription": "اشتراک",
+        "group-client": "ویژه کلاینت",
+        "group-advanced": "پیشرفته",
+        "hide-host": "مخفی کردن هاست",
+        "single-domain": "تک‌دامنه",
+        "default-mode-for-one-domain": "حالت پیشفرض برای یک دامنه",
+        "multi-domain": "چند دامنه",
+        "multi-domain-description": "چندین دامنه که با کاما (,) جدا شده‌اند، Remnacust یکی از دامنه‌ها را به صورت تصادفی انتخاب خواهد کرد.",
+        "wildcard-domain": "دامنه wildcard",
+        "wildcard-domain-description": "الگوی wildcard برای دامنه. Remnacust به جای * یک رشته متنی رندوم جایگذاری خواهد کرد",
+        "override-sni-from-address": "بازنویسی SNI از آدرس دامنه",
+        "override-sni-from-address-description": "این گزینه مقدار SNI را با آدرس مشخص شده جایگزین خواهد کرد که برای کانفیگ‌های چند دامنه‌ای و wildcard قابل استفاده می‌باشد",
+        "shuffled-hosts-hover-card": "هاست‌های به هم زده شده در بالای لیست قرار گرفته و به صورت تصادفی مرتب خواهند شد.",
+        "vless-route-description": "از 1 تا 65535، برای غیرفعال‌سازی 0 یا خالی بگذارید",
+        "shuffle-host": "به هم زدن هاست‌ها",
+        "enable-x25519mlkem768": "فعالسازی x25519mlkem768",
+        "pick-nodes-which-resolved-from-this-host-only-visual-assignment": "نودهایی که از طریق این هاست استفاده می‌شوند را انتخاب کنید. (تاثیر عملکردی ندارد و فقط جنبه نمایشی دارد)",
+        "nodes": "نودها",
+        "select-a-xray-json-template": "یکی از الگوهای کانفیگ Json را انتخاب کنید",
+        "xray-json-template": "الگوی کانفیگ Json",
+        "vital-parameters": "پارامترهای حیاتی",
+        "exclude-this-host-from-specific-internal-squads": "این هاست را از اسکوادهای خارجی مشخص حذف کنید",
+        "excluded-internal-squads": "اسکوادهای خارجی حذف شده",
+        "keep-sni-blank": "SNI خالی بماند",
+        "keep-sni-blank-description": "در برخی موارد باید SNI خالی بماند. از این گزینه برای خالی گذاشتن SNI استفاده کنید. توجه داشته باشید که این گزینه بالاترین اولویت را دارد، بنابراین حتی اگر SNI از قبل تنظیم شده باشد، اعمال خواهد شد.",
+        "exclude-from-subscription-type": "حذف از نوع اشتراک",
+        "hidden-host-description": "Remnacust به‌طور پیش‌فرض هاست‌های پنهان را در اشتراک نمی‌گنجاند. این هاست‌ها در Mihomo، Xray-Json Advanced و Raw قابل استفاده‌اند.",
+        "server-description-1": "در کلاینت‌های پشتیبانی‌شده، نام پروتکل (مانند vless) با توضیح واردشده در اینجا جایگزین می‌شود.",
+        "server-description-2": "همه برنامه‌های کلاینت از این ویژگی پشتیبانی نمی‌کنند. برای جزئیات، مستندات برنامه‌های زیر را ببینید.",
+        "supported-clients": "کلاینت‌های پشتیبانی‌شده",
+        "mapper": "نگاشت",
+        "internal-squads-mode-exclude": "حذف از دسترسی",
+        "internal-squads-mode-allow-only": "فقط اجازه به",
+        "allowed-internal-squads": "اسکوادهای داخلی مجاز",
+        "allow-this-host-only-for-specific-internal-squads": "نمایش این هاست فقط به اسکوادهای داخلی انتخاب‌شده",
+        "group-assignment": "اختصاص",
+        "access-mode": "حالت دسترسی",
+        "override-type": "نوع بازنویسی",
+        "sni": "SNI",
+        "alpn": "ALPN",
+        "vless-route-id": "شناسه مسیر VLESS",
+        "mux-params": "MUX",
+        "sockopt-params": "پارامترهای SockOpt",
+        "final-mask-params": "پارامترهای Final Mask",
+        "pinned-peer-cert-sha256": "گواهی ثابت طرف مقابل",
+        "verify-peer-cert-by-name": "تأیید گواهی طرف مقابل بر اساس نام",
+        "mihomo-x25519": "Mihomo X25519",
+        "mihomo-ip-version": "نسخه IP در Mihomo",
+        "no-options-title": "گزینه دیگری تنظیم نشده است",
+        "no-options-description": "این هاست با ورودی و تنظیمات اصلی بالا کار می‌کند. برای تغییر نحوه تولید یا کاربران مجاز، گزینه‌ای اضافه کنید.",
+        "no-bulk-options-title": "تغییری در صف نیست",
+        "no-bulk-options-description": "هر گزینه افزوده‌شده روی همه هاست‌های انتخاب‌شده اعمال می‌شود. خالی گذاشتن آن، فیلد مربوطه را در همه پاک می‌کند.",
+        "bulk-option-will-be-cleared": "روی همه هاست‌های انتخاب‌شده پاک می‌شود.",
+        "leave-field-untouched": "این فیلد تغییر نکند",
+        "options": "گزینه‌ها"
+    },
+    "base-node-form": {
+        "country": "کشور",
+        "select-country": "انتخاب کشور",
+        "internal-name": "نام داخلی",
+        "internal-name-placeholder": "برای مثال US-NY-Node-01",
+        "e-g-example-com": "مثلا example.com",
+        "traffic-tracking": "پایش مصرف ترافیک",
+        "limit": "حد مصرف",
+        "reset-day": "روز صفر کردن ترافیک",
+        "e-g-1-31": "مثلا 1-31",
+        "notify-percent": "اطلاع‌رسانی در چند درصد",
+        "e-g-50": "مثلا 50",
+        "consumption-m-line-1": "ضریب مشخص شده را به مقدار مصرف ترافیک اعمال می‌کند (به عنوان مثال اگر ضریب مصرف 0.5 باشد، مقدار مصرف نصف خواهد شد. 1.0 = نرمال، 2.0 = مصرف دوبل)",
+        "consumption-m-line-2": "به زبان ساده اگر محدودیت مصرف یک کاربر 1 گیگابایت باشد، با ضریب 2.0 کاربر فقط می‌تواند به اندازه 500 مگابایت از سرور استفاده (مصرف واقعی) کند و سپس اکانت ایشان محدود می‌شود.",
+        "node-vitals": "اطلاعات اصلی نود",
+        "consumption": "مصرف",
+        "core-configuration": "پیکربندی هسته",
+        "tracking-and-billing": "پایش و صورتحساب‌ها",
+        "management": "مدیریت"
+    },
+    "home": {
+        "page": {
+            "online-stats": "آمار آنلاین شدن کاربرها",
+            "bandwidth": "پهنای باند",
+            "remnawave-usage": "مصرف منابع Remnacust",
+            "process-details": "مشخصات Process"
+        },
+        "runtime-info": {
+            "title": "راهنمای سنجه‌های زمان اجرا",
+            "subtitle": "معنای دقیق اعداد کارت فرایند",
+            "intro": "هر کارت تصویری زنده از یک <highlight>فرایند Remnacust</highlight> نشان می‌دهد. این راهنما معنای سنجه‌ها و زمان توجه به آن‌ها را توضیح می‌دهد.",
+            "instance-types-title": "انواع فرایند",
+            "instance-types-description": "Remnacust از چند فرایند تخصصی تشکیل شده است؛ هرکدام وظیفه، حافظه و حلقه رویداد خود را دارند.",
+            "api-description": "همه درخواست‌های HTTP داشبورد و مسیرهای اشتراک را پردازش می‌کند. این <highlight>فرایند اصلی پاسخ‌گو به کاربران</highlight> است و تقریباً تمام درخواست‌های پنل و اشتراک اینجا پاسخ می‌گیرند.",
+            "scheduler-description": "یک <highlight>توزیع‌کننده مبتنی بر cron</highlight> است. خودش کاری اجرا نمی‌کند؛ در زمان مقرر، وظیفه را در صف قرار می‌دهد تا <highlight>پردازشگر</highlight> آن را بردارد.",
+            "processor-description": "<highlight>کارگر</highlight> واقعی است. وظایف صف را اجرا می‌کند: <highlight>بررسی سلامت نود</highlight>، <highlight>تجمیع ترافیک</highlight> هر کاربر و نود و کارهای طولانی دیگری که نباید API را مسدود کنند.",
+            "memory-description": "محل نگهداری داده‌های کاری فرایند. همه مقادیر به‌صورت زنده توسط Node.js گزارش می‌شوند.",
+            "heap-description": "حافظه اشیای JavaScript که <highlight>V8</highlight>، موتور Node.js، مدیریت می‌کند. به شکل <highlight>مصرف‌شده / کل</highlight> نمایش داده می‌شود. نسبت بالا <highlight>طبیعی و سالم</highlight> است؛ V8 تا نیاز واقعی، حافظه را نگه می‌دارد، پس <highlight>۱۰۰ / ۱۲۰ MB</highlight> طبیعی است و هشدار نیست.",
+            "rss-description": "<highlight>اندازه مجموعه مقیم</highlight>: کل حافظه فیزیکی اختصاص‌یافته سیستم‌عامل به فرایند، شامل هیپ، کد بومی و کتابخانه‌های مشترک. بهترین شاخص منفرد برای <highlight>RAM واقعاً مصرف‌شده فرایند</highlight> است.",
+            "external-description": "حافظه خارج از V8 که اشیای بومی C++ متصل به JavaScript نگه می‌دارند؛ معمولاً <highlight>سوکت‌های باز</highlight>، <highlight>جریان‌ها</highlight> و داده‌های مبتنی بر Buffer.",
+            "array-buffers-description": "حافظه اختصاص‌یافته به نمونه‌های <highlight>ArrayBuffer</highlight> و <highlight>Buffer</highlight> برای داده باینری خام؛ زیرمجموعه <highlight>حافظه خارجی</highlight> محسوب می‌شود.",
+            "event-loop-description": "سلامت حلقه تک‌رشته‌ای که کارهای ناهمگام Node.js را پیش می‌برد. مسدود شدن آن کل فرایند را متوقف می‌کند.",
+            "delay-description": "میانگین فاصله زمانی تیک‌های پیاپی حلقه رویداد. مقدار سالم نزدیک <highlight>۰ تا ۲ میلی‌ثانیه</highlight> است. مقدار بالاتر نشان‌دهنده مسدود شدن حلقه توسط کار همگام طولانی است.",
+            "p99-description": "<highlight>صدک ۹۹</highlight> تأخیر حلقه رویداد در بازه اندازه‌گیری. تأخیرهای شدید پنهان در میانگین را نشان می‌دهد و برای یافتن جهش‌های مقطعی مفید است.",
+            "active-handles-description": "منابع بادوامی که حلقه را فعال نگه می‌دارند: <highlight>سوکت‌های باز</highlight>، <highlight>زمان‌سنج‌ها</highlight> و <highlight>توصیفگرهای فایل</highlight>. مقدار ثابت طبیعی است؛ <highlight>رشد نامحدود</highlight> نشانه جدی نشت است."
+        }
+    },
+    "login-form": {
+        "feature": {
+            "sign-in": "ورود",
+            "your-password": "گذرواژه شما"
+        }
+    },
+    "statistic-nodes": {
+        "component": {
+            "current-month": "ماه جاری",
+            "7-days": "۷ روز",
+            "14-days": "۱۴ روز",
+            "30-days": "۳۰ روز",
+            "60-days": "۶۰ روز",
+            "90-days": "۹۰ روز",
+            "180-days": "۱۸۰ روز",
+            "total-traffic": "ترافیک کل",
+            "total-traffic-placeholder": "ترافیک کل: {{totalTraffic}}",
+            "top-nodes": "نودهای پرمصرف",
+            "node": "نود",
+            "traffic": "ترافیک",
+            "3-days": "۳ روز"
+        }
+    },
+    "get-expiration-text": {
+        "util": {
+            "expires-in": "در {{expiration}} منقضی می‌شود",
+            "expired": "در {{expiration}} منقضی شده",
+            "unknown": "نامعلوم"
+        }
+    },
+    "reset-data": {
+        "constants": {
+            "reset-monthly": "بازنشانی ماهانه",
+            "reset-weekly": "بازنشانی هفتگی",
+            "reset-daily": "بازنشانی روزانه",
+            "never-reset": "هیچ‌گاه بازنشانی نشود",
+            "reset-monthly-by-creation-date": "بازنشانی ماهانه (بر اساس تاریخ ایجاد)"
+        }
+    },
+    "data-usage": {
+        "column": {
+            "monthly": "ماهانه",
+            "weekly": "هفتگی",
+            "daily": "روزانه"
+        }
+    },
+    "get-time-ago": {
+        "util": {
+            "invalid-date": "تاریخ نامعتبر",
+            "not-connected-yet": "هنوز متصل نشده"
+        }
+    },
+    "bulk-user-actions-modal": {
+        "widget": {
+            "user-deletion-description": "حذف تمامی کاربران با وضعیت انتخاب شده. اگر کاربران با وضعیت \"فعال یا Active\" را حذف می‌کنید، باید تمامی نودها را برای اعمال تغییرات مجدداً راه‌اندازی کنید.",
+            "select-status": "حذف کردن بر اساس وضعیت"
+        }
+    },
+    "register-form": {
+        "feature": {
+            "generate": "ایجاد و کپی کردن رمز",
+            "confirm-password": "تایید گذرواژه",
+            "sign-up": "ثبت نام",
+            "password-copied": "گذرواژه کپی شد",
+            "password-copied-message": "گذرواژه در کلیپ‌بورد کپی شد",
+            "password-copied-error": "کپی کردن گذرواژه به کلیپ‌بورد ناموفق بود",
+            "passwords-do-not-match": "پسوردها مطابقت ندارند",
+            "password-too-short": "حداقل 24 کاراکتر",
+            "register-description": "برای شروع یک اکانت سوپرادمین ایجاد کنید",
+            "registration": "ثبت نام"
+        }
+    },
+    "remarks-manager": {
+        "widget": {
+            "enter-remark": "ریمارک را وارد نمایید"
+        }
+    },
+    "subscription-settings": {
+        "widget": {
+            "validation-error": "خطای اعتبارسنجی",
+            "main-settings": "تنظیمات اصلی",
+            "you-must-add-at-least-one-remark-with-text": "باید حداقل یک ریمارک وارد نمایید",
+            "user-status-remarks-description": "درصورتی که کاربر منقضی، محدود یا غیرفعال شده باشد مقادیر زیر در اشتراک او نمایش داده خواهند شد",
+            "user-status-remarks-description-line-2": "می‌توانید برای هر وضعیت چند ریمارک ایجاد کنید",
+            "serve-json-at-base-subscription": "ارائه JSON در لینک پایه پیشفرض",
+            "serve-json-description": "درصورت پشتیبانی نرم‌افزار، بدون نیاز به قرار دادن /json در انتهای لینک، اشتراک JSON برای آن ارسال خواهد شد",
+            "custom-remarks": "ریمارک‌های سفارشی"
+        }
+    },
+    "multi-select-hosts": {
+        "feature": {
+            "dangling-hosts-skipped": "{{count}} هاست بدون ارتباط رد شد و کپی نشد."
+        }
+    },
+    "edit-many-hosts-drawer": {
+        "confirm-title": "تأیید به‌روزرسانی گروهی",
+        "confirm-description": "فیلدهای زیر برای {{count}} هاست به‌روز می‌شوند:",
+        "no-changes-title": "تغییری برای به‌روزرسانی نیست",
+        "no-changes-description": "هیچ فیلدی را تغییر نداده‌اید."
+    },
+    "delete-all-users-by-status": {
+        "feature": {
+            "deleting-users": "در حال حذف کاربران..."
+        }
+    },
+    "bulk-all-user-actions-tabs": {
+        "update": {
+            "tab": {
+                "feature": {
+                    "select-status": "انتخاب وضعیت",
+                    "update-users": "به‌روزرسانی کاربران"
+                }
+            }
+        },
+        "actions": {
+            "tab": {
+                "feature": {
+                    "reset-traffic-description": "ترافیک مصرفی را برای همه کاربران انتخاب‌شده به صفر بازنشانی می‌کند"
+                }
+            }
+        },
+        "danger": {
+            "tab": {
+                "feature": {
+                    "delete-users-by-status": "حذف کاربران بر اساس وضعیت",
+                    "delete-users-by-status-description": "همه کاربران با وضعیت انتخاب‌شده را به‌طور دائم حذف می‌کند"
+                }
+            }
+        }
+    },
+    "bulk-user-actions": {
+        "actions": {
+            "tab": {
+                "feature": {
+                    "revoke-subscription": "لغو اشتراک",
+                    "perform-action-on-users": "انجام اقدامات برای {{usersCount}} کاربر انتخاب‌شده",
+                    "revokes-subscription-for-all-selected-users": "اشتراک را برای همه کاربران انتخاب‌شده لغو می‌کند",
+                    "specify-internal-squads-that-will-be-assigned-to-the-user": "اسکوادهایی که این کاربر عضو آن‌ها خواهد شد را مشخص کنید",
+                    "extend-expiration-date": "تمدید زمان انقضا",
+                    "enter-the-number-of-days-to-extend-the-expiration-date": "تعداد روزهایی که به زمان اشتراک افزوده می‌شوند.",
+                    "extend-days": "روزهای تمدید ",
+                    "extend": "تمدید",
+                    "extend-expiration-date-description": "افزودن به تعداد روزهای باقی مانده تا انقضای کاربرهای انتخاب شده."
+                }
+            }
+        },
+        "danger": {
+            "tab": {
+                "feature": {
+                    "delete-users": "حذف کاربران",
+                    "permanently-deletes-all-selected-users-and-their-data": "همه کاربران انتخاب‌شده و داده‌های آنها را به‌طور دائم حذف می‌کند"
+                }
+            }
+        }
+    },
+    "get-user-subscription-links": {
+        "feature": {
+            "connection-keys": "کلیدهای اتصال"
+        }
+    },
+    "active-sessions-drawer": {
+        "widget": {
+            "requirements": "پیش‌نیازها",
+            "warning-activity": "IP زمانی نمایش داده می‌شود که <highlight>هسته Xray</highlight>، <highlight>اتصال را باز</highlight> بداند. بنابراین بعضی IPهای نمایش‌داده‌شده شاید دیگر متصل نباشند. نماد <highlight>ساعت</highlight> زمان آخرین فعالیت IP را نشان می‌دهد.",
+            "warning-version": "نود Remnacust نسخه <highlight>{{version}}</highlight> یا بالاتر",
+            "warning-docker": "مقادیر زیر را به <highlight>docker-compose.yml</highlight> نود (در /opt/remnanode) اضافه کنید",
+            "warning-patience": "دریافت اطلاعات ممکن است زمانبر باشد، این پنجره را نبندید!",
+            "warning-n-plus-one": "<highlight>توجه</highlight>: به‌دلیل نبود دریافت گروهی داده، این درخواست <highlight>N+1</highlight> فراخوانی به API ‏gRPC <highlight>هسته Xray</highlight> انجام می‌دهد. <highlight>N</highlight> تعداد کاربران آنلاین آن نود است.",
+            "fetching": "درحال دریافت نشست‌های فعال ...",
+            "progress": "{{completed}} تا از {{total}} نود تکمیل شده",
+            "job-failed-description": "دریافت نشست‌های فعال موفقیت‌آمیز نبود",
+            "active-ips-across-nodes": "آدرس‌های آیپی فعال",
+            "distinct-ips": "آیپی‌های مجزا"
+        }
+    },
+    "detailed-user-info-drawer": {
+        "widget": {
+            "detailed-user-info": "اطلاعات دقیق کاربر",
+            "user-information": "اطلاعات کاربر",
+            "short-uuid": "شناسه (UUID) کوتاه",
+            "email": "ایمیل",
+            "telegram-id": "شناسه تلگرام",
+            "traffic-information": "اطلاعات ترافیک",
+            "used-traffic": "ترافیک استفاده‌شده",
+            "lifetime-used-traffic": "ترافیک استفاده‌شده در طول عمر",
+            "traffic-limit": "محدودیت ترافیک",
+            "traffic-limit-strategy": "استراتژی محدودیت ترافیک",
+            "last-traffic-reset": "آخرین بازنشانی ترافیک",
+            "subscription-information": "اطلاعات اشتراک",
+            "expires-at": "زمان انقضا",
+            "revoked-at": "لغو شده در",
+            "connection-information": "اطلاعات اتصال",
+            "trojan-password": "رمز عبور تروجان",
+            "ss-password": "رمز عبور SS",
+            "last-online": "آخرین آنلاین",
+            "last-connected-node": "آخرین نود متصل‌شده",
+            "timestamps": "مهرهای زمانی",
+            "active-internal-squads": "اسکوادهای داخلی فعال"
+        }
+    },
+    "subscription-tabs": {
+        "widget": {
+            "show-custom-remarks": "نمایش توضیحات سفارشی",
+            "show-custom-remark-description-line-2": "اگر این گزینه غیرفعال باشد - کاربران منقضی‌شده، محدودشده و غیرفعال به جای توضیحات سفارشی زیر، لیست واقعی هاست‌ها را دریافت خواهند کرد.",
+            "additional-response-headers": "سرآیندهای پاسخ",
+            "headers-that-will-be-sent-with-subscription-content": "هدرهای اضافی که می‌خواهید همراه با محتوای اشتراک ارسال شوند را مشخص کنید.",
+            "location-template-hint": "بدون TEG مقدار سهمیهٔ هاست است؛ با TEG سهمیهٔ برچسب یا، در نبود برچسب، هاست است. MB/GB فقط واحد محاسبه است و نتیجه تنها یک عدد دارد.",
+            "randomize-hosts": "هاست رندوم",
+            "randomize-hosts-description": "استفاده از مقادیر رندوم برای هاست در اشتراک‌ها",
+            "additional-options": "تنظیمات بیشتر",
+            "configure-additional-subscription-options": "پیکربندی تنظیمات اضافی"
+        }
+    },
+    "nodes-realtime-metrics": {
+        "widget": {
+            "download-speed": "سرعت دریافت",
+            "upload-speed": "سرعت ارسال"
+        }
+    },
+    "internal-squads-usage-drawer": {
+        "info": {
+            "title": "روش محاسبه مصرف",
+            "summary": "اعضای اسکواد داخلی را که در بازه انتخاب‌شده حداقل آستانه تعیین‌شده مصرف کرده‌اند، همراه <b>حجم کل</b> هر نفر برمی‌گرداند.",
+            "nodes-title": "کدام نودها محاسبه می‌شوند",
+            "nodes-intro": "اسکواد مستقیماً به نودها متصل نیست؛ ارتباط از ورودی‌ها به دست می‌آید:",
+            "nodes-step-1": "همه ورودی‌های متعلق به اسکواد داخلی انتخاب می‌شوند.",
+            "nodes-step-2": "برای هر ورودی، پروفایل‌های پیکربندی مربوطه مشخص می‌شوند.",
+            "nodes-step-3": "نود زمانی محاسبه می‌شود که چنین پروفایلی در آن <b>فعال</b> باشد و آن ورودی روی خود نود فعال شده باشد.",
+            "nodes-outro": "پس فقط نودهایی محاسبه می‌شوند که عضو اسکواد <hl>همین حالا واقعاً می‌تواند به آن‌ها متصل شود</hl>. اگر هیچ ورودی اسکواد روی نودی در دسترس نباشد، فهرست خالی است.",
+            "traffic-title": "روش محاسبه ترافیک",
+            "traffic-granularity": "آمار با دقت <b>روزانه</b> ذخیره می‌شود: هر رکورد = کاربر + نود + روز. داده نود تقریباً <hl>هر ۲ دقیقه</hl> در پایگاه داده نوشته می‌شود؛ آمار امروز تقریباً زنده و با حداکثر چند دقیقه تأخیر است.",
+            "traffic-sum": "رکوردهای روزانه هر نود برای هر عضو از ابتدای <code>start</code> تا پایان <code>end</code>، شامل هر دو تاریخ و به وقت UTC، جمع می‌شوند.",
+            "traffic-threshold": "فقط کاربران با مجموع <b>≥ minTotalBytes</b> در پاسخ قرار می‌گیرند. حجم به صورت <hl>بایت خام</hl> و بدون گرد کردن برمی‌گردد.",
+            "caveats-title": "نکات مهم",
+            "caveats-per-node": "ترافیک برای <b>کل نود</b> محاسبه می‌شود، نه هر ورودی. اگر نود بین اسکوادها مشترک باشد، مجموع کاربر شامل همه ترافیک او روی آن نود، حتی از ورودی اسکوادهای دیگر است. این <hl>حد بالا</hl> است، نه انتساب دقیق به اسکواد.",
+            "caveats-membership": "عضویت اسکواد و مجموعه نودها <b>هنگام درخواست</b> تعیین می‌شوند، نه بر اساس تاریخچه. عضو خارج‌شده در پاسخ نیست؛ عضو جدید همه مصرف دوره، حتی پیش از عضویت را نشان می‌دهد. تغییر پروفایل فعال نود نیز همین اثر را دارد.",
+            "caveats-sorting": "فهرست بر اساس <b>شناسه کاربر</b> مرتب است، نه حجم. با تغییر زنده ترافیک، داده‌ها بین صفحه‌ها ممکن است جابه‌جا شوند؛ برای یافتن مصرف‌کنندگان زیاد، به‌جای خواندن همه، آستانه <code>minTotalBytes</code> تعیین کنید."
+        }
+    },
+    "get-hwid-user-devices": {
+        "feature": {
+            "unknown": "ناشناخته",
+            "model": "مدل",
+            "added": "اضافه شده در",
+            "delete-device": "حذف دستگاه",
+            "delete-device-confirmation": "این دستگاه حذف شود؟ اگر نودی در دسترس نباشد، حذف ممکن است کامل نشود؛ فهرست به‌روزشده را بررسی کنید.",
+            "devices": "دستگاه‌ها",
+            "hwid-devices": "دستگاه‌های HWID",
+            "delete-all-devices": "حذف همه دستگاه‌های مسدودنشده",
+            "delete-unblocked-confirmation": "همه دستگاه‌های مسدودنشده حذف شوند؟ دستگاه‌های مسدودشده باقی می‌مانند و می‌توان آن‌ها را جداگانه حذف کرد.",
+            "block-scope": "مسدود کردن، ارائه اشتراک به این HWID را متوقف می‌کند. برای قطع نشست‌های فعال VPN، مقدار XERA_PERSONAL_SUBSCRIPTIONS=true را در محیط پنل تنظیم کنید و از نودهای سازگار استفاده کنید. با کلیدهای مشترک، ترافیک فعلی ممکن است ادامه یابد."
+        }
+    },
+    "headers-manager": {
+        "widget": {
+            "key": "کلید",
+            "value": "مقدار",
+            "add-header": "افزودن هدر"
+        }
+    },
+    "template-selector": {
+        "search-templates": "جست‌وجوی قالب‌ها",
+        "official-templates": "قالب‌های رسمی",
+        "author-templates": "{{author}} قالب‌های",
+        "modal": {
+            "load-template": "بارگذاری قالب"
+        },
+        "add-template": "افزودن قالب"
+    },
+    "use-download-template": {
+        "failed-to-load-template": "خطا هنگام بارگذاری قالب",
+        "template-loaded": "قالب مورد نظر بارگذاری شد",
+        "template-name-has-been-loaded-into-the-editor": "وارد ویرایشگر شده‌است {{name}}",
+        "load-failed": "بارگذاری ناموفق",
+        "failed-to-load-template-please-try-again": "بارگذاری قالب ناموفق بود، لطفا مجدد تلاش کنید",
+        "select-template-to-load": "قالب مورد نظر خود را انتخاب کنید"
+    },
+    "pm2-metrics": {
+        "total-processes": "تعداد کل Processها",
+        "total-memory": "کل رم مصرفی"
+    },
+    "dashboard-ui": {
+        "heap-used": "حافظه Heap مصرف‌شده",
+        "avg-event-loop": "میانگین تأخیر حلقه رویداد",
+        "total-ram": "کل حافظه RAM",
+        "active": "فعال",
+        "expired": "منقضی‌شده",
+        "limited": "محدودشده",
+        "disabled": "غیرفعال",
+        "runtime": "فرایندها",
+        "canvases": "بوم‌ها",
+        "backups": "نسخه‌های پشتیبان"
+    },
+    "internal-squads-grid": {
+        "widget": {
+            "no-internal-squads": "هیچ اسکواد داخلی‌ای وجود ندارد",
+            "create-your-first-internal-squad-to-get-started": "برای شروع، اولین اسکواد داخلی خود را ایجاد کنید",
+            "delete-squad": "حذف اسکواد",
+            "users": "کاربران"
+        }
+    },
+    "config-profiles-grid": {
+        "widget": {
+            "no-config-profiles": "هیچ پروفایل پیکربندی‌ای وجود ندارد",
+            "create-your-first-config-profile-to-get-started": "برای شروع، اولین پروفایل پیکربندی خود را ایجاد کنید",
+            "delete-profile": "حذف پروفایل",
+            "nodes": "نودها",
+            "quick-view": "نمای سریع",
+            "xray-config": "Xray کانفیگ"
+        }
+    },
+    "view-infra-provider": {
+        "drawer": {
+            "widget": {
+                "infra-provider": "ارائه‌دهنده تجهیزات",
+                "name-description": "نام ارائه‌دهنده. این نام برای شناسایی ارائه‌دهنده در رابط کاربری استفاده می‌شود.",
+                "enter-provider-name": "نام ارائه‌دهنده را وارد کنید",
+                "favicon-link": "لینک Favicon",
+                "enter-favicon-link": "لینک Favicon را وارد کنید",
+                "favicon-link-description": "لینک favicon، لینک نماد ارائه‌دهنده است که در رابط کاربری نمایش داده می‌شود. فقط نام دامنه را وارد کنید.",
+                "login-url": "آدرس ورود",
+                "enter-login-url": "آدرس ورود را وارد کنید",
+                "login-url-description": "آدرس ورود صفحه لاگین ارائه‌دهنده است و برای دسترسی سریع به آن استفاده می‌شود."
+            }
+        }
+    },
+    "update-billing-date-modal": {
+        "widget": {
+            "update-billing-date": "به‌روزرسانی تاریخ صورتحساب",
+            "current-date": "تاریخ فعلی",
+            "new-date": "تاریخ جدید",
+            "tomorrow": "فردا",
+            "next-month": "ماه بعد"
+        }
+    },
+    "infra-providers-table": {
+        "widget": {
+            "no-providers-found": "هیچ ارائه‌دهنده‌ای یافت نشد."
+        }
+    },
+    "infra-billing-records-table": {
+        "widget": {
+            "no-billing-records-found": "هیچ رکورد صورتحسابی یافت نشد."
+        }
+    },
+    "infra-billing-nodes": {
+        "widget": {
+            "no-nodes-found": "هیچ نودی یافت نشد.",
+            "add-a-node": "افزودن نود",
+            "update-multiple-nodes": "به‌روزرسانی چند نود"
+        }
+    },
+    "create-infra-billing-record": {
+        "modal": {
+            "widget": {
+                "please-select-a-provider": "لطفاً یک ارائه‌دهنده انتخاب کنید",
+                "bill-record": "رکورد صورتحساب",
+                "billed-at": "تاریخ صورتحساب",
+                "the-date-and-time-when-the-bill-was-paid": "تاریخ و زمان پرداخت صورتحساب.",
+                "payment-amount-usd": "مبلغ پرداختی (دلار)",
+                "amount": "مقدار"
+            }
+        }
+    },
+    "create-infra-billing-node": {
+        "modal": {
+            "widget": {
+                "please-select-a-provider-and-billing-node": "لطفاً یک ارائه‌دهنده و نود صورتحساب انتخاب کنید",
+                "next-billing-at": "صورتحساب بعدی در",
+                "next-billing-at-description": "تاریخ و زمانی که نود صورتحساب بعدی صادر می‌شود. Remnacust شما را مطلع خواهد کرد.",
+                "existing": "موجود",
+                "custom": "سفارشی",
+                "custom-name-description": "وقتی نود تحت مدیریت Remnacust نیست، نام سفارشی استفاده کنید."
+            }
+        }
+    },
+    "active-nodes-list": {
+        "modal": {
+            "shared": {
+                "this-profile-is-not-active-on-any-nodes": "این پروفایل روی هیچ نودی فعال نمی‌باشد"
+            }
+        }
+    },
+    "config-profile-card": {
+        "shared": {
+            "active-on-nodes": "فعال روی نودها"
+        },
+        "widget": {
+            "loading-computed-config-profile": "درحال بارگذاری کانفیگ محاسبه‌شده ...",
+            "computed-config-profile-loaded-successfully": "کانفیگ محاسبه‌شده با موفقیت بارگذاری شد",
+            "the-computed-config-profile-description": "کانفیگ محاسبه‌شده نشان‌دهنده کانفیگ نهایی پس از جایگذاری مقادیر اسنیپت‌ها می‌باشد.",
+            "view-computed": "نشان دادن کانفیگ ‌محاسبه‌شده"
+        }
+    },
+    "flat-inbound-checkbox-card": {
+        "shared": {
+            "inbound-config-inbound-tag": "پیکربندی اینباند: {{inboundTag}}"
+        }
+    },
+    "virtualized-flat-inbounds-list": {
+        "shared": {
+            "no-inbounds-found": "هیچ اینباندی یافت نشد"
+        }
+    },
+    "select-billing-node": {
+        "shared": {
+            "no-billing-nodes-available": "هیچ نود صورتحسابی موجود نیست",
+            "select-the-billing-node": "نود صورتحساب را انتخاب کنید.",
+            "select-billing-node": "انتخاب نود صورتحساب..."
+        }
+    },
+    "select-infra-provider": {
+        "shared": {
+            "infrastructure-provider": "ارائه‌دهنده تجهیزات",
+            "no-providers-available": "هیچ ارائه‌دهنده‌ای موجود نیست",
+            "select-the-infrastructure-provider": "ارائه‌دهنده تجهیزات را انتخاب کنید.",
+            "select-provider": "انتخاب ارائه‌دهنده..."
+        }
+    },
+    "internal-squads-list": {
+        "widget": {
+            "search-internal-squads": "جستجوی اسکوادهای داخلی...",
+            "no-squads-found": "هیچ اسکوادی یافت نشد"
+        }
+    },
+    "user-accessible-nodes": {
+        "modal": {
+            "widget": {
+                "user-accessible-nodes": "نودهای قابل دسترس برای کاربر"
+            }
+        }
+    },
+    "internal-squads": {
+        "drawer": {
+            "widget": {
+                "config-profiles": "پروفایل‌های پیکربندی",
+                "flat-list": "لیست ساده",
+                "selected": "انتخاب شده",
+                "unselected": "انتخاب نشده",
+                "edit-internal-squad": "ویرایش اسکواد",
+                "selected-inbounds": "اینباندهای انتخاب شده: {{count}}"
+            }
+        }
+    },
+    "host-select-inbound": {
+        "feature": {
+            "choose-an-inbound-to-apply-to-the-host": "یک اینباند را برای اعمال به هاست انتخاب کنید"
+        }
+    },
+    "show-config-profiles-with-inbounds": {
+        "feature": {
+            "no-config-profile-selected": "هیچ پروفایلی انتخاب نشده است",
+            "choose-a-profile-to-configure-inbounds-for-this-node": "یک پروفایل برای پیکربندی اینباند برای این نود انتخاب کنید"
+        }
+    },
+    "access-settings-card": {
+        "access-settings": "تنظیمات دسترسی",
+        "select-an-external-squad-to-apply-custom-settings-to-this-user": "یک اسکواد خارجی انتخاب کنید تا تنظیمات شخصی‌سازی شده برای این کاربر اعمال شود",
+        "external-squad": "اسکواد خارجی",
+        "select-an-external-squad": "یک اسکواد خارجی انتخاب کنید"
+    },
+    "device-tag-settings-card": {
+        "device-and-tag-settings": "تنظیمات دستگاه و برچسب"
+    },
+    "user-identity-creation-card": {
+        "user-identity": "هویت کاربر"
+    },
+    "hosts-config-profiles": {
+        "drawer": {
+            "widget": {
+                "unknown-inbound": "اینباند ناشناخته",
+                "assign-an-inbound-to-the-host": "اختصاص ورودی به هاست"
+            }
+        }
+    },
+    "stats": {
+        "widget": {
+            "upcoming-in": "{{month}}موعد ",
+            "nodes-pending-payment": "نود‌های در انتظار پرداخت",
+            "payments-in": "پرداخت‌ها در {{month}}",
+            "total-payments-made": "کل پرداخت‌های انجام شده",
+            "total-spent": "کل هزینه شده",
+            "lifetime-spending": "هزینه کل طول عمر",
+            "payment-overdue": "پرداخت عقب‌افتاده",
+            "all-up-to-date": "همه به‌روز هستند"
+        }
+    },
+    "disclaimer-overlay": {
+        "title": "سلب مسئولیت",
+        "subtitle": "پیش از ادامه این اطلاعیه را بخوانید.",
+        "intro": "Remnacust ابزار پروکسی و مدیریت کاربران <highlight>متن‌باز و خودمیزبان</highlight> است. این نرم‌افزار <warning>«همان‌گونه که هست»، بدون هیچ ضمانت صریح یا ضمنی</warning> ارائه می‌شود.",
+        "responsibility": "مسئولیت شیوه استقرار و استفاده از این نرم‌افزار <highlight>فقط بر عهده شماست</highlight>.",
+        "compliance": "باید <highlight>تمام قوانین و مقررات</highlight> حوزه قضایی خود را رعایت کنید.",
+        "liability": "توسعه‌دهندگان و مشارکت‌کنندگان <warning>هیچ مسئولیتی</warning> در قبال سوءاستفاده، خسارت یا از دست رفتن داده نمی‌پذیرند.",
+        "license-acknowledgement": "با ادامه تأیید می‌کنید که <anchor>شرایط مجوز</anchor> را خوانده و پذیرفته‌اید.",
+        "accept-button": "متوجه شدم و می‌پذیرم"
+    },
+    "connection-status-overlay": {
+        "connection-lost": "اتصال قطع شد",
+        "reconnecting": "در حال اتصال مجدد…"
+    },
+    "mobile-warning-overlay": {
+        "mobile-device-detected": "دستگاه موبایل شناسایی شد",
+        "description-line-1": "این صفحه حاوی جدول‌های پیچیده‌ای است که شاید روی دستگاه موبایل به خوبی قابل استفاده نباشند",
+        "description-line-2": "برخی فرمان‌ها که می‌توانید برای مدیریت جدول روی دستگاه موبایل استفاده کنید:",
+        "show-or-hide-columns": "نمایش یا مخفی کردن ستون‌ها",
+        "adjust-row-spacing-density": "تنظیم فاصله سطرها",
+        "toggle-fullscreen-table-view": "تغییر نمایش تمام صفحه جدول",
+        "desktop-recommended": "پیشنهاد می‌شود از دسکتاپ استفاده کنید",
+        "or": "یا",
+        "rotate-device": "چرخاندن دستگاه",
+        "i-understand-continue-anyway": "می‌دانم، ادامه بده"
+    },
+    "internal-squad-header-action-buttons": {
+        "feature": {
+            "squad-name": "نام اسکواد",
+            "enter-squad-name": "نام اسکواد را وارد کنید"
+        }
+    },
+    "config-profiles-header-action-buttons": {
+        "feature": {
+            "create-a-new-config-profile-by-entering-a-name-below": "برای ایجاد پروفایل پیکربندی جدید اسم آن را وارد کنید",
+            "you-can-customize-xray-config-after-creation": "کانفیگ Xray را می‌توانید بعد از ایجاد شخصی‌سازی کنید",
+            "profile-name": "نام پروفایل",
+            "enter-profile-name": "نام پروفایل را وارد کنید"
+        }
+    },
+    "restart-node-button": {
+        "feature": {
+            "restart": "راه‌اندازی مجدد",
+            "restart-description-line-1": "راه‌اندازی مجدد کامل هسته Xray توسط نود را تضمین می‌کند. این گزینه توصیه می‌شود.",
+            "restart-description-line-2": "درخواست راه‌اندازی مجدد Xray را به نود می‌فرستد؛ اگر هش نود با مقدار فعلی برابر باشد، ممکن است درخواست اجرا نشود."
+        }
+    },
+    "node-details-card": {
+        "show-zero-values": "نمایش مقادیر صفر",
+        "hide-zero-values": "مخفی‌سازی مقادیر صفر",
+        "no-inbound-traffic-data": "اطلاعات ترافیک اینباند موجود نمی‌باشد",
+        "no-outbound-traffic-data": "اطلاعات ترافیک اوتباند موجود نمی‌باشد",
+        "widget": {
+            "node-details": "مشخصات نود",
+            "enable-node": "فعالسازی نود",
+            "disable-node": "غیرفعالسازی نود",
+            "config-profile-or-inbounds-is-missing": "پروفایل پیکربندی یا اینباند وجود ندارد",
+            "xray-core-version": "نسخه هسته Xray",
+            "remnawave-node-version": "نسخه نود، @remnawave/node"
+        }
+    },
+    "config-profiles": {
+        "drawer": {
+            "widget": {
+                "config-profiles": "پروفایل‌های پیکربندی",
+                "no-inbounds-selected": "اینباندی انتخاب نشده است"
+            }
+        }
+    },
+    "node-system-card": {
+        "widget": {
+            "system-info": "اطلاعات سیستم",
+            "memory": "حافظه",
+            "network": "شبکه",
+            "kernel": "هسته"
+        }
+    },
+    "node-stats": {
+        "card": {
+            "traffic-refill-in-days": "شارژ ترافیک در (روز):",
+            "represents-the-uptime-of-the-xray-core": "نشان‌دهنده آپتایم هسته Xray"
+        }
+    },
+    "host-tags-input": {
+        "tags-are-not-visible-to-end-users-tag-will-be-sent-with-raw-subscription-only": "برچسب‌ها برای کاربران قابل مشاهده نیستند و فقط با اشتراک خام ارسال خواهند شد."
+    },
+    "internal-squad-accessible-nodes": {
+        "modal": {
+            "widget": {
+                "internal-squad-accessible-nodes": "نودهای قابل دسترسی برای اسکواد"
+            }
+        }
+    },
+    "config-profile-inbounds": {
+        "drawer": {
+            "widget": {
+                "fetching-inbounds": "درحال دریافت اینباندها",
+                "inbounds-with-active-squads": "اینباندهایی که اسکواد فعال دارند"
+            }
+        }
+    },
+    "get-user-subscription-request-history": {
+        "feature": {
+            "request-history": "تاریخچه درخواست"
+        }
+    },
+    "use-hwid-inspector-table-columns": {
+        "device-model": "مدل دستگاه"
+    },
+    "hwid-inspector-table": {
+        "widget": {
+            "hwid-devices-list": "لیست دستگاه‌های HWID"
+        }
+    },
+    "hwid-inspector-metrics": {
+        "widget": {
+            "total-unique-devices": "لیست دستگاه‌های منحصر به فرد",
+            "total-hwid-devices": "تغداد کل دستگاه‌های HWID",
+            "avg-devices-per-user": "میانگین دستگاه بر کاربر",
+            "platform-distribution": "توزیع پلتفرم‌ها",
+            "app-distribution": "توزیع نرم‌افزارها",
+            "no-platform-data": "داده‌ای برای پلتفرم‌ها در دسترس نیست",
+            "no-app-data": "داده‌ای برای نرم‌افزارها در دسترس نیست"
+        }
+    },
+    "use-srh-inspector-table-columns": {
+        "request-ip": "IP درخواست کننده",
+        "response-type": "نوع پاسخ",
+        "rule-name": "نام قانون"
+    },
+    "srh-inspector-metrics": {
+        "widget": {
+            "requests": "درخواست‌ها",
+            "hourly-request-statistics": "آمار ساعتی درخواست‌ها",
+            "no-hourly-data-available": "داده‌های ساعتی در دسترس نمی‌باشد"
+        }
+    },
+    "linked-hosts-drawer": {
+        "widget": {
+            "assigned-hosts": "نودهای مشخص شده",
+            "no-hosts-assigned-to-this-node": "هیچ هاستی برای این نود مشخص نشده است"
+        }
+    },
+    "get-node-linked-hosts": {
+        "feature": {
+            "linked-hosts": "هاست‌های لینک شده"
+        }
+    },
+    "snippets": {
+        "drawer": {
+            "widget": {
+                "snippet-cannot-be-empty": "قطعه کد نمی‌تواند خالی باشد",
+                "snippet-cannot-contain-empty-objects": "قطعه کد نمی‌تواند حاوی مقادیر خالی باشد",
+                "more-items": "موارد بیشتر",
+                "create-snippet": "ایجاد قطعه کد",
+                "snippet-name": "نام قطعه کد",
+                "enter-snippet-name-cannot-be-changed-later": "اسم اسنیپت را وارد کنید (قابل تغییر نخواهد بود)",
+                "snippet-is-valid": "قطعه کد صحیح است",
+                "edit-snippet": "ویرایش قطعه کد",
+                "snippets": "قطعه کدها",
+                "new-snippet": "قطعه کد جدید"
+            }
+        }
+    },
+    "response-rules-editor-actions": {
+        "feature": {
+            "response-rules-debugger": "عیب‌یاب قوانین پاسخ",
+            "response-rules-debugger-description-1": "می‌توانید از این دستور cURL برای آزمایش کردن قوانین پاسخ خود با هدرهای مختلف استفاده کنید",
+            "response-rules-debugger-description-2": "می‌توانید آن را در آدرس مقابل ایمپورت کنید:",
+            "or": "یا",
+            "curl-command": "دستور cURL",
+            "copy-curl-command": "کپی کردن دستور cURL",
+            "debugger": "عیب‌یاب"
+        }
+    },
+    "copy-docker-compose": {
+        "widget": {
+            "copy-docker-compose-yml": "کپی کردن docker-compose.yml",
+            "local-image-note": "این Compose از ایمیج Remnacust Node 1.1.1 ساخته‌شده روی سرور استفاده می‌کند. ابتدا آن را طبق راهنمای نود بسازید. نصب‌کننده عمومی فایل Compose را خودش ایجاد می‌کند."
+        }
+    },
+    "create-node-step-1-connection": {
+        "copy-the": "محتوای",
+        "content-for-the-remnawave-node-below": "زیر را برای نود کپی کنید.",
+        "learn-more": "اطلاعات بیشتر.",
+        "domain-or-ip": "دامنه یا آیپی",
+        "additional-options": "تنظیمات بیشتر"
+    },
+    "create-node-step-3-status": {
+        "establishing-mtls-connection": "درحال برقراری اتصال mTLS",
+        "xray-core-is-up-and-running": "هسته Xray درحال اجرا می‌باشد!",
+        "remnawave-will-try-to-reconnect-shortly": "به زودی Remnacust برای اتصال مجدد تلاش خواهد کرد",
+        "no-errors-so-far": "تا کنون خطایی وجود نداشته است"
+    },
+    "external-squad-card": {
+        "widget": {
+            "users": "کاربرها"
+        }
+    },
+    "internal-squads-with-store": {
+        "drawer": {
+            "widget": {
+                "users": "کاربرها"
+            }
+        }
+    },
+    "external-squads": {
+        "drawer": {
+            "widget": {
+                "subscription-templates": "الگوهای اشتراک",
+                "subscription-templates-description-line-1": "یک الگو برای هر نوع اشتراک انتخاب کنید. درصورت انتخاب نکردن از الگوی پیش‌فرض استفاده خواهد شد.",
+                "subscription-templates-description-line-2": "لطفا توجه کنید که قوانین پاسخ اولویت بالاتری خواهند داشت.",
+                "select-a-template": "یک الگو انتخاب کنید",
+                "default-template-in-use": "درحال استفاده از الگوی پیش‌فرض ...",
+                "edit-external-squad": "ویرایش اسکواد خارجی",
+                "templates": "الگوها",
+                "settings": "تنظیمات",
+                "remarks": "ریمارک‌ها"
+            }
+        }
+    },
+    "external-squads-grid": {
+        "widget": {
+            "no-external-squads": "هیچ اسکواد خارجی وجود ندارد",
+            "no-external-squads-line-1": "اسکوادهای خارجی به شما اجازه می‌دهند تنظیمات اشتراک را برای گروه‌های مشخصی از کاربران شخصی‌سازی کنید.",
+            "no-external-squads-line-2": "می‌توانید الگوهای پیش‌فرض اشتراک و سایر تنظیمات را برای هر اسکواد جداگانه تنظیم کنید.",
+            "no-external-squads-line-3": "یک اسکواد ایجاد کرده و کاربرها را عضو آن کنید تا تنظیمات شخصی‌سازی‌شده برایشان اعمال شود."
+        }
+    },
+    "external-squads-settings": {
+        "tab": {
+            "widget": {
+                "override-subscription-settings-for-this-external-squad": "تنظیمات اشتراک را برای این اسکواد خارجی override کنید",
+                "add-override": "افزودن override"
+            }
+        }
+    },
+    "srr-advanced-warning-overlay": {
+        "warning-line-1": "این ویژگی برای کاربران حرفه‌ای که از ریسک‌های آن اطلاع دارند طراحی شده است",
+        "incorrect-configuration-line-1": "پیکربندی نادرست",
+        "incorrect-configuration-line-2": "ممکن است باعث رفتارهای غیرمنتظره شود",
+        "review-settings-carefully-line-1": "قبل از اعمال تغییرات",
+        "review-settings-carefully-line-2": "تنظیمات را به دقت بررسی کنید"
+    },
+    "auth-settings": {
+        "header": {
+            "title": "روش های احراز هویت",
+            "description": "روش های احراز هویت خود را مدیریت کنید"
+        },
+        "error-modal": {
+            "title": "به‌روزرسانی ناموفق",
+            "description": "هنگام به‌روزرسانی تنظیمات ورود مشکلی پیش آمده است. لطفا مشخصات خطا را مشاهده کرده و مجددا تلاش کنید.",
+            "unknown-error": "درخواست با یک خطای ناشناخته مواجه شد"
+        },
+        "passkey": {
+            "title": "کلید عبور",
+            "manage-button": "مدیریت",
+            "rpId": {
+                "label": "دامنه فرانت‌اند",
+                "description": "دامنه عمومی فرانت‌اند شما بدون پروتکل (به طور مثال example.com)"
+            },
+            "origin": {
+                "label": "دامنه بک‌اند",
+                "description": "آدرس کامل https بک‌اند شما (به طور مثال https://api.example.com)"
+            }
+        },
+        "password": {
+            "title": "گذرواژه"
+        },
+        "telegram": {
+            "adminIds": {
+                "label": "آیدی‌های ادمین مورد قبول",
+                "placeholder": "آیدی‌های ادمین را وارد کنید"
+            }
+        },
+        "fields": {
+            "clientId": {
+                "label": "شناسه کلاینت",
+                "description": "شناسه کاربری ارائه دهنده OAuth2",
+                "placeholder": "شناسه کاربر را وارد نمایید"
+            },
+            "clientSecret": {
+                "label": "راز کلاینت",
+                "description": "رمز مشتری ارائه دهنده OAuth2",
+                "placeholder": "رمز مشتری را وارد کنید"
+            },
+            "plainDomain": {
+                "label": "دامنه ساده",
+                "description": "دامنه ساده برای PocketID (مثلا example.com)",
+                "placeholder": "example.com"
+            },
+            "allowedEmails": {
+                "label": "ایمیل‌های مورد قبول",
+                "description": "لیست ایمیل‌های مورد قبول.",
+                "placeholder": "ایمیل را وارد کنید"
+            },
+            "realm": {
+                "label": "قلمرو (realm)",
+                "description": "اسم قلمرو Keycloak"
+            },
+            "keycloakDomain": {
+                "label": "دامنه Keycloak",
+                "description": "دامنه سرور Keycloak بدون پروتکل (مثلا keycloak.docs.rw)"
+            },
+            "expectedIssuer": {
+                "label": "صادرکنندهٔ ارائه‌دهنده",
+                "description": "مقدار دقیق issuer در تنظیمات OpenID Connect ارائه‌دهنده. مسیر و / پایانی باید یکسان باشند. این مقدار نشانی دریافت توکن نیست."
+            }
+        }
+    },
+    "passkeys-drawer": {
+        "component": {
+            "passkeys": "کلیدهای عبور",
+            "no-passkeys-registered-yet": "هیچ کلید عبوری ثبت نشده است.",
+            "add-passkeys-description": "اولین کلید عبور خود را اضافه کنید تا ورود امن بدون گذرواژه در همه دستگاه‌های شما فعال شود.",
+            "register": "ثبت نام",
+            "last-used-at": "آخرین استفاده در"
+        }
+    },
+    "branding-settings-card": {
+        "widget": {
+            "customize-your-remnawave-instance": "پنل Remnacust خود را شخصی‌سازی کنید",
+            "branding-settings": "تنظیمات برندینگ",
+            "the-title-that-will-be-displayed-on-login-page": "عنوانی که در صفحه ورود نشان داده خواهد شد",
+            "brand-name": "اسم برند",
+            "the-url-to-your-brand-logo-image": "نشانی تصویر نشان تجاری شما. نشانی http(s) یا داده base64 مانند data:image/svg+xml;base64,... پذیرفته می‌شود.",
+            "colored-title-format": "فرمت عنوان رنگی",
+            "colored-title-description": "می‌توانید کلمه‌ها را به صورت تکی به کمک نوشتار \"{color}کلمه\" رنگ‌آمیزی کنید. این ویژگی از رنگ‌های HEX (#RRGGBB) و اسم رنگ‌های MantineUI پشتیبانی می‌کند.",
+            "example-hex-colors": "مثال با رنگ‌های HEX",
+            "example-mantine-colors": "مثال با رنگ‌های MantineUI",
+            "example-mixed": "مثال با رنگ‌های مختلط",
+            "color-format-note": "💡 رنگ مشخص شده فقط برای کلمه‌ای که به نشانگر رنگ چسبیده اعمال می‌شود. بدون نشانگر، متن سفیدرنگ خواهد بود."
+        }
+    },
+    "experimental-settings-card": {
+        "widget": {
+            "experimental-features": "ویژگی‌های آزمایشی",
+            "description": "ویژگی‌هایی که هنوز در حال توسعه‌اند و ممکن است هر زمان تغییر کنند یا حذف شوند.",
+            "legacy-layout-style": "چیدمان قدیمی"
+        }
+    },
+    "api-tokens-card": {
+        "widget": {
+            "api-tokens-description": "توکن‌های API خود را مدیریت کنید.",
+            "api-tokens": "توکن‌های API",
+            "no-api-tokens-found": "هیچ توکن API یافت نشد",
+            "token-name": "نام توکن",
+            "create-api-token": "ایجاد توکن API",
+            "full-access": "دسترسی کامل",
+            "col-scopes": "مجوزها",
+            "col-created": "ایجادشده",
+            "col-expires": "انقضا",
+            "expired": "منقضی‌شده",
+            "expires-in-days": "انقضا پس از (روز)",
+            "one-time-notice": "برای امنیت، توکن بلافاصله پس از ایجاد <emphasis>فقط یک بار</emphasis> نمایش داده می‌شود. آن را کپی و در جای امن نگهداری کنید؛ دوباره قابل مشاهده نیست."
+        }
+    },
+    "external-squads-hosts": {
+        "tab": {
+            "widget": {
+                "host-overrides": "تنظیمات override هاست‌ها",
+                "override-host-settings-for-this-external-squad": "override تنظیمات هاست برای این اسکواد خارجی."
+            }
+        }
+    },
+    "reset-usage-user": {
+        "feature": {
+            "reset-usage": "بازنشانی مصرف"
+        }
+    },
+    "help-action-icon": {
+        "shared": {
+            "help-article": "مقاله راهنما"
+        }
+    },
+    "internal-squad-card": {
+        "widget": {
+            "available-nodes": "نودهای قابل دسترسی"
+        }
+    },
+    "help-drawer": {
+        "shared": {
+            "failed-to-load-documentation": "بارگذاری مستندات با شکست مواجه شد"
+        }
+    },
+    "external-squads-response-headers": {
+        "widget": {
+            "response-headers": "هدرها",
+            "headers-inherited-description": "سرآیندهای پاسخ به‌طور پیش‌فرض از تنظیمات اصلی اشتراک ارث می‌برند.",
+            "add-headers": "افزودن سرآیندها",
+            "add-headers-description": "سرآیندهای اینجا به موارد ارث‌برده افزوده می‌شوند. اگر کلید مشابهی در تنظیمات اصلی باشد، بازنویسی می‌شود.",
+            "remove-headers": "حذف سرآیندها",
+            "remove-headers-description": "کلیدهای فهرست‌شده از پاسخ حذف می‌شوند، حتی اگر در تنظیمات اصلی تعریف شده باشند.",
+            "enter-header-key": "کلید سرآیند را وارد کنید"
+        }
+    },
+    "subscription-hwid-settings": {
+        "widget": {
+            "hwid-card-description": "قبل از فعال کردن محدودیت HWID به دقت مستندات مربوط به آن را بخوانید. همه نرم افزارهای کلاینت از این ویژگی پشتیبانی نمی‌کنند.",
+            "hwid-settings": "تنظیمات HWID",
+            "hwid-limit": "محدودیت HWID",
+            "fallback-device-limit-description": "حداکثر تعداد دستگاه‌هایی که با هر اشتراک قابل استفاده خواهند بود را وارد نمایید",
+            "fallback-device-limit": "محدودیت پیشفرض تعداد دستگاه ",
+            "max-devices-announce-description": "پیامی را که کاربر هنگام پر شدن محدودیت تعداد دستگاه مشاهده خواهد کرد وارد نمایید",
+            "max-devices-announce": "پیغام پر شدن تعداد دستگاه",
+            "max-200-characters": "حداکثر 200 کاراکتر"
+        }
+    },
+    "external-squads-hwid-settings": {
+        "tab": {
+            "widget": {
+                "hwid-settings-override": "override تنظیمات HWID",
+                "override-hwid-description": "برای این اسکواد خارجی تنظیمات HWID override خواهند شد. درصورت غیرفعال بودن، مقادیر موجود در تنظیمات عمومی استفاده خواهد شد.",
+                "enable-hwid-override": "فعالسازی override تنظیمات HWID"
+            }
+        }
+    },
+    "external-squads-custom-remarks": {
+        "widget": {
+            "override-remarks-description": "تغییر دادن ریمارک‌های وضعیت کاربر برای این اسکواد خارجی. درصورت غیرفعال بودن از تنظیمات کلی اشتراک استفاده خواهد شد.",
+            "enable-override": "فعالسازی override"
+        }
+    },
+    "subscription-user-remarks-card": {
+        "widget": {
+            "contact-support": "با پشتیبانی تماس بگیرید",
+            "subscription-limited": "اشتراک محدود شده است",
+            "no-hosts-found": "هاستی پیدا نشد",
+            "deny-new-devices": "ثبت دستگاه جدید مسدود شده است",
+            "traffic-paused": "ترافیک موقتاً مسدود شده است",
+            "empty-hosts": "هاست‌های خالی",
+            "hwid-max-devices-exceeded": "HWID: ظرفیت دستگاه‌ها پر شده است",
+            "hwid-not-supported": "HWID: پشتیبانی نمی‌شود",
+            "combine-status-hwid": "ترکیب وضعیت اشتراک و مسدودیت HWID",
+            "combine-status-hwid-description": "وضعیت اشتراک و مسدود بودن دستگاه را هم‌زمان نمایش می‌دهد.",
+            "remark-order": "ترتیب پیام‌ها",
+            "subscription-expired": "اشتراک منقضی شده است",
+            "subscription-disabled": "اشتراک غیرفعال شده است",
+            "hwid-blocked": "دستگاه مسدود شده است (HWID)"
+        }
+    },
+    "multi-select-nodes": {
+        "feature": {
+            "profile-and-inbounds": "پروفایل و اینباندها"
+        }
+    },
+    "use-nodes-table-widget": {
+        "online": "آنلاین",
+        "traffic-used": "ترافیک استفاده‌شده",
+        "config-profile": "پروفایل پیکربندی",
+        "xray-v": "نسخه Xray",
+        "node-v": "نسخه نود",
+        "provider": "ارائه‌دهنده",
+        "total-ram": "کل RAM",
+        "cpu-model": "مدل پردازنده"
+    },
+    "subpage-config-visual-editor": {
+        "widget": {
+            "configuration-saved-successfully": "پیکربندی با موفقیت ذخیره شد",
+            "edit-your-subscription-page-configuration": "پیکربندی صفحه اشتراک خود را ویرایش کنید",
+            "subpage-editor": "ویرایشگر صفحه اشتراک",
+            "brand-appearance": "ظاهر برند",
+            "branding": "برندینگ",
+            "brand-title": "عنوان برند",
+            "your-brand-name": "اسم برند شما",
+            "support-url": "آدرس پشتیبانی",
+            "additional-languages": "زبان‌های بیشتر",
+            "localization": "بومی‌سازی",
+            "ui-configuration": "تنظیمات رابط کاربری",
+            "subscription-info-block-design": "طراحی بلاک‌های مشخصات اشتراک",
+            "configure-apps-for-each-platform": "نرم افزارهای هر پلتفرم را تنظیم کنید",
+            "platforms": "پلتفرم‌ها",
+            "add-platform": "افزودن پلتفرم",
+            "no-platforms-configured": "پلتفرمی تنظیم نشده است",
+            "add-a-platform-to-get-started": "برای شروع یک پلتفرم اضافه کنید",
+            "open-svg-library": "باز کردن کتابخانه SVG",
+            "installation-guides-design": "طراحی آموزش‌های نصب"
+        },
+        "subpage-config-saved-line-1": "برای اعمال تغییرات لطفا مخزن",
+        "subpage-config-saved-line-2": "برای مثال می‌توانید این دستور را در ترمینال استفاده کنید:"
+    },
+    "app-editor-drawer-content": {
+        "component": {
+            "app-settings": "تنظیمات نرم‌افزار",
+            "featured": "ویژه",
+            "app-name": "اسم برنامه",
+            "blocks": "بلاک‌ها",
+            "add-block": "افزودن بلاک"
+        }
+    },
+    "block-editor": {
+        "modal": {
+            "component": {
+                "untitled-block": "بلاک بدون عنوان",
+                "edit-block": "ویرایش بلاک",
+                "block-settings": "تنظیمات بلاک",
+                "icon-color": "رنگ آیکون",
+                "icon-color-help": "می‌توانید از رنگ‌های قالب Mantine ({{colors}}) یا هر رنگ با کد HEX معتبر (مانند #009688) استفاده کنید",
+                "title": "عنوان",
+                "buttons": "دکمه‌ها",
+                "add-button": "افزودن دکمه"
+            }
+        }
+    },
+    "button-editor": {
+        "component": {
+            "link": "لینک",
+            "type": "نوع",
+            "button-text": "متن دکمه",
+            "link-placeholder": "https:// یا app://"
+        }
+    },
+    "localized-text-editor": {
+        "component": {
+            "done": "انجام شد"
+        }
+    },
+    "platform-editor": {
+        "component": {
+            "platform-svg-icon": "آیکون SVG پلتفرم",
+            "display-name": "نام نمایشی",
+            "apps": "نرم‌افزارها",
+            "add-app": "افزودن برنامه",
+            "unnamed-app": "نرم‌افزار بدون اسم",
+            "edit-app": "ویرایش برنامه"
+        }
+    },
+    "svg-icon-select": {
+        "component": {
+            "select-icon": "انتخاب آیکون",
+            "no-icons-in-library": "آیکونی در کتابخانه وجود ندارد"
+        }
+    },
+    "svg-library-modal": {
+        "component": {
+            "svg-library": "کتابخانه SVG",
+            "add-icon": "افزودن آیکون",
+            "add-icons-to-use-them-in-blocks-and-buttons": "چند آیکون برای استفاده در بلاک‌ها و دکمه‌ها اضافه کنید",
+            "edit-icon": "ویرایش آیکون",
+            "only-latin-characters-no-spaces": "فقط کاراکترهای لاتین، بدون فاصله",
+            "only-latin-characters-allowed": "فقط کاراکترهای لاتین قابل قبول می‌باشد",
+            "icon-key": "کلید آیکون",
+            "svg-code": "کد SVG",
+            "preview": "پیش‌نمایش",
+            "where-to-find-icons": "از کجا آیکون پیدا کنم؟",
+            "you-can-find-beautiful-icons-at": "برای پیدا کردن آیکون‌های زیبا می‌توانید از این منابع استفاده کنید:",
+            "where-to-find-icons-description": "روی آیکون مورد نظر کلیک کرده، Copy SVG را بزنید و آن را در اینجا وارد کنید. مطمئن شوید که از حالت Outline یا Filled استفاده می‌کنید."
+        }
+    },
+    "external-squads-subpage-config": {
+        "tab": {
+            "widget": {
+                "subscription-page-config": "پیکربندی صفحه اشتراک",
+                "subscription-page-config-description": "شما می‌توانید پیکربندی صفحه اشتراک (صفحه اشتراک Remnacust) را برای این گروه خارجی override کنید.",
+                "subpage-config": "تنظیمات صفحه اشتراک",
+                "select-config": "کانفیگ را انتخاب کنید..."
+            }
+        }
+    },
+    "subpage-config-editor-page": {
+        "component": {
+            "import-config": "وارد کردن پیکربندی",
+            "download-config": "دانلود کانفیگ",
+            "importing-config": "در حال درون‌ریزی پیکربندی",
+            "this-may-take-a-while": "این فرایند ممکن است مدتی طول بکشد...",
+            "config-imported-successfully": "پیکربندی با موفقیت درون‌ریزی شد",
+            "failed-to-parse-config-file": "تجزیه فایل پیکربندی موفقیت آمیز نبود"
+        }
+    },
+    "base-translations-drawer": {
+        "component": {
+            "base-translations": "ترجمه‌های پایه",
+            "completed": "{{count}}/{{total}} تکمیل شده است"
+        }
+    },
+    "statistic-sparkline-card": {
+        "widget": {
+            "peak": "اوج"
+        }
+    },
+    "base-settings-block": {
+        "component": {
+            "base-settings": "تنظیمات پایه",
+            "meta-title": "عنوان متا",
+            "meta-description": "توضیح متا",
+            "show-connection-keys": "نمایش کلیدهای اتصال",
+            "show-or-hide-raw-connection-keys": "نمایش یا مخفی‍ی‌سازی کلیدهای اتصال خام",
+            "hide-get-link-button": "مخفی کردن دکمه \"دریافت لینک\"",
+            "hide-the-get-link-button-top-right-corner": "دکمه \"دریافت لینک\" از گوشه بالا راست مخفی شود"
+        }
+    },
+    "import-config-sections": {
+        "modal": {
+            "import-options-description": "مواردی که می‌خواهید از فایل پیکربندی وارد کنید را انتخاب نمایید",
+            "replace-entire-config-with-imported-one": "جایگزینی تمام پیکربندی با فایل آپلود شده",
+            "full-import": "درون‌ریزی کامل",
+            "partial-import": "درون‌ریزی قسمتی",
+            "merge-svg-library": "ادغام {{0}} آیکون با مجموعه شما ({{1}} عدد تکراری)",
+            "import-svg-library": "درون‌ریزی کتابخانه SVG",
+            "import-platforms-descriptions": "پلتفرم‌ها، زبان‌ها و ترجمه‌ها را جایگزین و کتابخانه SVG را ادغام می‌کند",
+            "import-platforms": "درون‌ریزی پلتفرم‌ها",
+            "replace-base-translation-and-locales": "جایگزین کردن ترجمه‌های پایه و لیست زبان‌ها",
+            "import-base-translations": "درون‌ریزی ترجمه‌های پایه"
+        }
+    },
+    "revoke-subscription-user": {
+        "feature": {
+            "full-revoke": "لغو اشتراک کامل",
+            "revoke": "لغو اشتراک",
+            "passwords-only": "فقط رمز عبور",
+            "passwords-only-description": "فقط رمزهای اتصال را بازتولید می‌کند و لینک اشتراک تغییر نمی‌کند",
+            "full-revoke-description": "آدرس لینک اشتراک و رمزهای اتصال را بازتولید می‌کند"
+        }
+    },
+    "nodes-quick-stats": {
+        "widget": {
+            "users-online": "کاربر آنلاين",
+            "online-nodes": "نودهای آنلاین"
+        }
+    },
+    "template-info-popover": {
+        "shared": {
+            "template-variables": "متغیرهای قالب",
+            "available-variables-are-listed-below": "متغیرهای قابل استفاده را در لیست زیر مشاهده کنید.",
+            "you-can-use-template-variables-in-this-field": "می‌توانید از متغیرهای قالب استفاده کنید.",
+            "descriptions": {
+                "DAYS_LEFT": "روزهای کامل تا انقضای اشتراک. پس از انقضا صفر برمی‌گرداند.",
+                "TRAFFIC_USED": "ترافیک مصرف‌شده از سهمیه کلی اشتراک در دوره فعلی، همراه واحدی مانند GiB.",
+                "TRAFFIC_LEFT": "باقی‌مانده سهمیه کلی اشتراک همراه واحد. در حالت اتمام یا نامحدود، صفر برمی‌گرداند.",
+                "TRAFFICLOCATIONUSE": "مصرف هاست. در توضیح عمومی مقدارها همراه نامشان فهرست می‌شوند.",
+                "TRAFFICLOCATIONUSETEG": "مصرف برچسب؛ اگر برچسب اعمال نشود، هاست. در توضیح عمومی مقدارها همراه نامشان فهرست می‌شوند.",
+                "TRAFFICLOCATIONLIMIT": "سقف هاست. در توضیح عمومی مقدارها همراه نامشان فهرست می‌شوند.",
+                "TRAFFICLOCATIONLIMITTEG": "سقف برچسب؛ اگر برچسب اعمال نشود، هاست. در توضیح عمومی مقدارها همراه نامشان فهرست می‌شوند.",
+                "TRAFFICLOCATIONLEFT": "باقی‌مانده هاست. در توضیح عمومی مقدارها همراه نامشان فهرست می‌شوند.",
+                "TRAFFICLOCATIONLEFTTEG": "باقی‌مانده برچسب؛ اگر برچسب اعمال نشود، هاست. در توضیح عمومی مقدارها همراه نامشان فهرست می‌شوند.",
+                "TRAFFICLOCATIONRESETAT": "تاریخ بازنشانی بعدی سهمیهٔ هاست. به وقت UTC؛ format پذیرفته می‌شود؛ ∞ یعنی بازنشانی برنامه‌ریزی نشده است.",
+                "TRAFFICLOCATIONRESETATTEG": "تاریخ بازنشانی بعدی سهمیهٔ برچسب؛ اگر برچسب اعمال نشود، هاست. به وقت UTC؛ format پذیرفته می‌شود؛ ∞ یعنی بازنشانی برنامه‌ریزی نشده است.",
+                "STATUS": "وضعیت کاربر با در نظر گرفتن انقضای اشتراک: فعال، غیرفعال، محدود یا منقضی. متن‌ها با پارامترهای وضعیت مربوطه قابل تغییرند.",
+                "TOTAL_TRAFFIC": "سقف کلی ترافیک اشتراک همراه واحدی مانند GiB. صفر یعنی نامحدود.",
+                "USERNAME": "نام کاربری کاربر در پنل.",
+                "EMAIL": "نشانی ایمیل کاربر؛ اگر تنظیم نشده باشد خالی است.",
+                "TELEGRAM_ID": "شناسه عددی تلگرام کاربر؛ اگر تنظیم نشده باشد خالی است.",
+                "SUBSCRIPTION_URL": "نشانی کامل HTTPS اشتراک کاربر.",
+                "TAG": "برچسب کاربر، نه برچسب هاست. اگر تنظیم نشده باشد خالی است.",
+                "EXPIRE_UNIX": "انقضای اشتراک به شکل زمان یونیکس: تعداد ثانیه از ۱ ژانویه ۱۹۷۰.",
+                "SHORT_UUID": "شناسه کوتاه کاربر که در نشانی اشتراک استفاده می‌شود.",
+                "ID": "شناسه عددی داخلی کاربر در پنل.",
+                "TRAFFIC_USED_BYTES": "ترافیک مصرف‌شده سهمیه کلی اشتراک در دوره فعلی، به تعداد دقیق بایت.",
+                "TRAFFIC_LEFT_BYTES": "باقی‌مانده سهمیه کلی اشتراک به بایت. در حالت اتمام یا نامحدود، صفر برمی‌گرداند.",
+                "TOTAL_TRAFFIC_BYTES": "سقف کلی ترافیک اشتراک به بایت. صفر یعنی نامحدود.",
+                "RESET_STRATEGY": "قاعده بازنشانی سهمیه کلی: NO_RESET، DAY، WEEK، MONTH یا MONTH_ROLLING. متن‌ها با همین پارامترها قابل تغییرند.",
+                "LIFETIME_USED_BYTES": "کل مصرف ترافیک کاربر از ابتدا، به بایت، شامل دوره‌های قبلی.",
+                "CREATED_AT_UNIX": "زمان ایجاد کاربر به شکل زمان یونیکس بر حسب ثانیه.",
+                "LAST_TRAFFIC_RESET_AT_UNIX": "آخرین بازنشانی ترافیک کلی به شکل زمان یونیکس بر حسب ثانیه. اگر بازنشانی نشده باشد صفر برمی‌گرداند.",
+                "LAST_TRAFFIC_RESET_AT": "تاریخ آخرین بازنشانی ترافیک کلی. پیش‌فرض DD.MM.YYYY است و format را می‌پذیرد. اگر بازنشانی نشده باشد خالی است.",
+                "NEXT_TRAFFIC_RESET_AT_UNIX": "بازنشانی بعدی سهمیه کلی طبق قاعده آن، به شکل زمان یونیکس بر حسب ثانیه. اگر بازنشانی خودکار خاموش باشد صفر برمی‌گرداند.",
+                "NEXT_TRAFFIC_RESET_AT": "تاریخ بازنشانی بعدی سهمیه کلی. پیش‌فرض DD.MM.YYYY است و format را می‌پذیرد. اگر بازنشانی خودکار خاموش باشد خالی است.",
+                "SS_HWID_LIMIT": "محدودیت دستگاه کاربر؛ اگر حد فردی تعیین نشده باشد از تنظیمات اشتراک گرفته می‌شود. صفر یعنی نامحدود.",
+                "DESCRIPTION": "توضیح کاربر در پنل؛ اگر تنظیم نشده باشد خالی است.",
+                "HOST_SPEED": "سقف سرعت هر کاربر به Mbps: سخت‌گیرانه‌ترین حد هاست یا برچسب. توضیح هاست فقط سرعت خودش و توضیح عمومی هاست‌های در دسترس را نشان می‌دهد. ۰ Mbps یعنی نامحدود؛ این سرعت اندازه‌گیری‌شده یا حد مشترک هاست نیست.",
+                "SUBSCRIPTION_LINK": "پیوند اشتراک کاربر برای دکمه صفحه اشتراک.",
+                "HAPP_CRYPT3_LINK": "پیوند اشتراک با قالب Happ crypt3 برای دکمه صفحه اشتراک.",
+                "HAPP_CRYPT4_LINK": "پیوند اشتراک با قالب Happ crypt4 برای دکمه صفحه اشتراک.",
+                "INCY_CRYPT1_LINK": "پیوند اشتراک با قالب Incy crypt1 برای دکمه صفحه اشتراک.",
+                "TRAFFICLOCATIONUSEDMB": "مصرف هاست بر حسب MB. فقط عدد بدون پسوند واحد، بر پایهٔ ۱۰۲۴، تا ۳ رقم اعشار. در توضیح عمومی مقدارها همراه نامشان فهرست می‌شوند.",
+                "TRAFFICLOCATIONUSEDMBTEG": "مصرف برچسب؛ اگر برچسب اعمال نشود، هاست بر حسب MB. فقط عدد بدون پسوند واحد، بر پایهٔ ۱۰۲۴، تا ۳ رقم اعشار. در توضیح عمومی مقدارها همراه نامشان فهرست می‌شوند.",
+                "TRAFFICLOCATIONUSEDGB": "مصرف هاست بر حسب GB. فقط عدد بدون پسوند واحد، بر پایهٔ ۱۰۲۴، تا ۳ رقم اعشار. در توضیح عمومی مقدارها همراه نامشان فهرست می‌شوند.",
+                "TRAFFICLOCATIONUSEDGBTEG": "مصرف برچسب؛ اگر برچسب اعمال نشود، هاست بر حسب GB. فقط عدد بدون پسوند واحد، بر پایهٔ ۱۰۲۴، تا ۳ رقم اعشار. در توضیح عمومی مقدارها همراه نامشان فهرست می‌شوند.",
+                "TRAFFICLOCATIONLIMITMB": "سقف هاست بر حسب MB. فقط عدد بدون پسوند واحد، بر پایهٔ ۱۰۲۴، تا ۳ رقم اعشار. در توضیح عمومی مقدارها همراه نامشان فهرست می‌شوند.",
+                "TRAFFICLOCATIONLIMITMBTEG": "سقف برچسب؛ اگر برچسب اعمال نشود، هاست بر حسب MB. فقط عدد بدون پسوند واحد، بر پایهٔ ۱۰۲۴، تا ۳ رقم اعشار. در توضیح عمومی مقدارها همراه نامشان فهرست می‌شوند.",
+                "TRAFFICLOCATIONLIMITGB": "سقف هاست بر حسب GB. فقط عدد بدون پسوند واحد، بر پایهٔ ۱۰۲۴، تا ۳ رقم اعشار. در توضیح عمومی مقدارها همراه نامشان فهرست می‌شوند.",
+                "TRAFFICLOCATIONLIMITGBTEG": "سقف برچسب؛ اگر برچسب اعمال نشود، هاست بر حسب GB. فقط عدد بدون پسوند واحد، بر پایهٔ ۱۰۲۴، تا ۳ رقم اعشار. در توضیح عمومی مقدارها همراه نامشان فهرست می‌شوند.",
+                "TRAFFICLOCATIONLEFTMB": "باقی‌مانده هاست بر حسب MB. فقط عدد بدون پسوند واحد، بر پایهٔ ۱۰۲۴، تا ۳ رقم اعشار. در توضیح عمومی مقدارها همراه نامشان فهرست می‌شوند.",
+                "TRAFFICLOCATIONLEFTMBTEG": "باقی‌مانده برچسب؛ اگر برچسب اعمال نشود، هاست بر حسب MB. فقط عدد بدون پسوند واحد، بر پایهٔ ۱۰۲۴، تا ۳ رقم اعشار. در توضیح عمومی مقدارها همراه نامشان فهرست می‌شوند.",
+                "TRAFFICLOCATIONLEFTGB": "باقی‌مانده هاست بر حسب GB. فقط عدد بدون پسوند واحد، بر پایهٔ ۱۰۲۴، تا ۳ رقم اعشار. در توضیح عمومی مقدارها همراه نامشان فهرست می‌شوند.",
+                "TRAFFICLOCATIONLEFTGBTEG": "باقی‌مانده برچسب؛ اگر برچسب اعمال نشود، هاست بر حسب GB. فقط عدد بدون پسوند واحد، بر پایهٔ ۱۰۲۴، تا ۳ رقم اعشار. در توضیح عمومی مقدارها همراه نامشان فهرست می‌شوند.",
+                "TRAFFIC_USED_MB": "مصرف سهمیه کلی اشتراک در دوره فعلی، با واحد ثابت MB، مبنای ۱۰۲۴ و حداکثر ۳ رقم اعشار.",
+                "TRAFFIC_USED_GB": "مصرف سهمیه کلی اشتراک در دوره فعلی، با واحد ثابت GB، مبنای ۱۰۲۴ و حداکثر ۳ رقم اعشار.",
+                "TRAFFIC_LEFT_MB": "باقی‌مانده سهمیه کلی اشتراک، با واحد ثابت MB، مبنای ۱۰۲۴ و حداکثر ۳ رقم اعشار. در حالت اتمام یا نامحدود، صفر برمی‌گرداند.",
+                "TRAFFIC_LEFT_GB": "باقی‌مانده سهمیه کلی اشتراک، با واحد ثابت GB، مبنای ۱۰۲۴ و حداکثر ۳ رقم اعشار. در حالت اتمام یا نامحدود، صفر برمی‌گرداند.",
+                "TOTAL_TRAFFIC_MB": "سقف سهمیه کلی اشتراک، با واحد ثابت MB، مبنای ۱۰۲۴ و حداکثر ۳ رقم اعشار. صفر یعنی نامحدود.",
+                "TOTAL_TRAFFIC_GB": "سقف سهمیه کلی اشتراک، با واحد ثابت GB، مبنای ۱۰۲۴ و حداکثر ۳ رقم اعشار. صفر یعنی نامحدود."
+            }
+        }
+    },
+    "user-active-session-drawer": {
+        "widget": {
+            "drop-all-user-connections-all-nodes": "قطع همه کانکشن‌ها (روی همه نودها)",
+            "drop-all-user-connections-this-node": "قطع همه کانکشن‌ها (روی این نود)",
+            "drop-this-connection-on-this-node": "قطع کانکشن روی این نود"
+        }
+    },
+    "contact-information-card": {
+        "contact-information": "مشخصات تماس"
+    },
+    "traffic-limits-card": {
+        "traffic-and-limits": "محدودیت ترافیک",
+        "traffic-limit-description": "صفر یعنی نامحدود",
+        "traffic-limit": "محدودیت ترافیک"
+    },
+    "node-vitals": {
+        "card": {
+            "plugin": "افزونه",
+            "review-documentation-for-more-information": "برای اطلاعات بیشتر مستندات را ببینید.",
+            "nothing-found": "چیزی پیدا نشد…",
+            "select-plugin": "انتخاب افزونه",
+            "proxy-url": "نشانی پروکسی",
+            "proxy-url-description": "اختیاری. اگر تنظیم شود، اتصال API داخلی پنل به نود از این پروکسی عبور می‌کند."
+        }
+    },
+    "node-plugin-card": {
+        "widget": {
+            "active-on-nodes": "فعال روی نودها"
+        }
+    },
+    "active-on-nodes": {
+        "modal": {
+            "shared": {
+                "this-plugin-is-not-active-on-any-nodes": "این افزونه در هیچ نودی فعال نیست."
+            }
+        }
+    },
+    "node-plugins-grid": {
+        "widget": {
+            "node-plugins-are-an-advanced-feature-please-review-the-documentation-before-use": "افزونه‌های نود قابلیتی پیشرفته‌اند. پیش از استفاده مستندات را بخوانید.",
+            "no-node-plugins-yet": "هنوز افزونه نودی وجود ندارد",
+            "create-a-plugin-to-extend-node-capabilities-with": "برای گسترش قابلیت‌های نود افزونه‌ای ایجاد کنید با"
+        }
+    },
+    "node-plugin-executor": {
+        "content": {
+            "enter-at-least-one-ip-address": "حداقل یک نشانی IP وارد کنید.",
+            "block-specific-ip-addresses-on-selected-nodes": "مسدود کردن IPهای مشخص در نودهای انتخاب‌شده",
+            "block-ips": "مسدود کردن IPها",
+            "remove-ip-blocks-on-selected-nodes": "رفع مسدودی IPها در نودهای انتخاب‌شده",
+            "unblock-ips": "رفع مسدودی IPها",
+            "executor-description": "مسدودی IP موقت است و فقط تا راه‌اندازی مجدد نود یا هسته باقی می‌ماند. تغییر پیکربندی افزونه نیز ممکن است مسدودی‌ها را پاک کند.",
+            "recreate-nftables-rules-on-selected-nodes": "ایجاد مجدد قوانین nftables روی نودهای انتخاب‌شده",
+            "recreate-tables": "ایجاد مجدد جدول‌ها",
+            "block-ips-description": "هر ورودی در یک خط. مهلت صفر یعنی مسدود تا راه‌اندازی مجدد.",
+            "unblock-ips-description": "هر نشانی IP در یک خط.",
+            "ips-to-block": "IPهای مورد مسدودسازی",
+            "ips-to-unblock": "IPهای مورد رفع مسدودی",
+            "format-one-per-line": "قالب (هر مورد در یک خط):",
+            "no-connected-nodes-available": "نود متصلی در دسترس نیست.",
+            "deselect-all": "لغو انتخاب همه",
+            "execute": "اجرا"
+        }
+    },
+    "torrent-blocker-stats": {
+        "widget": {
+            "total-reports": "کل گزارش‌ها",
+            "distinct-nodes": "نودهای یکتا",
+            "distinct-users": "کاربران یکتا",
+            "last-24-hours": "۲۴ ساعت گذشته",
+            "by-report-count": "بر اساس تعداد گزارش",
+            "top-users": "کاربران برتر"
+        }
+    },
+    "torrent-blocker-reports-table": {
+        "widget": {
+            "truncate-reports": "پاک کردن گزارش‌ها",
+            "truncate-reports-description": "همه گزارش‌های مسدودکننده تورنت برای همیشه حذف می‌شوند."
+        }
+    },
+    "node-active-session": {
+        "item": {
+            "widget": {
+                "view-user": "مشاهده کاربر"
+            }
+        }
+    },
+    "node-active-sessions": {
+        "drawer": {
+            "widget": {
+                "active-users-on-this-node": "کاربران فعال این نود"
+            }
+        }
+    },
+    "nodes-datatable": {
+        "widget": {
+            "column-width": "عرض ستون",
+            "column-order": "ترتیب ستون‌ها",
+            "column-toggle": "نمایش ستون‌ها"
+        }
+    },
+    "user-torrent-blocker-report-item": {
+        "processed-at": "زمان پردازش",
+        "unblocked-at": "زمان رفع مسدودی"
+    },
+    "get-user-torrent-blocker-reports": {
+        "feature": {
+            "blocker-reports": "گزارش‌های مسدودکننده تورنت"
+        }
+    },
+    "user-torrent-blocker-reports": {
+        "drawer": {
+            "widget": {
+                "total-reports": "کل گزارش‌ها"
+            }
+        }
+    },
+    "user-subscription-requests-drawer": {
+        "widget": {
+            "total-records": "کل رکوردها"
+        }
+    },
+    "sessions-explorer-idle": {
+        "description-1": "بسته به تعداد نودها و کاربران، عملیات ممکن است طول بکشد. برای جلوگیری از فشار به سرور، نشست‌ها به‌ترتیب دریافت می‌شوند.",
+        "start-exploring": "شروع بررسی"
+    },
+    "sessions-explorer-progress": {
+        "exploring-nodes": "در حال بررسی نودها…",
+        "nodes-processed": "{{completed}} از {{total}} نود پردازش شد",
+        "nodes-failed": "{{count}} ناموفق"
+    },
+    "sessions-explorer": {
+        "widget": {
+            "all-nodes-failed-to-return-session-data": "هیچ نودی نتوانست داده نشست را برگرداند.",
+            "total-ips": "کل IPها",
+            "unique-ips": "IPهای یکتا",
+            "nodes-explored": "نودهای بررسی‌شده",
+            "total-users": "کل کاربران",
+            "restart-scan": "شروع دوباره بررسی",
+            "clear-results": "پاک کردن نتایج",
+            "search-by-ip": "جستجو بر اساس نشانی IP…",
+            "no-results-for-ip": "کاربری با IP منطبق با «{{ip}}» پیدا نشد"
+        }
+    },
+    "mobile-stats": {
+        "widget": {
+            "upcoming": "پیش رو",
+            "per-month": "در ماه",
+            "total-spent": "کل هزینه شده"
+        }
+    },
+    "mobile-providers-list": {
+        "widget": {
+            "invoices": "صورتحساب‌ها"
+        }
+    },
+    "mobile-infra-billing": {
+        "widget": {
+            "history": "تاریخچه",
+            "providers": "ارائه‌دهنده‌ها"
+        }
+    },
+    "hosts-datatable": {
+        "widget": {
+            "reset-sort": "بازنشانی مرتب‌سازی"
+        }
+    },
+    "columns-visibility-popover": {
+        "show-all": "نمایش همه",
+        "hide-all": "پنهان کردن همه"
+    },
+    "use-hosts-table-widget": {
+        "disabled": "غیرفعال",
+        "enabled": "فعال",
+        "hidden": "مخفی",
+        "visible": "قابل مشاهده"
+    },
+    "node-tracking-and-billing": {
+        "card": {
+            "note": "یادداشت"
+        }
+    },
+    "node-ips": {
+        "add-ip": "افزودن IP",
+        "remove-ip": "حذف IP",
+        "invalid-ip": "نشانی IPv4 یا IPv6 معتبر نیست",
+        "ip-is-required": "نشانی IP الزامی است",
+        "max-ips-reached": "حداکثر {{max}} نشانی IP",
+        "no-ips-yet": "هنوز نشانی IP وجود ندارد"
+    },
+    "node-ip-statuses": {
+        "inbound": "اینباند",
+        "outbound": "خروجی",
+        "management": "مدیریت",
+        "transit": "عبوری",
+        "monitoring": "پایش",
+        "reserve": "ذخیره",
+        "blocked": "مسدود",
+        "flagged": "علامت‌خورده",
+        "deprecated": "منسوخ",
+        "unknown": "نامعلوم"
+    },
+    "node-consumption": {
+        "card": {
+            "node-consumption-multiplier-1": "ضریب انتخاب‌شده را روی ترافیک نود اعمال می‌کند (۱٫۰ = عادی، ۰٫۵ = نصف، ۲٫۰ = دو برابر).",
+            "node-consumption-multiplier-2": "عمدتاً برای نمایش دقیق سقف مصرف هنگام فعال بودن رهگیری ترافیک استفاده می‌شود. ضریب مصرف نود بر نمایش آمار تفصیلی نمودارها اثر ندارد.",
+            "node-consumption-multiplier": "ضریب مصرف نود",
+            "user-consumption-multiplier": "ضریب مصرف کاربر"
+        }
+    },
+    "keypair-generator": {
+        "widget": {
+            "generate": "تولید",
+            "short-id-help": "۱۶ نویسه هگزادسیمال (۸ بایت تصادفی). در سرور REALITY از shortIds و در کلاینت از shortId استفاده کنید.",
+            "server-config": "پیکربندی سرور",
+            "public-key-help": "در X25519، password نام دیگر کلید عمومی است. هر دو مقدار یکسان‌اند.",
+            "all-values": "همه مقادیر"
+        }
+    },
+    "bulk-all-users-actions": {
+        "modal": {
+            "perform-actions-on-all-users": "انجام اقدامات برای همه کاربران"
+        }
+    },
+    "backend-tools-card": {
+        "widget": {
+            "queue-viewer": "نمایشگر صف",
+            "queue-viewer-description": "پایش و مدیریت صف‌های وظایف پس‌زمینه.",
+            "scalar-description": "مرجع تعاملی و جدید API.",
+            "swagger-description": "کاوشگر کلاسیک مستندات OpenAPI.",
+            "backend-tools-description": "دسترسی به نمایشگر صف، Scalar یا Swagger.",
+            "login": "ورود",
+            "backend-tools": "ابزارهای سرور"
+        }
+    },
+    "http-stats": {
+        "page": {
+            "component": {
+                "http-stats-description": "تعداد تجمعی درخواست‌های هر مسیر API از آخرین راه‌اندازی مجدد پنل."
+            }
+        }
+    },
+    "http-stats-table": {
+        "widget": {
+            "total-requests": "کل درخواست‌ها",
+            "tracked-routes": "مسیرهای رهگیری‌شده",
+            "peak-requests": "بیشترین درخواست‌ها",
+            "avg-route": "میانگین / مسیر"
+        }
+    },
+    "node-inbounds-hosts-drawer": {
+        "widget": {
+            "no-active-config-profile": "این نود پروفایل پیکربندی فعال ندارد",
+            "linked": "مرتبط"
+        }
+    },
+    "node-integrations": {
+        "modal": {
+            "title": "یکپارچه‌سازی‌های نود",
+            "delete-description": "یکپارچه‌سازی از همه نودها حذف می‌شود و نودهای تحت تأثیر راه‌اندازی مجدد می‌شوند."
+        },
+        "editor": {
+            "description-placeholder": "کارکرد این یکپارچه‌سازی",
+            "config-must-be-an-object": "پیکربندی باید یک شیء JSON باشد"
+        },
+        "select": {
+            "label": "یکپارچه‌سازی‌ها",
+            "placeholder": "انتخاب یکپارچه‌سازی‌ها"
+        }
+    },
+    "shared-lists": {
+        "modal": {
+            "subtitle": "فهرست‌های IP و ASN قابل استفاده مجدد که افزونه‌ها با ext:name به آن‌ها ارجاع می‌دهند",
+            "delete-description": "فهرست حذف می‌شود. افزونه‌های ارجاع‌دهنده، مرجع ext: را نگه می‌دارند و تا اصلاح آن در اعتبارسنجی شکست می‌خورند."
+        },
+        "editor": {
+            "name-description": "در افزونه‌ها با ext:name ارجاع داده می‌شود. بعداً قابل تغییر نیست."
+        }
+    },
+    "apply-to-nodes": {
+        "title": "روی نودها اعمال شود؟",
+        "apply": "اکنون اعمال کن",
+        "apply-description": "نودهای تحت تأثیر فوراً پیکربندی جدید را دریافت می‌کنند.",
+        "later": "فعلاً نه",
+        "later-description": "تغییرات ذخیره می‌شوند، اما نودها تا همگام‌سازی یا راه‌اندازی مجدد بعدی نسخه فعلی را نگه می‌دارند."
+    },
+    "node-geocheck": {
+        "title": "GeoCheck",
+        "source-default": "پیش‌فرض",
+        "default-placeholder": "خودکار",
+        "default-description": "نود از مسیر خروجی پیش‌فرض خود استفاده می‌کند.",
+        "ip-description": "یکی از IPهای نود را انتخاب یا نشانی دلخواه وارد کنید",
+        "interface-description": "یکی از رابط‌های نود را انتخاب یا نام دلخواه وارد کنید",
+        "run": "اجرای بررسی",
+        "running": "در حال اجرای GeoCheck",
+        "running-description": "نود در حال بررسی اتصال خود است؛ معمولاً تا یک دقیقه طول می‌کشد.",
+        "failed-description": "نود نتوانست GeoCheck را کامل کند.",
+        "view-image": "گزارش",
+        "no-image": "تصویری در گزارش نیست؛ JSON را باز کنید",
+        "requires-node-version": "در Remnacust Node نسخه {{remnacustVersion}}+ یا Remnawave Node نسخه {{version}}+ در دسترس است"
+    },
+    "quick-open": {
+        "page": {
+            "description": "هر موجودیت را با شناسه باز کنید یا پیوند مستقیم آن را برای اشتراک‌گذاری کپی کنید"
+        }
+    },
+    "node-ssh": {
+        "title": "ترمینال SSH",
+        "key-imported": "کلید شما",
+        "key-description-imported": "امضا با کلید واردشده شما انجام می‌شود و هرگز از مرورگر خارج نمی‌شود. بخش عمومی آن باید در authorized_keys سرور باشد.",
+        "key-use-own": "استفاده از کلید خودم",
+        "key-generate-new": "تولید کلید جدید",
+        "key-import": "ورود کلید",
+        "key-import-title": "استفاده از کلید خودتان",
+        "key-import-label": "کلید خصوصی (Private Key)",
+        "key-import-description": "در همین مرورگر، رمزگذاری‌شده در خزانه می‌ماند. کلیدهای دارای گذرواژه پشتیبانی نمی‌شوند.",
+        "key-error": {
+            "encrypted": "این کلید گذرواژه دارد. گذرواژه را بردارید یا نسخه بدون گذرواژه وارد کنید.",
+            "malformed": "خواندن کلید ممکن نشد. کل فایل، شامل خطوط BEGIN و END را کپی کنید.",
+            "unsupported-algo": "فقط کلیدهای Ed25519 و RSA پشتیبانی می‌شوند.",
+            "unsupported-format": "این داده شبیه فایل کلید خصوصی نیست."
+        },
+        "vault-setup-title": "راه‌اندازی خزانه کلید",
+        "vault-unlock-title": "باز کردن خزانه کلید",
+        "seed-warning": "این ۱۲ واژه را بنویسید و آفلاین نگه دارید. تنها راه بازیابی کلیدهای SSH شما هستند؛ پنل هرگز آن‌ها را نمی‌بیند و نمی‌تواند برایتان بازیابی کند.",
+        "create-vault": "ایجاد خزانه",
+        "unlock": "باز کردن قفل",
+        "unlock-description": "۱۲ واژه ذخیره‌شده هنگام ایجاد خزانه را وارد کنید.",
+        "seed-invalid": "این عبارت بازیابی ۱۲ واژه‌ای معتبر نیست",
+        "seed-mismatch": "این عبارت با خزانه ذخیره‌شده در این مرورگر مطابقت ندارد",
+        "key-title": "نصب کلید عمومی",
+        "key-description": "کلیدی اختصاصی برای این نود ساخته شده که هرگز از مرورگر خارج نمی‌شود. خط زیر را به authorized_keys سرور اضافه کرده و سپس متصل شوید.",
+        "authorized-keys": "ورودی authorized_keys",
+        "host": "هاست",
+        "host-hint": "برای استفاده از نشانی نود خالی بگذارید",
+        "connect": "اتصال",
+        "hostkey-new-title": "کلید میزبان ناشناخته",
+        "hostkey-new-description": "این نخستین اتصال شما به این میزبان از این مرورگر است. پیش از اعتماد، اثر انگشت را از راهی مستقل بررسی کنید.",
+        "hostkey-changed-title": "کلید میزبان تغییر کرده است",
+        "hostkey-changed-description": "کلید میزبان با کلید قبلاً مورد اعتماد برابر نیست. شاید سرور دوباره نصب شده باشد یا کسی اتصال را رهگیری کند.",
+        "fingerprint": "اثر انگشت",
+        "known-fingerprint": "قبلاً مورد اعتماد",
+        "trust-and-connect": "اعتماد و اتصال",
+        "abort": "انصراف",
+        "disconnected": "نشست بسته شد",
+        "passcode-required-description": "تا تعیین رمز ورود، خزانه در این مرورگر قابل استفاده نیست. این رمز از وارد کردن عبارت بازیابی در هر بار جلوگیری می‌کند.",
+        "passcode-save": "ذخیره رمز ورود",
+        "passcode-title": "تعیین رمز ورود برای این مرورگر",
+        "passcode-description": "پس از بارگذاری مجدد، خزانه را در این مرورگر باز می‌کند.",
+        "passcode-length": "{{length}} نویسه، شامل حداقل یک حرف.",
+        "passcode-needs-letter": "حداقل یک حرف اضافه کنید.",
+        "passcode-unlock-description": "رمز ورودی را که برای این مرورگر تعیین کرده‌اید وارد کنید.",
+        "passcode-wrong": "رمز ورود نادرست است",
+        "passcode-attempts": "تلاش‌های باقی‌مانده: {{count}}",
+        "passcode-exhausted": "تلاش نادرست بیش از حد بود و رمز ورود غیرفعال شد. با عبارت بازیابی خزانه را باز کرده و رمز جدید تعیین کنید.",
+        "use-phrase": "رمز ورود را فراموش کرده‌اید؟",
+        "use-passcode": "بازگشت به رمز ورود",
+        "connection-settings": "تنظیمات اشتراک",
+        "resize": "تغییر اندازه پنجره",
+        "retry": "تلاش دوباره",
+        "ticket-failed": "پنل باز کردن نشست را نپذیرفت.",
+        "vault-manage": "مدیریت خزانه",
+        "export": "خروجی خزانه",
+        "export-locked": "ابتدا خزانه را باز کنید؛ پشتیبان‌گیری فقط از خزانه باز ممکن است.",
+        "export-description": "فایلی رمزگذاری‌شده شامل کلیدها و نشانی‌های نود ذخیره می‌کند. بدون عبارت بازیابی قابل خواندن نیست و می‌توان آن را هرجا نگه داشت.",
+        "import": "ورود خزانه",
+        "import-description": "کلیدها را از فایل پشتیبان بازیابی می‌کند. عبارت بازیابی زمان ایجاد پشتیبان را وارد کنید.",
+        "import-select": "انتخاب فایل پشتیبان",
+        "import-ready": "نسخه پشتیبان {{date}}",
+        "create-new-instead": "به‌جای آن خزانه جدید بسازید",
+        "reset-really": "بله، همه کلیدها حذف شوند",
+        "import-invalid": "این فایل نسخه پشتیبان خزانه نیست",
+        "import-mismatch": "عبارت بازیابی این نسخه پشتیبان را باز نمی‌کند",
+        "reset": "بازنشانی خزانه",
+        "reset-description": "خزانه و همه کلیدهای SSH آن را حذف می‌کند. کلیدهای خصوصی برای همیشه از بین می‌روند؛ کلیدهای عمومی روی نودها بی‌استفاده می‌شوند و باید برای هر نود کلید جدید نصب کنید. دسترسی پنل تغییر نمی‌کند.",
+        "lost-everything": "هم رمز ورود و هم عبارت را گم کرده‌اید؟",
+        "snippets-title": "قطعه کدها",
+        "snippets-empty": "هنوز قطعه‌ای وجود ندارد",
+        "snippet-command": "فرمان",
+        "snippet-add": "افزودن قطعه",
+        "snippet-edit": "ویرایش قطعه کد",
+        "connections-title": "اتصال‌های ذخیره‌شده",
+        "connections-empty": "هنوز اتصال ذخیره‌شده‌ای نیست",
+        "connections-current": "فعلی"
+    },
+    "layoutActions": {
+        "oneCardPerRow": "یک کارت در هر ردیف",
+        "twoCardsPerRow": "دو کارت در هر ردیف",
+        "showTable": "نمایش به‌صورت جدول",
+        "showCards": "نمایش به‌صورت کارت"
+    },
+    "trafficPaths": {
+        "profile": "پروفایل: {{name}}",
+        "profileActive": "پروفایل: {{name}} (فعال)"
+    },
+    "nodeHealthHistory": {
+        "ok": "سالم",
+        "retry": "تلاش دوباره",
+        "unreachable": "در دسترس نیست",
+        "xrayMissing": "دادهٔ Xray موجود نیست",
+        "error": "خطا در بررسی"
+    },
+    "nodeLoad": {
+        "title": "میانگین بار · هسته‌ها: {{cores}}",
+        "oneMinute": "۱ دقیقه: {{value}} ({{percent}}٪)",
+        "fiveMinutes": "۵ دقیقه: {{value}} ({{percent}}٪)",
+        "fifteenMinutes": "۱۵ دقیقه: {{value}} ({{percent}}٪)",
+        "thresholds": "۰–۷۰٪ عادی · ۷۰–۱۰۰٪ زیاد · بالای ۱۰۰٪ بار بیش‌ازحد",
+        "noData": "داده‌ای موجود نیست"
+    },
+    "requestErrors": {
+        "templateNameExists": "قالبی از این نوع با این نام از قبل وجود دارد. نام دیگری انتخاب کنید.",
+        "unavailable": "ارتباط با سرور برقرار نشد. کمی بعد دوباره تلاش کنید.",
+        "http-status": "درخواست ناموفق بود (HTTP {{status}}).",
+        "unauthorized": "ورود ناموفق بود. اطلاعات ورود را بررسی کنید.",
+        "invalidResponse": "پاسخ سرور با نسخهٔ پنل سازگار نیست. صفحه را تازه‌سازی کنید؛ اگر خطا ادامه داشت، نسخهٔ پنل و API را بررسی کنید.",
+        "forbidden": "برای انجام این کار مجوز کافی ندارید.",
+        "unknown": "درخواست به‌طور غیرمنتظره ناموفق بود.",
+        "failed": "درخواست ناموفق بود."
+    },
+    "limitsTrafficAction": {
+        "blockHost": "مسدود کردن ترافیک در هاست",
+        "unblockHost": "رفع مسدودی ترافیک در هاست",
+        "blockTag": "مسدود کردن ترافیک در برچسب",
+        "unblockTag": "رفع مسدودی ترافیک در برچسب",
+        "blockUser": "مسدود کردن ترافیک کاربر",
+        "unblockUser": "رفع مسدودی ترافیک کاربر",
+        "blockedCount": "ترافیک مسدود شده: {{blocked}} از {{total}} دریافت‌کننده"
+    },
+    "interface": {
+        "enter-valid-domain-ip-or-cidr-f42b6cd": "دامنه، نشانی IP یا بازهٔ CIDR معتبر وارد کنید.",
+        "ssh-connection-closed-before-operation": "اتصال SSH پیش از آغاز عملیات بسته شد",
+        "optimization-failed": "بهینه‌سازی ناموفق بود",
+        "routing-rule-description": "قانون مسیریابی (برای routing.rules[])",
+        "navigation-3db65f8": "ناوبری",
+        "close-navigation-99904db": "بستن ناوبری",
+        "oauth2-login-ddeec07": "ورود با OAuth2",
+        "unable-to-save-login-state-allow-session-storage-and-try-again-48ef435": "ذخیره وضعیت ورود ممکن نشد. ذخیره‌سازی نشست را مجاز کنید و دوباره تلاش کنید.",
+        "remnawave-custom-core-02ce687": "هسته سفارشی Remnacust",
+        "core-url-b8f496b": "نشانی هسته",
+        "core-sha-256-c0d9ff5": "SHA-256 هسته",
+        "remnawave-snippets-5591a07": "قطعه‌های Remnacust",
+        "snippet-name-1b08019": "نام قطعه",
+        "snippet-array-f0eb3d0": "آرایه قطعه‌ها",
+        "array-of-root-outbound-rule-or-balancer-objects-for-snippets-5b8ba5b": "آرایه‌ای از اشیای ریشه، خروجی، قانون یا متعادل‌کننده برای قطعه‌ها",
+        "outbound-object-9c0af1d": "شیء خروجی",
+        "outbound-configuration-for-outbounds-b1c06c3": "پیکربندی خروجی برای outbounds[]",
+        "rule-object-35c596a": "شیء قانون",
+        "balancer-object-c0dcb8b": "شیء متعادل‌کننده",
+        "balancer-configuration-for-routing-balancers-a14b13f": "پیکربندی متعادل‌کننده برای routing.balancers[]",
+        "root-object-5ab7a3d": "شیء ریشه",
+        "root-level-sections-for-configs-referencing-this-snippet-in-th-07e2f8a": "بخش‌های ریشه برای پیکربندی‌هایی که در آرایه snippets ریشه به این قطعه ارجاع می‌دهند",
+        "move-to-top-349d5d6": "انتقال به ابتدا",
+        "move-up-c66feb5": "انتقال به بالا",
+        "move-down-40bb50d": "انتقال به پایین",
+        "move-to-bottom-df93376": "انتقال به انتها",
+        "update-node-6216b74": "به‌روزرسانی نود",
+        "update-node-value-9c42315": "به‌روزرسانی نود · {{value1}}",
+        "close-node-update-9f7e455": "بستن به‌روزرسانی نود",
+        "node-directory-87cd969": "پوشه نود",
+        "directory-containing-docker-compose-yml-953b8bd": "پوشه حاوی docker-compose.yml",
+        "node-settings-2f2dfb4": "تنظیمات نود",
+        "panel-settings-292ac00": "تنظیمات پنل",
+        "installs-the-latest-node-image-and-core-over-ssh-requires-root-d74d053": "تصویر نود تعریف‌شده در docker-compose.yml را از طریق SSH به‌روزرسانی می‌کند. دسترسی root یا sudo بدون رمز لازم است. پنجره SSH را تا پایان باز نگه دارید.",
+        "update-this-node-and-restart-connections-1de075b": "به‌روزرسانی این نود و راه‌اندازی مجدد اتصال‌ها",
+        "continue-over-ssh-f266499": "ادامه از طریق SSH",
+        "enter-tags-comma-space-semicolon-ed6e61b": "برچسب‌ها را با ویرگول، فاصله یا نقطه‌ویرگول جدا کنید",
+        "export-users-e875475": "خروجی کاربران",
+        "import-users-f8e8e1b": "ورود کاربران از فایل",
+        "min-dea7933": "کمینه",
+        "max-a1a5936": "بیشینه",
+        "unit-4e54596": "واحد",
+        "active-users-with-sort-47cbe5b": "کاربران فعال با مرتب‌سازی",
+        "toggle-view-mode-de9a6a9": "تغییر حالت نمایش",
+        "executor-bb18675": "اجرای وظایف",
+        "oauth2-callback-2493959": "بازگشت از OAuth2",
+        "login-state-is-missing-expired-or-invalid-start-login-again-7630c41": "وضعیت ورود موجود نیست، منقضی شده یا نامعتبر است. ورود را دوباره آغاز کنید.",
+        "oauth2-authentication-5df84fc": "احراز هویت OAuth2",
+        "authenticating-1f6087c": "در حال احراز هویت…",
+        "verifying-credentials-c4c1b4e": "در حال بررسی اطلاعات ورود…",
+        "backups-3334fee": "نسخه‌های پشتیبان",
+        "encrypted-database-backups-a7d7cca": "نسخه‌های پشتیبان رمزگذاری‌شده پایگاه داده",
+        "incorrect-backup-password-7e314a0": "رمز نسخه پشتیبان نادرست است",
+        "wait-a-minute-and-try-again-20060e1": "یک دقیقه صبر کنید و دوباره تلاش کنید",
+        "could-not-unlock-backups-check-the-backup-verification-key-on--c5ef946": "باز کردن نسخه‌های پشتیبان ممکن نشد. کلید تأیید نسخه پشتیبان را در سرور بررسی کنید.",
+        "unlock-backups-ad83206": "باز کردن نسخه‌های پشتیبان",
+        "enter-your-backup-password-you-will-need-it-again-on-your-next-456b306": "رمز نسخه پشتیبان را وارد کنید. در مراجعه بعدی دوباره به آن نیاز دارید.",
+        "backup-password-3e39703": "رمز نسخه پشتیبان",
+        "could-not-encrypt-legacy-backups-2ddd492": "رمزگذاری نسخه‌های پشتیبان قدیمی ممکن نشد",
+        "encrypted-zip-backup-created-d2fdf96": "نسخه پشتیبان ZIP رمزگذاری‌شده ایجاد شد",
+        "could-not-create-backup-check-the-database-connection-and-avai-c5759c9": "ایجاد نسخه پشتیبان ممکن نشد. اتصال پایگاه داده و فضای آزاد دیسک را بررسی کنید.",
+        "backup-handed-to-the-browser-for-saving-d68a198": "نسخه پشتیبان برای ذخیره به مرورگر تحویل داده شد",
+        "could-not-download-backup-e909158": "دریافت نسخه پشتیبان ممکن نشد",
+        "password-protected-zip-backups-of-the-panel-database-scheduled-32d6028": "نسخه‌های ZIP پایگاه داده پنل با محافظت رمز عبور. نسخه‌های زمان‌بندی‌شده را می‌توان به تلگرام فرستاد.",
+        "lock-backups-2142035": "قفل کردن نسخه‌های پشتیبان",
+        "creating-backup-6a9c2e3": "در حال ایجاد نسخه پشتیبان…",
+        "create-zip-backup-8d2606e": "ایجاد نسخه پشتیبان ZIP",
+        "creating-an-encrypted-zip-backup-the-file-will-appear-below-wh-bbda93b": "نسخه پشتیبان ZIP رمزگذاری‌شده در حال ایجاد است. فایل پس از آماده شدن در پایین نمایش داده می‌شود.",
+        "could-not-check-backup-availability-930fb48": "بررسی دسترسی به نسخه‌های پشتیبان ممکن نشد",
+        "retry-942087c": "تلاش دوباره",
+        "legacy-backups-101ec81": "نسخه‌های پشتیبان قدیمی",
+        "convert-to-encrypted-zip-5e62e37": "تبدیل به ZIP رمزگذاری‌شده",
+        "unencrypted-legacy-backups-exist-d767a2c": "نسخه‌های پشتیبان قدیمی بدون رمزگذاری وجود دارند",
+        "count-value-these-files-can-be-converted-to-aes-zip-6d38585": "تعداد: {{value1}}. این فایل‌ها را می‌توان به ZIP با رمزگذاری AES تبدیل کرد.",
+        "convert-to-aes-zip-3860f5e": "تبدیل به ZIP با AES",
+        "periodic-database-dumps-and-telegram-delivery-84bd8f9": "دامپ دوره‌ای پایگاه داده و ارسال به تلگرام",
+        "automation-d909750": "خودکارسازی",
+        "off-ca7981b": "خاموش",
+        "daily-b36c261": "روزانه",
+        "automatic-backups-20260929": "پشتیبان‌گیری خودکار",
+        "weekly-2975132": "هفتگی",
+        "schedule-f4830a1": "زمان‌بندی",
+        "send-to-telegram-4d932ac": "ارسال به تلگرام",
+        "backups-are-retained-for-up-to-7-days-plain-dumps-are-addition-bdcd58a": "پشتیبان‌گیری خودکار به‌طور پیش‌فرض خاموش است. فاصله و دوره نگهداری تا ۷ روز را انتخاب کنید؛ همه نسخه‌ها در dumps ذخیره می‌شوند.",
+        "bot-token-5bb9aec": "توکن ربات",
+        "chat-group-id-f310e38": "شناسه گفتگو/گروه",
+        "save-settings-7f3a3b1": "ذخیره تنظیمات",
+        "no-backups-yet-bb7381f": "هنوز نسخه پشتیبانی وجود ندارد",
+        "encrypted-f45aef6": "رمزگذاری‌شده",
+        "unencrypted-d5c2819": "بدون رمزگذاری",
+        "download-backup-6692112": "دریافت نسخه پشتیبان",
+        "delete-e2d0a54": "حذف",
+        "delete-backup-86cf366": "حذف نسخه پشتیبان",
+        "downloading-37b3455": "در حال دریافت",
+        "download-progress-984b84c": "پیشرفت دریافت",
+        "configuration-b332c34": "پیکربندی",
+        "canvas-3824a9f": "بوم",
+        "history-0e76960": "تاریخچه",
+        "select-profile-d42c243": "انتخاب پروفایل",
+        "all-canvases-51c02d8": "همه بوم‌ها",
+        "otherwise-first-outbound-73e387d": "در غیر این صورت: نخستین خروجی",
+        "rule-without-conditions-39a0a61": "قانون بدون شرط",
+        "client-0c77fe0": "کلاینت",
+        "access-pending-or-unverified-91dc6c8": "دسترسی در انتظار یا تأییدنشده",
+        "illustrative-device-using-subscription-00e0d5b": "دستگاه نمونه با استفاده از اشتراک",
+        "status-920e413": "وضعیت",
+        "visible-enabled-hosts-693ffb2": "هاست‌های فعال و قابل نمایش",
+        "expires-f6725f3": "انقضا",
+        "client-links-appear-only-after-access-is-verified-4c01a81": "پیوندهای کلاینت فقط پس از تأیید دسترسی نمایش داده می‌شوند.",
+        "illustrative-client-enter-a-short-id-to-inspect-accessible-hos-6742ba7": "کلاینت نمونه: برای بررسی هاست‌های در دسترس، شناسه کوتاه را وارد کنید.",
+        "default-template-0b1bdec": "قالب پیش‌فرض",
+        "default-subscription-format-c8f5f80": "قالب پیش‌فرض اشتراک",
+        "hosts-using-template-c4bb011": "هاست‌های استفاده‌کننده از قالب",
+        "host-uses-the-default-subscription-settings-5faa262": "هاست از تنظیمات پیش‌فرض اشتراک استفاده می‌کند.",
+        "client-profile-outbounds-13e1b05": "خروجی‌های پروفایل کلاینت",
+        "loading-this-client-profile-s-outbounds-and-routes-0fc4a62": "خروجی‌ها و مسیرهای پروفایل کلاینت در حال بارگذاری‌اند.",
+        "client-profile-routes-f64f6b4": "مسیرهای پروفایل کلاینت",
+        "no-rule-matched-105129d": "هیچ قانونی منطبق نیست",
+        "client-template-a8cd9ea": "قالب کلاینت",
+        "disabled-79fb364": " · غیرفعال",
+        "default-37a8eec": "پیش‌فرض",
+        "subscription-host-5f3e4ca": "هاست اشتراک",
+        "address-56ef8f2": "نشانی",
+        "inbound-d17a5bd": "ورودی",
+        "state-a3b50c4": "وضعیت",
+        "disabled-17eb3c0": "غیرفعال",
+        "enabled-fb9cf75": "فعال",
+        "in-subscription-a4d7dfe": "در اشتراک",
+        "hidden-e564b40": "پنهان",
+        "visible-d42ef14": "قابل نمایش",
+        "host-nodes-b17b61e": "نودهای هاست",
+        "path-62fa5a5": "مسیر",
+        "host-domain-rules-0c0ad3c": "قوانین دامنه هاست",
+        "brutal-target-speed-56b4f37": "سرعت هدف Brutal",
+        "accessible-inbounds-value-cded6a4": "ورودی‌های در دسترس: {{value1}}",
+        "inbounds-from-this-profile-711baf6": "ورودی‌های این پروفایل",
+        "the-squad-grants-access-to-its-assigned-users-d287010": "اسکواد به کاربران اختصاص‌یافته خود دسترسی می‌دهد.",
+        "config-profile-ee4e7b6": "پروفایل پیکربندی",
+        "inbounds-ccb7185": "ورودی‌ها",
+        "nodes-7ac3620": "نودها",
+        "rules-4228aeb": "قوانین",
+        "outbounds-4788f08": "خروجی‌ها",
+        "config-sections-f9feceb": "بخش‌های پیکربندی",
+        "tags-1331275": "برچسب‌ها",
+        "type-baaddf7": "نوع",
+        "port-72e9a59": "پورت",
+        "network-1744b96": "شبکه",
+        "security-8f6fb4e": "امنیت",
+        "sniffing-9b17029": "تشخیص ترافیک",
+        "active-on-nodes-21240c8": "فعال در نودها",
+        "hosts-bba9af1": "هاست‌ها",
+        "squads-258027a": "اسکوادها",
+        "exit-ip-not-listed-9848d0f": "IP خروجی فهرست نشده است",
+        "profile-relation-848c037": "ارتباط پروفایل",
+        "assigned-directly-3cf81d0": "مستقیماً اختصاص یافته",
+        "listed-by-host-profile-not-assigned-70630de": "در هاست فهرست شده؛ پروفایل اختصاص نیافته است",
+        "inbound-ips-2dcc83e": "IPهای ورودی",
+        "outbound-ips-fda66c2": "IPهای خروجی",
+        "active-inbounds-9d8a08c": "ورودی‌های فعال",
+        "provider-472590a": "ارائه‌دهنده",
+        "used-when-no-earlier-rule-matches-e9bc9a6": "وقتی هیچ قانون قبلی منطبق نباشد استفاده می‌شود.",
+        "evaluation-order-8c0c5f6": "ترتیب ارزیابی",
+        "selects-outbound-by-prefix-7ef6b10": "خروجی را بر اساس پیشوند انتخاب می‌کند",
+        "outbound-prefixes-4cdbd5b": "پیشوندهای خروجی",
+        "fallback-outbound-25be968": "خروجی جایگزین",
+        "the-selected-outbound-depends-on-balancer-state-e104f25": "خروجی انتخاب‌شده به وضعیت متعادل‌کننده بستگی دارد.",
+        "client-profile-balancer-70c7415": "متعادل‌کننده پروفایل کلاینت",
+        "direct-exits-from-node-5b4fc83": "DIRECT · خروج از نود",
+        "block-traffic-dropped-42367b8": "BLOCK · ترافیک مسدود می‌شود",
+        "protocol-cf08833": "پروتکل",
+        "server-aef7de2": "سرور",
+        "freedom-final-rules-1e94bd8": "قوانین نهایی Freedom",
+        "block-response-43a0e8f": "پاسخ مسدودسازی",
+        "explicit-rules-703ff35": "قوانین صریح",
+        "first-outbound-used-if-no-rules-match-94443f0": "نخستین خروجی: اگر هیچ قانونی منطبق نباشد استفاده می‌شود.",
+        "blocked-18f2a09": "مسدود",
+        "direct-002c7c6": "مستقیم",
+        "forwarded-to-outbound-04ff29e": "ارسال به خروجی",
+        "connection-dropped-9049f3d": "اتصال قطع شد",
+        "to-destination-from-node-ip-b219404": "اتصال به مقصد از IP نود",
+        "outbound-0277321": "خروجی",
+        "traffic-is-dropped-by-xray-blackhole-c0aa93d": "ترافیک توسط blackhole در Xray مسدود می‌شود.",
+        "the-node-dials-out-actual-ip-and-destination-depend-on-network-6c6ab19": "نود اتصال خروجی را برقرار می‌کند. IP و مقصد واقعی به شبکه و تنظیمات خروجی بستگی دارد.",
+        "traffic-is-handed-to-this-outbound-the-final-address-is-not-me-671eee5": "ترافیک به این خروجی تحویل می‌شود؛ نشانی نهایی اینجا اندازه‌گیری نمی‌شود.",
+        "additional-finalrules-may-block-a-direct-connection-08be6b6": "قوانین اضافی finalRules ممکن است اتصال مستقیم را مسدود کنند.",
+        "exits-from-the-client-device-9073cc7": "خروج از دستگاه کلاینت",
+        "client-template-outbound-2fca86a": "خروجی قالب کلاینت",
+        "direct-is-handled-by-the-client-according-to-xray-json-011478f": "کلاینت، DIRECT را مطابق XRAY_JSON پردازش می‌کند.",
+        "traffic-is-dropped-c07151a": "ترافیک مسدود می‌شود.",
+        "the-route-ends-at-this-client-outbound-dbdea2e": "مسیر در این خروجی کلاینت پایان می‌یابد.",
+        "snippet-unresolved-6616234": "قطعه حل‌نشده",
+        "host-disabled-5a8b830": "هاست غیرفعال است",
+        "no-allowed-squad-for-its-inbound-a3b1eef": "اسکواد مجازی برای ورودی آن وجود ندارد",
+        "not-active-on-any-node-4298c77": "در هیچ نودی فعال نیست",
+        "node-disabled-9ed5252": "نود غیرفعال است",
+        "no-matching-outbounds-ccb79ca": "خروجی منطبقی وجود ندارد",
+        "outbound-not-found-6eb20b6": "خروجی پیدا نشد",
+        "balancer-not-found-b2655a5": "متعادل‌کننده پیدا نشد",
+        "client-profile-e233471": "پروفایل کلاینت",
+        "squad-df6163f": "اسکواد",
+        "profile-d696a35": "پروفایل",
+        "node-e933725": "نود",
+        "profile-rules-in-order-800f3bb": "قوانین پروفایل · به ترتیب",
+        "balancer-616a69d": "متعادل‌کننده",
+        "xray-outbound-9100f3c": "خروجی Xray",
+        "outcome-4e80abb": "نتیجه",
+        "profile-canvas-d14ca6b": "بوم پروفایل",
+        "profile-map-1112855": "نقشه پروفایل",
+        "drag-the-empty-canvas-to-pan-use-the-wheel-to-zoom-4a49b93": "برای جابه‌جایی، بخش خالی بوم را بکشید. برای بزرگ‌نمایی از چرخ ماوس استفاده کنید.",
+        "items-5f3c4f8": "مورد",
+        "exit-fullscreen-37fd4e3": "خروج از تمام‌صفحه",
+        "fullscreen-c461dbb": "تمام‌صفحه",
+        "canvas-layer-391f9d9": "لایه بوم",
+        "all-a52ace4": "همه",
+        "access-ec5ba0a": "دسترسی",
+        "routing-bcba696": "مسیریابی",
+        "select-a-block-to-inspect-its-properties-and-connections-2347bec": "برای بررسی ویژگی‌ها و اتصال‌ها یک بلوک را انتخاب کنید.",
+        "client-short-id-62efa46": "شناسه کوتاه کلاینت",
+        "check-access-abb9a17": "بررسی دسترسی",
+        "clear-83b12c2": "پاک کردن",
+        "checking-client-access-a3880a4": "در حال بررسی دسترسی کلاینت…",
+        "could-not-load-the-client-path-check-the-id-and-traffic-paths--fb70989": "بارگذاری مسیر کلاینت ممکن نشد. شناسه و دسترسی به API مسیرهای ترافیک را بررسی کنید.",
+        "accessible-profile-hosts-72b0b17": "هاست‌های در دسترس پروفایل",
+        "this-client-has-no-accessible-hosts-in-this-profile-12cda92": "این کلاینت در این پروفایل به هیچ هاستی دسترسی ندارد.",
+        "check-connections-5a8dc11": "بررسی اتصال‌ها",
+        "value-more-findings-39ca181": "{{value1}} مورد دیگر",
+        "loading-relations-5a4c580": "در حال بارگذاری ارتباط‌ها…",
+        "unable-to-load-relations-b37edfe": "بارگذاری ارتباط‌ها ممکن نشد.",
+        "canvas-navigation-579dfc8": "ناوبری بوم",
+        "find-item-15cb4f1": "یافتن مورد",
+        "find-an-item-4871b5f": "یافتن یک مورد…",
+        "no-matching-items-4d1d151": "مورد منطبقی پیدا نشد",
+        "zoom-in-0e47f09": "بزرگ‌نمایی",
+        "zoom-out-bc7b631": "کوچک‌نمایی",
+        "fit-map-7d3b421": "جا دادن نقشه",
+        "navigate-using-minimap-44dd66c": "ناوبری با نقشه کوچک",
+        "go-to-selected-b5b8d43": "رفتن به مورد انتخاب‌شده",
+        "open-settings-ca381c1": "باز کردن تنظیمات",
+        "loading-history-a960c43": "در حال بارگذاری تاریخچه…",
+        "history-unavailable-cf319f4": "تاریخچه در دسترس نیست",
+        "check-that-the-panel-and-its-database-are-up-to-date-e05ae6c": "به‌روز بودن پنل و پایگاه داده آن را بررسی کنید.",
+        "the-30-latest-versions-are-retained-restore-opens-an-unsaved-d-275da0f": "۳۰ نسخه اخیر نگهداری می‌شود. بازیابی یک پیش‌نویس ذخیره‌نشده را در ویرایشگر باز می‌کند؛ برای اعمال آن ذخیره را بزنید.",
+        "no-snapshots-yet-the-first-edit-of-an-existing-profile-will-pr-6bf0903": "هنوز نسخه‌ای ثبت نشده است. اولین ویرایش پروفایل موجود هر دو نسخه را نگه می‌دارد.",
+        "latest-8730d3c": "آخرین نسخه",
+        "open-in-editor-ea1d0f0": "باز کردن در ویرایشگر",
+        "squads-inbounds-nodes-and-hosts-a83c761": "اسکوادها، ورودی‌ها، نودها و هاست‌ها",
+        "profile-relations-077ff52": "ارتباط‌های پروفایل",
+        "unable-to-load-all-relations-refresh-the-page-f4738e4": "بارگذاری همه ارتباط‌ها ممکن نشد. صفحه را تازه کنید.",
+        "no-related-squads-8fe4caf": "اسکواد مرتبطی وجود ندارد",
+        "profile-has-no-inbounds-e6811ad": "پروفایل ورودی ندارد",
+        "no-nodes-use-this-profile-eac5087": "هیچ نودی از این پروفایل استفاده نمی‌کند",
+        "no-hosts-for-this-profile-221d046": "این پروفایل هاستی ندارد",
+        "these-are-saved-configuration-relations-they-do-not-verify-rea-2475ca8": "این‌ها ارتباط‌های ذخیره‌شده پیکربندی‌اند؛ دسترس‌پذیری یا ترافیک را تأیید نمی‌کنند.",
+        "could-not-load-the-profile-or-snippets-d5bd769": "بارگذاری پروفایل یا قطعه‌ها ممکن نشد",
+        "canvases-811c4ef": "بوم‌ها",
+        "failed-to-load-profiles-b623ebf": "بارگذاری پروفایل‌ها ناموفق بود",
+        "no-profiles-yet-bd4729e": "هنوز پروفایلی وجود ندارد",
+        "memory-c3963ae": "حافظه",
+        "heap-bb30cbe": "هیپ",
+        "external-68c114e": "حافظه خارجی",
+        "array-buffers-8f83231": "بافرهای آرایه",
+        "event-loop-f397de4": "حلقه رویداد",
+        "delay-fd9b6df": "تأخیر",
+        "ms-f785c3c": "میلی‌ثانیه",
+        "handles-9db6f24": "دستگیره‌ها",
+        "active-handles-be956a8": "دستگیره‌های فعال",
+        "scheduler-d3a27d9": "زمان‌بند",
+        "processor-54aac65": "پردازشگر",
+        "tag-settings-9449b1a": "تنظیمات برچسب",
+        "could-not-load-retry-7e0704a": "بارگذاری ممکن نشد. دوباره تلاش کنید",
+        "find-tag-8344cc6": "یافتن برچسب",
+        "new-tag-609117d": "برچسب جدید",
+        "configure-6defafa": "پیکربندی",
+        "loading-ba3bbbe": "در حال بارگذاری…",
+        "unlimited-11dde17": "نامحدود",
+        "create-a-tag-and-configure-it-before-adding-hosts-b4df42f": "پیش از افزودن هاست‌ها، برچسب را ایجاد و پیکربندی کنید.",
+        "close-tag-settings-f3b8745": "بستن تنظیمات برچسب",
+        "settings-for-value-saved-b164a5f": "تنظیمات «{{value1}}» ذخیره شد",
+        "tag-settings-sync-on-compatible-nodes-a94e2f1": "تغییرات پس از همگام‌سازی با نودهای سازگار اعمال می‌شوند.",
+        "apply-to-tagged-hosts-with-the-corresponding-inheritance-switc-efe2579": "برای هاست‌های دارای این برچسب که گزینه ارث‌بری مربوطه فعال است اعمال می‌شود. صفر یعنی نامحدود.",
+        "per-user-limit-gib-555cb5c": "سهمیه هر کاربر، GiB",
+        "combined-user-usage-across-all-tagged-hosts-including-multipli-aa5364d": "مجموع مصرف کاربر در همه هاست‌های این برچسب با احتساب ضرایب.",
+        "per-user-speed-mbps-1824561": "سرعت هر کاربر، Mbps",
+        "for-each-user-independently-on-each-host-1ea423d": "برای هر کاربر، جداگانه روی هر هاست.",
+        "tag-traffic-multiplier-4ad10d9": "ضریب ترافیک برچسب",
+        "for-hosts-using-the-tag-multiplier-recalculates-the-current-pe-e2ad055": "برای هاست‌هایی که از ضریب برچسب استفاده می‌کنند. دوره فعلی دوباره محاسبه می‌شود؛ مصرف اشتراک تغییر نمی‌کند.",
+        "whole-group-speed-mbps-3c36e77": "سرعت کل گروه، Mbps",
+        "one-shared-cap-across-all-users-and-all-tagged-hosts-3a81bf7": "یک سقف مشترک برای همه کاربران و همه هاست‌های دارای این برچسب.",
+        "reset-every-8c98f6a": "بازنشانی هر",
+        "days-ab51004": "روز",
+        "months-1683743": "ماه",
+        "save-1509f56": "ذخیره",
+        "confirm-removing-settings-be691de": "تأیید حذف تنظیمات",
+        "remove-tag-settings-12cb09d": "حذف تنظیمات برچسب",
+        "cancel-19766ed": "انصراف",
+        "en-us-5c49f88": "fa-IR",
+        "metrics-overview-3e78a3c": "نمای کلی سنجه‌ها",
+        "refresh-0e91610": "تازه‌سازی",
+        "add-location-db07192": "افزودن مکان",
+        "unable-to-load-locations-f449888": "بارگذاری مکان‌ها ممکن نشد",
+        "check-the-panel-connection-and-press-refresh-f8ebbd1": "اتصال پنل را بررسی کرده و تازه‌سازی را بزنید.",
+        "configure-an-existing-host-544819d": "پیکربندی هاست موجود",
+        "host-4a82311": "هاست",
+        "select-a-host-c8030cf": "انتخاب هاست",
+        "no-host-found-d3a8ed1": "هاستی پیدا نشد",
+        "search-locations-8492a8c": "جستجوی مکان‌ها",
+        "search-name-country-or-carrier-63fbd36": "جستجوی نام، کشور یا اپراتور",
+        "no-matching-locations-267dceb": "مکان منطبقی پیدا نشد",
+        "add-a-location-or-configure-an-existing-host-above-234eac3": "یک مکان اضافه کنید یا هاست موجود را در بالا پیکربندی کنید.",
+        "try-another-name-or-clear-the-search-d300b41": "نام دیگری را امتحان کنید یا جستجو را پاک کنید.",
+        "not-enabled-2b0e804": "فعال نشده",
+        "host-disabled-b05fd9b": "هاست غیرفعال است",
+        "the-location-is-not-delivered-to-any-subscription-5c37a59": "این مکان به هیچ اشتراکی ارسال نمی‌شود.",
+        "hidden-7e6feff": "پنهان",
+        "hidden-hosts-are-not-delivered-to-subscriptions-c6cfe11": "هاست‌های پنهان به اشتراک‌ها ارسال نمی‌شوند.",
+        "delivered-9061156": "ارسال می‌شود",
+        "only-to-matching-internal-squads-and-active-subscriptions-6a45063": "فقط برای اسکوادهای داخلی منطبق و اشتراک‌های فعال.",
+        "to-active-users-with-a-valid-subscription-ccaa35c": "برای کاربران فعال با اشتراک معتبر.",
+        "no-city-set-fd1aefe": "شهری تعیین نشده",
+        "room-4f0d12f": "اتاق: ",
+        "location-settings-e49e4dc": "تنظیمات مکان",
+        "apps-in-delivery-rules-df2b121": "برنامه‌ها در قوانین ارسال",
+        "user-agent-conditions-in-enabled-delivery-rules-the-actual-res-9346c0b": "شرط‌های User-Agent در قوانین فعال ارسال. پاسخ واقعی به همه شرط‌ها و ترتیب قوانین بستگی دارد.",
+        "no-explicit-user-agent-conditions-in-delivery-rules-a0c8775": "در قوانین ارسال، شرط صریح User-Agent وجود ندارد.",
+        "top-5-d9c3778": "۵ مورد برتر",
+        "top-10-18b38ae": "۱۰ مورد برتر",
+        "top-20-f80bebb": "۲۰ مورد برتر",
+        "top-30-c192e33": "۳۰ مورد برتر",
+        "top-40-17bbae2": "۴۰ مورد برتر",
+        "top-50-50ea9e3": "۵۰ مورد برتر",
+        "top-60-bba98b8": "۶۰ مورد برتر",
+        "top-70-23e7e5d": "۷۰ مورد برتر",
+        "top-80-170d26f": "۸۰ مورد برتر",
+        "top-90-c5c5619": "۹۰ مورد برتر",
+        "top-100-4e67739": "۱۰۰ مورد برتر",
+        "nothing-to-see-here-1a490b4": "صفحه پیدا نشد",
+        "page-you-are-trying-to-open-does-not-exist-you-may-have-mistyp-9e386c2": "صفحه‌ای که می‌خواهید باز کنید وجود ندارد. شاید نشانی اشتباه است یا صفحه به نشانی دیگری منتقل شده است.",
+        "take-me-back-to-home-page-4f5104e": "بازگشت به صفحه اصلی",
+        "something-bad-just-happened-ae00f3a": "خطایی رخ داد",
+        "refresh-the-page-b5c2959": "تازه‌سازی صفحه",
+        "active-9234069": "فعال",
+        "limited-e5125d9": "محدودشده",
+        "disabled-75081b5": "غیرفعال",
+        "expired-424a255": "منقضی‌شده",
+        "sign-out-failed-cc017f6": "خروج ناموفق بود",
+        "the-server-could-not-confirm-session-revocation-please-try-aga-eee8add": "سرور نتوانست لغو نشست را تأیید کند. دوباره تلاش کنید.",
+        "theme-settings-697b009": "تنظیمات پوسته",
+        "appearance-3907fa7": "ظاهر",
+        "accent-a5c6fb1": "رنگ تأکیدی",
+        "font-64d0b3a": "قلم",
+        "compact-interface-b1b6a87": "رابط فشرده",
+        "reduce-motion-297ef4c": "کاهش حرکت",
+        "reset-daee760": "بازنشانی",
+        "launcher-22614ac": "راه‌انداز",
+        "could-not-repair-this-json-45b21e3": "اصلاح JSON ممکن نشد",
+        "json-repaired-c6046c7": "JSON اصلاح شد",
+        "nothing-to-repair-05924d7": "نیازی به اصلاح نیست",
+        "create-or-select-a-tag-8c144e4": "یک برچسب ایجاد یا انتخاب کنید",
+        "tag-1503916": "برچسب",
+        "clear-value-01ae1c2": "پاک کردن مقدار",
+        "yes-85a39ab": "بله",
+        "no-1ea442a": "خیر",
+        "message-325906e": "شبکه‌های اجتماعی",
+        "invalid-destination-c414988": "مقصد نامعتبر: ",
+        "domains-include-subdomains-http-s-urls-ipv4-ipv6-cidr-and-inte-bd63ed5": "دامنه‌ها شامل زیردامنه‌ها هستند. نشانی‌های HTTP(S)، IPv4، IPv6، CIDR و دامنه‌های بین‌المللی پشتیبانی می‌شوند. برای بررسی بدون سایت ثالث، پینگ TCP را در کلاینت خود (مانند Happ یا INCY) انتخاب کنید. بررسی HTTP به نشانی مجاز نیاز دارد. TCP اتصال سرور را می‌سنجد، نه دسترسی VPN.",
+        "domains-and-ips-813c598": "دامنه‌ها و IPها",
+        "allow-only-selected-destinations-8f26f18": "فقط اجازه به مقصدهای انتخاب‌شده",
+        "block-selected-destinations-b979531": "مسدود کردن مقصدهای انتخاب‌شده",
+        "add-destination-48b7df1": "افزودن مقصد",
+        "address-and-ping-help-2b2063f": "راهنمای نشانی و پینگ",
+        "destination-presets-27cd6c9": "پیش‌تنظیم‌های مقصد",
+        "could-not-load-the-form-data-please-retry-7278c1c": "بارگذاری داده‌های فرم ممکن نشد. دوباره تلاش کنید.",
+        "assign-a-tag-to-this-host-first-636effb": "ابتدا به این هاست یک برچسب اختصاص دهید.",
+        "the-host-s-own-limits-apply-independently-each-kind-of-limit-c-9735c38": "محدودیت‌های خود هاست مستقل اعمال می‌شوند. هر نوع محدودیت می‌تواند تنظیمات برچسب‌های اختصاص‌یافته را هم در نظر بگیرد. سخت‌گیرانه‌ترین محدودیت اعمال می‌شود.",
+        "groups-176c620": "گروه‌ها: ",
+        "traffic-limit-per-user-a5e049d": "سهمیه ترافیک هر کاربر",
+        "per-user-within-this-host-zero-means-unlimited-82da8b7": "برای هر کاربر در این هاست. صفر یعنی نامحدود.",
+        "apply-tag-traffic-quota-3fb4646": "اعمال سهمیه ترافیک برچسب",
+        "one-user-s-shared-quota-across-participating-hosts-using-the-t-1b4551d": "سهمیه مشترک یک کاربر میان هاست‌های مشارکت‌کننده، با دوره بازنشانی برچسب. تغییر این گزینه مصرف دوره فعلی را بازمحاسبه می‌کند؛ سهمیه خود هاست حفظ می‌شود.",
+        "server-speed-limit-per-user-e6705eb": "سرعت سرور برای هر کاربر",
+        "shared-by-all-devices-and-connections-of-one-user-zero-means-u-9bbeda4": "مشترک میان همه دستگاه‌ها و اتصال‌های یک کاربر. صفر یعنی نامحدود.",
+        "apply-tag-per-user-speed-4ad7483": "اعمال سرعت هر کاربر از برچسب",
+        "the-same-limit-separately-on-each-host-shared-by-one-user-s-de-50737b5": "محدودیت یکسان به‌صورت جداگانه روی هر هاست، مشترک میان دستگاه‌های یک کاربر. بین هاست‌ها تجمیع نمی‌شود.",
+        "whole-host-speed-limit-e5c8f33": "محدودیت سرعت کل هاست",
+        "shared-by-every-user-of-this-host-other-hosts-on-the-node-are--207fb7b": "مشترک میان تمام کاربران این هاست. هاست‌های دیگر نود تغییر نمی‌کنند. صفر یعنی نامحدود.",
+        "apply-tag-shared-speed-0471605": "اعمال سرعت مشترک برچسب",
+        "one-shared-speed-pool-for-all-users-and-participating-hosts-of-0e8ab7a": "یک سرعت مشترک برای همه کاربران و هاست‌های مشارکت‌کننده در برچسب. محدودیت خود هاست هم اعمال می‌شود.",
+        "host-traffic-multiplier-629284f": "ضریب ترافیک هاست",
+        "1-counts-normal-usage-2-charges-twice-the-traffic-to-host-and--92c312c": "۱× مصرف عادی و ۲× دو برابر ترافیک را از سهمیه هاست و برچسب کسر می‌کند. مصرف اشتراک تغییر نمی‌کند. تغییر ضریب دوره فعلی را بازمحاسبه می‌کند.",
+        "use-the-tag-multiplier-e071b5e": "استفاده از ضریب برچسب",
+        "the-host-s-own-quota-uses-1-218665d": "سهمیه خود هاست از ضریب ۱× استفاده می‌کند.",
+        "reset-traffic-every-587e56d": "بازنشانی ترافیک هر",
+        "0-means-never-the-period-starts-on-the-day-the-setting-is-save-fc881dd": "صفر یعنی بدون بازنشانی. دوره از روز ذخیره تنظیمات (UTC) آغاز می‌شود.",
+        "period-unit-f65d821": "واحد دوره",
+        "days-e08c0aa": "روز",
+        "months-09ca755": "ماه",
+        "allow-only-43c63e5": "فقط اجازه به",
+        "deny-05a2d73": "رد کردن",
+        "automatic-sni-and-shortid-regeneration-fa50b0e": "تولید مجدد خودکار SNI و shortId",
+        "sni-rotates-through-the-pool-shortid-is-regenerated-nodes-rest-aa632da": "SNI از میان مجموعه انتخاب می‌شود، shortId دوباره تولید می‌شود و نودها خودکار راه‌اندازی مجدد می‌شوند",
+        "interval-hours-e456194": "فاصله، ساعت",
+        "backup-retention-days-20260929": "نگهداری نسخه‌های پشتیبان، روز (۱ تا ۷)",
+        "shortid-count-724ec96": "تعداد shortId",
+        "shortid-length-a595758": "طول shortId",
+        "sni-pool-42869d6": "مجموعه SNI",
+        "regenerate-shortid-5b4336d": "تولید مجدد shortId",
+        "last-rotation-ffd71b1": "آخرین چرخش: ",
+        "available-after-subscription-expires-or-is-disabled-61afc39": "پس از انقضا یا غیرفعال شدن اشتراک در دسترس است",
+        "can-share-an-inbound-with-ordinary-hosts-access-uses-separate--1881b29": "می‌تواند ورودی مشترکی با هاست‌های عادی داشته باشد. دسترسی با اطلاعات جداگانه هاست انجام می‌شود؛ به نود و Xray با جداسازی هاست نیاز دارد.",
+        "unavailable-during-an-active-subscription-43ed8ab": "در طول اشتراک فعال در دسترس نیست",
+        "only-for-expired-or-disabled-subscriptions-squad-access-restri-c5bbce7": "فقط برای اشتراک‌های منقضی یا غیرفعال. محدودیت‌های دسترسی اسکواد همچنان اعمال می‌شود.",
+        "carrier-271c535": "اپراتور",
+        "room-911ea89": "اتاق",
+        "encryption-key-16b3c9d": "کلید رمزگذاری",
+        "64-hexadecimal-characters-from-the-node-configuration-f5f9d5f": "۶۴ نویسه هگزادسیمال از پیکربندی نود",
+        "transport-aaead4a": "انتقال",
+        "vp8-channel-default-933cdaf": "کانال VP8 · پیش‌فرض",
+        "video-channel-f2aa4de": "کانال ویدیو",
+        "sei-channel-171688a": "کانال SEI",
+        "data-channel-6d1ed8a": "کانال داده",
+        "wb-stream-account-token-ef8a3f9": "توکن حساب WB Stream",
+        "client-token-optional-b408598": "توکن کلاینت (اختیاری)",
+        "data-channel-requires-an-account-token-with-canpublishdata-tru-6bff50b": "کانال داده به توکن حساب با canPublishData=true نیاز دارد؛ توکن مهمان کار نمی‌کند.",
+        "verify-the-token-before-enabling-the-host-the-panel-will-not-d-84f3448": "پیش از فعال کردن هاست توکن را بررسی کنید: پنل کانال داده را بدون آن ارسال نمی‌کند تا کاربران مکان خراب دریافت نکنند.",
+        "country-code-b5bf7a5": "کد کشور",
+        "city-fc33f73": "شهر",
+        "latency-probe-address-4e2ade7": "نشانی سنجش تأخیر",
+        "name-description-squads-and-visibility-follow-this-host-the-ap-1a501e7": "نام، توضیح، اسکوادها و نمایش‌پذیری از این هاست گرفته می‌شوند. برنامه انتقال را خودکار انتخاب می‌کند.",
+        "mihomo-flclash-x-flowvy-prizrak-box-koala-clash-46c8d64": "Mihomo: FlClash X, Flowvy, prizrak-box, Koala Clash",
+        "xray-happ-incy-02b99d3": "Xray: Happ, Incy",
+        "vless-route-id-5e33c03": "شناسه مسیر VLESS",
+        "unknown-setting-d7117ae": "تنظیم ناشناخته",
+        "last-verified-0f68266": "آخرین تأیید: ",
+        "unknown-b764cdc": "نامشخص",
+        "verified-77cae63": "تأییدشده: ",
+        "the-latest-check-could-not-confirm-the-state-check-again-via-s-3e2b35f": "آخرین بررسی نتوانست وضعیت را تأیید کند. دوباره از طریق SSH بررسی کنید.",
+        "check-via-ssh-1101731": "بررسی از طریق SSH",
+        "0-count-all-time-never-reset-d6cddc0": "۰ — محاسبه کل زمان، بدون بازنشانی",
+        "node-port-42b685c": "پورت نود",
+        "secret-key-secret-key-2f12318": "کلید محرمانه (SECRET_KEY)",
+        "new-devices-denied-standalone-dcc8096": "منع دستگاه‌های جدید",
+        "available-host-placement-c6e58c8": "محل نمایش هاست در دسترس",
+        "before-remarks-1cae831": "پیش از توضیحات",
+        "after-remarks-878b925": "پس از توضیحات",
+        "invalid-date-cd63c7d": "تاریخ نامعتبر",
+        "please-select-a-valid-date-defaulting-to-1-month-from-now-f05123b": "تاریخ معتبری انتخاب کنید. تاریخ پیش‌فرض یک ماه بعد از امروز است.",
+        "telegram-id-68559c8": "شناسه تلگرام",
+        "enter-user-s-telegram-id-optional-a4f21c4": "شناسه تلگرام کاربر را وارد کنید (اختیاری)",
+        "email-969ccbd": "ایمیل",
+        "enter-user-s-email-optional-f372bfa": "ایمیل کاربر را وارد کنید (اختیاری)",
+        "fallback-device-limit-in-use-3dae434": "محدودیت جایگزین دستگاه در حال استفاده است",
+        "metadata-9eddf57": "فراداده",
+        "recap-31056c3": "مرور آماری",
+        "loading-dc38088": "در حال بارگذاری",
+        "build-info-642ae0c": "اطلاعات بیلد",
+        "access-after-subscription-expiry-is-enabled-52c699c": "دسترسی پس از انقضای اشتراک فعال است",
+        "after-subscription-expiry-66a7704": "پس از انقضای اشتراک",
+        "message-324c53a": "ورود کاربران به «",
+        "message-7e4abe1": "خروجی کاربران اسکواد به فایل",
+        "message-0268a2c": "ورود کاربران از فایل به اسکواد",
+        "language-a4fe652": "زبان",
+        "error-loading-templates-from-github-try-again-later-995cfcc": "بارگذاری قالب‌ها از GitHub ممکن نشد. بعداً دوباره تلاش کنید.",
+        "by-a7e2d26": "از",
+        "foreground-color-7760829": "رنگ پیش‌زمینه",
+        "background-color-3e314da": "رنگ پس‌زمینه",
+        "update-available-ff8b555": "به‌روزرسانی موجود است",
+        "a-new-version-is-available-e848cbe": "نسخه جدید موجود است",
+        "check-out-326e405": "مشاهده",
+        "copy-build-info-04f3631": "کپی اطلاعات بیلد",
+        "build-time-707cae7": "زمان بیلد",
+        "build-bdd254b": "بیلد",
+        "backend-2fb4019": "بخش سرور",
+        "view-on-github-2067242": "مشاهده در GitHub",
+        "frontend-af48bcf": "رابط کاربری",
+        "community-bb501d7": "انجمن",
+        "open-base64-editor-838c81d": "باز کردن ویرایشگر Base64",
+        "message-c736fb4": "منع دستگاه‌های جدید",
+        "message-15a13be": "ترافیک هاست یا برچسب مسدود است",
+        "nice-try-afcca19": "این عملیات در دسترس نیست",
+        "management-server-e1f23eb": "سرور مدیریت",
+        "integration-9a42d40": "یکپارچه‌سازی",
+        "base64-editor-8d692d6": "ویرایشگر Base64",
+        "connecting-5f04ae9": "در حال اتصال…",
+        "settings-74a883a": "تنظیمات",
+        "health-and-logs-abdf03a": "وضعیت و گزارش‌ها",
+        "clear-this-node-health-log-5ff36f0": "گزارش سلامت این نود پاک شود؟",
+        "the-check-history-will-be-deleted-permanently-096cdeb": "تاریخچه بررسی‌ها برای همیشه حذف می‌شود.",
+        "node-health-checks-f44b4af": "بررسی‌های سلامت نود",
+        "connection-attempts-node-responses-and-measured-resources-syst-77a7903": "تلاش‌های اتصال، پاسخ‌های نود و منابع اندازه‌گیری‌شده. گزارش‌های سیستم و Xray از این بررسی‌ها جدا هستند.",
+        "check-now-2937cff": "بررسی اکنون",
+        "filter-entries-9080dc7": "فیلتر ورودی‌ها",
+        "retries-ef21130": "تلاش‌های مجدد",
+        "unreachable-abaa46a": "دسترس‌ناپذیر",
+        "errors-cb70237": "خطاها",
+        "could-not-load-health-checks-6e02827": "بارگذاری بررسی‌های سلامت ممکن نشد",
+        "no-entries-yet-they-will-appear-after-the-next-node-check-bade00e": "هنوز ورودی وجود ندارد. پس از بررسی بعدی نود نمایش داده می‌شوند.",
+        "time-33b9347": "زمان",
+        "result-6e7d50e": "نتیجه",
+        "attempt-c934cc7": "تلاش",
+        "load-memory-xray-955d5f3": "بار / حافظه / Xray",
+        "message-2f77668": "پیام",
+        "entries-shown-value-use-refresh-for-new-data-d452203": "ورودی‌های نمایش‌داده‌شده: {{value1}}. برای داده جدید تازه‌سازی کنید.",
+        "load-more-ac8991e": "بارگذاری بیشتر",
+        "xray-log-from-node-0af029d": "گزارش Xray نود",
+        "latest-200-lines-fetched-on-demand-and-not-stored-in-the-panel-f82c8f7": "۲۰۰ خط آخر، هنگام درخواست دریافت می‌شود و در پنل ذخیره نمی‌شود.",
+        "load-log-5646a79": "بارگذاری گزارش",
+        "xray-log-unavailable-check-the-node-connection-and-version-8c26f1a": "گزارش Xray در دسترس نیست: اتصال و نسخه نود را بررسی کنید.",
+        "no-lines-yet-4c1ac25": "هنوز خطی وجود ندارد.",
+        "log-retention-46c385a": "مدت نگهداری گزارش",
+        "old-entries-for-all-nodes-are-removed-automatically-this-setti-55fabec": "ورودی‌های قدیمی همه نودها خودکار حذف می‌شوند. این تنظیم برای پنل است.",
+        "clear-this-node-ccdf4bb": "پاک کردن این نود",
+        "operation-failed-4e1af7c": "عملیات ناموفق بود",
+        "default-21b111c": "پیش‌فرض",
+        "traceroute-5e472e4": "ردیابی مسیر",
+        "anycast-11c3776": "انی‌کست",
+        "excess-ddd36ae": "افزایش",
+        "jitter-16c7dc7": "نوسان تأخیر",
+        "loss-2ea71c1": "از دست‌رفتگی",
+        "score-a575b79": "امتیاز",
+        "hops-98e0377": "گام‌ها",
+        "floor-a3e1f49": "حداقل",
+        "no-icmp-4fd6266": "بدون ICMP",
+        "checking-installation-and-access-9ae1be6": "در حال بررسی نصب و دسترسی",
+        "downloading-and-verifying-updater-e2ba68a": "در حال دریافت و تأیید به‌روزرسان",
+        "updating-node-backup-and-startup-verification-81927ea": "به‌روزرسانی نود، پشتیبان‌گیری و بررسی راه‌اندازی",
+        "node-updated-298d17b": "نود به‌روز شد",
+        "update-not-confirmed-check-ssh-directory-token-and-node-state--2d230c4": "به‌روزرسانی تأیید نشد. پیش از تلاش مجدد، SSH، پوشه، توکن و وضعیت نود را بررسی کنید.",
+        "waiting-for-ssh-connection-309d2b4": "در انتظار اتصال SSH",
+        "close-unused-ssh-tabs-and-retry-4a49f17": "زبانه‌های SSH بدون استفاده را ببندید و دوباره تلاش کنید.",
+        "ssh-connection-failed-4dd3696": "اتصال SSH ناموفق بود.",
+        "command-finished-but-database-verification-is-missing-check-th-f160173": "فرمان پایان یافت، اما تأیید پایگاه داده موجود نیست. نود را بررسی کنید.",
+        "waiting-for-ssh-4456975": "در انتظار SSH",
+        "running-f4ccae2": "در حال اجرا",
+        "done-11a6767": "انجام شد",
+        "failed-031a8f0": "ناموفق",
+        "cancelled-d353a99": "لغوشده",
+        "skipped-12698ce": "ردشده",
+        "new-job-was-not-accepted-wait-for-the-current-queue-to-finish-9d71dc7": "وظیفه جدید پذیرفته نشد: تا پایان صف فعلی صبر کنید.",
+        "cancel-remaining-56c2a17": "لغو موارد باقی‌مانده",
+        "keep-ssh-open-ebe7e58": "SSH را باز نگه دارید",
+        "node-results-9a3d72c": "نتایج نودها",
+        "retry-unfinished-d1a0447": "تلاش مجدد موارد ناتمام",
+        "session-ticket-2426a1b": "مجوز نشست",
+        "channel-69e3656": "کانال",
+        "host-key-fb1b291": "کلید میزبان",
+        "public-key-f569a86": "کلید عمومی",
+        "shell-ce635c4": "پوسته",
+        "refused-to-sign-f9507d6": "امضا رد شد",
+        "signing-failed-ac02245": "امضا ناموفق بود",
+        "docker-stats-c2c9ecf": "آمار Docker",
+        "already-open-in-another-tab-fa90add": "قبلاً در زبانه دیگری باز شده است",
+        "top-500-cb2691e": "۵۰۰ مورد برتر",
+        "top-1000-0e8c83c": "۱۰۰۰ مورد برتر",
+        "top-2000-951e648": "۲۰۰۰ مورد برتر",
+        "day-9fa246c": "میانگین روزانه",
+        "request-failed-fd46833": "درخواست ناموفق بود",
+        "passkey-registration-efb614a": "ثبت کلید عبور",
+        "registration-was-cancelled-0b92676": "ثبت لغو شد",
+        "passkeys-are-not-supported-on-this-device-c8afa17": "این دستگاه از کلید عبور پشتیبانی نمی‌کند",
+        "this-device-is-already-registered-1735ab9": "این دستگاه قبلاً ثبت شده است",
+        "passkey-registration-error-3f734fb": "خطا در ثبت کلید عبور",
+        "an-unexpected-error-occurred-6615bf1": "خطای غیرمنتظره‌ای رخ داد",
+        "text-71988c4": "متن",
+        "my-awesome-squad-c19621e": "اسکواد من",
+        "my-node-plugin-0763cd5": "افزونه نود من",
+        "my-subscription-page-config-380cfe3": "صفحه اشتراک من",
+        "my-mihomo-template-86a53f7": "قالب Mihomo من",
+        "modals-3138cda": "پنجره‌های گفتگو",
+        "routes-2c5b669": "صفحه‌ها",
+        "raw-subscription-9e7ce17": "اشتراک خام",
+        "could-not-change-new-device-access-01f1686": "تغییر دسترسی دستگاه‌های جدید ممکن نشد",
+        "device-registration-policy-is-unavailable-130c617": "سیاست ثبت دستگاه در دسترس نیست",
+        "deny-new-devices-48105ae": "منع دستگاه‌های جدید",
+        "existing-devices-continue-working-allowing-registration-keeps--517c1bf": "دستگاه‌های موجود به کار ادامه می‌دهند. مجاز کردن ثبت، محدودیت تعداد دستگاه را حفظ می‌کند.",
+        "updated-3a5ecca": "به‌روز شده",
+        "raw-report-6d26b54": "گزارش خام",
+        "inbound-tag-bb8a8e8": "برچسب ورودی",
+        "xray-validator-is-loading-c1b8f5f": "اعتبارسنج Xray در حال بارگذاری است…",
+        "xray-core-wasm-is-restarting-a544e56": "هسته Xray ‏(WASM) در حال راه‌اندازی مجدد است…",
+        "xray-core-wasm-crashed-validation-is-unavailable-32f2d4d": "اعتبارسنجی پیکربندی در دسترس نیست. دوباره بارگذاری کنید.",
+        "password-e7cf3ef": "رمز عبور",
+        "private-key-b593dff": "کلید خصوصی",
+        "mldsa65seed-server-side-ad97048": "mldsa65Seed (سمت سرور)",
+        "mldsa65verify-client-side-pqv-a5843b5": "mldsa65Verify (سمت کلاینت، pqv)",
+        "both-keys-8256d94": "هر دو کلید",
+        "server-side-used-in-decryption-d0768f2": "سمت سرور، برای رمزگشایی",
+        "client-side-used-in-encryption-c5871bc": "سمت کلاینت، برای رمزگذاری",
+        "mux-params-d003e0a": "پارامترهای Mux",
+        "sockopt-params-12a2ddf": "پارامترهای SockOpt",
+        "filter-by-9d50c25": "فیلتر…",
+        "import-users-to-value-65bb3a8": "ورود کاربران به «{{value1}}»",
+        "export-squad-users-file-0a3a333": "خروجی کاربران اسکواد (فایل)",
+        "import-users-from-file-514dd40": "ورود کاربران از فایل",
+        "torrent-blocker-bdcf6f6": "مسدودکننده تورنت",
+        "ingress-filter-52853f6": "فیلتر ورودی",
+        "egress-filter-a22e397": "فیلتر خروجی",
+        "connection-drop-b46fa7e": "قطع اتصال",
+        "dangling-1f52ec3": "بدون ارتباط",
+        "rx-05c4497": "دریافت",
+        "tx-536939e": "ارسال",
+        "xray-uptime-ac0a1ea": "مدت کارکرد Xray",
+        "plugin-ab1173e": "افزونه",
+        "cpu-cores-04fdfca": "هسته‌های CPU",
+        "free-ram-8cd6e27": "RAM آزاد",
+        "used-ram-89dd5cb": "RAM مصرف‌شده",
+        "server-uptime-ed0def1": "مدت کارکرد سرور",
+        "network-interfaces-9f43b24": "رابط‌های شبکه",
+        "rx-speed-6aaa2ac": "سرعت دریافت",
+        "tx-speed-2774f59": "سرعت ارسال",
+        "rx-total-d983b27": "کل دریافت",
+        "tx-total-6bbd46a": "کل ارسال",
+        "os-release-8ac3c26": "نسخه سیستم‌عامل",
+        "inbound-traffic-d7a4bfd": "ترافیک ورودی",
+        "up-55490a4": "ارسال",
+        "down-b86d11a": "دریافت",
+        "outbound-traffic-03f18cb": "ترافیک خروجی",
+        "unable-to-load-metrics-06e0911": "بارگذاری سنجه‌ها ممکن نشد",
+        "node-metrics-are-not-available-yet-7dc9df5": "سنجه‌های نود هنوز در دسترس نیستند",
+        "nodes-with-metrics-d37b888": "نودهای دارای سنجه",
+        "connected-nodes-2ed1e6f": "نودهای متصل",
+        "users-online-85517c0": "کاربران آنلاین",
+        "inbounds-with-metrics-1e40621": "ورودی‌های دارای سنجه",
+        "additional-information-9276bb4": "اطلاعات بیشتر",
+        "data-from-metrics-last-fetch-time-appears-on-the-right-bc1b674": "داده‌های /metrics؛ زمان آخرین دریافت در سمت راست است",
+        "health-comes-from-node-status-user-count-comes-from-metrics-41e9f4f": "سلامت از وضعیت نود و تعداد کاربران از سنجه‌ها گرفته می‌شود",
+        "traffic-counters-accumulate-since-panel-or-node-startup-7925c82": "شمارنده‌های ترافیک از زمان راه‌اندازی پنل یا نود جمع می‌شوند",
+        "node-metrics-d510954": "سنجه‌های نود",
+        "fetched-0013b4c": "دریافت‌شده",
+        "time-unknown-6f803fc": "زمان نامشخص",
+        "search-node-785c488": "جستجوی نود",
+        "search-node-or-provider-121e5e5": "جستجوی نود یا ارائه‌دهنده",
+        "metrics-filter-a6438ac": "فیلتر سنجه‌ها",
+        "no-users-online-928c5dd": "کاربر آنلاینی وجود ندارد",
+        "needs-attention-c1ebc78": "نیازمند توجه",
+        "no-nodes-match-this-filter-5d5555a": "هیچ نودی با این فیلتر مطابقت ندارد",
+        "pick-a-user-to-visualize-the-traffic-path-b575fdc": "برای نمایش مسیر ترافیک، کاربری انتخاب کنید",
+        "user-optional-a99b884": "کاربر (اختیاری)",
+        "nothing-found-9f5cac3": "چیزی پیدا نشد",
+        "visible-hosts-value-value-2083f9d": "هاست‌های قابل نمایش: {{value1}}/{{value2}}",
+        "inbounds-value-35f7340": "ورودی‌ها: {{value1}}",
+        "nodes-value-45d22b6": "نودها: {{value1}}",
+        "outbounds-value-4613c6c": "خروجی‌ها: {{value1}}",
+        "routing-rules-value-31fa013": "قوانین مسیریابی: {{value1}}",
+        "all-hosts-e568a3c": "همه هاست‌ها",
+        "ok-565339b": "سالم",
+        "no-hosts-fe3c6a1": "بدون هاست",
+        "path-value-6701191": "مسیر: {{value1}}",
+        "key-99a52df": "کلید",
+        "speed-c372fee": "سرعت",
+        "unlimited-2044fbd": "نامحدود",
+        "domains-ced6771": "دامنه‌ها",
+        "exits-5e56101": "خروجی‌ها",
+        "blocked-by-routing-rules-samples-c390eb9": "مسدودشده توسط قوانین مسیریابی (نمونه‌ها):",
+        "nodes-traffic-84537ea": "نودها و ترافیک",
+        "this-month-6436773": "این ماه",
+        "infrastructure-ce0cff7": "زیرساخت",
+        "solid-b8b311b": "رنگ یکدست",
+        "gradient-2523561": "گرادیان",
+        "dots-6de335f": "نقطه‌ها",
+        "grid-0d7d12a": "شبکه",
+        "users-6b0cc90": "کاربران",
+        "traffic-4876efb": "ترافیک",
+        "new-users-bdbdb86": "کاربران جدید",
+        "month-traffic-0654a8f": "ترافیک ماه",
+        "countries-8faf7ec": "کشورها",
+        "cpu-cores-5dbed0b": "هسته‌های CPU",
+        "could-not-download-recap-659e20e": "دریافت مرور آماری ممکن نشد",
+        "sections-9bae918": "بخش‌ها",
+        "mask-fields-f71dfc0": "پنهان کردن مقادیر",
+        "early-adopter-c630122": "همراه از روزهای نخست",
+        "total-users-d643aee": "کل کاربران",
+        "nodes-45978ec": "نودها",
+        "traffic-075f4ab": "ترافیک",
+        "new-users-c5ef14e": "کاربران جدید",
+        "countries-e45d4cb": "کشورها",
+        "since-98af1ed": "از",
+        "background-ea2b8a8": "پس‌زمینه",
+        "custom-note-b11388e": "یادداشت سفارشی",
+        "accent-color-baeefba": "رنگ تأکیدی",
+        "base-translations-98825e5": "ترجمه‌های پایه",
+        "active-9687961": "فعال",
+        "icons-04ce686": "نمادها",
+        "blocks-2a12da1": "بلوک‌ها",
+        "buttons-931eb6a": "دکمه‌ها",
+        "button-707eab0": "دکمه",
+        "validation-error-142762b": "خطای اعتبارسنجی",
+        "learn-more-1445799": "بیشتر بدانید",
+        "link-with-button-e7deb61": "پیوند با دکمه",
+        "available-hosts-66c64ba": "هاست‌های در دسترس",
+        "button-text-ec208ea": "متن دکمه",
+        "https-url-c3cf95f": "نشانی HTTPS",
+        "marked-hosts-appear-at-this-position-3b9cd38": "هاست‌های علامت‌خورده در این موقعیت نمایش داده می‌شوند.",
+        "new-devices-denied-34c7816": "دستگاه‌های جدید ممنوع‌اند",
+        "device-blocked-hwid-5bc86b1": "دستگاه مسدود است (HWID)",
+        "host-traffic-limit-reached-850782c": "سهمیه ترافیک هاست تمام شده است",
+        "host-or-tag-traffic-paused-9df80dc": "ترافیک هاست یا برچسب مسدود است",
+        "confirm-deletion-fa57243": "تأیید حذف",
+        "import-finished-2194340": "ورود از فایل پایان یافت",
+        "created-value-skipped-value-failed-value-2a9f657": "ایجادشده: {{value1}}، ردشده: {{value2}}، ناموفق: {{value3}}",
+        "no-users-array-in-file-f80eb52": "آرایه کاربران در فایل وجود ندارد",
+        "too-many-users-max-20000-b30882c": "تعداد کاربران بیش از حد مجاز است (حداکثر ۲۰۰۰۰)",
+        "file-error-98f5369": "خطای فایل",
+        "upload-a-json-file-exported-from-remnawave-xera-subscription-s-180157a": "فایل JSON خروجی Remnacust را بارگذاری کنید. UUID کوتاه اشتراک، VLESS UUID و کلیدهای trojan/ss حفظ می‌شوند؛ کاربران همان کلیدها و پیوندها را نگه می‌دارند. نام‌های کاربری تکراری رد می‌شوند.",
+        "export-file-d9d979c": "فایل خروجی",
+        "restore-internal-squads-by-name-3fa079a": "بازیابی اسکوادهای داخلی بر اساس نام",
+        "squads-missing-in-this-panel-are-skipped-8999934": "اسکوادهای ناموجود در این پنل رد می‌شوند",
+        "add-everyone-to-a-squad-fallback-7a2f868": "افزودن همه به یک گروه اضافی",
+        "users-in-file-value-182a30f": "کاربران فایل: {{value1}}",
+        "import-2cff9ba": "ورود از فایل",
+        "nothing-to-show-aabc4af": "داده‌ای برای نمایش نیست",
+        "scopes-pasted-a6e9e16": "مجوزها چسبانده شدند",
+        "invalid-scopes-400e90a": "مجوزهای نامعتبر",
+        "clipboard-must-contain-a-json-array-of-scope-strings-7d61090": "کلیپ‌بورد باید حاوی آرایه JSON از رشته‌های مجوز باشد",
+        "service-bot-4d196c6": "ربات خدماتی",
+        "subpage-9c141bb": "صفحه اشتراک",
+        "read-9b9a8d0": "خواندن",
+        "write-3f00927": "نوشتن",
+        "master-fc613b4": "master",
+        "authorization-url-c70b5f2": "نشانی احراز هویت",
+        "authorization-url-for-the-oauth2-provider-f217590": "نشانی احراز هویت ارائه‌دهنده OAuth2",
+        "token-url-431e003": "نشانی توکن",
+        "token-url-for-the-oauth2-provider-aa98687": "نشانی توکن ارائه‌دهنده OAuth2",
+        "with-pkce-fd32ec9": "استفاده از PKCE",
+        "optimize-via-ssh-ea39a69": "بهینه‌سازی از طریق SSH",
+        "install-release-1cef24f": "نصب نسخه",
+        "roll-back-core-5635594": "بازگردانی هسته",
+        "bundled-core-063f5f7": "هسته همراه",
+        "follow-configuration-c5da704": "پیروی از پیکربندی",
+        "start-e4bb9f1": "شروع",
+        "stop-cae7d57": "توقف",
+        "restart-6b983a8": "راه‌اندازی مجدد",
+        "validate-configuration-7563534": "اعتبارسنجی پیکربندی",
+        "queued-661ff40": "در صف",
+        "rolled-back-7159223": "بازگردانی شد",
+        "connecting-to-node-586f22e": "در حال اتصال به نود",
+        "preparing-cf1aa6c": "در حال آماده‌سازی",
+        "verifying-binary-ffb60a2": "در حال تأیید فایل اجرایی",
+        "validating-configuration-b84c66a": "در حال اعتبارسنجی پیکربندی",
+        "switching-core-72d199b": "در حال تعویض هسته",
+        "starting-aeed4d2": "در حال شروع",
+        "stopping-a71ee1d": "در حال توقف",
+        "checking-readiness-68978eb": "در حال بررسی آمادگی",
+        "xray-jobs-72b1110": "وظایف Xray",
+        "node-tasks-7698fb5": "وظایف نود",
+        "close-node-tasks-15138a8": "بستن وظایف نود",
+        "by-tag-9effd8b": "بر اساس برچسب",
+        "untagged-9a28cbf": "بدون برچسب",
+        "select-2a78025": "انتخاب",
+        "node-tag-14efe71": "برچسب نود",
+        "value-nodes-selected-5322c83": "{{value1}} نود انتخاب شد",
+        "xray-updates-process-controls-and-node-optimization-d75cdea": "به‌روزرسانی Xray، کنترل فرایند و بهینه‌سازی نود.",
+        "core-manager-unavailable-68fb1d3": "مدیر هسته در دسترس نیست",
+        "the-panel-received-no-usable-response-check-node-connectivity--051d58f": "پنل پاسخ قابل استفاده‌ای دریافت نکرد. اتصال و نسخه نود را بررسی کنید.",
+        "paused-by-administrator-f5d00fe": "توسط مدیر متوقف شده",
+        "stopped-1a4f630": "متوقف",
+        "version-unavailable-c0a7f64": "نسخه در دسترس نیست",
+        "source-1a5ac0b": "منبع: ",
+        "pinned-release-c741101": "نسخه ثابت",
+        "node-image-79c45a0": "ایمیج نود",
+        "build-verification-2a3ea42": "تأیید بیلد",
+        "running-core-sha-256-b6b0ef2": "SHA-256 هسته در حال اجرا",
+        "selected-binary-sha-256-9b8ea61": "SHA-256 فایل اجرایی انتخاب‌شده",
+        "action-64cff13": "عملیات",
+        "optimization-profile-18535a9": "پروفایل بهینه‌سازی",
+        "no-optimization-3d082b3": "بدون بهینه‌سازی",
+        "safe-4f9f0da": "محافظه‌کارانه",
+        "balanced-5386ea5": "متعادل",
+        "performance-442aded": "کارایی بالا",
+        "approved-release-15ae27c": "نسخه تأییدشده",
+        "release-catalog-unavailable-467e68d": "فهرست نسخه‌ها در دسترس نیست",
+        "could-not-load-the-release-catalog-9b6fbd1": "بارگذاری فهرست نسخه‌ها ممکن نشد.",
+        "vpn-connections-will-stop-the-core-stays-paused-until-start-is-86557ef": "اتصال‌های VPN متوقف می‌شوند. هسته تا انتخاب شروع، حتی هنگام همگام‌سازی پنل، متوقف می‌ماند.",
+        "ssh-access-is-required-for-each-node-keep-the-terminal-window--1692ffc": "برای هر نود دسترسی SSH لازم است. پنجره ترمینال را تا پایان صف باز نگه دارید. فقط تنظیمات sysctl تغییر می‌کند.",
+        "validates-configuration-without-restarting-vpn-35287d5": "پیکربندی را بدون راه‌اندازی مجدد VPN بررسی می‌کند.",
+        "the-configuration-geodata-core-controls-the-version-again-with-46b0190": "geodata.core پیکربندی دوباره نسخه را کنترل می‌کند. در نبود آن، هسته همراه استفاده می‌شود.",
+        "connections-may-be-interrupted-binary-and-configuration-are-ch-aa90a8f": "ممکن است اتصال‌ها قطع شوند. ابتدا فایل اجرایی و پیکربندی بررسی می‌شوند؛ شکست راه‌اندازی باعث بازگردانی می‌شود. هسته‌های متوقف‌شده دستی پس از به‌روزرسانی متوقف می‌مانند.",
+        "affected-nodes-fbf8ff6": "نودهای تحت تأثیر",
+        "stop-queue-after-the-first-failure-30937ae": "توقف صف پس از نخستین خطا",
+        "apply-to-selected-nodes-value-24b8f51": "اعمال به نودهای انتخاب‌شده ({{value1}})",
+        "a-selected-node-already-has-a-job-follow-its-progress-below-a887e9f": "یکی از نودهای انتخاب‌شده از قبل وظیفه‌ای دارد. پیشرفت آن را پایین دنبال کنید.",
+        "could-not-confirm-job-creation-check-history-below-before-retr-591a3be": "ایجاد وظیفه تأیید نشد. پیش از تلاش دوباره تاریخچه زیر را بررسی کنید.",
+        "run-00d60e3": "اجرا",
+        "up-to-1000-nodes-per-job-select-a-tag-or-a-subset-of-nodes-d06dbf1": "حداکثر ۱۰۰۰ نود در هر وظیفه. یک برچسب یا زیرمجموعه‌ای از نودها را انتخاب کنید.",
+        "xray-jobs-continue-on-the-server-after-closing-this-window-can-2b1fc09": "وظایف Xray پس از بستن این پنجره روی سرور ادامه می‌یابند. لغو، نودهای باقی‌مانده را رد می‌کند و اجازه پایان عملیات فعلی را می‌دهد.",
+        "could-not-load-job-status-c549b8b": "بارگذاری وضعیت وظیفه ممکن نشد.",
+        "no-jobs-yet-38b840c": "هنوز وظیفه‌ای وجود ندارد.",
+        "in-progress-c1f88e9": "در حال انجام",
+        "has-failures-ee2613c": "دارای خطا",
+        "finished-7804f7a": "پایان‌یافته",
+        "job-progress-6d04c76": "پیشرفت وظیفه",
+        "cancellation-requested-c07f337": "لغو درخواست شد",
+        "prepare-retry-for-failed-nodes-928faa5": "آماده‌سازی تلاش مجدد برای نودهای ناموفق",
+        "limits-dffb64d": "محدودیت‌ها",
+        "host-and-tag-quotas-and-speeds-manage-all-users-a-squad-or-sel-dedaadc": "سهمیه و سرعت هاست‌ها و برچسب‌ها. مدیریت همه کاربران، یک اسکواد یا افراد انتخاب‌شده.",
+        "search-scopes-4072c9d": "جستجوی محدوده‌ها",
+        "find-a-host-or-tag-32f269c": "یافتن هاست یا برچسب",
+        "sort-limits-575f4cc": "مرتب‌سازی محدودیت‌ها",
+        "host-order-a7a00c3": "ترتیب هاست‌ها",
+        "name-dcd1d52": "نام",
+        "traffic-used-355b28c": "ترافیک مصرف‌شده",
+        "quota-6c105ca": "سهمیه",
+        "user-speed-bbb06a4": "سرعت کاربر",
+        "total-speed-c3c0eb4": "سرعت کل",
+        "ascending-7718459": "صعودی",
+        "descending-79479a6": "نزولی",
+        "reverse-sort-direction-b4d2088": "معکوس کردن جهت مرتب‌سازی",
+        "could-not-load-limits-press-refresh-8e66afe": "بارگذاری محدودیت‌ها ممکن نشد. تازه‌سازی را بزنید.",
+        "no-hosts-or-tags-found-5e14329": "هاست یا برچسبی پیدا نشد",
+        "paused-for-all-d332b4f": "برای همه مسدود است",
+        "current-period-usage-73e93ad": "مصرف دوره فعلی: ",
+        "quota-per-user-5c0ec2b": "سهمیه هر کاربر: ",
+        "speed-per-user-host-f449280": "سرعت هر کاربر / هاست: ",
+        "shared-speed-2012ee5": "سرعت مشترک: ",
+        "tag-1-266d618": "برچسب / ۱",
+        "hosts-e365c9f": "هاست‌ها: ",
+        "users-and-actions-87dce8a": "کاربران و عملیات",
+        "add-allowance-4705372": "افزودن ترافیک",
+        "reset-usage-956c967": "بازنشانی مصرف",
+        "pause-traffic-a604dca": "مسدود کردن ترافیک",
+        "resume-traffic-50b5bc3": "رفع مسدودی ترافیک",
+        "saved-for-value-users-node-policy-synchronization-requested-d4d11b6": "برای {{value1}} کاربر ذخیره شد. همگام‌سازی سیاست نود درخواست شد.",
+        "all-limits-6d1a1ed": "همه محدودیت‌ها",
+        "refresh-users-7e079f1": "تازه‌سازی کاربران",
+        "base-quota-per-user-d6b9f30": "سهمیه پایه هر کاربر: ",
+        "quota-combines-traffic-from-hosts-participating-in-the-tag-quo-669a173": "سهمیه، ترافیک هاست‌های مشارکت‌کننده در سهمیه برچسب را جمع می‌کند. اتمام آن، این هاست‌ها را برای آن کاربر مسدود می‌کند.",
+        "actions-affect-this-host-only-other-tag-limits-still-apply-4659b5e": "عملیات فقط این هاست را تحت تأثیر قرار می‌دهد. محدودیت‌های دیگر برچسب همچنان اعمال می‌شوند.",
+        "this-scope-is-paused-for-everyone-select-all-resume-traffic-to-05c8eaf": "ترافیک این محدوده برای همه مسدود است. برای رفع مسدودی، «همه» و سپس رفع مسدودی ترافیک را انتخاب کنید. رفع مسدودی فردی، مسدودی عمومی را لغو نمی‌کند.",
+        "action-recipients-f6f5577": "دریافت‌کنندگان عملیات",
+        "selected-57fd7a0": "انتخاب‌شده",
+        "internal-3bed2cb": "داخلی",
+        "external-3c46238": "خارجی",
+        "choose-a-squad-1217e46": "انتخاب اسکواد",
+        "no-squad-found-d1d41dc": "اسکوادی پیدا نشد",
+        "could-not-load-squads-fb7f789": "بارگذاری اسکوادها ممکن نشد.",
+        "all-users-entitled-to-this-scope-search-and-pagination-do-not--ad386c9": "همه کاربران دارای دسترسی به این محدوده. جستجو و صفحه‌بندی دریافت‌کنندگان را تغییر نمی‌دهند. مسدودی کل محدوده شامل کاربران آینده نیز می‌شود.",
+        "select-one-or-more-users-in-the-table-selection-spans-pages-ma-d1f6a9b": "یک یا چند کاربر را در جدول انتخاب کنید. انتخاب میان صفحه‌ها حفظ می‌شود؛ حداکثر ۵۰۰ کاربر.",
+        "recipients-a9aab54": "دریافت‌کنندگان: ",
+        "clear-selection-cea4d2e": "پاک کردن انتخاب",
+        "one-off-allowance-each-gib-964abcc": "ترافیک یک‌باره برای هر نفر، GiB",
+        "traffic-is-unlimited-set-a-base-quota-in-host-or-tag-settings--96189bd": "ترافیک نامحدود است. پیش از افزودن ترافیک، سهمیه پایه را در تنظیمات هاست یا برچسب تعیین کنید.",
+        "traffic-unit-e8fcf48": "واحد ترافیک",
+        "search-users-e4bb77a": "جستجوی کاربران",
+        "name-id-short-id-email-or-telegram-id-c7b3a50": "نام، شناسه، شناسه کوتاه، ایمیل یا شناسه تلگرام",
+        "subscription-status-f0723c4": "وضعیت اشتراک",
+        "scope-state-1acf78e": "وضعیت محدوده",
+        "paused-e159b06": "مسدود",
+        "quota-exhausted-8d99493": "سهمیه تمام شده",
+        "available-e674447": "در دسترس",
+        "no-subscription-access-6fbdfa5": "بدون دسترسی اشتراک",
+        "sort-by-c912902": "مرتب‌سازی بر اساس",
+        "usage-8d59829": "مصرف",
+        "remaining-f3e4352": "باقی‌مانده",
+        "extra-allowance-a855328": "ترافیک اضافه",
+        "username-e3b89e9": "نام کاربری",
+        "page-size-bd69e66": "تعداد در صفحه",
+        "reverse-sort-order-ac00159": "معکوس کردن ترتیب",
+        "filtered-usage-58fcf33": "مصرف فیلترشده: ",
+        "paused-ec7059d": "مسدود: ",
+        "quota-exhausted-b910ef4": "سهمیه تمام‌شده: ",
+        "statistics-cover-this-scope-s-current-period-including-multipl-25bc1d4": "آمار مربوط به دوره فعلی این محدوده است و ضرایب و بازنشانی‌ها را در بر می‌گیرد. فیلترهای جدول، دریافت‌کنندگان عملیات گروهی را تغییر نمی‌دهند.",
+        "could-not-load-users-refresh-the-list-e29d206": "بارگذاری کاربران ممکن نشد. فهرست را تازه کنید.",
+        "choose-a-squad-above-cee3096": "یک اسکواد در بالا انتخاب کنید.",
+        "select-current-page-327d76c": "انتخاب صفحه فعلی",
+        "user-b512d97": "کاربر",
+        "usage-quota-a47c881": "مصرف / سهمیه",
+        "actions-ff8059d": "عملیات",
+        "select-1f7133c": "انتخاب ",
+        "quota-usage-a0b5917": "مصرف سهمیه",
+        "access-allowed-f505864": "دسترسی مجاز",
+        "no-current-access-5ccd803": "فعلاً بدون دسترسی",
+        "actions-12ca9c2": "عملیات: ",
+        "open-user-a030376": "باز کردن کاربر",
+        "this-scope-only-698e023": "فقط این محدوده",
+        "no-matching-users-579f8c3": "کاربر منطبقی پیدا نشد.",
+        "add-value-to-each-user-s-current-period-base-quota-is-unchange-7891f41": "برای دوره فعلی هر کاربر {{value1}} اضافه می‌شود. سهمیه پایه تغییر نمی‌کند.",
+        "reset-usage-in-this-scope-overall-subscription-statistics-are--6e727f4": "مصرف این محدوده بازنشانی می‌شود. آمار کلی اشتراک حفظ می‌شود.",
+        "pause-further-traffic-in-this-scope-until-manually-resumed-d906702": "ترافیک بعدی این محدوده تا رفع مسدودی دستی متوقف می‌شود.",
+        "clear-scope-and-individual-pauses-here-quotas-and-subscription-90cd1d0": "مسدودی عمومی و فردی این محدوده رفع می‌شود. سهمیه‌ها و محدودیت‌های اشتراک همچنان اعمال می‌شوند.",
+        "clear-individual-pauses-scope-pause-quotas-and-subscription-re-c6848d8": "مسدودی‌های فردی رفع می‌شوند. مسدودی عمومی محدوده، سهمیه‌ها و محدودیت‌های اشتراک همچنان اعمال می‌شوند.",
+        "could-not-confirm-the-result-retrying-this-operation-is-safe-a-368c1e5": "نتیجه تأیید نشد. تکرار این عملیات امن است و ترافیک را دوباره اضافه نمی‌کند.",
+        "retry-operation-9d39a36": "تکرار عملیات",
+        "confirm-eebdd24": "تأیید",
+        "ip-addresses": "نشانی‌های IP",
+        "powered-by-geocheck": "با GeoCheck",
+        "generic-oauth2": "ارائه‌دهنده عمومی OAuth2"
+    },
+    "api-token-editor": {
+        "retry": "تلاش دوباره",
+        "saved": "مجوزهای توکن API ذخیره شد",
+        "actions": "عملیات توکن {{name}}",
+        "edit-title": "ویرایش توکن {{name}}",
+        "edit-permissions": "ویرایش مجوزها",
+        "existing-token": "تغییرات از درخواست بعدی اعمال می‌شوند. مقدار توکن و زمان انقضا تغییر نمی‌کنند.",
+        "read-only": "فقط خواندن",
+        "full-description": "همه متدهای API موجود و افزوده‌های آینده. عملیات مختص پنل مستثنا هستند.",
+        "exact-description": "فقط مجوزهای انتخاب‌شده داده می‌شوند. متدهای آینده خودکار مجاز نمی‌شوند. بدون انتخاب، هیچ مجوزی داده نمی‌شود.",
+        "loading": "در حال بارگذاری مجوزها…",
+        "catalog-error": "بارگذاری مجوزها ممکن نشد. ذخیره غیرفعال است.",
+        "obsolete-scopes": "این مجوزها دیگر موجود نیستند و هنگام ذخیره حذف می‌شوند:",
+        "search": "جستجوی متد، URL، مجوز یا توضیح"
+    },
+    "limitsUnlimited": {
+        "grant": "اعطای سهمیه نامحدود",
+        "revoke": "بازگردانی سهمیه عادی",
+        "active": "سهمیه نامحدود اعطا شده",
+        "grantDescription": "سهمیه ترافیک نامحدود را برای این کاربران در این میزبان یا برچسب تا زمان لغو اعطا کنید. مسدودسازی ترافیک، محدودیت سرعت، وضعیت اشتراک و محدودیت سایر محدوده‌ها همچنان اعمال می‌شوند.",
+        "revokeDescription": "سهمیه نامحدود شخصی را در این میزبان یا برچسب لغو کنید. سهمیه پایه و ترافیک اضافی موجود دوباره اعمال می‌شوند؛ مصرف حفظ می‌شود.",
+        "permission": "اعطا یا لغو سهمیه نامحدود شخصی",
+        "write": "نوشتن",
+        "read": "خواندن"
+    },
+    "design-ui": {
+        "more": "گزینه‌های بیشتر",
+        "support": "حمایت از پروژه",
+        "recap": "خلاصهٔ فعالیت",
+        "build": "نسخهٔ پنل",
+        "logout": "خروج",
+        "skip-navigation": "رفتن به محتوا",
+        "login-intro": "کاربران، مسیریابی و زیرساخت را در یک فضای کاری مدیریت کنید.",
+        "login-description": "وارد پنل مدیریت خود شوید.",
+        "test-version": "پیش‌نمایش طراحی",
+        "previous-tags": "برچسب‌های قبلی",
+        "next-tags": "برچسب‌های بعدی",
+        "user-list": "فهرست کاربران",
+        "show-password": "نمایش رمز عبور",
+        "hide-password": "پنهان کردن رمز عبور",
+        "toggle-password": "نمایش یا پنهان کردن رمز عبور",
+        "configured-apps": "برنامه‌های پیکربندی‌شده: {{count}}",
+        "node-offline": "آفلاین",
+        "theme-light": "روشن",
+        "theme-dark": "تیره",
+        "theme-purple": "بنفش",
+        "theme-green": "سبز",
+        "theme-midnight": "نیمه‌شب",
+        "theme-crimson": "زرشکی",
+        "theme-cyber": "سایبری",
+        "theme-slate": "خاکستری",
+        "color-purple": "بنفش",
+        "color-indigo": "نیلی",
+        "color-blue": "آبی",
+        "color-cobalt": "کبالتی",
+        "color-cyan": "فیروزه‌ای روشن",
+        "color-teal": "سبزآبی",
+        "color-green": "سبز",
+        "color-emerald": "زمردی",
+        "color-lime": "سبز لیمویی",
+        "color-amber": "کهربایی",
+        "color-orange": "نارنجی",
+        "color-rose": "گل‌سرخی",
+        "color-pink": "صورتی",
+        "color-crimson": "زرشکی",
+        "color-coral": "مرجانی",
+        "color-slate": "خاکستری",
+        "font-system": "قلم سیستم"
+    },
+    "user-status": {
+        "active": "فعال",
+        "disabled": "غیرفعال",
+        "expired": "منقضی‌شده",
+        "limited": "سقف مصرف پر شده"
+    },
+    "documentation": {
+        "title": "مستندات",
+        "guide": "راهنمای پنل",
+        "api": "مرجع API",
+        "intro": "عملکردها، تنظیمات و قرارداد دقیق این نسخه.",
+        "search": "جستجوی عملکردها، فیلدها و توضیحات",
+        "apiSearch": "جستجوی مسیر، عملیات یا مجوز",
+        "contents": "فهرست",
+        "onPage": "در این صفحه",
+        "language": "زبان راهنما",
+        "readingNote": "راهنمای کامل به زبان روسی و انگلیسی موجود است. زبان مطالعه را در بالا انتخاب کنید.",
+        "fields": "فیلدها و کنترل‌ها",
+        "fieldNote": "توضیح فیلدها و تنظیمات این بخش پنل.",
+        "relatedApi": "عملیات مرتبط API",
+        "openPage": "باز کردن این بخش",
+        "permalink": "کپی پیوند",
+        "copied": "پیوند کپی شد",
+        "copyFailed": "کپی انجام نشد. آدرس مرورگر را کپی کنید.",
+        "download": "دانلود راهنما",
+        "downloadSpec": "دانلود OpenAPI",
+        "searchEmpty": "نتیجه‌ای پیدا نشد. نام عملکرد، فیلد یا مسیر API را امتحان کنید.",
+        "error": "بارگذاری مستندات انجام نشد.",
+        "retry": "تلاش دوباره",
+        "loading": "بارگذاری مستندات",
+        "articles": "{{count}} مقاله",
+        "operations": "{{count}} عملیات",
+        "operation": "عملیات",
+        "schemas": "طرح‌ها و رویدادها",
+        "schema": "طرح",
+        "access": "دسترسی",
+        "token": "توکن API",
+        "admin": "نشست مدیر",
+        "public": "عمومی / بررسی‌های اختصاصی مسیر",
+        "special": "احراز هویت اختصاصی",
+        "authNote": "مسیر عمومی ممکن است به رمز اشتراک، اطلاعات ورود یا چالش یک‌بارمصرف نیاز داشته باشد. طرح آن را بررسی کنید.",
+        "scope": "مجوز لازم",
+        "alternatives": "همچنین قابل قبول: ",
+        "params": "پارامترهای مسیر و پرس‌وجو",
+        "request": "بدنه درخواست",
+        "response": "پاسخ‌ها",
+        "example": "نمونه cURL",
+        "exampleNote": "مقادیر نمونه را جایگزین و دسترسی گیرندگان را بررسی کنید. نمونه‌ها هیچ درخواستی اجرا نمی‌کنند و اطلاعات ورود واقعی ندارند.",
+        "noSchema": "برای این داده‌ها طرحی منتشر نشده است. پیش از ارسال، قرارداد عملیات را بررسی کنید.",
+        "none": "لازم نیست",
+        "required": "الزامی",
+        "optional": "اختیاری",
+        "default": "پیش‌فرض",
+        "constraints": "محدودیت‌ها",
+        "enum": "مقادیر مجاز",
+        "unresolved": "ارجاع به طرح",
+        "contractNote": "توضیحات فنی از قرارداد OpenAPI سرور حفظ شده‌اند. سرور ممکن است بررسی‌های تجاری بیشتری انجام دهد.",
+        "variables": "متغیرهای پشتیبانی‌شده {{…}}",
+        "noUnits": "عدد بدون واحد",
+        "referenceVersion": "مرجع نسخه",
+        "invalidLink": "مقاله یا عملیات این پیوند پیدا نشد. موردی را از فهرست انتخاب کنید.",
+        "clear": "پاک کردن جستجو"
+    },
+    "project-support": {
+        "title": "حمایت از پروژه",
+        "description": "از حمایت شما از Remnacust سپاسگزاریم. آدرس‌های انتقال در زیر آمده‌اند.",
+        "wallets": "کیف پول‌ها",
+        "network": "شبکه",
+        "wallet-address": "آدرس کیف پول",
+        "copy-address": "کپی آدرس {{coin}}",
+        "copy-failed": "کپی انجام نشد. آدرس را انتخاب و به‌صورت دستی کپی کنید.",
+        "network-note": "از شبکه‌ای استفاده کنید که کنار نام نوشته شده است.",
+        "thank-you": "از حمایت شما از Remnacust سپاسگزاریم",
+        "contact-description": "پرسش یا پیشنهادی دارید؟ با سازنده پروژه تماس بگیرید.",
+        "contact": "تماس در تلگرام"
+    },
+    "hosts-status-filter": {
+        "label": "وضعیت میزبان",
+        "all": "همه وضعیت‌ها",
+        "enabled": "فعال",
+        "disabled": "غیرفعال",
+        "hidden": "پنهان",
+        "visible": "قابل مشاهده"
+    }
+}

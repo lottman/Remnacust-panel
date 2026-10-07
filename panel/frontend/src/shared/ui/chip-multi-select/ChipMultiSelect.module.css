@@ -1,0 +1,21 @@
+.card {
+    position: relative;
+    padding: 10px 12px;
+    min-height: 44px;
+    background: var(--panel-subtle);
+    border: 1px solid var(--panel-border);
+    transition:
+        background-color 140ms ease,
+        border-color 140ms ease;
+}
+.card[data-checked] {
+    border-color: var(--panel-accent);
+    background: color-mix(in srgb, var(--panel-accent) 10%, var(--panel-surface));
+}
+.card:hover {
+    border-color: var(--panel-accent);
+}
+.label {
+    font-weight: 600;
+    color: var(--panel-text);
+}

@@ -1,0 +1,22 @@
+.footer {
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+    width: calc(100% + 2 * var(--panel-overlay-padding, var(--mantine-spacing-sm)));
+    margin-bottom: calc(-1 * var(--panel-overlay-padding, var(--mantine-spacing-sm)));
+    margin-inline-start: calc(-1 * var(--panel-overlay-padding, var(--mantine-spacing-sm)));
+    background: var(--panel-surface, var(--mantine-color-body));
+    border-top: 1px solid var(--panel-border, var(--mantine-color-default-border));
+    border-bottom: none;
+    padding-inline: var(--panel-overlay-padding, var(--mantine-spacing-sm));
+    padding-top: var(--mantine-spacing-sm) !important;
+    padding-bottom: max(var(--mantine-spacing-sm), env(safe-area-inset-bottom, 0px)) !important;
+    border-radius: 0;
+    flex-shrink: 0;
+}
+
+@media (max-width: 48em) {
+    .footer {
+        margin-bottom: calc(-1 * var(--panel-overlay-padding, var(--mantine-spacing-sm)));
+    }
+}

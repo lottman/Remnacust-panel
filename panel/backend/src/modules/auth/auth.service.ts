@@ -1,0 +1,1237 @@
+import {
+    AuthenticationResponseJSON,
+    type PublicKeyCredentialRequestOptionsJSON,
+    generateAuthenticationOptions,
+    verifyAuthenticationResponse,
+} from '@simplewebauthn/server';
+import * as arctic from 'arctic';
+import { AxiosError } from 'axios';
+import { createHmac, randomBytes, scrypt, timingSafeEqual } from 'node:crypto';
+import { promisify } from 'node:util';
+import { catchError, firstValueFrom } from 'rxjs';
+
+import { HttpService } from '@nestjs/axios';
+import { Injectable, Logger } from '@nestjs/common';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { JwtService } from '@nestjs/jwt';
+
+import { TypedConfigService } from '@common/config/app-config';
+import { RawCacheService } from '@common/raw-cache';
+import { fail, ok, TResult } from '@common/types';
+import { adminSessionKey, createAdminSessionClaims } from '@common/utils/admin-session';
+import { AUTH_ROUTES } from '@libs/contracts/api';
+import {
+    CACHE_KEYS,
+    CACHE_KEYS_TTL,
+    EVENTS,
+    OAUTH2_PROVIDERS,
+    ROLE,
+    TOAuth2ProvidersKeys,
+} from '@libs/contracts/constants';
+import { ERRORS } from '@libs/contracts/constants/errors';
+
+import { ServiceEvent } from '@integration-modules/notifications/interfaces';
+
+import { CreateAdminCommand } from '@modules/admin/commands/create-admin';
+import { UpdatePasskeyCommand } from '@modules/admin/commands/update-passkey';
+import { AdminEntity } from '@modules/admin/entities/admin.entity';
+import { CountAdminsByRoleQuery } from '@modules/admin/queries/count-admins-by-role';
+import { FindPasskeyByIdAndAdminUuidQuery } from '@modules/admin/queries/find-passkey-by-id-and-uuid';
+import { GetAdminByUsernameQuery } from '@modules/admin/queries/get-admin-by-username';
+import { GetFirstAdminQuery } from '@modules/admin/queries/get-first-admin';
+import { GetPasskeysByAdminUuidQuery } from '@modules/admin/queries/get-passkeys-by-admin-uuid';
+import { RemnawaveSettingsEntity } from '@modules/remnawave-settings/entities';
+import { GetCachedRemnawaveSettingsQuery } from '@modules/remnawave-settings/queries/get-cached-remnawave-settings';
+
+import { VerifyPasskeyAuthenticationBodyDto } from './dtos';
+import { ILogin, IRegister } from './interfaces';
+import {
+    OAuth2AuthorizeResponseModel,
+    OAuth2CallbackResponseModel,
+    GetStatusResponseModel,
+} from './model';
+
+const scryptAsync = promisify(scrypt);
+const REMNAWAVE_CUSTOM_CLAIM_KEY = 'remnawaveAccess';
+const OAUTH2_SCOPES = ['email', 'profile', 'openid'];
+
+@Injectable()
+export class AuthService {
+    private readonly logger = new Logger(AuthService.name);
+    private readonly jwtSecret: string;
+    private readonly jwtLifetime: number;
+
+    constructor(
+        private readonly rawCacheService: RawCacheService,
+        private readonly jwtService: JwtService,
+        private readonly configService: TypedConfigService,
+        private readonly queryBus: QueryBus,
+        private readonly commandBus: CommandBus,
+        private readonly eventEmitter: EventEmitter2,
+        private readonly httpService: HttpService,
+    ) {
+        this.jwtSecret = this.configService.getOrThrow('APP_SECRET');
+        this.jwtLifetime = this.configService.getOrThrow('JWT_AUTH_LIFETIME');
+    }
+
+    public async login(
+        dto: ILogin,
+        ip: string,
+        userAgent: string,
+    ): Promise<
+        TResult<{
+            accessToken: string;
+        }>
+    > {
+        try {
+            const { username, password } = dto;
+
+            const statusResponse = await this.getStatus();
+
+            if (!statusResponse.isOk) {
+                return fail(ERRORS.GET_AUTH_STATUS_ERROR);
+            }
+
+            if (!statusResponse.response.isLoginAllowed) {
+                await this.emitFailedLoginAttempt(
+                    username,
+                    ip,
+                    userAgent,
+                    'Login is not allowed.',
+                );
+                this.logger.error('Login is not allowed.');
+                return fail(ERRORS.FORBIDDEN);
+            }
+
+            if (!statusResponse.response.authentication) {
+                return fail(ERRORS.FORBIDDEN);
+            }
+
+            if (!statusResponse.response.authentication.password.enabled) {
+                await this.emitFailedLoginAttempt(
+                    username,
+                    ip,
+                    userAgent,
+                    'Someone tried to login with password authentication, but it is disabled.',
+                );
+                this.logger.error(
+                    'Someone tried to login with password authentication, but it is disabled.',
+                );
+                return fail(ERRORS.FORBIDDEN);
+            }
+
+            const admin = await this.getAdminByUsername({
+                username,
+                role: ROLE.ADMIN,
+            });
+
+            if (!admin.isOk) {
+                // Match the expensive password work even when the username is unknown.
+                await this.hashPassword(password);
+                await this.emitFailedLoginAttempt(
+                    username,
+                    ip,
+                    userAgent,
+                    'Admin is not found in database.',
+                );
+                this.logger.error('Admin is not found in database.');
+                return fail(ERRORS.FORBIDDEN);
+            }
+
+            const isPasswordValid = await this.verifyPassword(
+                password,
+                admin.response.passwordHash,
+            );
+
+            if (!isPasswordValid) {
+                await this.emitFailedLoginAttempt(
+                    username,
+                    ip,
+                    userAgent,
+                    'Invalid password.',
+                );
+                this.logger.error('Invalid password.');
+                return fail(ERRORS.FORBIDDEN);
+            }
+
+            const accessToken = await this.issueAdminToken(admin.response);
+
+            await this.emitLoginSuccess(username, ip, userAgent);
+
+            return ok({ accessToken });
+        } catch (error) {
+            this.logger.error(error);
+            return fail(ERRORS.LOGIN_ERROR);
+        }
+    }
+
+    public async register(dto: IRegister): Promise<
+        TResult<{
+            accessToken: string;
+        }>
+    > {
+        try {
+            const { username, password } = dto;
+
+            const statusResponse = await this.getStatus();
+
+            if (!statusResponse.isOk) {
+                return fail(ERRORS.GET_AUTH_STATUS_ERROR);
+            }
+
+            if (!statusResponse.response.isRegisterAllowed) {
+                return fail(ERRORS.FORBIDDEN);
+            }
+
+            const admin = await this.getAdminByUsername({
+                username,
+                role: ROLE.ADMIN,
+            });
+
+            if (admin.isOk) {
+                return fail(ERRORS.FORBIDDEN);
+            }
+
+            const hashedPassword = await this.hashPassword(password);
+
+            const createAdminResponse = await this.createAdmin({
+                username,
+                password: hashedPassword,
+                role: ROLE.ADMIN,
+            });
+
+            if (!createAdminResponse.isOk) {
+                return fail(ERRORS.CREATE_ADMIN_ERROR);
+            }
+
+            const accessToken = await this.issueAdminToken(createAdminResponse.response);
+
+            return ok({ accessToken });
+        } catch (error) {
+            this.logger.error(error);
+            return fail(ERRORS.LOGIN_ERROR);
+        }
+    }
+
+    public async getStatus(): Promise<TResult<GetStatusResponseModel>> {
+        try {
+            const remnawaveSettings = await this.queryBus.execute(
+                new GetCachedRemnawaveSettingsQuery(),
+            );
+
+            const adminCount = await this.getAdminCount();
+
+            if (!adminCount.isOk) {
+                this.logger.error('Failed to fetch admin list.');
+                return ok(
+                    new GetStatusResponseModel({
+                        isLoginAllowed: false,
+                        isRegisterAllowed: false,
+                        authentication: null,
+                        branding: remnawaveSettings.brandingSettings,
+                    }),
+                );
+            }
+
+            if (adminCount.response === undefined) {
+                return ok(
+                    new GetStatusResponseModel({
+                        isLoginAllowed: false,
+                        isRegisterAllowed: false,
+                        authentication: null,
+                        branding: remnawaveSettings.brandingSettings,
+                    }),
+                );
+            }
+
+            if (adminCount.response === 0) {
+                return ok(
+                    new GetStatusResponseModel({
+                        isLoginAllowed: false,
+                        isRegisterAllowed: true,
+                        authentication: null,
+                        branding: remnawaveSettings.brandingSettings,
+                    }),
+                );
+            }
+
+            if (adminCount.response > 1) {
+                this.logger.warn(
+                    'Multiple admins found. This should not be possible. Restart Remnawave to clear unknown admins.',
+                );
+                return ok(
+                    new GetStatusResponseModel({
+                        isLoginAllowed: false,
+                        isRegisterAllowed: false,
+                        authentication: null,
+                        branding: remnawaveSettings.brandingSettings,
+                    }),
+                );
+            }
+
+            return ok(
+                new GetStatusResponseModel({
+                    isLoginAllowed: true,
+                    isRegisterAllowed: false,
+                    authentication: {
+                        passkey: {
+                            enabled: remnawaveSettings.passkeySettings.enabled,
+                        },
+                        oauth2: {
+                            providers: {
+                                [OAUTH2_PROVIDERS.GITHUB]:
+                                    remnawaveSettings.oauth2Settings.github.enabled,
+                                [OAUTH2_PROVIDERS.POCKETID]:
+                                    remnawaveSettings.oauth2Settings.pocketid.enabled,
+                                [OAUTH2_PROVIDERS.YANDEX]:
+                                    remnawaveSettings.oauth2Settings.yandex.enabled,
+                                [OAUTH2_PROVIDERS.KEYCLOAK]:
+                                    remnawaveSettings.oauth2Settings.keycloak.enabled,
+                                [OAUTH2_PROVIDERS.GENERIC]:
+                                    remnawaveSettings.oauth2Settings.generic.enabled,
+                                [OAUTH2_PROVIDERS.TELEGRAM]:
+                                    remnawaveSettings.oauth2Settings.telegram.enabled,
+                            },
+                        },
+                        password: {
+                            enabled: remnawaveSettings.passwordSettings.enabled,
+                        },
+                    },
+                    branding: remnawaveSettings.brandingSettings,
+                }),
+            );
+        } catch (error) {
+            this.logger.error(error);
+            return fail(ERRORS.GET_AUTH_STATUS_ERROR);
+        }
+    }
+
+    public async oauth2Authorize(
+        provider: TOAuth2ProvidersKeys,
+    ): Promise<TResult<OAuth2AuthorizeResponseModel>> {
+        try {
+            const statusResponse = await this.getStatus();
+
+            if (!statusResponse.isOk) {
+                return fail(ERRORS.GET_AUTH_STATUS_ERROR);
+            }
+
+            if (
+                !statusResponse.response.isLoginAllowed ||
+                !statusResponse.response.authentication ||
+                !statusResponse.response.authentication?.oauth2.providers[provider]
+            ) {
+                return fail(ERRORS.FORBIDDEN);
+            }
+
+            const remnawaveSettings = await this.queryBus.execute(
+                new GetCachedRemnawaveSettingsQuery(),
+            );
+
+            let authorizationURL: URL;
+            let pkceVerifier: string | null = null;
+
+            const state = arctic.generateState();
+
+            switch (provider) {
+                case OAUTH2_PROVIDERS.GITHUB:
+                    const ghClient = new arctic.GitHub(
+                        remnawaveSettings.oauth2Settings.github.clientId!,
+                        remnawaveSettings.oauth2Settings.github.clientSecret!,
+                        null,
+                    );
+
+                    authorizationURL = ghClient.createAuthorizationURL(state, ['user:email']);
+                    break;
+                case OAUTH2_PROVIDERS.POCKETID:
+                    const pocketIdClient = await this.getGenericOAuth2Client(
+                        remnawaveSettings,
+                        true,
+                    );
+
+                    authorizationURL = pocketIdClient.createAuthorizationURL(
+                        `https://${remnawaveSettings.oauth2Settings.pocketid.plainDomain}/authorize`,
+                        state,
+                        OAUTH2_SCOPES,
+                    );
+                    break;
+                case OAUTH2_PROVIDERS.YANDEX:
+                    const yandexClient = new arctic.Yandex(
+                        remnawaveSettings.oauth2Settings.yandex.clientId!,
+                        remnawaveSettings.oauth2Settings.yandex.clientSecret!,
+                        '',
+                    );
+                    authorizationURL = yandexClient.createAuthorizationURL(state, ['login:email']);
+                    break;
+                case OAUTH2_PROVIDERS.KEYCLOAK:
+                    pkceVerifier = arctic.generateCodeVerifier();
+
+                    const keycloakClient = await this.getKeyCloakClient(remnawaveSettings);
+                    authorizationURL = keycloakClient.createAuthorizationURL(
+                        state,
+                        pkceVerifier,
+                        OAUTH2_SCOPES,
+                    );
+
+                    break;
+                case OAUTH2_PROVIDERS.GENERIC:
+                    const authorizationEndpoint =
+                        remnawaveSettings.oauth2Settings.generic.authorizationUrl!;
+                    const genericOAuth2Client =
+                        await this.getGenericOAuth2Client(remnawaveSettings);
+
+                    switch (remnawaveSettings.oauth2Settings.generic.withPkce) {
+                        case false:
+                            authorizationURL = genericOAuth2Client.createAuthorizationURL(
+                                authorizationEndpoint,
+                                state,
+                                OAUTH2_SCOPES,
+                            );
+                            break;
+                        case true:
+                            pkceVerifier = arctic.generateCodeVerifier();
+
+                            authorizationURL = genericOAuth2Client.createAuthorizationURLWithPKCE(
+                                authorizationEndpoint,
+                                state,
+                                arctic.CodeChallengeMethod.S256,
+                                pkceVerifier,
+                                OAUTH2_SCOPES,
+                            );
+                            break;
+                    }
+                    break;
+                case OAUTH2_PROVIDERS.TELEGRAM: {
+                    pkceVerifier = arctic.generateCodeVerifier();
+                    const tgClient = this.getTelegramOAuth2Client(remnawaveSettings);
+
+                    authorizationURL = tgClient.createAuthorizationURLWithPKCE(
+                        'https://oauth.telegram.org/auth',
+                        state,
+                        arctic.CodeChallengeMethod.S256,
+                        pkceVerifier,
+                        ['openid', 'profile', 'telegram:bot_access'],
+                    );
+
+                    break;
+                }
+                default:
+                    return fail(ERRORS.OAUTH2_PROVIDER_NOT_FOUND);
+            }
+
+            await this.rawCacheService.set(
+                CACHE_KEYS.OAUTH2_STATE(state),
+                { codeVerifier: pkceVerifier, provider },
+                CACHE_KEYS_TTL.OAUTH2_STATE,
+            );
+
+            return ok(
+                new OAuth2AuthorizeResponseModel({
+                    authorizationUrl: authorizationURL.toString(),
+                }),
+            );
+        } catch {
+            this.logger.error('OAuth2 authorization failed.');
+            return fail(ERRORS.OAUTH2_AUTHORIZE_ERROR);
+        }
+    }
+
+    public async oauth2Callback(
+        code: string,
+        state: string,
+        provider: TOAuth2ProvidersKeys,
+        ip: string,
+        userAgent: string,
+    ): Promise<TResult<OAuth2CallbackResponseModel>> {
+        try {
+            const statusResponse = await this.getStatus();
+            if (!statusResponse.isOk) {
+                return fail(ERRORS.GET_AUTH_STATUS_ERROR);
+            }
+
+            if (!statusResponse.response.isLoginAllowed) {
+                await this.emitFailedLoginAttempt(
+                    'Unknown',
+                    ip,
+                    userAgent,
+                    'Login is not allowed.',
+                );
+                return fail(ERRORS.FORBIDDEN);
+            }
+
+            if (!statusResponse.response.authentication?.oauth2.providers[provider]) {
+                await this.emitFailedLoginAttempt(
+                    'Unknown',
+                    '–',
+                    '–',
+                    `OAuth2 provider ${provider} is disabled.`,
+                );
+                return fail(ERRORS.FORBIDDEN);
+            }
+
+            const firstAdmin = await this.getFirstAdmin();
+            if (!firstAdmin.isOk) {
+                await this.emitFailedLoginAttempt(
+                    'Unknown',
+                    ip,
+                    userAgent,
+                    'Superadmin not found.',
+                );
+                return fail(ERRORS.FORBIDDEN);
+            }
+
+            const callbackResult = await this.processOAuth2Callback(
+                provider,
+                code,
+                state,
+                ip,
+                userAgent,
+            );
+
+            if (!callbackResult.isAllowed || !callbackResult.email) {
+                return fail(ERRORS.FORBIDDEN);
+            }
+
+            const jwtToken = await this.issueAdminToken(firstAdmin.response);
+
+            await this.emitLoginSuccess(
+                callbackResult.email,
+                ip,
+                userAgent,
+                `Logged via ${provider} OAuth2.`,
+            );
+
+            return ok(new OAuth2CallbackResponseModel({ accessToken: jwtToken }));
+        } catch {
+            this.logger.error('OAuth2 callback failed.');
+            return fail(ERRORS.LOGIN_ERROR);
+        }
+    }
+
+    private async processOAuth2Callback(
+        provider: TOAuth2ProvidersKeys,
+        code: string,
+        state: string,
+        ip: string,
+        userAgent: string,
+    ): Promise<{ isAllowed: boolean; email: string | null }> {
+        const FAIL = { isAllowed: false, email: null };
+
+        const ceremony = await this.rawCacheService.getDel<{
+            codeVerifier: string | null;
+            provider: TOAuth2ProvidersKeys;
+        }>(CACHE_KEYS.OAUTH2_STATE(state));
+
+        const codeVerifier = ceremony?.codeVerifier ?? null;
+
+        if (!ceremony || ceremony.provider !== provider) {
+            await this.emitFailedLoginAttempt(
+                'Unknown',
+                ip,
+                userAgent,
+                `${provider} state mismatch.`,
+            );
+            return FAIL;
+        }
+
+        const settings: RemnawaveSettingsEntity = await this.queryBus.execute(
+            new GetCachedRemnawaveSettingsQuery(),
+        );
+
+        if (
+            ((provider === OAUTH2_PROVIDERS.GENERIC &&
+                settings.oauth2Settings.generic.withPkce &&
+                settings.oauth2Settings.generic.enabled) ||
+                provider === OAUTH2_PROVIDERS.KEYCLOAK ||
+                provider === OAUTH2_PROVIDERS.TELEGRAM) &&
+            !codeVerifier
+        ) {
+            await this.emitFailedLoginAttempt(
+                'Unknown',
+                ip,
+                userAgent,
+                `${provider} code verifier not found.`,
+            );
+            return FAIL;
+        }
+
+        const emailResult = await this.exchangeCodeForEmail(provider, code, codeVerifier, settings);
+
+        if (!emailResult.email) {
+            await this.emitFailedLoginAttempt(
+                'Unknown',
+                ip,
+                userAgent,
+                emailResult.error ?? `Failed to get email from ${provider}.`,
+            );
+            return FAIL;
+        }
+
+        const allowedEmails = this.getAllowedEmails(provider, settings);
+
+        const isAllowed = emailResult.hasCustomClaim || allowedEmails.includes(emailResult.email);
+
+        if (!isAllowed) {
+            await this.emitFailedLoginAttempt(
+                emailResult.email,
+                ip,
+                userAgent,
+                `${provider} email not in allowed list and no remnawaveAccess claim.`,
+            );
+            return FAIL;
+        }
+
+        return { isAllowed: true, email: emailResult.email };
+    }
+
+    private async exchangeCodeForEmail(
+        provider: TOAuth2ProvidersKeys,
+        code: string,
+        codeVerifier: string | null,
+        settings: RemnawaveSettingsEntity,
+    ): Promise<{ email: string | null; hasCustomClaim?: boolean; error?: string }> {
+        try {
+            switch (provider) {
+                case OAUTH2_PROVIDERS.GITHUB:
+                    return await this.fetchGithubEmail(code, settings);
+                case OAUTH2_PROVIDERS.YANDEX:
+                    return await this.fetchYandexEmail(code, settings);
+                case OAUTH2_PROVIDERS.POCKETID:
+                    return await this.fetchPocketIdEmail(code, settings);
+                case OAUTH2_PROVIDERS.KEYCLOAK:
+                    return await this.fetchKeycloakEmail(code, codeVerifier!, settings);
+                case OAUTH2_PROVIDERS.GENERIC:
+                    return await this.fetchGenericEmail(code, codeVerifier, settings);
+                case OAUTH2_PROVIDERS.TELEGRAM:
+                    return await this.fetchTelegramId(code, codeVerifier!, settings);
+                default:
+                    return { email: null, error: 'Unknown provider' };
+            }
+        } catch {
+            this.logger.error('OAuth2 token exchange failed.');
+            return { email: null, error: `Token exchange failed for ${provider}` };
+        }
+    }
+
+    private getAllowedEmails(
+        provider: TOAuth2ProvidersKeys,
+        settings: RemnawaveSettingsEntity,
+    ): string[] {
+        const map: Record<TOAuth2ProvidersKeys, string[]> = {
+            [OAUTH2_PROVIDERS.GITHUB]: settings.oauth2Settings.github.allowedEmails,
+            [OAUTH2_PROVIDERS.YANDEX]: settings.oauth2Settings.yandex.allowedEmails,
+            [OAUTH2_PROVIDERS.POCKETID]: settings.oauth2Settings.pocketid.allowedEmails,
+            [OAUTH2_PROVIDERS.KEYCLOAK]: settings.oauth2Settings.keycloak.allowedEmails,
+            [OAUTH2_PROVIDERS.GENERIC]: settings.oauth2Settings.generic.allowedEmails,
+            [OAUTH2_PROVIDERS.TELEGRAM]: settings.oauth2Settings.telegram.allowedIds,
+        };
+        return map[provider] ?? [];
+    }
+
+    private async fetchGithubEmail(
+        code: string,
+        settings: RemnawaveSettingsEntity,
+    ): Promise<{ email: string | null; error?: string }> {
+        const client = new arctic.GitHub(
+            settings.oauth2Settings.github.clientId!,
+            settings.oauth2Settings.github.clientSecret!,
+            null,
+        );
+
+        const tokens = await client.validateAuthorizationCode(code);
+
+        const { data } = await firstValueFrom(
+            this.httpService
+                .get<{ email: string; primary: boolean; verified: boolean }[]>(
+                    'https://api.github.com/user/emails',
+                    {
+                        headers: {
+                            Authorization: `Bearer ${tokens.accessToken()}`,
+                            'User-Agent': 'Remnawave',
+                        },
+                    },
+                )
+                .pipe(
+                    catchError((e: AxiosError) => {
+                        throw e.response?.data;
+                    }),
+                ),
+        );
+
+        const email = data?.find((e) => e.primary === true && e.verified === true)?.email ?? null;
+        return { email, error: email ? undefined : 'No verified primary email found' };
+    }
+
+    private async fetchYandexEmail(
+        code: string,
+        settings: RemnawaveSettingsEntity,
+    ): Promise<{ email: string | null; error?: string }> {
+        const client = new arctic.Yandex(
+            settings.oauth2Settings.yandex.clientId!,
+            settings.oauth2Settings.yandex.clientSecret!,
+            '',
+        );
+
+        const tokens = await client.validateAuthorizationCode(code);
+
+        const { data } = await firstValueFrom(
+            this.httpService
+                .get<{ default_email: string }>('https://login.yandex.ru/info?format=json', {
+                    headers: {
+                        Authorization: `Bearer ${tokens.accessToken()}`,
+                        'User-Agent': 'Remnawave',
+                    },
+                })
+                .pipe(
+                    catchError((e: AxiosError) => {
+                        throw e.response?.data;
+                    }),
+                ),
+        );
+
+        const email = data?.default_email ?? null;
+        return { email, error: email ? undefined : 'No email found' };
+    }
+
+    private async fetchPocketIdEmail(
+        code: string,
+        settings: RemnawaveSettingsEntity,
+    ): Promise<{ email: string | null; hasCustomClaim?: boolean; error?: string }> {
+        const client = await this.getGenericOAuth2Client(settings, true);
+
+        const tokens = await client.validateAuthorizationCode(
+            `https://${settings.oauth2Settings.pocketid.plainDomain}/api/oidc/token`,
+            code,
+            null,
+        );
+
+        return this.extractEmailFromIdToken(
+            tokens.idToken(),
+            settings.oauth2Settings.pocketid.clientId,
+            `https://${settings.oauth2Settings.pocketid.plainDomain}`,
+        );
+    }
+
+    private async fetchKeycloakEmail(
+        code: string,
+        codeVerifier: string,
+        settings: RemnawaveSettingsEntity,
+    ): Promise<{ email: string | null; hasCustomClaim?: boolean; error?: string }> {
+        const client = await this.getKeyCloakClient(settings);
+
+        const tokens = await client.validateAuthorizationCode(code, codeVerifier);
+
+        return this.extractEmailFromIdToken(
+            tokens.idToken(),
+            settings.oauth2Settings.keycloak.clientId,
+            `https://${settings.oauth2Settings.keycloak.keycloakDomain}/realms/${settings.oauth2Settings.keycloak.realm}`,
+        );
+    }
+
+    private async fetchGenericEmail(
+        code: string,
+        codeVerifier: string | null,
+        settings: RemnawaveSettingsEntity,
+    ): Promise<{ email: string | null; hasCustomClaim?: boolean; error?: string }> {
+        if (settings.oauth2Settings.generic.withPkce && !codeVerifier) {
+            return { email: null, error: 'Code verifier required for PKCE' };
+        }
+
+        const tokenEndpoint = this.getGenericTokenEndpoint(settings);
+        const expectedIssuer = this.getGenericIssuer(settings);
+        const client = await this.getGenericOAuth2Client(settings);
+
+        const tokens = await client.validateAuthorizationCode(
+            tokenEndpoint,
+            code,
+            codeVerifier ?? null,
+        );
+
+        return this.extractEmailFromIdToken(
+            tokens.idToken(), settings.oauth2Settings.generic.clientId, expectedIssuer,
+        );
+    }
+
+    private getGenericIssuer(settings: RemnawaveSettingsEntity): string {
+        const issuer = settings.oauth2Settings.generic.expectedIssuer;
+        if (!issuer) {
+            throw new Error('Generic OAuth2 requires the expected issuer from the provider configuration.');
+        }
+        const url = new URL(issuer);
+        if (url.protocol !== 'https:' || url.username || url.password || url.search ||
+            url.hash || issuer !== issuer.trim()) {
+            throw new Error('Generic OAuth2 issuer must be an HTTPS URL without credentials, query or fragment.');
+        }
+        // OIDC compares the exact issuer, including its path and trailing slash.
+        return issuer;
+    }
+
+    private getGenericTokenEndpoint(settings: RemnawaveSettingsEntity): string {
+        const endpoint = new URL(settings.oauth2Settings.generic.tokenUrl ?? '');
+        if (endpoint.protocol !== 'https:' || endpoint.username || endpoint.password || endpoint.hash) {
+            throw new Error('Generic OAuth2 requires an HTTPS token endpoint without URL credentials or fragments.');
+        }
+        return endpoint.href;
+    }
+
+    private decodeAndValidateIdToken(
+        idToken: string,
+        clientId: string | null,
+        expectedIssuer?: string,
+    ): Record<string, unknown> {
+        // These tokens come directly from the trusted TLS token endpoint, not the
+        // browser. Decoding is not signature verification; validate claims before use.
+        const claims = arctic.decodeIdToken(idToken) as Record<string, unknown>;
+        const now = Date.now() / 1000;
+        const audience = claims.aud;
+        const audiences = typeof audience === 'string' ? [audience] : audience;
+        if (
+            Array.isArray(claims) ||
+            !clientId ||
+            !Array.isArray(audiences) ||
+            audiences.length === 0 ||
+            !audiences.every((value) => typeof value === 'string' && value.length > 0) ||
+            !audiences.includes(clientId) ||
+            (audiences.length > 1 && claims.azp !== clientId) ||
+            ('azp' in claims && claims.azp !== clientId) ||
+            typeof claims.iss !== 'string' ||
+            claims.iss.trim().length === 0 ||
+            (expectedIssuer !== undefined && claims.iss !== expectedIssuer) ||
+            typeof claims.sub !== 'string' ||
+            claims.sub.trim().length === 0 ||
+            typeof claims.exp !== 'number' ||
+            !Number.isFinite(claims.exp) ||
+            claims.exp <= now ||
+            typeof claims.iat !== 'number' ||
+            !Number.isFinite(claims.iat) ||
+            claims.iat < 0 ||
+            claims.iat > now + 60 ||
+            claims.iat >= claims.exp
+        ) {
+            throw new Error('Invalid OIDC ID token claims.');
+        }
+        return claims;
+    }
+
+    private extractEmailFromIdToken(idToken: string, clientId: string | null, expectedIssuer?: string): {
+        email: string | null;
+        hasCustomClaim?: boolean;
+        error?: string;
+    } {
+        const claims = this.decodeAndValidateIdToken(idToken, clientId, expectedIssuer);
+        const email = 'email' in claims && typeof claims.email === 'string' ? claims.email : null;
+        const hasCustomClaim =
+            REMNAWAVE_CUSTOM_CLAIM_KEY in claims && claims[REMNAWAVE_CUSTOM_CLAIM_KEY] === true;
+
+        // A provider-managed access grant is independent of email ownership. Email
+        // allowlists, however, must never trust an unverified profile address.
+        if (!hasCustomClaim && !('email_verified' in claims && claims.email_verified === true)) {
+            return { email: null, hasCustomClaim: false, error: 'Email is not verified' };
+        }
+
+        return {
+            email,
+            hasCustomClaim,
+            error: email ? undefined : 'Missing email in ID token',
+        };
+    }
+
+    private async issueAdminToken(admin: AdminEntity): Promise<string> {
+        const claims = createAdminSessionClaims(admin, this.jwtSecret);
+        const token = this.jwtService.sign(
+            { username: admin.username, uuid: admin.uuid, role: ROLE.ADMIN, ...claims },
+            { expiresIn: `${this.jwtLifetime}h` },
+        );
+        await this.rawCacheService.setString(
+            adminSessionKey(claims.jti),
+            '1',
+            this.jwtLifetime * 3600,
+        );
+        return token;
+    }
+
+    private async getAdminCount(): Promise<TResult<number>> {
+        return this.queryBus.execute<CountAdminsByRoleQuery, TResult<number>>(
+            new CountAdminsByRoleQuery(ROLE.ADMIN),
+        );
+    }
+
+    private async getAdminByUsername(dto: GetAdminByUsernameQuery): Promise<TResult<AdminEntity>> {
+        return this.queryBus.execute<GetAdminByUsernameQuery, TResult<AdminEntity>>(
+            new GetAdminByUsernameQuery(dto.username, dto.role),
+        );
+    }
+
+    private async getFirstAdmin(): Promise<TResult<AdminEntity>> {
+        return this.queryBus.execute<GetFirstAdminQuery, TResult<AdminEntity>>(
+            new GetFirstAdminQuery(ROLE.ADMIN),
+        );
+    }
+
+    private applySecretHmac(password: string, secret: string): Buffer {
+        const hmac = createHmac('sha256', secret);
+        hmac.update(password);
+        return hmac.digest();
+    }
+
+    private async hashPassword(plainPassword: string): Promise<string> {
+        const hmacResult = this.applySecretHmac(plainPassword, this.jwtSecret);
+
+        const salt = randomBytes(16).toString('hex');
+
+        const derivedKey = (await scryptAsync(hmacResult.toString('hex'), salt, 64)) as Buffer;
+        const hash = derivedKey.toString('hex');
+
+        return `${salt}:${hash}`;
+    }
+
+    private async verifyPassword(plainPassword: string, storedHash: string): Promise<boolean> {
+        const hmacResult = this.applySecretHmac(plainPassword, this.jwtSecret);
+
+        const [salt, hash] = storedHash.split(':');
+
+        const derivedKey = (await scryptAsync(hmacResult.toString('hex'), salt, 64)) as Buffer;
+        const calculatedHash = derivedKey.toString('hex');
+
+        return timingSafeEqual(Buffer.from(calculatedHash), Buffer.from(hash));
+    }
+
+    private async createAdmin(dto: CreateAdminCommand): Promise<TResult<AdminEntity>> {
+        return this.commandBus.execute<CreateAdminCommand, TResult<AdminEntity>>(
+            new CreateAdminCommand(dto.username, dto.password, dto.role),
+        );
+    }
+
+    private async emitFailedLoginAttempt(
+        username: string,
+        ip: string,
+        userAgent: string,
+        description?: string,
+    ): Promise<void> {
+        this.eventEmitter.emit(
+            EVENTS.SERVICE.LOGIN_ATTEMPT_FAILED,
+            new ServiceEvent(EVENTS.SERVICE.LOGIN_ATTEMPT_FAILED, {
+                loginAttempt: {
+                    username,
+                    ip,
+                    userAgent,
+                    description: description ?? '–',
+                },
+            }),
+        );
+    }
+
+    private async emitLoginSuccess(
+        username: string,
+        ip: string,
+        userAgent: string,
+        description?: string,
+    ): Promise<void> {
+        this.eventEmitter.emit(
+            EVENTS.SERVICE.LOGIN_ATTEMPT_SUCCESS,
+            new ServiceEvent(EVENTS.SERVICE.LOGIN_ATTEMPT_SUCCESS, {
+                loginAttempt: {
+                    username,
+                    ip,
+                    userAgent,
+                    description: description ?? '–',
+                },
+            }),
+        );
+    }
+
+    public async generatePasskeyAuthenticationOptions(
+        remnawaveSettings: RemnawaveSettingsEntity,
+    ): Promise<TResult<PublicKeyCredentialRequestOptionsJSON>> {
+        try {
+            if (!remnawaveSettings.passkeySettings.enabled) {
+                return fail(ERRORS.FORBIDDEN);
+            }
+
+            if (
+                !remnawaveSettings.passkeySettings.rpId ||
+                !remnawaveSettings.passkeySettings.origin
+            ) {
+                return fail(ERRORS.FORBIDDEN);
+            }
+
+            const admin = await this.getFirstAdmin();
+
+            if (!admin.isOk) {
+                return fail(ERRORS.FORBIDDEN);
+            }
+
+            const userPasskeys = await this.queryBus.execute(
+                new GetPasskeysByAdminUuidQuery(admin.response.uuid),
+            );
+
+            if (!userPasskeys.isOk) {
+                return fail(ERRORS.FORBIDDEN);
+            }
+
+            if (userPasskeys.response.length === 0) {
+                this.logger.warn('No passkeys registered for this user');
+                return fail(ERRORS.FORBIDDEN);
+            }
+
+            const options = await generateAuthenticationOptions({
+                rpID: remnawaveSettings.passkeySettings.rpId,
+                allowCredentials: userPasskeys.response.map((passkey) => ({
+                    id: passkey.id,
+                    transports: passkey.getTransports(),
+                })),
+                userVerification: 'required',
+            });
+
+            await this.rawCacheService.setString(
+                CACHE_KEYS.PASSKEY_AUTHENTICATION_CHALLENGE(options.challenge),
+                admin.response.uuid,
+                CACHE_KEYS_TTL.PASSKEY_AUTHENTICATION_CHALLENGE,
+            );
+
+            return ok(options);
+        } catch (error) {
+            this.logger.error(`Passkey authentication options error: ${error}`);
+            return fail(ERRORS.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    private readClientDataChallenge(response: AuthenticationResponseJSON): string | null {
+        try {
+            const clientData = JSON.parse(
+                Buffer.from(response.response.clientDataJSON, 'base64url').toString('utf8'),
+            ) as { challenge?: unknown };
+
+            return typeof clientData.challenge === 'string' ? clientData.challenge : null;
+        } catch {
+            return null;
+        }
+    }
+
+    public async verifyPasskeyAuthentication(
+        dto: VerifyPasskeyAuthenticationBodyDto,
+        remnawaveSettings: RemnawaveSettingsEntity,
+        ip: string,
+        userAgent: string,
+    ): Promise<TResult<{ accessToken: string }>> {
+        try {
+            if (!remnawaveSettings.passkeySettings.enabled) {
+                await this.emitFailedLoginAttempt(
+                    'Unknown',
+                    ip,
+                    userAgent,
+                    'Passkey authentication is not enabled.',
+                );
+                return fail(ERRORS.FORBIDDEN);
+            }
+
+            if (
+                !remnawaveSettings.passkeySettings.rpId ||
+                !remnawaveSettings.passkeySettings.origin
+            ) {
+                await this.emitFailedLoginAttempt(
+                    'Unknown',
+                    ip,
+                    userAgent,
+                    'Passkey authentication is not configured.',
+                );
+                return fail(ERRORS.FORBIDDEN);
+            }
+
+            const response = dto.response as unknown as AuthenticationResponseJSON;
+
+            const admin = await this.getFirstAdmin();
+
+            if (!admin.isOk) {
+                await this.emitFailedLoginAttempt(
+                    'Unknown',
+                    ip,
+                    userAgent,
+                    'Admin is not found.',
+                );
+                return fail(ERRORS.FORBIDDEN);
+            }
+
+            const expectedChallenge = this.readClientDataChallenge(response);
+
+            const challengeOwner = expectedChallenge
+                ? await this.rawCacheService.getDelString(
+                      CACHE_KEYS.PASSKEY_AUTHENTICATION_CHALLENGE(expectedChallenge),
+                  )
+                : null;
+
+            if (!expectedChallenge || challengeOwner !== admin.response.uuid) {
+                await this.emitFailedLoginAttempt(
+                    'Unknown',
+                    ip,
+                    userAgent,
+                    'Challenge not found.',
+                );
+                return fail(ERRORS.FORBIDDEN);
+            }
+
+            const passkey = await this.queryBus.execute(
+                new FindPasskeyByIdAndAdminUuidQuery(response.id, admin.response.uuid),
+            );
+
+            if (!passkey.isOk) {
+                await this.emitFailedLoginAttempt(
+                    'Unknown',
+                    ip,
+                    userAgent,
+                    'Passkey not found.',
+                );
+                return fail(ERRORS.FORBIDDEN);
+            }
+
+            const verification = await verifyAuthenticationResponse({
+                response,
+                expectedChallenge,
+                expectedOrigin: remnawaveSettings.passkeySettings.origin,
+                expectedRPID: remnawaveSettings.passkeySettings.rpId,
+                credential: {
+                    id: passkey.response.id,
+                    publicKey: new Uint8Array(passkey.response.publicKey),
+                    counter: Number(passkey.response.counter),
+                    transports: passkey.response.getTransports(),
+                },
+                requireUserVerification: true,
+            });
+
+            if (!verification.verified) {
+                await this.emitFailedLoginAttempt(
+                    'Unknown',
+                    ip,
+                    userAgent,
+                    'Passkey authentication failed.',
+                );
+                return fail(ERRORS.FORBIDDEN);
+            }
+
+            const updateResult = await this.commandBus.execute(
+                new UpdatePasskeyCommand(
+                    passkey.response.id,
+                    {
+                        counter: BigInt(verification.authenticationInfo.newCounter),
+                        updatedAt: new Date(),
+                    },
+                    passkey.response.counter,
+                ),
+            );
+
+            if (!updateResult.isOk) {
+                await this.emitFailedLoginAttempt(
+                    admin.response.username,
+                    ip,
+                    userAgent,
+                    'Passkey counter update failed.',
+                );
+                return fail(ERRORS.FORBIDDEN);
+            }
+
+            const accessToken = await this.issueAdminToken(admin.response);
+
+            await this.emitLoginSuccess(
+                admin.response.username,
+                ip,
+                userAgent,
+                'Passkey authentication successful.',
+            );
+
+            return ok({ accessToken });
+        } catch (error) {
+            this.logger.error(`Passkey authentication verification error: ${error}`);
+            return fail(ERRORS.FORBIDDEN);
+        }
+    }
+
+    private async getKeyCloakClient(settings: RemnawaveSettingsEntity): Promise<arctic.KeyCloak> {
+        return new arctic.KeyCloak(
+            `https://${settings.oauth2Settings.keycloak.keycloakDomain!}/realms/${settings.oauth2Settings.keycloak.realm!}`,
+            settings.oauth2Settings.keycloak.clientId!,
+            settings.oauth2Settings.keycloak.clientSecret!,
+            `https://${settings.oauth2Settings.keycloak.frontendDomain!}/${AUTH_ROUTES.OAUTH2.CALLBACK}/${OAUTH2_PROVIDERS.KEYCLOAK}`,
+        );
+    }
+
+    private async getGenericOAuth2Client(
+        settings: RemnawaveSettingsEntity,
+        isPocketId: boolean = false,
+    ): Promise<arctic.OAuth2Client> {
+        if (isPocketId) {
+            const { clientId, clientSecret, frontendDomain } = settings.oauth2Settings.pocketid;
+            if (!clientId || !clientSecret || !frontendDomain) {
+                throw new Error(
+                    'PocketID OAuth2 config is incomplete (clientId, clientSecret, plainDomain, frontendDomain).',
+                );
+            }
+            const redirectUrl = `https://${frontendDomain}/${AUTH_ROUTES.OAUTH2.CALLBACK}/${OAUTH2_PROVIDERS.POCKETID}`;
+            return new arctic.OAuth2Client(clientId, clientSecret, redirectUrl);
+        } else {
+            const { clientId, clientSecret, frontendDomain } = settings.oauth2Settings.generic;
+            this.getGenericTokenEndpoint(settings);
+            this.getGenericIssuer(settings);
+            if (!clientId || !clientSecret || !frontendDomain) {
+                throw new Error(
+                    'Generic OAuth2 config is incomplete (clientId, clientSecret, frontendDomain).',
+                );
+            }
+            const redirectUrl = `https://${frontendDomain}/${AUTH_ROUTES.OAUTH2.CALLBACK}/${OAUTH2_PROVIDERS.GENERIC}`;
+            return new arctic.OAuth2Client(clientId, clientSecret, redirectUrl);
+        }
+    }
+
+    private getTelegramOAuth2Client(settings: RemnawaveSettingsEntity): arctic.OAuth2Client {
+        const { clientId, clientSecret, frontendDomain } = settings.oauth2Settings.telegram;
+        if (!clientId || !clientSecret || !frontendDomain) {
+            throw new Error(
+                'Telegram OAuth2 config is incomplete (clientId, clientSecret, frontendDomain).',
+            );
+        }
+        const redirectUrl = `https://${frontendDomain}/${AUTH_ROUTES.OAUTH2.CALLBACK}/${OAUTH2_PROVIDERS.TELEGRAM}`;
+        return new arctic.OAuth2Client(clientId, clientSecret, redirectUrl);
+    }
+
+    private async fetchTelegramId(
+        code: string,
+        codeVerifier: string,
+        settings: RemnawaveSettingsEntity,
+    ): Promise<{ email: string | null; hasCustomClaim?: boolean; error?: string }> {
+        const client = this.getTelegramOAuth2Client(settings);
+
+        const tokens = await client.validateAuthorizationCode(
+            'https://oauth.telegram.org/token',
+            code,
+            codeVerifier,
+        );
+
+        const tokenData = this.decodeAndValidateIdToken(
+            tokens.idToken(),
+            settings.oauth2Settings.telegram.clientId,
+            'https://oauth.telegram.org',
+        );
+
+        if (!('id' in tokenData) || typeof tokenData.id !== 'string') {
+            return {
+                email: null,
+                hasCustomClaim: false,
+                error: 'Telegram ID is missing in the ID token',
+            };
+        }
+
+        if (!settings.oauth2Settings.telegram.allowedIds.includes(tokenData.id)) {
+            return {
+                email: null,
+                hasCustomClaim: false,
+                error: `Telegram ID ${tokenData.id} is not in the allowed list`,
+            };
+        }
+
+        return {
+            email: tokenData.id,
+            hasCustomClaim: false,
+            error: undefined,
+        };
+    }
+}

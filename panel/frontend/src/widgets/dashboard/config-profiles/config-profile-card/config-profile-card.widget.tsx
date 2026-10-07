@@ -1,0 +1,337 @@
+import { Badge, Box, CopyButton, Divider, Group, Loader, Menu, Text, Tooltip } from '@mantine/core'
+import { modals } from '@mantine/modals'
+import { notifications } from '@mantine/notifications'
+import { GetConfigProfilesCommand } from '@remnawave/backend-contract'
+import { githubDarkTheme, JsonEditor } from 'json-edit-react'
+import { useTranslation } from 'react-i18next'
+import { PiCheck, PiCopy, PiCpu, PiPencil, PiTag, PiTrashDuotone } from 'react-icons/pi'
+import { TbCheck, TbCpu2, TbDownload, TbEye, TbTags } from 'react-icons/tb'
+import { generatePath, useNavigate } from 'react-router'
+
+import { showModal } from '@shared/_modals/show-modal'
+import { useGetComputedConfigProfile } from '@shared/api/hooks/config-profiles/config-profiles.query.hooks'
+import { ROUTES } from '@shared/constants'
+import { WithDndSortable } from '@shared/hocs/with-dnd-sortable'
+import { EntityCardShared } from '@shared/ui/entity-card'
+import { XrayLogo } from '@shared/ui/logos'
+import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { formatInt } from '@shared/utils/misc'
+
+interface IProps {
+    configProfile: GetConfigProfilesCommand.Response['response']['configProfiles'][number]
+    disableReordering?: boolean
+    handleDeleteConfigProfile: (configProfileUuid: string) => void
+    isDragOverlay?: boolean
+}
+
+export function ConfigProfileCardWidget(props: IProps) {
+    const {
+        configProfile,
+        disableReordering = false,
+        handleDeleteConfigProfile,
+        isDragOverlay = false
+    } = props
+    const { t } = useTranslation()
+
+    const navigate = useNavigate()
+
+    const nodesCount = configProfile.nodes.length
+    const inboundsCount = configProfile.inbounds.length
+    const isActive = nodesCount > 0
+
+    const handleEditConfigProfile = () => {
+        navigate(
+            generatePath(ROUTES.DASHBOARD.MANAGEMENT.CONFIG_PROFILE_BY_UUID, {
+                uuid: configProfile.uuid
+            })
+        )
+    }
+
+    const { refetch: refetchComputedConfigProfile, isLoading: isLoadingComputedConfigProfile } =
+        useGetComputedConfigProfile({
+            route: {
+                uuid: configProfile.uuid
+            }
+        })
+
+    const handleViewComputedConfigProfile = async () => {
+        notifications.show({
+            id: 'view-computed-config-profile',
+            loading: true,
+            title: t('common.message.loading'),
+            message: t('config-profile-card.widget.loading-computed-config-profile'),
+            autoClose: false,
+            withCloseButton: false
+        })
+
+        const computedConfigProfile = await refetchComputedConfigProfile()
+
+        if (computedConfigProfile && computedConfigProfile.data) {
+            notifications.update({
+                id: 'view-computed-config-profile',
+                loading: false,
+                title: t('common.message.success'),
+                message: t(
+                    'config-profile-card.widget.computed-config-profile-loaded-successfully'
+                ),
+                icon: <TbCheck size={18} />,
+                autoClose: 3000
+            })
+
+            modals.openConfirmModal({
+                children: (
+                    <>
+                        <Text size="sm">
+                            {t(
+                                'config-profile-card.widget.the-computed-config-profile-description'
+                            )}
+                        </Text>
+                        <Divider my="md" />
+                        <JsonEditor
+                            data={computedConfigProfile.data.config as object}
+                            indent={4}
+                            maxWidth="100%"
+                            rootName=""
+                            theme={githubDarkTheme}
+                            viewOnly
+                        />
+                    </>
+                ),
+                cancelProps: {
+                    variant: 'subtle',
+                    color: 'gray'
+                },
+                confirmProps: {
+                    color: 'teal'
+                },
+                labels: {
+                    confirm: t('common.action.download'),
+                    cancel: t('common.action.cancel')
+                },
+                size: 'xl',
+                title: (
+                    <BaseOverlayHeader
+                        iconColor="teal"
+                        IconComponent={TbEye}
+                        iconVariant="soft"
+                        title={computedConfigProfile.data.name}
+                        titleOrder={5}
+                    />
+                ),
+                onConfirm: () => {
+                    const jsonString = JSON.stringify(computedConfigProfile.data.config, null, 2)
+                    const blob = new Blob([jsonString], {
+                        type: 'application/json'
+                    })
+                    const url = URL.createObjectURL(blob)
+                    const a = document.createElement('a')
+                    a.href = url
+                    a.download = `${computedConfigProfile.data.name}.json`
+                    document.body.appendChild(a)
+                    a.click()
+                    document.body.removeChild(a)
+                    URL.revokeObjectURL(url)
+                }
+            })
+        }
+    }
+
+    return (
+        <WithDndSortable
+            disableReordering={disableReordering}
+            dragHandlePosition="inline-end"
+            id={configProfile.uuid}
+            isDragOverlay={isDragOverlay}
+        >
+            <EntityCardShared.Root isActive={isActive} onClick={handleEditConfigProfile}>
+                <EntityCardShared.Header>
+                    <EntityCardShared.Icon highlight={isActive}>
+                        <XrayLogo size={22} />
+                    </EntityCardShared.Icon>
+                    <EntityCardShared.Content
+                        tags={configProfile.tags}
+                        badges={
+                            <Group gap="xs" wrap="nowrap">
+                                <Tooltip label={t('common.field.inbounds')}>
+                                    <Badge
+                                        color="blue"
+                                        leftSection={<PiTag size={12} />}
+                                        onClick={(event) => {
+                                            event.stopPropagation()
+                                            showModal(
+                                                'configProfiles_configProfileInboundsDrawer',
+                                                {
+                                                    uuid: configProfile.uuid
+                                                }
+                                            )
+                                        }}
+                                        size="lg"
+                                        style={{ cursor: 'pointer' }}
+                                        variant="soft"
+                                    >
+                                        {formatInt(inboundsCount, {
+                                            thousandSeparator: ','
+                                        })}
+                                    </Badge>
+                                </Tooltip>
+
+                                <Tooltip label={t('config-profiles-grid.widget.nodes')}>
+                                    <Badge
+                                        color={isActive ? 'teal' : 'gray'}
+                                        leftSection={<PiCpu size={12} />}
+                                        onClick={(event) => {
+                                            event.stopPropagation()
+                                            showModal('configProfiles_activeNodesModal', {
+                                                nodes: configProfile.nodes,
+                                                profileName: configProfile.name
+                                            })
+                                        }}
+                                        size="lg"
+                                        style={{
+                                            cursor: 'pointer'
+                                        }}
+                                        variant="soft"
+                                    >
+                                        {formatInt(nodesCount, {
+                                            thousandSeparator: ','
+                                        })}
+                                    </Badge>
+                                </Tooltip>
+                            </Group>
+                        }
+                        title={configProfile.name}
+                    />
+                </EntityCardShared.Header>
+
+                <EntityCardShared.Actions>
+                    <EntityCardShared.Menu>
+                        <Menu.Item
+                            leftSection={<TbEye size={18} />}
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                modals.open({
+                                    children: (
+                                        <Box>
+                                            <JsonEditor
+                                                collapse={3}
+                                                data={configProfile.config as object}
+                                                indent={4}
+                                                maxWidth="100%"
+                                                rootName=""
+                                                theme={githubDarkTheme}
+                                                viewOnly
+                                            />
+                                        </Box>
+                                    ),
+                                    title: (
+                                        <BaseOverlayHeader
+                                            iconColor="teal"
+                                            IconComponent={TbEye}
+                                            iconVariant="soft"
+                                            title={configProfile.name}
+                                            titleOrder={5}
+                                        />
+                                    ),
+                                    size: 'xl'
+                                })
+                            }}
+                        >
+                            {t('config-profiles-grid.widget.quick-view')}
+                        </Menu.Item>
+
+                        <Menu.Item
+                            leftSection={
+                                isLoadingComputedConfigProfile ? (
+                                    <Loader size={18} />
+                                ) : (
+                                    <TbCpu2 size={18} />
+                                )
+                            }
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                handleViewComputedConfigProfile()
+                            }}
+                        >
+                            {t('config-profile-card.widget.view-computed')}
+                        </Menu.Item>
+
+                        <Menu.Item
+                            leftSection={<TbDownload size={18} />}
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                const jsonString = JSON.stringify(configProfile.config, null, 2)
+                                const blob = new Blob([jsonString], {
+                                    type: 'application/json'
+                                })
+                                const url = URL.createObjectURL(blob)
+                                const a = document.createElement('a')
+                                a.href = url
+                                a.download = `${configProfile.name}.json`
+                                document.body.appendChild(a)
+                                a.click()
+                                document.body.removeChild(a)
+                                URL.revokeObjectURL(url)
+                            }}
+                        >
+                            {t('common.action.download')}
+                        </Menu.Item>
+
+                        <CopyButton timeout={2000} value={configProfile.uuid}>
+                            {({ copied, copy }) => (
+                                <Menu.Item
+                                    color={copied ? 'teal' : undefined}
+                                    leftSection={
+                                        copied ? <PiCheck size={18} /> : <PiCopy size={18} />
+                                    }
+                                    onClick={copy}
+                                >
+                                    {t('common.action.copy-uuid')}
+                                </Menu.Item>
+                            )}
+                        </CopyButton>
+
+                        <Menu.Item
+                            leftSection={<PiPencil size={18} />}
+                            onClick={() => {
+                                showModal('renameModal', {
+                                    renameFrom: 'configProfile',
+                                    name: configProfile.name,
+                                    uuid: configProfile.uuid
+                                })
+                            }}
+                        >
+                            {t('common.action.rename')}
+                        </Menu.Item>
+
+                        <Menu.Item
+                            leftSection={<TbTags size={18} />}
+
+                            onClick={() => {
+                                showModal('editTagsModal', {
+                                    editTagsFrom: 'configProfile',
+
+                                    tags: configProfile.tags,
+
+                                    uuid: configProfile.uuid
+                                })
+                            }}
+                        >
+                            {t('common.field.tags')}
+                        </Menu.Item>
+
+                        <Menu.Item
+                            color="red"
+                            leftSection={<PiTrashDuotone size={18} />}
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                handleDeleteConfigProfile(configProfile.uuid)
+                            }}
+                        >
+                            {t('config-profiles-grid.widget.delete-profile')}
+                        </Menu.Item>
+                    </EntityCardShared.Menu>
+                </EntityCardShared.Actions>
+            </EntityCardShared.Root>
+        </WithDndSortable>
+    )
+}

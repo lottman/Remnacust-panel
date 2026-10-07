@@ -1,0 +1,15 @@
+.item {
+    cursor: pointer;
+    border: 1px solid var(--panel-border);
+    background: var(--panel-surface);
+    transition:
+        background 150ms ease,
+        border-color 150ms ease,
+        transform 150ms ease;
+}
+
+.item:hover {
+    background: var(--panel-elevated);
+    border-color: var(--panel-accent);
+    transform: translateY(-1px);
+}

@@ -1,0 +1,39 @@
+.itemBackground {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    opacity: 0.15;
+    transition: width 0.3s ease;
+}
+
+.scrollbar {
+    &,
+    &:hover {
+        background-color: transparent;
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.item {
+    animation: fadeIn 0.3s ease-out both;
+    outline: 1px solid transparent;
+    outline-offset: -1px;
+}
+
+.clickable {
+    cursor: pointer;
+    transition: outline 0.2s ease;
+}
+.clickable:hover {
+    outline: 1px solid var(--mantine-color-cyan-outline);
+    outline-offset: -1px;
+}

@@ -1,0 +1,12 @@
+.section {
+    margin-bottom: 16px;
+}
+.title {
+    color: var(--panel-text);
+    letter-spacing: -0.02em;
+    margin-bottom: 14px;
+}
+.card {
+    min-width: 0;
+    height: 100%;
+}

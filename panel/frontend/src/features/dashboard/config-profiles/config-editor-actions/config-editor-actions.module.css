@@ -1,0 +1,18 @@
+.actionIconLeft {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+
+    @mixin rtl {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+        border-top-right-radius: var(--mantine-radius-default);
+        border-bottom-right-radius: var(--mantine-radius-default);
+    }
+}
+
+.centeredButton {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-left: 0;
+    width: 100%;
+}

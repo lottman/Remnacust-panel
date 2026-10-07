@@ -1,0 +1,37 @@
+import { ExternalSquadsHeaderActionButtonsFeature } from '@features/ui/dashboard/external-squads/header-action-buttons'
+import { ExternalSquadsGridWidget } from '@widgets/dashboard/external-squads/external-squads-grid/external-squads-grid.widget'
+import { ExternalSquadsSpotlightWidget } from '@widgets/dashboard/external-squads/external-squads-spotlight/external-squads-spotlight'
+import { useTranslation } from 'react-i18next'
+import { TbWebhook } from 'react-icons/tb'
+
+import { Page } from '@shared/ui/page'
+import { PageHeaderShared } from '@shared/ui/page-header/page-header.shared'
+
+import { Props } from './interfaces'
+
+export const ExternalSquadsPageComponent = (props: Props) => {
+    const { t } = useTranslation()
+    const { externalSquads } = props
+
+    return (
+        <Page title={t('constants.external-squads')}>
+            <PageHeaderShared
+                actions={
+                    <ExternalSquadsHeaderActionButtonsFeature
+                        externalSquadCount={externalSquads.length}
+                    />
+                }
+                icon={<TbWebhook size={24} />}
+                title={t('constants.external-squads')}
+            />
+
+            <div>
+                <ExternalSquadsGridWidget externalSquads={externalSquads} />
+            </div>
+
+            {externalSquads.length > 0 && (
+                <ExternalSquadsSpotlightWidget externalSquads={externalSquads} />
+            )}
+        </Page>
+    )
+}

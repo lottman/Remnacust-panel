@@ -1,0 +1,17 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.STATS_ROUTES = exports.STATS_CONTROLLER = void 0;
+exports.STATS_CONTROLLER = 'stats';
+exports.STATS_ROUTES = {
+    GET_USER_ONLINE_STATUS: 'get-user-online-status',
+    GET_USERS_STATS: 'get-users-stats',
+    GET_SYSTEM_STATS: 'get-system-stats',
+    GET_INBOUND_STATS: 'get-inbound-stats',
+    GET_OUTBOUND_STATS: 'get-outbound-stats',
+    GET_ALL_OUTBOUNDS_STATS: 'get-all-outbounds-stats',
+    GET_ALL_INBOUNDS_STATS: 'get-all-inbounds-stats',
+    GET_COMBINED_STATS: 'get-combined-stats',
+    GET_USER_IP_LIST: 'get-user-ip-list',
+    GET_USERS_IP_LIST: 'get-users-ip-list',
+    GET_GEOCHECK: 'get-geocheck',
+};

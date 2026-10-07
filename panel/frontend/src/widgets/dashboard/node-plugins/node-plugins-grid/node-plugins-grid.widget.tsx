@@ -1,0 +1,252 @@
+import { Badge, Center, Group, Stack, Text, ThemeIcon } from '@mantine/core'
+import { modals } from '@mantine/modals'
+import { GetNodesCommand, GetNodePluginsCommand } from '@remnawave/backend-contract'
+import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
+import {
+    TbAlertTriangle,
+    TbFlame,
+    TbLogin,
+    TbLogout,
+    TbPackage,
+    TbPlugConnectedX
+} from 'react-icons/tb'
+
+import {
+    QueryKeys,
+    useCloneNodePlugin,
+    useDeleteNodePlugin,
+    useReorderNodePlugins
+} from '@shared/api/hooks'
+import { queryClient } from '@shared/api/query-client'
+import { useUiText } from '@shared/i18n/interface-text'
+import { filterByTag, TagFilterBar } from '@shared/ui'
+import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { SectionCard } from '@shared/ui/section-card'
+import { VirtualizedDndGrid } from '@shared/ui/virtualized-dnd-grid'
+
+import {
+    useSectionActiveTag,
+    useViewPreferencesStoreActions
+} from '@entities/dashboard/view-preferences-store'
+
+import { ActivePluginsOnNodesModalShared } from '../active-on-nodes-modal/adtive-on-nodes.modal.shared'
+import { NodePluginCardWidget } from '../node-plugin-card/node-plugin-card.widget'
+
+interface IProps {
+    nodes: GetNodesCommand.Response['response']
+    plugins: GetNodePluginsCommand.Response['response']['nodePlugins']
+}
+
+export function NodePluginsGridWidget(props: IProps) {
+    const uiText = useUiText()
+
+    const { t } = useTranslation()
+    const { nodes, plugins } = props
+
+    const activeTag = useSectionActiveTag('nodePlugins')
+    const { setSectionActiveTag } = useViewPreferencesStoreActions()
+    const visibleItems = useMemo(() => filterByTag(plugins ?? [], activeTag), [plugins, activeTag])
+
+    const { mutate: deleteNodePlugin } = useDeleteNodePlugin({
+        mutationFns: {
+            onSuccess: () => {
+                queryClient.refetchQueries({
+                    queryKey: QueryKeys.nodePlugins.getNodePlugins.queryKey
+                })
+                queryClient.refetchQueries({
+                    queryKey: QueryKeys.nodes.getAllNodes.queryKey
+                })
+            }
+        }
+    })
+    const { mutate: reorderNodePlugins } = useReorderNodePlugins({
+        mutationFns: {
+            onSuccess: (data) => {
+                queryClient.setQueryData(QueryKeys.nodePlugins.getNodePlugins.queryKey, data)
+            }
+        }
+    })
+
+    const { mutate: cloneNodePlugin } = useCloneNodePlugin({
+        mutationFns: {
+            onSuccess: () => {
+                queryClient.refetchQueries({
+                    queryKey: QueryKeys.nodePlugins.getNodePlugins.queryKey
+                })
+            }
+        }
+    })
+
+    const handleDeleteNodePlugin = (nodePluginUuid: string) => {
+        modals.openConfirmModal({
+            title: t('common.action.confirm-action'),
+            children: t('common.message.confirm-action-description'),
+            labels: {
+                confirm: t('common.action.delete'),
+                cancel: t('common.action.cancel')
+            },
+            cancelProps: { variant: 'subtle' },
+            confirmProps: { color: 'red', variant: 'soft' },
+            centered: true,
+            onConfirm: () => {
+                deleteNodePlugin({
+                    route: {
+                        uuid: nodePluginUuid
+                    }
+                })
+            }
+        })
+    }
+
+    const handleReorder = (reorderedItems: typeof plugins) => {
+        reorderNodePlugins({
+            variables: {
+                items: reorderedItems.map((item, index) => ({
+                    uuid: item.uuid,
+                    viewPosition: index
+                }))
+            }
+        })
+    }
+
+    const handleCloneNodePlugin = (nodePluginUuid: string) => {
+        cloneNodePlugin({
+            variables: {
+                cloneFromUuid: nodePluginUuid
+            }
+        })
+    }
+
+    const handleShowActiveNodes = (nodePluginUuid: string) => {
+        const activeOnNodes = nodes.filter((node) => node.activePluginUuid === nodePluginUuid)
+
+        modals.open({
+            children: <ActivePluginsOnNodesModalShared nodes={activeOnNodes} />,
+            title: (
+                <BaseOverlayHeader
+                    iconColor="teal"
+                    IconComponent={TbPackage}
+                    iconVariant="soft"
+                    title={t('node-plugin-card.widget.active-on-nodes')}
+                    titleOrder={5}
+                />
+            ),
+            size: 'lg',
+            centered: true
+        })
+    }
+
+    if (!plugins || plugins.length === 0) {
+        return (
+            <SectionCard.Root p="xl">
+                <SectionCard.Section>
+                    <BaseOverlayHeader
+                        iconColor="orange"
+                        IconComponent={TbAlertTriangle}
+                        iconVariant="soft"
+                        subtitle={t(
+                            'node-plugins-grid.widget.node-plugins-are-an-advanced-feature-please-review-the-documentation-before-use'
+                        )}
+                        title={t('common.message.warning')}
+                        titleOrder={4}
+                    />
+                </SectionCard.Section>
+
+                <SectionCard.Section>
+                    <Center py="xl">
+                        <Stack align="center" gap="lg">
+                            <ThemeIcon color="gray" radius="xl" size={64} variant="soft">
+                                <TbPackage size={32} />
+                            </ThemeIcon>
+
+                            <Stack align="center" gap="xs">
+                                <Text fw={600} size="lg" ta="center">
+                                    {t('node-plugins-grid.widget.no-node-plugins-yet')}
+                                </Text>
+                                <Text c="dimmed" maw={400} size="sm" ta="center">
+                                    {t(
+                                        'node-plugins-grid.widget.create-a-plugin-to-extend-node-capabilities-with'
+                                    )}
+                                </Text>
+                            </Stack>
+
+                            <Group gap="sm" justify="center">
+                                <Badge
+                                    leftSection={<TbFlame size={16} />}
+                                    radius="md"
+                                    size="lg"
+                                    variant="light"
+                                >
+                                    {uiText('torrent-blocker-bdcf6f6')}
+                                </Badge>
+                                <Badge
+                                    color="teal"
+                                    leftSection={<TbLogin size={16} />}
+                                    radius="md"
+                                    size="lg"
+                                    variant="light"
+                                >
+                                    {uiText('ingress-filter-52853f6')}
+                                </Badge>
+                                <Badge
+                                    color="orange"
+                                    leftSection={<TbLogout size={16} />}
+                                    radius="md"
+                                    size="lg"
+                                    variant="light"
+                                >
+                                    {uiText('egress-filter-a22e397')}
+                                </Badge>
+                                <Badge
+                                    color="grape"
+                                    leftSection={<TbPlugConnectedX size={16} />}
+                                    radius="md"
+                                    size="lg"
+                                    variant="light"
+                                >
+                                    {uiText('connection-drop-b46fa7e')}
+                                </Badge>
+                            </Group>
+                        </Stack>
+                    </Center>
+                </SectionCard.Section>
+            </SectionCard.Root>
+        )
+    }
+
+    return (
+        <VirtualizedDndGrid
+            enableDnd={activeTag === null}
+            header={
+                <TagFilterBar
+                    activeTag={activeTag}
+                    items={plugins}
+                    onChange={(tag) => setSectionActiveTag('nodePlugins', tag)}
+                />
+            }
+            items={visibleItems}
+            key={`node-plugins-grid-widget`}
+            onReorder={handleReorder}
+            renderDragOverlay={(nodePlugin) => (
+                <NodePluginCardWidget
+                    handleCloneNodePlugin={handleCloneNodePlugin}
+                    handleDeleteNodePlugin={handleDeleteNodePlugin}
+                    handleShowActiveNodes={handleShowActiveNodes}
+                    isDragOverlay
+                    nodePlugin={nodePlugin}
+                />
+            )}
+            renderItem={(nodePlugin) => (
+                <NodePluginCardWidget
+                    disableReordering={activeTag !== null}
+                    handleCloneNodePlugin={handleCloneNodePlugin}
+                    handleDeleteNodePlugin={handleDeleteNodePlugin}
+                    handleShowActiveNodes={handleShowActiveNodes}
+                    nodePlugin={nodePlugin}
+                />
+            )}
+            useWindowScroll={true}
+        />
+    )
+}

@@ -1,0 +1,25 @@
+.support {
+    border-color: color-mix(in srgb, #d95567 35%, var(--panel-border));
+    background: color-mix(in srgb, #d95567 9%, var(--panel-elevated));
+    color: #e77d8b;
+}
+
+html[data-mantine-color-scheme='light'] .support {
+    color: #a7283e;
+}
+
+.support:hover {
+    border-color: #d95567;
+    background: color-mix(in srgb, #d95567 14%, var(--panel-elevated));
+    color: #f296a2;
+}
+
+html[data-mantine-color-scheme='light'] .support:hover {
+    color: #8e1e31;
+}
+
+.support svg {
+    width: 22px;
+    height: 22px;
+    color: currentColor;
+}

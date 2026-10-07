@@ -1,0 +1,224 @@
+import { Job } from 'bullmq';
+
+import { Processor, WorkerHost } from '@nestjs/bullmq';
+import { Logger } from '@nestjs/common';
+import { CommandBus, EventBus, QueryBus } from '@nestjs/cqrs';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+
+import { EVENTS } from '@libs/contracts/constants/events/events';
+
+import { TorrentBlockerEvent, UserEvent } from '@integration-modules/notifications/interfaces';
+
+import { CreateTorrentReportCommand } from '@modules/node-plugins/commands/create-torrent-report';
+import { BaseTorrentBlockerReportEntity } from '@modules/node-plugins/entities';
+import { DeviceAccessService } from '@modules/hwid-user-devices/device-access.service';
+import { AddUserToNodeEvent } from '@modules/nodes/events/add-user-to-node';
+import { RemoveUserFromNodeEvent } from '@modules/nodes/events/remove-user-from-node';
+import { GetNodeByUuidQuery } from '@modules/nodes/queries/get-node-by-uuid';
+import { GetUserByUniqueFieldQuery } from '@modules/users/queries/get-user-by-unique-field';
+
+import { QUEUES_NAMES } from '@queue/queue.enum';
+
+import { USERS_JOB_NAMES } from '../constants/users-job-name.constant';
+import { IFireTorrentBlockerEventJobData, IFireUserEventJobData } from '../interfaces';
+
+@Processor(QUEUES_NAMES.USERS.USER_EVENTS, {
+    concurrency: 50,
+})
+export class UserEventsQueueProcessor extends WorkerHost {
+    private readonly logger = new Logger(UserEventsQueueProcessor.name);
+
+    constructor(
+        private readonly queryBus: QueryBus,
+        private readonly commandBus: CommandBus,
+        private readonly eventBus: EventBus,
+        private readonly eventEmitter: EventEmitter2,
+        private readonly deviceAccess: DeviceAccessService,
+    ) {
+        super();
+    }
+
+    async process(job: Job) {
+        switch (job.name) {
+            case USERS_JOB_NAMES.FIRE_USER_EVENT:
+                return await this.handleFireUserEvent(job);
+            case USERS_JOB_NAMES.FIRE_TORRENT_BLOCKER_EVENT:
+                return await this.handleFireTorrentBlockerEvent(job);
+            default:
+                this.logger.warn(`Job "${job.name}" is not handled.`);
+                break;
+        }
+    }
+
+    private async handleFireUserEvent(job: Job<IFireUserEventJobData>) {
+        try {
+            const { userEvent, skipTelegramNotification, meta } = job.data;
+
+            const id = BigInt(job.data.id);
+
+            const getUserResult = await this.queryBus.execute(
+                new GetUserByUniqueFieldQuery(
+                    {
+                        id,
+                    },
+                    {
+                        activeInternalSquads: true,
+                    },
+                ),
+            );
+
+            if (!getUserResult.isOk) {
+                return;
+            }
+
+            const { response: user } = getUserResult;
+
+            switch (userEvent) {
+                case EVENTS.USER.EXPIRED:
+                case EVENTS.USER.LIMITED:
+                    this.eventEmitter.emit(
+                        userEvent as string,
+                        new UserEvent({
+                            user,
+                            event: userEvent,
+                        }),
+                    );
+
+                    await this.eventBus.publish(
+                        new RemoveUserFromNodeEvent(user.id, user.vlessUuid),
+                    );
+
+                    if (!(await this.deviceAccess.synchronizeUserStatus(user))) {
+                        this.logger.error(`Could not confirm node-side access removal for user ${user.id}`);
+                    }
+
+                    break;
+
+                case EVENTS.USER.BANDWIDTH_USAGE_THRESHOLD_REACHED:
+                    this.eventEmitter.emit(
+                        userEvent as string,
+                        new UserEvent({
+                            user,
+                            event: userEvent,
+                            skipTelegramNotification,
+                        }),
+                    );
+                    break;
+                case EVENTS.USER.NOT_CONNECTED:
+                    this.eventEmitter.emit(
+                        userEvent as string,
+                        new UserEvent({
+                            user,
+                            event: userEvent,
+                            meta,
+                            skipTelegramNotification,
+                        }),
+                    );
+
+                    break;
+                case EVENTS.USER.EXPIRATION:
+                    this.eventEmitter.emit(
+                        userEvent as string,
+                        new UserEvent({
+                            user,
+                            event: userEvent,
+                            meta,
+                            skipTelegramNotification,
+                        }),
+                    );
+
+                    break;
+                case EVENTS.USER.FIRST_CONNECTED:
+                    this.eventEmitter.emit(
+                        userEvent as string,
+                        new UserEvent({
+                            user,
+                            event: userEvent,
+                        }),
+                    );
+
+                    break;
+                case EVENTS.USER.ENABLED:
+                    this.eventEmitter.emit(
+                        userEvent as string,
+                        new UserEvent({
+                            user,
+                            event: userEvent,
+                        }),
+                    );
+
+                    this.eventBus.publish(new AddUserToNodeEvent(user.id));
+                    break;
+                default:
+                    this.logger.warn(`User event "${userEvent}" is not implemented.`);
+                    break;
+            }
+        } catch (error) {
+            this.logger.error(`Error handling "${USERS_JOB_NAMES.FIRE_USER_EVENT}" job: ${error}`);
+        }
+    }
+
+    private async handleFireTorrentBlockerEvent(job: Job<IFireTorrentBlockerEventJobData>) {
+        try {
+            const { event, nodeUuid, report } = job.data;
+
+            const id = BigInt(job.data.id);
+
+            const getUserResult = await this.queryBus.execute(
+                new GetUserByUniqueFieldQuery(
+                    {
+                        id,
+                    },
+                    {
+                        activeInternalSquads: true,
+                    },
+                ),
+            );
+
+            if (!getUserResult.isOk) {
+                return;
+            }
+
+            const getNodeResult = await this.queryBus.execute(new GetNodeByUuidQuery(nodeUuid));
+
+            if (!getNodeResult.isOk) {
+                return;
+            }
+
+            const { response: user } = getUserResult;
+            const { response: node } = getNodeResult;
+
+            switch (event) {
+                case EVENTS.TORRENT_BLOCKER.REPORT:
+                    this.eventEmitter.emit(
+                        event as string,
+                        new TorrentBlockerEvent(
+                            {
+                                node,
+                                user,
+                                report,
+                            },
+                            event,
+                        ),
+                    );
+
+                    await this.commandBus.execute(
+                        new CreateTorrentReportCommand(
+                            new BaseTorrentBlockerReportEntity({
+                                userId: user.id,
+                                nodeId: node.id,
+                                report,
+                            }),
+                        ),
+                    );
+
+                    break;
+                default:
+                    this.logger.warn(`Torrent blocker event "${event}" is not implemented.`);
+                    break;
+            }
+        } catch (error) {
+            this.logger.error(`Error handling "${USERS_JOB_NAMES.FIRE_USER_EVENT}" job: ${error}`);
+        }
+    }
+}

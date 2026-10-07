@@ -1,0 +1,277 @@
+import dayjs from 'dayjs';
+import { serialize } from 'superjson';
+
+import { Injectable, Logger } from '@nestjs/common';
+import { OnEvent } from '@nestjs/event-emitter';
+
+import { TypedConfigService } from '@common/config/app-config';
+import { NotificationsConfigService } from '@common/config/common-config';
+import { RawCacheService } from '@common/raw-cache';
+import { CACHE_KEYS, EVENTS, EVENTS_SCOPES } from '@libs/contracts/constants';
+
+import {
+    UserEvent,
+    ServiceEvent,
+    CustomErrorEvent,
+    NodeEvent,
+    CrmEvent,
+    UserHwidDeviceEvent,
+    TorrentBlockerEvent,
+} from '@integration-modules/notifications/interfaces';
+
+import { BaseUserHwidDevicesResponseModel } from '@modules/hwid-user-devices/models';
+import { INodeHotCache, INodeSystem, INodeVersions } from '@modules/nodes/interfaces';
+import { NodeResponseModel } from '@modules/nodes/models';
+import { GetFullUserResponseModel } from '@modules/users/models';
+
+import { WebhookLoggerQueueService } from '@queue/notifications/webhook-logger/webhook-logger.service';
+
+@Injectable()
+export class WebhookEvents {
+    private readonly logger = new Logger(WebhookEvents.name);
+    private readonly webhookUrls: string[];
+    private readonly subPublicDomain: string;
+
+    constructor(
+        private readonly webhookLoggerQueueService: WebhookLoggerQueueService,
+        private readonly configService: TypedConfigService,
+        private readonly notificationsConfig: NotificationsConfigService,
+        private readonly rawCacheService: RawCacheService,
+    ) {
+        this.subPublicDomain = this.configService.getOrThrow('SUB_PUBLIC_DOMAIN');
+
+        const webhookUrls = this.configService.get('WEBHOOK_URL');
+        if (webhookUrls) {
+            this.webhookUrls = webhookUrls.split(',').map((url) => url.trim());
+        } else {
+            this.webhookUrls = [];
+        }
+    }
+
+    @OnEvent(EVENTS.CATCH_ALL_USER_EVENTS)
+    async onCatchAllUserEvents(event: UserEvent): Promise<void> {
+        try {
+            if (!this.notificationsConfig.isEnabled(event.eventName, 'webhook')) {
+                return;
+            }
+
+            const payload = {
+                scope: EVENTS_SCOPES.USER,
+                event: event.eventName,
+                timestamp: dayjs().toISOString(),
+                data: new GetFullUserResponseModel(event.user, this.subPublicDomain),
+                meta: event.meta,
+            };
+
+            const { json } = serialize(payload);
+
+            await this.webhookLoggerQueueService.sendWebhooks(
+                {
+                    payload: JSON.stringify(json),
+                    timestamp: payload.timestamp,
+                },
+                [...this.webhookUrls, ...this.notificationsConfig.getWebhookUrls(event.eventName)],
+            );
+        } catch (error) {
+            this.logger.error(`Error sending webhook event: ${error}`);
+        }
+    }
+
+    @OnEvent(EVENTS.CATCH_ALL_NODE_EVENTS)
+    async onCatchAllNodeEvents(event: NodeEvent): Promise<void> {
+        try {
+            if (!this.notificationsConfig.isEnabled(event.eventName, 'webhook')) {
+                return;
+            }
+
+            const payload = {
+                scope: EVENTS_SCOPES.NODE,
+                event: event.eventName,
+                timestamp: dayjs().toISOString(),
+                data: new NodeResponseModel(
+                    event.node,
+                    await this.getNodesSystemInfo(event.node.uuid),
+                ),
+            };
+
+            const { json } = serialize(payload);
+
+            await this.webhookLoggerQueueService.sendWebhooks(
+                {
+                    payload: JSON.stringify(json),
+                    timestamp: payload.timestamp,
+                },
+                [...this.webhookUrls, ...this.notificationsConfig.getWebhookUrls(event.eventName)],
+            );
+        } catch (error) {
+            this.logger.error(`Error sending webhook event: ${error}`);
+        }
+    }
+
+    @OnEvent(EVENTS.CATCH_ALL_SERVICE_EVENTS)
+    async onCatchAllServiceEvents(event: ServiceEvent): Promise<void> {
+        try {
+            if (!this.notificationsConfig.isEnabled(event.eventName, 'webhook')) {
+                return;
+            }
+
+            const payload = {
+                scope: EVENTS_SCOPES.SERVICE,
+                event: event.eventName,
+                timestamp: dayjs().toISOString(),
+                data: event.data,
+            };
+
+            const { json } = serialize(payload);
+
+            await this.webhookLoggerQueueService.sendWebhooks(
+                {
+                    payload: JSON.stringify(json),
+                    timestamp: payload.timestamp,
+                },
+                [...this.webhookUrls, ...this.notificationsConfig.getWebhookUrls(event.eventName)],
+            );
+        } catch (error) {
+            this.logger.error(`Error sending webhook event: ${error}`);
+        }
+    }
+
+    @OnEvent(EVENTS.CATCH_ALL_ERRORS_EVENTS)
+    async onCatchAllErrorsEvents(event: CustomErrorEvent): Promise<void> {
+        try {
+            if (!this.notificationsConfig.isEnabled(event.eventName, 'webhook')) {
+                return;
+            }
+
+            const payload = {
+                scope: EVENTS_SCOPES.ERRORS,
+                event: event.eventName,
+                timestamp: dayjs().toISOString(),
+                data: event.data,
+            };
+
+            const { json } = serialize(payload);
+
+            await this.webhookLoggerQueueService.sendWebhooks(
+                {
+                    payload: JSON.stringify(json),
+                    timestamp: payload.timestamp,
+                },
+                [...this.webhookUrls, ...this.notificationsConfig.getWebhookUrls(event.eventName)],
+            );
+        } catch (error) {
+            this.logger.error(`Error sending webhook event: ${error}`);
+        }
+    }
+
+    @OnEvent(EVENTS.CATCH_ALL_CRM_EVENTS)
+    async onCatchAllCrmEvents(event: CrmEvent): Promise<void> {
+        try {
+            if (!this.notificationsConfig.isEnabled(event.eventName, 'webhook')) {
+                return;
+            }
+
+            const payload = {
+                scope: EVENTS_SCOPES.CRM,
+                event: event.eventName,
+                timestamp: dayjs().toISOString(),
+                data: event.data,
+            };
+
+            const { json } = serialize(payload);
+
+            await this.webhookLoggerQueueService.sendWebhooks(
+                {
+                    payload: JSON.stringify(json),
+                    timestamp: payload.timestamp,
+                },
+                [...this.webhookUrls, ...this.notificationsConfig.getWebhookUrls(event.eventName)],
+            );
+        } catch (error) {
+            this.logger.error(`Error sending webhook event: ${error}`);
+        }
+    }
+
+    @OnEvent(EVENTS.CATCH_ALL_USER_HWID_DEVICES_EVENTS)
+    async onCatchAllUserHwidDevicesEvents(event: UserHwidDeviceEvent): Promise<void> {
+        try {
+            if (!this.notificationsConfig.isEnabled(event.eventName, 'webhook')) {
+                return;
+            }
+
+            const payload = {
+                scope: EVENTS_SCOPES.USER_HWID_DEVICES,
+                event: event.eventName,
+                timestamp: dayjs().toISOString(),
+                data: {
+                    hwidUserDevice: new BaseUserHwidDevicesResponseModel(event.data.hwidUserDevice),
+                    user: new GetFullUserResponseModel(event.data.user, this.subPublicDomain),
+                },
+            };
+
+            const { json } = serialize(payload);
+
+            await this.webhookLoggerQueueService.sendWebhooks(
+                {
+                    payload: JSON.stringify(json),
+                    timestamp: payload.timestamp,
+                },
+                [...this.webhookUrls, ...this.notificationsConfig.getWebhookUrls(event.eventName)],
+            );
+        } catch (error) {
+            this.logger.error(`Error sending webhook event: ${error}`);
+        }
+    }
+
+    @OnEvent(EVENTS.CATCH_ALL_TORRENT_BLOCKER_EVENTS)
+    async onCatchAllTorrentBlockerEvents(event: TorrentBlockerEvent): Promise<void> {
+        try {
+            if (!this.notificationsConfig.isEnabled(event.eventName, 'webhook')) {
+                return;
+            }
+
+            const payload = {
+                scope: EVENTS_SCOPES.TORRENT_BLOCKER,
+                event: event.eventName,
+                timestamp: dayjs().toISOString(),
+                data: {
+                    ...event.data,
+                    node: new NodeResponseModel(
+                        event.data.node,
+                        await this.getNodesSystemInfo(event.data.node.uuid),
+                    ),
+                    user: new GetFullUserResponseModel(event.data.user, this.subPublicDomain),
+                },
+            };
+
+            const { json } = serialize(payload);
+
+            await this.webhookLoggerQueueService.sendWebhooks(
+                {
+                    payload: JSON.stringify(json),
+                    timestamp: payload.timestamp,
+                },
+                [...this.webhookUrls, ...this.notificationsConfig.getWebhookUrls(event.eventName)],
+            );
+        } catch (error) {
+            this.logger.error(`Error sending webhook event: ${error}`);
+        }
+    }
+
+    private async getNodesSystemInfo(uuid: string): Promise<INodeHotCache> {
+        const [info, stats, onlineUsers, xrayUptime, versions] = await Promise.all([
+            this.rawCacheService.get<INodeSystem['info']>(CACHE_KEYS.NODE_SYSTEM_INFO(uuid)),
+            this.rawCacheService.get<INodeSystem['stats']>(CACHE_KEYS.NODE_SYSTEM_STATS(uuid)),
+            this.rawCacheService.getNumber(CACHE_KEYS.NODE_USERS_ONLINE(uuid)),
+            this.rawCacheService.getNumber(CACHE_KEYS.NODE_XRAY_UPTIME(uuid)),
+            this.rawCacheService.get<INodeVersions>(CACHE_KEYS.NODE_VERSIONS(uuid)),
+        ]);
+
+        return {
+            system: info && stats ? { info, stats } : null,
+            onlineUsers,
+            versions,
+            xrayUptime,
+        };
+    }
+}

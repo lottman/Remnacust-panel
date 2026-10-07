@@ -1,0 +1,15 @@
+.controlPanel {
+    background: var(--panel-subtle);
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+    padding: 14px;
+}
+
+.controlLabel {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.35);
+    margin-bottom: 8px;
+}

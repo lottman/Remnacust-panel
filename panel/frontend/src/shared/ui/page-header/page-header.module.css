@@ -1,0 +1,45 @@
+.card {
+    background: transparent;
+    overflow: visible;
+}
+.headerWrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+.contentSection {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+.pageIcon {
+    flex: 0 0 auto;
+}
+.title {
+    letter-spacing: -0.035em;
+    overflow-wrap: anywhere;
+}
+.description {
+    cursor: copy;
+    max-width: 70ch;
+    border-radius: 4px;
+}
+.actionsSection {
+    flex: 0 1 auto;
+    max-width: 100%;
+    margin-inline-start: auto;
+}
+@media (max-width: 48em) {
+    .title {
+        font-size: 24px;
+    }
+    .actionsSection {
+        flex-basis: 100%;
+        margin-inline-start: 0;
+    }
+    .actionsSection > :global(.mantine-Group-root) {
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+}

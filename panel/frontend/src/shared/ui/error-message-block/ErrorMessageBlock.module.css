@@ -1,0 +1,54 @@
+.message {
+    position: relative;
+    padding-block: 12px;
+    padding-inline: 14px 44px;
+    background: var(--panel-subtle);
+    border: 1px solid var(--panel-border);
+    border-inline-start: 2px solid var(--mantine-color-red-5);
+    border-radius: var(--mantine-radius-md);
+}
+
+.text {
+    font-family: var(--mantine-font-family-monospace);
+    font-size: var(--mantine-font-size-xs);
+    line-height: 1.6;
+    color: light-dark(var(--mantine-color-red-8), var(--mantine-color-red-3));
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    max-height: 240px;
+    overflow-y: auto;
+}
+
+.copyButton {
+    position: absolute;
+    top: 8px;
+    inset-inline-end: 8px;
+    opacity: 0.5;
+    transition: opacity 150ms ease;
+}
+
+.message:hover .copyButton {
+    opacity: 1;
+}
+
+.copyButton[data-copied='true'] {
+    opacity: 1;
+}
+
+.message[data-tone='warning'] {
+    border-inline-start-color: var(--mantine-color-yellow-5);
+}
+
+.message[data-tone='warning'] .text {
+    font-family: var(--mantine-font-family);
+    color: light-dark(var(--mantine-color-yellow-9), var(--mantine-color-yellow-3));
+}
+
+.message[data-tone='upgrade'] {
+    border-inline-start-color: var(--mantine-color-violet-5);
+}
+
+.message[data-tone='upgrade'] .text {
+    font-family: var(--mantine-font-family);
+    color: light-dark(var(--mantine-color-violet-8), var(--mantine-color-violet-3));
+}

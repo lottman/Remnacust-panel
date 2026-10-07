@@ -1,0 +1,10 @@
+.form {
+    width: 100%;
+}
+
+.surface {
+    background: var(--panel-surface, var(--mantine-color-body));
+    border-color: var(--panel-border, var(--mantine-color-default-border));
+    color: var(--panel-text, var(--mantine-color-text));
+    box-shadow: none;
+}

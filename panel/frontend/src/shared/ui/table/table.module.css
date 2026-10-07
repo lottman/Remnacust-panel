@@ -1,0 +1,24 @@
+.card {
+    position: relative;
+}
+.headerWrapper {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+.contentSection {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+.actionsSection {
+    flex: 0 1 auto;
+    margin-inline-start: auto;
+    max-width: 100%;
+}
+@media (max-width: 48em) {
+    .actionsSection {
+        margin-inline-start: 0;
+    }
+}

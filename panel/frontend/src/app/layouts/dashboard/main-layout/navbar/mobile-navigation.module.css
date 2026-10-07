@@ -1,0 +1,61 @@
+.sectionTitle {
+    padding-inline: 12px;
+    margin-bottom: 8px;
+    font-size: 12px;
+    line-height: 1.5;
+    font-weight: 500;
+    color: var(--panel-muted);
+}
+.sectionLink {
+    width: 100%;
+    min-height: 42px;
+    border-radius: 8px;
+    color: var(--panel-muted);
+    transition:
+        background-color 140ms,
+        color 140ms;
+}
+.sectionLink:hover {
+    background: var(--panel-elevated);
+    color: var(--panel-text);
+}
+.sectionLink[data-active='true'] {
+    background: color-mix(in srgb, var(--panel-accent) 12%, var(--panel-surface));
+    color: var(--panel-accent-text);
+}
+.sectionLink svg {
+    width: 18px;
+    height: 18px;
+}
+.sectionLink :global(.mantine-NavLink-label) {
+    font-weight: 500;
+    font-size: 13px;
+}
+.sectionDropdownItemLink {
+    min-height: 40px;
+    border-radius: 6px;
+    margin-block: 2px;
+    margin-inline-start: 20px;
+    width: calc(100% - 20px);
+    color: var(--panel-muted);
+    border-inline-start: 1px solid var(--panel-border);
+}
+.sectionDropdownItemLink svg {
+    width: 16px;
+    height: 16px;
+}
+.sectionDropdownItemLink:hover {
+    color: var(--panel-text);
+    background: var(--panel-elevated);
+}
+.sectionDropdownItemLink[data-active='true'] {
+    color: var(--panel-accent-text);
+    background: color-mix(in srgb, var(--panel-accent) 8%, var(--panel-surface));
+    border-inline-start-color: var(--panel-accent);
+}
+@media (pointer: coarse) {
+    .sectionLink,
+    .sectionDropdownItemLink {
+        min-height: 44px;
+    }
+}

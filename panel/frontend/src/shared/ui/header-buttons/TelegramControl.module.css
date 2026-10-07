@@ -1,0 +1,25 @@
+.telegram {
+    border-color: color-mix(in srgb, #1594c7 38%, var(--panel-border));
+    background: color-mix(in srgb, #1594c7 8%, var(--panel-elevated));
+    color: #57b4d8;
+}
+
+html[data-mantine-color-scheme='light'] .telegram {
+    color: #12658a;
+}
+
+.telegram:hover {
+    border-color: #1594c7;
+    background: color-mix(in srgb, #1594c7 13%, var(--panel-elevated));
+    color: #79c7e3;
+}
+
+html[data-mantine-color-scheme='light'] .telegram:hover {
+    color: #0c5577;
+}
+
+.telegram svg {
+    width: 22px;
+    height: 22px;
+    color: currentColor;
+}

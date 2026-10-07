@@ -1,0 +1,41 @@
+{
+  "exclude": ["node_modules", "dist", "samples"],
+  "include": ["src/**/*", "@types/prismaJson.d.ts", "@types/types.d.ts", "prisma/seed/**/*"],
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "target": "esnext",
+    "declaration": true,
+    "removeComments": true,
+    "emitDecoratorMetadata": true,
+    "esModuleInterop": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "sourceMap": true,
+    "resolveJsonModule": true,
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "paths": {
+      "@common/*": ["./src/common/*"],
+      "@integration-modules/*": ["./src/integration-modules/*"],
+      "@modules/*": ["./src/modules/*"],
+      "@libs/contracts/*": ["./libs/contract/*"],
+      "@libs/node-plugins/*": ["./libs/node-plugins/*"],
+      "@libs/subscription-page/*": ["./libs/subscription-page/*"],
+      "@contract/*": ["./libs/contract/*"],
+      "@queue/*": ["./src/queue/*"],
+      "@scheduler/*": ["./src/scheduler/*"]
+    },
+    "incremental": true,
+    "skipLibCheck": true,
+    "strictNullChecks": true,
+    "strict": true,
+    "strictPropertyInitialization": false,
+    "noImplicitAny": true,
+    "strictBindCallApply": false,
+    "forceConsistentCasingInFileNames": false,
+    "noFallthroughCasesInSwitch": false,
+    "useDefineForClassFields": true,
+    "types": ["@rspack/core/module"]
+  }
+}

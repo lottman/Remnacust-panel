@@ -1,0 +1,17 @@
+.dropdown {
+    padding: 16px;
+    background: var(--panel-elevated);
+    border-color: var(--panel-border);
+    box-shadow: var(--panel-overlay-shadow);
+}
+.mobileVersion {
+    display: none;
+}
+@media (max-width: 64em) {
+    .desktopVersion {
+        display: none;
+    }
+    .mobileVersion {
+        display: flex;
+    }
+}

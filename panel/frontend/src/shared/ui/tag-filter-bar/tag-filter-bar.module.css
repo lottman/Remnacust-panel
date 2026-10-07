@@ -1,0 +1,77 @@
+.scroller {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-width: 0;
+    margin-bottom: 8px;
+    border: 1px solid var(--panel-border);
+    border-radius: var(--mantine-radius-md);
+    background: var(--panel-surface);
+}
+.viewport {
+    flex: 1;
+    min-width: 0;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    scroll-padding-inline: 10px;
+}
+.viewport::-webkit-scrollbar {
+    display: none;
+}
+.content {
+    width: max-content;
+    padding: 10px;
+}
+.scrollControl {
+    flex: 0 0 40px;
+    align-self: stretch;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--panel-muted);
+    border-radius: 8px;
+    transition:
+        background-color 140ms,
+        color 140ms,
+        opacity 140ms;
+}
+.scrollControl:hover:not(:disabled) {
+    color: var(--panel-text);
+    background: var(--panel-elevated);
+}
+.scrollControl:disabled {
+    opacity: 0.3;
+    cursor: default;
+}
+:global([dir='rtl']) .scrollControl svg {
+    transform: rotate(180deg);
+}
+.tab {
+    color: var(--panel-muted);
+    min-height: 38px;
+}
+.tab:hover {
+    color: var(--panel-text);
+    background: var(--panel-elevated);
+}
+.tab[data-active] {
+    color: var(--panel-accent-text);
+    background: color-mix(in srgb, var(--panel-accent) 12%, var(--panel-surface));
+    border-color: color-mix(in srgb, var(--panel-accent) 30%, var(--panel-border));
+}
+.tab :global(.mantine-Badge-root) {
+    color: inherit;
+    background: color-mix(in srgb, currentColor 10%, transparent);
+    border: 0;
+    min-width: 22px;
+}
+@media (pointer: coarse) {
+    .scrollControl {
+        flex-basis: 44px;
+    }
+    .tab {
+        min-height: 44px;
+    }
+}

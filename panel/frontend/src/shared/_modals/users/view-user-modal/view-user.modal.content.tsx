@@ -2,7 +2,7 @@ import { DeleteUserFeature } from '@features/ui/dashboard/users/delete-user'
 import { ResetUsageUserFeature } from '@features/ui/dashboard/users/reset-usage-user'
 import { RevokeSubscriptionUserFeature } from '@features/ui/dashboard/users/revoke-subscription-user'
 import { ToggleUserStatusButtonFeature } from '@features/ui/dashboard/users/toggle-user-status-button'
-import { Button, Group, Menu, px, Stack } from '@mantine/core'
+import { Button, Menu, px, Stack } from '@mantine/core'
 import { useForm, schemaResolver } from '@mantine/form'
 import { UpdateUserCommand } from '@remnawave/backend-contract'
 import dayjs from 'dayjs'
@@ -31,6 +31,7 @@ import {
     TrafficLimitsCard,
     UserIdentificationCard
 } from '@shared/ui/forms/users/forms-components'
+import { UserFormLayout } from '@shared/ui/forms/users/user-form-layout'
 import { LoaderModalShared } from '@shared/ui/loader-modal'
 import { ModalFooter } from '@shared/ui/modal-footer'
 import { handleFormErrors } from '@shared/utils/misc'
@@ -197,7 +198,7 @@ export const ViewUserModalContent = (props: IProps) => {
                 ease: 'easeInOut'
             }}
         >
-            {isMobile && (
+            <UserFormLayout>
                 <MotionStack
                     animate="visible"
                     gap="md"
@@ -209,18 +210,6 @@ export const ViewUserModalContent = (props: IProps) => {
                         lastConnectedNode={lastConnectedNode}
                         motionWrapper={MotionWrapper}
                         user={user}
-                    />
-                    <TrafficLimitsCard
-                        cardVariants={cardVariants}
-                        form={form}
-                        motionWrapper={MotionWrapper}
-                    />
-                    <AccessSettingsCard
-                        cardVariants={cardVariants}
-                        externalSquads={externalSquads}
-                        form={form}
-                        internalSquads={internalSquads}
-                        motionWrapper={MotionWrapper}
                     />
                     <ContactInformationCard
                         cardVariants={cardVariants}
@@ -234,58 +223,27 @@ export const ViewUserModalContent = (props: IProps) => {
                         tags={tags}
                     />
                 </MotionStack>
-            )}
 
-            {!isMobile && (
-                <Group align="flex-start" gap="md" grow={false} wrap="wrap">
-                    <MotionStack
-                        animate="visible"
-                        gap="md"
-                        initial="hidden"
-                        style={{ flex: '1 1 450px' }}
-                        variants={containerVariants}
-                    >
-                        <UserIdentificationCard
-                            cardVariants={cardVariants}
-                            lastConnectedNode={lastConnectedNode}
-                            motionWrapper={MotionWrapper}
-                            user={user}
-                        />
-                        <ContactInformationCard
-                            cardVariants={cardVariants}
-                            form={form}
-                            motionWrapper={MotionWrapper}
-                        />
-                        <DeviceTagSettingsCard
-                            cardVariants={cardVariants}
-                            form={form}
-                            motionWrapper={MotionWrapper}
-                            tags={tags}
-                        />
-                    </MotionStack>
-
-                    <MotionStack
-                        animate="visible"
-                        gap="md"
-                        initial="hidden"
-                        style={{ flex: '1 1 450px' }}
-                        variants={containerVariants}
-                    >
-                        <TrafficLimitsCard
-                            cardVariants={cardVariants}
-                            form={form}
-                            motionWrapper={MotionWrapper}
-                        />
-                        <AccessSettingsCard
-                            cardVariants={cardVariants}
-                            externalSquads={externalSquads}
-                            form={form}
-                            internalSquads={internalSquads}
-                            motionWrapper={MotionWrapper}
-                        />
-                    </MotionStack>
-                </Group>
-            )}
+                <MotionStack
+                    animate="visible"
+                    gap="md"
+                    initial="hidden"
+                    variants={containerVariants}
+                >
+                    <TrafficLimitsCard
+                        cardVariants={cardVariants}
+                        form={form}
+                        motionWrapper={MotionWrapper}
+                    />
+                    <AccessSettingsCard
+                        cardVariants={cardVariants}
+                        externalSquads={externalSquads}
+                        form={form}
+                        internalSquads={internalSquads}
+                        motionWrapper={MotionWrapper}
+                    />
+                </MotionStack>
+            </UserFormLayout>
 
             <ModalFooter isMobile={isMobile}>
                 <Menu keepMounted position="top-end" shadow="md">

@@ -1,5 +1,5 @@
 import NiceModal, { useModal } from '@ebay/nice-modal-react'
-import { Button, Group, Modal, Stack } from '@mantine/core'
+import { Button, Modal, Stack } from '@mantine/core'
 import { useForm, schemaResolver } from '@mantine/form'
 import { CreateUserCommand, USERS_STATUS } from '@remnawave/backend-contract'
 import dayjs from 'dayjs'
@@ -25,6 +25,7 @@ import {
     TrafficLimitsCard,
     UserIdentityCreationCard
 } from '@shared/ui/forms/users/forms-components'
+import { UserFormLayout } from '@shared/ui/forms/users/user-form-layout'
 import { LoaderModalShared } from '@shared/ui/loader-modal'
 import { ModalFooter } from '@shared/ui/modal-footer'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
@@ -166,51 +167,12 @@ export const CreateUserModal = NiceModal.create(() => {
                 </motion.div>
             )}
 
-            {!isInternalSquadsLoading && !isTagsLoading && isMobile && (
-                <MotionStack
-                    animate="visible"
-                    gap="md"
-                    initial="hidden"
-                    variants={containerVariants}
-                >
-                    <UserIdentityCreationCard
-                        cardVariants={cardVariants}
-                        form={form}
-                        motionWrapper={MotionWrapper}
-                    />
-                    <TrafficLimitsCard
-                        cardVariants={cardVariants}
-                        form={form}
-                        motionWrapper={MotionWrapper}
-                    />
-                    <AccessSettingsCard
-                        cardVariants={cardVariants}
-                        externalSquads={externalSquads}
-                        form={form}
-                        internalSquads={internalSquads}
-                        motionWrapper={MotionWrapper}
-                    />
-                    <ContactInformationCard
-                        cardVariants={cardVariants}
-                        form={form}
-                        motionWrapper={MotionWrapper}
-                    />
-                    <DeviceTagSettingsCard
-                        cardVariants={cardVariants}
-                        form={form}
-                        motionWrapper={MotionWrapper}
-                        tags={tags}
-                    />
-                </MotionStack>
-            )}
-
-            {!isInternalSquadsLoading && !isTagsLoading && !isMobile && (
-                <Group align="flex-start" gap="md" wrap="wrap">
+            {!isInternalSquadsLoading && !isTagsLoading && (
+                <UserFormLayout>
                     <MotionStack
                         animate="visible"
                         gap="md"
                         initial="hidden"
-                        style={{ flex: '1 1 450px' }}
                         variants={containerVariants}
                     >
                         <UserIdentityCreationCard
@@ -235,7 +197,6 @@ export const CreateUserModal = NiceModal.create(() => {
                         animate="visible"
                         gap="md"
                         initial="hidden"
-                        style={{ flex: '1 1 450px' }}
                         variants={containerVariants}
                     >
                         <TrafficLimitsCard
@@ -251,7 +212,7 @@ export const CreateUserModal = NiceModal.create(() => {
                             motionWrapper={MotionWrapper}
                         />
                     </MotionStack>
-                </Group>
+                </UserFormLayout>
             )}
 
             <ModalFooter isMobile={isMobile}>

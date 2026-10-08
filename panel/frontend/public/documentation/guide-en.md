@@ -350,9 +350,21 @@ The X25519 tab in Tools shows password, publicKey and privateKey with separate c
 
 ## Xera HTTP transport
 
+### Origin and place in a connection
+
+Xera HTTP is a fork of the XHTTP (SplitHTTP) transport from Xray-core, developed in Remnacust Core. It carries connection data in HTTP requests and responses. The original XHTTP implementation is in [Xray-core](https://github.com/XTLS/Xray-core/tree/v26.9.30/transport/internet/splithttp); our fork is in [xerahttp](https://github.com/lottman/Remnacust-core/tree/main/xray/transport/internet/xerahttp).
+
+In a profile, VLESS specifies the connection protocol and user, Xera HTTP specifies the transport, and TLS or REALITY protects the connection. Thus protocol: "vless", streamSettings.network: "xera-http" and streamSettings.security: "tls" can be used together. When switching to Xera, do not replace protocol with xera-http; change the transport and its options inside streamSettings. TLS, the user UUID and routing retain their separate roles.
+
+### Changes in the fork
+
+Xera is registered separately as network: "xera-http" with xeraHttpSettings. Standard XHTTP remains a separate transport. The fork includes stream-auto, customDownlinkPadding for data blocks, configuration validation and resource limits for sessions, upload queues, headers and blocks. Session identifiers use a cryptographic random generator and are checked for allowed characters and sufficient entropy.
+
+Request padding xPaddingBytes and customDownlinkPadding serve different purposes: the latter pads transmitted data blocks and needs compatible processing on both ends. Shared XHTTP ancestry does not mean every XHTTP client understands these extensions. Speed and reliability depend on the network, mode, proxy and settings; the fork alone does not promise faster connections or guaranteed circumvention.
+
 ### Compatibility
 
-Xera HTTP is a custom HTTP transport in our Xray core. Both the node core and the client application core must support it. XHTTP support in a regular Xray build does not imply Xera support. Check that both builds accept network: "xera-http". Clone a working profile and test a separate host before changing it for all users.
+Xera HTTP is an XHTTP fork in our Xray core. Both the node core and the client application core must support it. XHTTP support in a regular Xray build does not imply Xera support. Check that both builds accept network: "xera-http". Clone a working profile and test a separate host before changing it for all users.
 
 ### Profile configuration
 
@@ -375,15 +387,32 @@ Activate the inbound on a compatible node, permit it in an internal squad and li
 
 ### Modes and HTTP proxies
 
-Start with mode: "auto". Other modes are stream-auto, packet-up, stream-up and stream-one. Upload data in headers or cookies and the GET method require packet-up. Match path, host and any customized header options on both sides. With an HTTP proxy in front of the node, check forwarding of the chosen path and headers, long-running requests and unbuffered streaming responses. For HTTP 404, check the path and virtual host. For TLS errors, check SNI and the certificate.
+Start with mode: "auto". In our implementation it selects packet-up without REALITY; with REALITY it selects stream-one, or stream-up when separate downloadSettings are configured. A server using auto accepts supported client modes.
+
+- packet-up: upload is split into finite HTTP requests; download uses a separate stream.
+- stream-up: upload and download use separate long-running streaming requests.
+- stream-one: upload and download share one bidirectional streaming request.
+- stream-auto: for HTTP/2 with REALITY, selects stream-one or stream-up with downloadSettings; otherwise selects packet-up. HTTP/2 support at a CDN edge does not establish that the CDN forwards request bodies without buffering.
+
+Upload in headers or cookies and GET require explicit packet-up. Match path, host and customized header options on both ends. The HTTP host and TLS SNI are distinct settings; specify Host through host, not headers.Host.
+
+Behind an HTTP proxy, check the route, headers, request-body limits and timeouts. Streaming modes require forwarding request bodies before completion and unbuffered responses. REALITY needs the protected connection to reach the core; ordinary CDN TLS termination does not replace it. If the proxy cannot forward a mode, test packet-up on a separate host.
 
 ### Additional traffic padding
 
 customDownlinkPadding adds random bytes to transmitted blocks and increases traffic usage. Start without it. When enabled, set matching header and token values on both sides: header must start with X- and contain 3–64 characters; token must contain 16–128 base64url characters. Avoid reserved proxy headers. bytes accepts 0–1024 and blockBytes 1024–16384; budgetPercent caps overhead (up to 100%), burstBytes is the initial allowance (up to 1 MiB), and uplink enables upload padding. These settings do not replace TLS/REALITY or guarantee that a connection bypasses blocking.
 
+bytes and blockBytes accept a number or a "from-to" range. budgetPercent: 0 or an omitted field disables the percentage cap, not padding itself. Set budgetPercent from 1 to 100 to constrain overhead. burstBytes requires a nonzero budget; the initial allowance may yield a higher percentage on a short connection. token coordinates padding processing; it does not replace the user UUID, protocol password or TLS. Leave padding disabled for the first test.
+
+With a nonzero budgetPercent and zero or omitted burstBytes, the core uses a 4096-byte initial allowance. The budget concerns padding bytes; HTTP headers, TLS and framing also consume traffic.
+
 ### Verify the result
 
 Validate JSON in the editor and save the profile. Database persistence and application on a node are separate stages: check the queue, node status and logs. Download the subscription again and compare network, path, mode and SNI in the client configuration. “Unknown transport” means the selected core does not support Xera. If the host is missing, check squads, access, filters and subscription format. For unstable connections, return to auto without additional padding and change one option at a time.
+
+To migrate from XHTTP, clone the profile and host and keep the working configuration. Change streamSettings.network from xhttp to xera-http in the intended inbound and move verified xhttpSettings options to xeraHttpSettings. Do not change protocol, UUID, port or TLS/REALITY without a separate reason. Do not retain both settings blocks in the same variant. Renaming alone cannot give a standard XHTTP core Xera support: check both cores and the configuration the client actually imported. Start with the previous path and host, mode: "auto" and no new extensions. Verify connection, upload, download, reconnection and node logs before switching other users. To revert, use the saved XHTTP profile and refresh the subscription.
+
+For a parallel test, use a separate node or a free port. Two inbounds must not listen on the same address and port at the same time.
 
 ## Visual profile canvas
 

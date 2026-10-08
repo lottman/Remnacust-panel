@@ -1,6 +1,6 @@
 # Изменения официальных проектов
 
-Панель 1.1.7.1 включает изменения [Remnawave backend 3.4.5](https://github.com/remnawave/backend/releases/tag/3.4.5) и frontend 3.4.5. Более новые безопасные версии зависимостей нашего проекта сохранены.
+Панель 1.1.7.2 включает изменения [Remnawave backend 3.4.5](https://github.com/remnawave/backend/releases/tag/3.4.5) и frontend 3.4.5. Более новые безопасные версии зависимостей нашего проекта сохранены.
 
 - gRPC `multiMode` сохраняется в JSON подписках.
 - Фильтр числового ID ищет точное значение.

@@ -350,9 +350,21 @@ none、safe、balanced、performance 通过 SSH 终端运行内置脚本，修�
 
 ## Xera HTTP 传输
 
+### 来源与连接中的位置
+
+Xera HTTP 是 Xray-core 中 XHTTP（SplitHTTP）传输的分支，在 Remnacust Core 中继续开发。它通过 HTTP 请求和响应传递连接数据。原始实现位于 [Xray-core](https://github.com/XTLS/Xray-core/tree/v26.9.30/transport/internet/splithttp)，我们的分支位于 [xerahttp](https://github.com/lottman/Remnacust-core/tree/main/xray/transport/internet/xerahttp)。
+
+配置中，VLESS 指定连接协议和用户，Xera HTTP 指定传输，TLS 或 REALITY 保护连接。因此 protocol: "vless"、streamSettings.network: "xera-http" 与 streamSettings.security: "tls" 可以同时使用。切换到 Xera 时，不要将 protocol 改成 xera-http；应修改 streamSettings 中的传输及其参数。TLS、用户 UUID 和路由各自承担不同职责。
+
+### 分支中的改动
+
+Xera 使用独立的 network: "xera-http" 和 xeraHttpSettings 注册，标准 XHTTP 仍是单独的传输。分支包含 stream-auto、用于数据块的 customDownlinkPadding、配置验证，以及会话、上传队列、请求头和数据块的资源限制。会话标识由密码学随机生成器创建，并检查允许字符及足够的熵。
+
+请求填充 xPaddingBytes 与 customDownlinkPadding 用途不同：后者填充传输的数据块，需要两端兼容处理。共同的 XHTTP 来源不代表所有 XHTTP 客户端都能识别这些扩展。速度和稳定性取决于网络、模式、代理和参数；分支本身不承诺提速或保证绕过封锁。
+
 ### 兼容性
 
-Xera HTTP 是我们 Xray 内核中的自定义 HTTP 传输。节点内核和客户端内核都必须支持它。普通 Xray 支持 XHTTP 不代表支持 Xera。确认两端构建都接受 network: "xera-http"。先克隆可用配置并测试独立主机，再为所有用户切换。
+Xera HTTP 是我们 Xray 内核中的 XHTTP 分支。节点内核和客户端内核都必须支持它。普通 Xray 支持 XHTTP 不代表支持 Xera。确认两端构建都接受 network: "xera-http"。先克隆可用配置并测试独立主机，再为所有用户切换。
 
 ### 配置设置
 
@@ -375,15 +387,32 @@ Xera HTTP 是我们 Xray 内核中的自定义 HTTP 传输。节点内核和客�
 
 ### 模式与 HTTP 代理
 
-先使用 mode: "auto"。还支持 stream-auto、packet-up、stream-up 和 stream-one。通过请求头或 cookie 上传数据，以及使用 GET 方法，都要求 packet-up。两端的 path、host 和自定义请求头参数必须一致。节点前有 HTTP 代理时，检查路径和请求头转发、长连接请求及流式响应是否禁用缓冲。HTTP 404 应检查路径与虚拟主机；TLS 错误应检查 SNI 和证书。
+先使用 mode: "auto"。我们的实现中，没有 REALITY 时选择 packet-up；使用 REALITY 时选择 stream-one，配置独立 downloadSettings 时选择 stream-up。auto 模式的服务器接受受支持的客户端模式。
+
+- packet-up：上传拆分为有限长度的 HTTP 请求，下载使用独立流。
+- stream-up：上传和下载使用两个独立的长时间流式请求。
+- stream-one：上传和下载共用一个双向流式请求。
+- stream-auto：HTTP/2 配合 REALITY 时选择 stream-one，存在 downloadSettings 时选择 stream-up；其他情况选择 packet-up。CDN 边缘支持 HTTP/2，不代表它向节点转发请求体时不会缓冲。
+
+通过请求头或 cookie 上传，以及 GET 方法，都要求显式 packet-up。两端的 path、host 和修改过的请求头参数必须一致。HTTP host 与 TLS SNI 是不同设置；请通过 host 设置 Host，不要使用 headers.Host。
+
+使用 HTTP 代理时，检查路径、请求头、请求体限制和超时。流式模式要求在请求结束前转发请求体，并禁用响应缓冲。REALITY 要求受保护连接到达内核；普通 CDN TLS 终止不能代替它。如果代理无法转发所选模式，请在独立主机测试 packet-up。
 
 ### 额外流量填充
 
 customDownlinkPadding 在传输块中添加随机字节，会增加流量消耗。先不启用它。启用时两端设置相同的 header 和 token：header 必须以 X- 开头，长度 3–64 字符；token 为 16–128 个 base64url 字符。不要使用代理保留请求头。bytes 范围为 0–1024，blockBytes 为 1024–16384；budgetPercent 限制额外开销，最大 100%；burstBytes 为初始额度，最大 1 MiB；uplink 启用上传填充。这些参数不能代替 TLS/REALITY，也不保证绕过封锁。
 
+bytes 和 blockBytes 接受数字或 "起始-结束" 范围。budgetPercent: 0 或省略该字段会关闭百分比上限，而不是关闭填充。限制额外开销时设为 1–100。burstBytes 要求非零预算；初始额度可能使短连接的实际百分比更高。token 用于协调填充处理，不能代替用户 UUID、协议密码或 TLS。首次测试不要启用填充。
+
+budgetPercent 非零而 burstBytes 为零或省略时，内核使用 4096 字节初始额度。预算针对填充字节；HTTP 请求头、TLS 和数据帧也会消耗流量。
+
 ### 验证结果
 
 在编辑器验证 JSON 并保存配置。数据库保存与节点应用是不同阶段，请检查队列、节点状态和日志。重新下载订阅，比较客户端配置中的 network、path、mode 和 SNI。“未知传输”表示所选内核不支持 Xera。主机缺失时检查群组、访问权限、筛选条件和订阅格式。连接不稳定时回到 auto，关闭额外填充，每次只调整一个参数。
+
+从 XHTTP 迁移时，克隆配置和主机，保留可用版本。在目标入站中将 streamSettings.network 从 xhttp 改为 xera-http，将已核对的 xhttpSettings 参数移到 xeraHttpSettings。没有单独原因时，不要修改 protocol、UUID、端口或 TLS/REALITY。同一个配置版本不要保留两个传输设置块。仅重命名不能让标准 XHTTP 内核支持 Xera：请检查两端内核及客户端实际导入的配置。先沿用原 path 和 host，使用 mode: "auto"，不启用新扩展。切换其他用户前，检查连接、上传、下载、重连和节点日志。需要回退时使用保存的 XHTTP 配置，并更新订阅。
+
+并行测试请使用独立节点或空闲端口。两个入站不能同时监听相同地址和端口。
 
 ## 配置可视化画布
 

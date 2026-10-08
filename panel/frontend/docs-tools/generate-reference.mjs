@@ -247,7 +247,7 @@ const manifest = {
     generatedAt: new Date().toISOString(),
     backendVersion: spec.info.version,
     coreVersion: '1.1.2',
-    nodeVersion: '1.1.2',
+    nodeVersion: '1.1.3',
     upstreamPanelVersion: '3.4.5',
     upstreamBackendPatches: [
         {

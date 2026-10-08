@@ -30,11 +30,11 @@ import {
 } from './extra-models';
 
 const description = `
-Remnacust is a powerful proxy management tool, built on top of Xray-core, with a focus on simplicity and ease of use.
+Remnacust manages Xray users, nodes, configuration profiles and subscriptions.
 
 ## Resources
 * https://t.me/lottman
-* https://github.com/lottman/remnacust
+* https://github.com/lottman/Remnacust-panel
 `;
 
 export async function createOpenApiDocumentFactory(

@@ -1,6 +1,7 @@
 import { Alert, Button, Paper, PasswordInput, Stack, Text } from '@mantine/core'
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { TbDatabase, TbLock, TbLockOpen } from 'react-icons/tb'
 
 import { instance } from '@shared/api/axios'
@@ -73,6 +74,7 @@ function BackupTransport({
 
 export function BackupAccess({ children }: { children: (lock: () => void) => ReactNode }) {
     const uiText = useUiText()
+    const { t } = useTranslation()
 
     const [password, setPassword] = useState('')
     const [session, setSession] = useState<Session | null>(null)
@@ -157,6 +159,9 @@ export function BackupAccess({ children }: { children: (lock: () => void) => Rea
                             autoComplete="off"
                             required
                             maxLength={256}
+                            visibilityToggleButtonProps={{
+                                'aria-label': t('design-ui.toggle-password')
+                            }}
                             disabled={busy}
                             onChange={(event) => setPassword(event.currentTarget.value)}
                         />

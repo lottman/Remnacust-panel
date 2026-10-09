@@ -8,14 +8,32 @@ import {
     useGetNodes,
     useGetSubscriptionTemplates
 } from '@shared/api/hooks'
+import { hasPageQueryError, PageQueryError } from '@shared/ui/page-query-error'
 
 export function HostsPageConnector() {
-    const { data: hosts, isLoading: isHostsLoading } = useGetHosts()
-    const { isLoading: isInternalSquadsLoading } = useGetInternalSquads()
-    const { data: configProfiles, isLoading: isConfigProfilesLoading } = useGetConfigProfiles()
-    const { data: hostTags, isLoading: isHostTagsLoading } = useGetHostTags()
-    const { isLoading: isNodesLoading } = useGetNodes()
-    const { isLoading: isSubscriptionTemplatesLoading } = useGetSubscriptionTemplates()
+    const hostsQuery = useGetHosts()
+    const internalSquadsQuery = useGetInternalSquads()
+    const configProfilesQuery = useGetConfigProfiles()
+    const hostTagsQuery = useGetHostTags()
+    const nodesQuery = useGetNodes()
+    const subscriptionTemplatesQuery = useGetSubscriptionTemplates()
+
+    const { data: hosts, isLoading: isHostsLoading } = hostsQuery
+    const { isLoading: isInternalSquadsLoading } = internalSquadsQuery
+    const { data: configProfiles, isLoading: isConfigProfilesLoading } = configProfilesQuery
+    const { data: hostTags, isLoading: isHostTagsLoading } = hostTagsQuery
+    const { isLoading: isNodesLoading } = nodesQuery
+    const { isLoading: isSubscriptionTemplatesLoading } = subscriptionTemplatesQuery
+
+    const pageQueries = [
+        hostsQuery,
+        internalSquadsQuery,
+        configProfilesQuery,
+        hostTagsQuery,
+        nodesQuery,
+        subscriptionTemplatesQuery
+    ]
+    if (hasPageQueryError(pageQueries)) return <PageQueryError queries={pageQueries} />
 
     return (
         <HostsPageComponent

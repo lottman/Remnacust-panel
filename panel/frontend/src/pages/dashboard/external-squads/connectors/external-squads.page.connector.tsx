@@ -4,13 +4,21 @@ import {
     useGetSubscriptionTemplates
 } from '@shared/api/hooks'
 import { LoadingScreen } from '@shared/ui'
+import { hasPageQueryError, PageQueryError } from '@shared/ui/page-query-error'
 
 import { ExternalSquadsPageComponent } from '../components/external-squads.page.component'
 
 export function ExternalSquadsPageConnector() {
-    const { data: externalSquads, isLoading: isExternalSquadsLoading } = useGetExternalSquads()
-    const { isLoading: isTemplatesLoading } = useGetSubscriptionTemplates()
-    const { isLoading: isSubpageConfigsLoading } = useGetSubpageConfigs()
+    const externalSquadsQuery = useGetExternalSquads()
+    const subscriptionTemplatesQuery = useGetSubscriptionTemplates()
+    const subpageConfigsQuery = useGetSubpageConfigs()
+
+    const { data: externalSquads, isLoading: isExternalSquadsLoading } = externalSquadsQuery
+    const { isLoading: isTemplatesLoading } = subscriptionTemplatesQuery
+    const { isLoading: isSubpageConfigsLoading } = subpageConfigsQuery
+
+    const pageQueries = [externalSquadsQuery, subscriptionTemplatesQuery, subpageConfigsQuery]
+    if (hasPageQueryError(pageQueries)) return <PageQueryError queries={pageQueries} />
 
     if (
         isExternalSquadsLoading ||

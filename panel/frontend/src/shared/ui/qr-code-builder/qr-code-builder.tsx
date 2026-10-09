@@ -153,7 +153,7 @@ export function QrCodeBuilder({ data, title }: IProps) {
     )
 
     const centerPreview = (
-        <Stack gap="xs" style={{ minWidth: 320, maxWidth: 400, flex: 1 }}>
+        <Stack gap="xs" style={{ minWidth: 0, width: '100%', maxWidth: 400, flex: 1 }}>
             <Box
                 ref={qrRef}
                 style={{

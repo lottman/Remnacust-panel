@@ -319,7 +319,6 @@ function ScopeUsers({ scope: initial, back }: { scope: Scope; back: () => void }
         ) +
         ' ' +
         unit
-    const displayQuota = (value: string) => (value === '0' ? '∞' : display(value))
     const [pendingCount, setPendingCount] = useState(0)
     const [pendingName, setPendingName] = useState('')
     const [amount, setAmount] = useState<string | number>(1)

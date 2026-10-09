@@ -2,14 +2,18 @@ import { TSubscriptionTemplateType } from '@remnawave/backend-contract'
 
 import { useGetSubscriptionSettings, useGetSubscriptionTemplates } from '@shared/api/hooks'
 import { LoadingScreen } from '@shared/ui'
+import { hasPageQueryError, PageQueryError } from '@shared/ui/page-query-error'
 
 import { ResponseRulesPageComponent } from '../components/response-rules.page.component'
 
 export function ResponseRulesPageConnector() {
-    const { data: subscriptionSettings, isLoading: isSubscriptionSettingsLoading } =
-        useGetSubscriptionSettings()
+    const settingsQuery = useGetSubscriptionSettings()
+    const templatesQuery = useGetSubscriptionTemplates({})
+    const { data: subscriptionSettings, isLoading: isSubscriptionSettingsLoading } = settingsQuery
+    const { data: templates, isLoading: isTemplatesLoading } = templatesQuery
 
-    const { data: templates, isLoading: isTemplatesLoading } = useGetSubscriptionTemplates({})
+    const pageQueries = [settingsQuery, templatesQuery]
+    if (hasPageQueryError(pageQueries)) return <PageQueryError queries={pageQueries} />
 
     if (
         isSubscriptionSettingsLoading ||

@@ -1,6 +1,6 @@
 .footer {
     position: sticky;
-    bottom: 0;
+    bottom: var(--panel-overlay-footer-bottom, 0);
     z-index: 10;
     width: calc(100% + 2 * var(--panel-overlay-padding, var(--mantine-spacing-sm)));
     margin-bottom: calc(

@@ -39,10 +39,21 @@ export const EditNodeModal = NiceModal.create((props: IProps) => {
         <Modal
             {...modalProps}
             size="1000px"
+            yOffset={16}
             styles={{
-                content: { maxHeight: 'calc(100dvh - 32px)', overscrollBehavior: 'contain' },
+                content: {
+                    display: 'flex',
+                    flexDirection: 'column',
+                    maxHeight: modalProps.fullScreen ? '100dvh' : 'calc(100dvh - 32px)',
+                    overflow: 'hidden',
+                    overscrollBehavior: 'contain'
+                },
+                header: { flexShrink: 0 },
                 body: {
-                    maxHeight: 'calc(100dvh - 110px)',
+                    '--panel-overlay-footer-bottom':
+                        'calc(-1 * var(--panel-overlay-bottom-padding, var(--panel-overlay-padding)))',
+                    flex: '1 1 auto',
+                    minHeight: 0,
                     overflowY: 'auto',
                     overscrollBehavior: 'contain'
                 }

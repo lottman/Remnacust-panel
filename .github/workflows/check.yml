@@ -19,9 +19,7 @@ jobs:
           cache-dependency-path: panel/frontend/package-lock.json
       - run: npm ci
       - run: npm run typecheck
-      - run: node --test tests/*.test.cjs
-      - name: Check private Xray IPC and certificate files on Linux
-        run: sudo --preserve-env=REMNACUST_NODE_SOURCE "$(command -v node)" --test tests/node-api-socket.test.cjs tests/pem-file-security.test.cjs tests/*.test.mjs
+      - run: node --test tests/*.test.cjs tests/*.test.mjs
       - run: npm run i18n:check
       - run: npm run docs:check
       - run: npm run cb
@@ -57,6 +55,7 @@ jobs:
       - run: npm ci
       - run: npm ci --prefix ../frontend
       - run: npm ci --prefix ../../node-repository/node
+      - run: npm ci --prefix ../../subscription-page/backend
       - run: npm run migrate:generate
       - run: npm run typecheck
       - run: node --test tests/*.test.cjs
@@ -84,6 +83,4 @@ jobs:
         env:
           NODE_ENV: production
       - run: node --test tests/*.test.cjs
-      - name: Check private Xray IPC and certificate files on Linux
-        run: sudo --preserve-env=REMNACUST_NODE_SOURCE "$(command -v node)" --test tests/node-api-socket.test.cjs tests/pem-file-security.test.cjs
         working-directory: subscription-page/backend

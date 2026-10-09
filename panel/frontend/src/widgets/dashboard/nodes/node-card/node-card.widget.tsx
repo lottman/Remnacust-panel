@@ -188,7 +188,7 @@ export const NodeCardWidget = memo((props: IProps) => {
             {!isMobile && (
                 <>
                     <div className={classes.desktopGrid}>
-                        <div>
+                        <div className={classes.identityContainer}>
                             <Flex align="center" className={classes.identityRow} gap="xs">
                                 {isConfigMissing ? (
                                     <Badge
@@ -232,6 +232,7 @@ export const NodeCardWidget = memo((props: IProps) => {
                                         className={classes.nodeName}
                                         fw={600}
                                         size="md"
+                                        title={node.name}
                                     >
                                         {node.name}
                                     </Text>
@@ -248,41 +249,48 @@ export const NodeCardWidget = memo((props: IProps) => {
                             </Flex>
                         </div>
 
-                        <div className={classes.providerContainer}>
-                            {!!node.tags?.length && (
-                                <ProviderTags nodeLayout providers={[]} tags={node.tags} />
-                            )}
-                        </div>
-                        <div className={classes.addressContainer}>
-                            <Flex align="center" className={classes.addressRow} gap="xs">
-                                <PiGlobeSimple className={classes.icon} size={14} />
-                                <Text
-                                    dir="ltr"
-                                    c="dimmed"
-                                    className={classes.addressText}
-                                    onClick={handleCopy}
-                                    size="sm"
-                                >
-                                    {node.address}
-                                </Text>
-                            </Flex>
+                        <div className={classes.metadataRow}>
+                            <div className={classes.addressContainer}>
+                                <Flex align="center" className={classes.addressRow} gap="xs">
+                                    <PiGlobeSimple className={classes.icon} size={14} />
+                                    <Text
+                                        dir="ltr"
+                                        c="dimmed"
+                                        className={classes.addressText}
+                                        onClick={handleCopy}
+                                        size="sm"
+                                        title={node.address}
+                                    >
+                                        {node.address}
+                                    </Text>
+                                </Flex>
+                            </div>
+                            <div className={classes.tagsContainer}>
+                                {!!node.tags?.length && (
+                                    <ProviderTags nodeLayout providers={[]} tags={node.tags} />
+                                )}
+                            </div>
                         </div>
 
-                        <div>
+                        <div className={classes.trafficContainer}>
                             <Box>
                                 <Flex direction="column" gap={4}>
-                                    <Flex align="center" justify="space-between">
+                                    <Flex
+                                        align="center"
+                                        className={classes.trafficValues}
+                                        dir="ltr"
+                                        justify="space-between"
+                                    >
                                         <Text
                                             dir="ltr"
                                             c="dimmed"
                                             ff="monospace"
                                             fw={600}
-                                            size="sm"
-                                            truncate
+                                            size="xs"
                                         >
                                             {prettyUsedData}
                                         </Text>
-                                        <Text c="dimmed" size="xs" truncate dir="ltr">
+                                        <Text c="dimmed" size="xs" dir="ltr">
                                             {maxData}
                                         </Text>
                                     </Flex>
@@ -291,14 +299,14 @@ export const NodeCardWidget = memo((props: IProps) => {
                                             node.isTrafficTrackingActive ? progressColor : 'cyan'
                                         }
                                         radius="sm"
-                                        size="sm"
+                                        size="xs"
                                         value={node.isTrafficTrackingActive ? percentage : 100}
                                     />
                                 </Flex>
                             </Box>
                         </div>
 
-                        <div>
+                        <div className={classes.statusContainer}>
                             <Flex align="center" gap="xs" justify="space-between">
                                 {node.isTrafficTrackingActive ? (
                                     <Flex align="center" gap={4}>
@@ -335,7 +343,7 @@ export const NodeCardWidget = memo((props: IProps) => {
                                     dir="ltr"
                                     c="dimmed"
                                     ff="monospace"
-                                    lineClamp={2}
+                                    truncate
                                     size="xs"
                                     title={node.versions ? node.versions.node : undefined}
                                 >
@@ -419,17 +427,25 @@ export const NodeCardWidget = memo((props: IProps) => {
                                     )}
                                 </Flex>
                             </Tooltip>
-                            <Flex align="center" gap={4}>
-                                <PiArrowDownDuotone color="var(--mantine-color-teal-5)" size={12} />
-                                <Text dir="ltr" c="dimmed" ff="monospace" size="xs">
-                                    {rxSpeed ?? '—'}
-                                </Text>
-                            </Flex>
-                            <Flex align="center" gap={4}>
-                                <PiArrowUpDuotone color="var(--mantine-color-cyan-5)" size={12} />
-                                <Text dir="ltr" c="dimmed" ff="monospace" size="xs">
-                                    {txSpeed ?? '—'}
-                                </Text>
+                            <Flex align="center" className={classes.ratesRow}>
+                                <Flex align="center" gap={4}>
+                                    <PiArrowDownDuotone
+                                        color="var(--mantine-color-teal-5)"
+                                        size={12}
+                                    />
+                                    <Text dir="ltr" c="dimmed" ff="monospace" size="xs">
+                                        {rxSpeed ?? '—'}
+                                    </Text>
+                                </Flex>
+                                <Flex align="center" gap={4}>
+                                    <PiArrowUpDuotone
+                                        color="var(--mantine-color-cyan-5)"
+                                        size={12}
+                                    />
+                                    <Text dir="ltr" c="dimmed" ff="monospace" size="xs">
+                                        {txSpeed ?? '—'}
+                                    </Text>
+                                </Flex>
                             </Flex>
                             <Flex align="center" className={classes.versionsRow} gap="md">
                                 {pluginsName && (
@@ -574,13 +590,18 @@ export const NodeCardWidget = memo((props: IProps) => {
 
                     <Box mb="xs">
                         <Flex direction="column" gap={2}>
-                            <Flex align="center" justify="space-between">
+                            <Flex
+                                align="center"
+                                className={classes.trafficValues}
+                                dir="ltr"
+                                justify="space-between"
+                            >
                                 <Text
                                     dir="ltr"
                                     c="dimmed"
                                     ff="monospace"
                                     fw={600}
-                                    size="sm"
+                                    size="xs"
                                     truncate
                                 >
                                     {prettyUsedData}

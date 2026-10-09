@@ -5,23 +5,27 @@ import {
     Anchor,
     Box,
     Button,
-    Group,
     Loader,
-    Select,
+    TextInput,
+    ActionIcon,
     Table,
     Text,
     Title
 } from '@mantine/core'
 import { useQuery } from '@tanstack/react-query'
-import { useTranslation } from 'react-i18next'
-import { TbApi, TbBook2, TbVersions } from 'react-icons/tb'
-import { Link, useSearchParams } from 'react-router'
+import { useDeferredValue, useState } from 'react'
+import { TbSearch, TbX } from 'react-icons/tb'
+import { Link } from 'react-router'
 
 import { useGetRemnawaveMetadata } from '@shared/api/hooks'
 import { ROUTES } from '@shared/constants'
 import { Page } from '@shared/ui/page'
-import { PageHeaderShared } from '@shared/ui/page-header/page-header.shared'
 
+import {
+    DocumentationHeader,
+    DocumentationToolbar,
+    useDocumentationTranslation
+} from './documentation-shell'
 import classes from './documentation.module.css'
 
 const labels = {
@@ -115,11 +119,9 @@ const patchTitles = {
 } satisfies Record<DocLanguage, string>
 
 export function CompatibilityDocumentation() {
-    const { t, i18n } = useTranslation()
-    const [params, setParams] = useSearchParams()
-    const requested = params.get('language') ?? i18n.resolvedLanguage ?? 'en'
-    const lang =
-        (Object.keys(labels) as DocLanguage[]).find((key) => requested.startsWith(key)) ?? 'en'
+    const { t, language: lang } = useDocumentationTranslation()
+    const [search, setSearch] = useState('')
+    const query = useDeferredValue(search.trim().toLocaleLowerCase())
     const l = labels[lang]
     const { data: runtime } = useGetRemnawaveMetadata()
     const manifest = useQuery({
@@ -135,68 +137,50 @@ export function CompatibilityDocumentation() {
     })
     const m = manifest.data
     return (
-        <Page title={l[0]}>
-            <PageHeaderShared title={l[0]} icon={<TbVersions size={24} />} />
-            <Group className={classes.toolbar}>
-                <Group className={classes.tabs} gap={6}>
-                    <Button
-                        component={Link}
-                        to={ROUTES.DASHBOARD.DOCUMENTATION.GUIDE}
-                        variant="subtle"
-                        leftSection={<TbBook2 size={17} />}
-                    >
-                        {t('documentation.guide')}
-                    </Button>
-                    <Button
-                        component={Link}
-                        to={ROUTES.DASHBOARD.DOCUMENTATION.API}
-                        variant="subtle"
-                        leftSection={<TbApi size={17} />}
-                    >
-                        {t('documentation.api')}
-                    </Button>
-                    <Button
-                        variant="light"
-                        aria-current="page"
-                        leftSection={<TbVersions size={17} />}
-                    >
-                        {l[0]}
-                    </Button>
-                </Group>
-                <Select
-                    w={145}
-                    aria-label={t('documentation.language')}
-                    allowDeselect={false}
-                    value={lang}
-                    onChange={(value) => {
-                        const next = new URLSearchParams(params)
-                        next.set('language', value ?? 'en')
-                        setParams(next)
-                    }}
-                    data={[
-                        { value: 'ru', label: 'Русский' },
-                        { value: 'en', label: 'English' },
-                        { value: 'fa', label: 'فارسی' },
-                        { value: 'zh', label: '简体中文' }
-                    ]}
+        <Page title={t('documentation.title')}>
+            <DocumentationHeader mode="versions" />
+            <DocumentationToolbar mode="versions">
+                <TextInput
+                    className={classes.search}
+                    aria-label={t('documentation.search')}
+                    placeholder={t('documentation.search')}
+                    value={search}
+                    onChange={(event) => setSearch(event.currentTarget.value)}
+                    leftSection={<TbSearch size={17} />}
+                    rightSection={
+                        search ? (
+                            <ActionIcon
+                                aria-label={t('documentation.clear')}
+                                variant="subtle"
+                                onClick={() => setSearch('')}
+                            >
+                                <TbX size={15} />
+                            </ActionIcon>
+                        ) : null
+                    }
                 />
-            </Group>
+            </DocumentationToolbar>
             <Box className={classes.layout} lang={lang} dir={lang === 'fa' ? 'rtl' : 'ltr'}>
                 <Box
                     component="nav"
                     className={classes.index}
                     aria-label={t('documentation.contents')}
                 >
+                    <Text c="dimmed" size="xs" fw={600} mb="sm">
+                        {t('documentation.contents')}
+                    </Text>
                     {[
                         ['versions', l[0]],
                         ['patches', patchTitles[lang]],
                         ['legacy-nodes', l[14]],
                         ['core-source', l[12]]
-                    ].map(([id, label]) => (
-                        <Anchor key={id} href={`#${id}`} className={classes.indexEntry}>
-                            {label}
-                        </Anchor>
-                    ))}
+                    ]
+                        .filter(([, label]) => label.toLocaleLowerCase().includes(query))
+                        .map(([id, label]) => (
+                            <Anchor key={id} href={`#${id}`} className={classes.indexEntry}>
+                                {label}
+                            </Anchor>
+                        ))}
                 </Box>
                 <Box className={classes.content}>
                     <Box component="article" className={`${classes.article} ${classes.prose}`}>

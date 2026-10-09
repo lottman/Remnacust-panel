@@ -1,4 +1,4 @@
-import { Container, SimpleGrid } from '@mantine/core'
+import { Container, SimpleGrid, Stack } from '@mantine/core'
 import { GetApiTokensCommand, GetRemnawaveSettingsCommand } from '@remnawave/backend-contract'
 import { ApiTokensCardWidget } from '@widgets/remnawave-settings/api-tokens-card/api-tokens-card.widget'
 import { AuthentificationSettingsCardWidget } from '@widgets/remnawave-settings/authentification-settings-card/authentification-settings-card.widget'
@@ -41,16 +41,20 @@ export const RemnawaveSettingsPageComponent = (props: IProps) => {
                     verticalSpacing="lg"
                     style={{ alignItems: 'start' }}
                 >
-                    <AuthentificationSettingsCardWidget
-                        oauth2Settings={remnawaveSettings.oauth2Settings}
-                        passkeySettings={remnawaveSettings.passkeySettings}
-                        passwordSettings={remnawaveSettings.passwordSettings}
-                    />
-                    <ApiTokensCardWidget apiTokensData={apiTokensData} />
-                    <BackendToolsCardWidget />
-                    <BrandingSettingsCardWidget
-                        brandingSettings={remnawaveSettings.brandingSettings}
-                    />
+                    <Stack gap="lg" style={{ minWidth: 0 }}>
+                        <AuthentificationSettingsCardWidget
+                            oauth2Settings={remnawaveSettings.oauth2Settings}
+                            passkeySettings={remnawaveSettings.passkeySettings}
+                            passwordSettings={remnawaveSettings.passwordSettings}
+                        />
+                        <BackendToolsCardWidget />
+                    </Stack>
+                    <Stack gap="lg" style={{ minWidth: 0 }}>
+                        <ApiTokensCardWidget apiTokensData={apiTokensData} />
+                        <BrandingSettingsCardWidget
+                            brandingSettings={remnawaveSettings.brandingSettings}
+                        />
+                    </Stack>
                 </SimpleGrid>
             </Container>
         </Page>

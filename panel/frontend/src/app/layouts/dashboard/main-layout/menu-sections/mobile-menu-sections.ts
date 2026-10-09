@@ -26,7 +26,8 @@ import {
     TbReportAnalytics,
     TbRoute,
     TbSitemap,
-    TbWebhook
+    TbWebhook,
+    TbVersions
 } from 'react-icons/tb'
 
 import { ROUTES } from '@shared/constants'
@@ -66,6 +67,12 @@ export const useMobileMenuSections = (): MenuItem[] => {
                             href: ROUTES.DASHBOARD.DOCUMENTATION.API,
                             icon: TbApi,
                             id: 'documentation-api'
+                        },
+                        {
+                            name: t('documentation.versions'),
+                            href: ROUTES.DASHBOARD.DOCUMENTATION.VERSIONS,
+                            icon: TbVersions,
+                            id: 'documentation-versions'
                         }
                     ]
                 }

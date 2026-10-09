@@ -9,14 +9,15 @@ import classes from './sidebar.module.css'
 export const SidebarTitleShared = () => {
     const { data: authStatus } = useGetAuthStatus()
     const { colorScheme } = useMantineColorScheme()
+    const title = authStatus?.branding.title
 
     const titleParts = useMemo(() => {
-        if (authStatus?.branding.title) {
-            return parseColoredTextUtil(authStatus.branding.title)
+        if (title) {
+            return parseColoredTextUtil(title)
         }
 
         return [{ text: 'Remnacust', color: 'var(--panel-text)' }]
-    }, [authStatus])
+    }, [title])
 
     return (
         <Text className={classes.logoTitle}>

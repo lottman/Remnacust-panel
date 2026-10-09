@@ -4,7 +4,6 @@ import type {
     Control,
     DocArticle,
     DocManifest,
-    DocLanguage,
     DocVariable,
     Registry
 } from './documentation.types'
@@ -19,7 +18,6 @@ import {
     Code,
     Group,
     Loader,
-    Select,
     SegmentedControl,
     Stack,
     Text,
@@ -29,34 +27,26 @@ import {
 import { notifications } from '@mantine/notifications'
 import { useQuery } from '@tanstack/react-query'
 import { useDeferredValue, useEffect, useMemo, useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import {
-    TbApi,
-    TbArrowUpRight,
-    TbBook2,
-    TbCheck,
-    TbCopy,
-    TbDownload,
-    TbLink,
-    TbSearch,
-    TbVersions,
-    TbX
-} from 'react-icons/tb'
+import { TbArrowUpRight, TbCheck, TbCopy, TbSearch, TbX } from 'react-icons/tb'
 import ReactMarkdown from 'react-markdown'
-import { Link, useLocation, useSearchParams } from 'react-router'
+import { Link, Navigate, useLocation, useSearchParams } from 'react-router'
 import remarkGfm from 'remark-gfm'
 
 import { ROUTES } from '@shared/constants'
 import { Page } from '@shared/ui/page'
-import { PageHeaderShared } from '@shared/ui/page-header/page-header.shared'
 
-import { CompatibilityDocumentation, compatibilityTabLabel } from './compatibility'
+import { CompatibilityDocumentation } from './compatibility'
+import {
+    DocumentationLocale,
+    DocumentationHeader,
+    DocumentationToolbar,
+    useDocumentationTranslation
+} from './documentation-shell'
 import classes from './documentation.module.css'
 import { curlExample, matchesSearch } from './reference-utils'
 import { SchemaTree } from './schema-tree'
 
 const asset = (name: string) => `${import.meta.env.BASE_URL}documentation/${name}`
-const docLanguages: DocLanguage[] = ['en', 'ru', 'fa', 'zh']
 async function read<T>(name: string, signal?: AbortSignal): Promise<T> {
     const response = await fetch(asset(name), { signal })
     if (!response.ok) throw new Error(`Documentation ${name}: ${response.status}`)
@@ -64,7 +54,7 @@ async function read<T>(name: string, signal?: AbortSignal): Promise<T> {
 }
 
 function CopyCode({ text }: { text: string }) {
-    const { t } = useTranslation()
+    const { t } = useDocumentationTranslation()
     const [copied, setCopied] = useState(false)
     useEffect(() => {
         if (!copied) return
@@ -98,22 +88,39 @@ function CopyCode({ text }: { text: string }) {
     )
 }
 
-export function DocumentationPage({ mode = 'guide' }: { mode?: 'guide' | 'api' }) {
+export function DocumentationPage({ mode = 'guide' }: { mode?: 'guide' | 'api' | 'versions' }) {
     const [params] = useSearchParams()
-    return params.get('tab') === 'versions' ? (
-        <CompatibilityDocumentation />
-    ) : (
-        <DocumentationContentPage mode={mode} />
+    const { hash } = useLocation()
+    if (params.get('tab') === 'versions') {
+        const next = new URLSearchParams(params)
+        next.delete('tab')
+        return (
+            <Navigate
+                replace
+                to={{
+                    pathname: ROUTES.DASHBOARD.DOCUMENTATION.VERSIONS,
+                    search: next.toString(),
+                    hash
+                }}
+            />
+        )
+    }
+    return (
+        <DocumentationLocale>
+            {mode === 'versions' ? (
+                <CompatibilityDocumentation />
+            ) : (
+                <DocumentationContentPage mode={mode} />
+            )}
+        </DocumentationLocale>
     )
 }
 
 function DocumentationContentPage({ mode }: { mode: 'guide' | 'api' }) {
-    const { t, i18n } = useTranslation()
+    const { t, i18n, language } = useDocumentationTranslation()
     const location = useLocation()
     const [params, setParams] = useSearchParams()
     const apiMode = mode === 'api'
-    const requestedLanguage = params.get('language') ?? i18n.resolvedLanguage ?? i18n.language
-    const language = docLanguages.find((code) => requestedLanguage.startsWith(code)) ?? 'en'
     const articleId = params.get('article') ?? 'architecture'
     const needsVariables = !apiMode && articleId === 'placeholders'
     const [search, setSearch] = useState(params.get('q') ?? '')
@@ -244,18 +251,6 @@ function DocumentationContentPage({ mode }: { mode: 'guide' | 'api' }) {
         const frame = requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'instant' }))
         return () => cancelAnimationFrame(frame)
     }, [articleId, operationId, schemaName, mode])
-    const copyLink = async () => {
-        const url = new URL(window.location.href)
-        url.pathname = location.pathname
-        url.search = params.toString()
-        url.hash = location.hash
-        try {
-            await navigator.clipboard.writeText(url.href)
-            notifications.show({ message: t('documentation.copied'), color: 'teal' })
-        } catch {
-            notifications.show({ message: t('documentation.copyFailed'), color: 'red' })
-        }
-    }
     const errors =
         general.isError ||
         (!apiMode && guide.isError) ||
@@ -280,60 +275,8 @@ function DocumentationContentPage({ mode }: { mode: 'guide' | 'api' }) {
                 : t('documentation.public')
     return (
         <Page title={t('documentation.title')}>
-            <PageHeaderShared
-                title={t('documentation.title')}
-                icon={<TbBook2 size={24} />}
-                actions={
-                    <Group gap="xs">
-                        <Button
-                            component="a"
-                            href={asset(apiMode ? 'openapi.json' : `guide-${language}.md`)}
-                            download
-                            leftSection={<TbDownload size={16} />}
-                            variant="default"
-                            size="sm"
-                        >
-                            {apiMode
-                                ? t('documentation.downloadSpec')
-                                : t('documentation.download')}
-                        </Button>
-                        <ActionIcon
-                            aria-label={t('documentation.permalink')}
-                            variant="default"
-                            onClick={() => void copyLink()}
-                        >
-                            <TbLink size={18} />
-                        </ActionIcon>
-                    </Group>
-                }
-            />
-            <Box className={classes.toolbar}>
-                <Group className={classes.tabs} gap={6}>
-                    <Button
-                        component={Link}
-                        to={ROUTES.DASHBOARD.DOCUMENTATION.GUIDE}
-                        variant={apiMode ? 'subtle' : 'light'}
-                        leftSection={<TbBook2 size={17} />}
-                    >
-                        {t('documentation.guide')}
-                    </Button>
-                    <Button
-                        component={Link}
-                        to={ROUTES.DASHBOARD.DOCUMENTATION.API}
-                        variant={apiMode ? 'light' : 'subtle'}
-                        leftSection={<TbApi size={17} />}
-                    >
-                        {t('documentation.api')}
-                    </Button>
-                    <Button
-                        component={Link}
-                        to={`${ROUTES.DASHBOARD.DOCUMENTATION.GUIDE}?tab=versions&language=${language}`}
-                        leftSection={<TbVersions size={17} />}
-                        variant="subtle"
-                    >
-                        {compatibilityTabLabel(language)}
-                    </Button>
-                </Group>
+            <DocumentationHeader mode={mode} />
+            <DocumentationToolbar mode={mode}>
                 <TextInput
                     className={classes.search}
                     aria-label={apiMode ? t('documentation.apiSearch') : t('documentation.search')}
@@ -353,22 +296,7 @@ function DocumentationContentPage({ mode }: { mode: 'guide' | 'api' }) {
                         ) : null
                     }
                 />
-                {!apiMode && (
-                    <Select
-                        w={145}
-                        aria-label={t('documentation.language')}
-                        allowDeselect={false}
-                        value={language}
-                        onChange={(value) => change('language', value ?? 'en')}
-                        data={[
-                            { value: 'ru', label: 'Русский' },
-                            { value: 'en', label: 'English' },
-                            { value: 'fa', label: 'فارسی' },
-                            { value: 'zh', label: '简体中文' }
-                        ]}
-                    />
-                )}
-            </Box>
+            </DocumentationToolbar>
             {errors ? (
                 <Alert color="red" role="alert">
                     <Group>
@@ -393,11 +321,16 @@ function DocumentationContentPage({ mode }: { mode: 'guide' | 'api' }) {
                 </Group>
             ) : (
                 <>
-                    <Box className={classes.layout} data-documentation-mode={mode}>
+                    <Box
+                        className={classes.layout}
+                        data-documentation-mode={mode}
+                        lang={language}
+                        dir={language === 'fa' ? 'rtl' : 'ltr'}
+                    >
                         <Box
                             component="nav"
                             className={classes.index}
-                            dir={!apiMode && language === 'fa' ? 'rtl' : undefined}
+                            dir={language === 'fa' ? 'rtl' : undefined}
                             aria-label={t('documentation.contents')}
                         >
                             <Text c="dimmed" size="xs" fw={600} mb="sm">

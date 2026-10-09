@@ -201,6 +201,10 @@ const router = createBrowserRouter(
                             path={ROUTES.DASHBOARD.DOCUMENTATION.API}
                             element={<DocumentationPage mode="api" />}
                         />
+                        <Route
+                            path={ROUTES.DASHBOARD.DOCUMENTATION.VERSIONS}
+                            element={<DocumentationPage mode="versions" />}
+                        />
                     </Route>
                     <Route element={<OpenEntityPage />} path={ROUTES.DASHBOARD.OPEN_ENTITY} />
 

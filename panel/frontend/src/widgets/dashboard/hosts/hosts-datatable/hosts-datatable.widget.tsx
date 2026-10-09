@@ -251,7 +251,7 @@ export const HostsDataTableWidget = memo((props: IProps) => {
                 columnResizeMode="expand"
                 rowVirtualization={{
                     fixedLayout: false,
-                    overscan: 25
+                    overscan: 8
                 }}
             />
             <DataTableControls

@@ -424,6 +424,10 @@ export function PanelAppearanceProvider({ children }: { children: React.ReactNod
         document.documentElement.style.setProperty('--panel-background', preset.background)
         document.documentElement.style.setProperty('--panel-accent', palette)
         document.documentElement.style.setProperty(
+            '--panel-update-color',
+            preset.light ? shade(palette, '#000000', 0.47) : accents[appearance.accent]
+        )
+        document.documentElement.style.setProperty(
             '--panel-text',
             preset.light ? '#25252c' : '#f1f1f4'
         )
@@ -447,7 +451,7 @@ export function PanelAppearanceProvider({ children }: { children: React.ReactNod
             '--panel-accent-text',
             preset.light ? shade(palette, '#000000', 0.47) : shade(palette, '#e7edf4', 0.42)
         )
-    }, [appearance.theme, palette, preset, reducedMotion])
+    }, [appearance.theme, appearance.accent, palette, preset, reducedMotion])
 
     useEffect(() => {
         try {

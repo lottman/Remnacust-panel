@@ -1383,7 +1383,9 @@
             "branding-settings": "Branding settings",
             "the-title-that-will-be-displayed-on-login-page": "The title that will be displayed on login page",
             "brand-name": "Brand name",
-            "the-url-to-your-brand-logo-image": "The URL to your brand logo image. Accepts a regular http(s) URL or a base64 data URL (data:image/svg+xml;base64,...).",
+            "the-url-to-your-brand-logo-image": "An HTTPS image link or a data URL (data:image/svg+xml;base64,...). The logo appears on the login page and in the sidebar.",
+            "logo-preview": "Logo preview",
+            "logo-load-error": "The logo could not be loaded. Check the HTTPS link or data URL.",
             "colored-title-format": "Colored title format",
             "colored-title-description": "You can color individual words using {color}word syntax. Supports both HEX colors (#RRGGBB) and Mantine color names.",
             "example-hex-colors": "Example with HEX colors",
@@ -3145,7 +3147,7 @@
         "apiSearch": "Search path, operation or permission",
         "contents": "Contents",
         "onPage": "On this page",
-        "language": "Reading language",
+        "language": "Documentation language",
         "readingNote": "The complete guide is available in Russian and English. Choose the reading language above.",
         "fields": "Fields and controls",
         "fieldNote": "Explanations of the fields and settings in this panel section.",
@@ -3191,7 +3193,9 @@
         "noUnits": "Numeric value, without unit",
         "referenceVersion": "Build reference",
         "invalidLink": "This article or operation was not found. Choose an entry from the contents.",
-        "clear": "Clear search"
+        "clear": "Clear search",
+        "versions": "Versions and compatibility",
+        "downloadVersions": "Download build information"
     },
     "project-support": {
         "title": "Support the project",

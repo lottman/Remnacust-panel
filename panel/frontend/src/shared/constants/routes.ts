@@ -13,7 +13,8 @@ export const ROUTES = {
         DOCUMENTATION: {
             ROOT: '/dashboard/documentation',
             GUIDE: '/dashboard/documentation/panel',
-            API: '/dashboard/documentation/api'
+            API: '/dashboard/documentation/api',
+            VERSIONS: '/dashboard/documentation/versions'
         },
         OPEN_ENTITY: '/dashboard/open/:entity/:id',
         MANAGEMENT: {

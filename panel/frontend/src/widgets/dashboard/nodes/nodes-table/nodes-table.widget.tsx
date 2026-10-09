@@ -20,8 +20,8 @@ import { nodesQueryKeys, useGetNodes, useReorderNodes } from '@shared/api/hooks'
 import { useIsMobile } from '@shared/hooks'
 import { NO_TAG, TagFilterBar } from '@shared/ui'
 import { EmptyPageLayout } from '@shared/ui/layouts/empty-page'
-import { sToMs } from '@shared/utils/time-utils'
 import { mergeVisibleOrder } from '@shared/utils/merge-visible-order'
+import { sToMs } from '@shared/utils/time-utils'
 
 import {
     useNodesCardColumns,
@@ -33,8 +33,6 @@ import { NodeCardWidget } from '../node-card'
 import { NodesSpotlightSearchWidget } from '../nodes-spotlight-search'
 import { IProps } from './interfaces'
 import styles from './NodesTable.module.css'
-
-const EMPTY_NAMES: string[] = []
 
 export const NodesTableWidget = memo((props: IProps) => {
     const { nodes, nodePlugins, nodeIntegrations } = props
@@ -86,7 +84,7 @@ export const NodesTableWidget = memo((props: IProps) => {
     const virtualizer = useWindowVirtualizer({
         count: Math.ceil(state.length / columns),
         estimateSize: () => (isMobile ? 190 : 90),
-        overscan: 7,
+        overscan: Math.ceil(6 / columns),
         scrollMargin,
         getItemKey: (index) => `${columns}:${state[index * columns]?.uuid ?? index}`
     })
@@ -136,8 +134,6 @@ export const NodesTableWidget = memo((props: IProps) => {
         observer.observe(list)
         return () => observer.disconnect()
     }, [])
-
-    useLayoutEffect(() => virtualizer.measure(), [columns])
 
     const handleDragStart = useCallback(
         (event: DragStartEvent) => {
@@ -197,26 +193,12 @@ export const NodesTableWidget = memo((props: IProps) => {
             ])
         )
 
-        return new Map(
-            (nodes ?? []).map((node) => [
-                node.uuid,
-                {
-                    integrationsNames: integrationNameByUuid
-                        ? (node.integrationUuids ?? [])
-                              .map((uuid) => integrationNameByUuid.get(uuid))
-                              .filter((name): name is string => name !== undefined)
-                        : EMPTY_NAMES,
-                    pluginsName: node.activePluginUuid
-                        ? pluginNameByUuid.get(node.activePluginUuid)
-                        : undefined
-                }
-            ])
-        )
-    }, [nodes, nodePlugins, nodeIntegrations])
+        return { pluginNameByUuid, integrationNameByUuid }
+    }, [nodePlugins, nodeIntegrations])
 
-    const handleViewNode = (nodeUuid: string) => {
+    const handleViewNode = useCallback((nodeUuid: string) => {
         showModal('nodes_editNodeModal', { nodeUuid })
-    }
+    }, [])
 
     if (!nodes || !nodePlugins || !nodeIntegrations) {
         return null
@@ -273,7 +255,6 @@ export const NodesTableWidget = memo((props: IProps) => {
                                         >
                                             <div className={styles.cardGrid} data-columns={columns}>
                                                 {row.map((item, offset) => {
-                                                    const names = nodeNames.get(item.uuid)
                                                     return (
                                                         <NodeCardWidget
                                                             key={item.uuid}
@@ -284,11 +265,16 @@ export const NodesTableWidget = memo((props: IProps) => {
                                                             }
                                                             isMobile={isMobile}
                                                             node={item}
-                                                            integrationsNames={
-                                                                names?.integrationsNames ??
-                                                                EMPTY_NAMES
+                                                            integrationNameByUuid={
+                                                                nodeNames.integrationNameByUuid
                                                             }
-                                                            pluginsName={names?.pluginsName}
+                                                            pluginsName={
+                                                                item.activePluginUuid
+                                                                    ? nodeNames.pluginNameByUuid.get(
+                                                                          item.activePluginUuid
+                                                                      )
+                                                                    : undefined
+                                                            }
                                                         />
                                                     )
                                                 })}
@@ -306,14 +292,17 @@ export const NodesTableWidget = memo((props: IProps) => {
                             <NodeCardWidget
                                 handleViewNode={handleViewNode}
                                 index={0}
-                                integrationsNames={
-                                    nodeNames.get(draggedNode.uuid)?.integrationsNames ??
-                                    EMPTY_NAMES
-                                }
+                                integrationNameByUuid={nodeNames.integrationNameByUuid}
                                 isDragOverlay
                                 isMobile={isMobile}
                                 node={draggedNode}
-                                pluginsName={nodeNames.get(draggedNode.uuid)?.pluginsName}
+                                pluginsName={
+                                    draggedNode.activePluginUuid
+                                        ? nodeNames.pluginNameByUuid.get(
+                                              draggedNode.activePluginUuid
+                                          )
+                                        : undefined
+                                }
                             />
                         </Container>
                     )}

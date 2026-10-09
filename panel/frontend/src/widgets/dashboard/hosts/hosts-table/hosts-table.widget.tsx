@@ -18,15 +18,14 @@ import { useGetNodes } from '@shared/api/hooks'
 import { useIsMobile } from '@shared/hooks'
 import { NO_TAG, TagFilterBar } from '@shared/ui'
 import { EmptyPageLayout } from '@shared/ui/layouts/empty-page'
+import { matchesHostStatus } from '@shared/utils/host-status-filter'
+import { mergeVisibleOrder } from '@shared/utils/merge-visible-order'
 
 import {
     useHostsActiveTag,
     useHostsCardColumns,
     useViewPreferencesStoreActions
 } from '@entities/dashboard/view-preferences-store'
-
-import { mergeVisibleOrder } from '@shared/utils/merge-visible-order'
-import { matchesHostStatus } from '@shared/utils/host-status-filter'
 
 import classes from './hosts-table.module.css'
 import { IProps } from './interfaces'
@@ -60,9 +59,14 @@ export const HostsTableWidget = memo((props: IProps) => {
     const { data: nodes } = useGetNodes()
 
     const visibleState = useMemo(() => {
-        return state.filter(host => matchesHostStatus(host, statusFilter) && (
-            activeTag === null || (activeTag === NO_TAG ? (host.tags ?? []).length === 0 : (host.tags ?? []).includes(activeTag))
-        ))
+        return state.filter(
+            (host) =>
+                matchesHostStatus(host, statusFilter) &&
+                (activeTag === null ||
+                    (activeTag === NO_TAG
+                        ? (host.tags ?? []).length === 0
+                        : (host.tags ?? []).includes(activeTag)))
+        )
     }, [state, activeTag, statusFilter])
 
     useLayoutEffect(() => {
@@ -81,13 +85,12 @@ export const HostsTableWidget = memo((props: IProps) => {
     const virtualizer = useWindowVirtualizer({
         count: Math.ceil(visibleState.length / columns),
         estimateSize: () => (isMobile ? 202 : 96),
-        overscan: 7,
+        overscan: Math.ceil(6 / columns),
         scrollMargin,
         getItemKey: (index) => `${columns}:${visibleState[index * columns]?.uuid ?? index}`
     })
 
-    useLayoutEffect(() => virtualizer.measure(), [columns])
-
+    const selectedIds = useMemo(() => new Set(selectedHosts), [selectedHosts])
     const nodesByUuid = useMemo(
         () => new Map((nodes ?? []).map((node) => [node.uuid, node] as const)),
         [nodes]
@@ -106,15 +109,23 @@ export const HostsTableWidget = memo((props: IProps) => {
     const handleDragOver = useCallback(
         (event: DragOverEvent) => {
             handlers.setState((prev) => {
-                const visible = prev.filter(host => matchesHostStatus(host, statusFilter) && (
-                    activeTag === null || (activeTag === NO_TAG ? (host.tags ?? []).length === 0 : (host.tags ?? []).includes(activeTag))
-                ))
+                const visible = prev.filter(
+                    (host) =>
+                        matchesHostStatus(host, statusFilter) &&
+                        (activeTag === null ||
+                            (activeTag === NO_TAG
+                                ? (host.tags ?? []).length === 0
+                                : (host.tags ?? []).includes(activeTag)))
+                )
                 const ids = visible.map((host) => host.uuid)
                 const newIds = move(ids, event)
                 if (newIds === ids) return prev
 
                 const hostsByUuid = new Map(prev.map((host) => [host.uuid, host]))
-                return mergeVisibleOrder(prev, newIds.map((uuid) => hostsByUuid.get(uuid)!))
+                return mergeVisibleOrder(
+                    prev,
+                    newIds.map((uuid) => hostsByUuid.get(uuid)!)
+                )
             })
         },
         [handlers, activeTag, statusFilter]
@@ -196,7 +207,7 @@ export const HostsTableWidget = memo((props: IProps) => {
                                                     transform: `translateY(${
                                                         virtualItem.start -
                                                         virtualizer.options.scrollMargin
-                                                    }px)`,
+                                                    }px)`
                                                 }}
                                             >
                                                 <div
@@ -208,11 +219,13 @@ export const HostsTableWidget = memo((props: IProps) => {
                                                             key={item.uuid}
                                                             disableReordering={false}
                                                             configProfiles={configProfiles}
-                                                            index={virtualItem.index * columns + offset}
-                                                            isSelected={selectedHosts.includes(item.uuid)}
+                                                            index={
+                                                                virtualItem.index * columns + offset
+                                                            }
+                                                            isSelected={selectedIds.has(item.uuid)}
                                                             item={item}
                                                             nodesByUuid={nodesByUuid}
-                                                            onSelect={() => toggleHostSelection(item.uuid)}
+                                                            onSelect={toggleHostSelection}
                                                         />
                                                     ))}
                                                 </div>
@@ -231,10 +244,10 @@ export const HostsTableWidget = memo((props: IProps) => {
                                     configProfiles={configProfiles}
                                     index={0}
                                     isDragOverlay
-                                    isSelected={selectedHosts.includes(draggedHost.uuid)}
+                                    isSelected={selectedIds.has(draggedHost.uuid)}
                                     item={draggedHost}
                                     nodesByUuid={nodesByUuid}
-                                    onSelect={() => toggleHostSelection(draggedHost.uuid)}
+                                    onSelect={toggleHostSelection}
                                 />
                             </Container>
                         )}

@@ -23,7 +23,7 @@ import {
 import cx from 'clsx'
 import ColorHash from 'color-hash'
 import { githubDarkTheme, JsonEditor } from 'json-edit-react'
-import { CSSProperties, useState } from 'react'
+import { CSSProperties, memo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiNetwork, PiProhibit, PiPulse } from 'react-icons/pi'
 import { RiDraggable } from 'react-icons/ri'
@@ -57,12 +57,12 @@ export interface IProps {
     isSelected?: boolean
     item: GetHostsCommand.Response['response'][number]
     nodesByUuid: Map<string, GetNodesCommand.Response['response'][number]>
-    onSelect?: () => void
+    onSelect?: (hostId: string) => void
     viewOnly?: boolean
     disableReordering?: boolean
 }
 
-export function HostCardWidget(props: IProps) {
+export const HostCardWidget = memo(function HostCardWidget(props: IProps) {
     const uiText = useUiText()
 
     const {
@@ -164,7 +164,7 @@ export function HostCardWidget(props: IProps) {
                                     checked={isSelected}
                                     onChange={(e) => {
                                         e.stopPropagation()
-                                        onSelect?.()
+                                        onSelect?.(item.uuid)
                                     }}
                                     size="md"
                                     styles={{
@@ -296,7 +296,7 @@ export function HostCardWidget(props: IProps) {
                         <Checkbox
                             aria-label={item.remark}
                             checked={isSelected}
-                            onChange={onSelect}
+                            onChange={() => onSelect?.(item.uuid)}
                             size="md"
                         />
                         {!disableReordering && (
@@ -674,4 +674,4 @@ export function HostCardWidget(props: IProps) {
             </Group>
         </Box>
     )
-}
+})

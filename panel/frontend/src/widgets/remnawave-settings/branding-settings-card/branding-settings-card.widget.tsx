@@ -11,19 +11,23 @@ import {
     TextInput
 } from '@mantine/core'
 import { useForm, schemaResolver } from '@mantine/form'
+import { useDebouncedValue } from '@mantine/hooks'
 import { modals } from '@mantine/modals'
 import {
     GetRemnawaveSettingsCommand,
+    GetStatusCommand,
     UpdateRemnawaveSettingsCommand
 } from '@remnawave/backend-contract'
+import { useQueryClient } from '@tanstack/react-query'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { HiQuestionMarkCircle } from 'react-icons/hi'
-import { TbAlertCircle, TbLink, TbStar } from 'react-icons/tb'
+import { TbAlertCircle, TbLink, TbRefresh, TbStar } from 'react-icons/tb'
 
-import { queryClient } from '@shared/api'
 import { QueryKeys } from '@shared/api/hooks/keys-factory'
 import { useUpdateRemnawaveSettings } from '@shared/api/hooks/remnawave-settings/remnawave-settings.mutation.hooks'
 import { Logo } from '@shared/ui'
+import { BrandLogo } from '@shared/ui/brand-logo'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SettingsCardShared } from '@shared/ui/settings-card'
 import { handleFormErrors } from '@shared/utils/misc'
@@ -37,19 +41,13 @@ interface IProps {
 export const BrandingSettingsCardWidget = (props: IProps) => {
     const { brandingSettings } = props
     const { t } = useTranslation()
+    const queryClient = useQueryClient()
+    const [failedLogoUrl, setFailedLogoUrl] = useState<string | null>(null)
+    const [logoRetryKey, setLogoRetryKey] = useState(0)
 
     const form = useForm<NonNullable<UpdateRemnawaveSettingsCommand.RequestBody>>({
         name: 'branding-settings',
-        mode: 'uncontrolled',
-        onValuesChange: (values) => {
-            if (
-                values.brandingSettings &&
-                typeof values.brandingSettings.logoUrl === 'string' &&
-                values.brandingSettings.logoUrl === ''
-            ) {
-                form.setFieldValue('brandingSettings.logoUrl', null)
-            }
-        },
+        mode: 'controlled',
         validate: schemaResolver(
             UpdateRemnawaveSettingsCommand.RequestBodySchema.pick({
                 brandingSettings: true
@@ -59,14 +57,34 @@ export const BrandingSettingsCardWidget = (props: IProps) => {
             brandingSettings
         }
     })
+    const [previewUrl] = useDebouncedValue(
+        form.values.brandingSettings?.logoUrl?.trim() || null,
+        350
+    )
 
     const { mutate: updateSettings, isPending: isUpdatePending } = useUpdateRemnawaveSettings({
         mutationFns: {
-            onSuccess() {
-                queryClient.refetchQueries({
+            onSuccess(settings) {
+                void queryClient.cancelQueries({
                     queryKey: QueryKeys.remnawaveSettings.getRemnawaveSettings.queryKey
                 })
-                queryClient.refetchQueries({
+                void queryClient.cancelQueries({
+                    queryKey: QueryKeys.auth.getAuthStatus.queryKey
+                })
+                queryClient.setQueryData(
+                    QueryKeys.remnawaveSettings.getRemnawaveSettings.queryKey,
+                    settings
+                )
+                queryClient.setQueryData<GetStatusCommand.Response['response']>(
+                    QueryKeys.auth.getAuthStatus.queryKey,
+                    (status) =>
+                        status && settings.brandingSettings
+                            ? { ...status, branding: settings.brandingSettings }
+                            : status
+                )
+                setFailedLogoUrl(null)
+                setLogoRetryKey((value) => value + 1)
+                void queryClient.invalidateQueries({
                     queryKey: QueryKeys.auth.getAuthStatus.queryKey
                 })
             },
@@ -203,24 +221,63 @@ export const BrandingSettingsCardWidget = (props: IProps) => {
                                 description={t(
                                     'branding-settings-card.widget.the-title-that-will-be-displayed-on-login-page'
                                 )}
-                                key={form.key('brandingSettings.title')}
                                 label={t('branding-settings-card.widget.brand-name')}
                                 leftSection={<TbStar size={16} />}
                                 placeholder="Remnawave"
                                 rightSection={brandingTitleHoverCard()}
                                 {...form.getInputProps('brandingSettings.title')}
+                                value={form.values.brandingSettings?.title ?? ''}
                             />
 
                             <TextInput
                                 description={t(
                                     'branding-settings-card.widget.the-url-to-your-brand-logo-image'
                                 )}
-                                key={form.key('brandingSettings.logoUrl')}
                                 label={t('common.field.logo-url')}
                                 leftSection={<TbLink size={16} />}
                                 placeholder="https://example.com/logo.png"
                                 {...form.getInputProps('brandingSettings.logoUrl')}
+                                value={form.values.brandingSettings?.logoUrl ?? ''}
+                                onChange={(event) =>
+                                    form.setFieldValue(
+                                        'brandingSettings.logoUrl',
+                                        event.currentTarget.value.trim() || null
+                                    )
+                                }
                             />
+                            <Group gap="sm" wrap="nowrap">
+                                <BrandLogo
+                                    logoUrl={previewUrl}
+                                    retryKey={logoRetryKey}
+                                    onError={() => setFailedLogoUrl(previewUrl)}
+                                    onLoad={() => setFailedLogoUrl(null)}
+                                />
+                                <Text
+                                    role="status"
+                                    c={
+                                        previewUrl && failedLogoUrl === previewUrl
+                                            ? 'red'
+                                            : 'dimmed'
+                                    }
+                                    size="xs"
+                                >
+                                    {t(
+                                        previewUrl && failedLogoUrl === previewUrl
+                                            ? 'branding-settings-card.widget.logo-load-error'
+                                            : 'branding-settings-card.widget.logo-preview'
+                                    )}
+                                </Text>
+                                {previewUrl && failedLogoUrl === previewUrl && (
+                                    <ActionIcon
+                                        aria-label={t('common.action.refresh')}
+                                        onClick={() => setLogoRetryKey((value) => value + 1)}
+                                        variant="subtle"
+                                        style={{ flexShrink: 0 }}
+                                    >
+                                        <TbRefresh size={18} />
+                                    </ActionIcon>
+                                )}
+                            </Group>
                         </Stack>
                     </SettingsCardShared.Content>
 

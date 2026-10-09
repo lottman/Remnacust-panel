@@ -22,7 +22,8 @@ import {
     TbSitemap,
     TbStar,
     TbTools,
-    TbWebhook
+    TbWebhook,
+    TbVersions
 } from 'react-icons/tb'
 
 import { ROUTES } from '@shared/constants'
@@ -65,6 +66,12 @@ export const useDesktopMenuSections = (): MenuItem[] => {
                         href: ROUTES.DASHBOARD.DOCUMENTATION.API,
                         icon: TbApi,
                         id: 'documentation-api'
+                    },
+                    {
+                        name: t('documentation.versions'),
+                        href: ROUTES.DASHBOARD.DOCUMENTATION.VERSIONS,
+                        icon: TbVersions,
+                        id: 'documentation-versions'
                     }
                 ]
             },

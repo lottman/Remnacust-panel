@@ -14,6 +14,10 @@
     flex: 1 1 230px;
     min-width: 0;
 }
+.language {
+    flex-shrink: 0;
+    margin-inline-start: auto;
+}
 .layout {
     display: grid;
     grid-template-columns: 244px minmax(0, 1fr);
@@ -27,7 +31,6 @@
     overflow: auto;
     overscroll-behavior: contain;
     padding-inline-end: 12px;
-
 }
 .category {
     padding: 12px 10px 6px;
@@ -210,7 +213,6 @@
 .related {
     max-height: 280px;
     overflow: auto;
-
 }
 .relatedLink {
     display: flex;

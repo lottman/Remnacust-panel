@@ -2,8 +2,8 @@ import type { Schema } from './documentation.types'
 
 import { Badge, Box, Code, Group, Text } from '@mantine/core'
 import { useState } from 'react'
-import { useTranslation } from 'react-i18next'
 
+import { useDocumentationTranslation } from './documentation-shell'
 import classes from './documentation.module.css'
 import { resolveSchema } from './reference-utils'
 
@@ -23,7 +23,7 @@ export function SchemaTree({
     depth = 0,
     ancestors = []
 }: Props) {
-    const { t } = useTranslation()
+    const { t } = useDocumentationTranslation()
     const [open, setOpen] = useState(depth < 2)
     const ref = schema.$ref?.split('/').pop()
     const recursive = ref && ancestors.includes(ref)

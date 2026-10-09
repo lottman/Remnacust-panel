@@ -48,9 +48,16 @@ export const NodeCardWidget = memo((props: IProps) => {
         isDragOverlay = false,
         isMobile,
         disableReordering = false,
-        integrationsNames,
+        integrationNameByUuid,
         pluginsName
     } = props
+    const integrationsNames = useMemo(
+        () =>
+            node.integrationUuids
+                .map((uuid) => integrationNameByUuid.get(uuid))
+                .filter((name): name is string => name !== undefined),
+        [node.integrationUuids, integrationNameByUuid]
+    )
 
     const clipboard = useClipboard({ timeout: 500 })
 

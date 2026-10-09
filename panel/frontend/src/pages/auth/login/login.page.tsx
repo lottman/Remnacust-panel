@@ -11,7 +11,6 @@ import {
     Card,
     Divider,
     Group,
-    Image,
     Stack,
     Text,
     Title,
@@ -22,7 +21,7 @@ import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useGetAuthStatus } from '@shared/api/hooks/auth/auth.query.hooks'
-import { Logo } from '@shared/ui/logo'
+import { BrandLogo } from '@shared/ui/brand-logo'
 import { Page } from '@shared/ui/page'
 import { parseColoredTextUtil } from '@shared/utils/misc'
 
@@ -41,26 +40,6 @@ const getAuthMethods = (authStatus: GetStatusCommand.Response['response'] | unde
         hasAlternativeMethods: isPasskeyEnabled || isOAuth2Enabled,
         hasPrimaryMethods: isPasswordEnabled
     }
-}
-
-const BrandLogo = ({ logoUrl }: { logoUrl?: null | string }) => {
-    if (!logoUrl) {
-        return <Logo aria-hidden="true" c="brand.5" w="2.25rem" />
-    }
-
-    return (
-        <Image
-            alt=""
-            fit="contain"
-            src={logoUrl}
-            style={{
-                maxWidth: '40px',
-                maxHeight: '40px',
-                width: '40px',
-                height: '40px'
-            }}
-        />
-    )
 }
 
 const BrandTitle = ({ titleParts }: { titleParts: Array<{ color: string; text: string }> }) => {
@@ -113,7 +92,7 @@ const AlternativeAuthMethods = ({
 
 export const LoginPage = () => {
     const { t } = useTranslation()
-    const { data: authStatus, isPending, isFetching, refetch } = useGetAuthStatus()
+    const { data: authStatus, dataUpdatedAt, isPending, isFetching, refetch } = useGetAuthStatus()
 
     const titleParts = useMemo(() => {
         if (authStatus?.branding.title) {
@@ -131,7 +110,11 @@ export const LoginPage = () => {
             <Box className={classes.grid}>
                 <Stack className={classes.brand} gap="lg">
                     <Group align="center" gap={12}>
-                        <BrandLogo logoUrl={authStatus?.branding.logoUrl} />
+                        <BrandLogo
+                            logoUrl={authStatus?.branding.logoUrl}
+                            retryKey={dataUpdatedAt}
+                            size={40}
+                        />
                         <BrandTitle titleParts={titleParts} />
                     </Group>
                     <Text className={classes.intro}>{t('design-ui.login-intro')}</Text>

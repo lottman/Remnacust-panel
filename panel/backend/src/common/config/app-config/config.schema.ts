@@ -14,13 +14,9 @@ const booleanString = (def: 'true' | 'false' = 'false') =>
 
 export const configSchema = z
     .object({
-        __RW_METADATA_VERSION: z.string().default('1.1.7.4'),
-        __RW_METADATA_GIT_BACKEND_COMMIT: z
-            .string()
-            .default('unknown'),
-        __RW_METADATA_GIT_FRONTEND_COMMIT: z
-            .string()
-            .default('unknown'),
+        __RW_METADATA_VERSION: z.string().default('1.1.7.5'),
+        __RW_METADATA_GIT_BACKEND_COMMIT: z.string().default('unknown'),
+        __RW_METADATA_GIT_FRONTEND_COMMIT: z.string().default('unknown'),
         __RW_METADATA_GIT_BRANCH: z.string().default('local'),
         __RW_METADATA_BUILD_TIME: z.string().default(''),
         __RW_METADATA_BUILD_NUMBER: z.string().default('0'),

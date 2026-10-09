@@ -1,6 +1,17 @@
 import type { DocManifest, DocLanguage } from './documentation.types'
 
-import { Alert, Anchor, Box, Button, Group, Loader, Table, Text } from '@mantine/core'
+import {
+    Alert,
+    Anchor,
+    Box,
+    Button,
+    Group,
+    Loader,
+    Select,
+    Table,
+    Text,
+    Title
+} from '@mantine/core'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { TbApi, TbBook2, TbVersions } from 'react-icons/tb'
@@ -105,7 +116,7 @@ const patchTitles = {
 
 export function CompatibilityDocumentation() {
     const { t, i18n } = useTranslation()
-    const [params] = useSearchParams()
+    const [params, setParams] = useSearchParams()
     const requested = params.get('language') ?? i18n.resolvedLanguage ?? 'en'
     const lang =
         (Object.keys(labels) as DocLanguage[]).find((key) => requested.startsWith(key)) ?? 'en'
@@ -126,129 +137,200 @@ export function CompatibilityDocumentation() {
     return (
         <Page title={l[0]}>
             <PageHeaderShared title={l[0]} icon={<TbVersions size={24} />} />
-            <Group className={classes.toolbar} gap={6}>
-                <Button
-                    component={Link}
-                    to={ROUTES.DASHBOARD.DOCUMENTATION.GUIDE}
-                    variant="subtle"
-                    leftSection={<TbBook2 size={17} />}
-                >
-                    {t('documentation.guide')}
-                </Button>
-                <Button
-                    component={Link}
-                    to={ROUTES.DASHBOARD.DOCUMENTATION.API}
-                    variant="subtle"
-                    leftSection={<TbApi size={17} />}
-                >
-                    {t('documentation.api')}
-                </Button>
-                <Button variant="light" aria-current="page" leftSection={<TbVersions size={17} />}>
-                    {l[0]}
-                </Button>
+            <Group className={classes.toolbar}>
+                <Group className={classes.tabs} gap={6}>
+                    <Button
+                        component={Link}
+                        to={ROUTES.DASHBOARD.DOCUMENTATION.GUIDE}
+                        variant="subtle"
+                        leftSection={<TbBook2 size={17} />}
+                    >
+                        {t('documentation.guide')}
+                    </Button>
+                    <Button
+                        component={Link}
+                        to={ROUTES.DASHBOARD.DOCUMENTATION.API}
+                        variant="subtle"
+                        leftSection={<TbApi size={17} />}
+                    >
+                        {t('documentation.api')}
+                    </Button>
+                    <Button
+                        variant="light"
+                        aria-current="page"
+                        leftSection={<TbVersions size={17} />}
+                    >
+                        {l[0]}
+                    </Button>
+                </Group>
+                <Select
+                    w={145}
+                    aria-label={t('documentation.language')}
+                    allowDeselect={false}
+                    value={lang}
+                    onChange={(value) => {
+                        const next = new URLSearchParams(params)
+                        next.set('language', value ?? 'en')
+                        setParams(next)
+                    }}
+                    data={[
+                        { value: 'ru', label: 'Русский' },
+                        { value: 'en', label: 'English' },
+                        { value: 'fa', label: 'فارسی' },
+                        { value: 'zh', label: '简体中文' }
+                    ]}
+                />
             </Group>
-            <Box className={classes.article} lang={lang} dir={lang === 'fa' ? 'rtl' : 'ltr'}>
-                <Text mb="md">{l[8]}</Text>
-                {manifest.isPending ? (
-                    <Loader size="sm" />
-                ) : manifest.isError ? (
-                    <Alert color="red">
-                        <Text>{t('documentation.error')}</Text>
-                        <Button onClick={() => void manifest.refetch()}>
-                            {t('documentation.retry')}
-                        </Button>
-                    </Alert>
-                ) : (
-                    m && (
-                        <>
-                            <Text fw={600} mb="md">
-                                {l[7]}:{' '}
-                                <span dir="ltr">{runtime?.version ?? m.backendVersion}</span>
-                            </Text>
-                            <Table.ScrollContainer minWidth={0}>
-                                <Table
-                                    withTableBorder
-                                    withColumnBorders
-                                    striped
-                                    style={{ tableLayout: 'fixed', overflowWrap: 'anywhere' }}
-                                >
-                                    <Table.Thead>
-                                        <Table.Tr>
-                                            {[l[1], l[2], l[3]].map((text) => (
-                                                <Table.Th key={text}>{text}</Table.Th>
-                                            ))}
-                                        </Table.Tr>
-                                    </Table.Thead>
-                                    <Table.Tbody>
-                                        <Table.Tr>
-                                            <Table.Td>{l[4]}</Table.Td>
-                                            <Table.Td>{m.backendVersion}</Table.Td>
-                                            <Table.Td>Remnawave {m.upstreamPanelVersion}</Table.Td>
-                                        </Table.Tr>
-                                        <Table.Tr>
-                                            <Table.Td>{l[5]}</Table.Td>
-                                            <Table.Td>{m.nodeVersion}</Table.Td>
-                                            <Table.Td>
-                                                Remnawave Node {m.upstreamNodeVersion}
-                                            </Table.Td>
-                                        </Table.Tr>
-                                        <Table.Tr>
-                                            <Table.Td>{l[6]}</Table.Td>
-                                            <Table.Td>{m.coreVersion}</Table.Td>
-                                            <Table.Td>Xray {m.upstreamCoreVersion}</Table.Td>
-                                        </Table.Tr>
-                                    </Table.Tbody>
-                                </Table>
-                            </Table.ScrollContainer>
-                            {!!m.upstreamBackendPatches?.length && (
+            <Box className={classes.layout} lang={lang} dir={lang === 'fa' ? 'rtl' : 'ltr'}>
+                <Box
+                    component="nav"
+                    className={classes.index}
+                    aria-label={t('documentation.contents')}
+                >
+                    {[
+                        ['versions', l[0]],
+                        ['patches', patchTitles[lang]],
+                        ['legacy-nodes', l[14]],
+                        ['core-source', l[12]]
+                    ].map(([id, label]) => (
+                        <Anchor key={id} href={`#${id}`} className={classes.indexEntry}>
+                            {label}
+                        </Anchor>
+                    ))}
+                </Box>
+                <Box className={classes.content}>
+                    <Box component="article" className={`${classes.article} ${classes.prose}`}>
+                        <Title order={1} className={classes.articleTitle} id="versions" mb="lg">
+                            {l[0]}
+                        </Title>
+                        <Text mb="md">{l[8]}</Text>
+                        {manifest.isPending ? (
+                            <Loader size="sm" />
+                        ) : manifest.isError ? (
+                            <Alert color="red">
+                                <Text>{t('documentation.error')}</Text>
+                                <Button onClick={() => void manifest.refetch()}>
+                                    {t('documentation.retry')}
+                                </Button>
+                            </Alert>
+                        ) : (
+                            m && (
                                 <>
-                                    <Text component="h2" fw={600} mt="lg">
-                                        {patchTitles[lang]}
+                                    <Text fw={600} mb="md">
+                                        {l[7]}:{' '}
+                                        <span dir="ltr">
+                                            {runtime?.version ?? m.backendVersion}
+                                        </span>
                                     </Text>
-                                    {m.upstreamBackendPatches.map((patch) => (
-                                        <Text key={patch.commit} mt="sm">
-                                            <Anchor
-                                                href={`https://github.com/remnawave/backend/commit/${patch.commit}`}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
+                                    <Table.ScrollContainer minWidth={0}>
+                                        <Table
+                                            withTableBorder
+                                            withColumnBorders
+                                            striped
+                                            style={{
+                                                tableLayout: 'fixed',
+                                                overflowWrap: 'anywhere'
+                                            }}
+                                        >
+                                            <Table.Thead>
+                                                <Table.Tr>
+                                                    {[l[1], l[2], l[3]].map((text) => (
+                                                        <Table.Th key={text}>{text}</Table.Th>
+                                                    ))}
+                                                </Table.Tr>
+                                            </Table.Thead>
+                                            <Table.Tbody>
+                                                <Table.Tr>
+                                                    <Table.Td>{l[4]}</Table.Td>
+                                                    <Table.Td>
+                                                        {runtime?.version ?? m.backendVersion}
+                                                    </Table.Td>
+                                                    <Table.Td>
+                                                        Remnawave {m.upstreamPanelVersion}
+                                                    </Table.Td>
+                                                </Table.Tr>
+                                                <Table.Tr>
+                                                    <Table.Td>{l[5]}</Table.Td>
+                                                    <Table.Td>{m.nodeVersion}</Table.Td>
+                                                    <Table.Td>
+                                                        Remnawave Node {m.upstreamNodeVersion}
+                                                    </Table.Td>
+                                                </Table.Tr>
+                                                <Table.Tr>
+                                                    <Table.Td>{l[6]}</Table.Td>
+                                                    <Table.Td>{m.coreVersion}</Table.Td>
+                                                    <Table.Td>
+                                                        Xray {m.upstreamCoreVersion}
+                                                    </Table.Td>
+                                                </Table.Tr>
+                                            </Table.Tbody>
+                                        </Table>
+                                    </Table.ScrollContainer>
+                                    {!!m.upstreamBackendPatches?.length && (
+                                        <>
+                                            <Text
+                                                component="h2"
+                                                id="patches"
+                                                className={classes.section}
+                                                fw={600}
                                             >
-                                                {patch.description[lang]}
-                                            </Anchor>
-                                            {' · '}
-                                            {patch.date}
-                                        </Text>
-                                    ))}
+                                                {patchTitles[lang]}
+                                            </Text>
+                                            {m.upstreamBackendPatches.map((patch) => (
+                                                <Text key={patch.commit} mt="sm">
+                                                    <Anchor
+                                                        href={`https://github.com/remnawave/backend/commit/${patch.commit}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                    >
+                                                        {patch.description[lang]}
+                                                    </Anchor>
+                                                    {' · '}
+                                                    {patch.date}
+                                                </Text>
+                                            ))}
+                                        </>
+                                    )}
+                                    <Text mt="md">
+                                        {l[9]}{' '}
+                                        <Anchor
+                                            component={Link}
+                                            to={ROUTES.DASHBOARD.MANAGEMENT.NODES}
+                                        >
+                                            {l[5]}
+                                        </Anchor>
+                                    </Text>
+                                    <Text mt="md">{l[10]}</Text>
+                                    <Text mt="md">{l[11]}</Text>
+                                    <Text
+                                        component="h2"
+                                        id="legacy-nodes"
+                                        className={classes.section}
+                                        fw={600}
+                                    >
+                                        {l[14]}
+                                    </Text>
+                                    <Text mt="md">{l[15]}</Text>
+                                    <Text mt="md">{l[16]}</Text>
+                                    <Text mt="md">{l[17]}</Text>
+                                    <Anchor
+                                        id="core-source"
+                                        mt="md"
+                                        display="inline-block"
+                                        href={`https://github.com/XTLS/Xray-core/tree/${m.upstreamCoreCommit}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        {l[12]} · {m.upstreamCoreVersion}
+                                    </Anchor>
+                                    <Text mt="md" c="dimmed" size="sm">
+                                        {l[13]}
+                                    </Text>
                                 </>
-                            )}
-                            <Text mt="md">
-                                {l[9]}{' '}
-                                <Anchor component={Link} to={ROUTES.DASHBOARD.MANAGEMENT.NODES}>
-                                    {l[5]}
-                                </Anchor>
-                            </Text>
-                            <Text mt="md">{l[10]}</Text>
-                            <Text mt="md">{l[11]}</Text>
-                            <Text component="h2" fw={600} mt="lg">
-                                {l[14]}
-                            </Text>
-                            <Text mt="md">{l[15]}</Text>
-                            <Text mt="md">{l[16]}</Text>
-                            <Text mt="md">{l[17]}</Text>
-                            <Anchor
-                                mt="md"
-                                display="inline-block"
-                                href={`https://github.com/XTLS/Xray-core/tree/${m.upstreamCoreCommit}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                {l[12]} · {m.upstreamCoreVersion}
-                            </Anchor>
-                            <Text mt="md" c="dimmed" size="sm">
-                                {l[13]}
-                            </Text>
-                        </>
-                    )
-                )}
+                            )
+                        )}
+                    </Box>
+                </Box>
             </Box>
         </Page>
     )

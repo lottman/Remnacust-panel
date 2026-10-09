@@ -1464,7 +1464,7 @@ export class SubscriptionService {
             }
 
             if (settingsEntity && settingsEntity.responseRules) {
-                const result = this.srrMatcher.matchRules(
+                const result = await this.srrMatcher.matchRules(
                     settingsEntity.responseRules,
                     requestHeaders,
                     undefined,

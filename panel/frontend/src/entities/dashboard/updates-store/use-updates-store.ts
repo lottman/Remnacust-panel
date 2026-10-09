@@ -3,10 +3,9 @@ import { create } from 'zustand'
 import { createJSONStorage, devtools, persist } from 'zustand/middleware'
 
 import { isValidPanelVersion } from '@shared/utils/panel-version'
-
 import { sToMs } from '@shared/utils/time-utils'
 
-const CACHE_TIME = sToMs(24 * 60 * 60)
+const CACHE_TIME = sToMs(60 * 60)
 
 export interface IRemnawaveInfo {
     latestVersion: string
@@ -48,7 +47,10 @@ export const useUpdatesStore = create<IActions & IState>()(
 
                         if (
                             lastUpdateTimestamp &&
+                            now >= lastUpdateTimestamp &&
                             now - lastUpdateTimestamp < CACHE_TIME &&
+                            remnawaveInfo.latestVersion !== '0.0.0' &&
+                            isValidPanelVersion(remnawaveInfo.latestVersion) &&
                             remnawaveInfo.starsCount !== undefined
                         ) {
                             return
@@ -70,24 +72,21 @@ export const useUpdatesStore = create<IActions & IState>()(
                             ])
                             const tag =
                                 release.status === 'fulfilled'
-                                    ? release.value.data.tag_name.replace(/^v/, '')
+                                    ? String(release.value.data.tag_name ?? '').replace(/^v/, '')
                                     : ''
                             const stars =
                                 repo.status === 'fulfilled'
                                     ? repo.value.data.stargazers_count
                                     : undefined
+                            const hasRelease = isValidPanelVersion(tag)
+                            const hasStars = Number.isSafeInteger(stars) && stars! >= 0
                             set({
                                 remnawaveInfo: {
-                                    latestVersion: isValidPanelVersion(tag)
-                                        ? tag
-                                        : remnawaveInfo.latestVersion,
-                                    starsCount:
-                                        Number.isSafeInteger(stars) && stars! >= 0
-                                            ? stars
-                                            : remnawaveInfo.starsCount
+                                    latestVersion: hasRelease ? tag : remnawaveInfo.latestVersion,
+                                    starsCount: hasStars ? stars : remnawaveInfo.starsCount
                                 },
                                 lastUpdateTimestamp:
-                                    repo.status === 'fulfilled' ? now : lastUpdateTimestamp
+                                    hasRelease && hasStars ? now : lastUpdateTimestamp
                             })
                         } catch {
                             // silent error

@@ -74,10 +74,10 @@ const help = {
         '在表格中比较已用流量、实际配额、剩余流量、一次性追加量和访问状态。例如基础配额 100 GiB 加上 20 GiB 追加量，共计 120 GiB；计费使用 80 GiB 后剩余 40 GiB。无限流量仅移除所选范围的个人配额，仍记录用量，不会解除流量暂停、订阅到期或其他用户限制。'
     ],
     'backups-1': [
-        'Раздел доступен администратору после ввода пароля резервных копий. Нажмите «Создать ZIP-копию» и дождитесь файла в списке. Архив зашифрован и содержит дамп базы данных: для открытия понадобится пароль. Скачайте копию на отдельное хранилище. Отправка передаёт выбранный файл в Telegram, удаление стирает его с сервера, «Закрыть доступ» снова блокирует раздел. Копия базы не включает серверный .env, сертификаты и файлы нод. Кнопки восстановления в панели нет: восстановление выполняет администратор сервера.',
-        'Administrators unlock this section with the backup password. Click “Create ZIP backup” and wait for the file to appear. The encrypted archive contains a database dump and requires its password to open. Download it to separate storage. Sending transfers the selected file to Telegram, deleting removes it from the server, and “Lock access” locks the section again. The database backup excludes the server’s .env, certificates and node files. There is no restore button in the panel; restoration is performed by the server administrator.',
-        'مدیر با رمز پشتیبان این بخش را باز می‌کند. «ساخت پشتیبان ZIP» را بزنید و منتظر ظاهر شدن فایل بمانید. آرشیو رمزگذاری‌شده شامل خروجی پایگاه داده است و برای باز کردن به رمز نیاز دارد. آن را در محل جداگانه دانلود کنید. ارسال، فایل را به تلگرام می‌فرستد؛ حذف، آن را از سرور پاک می‌کند و «بستن دسترسی» بخش را دوباره قفل می‌کند. فایل .env سرور، گواهی‌ها و فایل‌های نود در این پشتیبان نیستند. دکمه بازیابی در پنل وجود ندارد؛ مدیر سرور بازیابی را انجام می‌دهد.',
-        '管理员输入备份密码后进入此页面。点击“创建 ZIP 备份”并等待文件出现。加密压缩包包含数据库转储，打开时需要密码。请下载到独立存储。发送会将所选文件发到 Telegram，删除会从服务器移除文件，“关闭访问”会重新锁定页面。数据库备份不包含服务器 .env、证书或节点文件。面板没有恢复按钮，恢复由服务器管理员执行。'
+        'При новой установке панели установщик спрашивает пароль резервных копий; Enter создаёт его автоматически. Пароль показан после установки и сохранён в `backup-password.txt` в каталоге панели с доступом только root. Сохраните его отдельно от сервера. Раздел доступен администратору после ввода этого пароля. Нажмите «Создать ZIP-копию» и дождитесь файла в списке. Архив зашифрован и содержит дамп базы данных: для открытия понадобится пароль. Скачайте копию на отдельное хранилище. Отправка передаёт выбранный файл в Telegram, удаление стирает его с сервера, «Закрыть доступ» снова блокирует раздел. Копия базы не включает серверный .env, сертификаты и файлы нод. Кнопки восстановления в панели нет: восстановление выполняет администратор сервера.',
+        'A fresh panel installation asks for a backup password; Enter generates one automatically. The installer shows it when installation finishes and saves it in `backup-password.txt` in the panel directory, accessible only to root. Keep a copy away from the server. Administrators unlock this section with that password. Click “Create ZIP backup” and wait for the file to appear. The encrypted archive contains a database dump and requires its password to open. Download it to separate storage. Sending transfers the selected file to Telegram, deleting removes it from the server, and “Lock access” locks the section again. The database backup excludes the server’s .env, certificates and node files. There is no restore button in the panel; restoration is performed by the server administrator.',
+        'در نصب جدید پنل، نصب‌کننده رمز پشتیبان را می‌پرسد؛ Enter آن را خودکار می‌سازد. رمز در پایان نصب نمایش داده می‌شود و در `backup-password.txt` در پوشه پنل ذخیره می‌شود؛ فقط root به آن دسترسی دارد. رمز را جدا از سرور نگه دارید. مدیر با این رمز بخش پشتیبان را باز می‌کند. «ساخت پشتیبان ZIP» را بزنید و منتظر ظاهر شدن فایل بمانید. آرشیو رمزگذاری‌شده شامل خروجی پایگاه داده است و برای باز کردن به رمز نیاز دارد. آن را در محل جداگانه دانلود کنید. ارسال، فایل را به تلگرام می‌فرستد؛ حذف، آن را از سرور پاک می‌کند و «بستن دسترسی» بخش را دوباره قفل می‌کند. فایل .env سرور، گواهی‌ها و فایل‌های نود در این پشتیبان نیستند. دکمه بازیابی در پنل وجود ندارد؛ مدیر سرور بازیابی را انجام می‌دهد.',
+        '首次安装面板时，安装程序会询问备份密码；按 Enter 可自动生成。安装完成后会显示该密码，并将其保存到面板目录中的 `backup-password.txt`，仅 root 可读取。请在服务器之外保存一份密码。管理员输入该密码后进入此页面。点击“创建 ZIP 备份”并等待文件出现。加密压缩包包含数据库转储，打开时需要密码。请下载到独立存储。发送会将所选文件发到 Telegram，删除会从服务器移除文件，“关闭访问”会重新锁定页面。数据库备份不包含服务器 .env、证书或节点文件。面板没有恢复按钮，恢复由服务器管理员执行。'
     ],
     'notifications-1': [
         'Общие уведомления о пользователях, нодах и служебных событиях настраивает администратор сервера в параметрах установки: он включает отправку, задаёт токен бота и чаты для нужных типов событий. В панели нет отдельной формы для всех этих параметров. Автоматическая отправка резервных копий настраивается отдельно на странице «Резервные копии» и может использовать другого бота.',
@@ -123,6 +123,25 @@ export function explainOperatorWorkflows(articles) {
 }
 
 const extraSections = [
+    ['appearance', {
+        id: 'appearance-panel-update',
+        ru: {
+            title: 'Обновление из панели',
+            body: 'Если доступна новая версия, её номер в верхней панели подсвечивается цветом темы. Нажмите на номер: под кнопками поддержки и GitHub появится «Обновить». Для прежней установки один раз выполните upgrade-panel через новый установщик — он настроит сервис обновления.\n\nПосле нажатия панель блокируется для всех открытых сеансов. Установщик проверяет выпуск, создаёт копию базы и обновляет приложения, сохраняя ключи, тома и параметры Compose. Ноды и существующий Nginx/Caddy не обновляются. Вкладку можно закрыть: работа продолжится. После запуска приложений страница перезагрузится. При ошибке прочитайте сообщение и проверьте журнал panel-update-<идентификатор>.log в каталоге logs установщика перед повтором.'
+        },
+        en: {
+            title: 'Updating from the panel',
+            body: 'When a new version is available, the header version number uses the theme accent color. Click it to find Update below the support and GitHub buttons. For an older installation, run upgrade-panel with the new installer once to configure the update service.\n\nStarting an update blocks all open panel sessions. The installer checks the release, backs up the database and updates the applications while preserving keys, volumes and Compose settings. Nodes and existing Nginx/Caddy are not updated. Closing the browser does not stop the operation. After the applications restart, the page reloads. If the update fails, read the message and check panel-update-<identifier>.log in the installer logs directory before retrying.'
+        },
+        fa: {
+            title: 'به‌روزرسانی از پنل',
+            body: 'اگر نسخه جدیدی موجود باشد، شماره نسخه در سربرگ با رنگ اصلی پوسته نمایش داده می‌شود. روی آن کلیک کنید؛ دکمه به‌روزرسانی زیر دکمه‌های پشتیبانی و GitHub ظاهر می‌شود. برای نصب قدیمی یک‌بار upgrade-panel را با نصب‌کننده جدید اجرا کنید تا سرویس به‌روزرسانی تنظیم شود.\n\nشروع به‌روزرسانی همه نشست‌های باز پنل را مسدود می‌کند. نصب‌کننده نسخه را بررسی می‌کند، از پایگاه داده پشتیبان می‌گیرد و برنامه‌ها را با حفظ کلیدها، حجم‌ها و تنظیمات Compose به‌روزرسانی می‌کند. نودها و Nginx/Caddy موجود به‌روزرسانی نمی‌شوند. بستن مرورگر عملیات را متوقف نمی‌کند. پس از راه‌اندازی مجدد برنامه‌ها، صفحه دوباره بارگذاری می‌شود. در صورت خطا، پیام و فایل panel-update-<identifier>.log در پوشه logs نصب‌کننده را پیش از تلاش دوباره بررسی کنید.'
+        },
+        zh: {
+            title: '从面板更新',
+            body: '有新版本时，顶部版本号会使用主题强调色。点击版本号，即可在支持和 GitHub 按钮下方看到更新按钮。旧安装请先用新版安装程序执行一次 upgrade-panel，以配置更新服务。\n\n开始更新后，所有已打开的面板会话都会被锁定。安装程序检查版本、备份数据库并更新应用，保留密钥、数据卷和 Compose 设置。节点及现有 Nginx/Caddy 不会更新。关闭浏览器不会停止操作。应用重新启动后页面会自动重新加载。如果更新失败，请阅读提示，并在重试前检查安装程序 logs 目录中的 panel-update-<identifier>.log。'
+        }
+    }],
     ['subscription-settings', {
         id: 'subscription-settings-3',
         ru: {

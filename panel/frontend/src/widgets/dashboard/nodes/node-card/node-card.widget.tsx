@@ -25,8 +25,8 @@ import { XrayLogo } from '@shared/ui/logos'
 import { NodeHealthBadge } from '@shared/ui/node-health/node-health'
 import { ProviderTags } from '@shared/ui/provider-tags/provider-tags'
 import { prettifyBytesUtil, prettySiRealtimeBytesUtil } from '@shared/utils/bytes'
-import { getNodeResetDaysUtil, getXrayUptimeUtil } from '@shared/utils/time-utils'
 import { nodeNeedsCustomUpgrade } from '@shared/utils/node-policy-status'
+import { getNodeResetDaysUtil, getXrayUptimeUtil } from '@shared/utils/time-utils'
 
 import { NodeStatusBadgeWidget } from '../node-status-badge'
 import { IProps } from './interfaces'
@@ -90,7 +90,9 @@ export const NodeCardWidget = memo((props: IProps) => {
     const nodeStatus = node.isDisabled
         ? 'disabled'
         : node.isConnected
-          ? nodeNeedsCustomUpgrade(node.lastStatusMessage) ? 'upgrade-required' : 'connected'
+          ? nodeNeedsCustomUpgrade(node.lastStatusMessage)
+              ? 'upgrade-required'
+              : 'connected'
           : node.isConnecting
             ? 'connecting'
             : 'offline'
@@ -105,14 +107,15 @@ export const NodeCardWidget = memo((props: IProps) => {
                 loadAvg: null,
                 cpus: 1
             }
-        const { memoryTotal, cpus } = node.system.info
+        const { memoryTotal } = node.system.info
+        const cpus = Math.max(1, node.system.info.cpus || 1)
         const { memoryUsed, loadAvg } = node.system.stats
 
-        const ramPercentage = Math.round((memoryUsed / memoryTotal) * 100)
+        const ramPercentage = memoryTotal > 0 ? Math.round((memoryUsed / memoryTotal) * 100) : null
 
         let ramColor = 'teal'
-        if (ramPercentage > 90) ramColor = 'red'
-        if (ramPercentage > 70) ramColor = 'yellow'
+        if (ramPercentage !== null && ramPercentage > 70) ramColor = 'yellow'
+        if (ramPercentage !== null && ramPercentage > 90) ramColor = 'red'
 
         if (!node.system.stats.interface)
             return {
@@ -120,8 +123,8 @@ export const NodeCardWidget = memo((props: IProps) => {
                 ramColor,
                 rxSpeed: null,
                 txSpeed: null,
-                loadAvg: null,
-                cpus: 1
+                loadAvg,
+                cpus
             }
         return {
             ramPercentage,
@@ -167,7 +170,7 @@ export const NodeCardWidget = memo((props: IProps) => {
             data-node-status={nodeStatus}
             data-panel-motion="row"
             onClick={() => handleViewNode(node.uuid)}
-            ref={isDragOverlay ? undefined : ref}
+            ref={isDragOverlay || disableReordering ? undefined : ref}
             style={style}
         >
             {!disableReordering && (
@@ -246,7 +249,9 @@ export const NodeCardWidget = memo((props: IProps) => {
                         </div>
 
                         <div className={classes.providerContainer}>
-                            <ProviderTags nodeLayout providers={[]} tags={node.tags ?? []} />
+                            {!!node.tags?.length && (
+                                <ProviderTags nodeLayout providers={[]} tags={node.tags} />
+                            )}
                         </div>
                         <div className={classes.addressContainer}>
                             <Flex align="center" className={classes.addressRow} gap="xs">
@@ -539,6 +544,33 @@ export const NodeCardWidget = memo((props: IProps) => {
                             <ProviderTags providers={[]} tags={node.tags} />
                         </Box>
                     )}
+
+                    <Flex align="center" gap="xs" justify="space-between" mb="xs">
+                        <Flex align="center" gap={6} style={{ minWidth: 0 }}>
+                            <PiGlobeSimple className={classes.icon} size={12} />
+                            <Text
+                                dir="ltr"
+                                c="dimmed"
+                                className={classes.addressText}
+                                onClick={handleCopy}
+                                size="xs"
+                                title={node.address}
+                            >
+                                {node.address}
+                            </Text>
+                        </Flex>
+                        <Text
+                            dir="ltr"
+                            c="dimmed"
+                            ff="monospace"
+                            size="xs"
+                            maw="45%"
+                            truncate
+                            title={node.versions?.node}
+                        >
+                            {node.versions?.node ?? '—'}
+                        </Text>
+                    </Flex>
 
                     <Box mb="xs">
                         <Flex direction="column" gap={2}>

@@ -40,8 +40,8 @@ import {
     UnblockIpsCommand,
 } from '@remnawave/node-contract';
 
-import { RawCacheService } from '@common/raw-cache';
 import { TypedConfigService } from '@common/config/app-config/typed-config.service';
+import { RawCacheService } from '@common/raw-cache';
 import { prettyBytesUtil } from '@common/utils/bytes';
 import { deriveSni } from '@common/utils/certs';
 import { formatExecutionTime, getTime } from '@common/utils/get-elapsed-time';
@@ -161,6 +161,9 @@ export class AxiosService {
     ) {
         this.axiosInstance = axios.create({
             timeout: 45_000,
+            // Match the SDK receive ceiling; a compromised node cannot buffer an
+            // unlimited HTTP response in the panel, including decompressed bytes.
+            maxContentLength: 100_000_000,
             headers: {
                 'Content-Type': 'application/json',
                 Accept: 'application/json',

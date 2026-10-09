@@ -33,6 +33,7 @@ export class AxiosService implements OnModuleInit {
         this.axiosInstance = axios.create({
             baseURL: this.configService.getOrThrow('REMNAWAVE_PANEL_URL'),
             timeout: 10_000,
+            maxContentLength: 16 * 1024 * 1024,
             headers: {
                 'user-agent': 'Remnawave Subscription Page',
                 'x-subpage-version': this.subpageVersion,

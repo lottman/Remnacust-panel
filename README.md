@@ -2,7 +2,7 @@
 
 Панель управления пользователями, подписками и нодами Xray на основе Remnawave. Backend хранит данные в PostgreSQL, frontend предоставляет интерфейс и встроенное руководство. В этом репозитории также находится отдельная страница подписки.
 
-**Версия 1.1.7.4** · **Основа: Remnawave 3.4.5** · [Установщик](https://github.com/lottman/Remnacust-installer) · [Telegram](https://t.me/lottman)
+**Версия 1.1.7.5** · **Основа: Remnawave 3.4.5** · [Установщик](https://github.com/lottman/Remnacust-installer) · [Telegram](https://t.me/lottman)
 
 ![Главная Remnacust](panel/assets/overview.png)
 
@@ -22,7 +22,7 @@
 
 ## Транспорт Xera HTTP
 
-Xera HTTP — наш форк транспорта XHTTP (SplitHTTP) из Xray-core. Он передаёт соединения VLESS и других поддерживаемых протоколов через HTTP и использует сеть `xera-http` и настройками `xeraHttpSettings`. Для соединения нужны совместимые ядра на ноде и в клиенте. Настройки профиля, хоста, режимов и padding описаны в разделе «Документация → Профили → Xera HTTP» внутри панели. Xray JSON сохраняет эти настройки; форматы Singbox и Mihomo этот транспорт не поддерживают.
+Xera HTTP — наш форк транспорта XHTTP (SplitHTTP) из Xray-core. Он передаёт соединения VLESS и других поддерживаемых протоколов через HTTP. В конфигурации укажите `network: "xera-http"` и настройки `xeraHttpSettings`. Для соединения нужны совместимые ядра на ноде и в клиенте. Настройки профиля, хоста, режимов и padding описаны в разделе «Документация → Профили → Xera HTTP» внутри панели. Xray JSON сохраняет эти настройки; форматы Singbox и Mihomo этот транспорт не поддерживают.
 
 ## Установка
 
@@ -34,7 +34,9 @@ Xera HTTP — наш форк транспорта XHTTP (SplitHTTP) из Xray-c
 curl -fsSL --proto '=https' --proto-redir '=https' https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh -o installer.sh && sudo bash installer.sh install-panel
 ```
 
-[Скачать installer.sh](https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh). Скрипт спросит версию выпуска, домен, reverse proxy, способ получения сертификата и email ACME. Доступны автоматический HTTPS, Cloudflare/Gcore DNS и готовый сертификат с ключом. Enter выбирает `latest`; `--version 1.2.24` закрепляет выпуск с панелью 1.1.7.4, нодой 1.1.5 и ядром 1.1.4. Он проверяет готовый образ и запускает PostgreSQL, Valkey, панель и Caddy. При собственном reverse proxy используйте `--proxy existing`. Контейнеры прежней установки обнаруживаются до вопросов и скачивания; для них выбирайте `upgrade-panel`. Обновление и миграция сохраняют существующий Nginx/Caddy и его сертификаты. HWID включён по умолчанию. После запуска откройте домен панели и создайте администратора.
+[Скачать installer.sh](https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh). Скрипт спросит версию выпуска, домен, reverse proxy, способ получения сертификата и email ACME. Доступны автоматический HTTPS, Cloudflare/Gcore DNS и готовый сертификат с ключом. Enter выбирает `latest`; `--version 1.2.25` закрепляет выпуск с панелью 1.1.7.5, нодой 1.1.6 и ядром 1.1.4. Он проверяет готовый образ и запускает PostgreSQL, Valkey, панель и Caddy. При собственном reverse proxy используйте `--proxy existing`. Контейнеры прежней установки обнаруживаются до вопросов и скачивания; для них выбирайте `upgrade-panel`. Обновление и миграция сохраняют существующий Nginx/Caddy и его сертификаты. HWID включён по умолчанию. После запуска откройте домен панели и создайте администратора.
+
+При новой установке скрипт также спросит пароль резервных копий. Enter создаёт случайный пароль. Он будет показан в конце установки и сохранён в защищённом файле `backup-password.txt` в каталоге панели; сохраните его отдельно для восстановления копий.
 
 Обновление и перенос существующей установки:
 
@@ -50,7 +52,7 @@ sudo bash installer.sh migrate-remnawave-panel --container remnawave
 ```bash
 git clone https://github.com/lottman/Remnacust-panel.git
 cd Remnacust-panel
-docker build -f panel/Dockerfile -t remnacust-panel:1.1.7.4 .
+docker build -f panel/Dockerfile -t remnacust-panel:1.1.7.5 .
 ```
 
 Это сборка образа. Для ручного запуска подготовьте окружение, БД и HTTPS по [README панели](panel/README.md). Исходники страницы подписки и её отдельная установка: [subscription-page/README.md](subscription-page/README.md).
@@ -68,5 +70,3 @@ docker build -f panel/Dockerfile -t remnacust-panel:1.1.7.4 .
 ## Лицензия
 
 Backend, frontend и страница подписки сохраняют лицензии Remnawave AGPL-3.0. Исходное авторство и лицензии зависимостей перечислены в [NOTICE.md](NOTICE.md). Официальные материалы Remnawave: [remna.st](https://remna.st/) и [docs.rw](https://docs.rw/).
-
-Установщик использует готовые образы GHCR с проверкой версии и архитектуры. Для новой панели HTTPS обслуживает Caddy в Docker, а не системный `nginx.service`. При обновлении или переносе существующей панели прежний Caddy/Nginx и его сертификаты сохраняются. Проверка контейнеров: `sudo remnacust status`.

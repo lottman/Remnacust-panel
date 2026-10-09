@@ -16,8 +16,4 @@
 }
 .newVersion {
     color: var(--panel-accent-text);
-    border-color: var(--panel-border);
-}
-.dev {
-    color: var(--mantine-color-yellow-6);
 }

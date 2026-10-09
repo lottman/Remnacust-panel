@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 
 import { isNonEmptyObject } from '@common/utils';
+import { configuredRegex } from '@common/utils/bounded-regex';
 import type {
     TRemnawaveInjectorSelectFrom,
     TRemnawaveInjectorSelector,
@@ -216,6 +217,7 @@ export class XrayJsonGeneratorService {
             )) as unknown as XrayJsonConfig;
 
             const configs: XrayJsonConfig[] = [];
+            const regexDeadline = Date.now() + 1000;
 
             for (const host of hosts) {
                 if (host.metadata.isHidden) continue;
@@ -227,11 +229,12 @@ export class XrayJsonGeneratorService {
                       templateContent);
 
                 if (baseTemplate.remnawave) {
-                    const injected = this.applyRemnawaveInjector(
+                    const injected = await this.applyRemnawaveInjector(
                         baseTemplate,
                         host,
                         hosts,
                         isExtendedClient,
+                        regexDeadline,
                     );
                     if (injected) configs.push(injected);
                     continue;
@@ -259,13 +262,17 @@ export class XrayJsonGeneratorService {
         }
     }
 
-
     private buildDomainRulesRouting(
         host: ResolvedProxyConfig,
         templateOutbounds: Outbound[],
     ): object | undefined {
         const rules = host.metadata.domainRules;
-        if (!rules || rules.mode === 'OFF' || !Array.isArray(rules.domains) || rules.domains.length === 0) {
+        if (
+            !rules ||
+            rules.mode === 'OFF' ||
+            !Array.isArray(rules.domains) ||
+            rules.domains.length === 0
+        ) {
             return undefined;
         }
         const domains = rules.domains.filter(
@@ -279,7 +286,10 @@ export class XrayJsonGeneratorService {
             if (!hasOutbound('block')) {
                 templateOutbounds.push({ tag: 'block', protocol: 'blackhole' } as Outbound);
             }
-            return { domainStrategy: 'IPIfNonMatch', rules: [{ domain: domains, outboundTag: 'block' }] };
+            return {
+                domainStrategy: 'IPIfNonMatch',
+                rules: [{ domain: domains, outboundTag: 'block' }],
+            };
         }
         if (!hasOutbound('block')) {
             templateOutbounds.push({ tag: 'block', protocol: 'blackhole' } as Outbound);
@@ -371,7 +381,11 @@ export class XrayJsonGeneratorService {
     private buildProtocolSettings(host: ResolvedProxyConfig): object {
         switch (host.protocol) {
             case 'masque':
-                return { address: host.address, port: host.port, remoteDNS: host.protocolOptions.remoteDNS };
+                return {
+                    address: host.address,
+                    port: host.port,
+                    remoteDNS: host.protocolOptions.remoteDNS,
+                };
             case 'vless':
                 return PROTOCOL_BUILDERS.vless(host);
             case 'trojan':
@@ -434,21 +448,13 @@ export class XrayJsonGeneratorService {
         );
     }
 
-    private parseRegex(pattern: string): RegExp | null {
-        try {
-            return new RegExp(pattern);
-        } catch {
-            this.logger.error(`Invalid regex pattern for injectHosts entry: ${pattern}`);
-            return null;
-        }
-    }
-
-    private resolveHosts(
+    private async resolveHosts(
         selector: TRemnawaveInjectorSelector,
         selectFrom: TRemnawaveInjectorSelectFrom,
         host: ResolvedProxyConfig,
         allHosts: ResolvedProxyConfig[],
-    ): ResolvedProxyConfig[] {
+        deadline: number,
+    ): Promise<ResolvedProxyConfig[]> {
         const source = selectFrom ?? 'HIDDEN';
         const recipientUuid = host.metadata.uuid;
         let candidates: ResolvedProxyConfig[] = [];
@@ -475,9 +481,19 @@ export class XrayJsonGeneratorService {
                     .filter(Boolean) as ResolvedProxyConfig[];
 
             case 'remarkRegex': {
-                const regex = this.parseRegex(selector.pattern);
-                if (!regex) return [];
-                return candidates.filter((h) => regex.test(h.finalRemark));
+                const selected: ResolvedProxyConfig[] = [];
+                for (const candidate of candidates) {
+                    if (
+                        await configuredRegex.test(
+                            selector.pattern,
+                            candidate.finalRemark,
+                            '',
+                            deadline,
+                        )
+                    )
+                        selected.push(candidate);
+                }
+                return selected;
             }
 
             case 'sameTagAsRecipient':
@@ -489,38 +505,50 @@ export class XrayJsonGeneratorService {
                 );
 
             case 'tagRegex': {
-                const regex = this.parseRegex(selector.pattern);
-                if (!regex) return [];
-                return candidates.filter(
-                    (h) => h.metadata.tags.length > 0 && h.metadata.tags.some((t) => regex.test(t)),
-                );
+                const selected: ResolvedProxyConfig[] = [];
+                for (const candidate of candidates) {
+                    for (const tag of candidate.metadata.tags) {
+                        if (await configuredRegex.test(selector.pattern, tag, '', deadline)) {
+                            selected.push(candidate);
+                            break;
+                        }
+                    }
+                }
+                return selected;
             }
         }
     }
 
-    private applyRemnawaveInjector(
+    private async applyRemnawaveInjector(
         baseTemplate: XrayJsonConfig,
         host: ResolvedProxyConfig,
         allHosts: ResolvedProxyConfig[],
         isExtendedClient: boolean,
-    ): XrayJsonConfig | null {
+        deadline: number,
+    ): Promise<XrayJsonConfig | null> {
         const { remnawave: injector, ...template } = baseTemplate;
         if (!injector) return null;
         if (!injector.injectHosts && !injector.addVirtualHostAsOutbound) return null;
 
-        const injectedOutbounds = [
-            ...(injector.addVirtualHostAsOutbound ? [this.buildOutbound(host, 'proxy')] : []),
-            ...(injector.injectHosts ?? []).flatMap((entry) => {
-                return this.buildTaggedOutbounds(
-                    this.resolveHosts(entry.selector, entry.selectFrom, host, allHosts),
-                    {
-                        tagPrefix: entry.tagPrefix,
-                        useHostRemarkAsTag: entry.useHostRemarkAsTag,
-                        useHostTagAsTag: entry.useHostTagAsTag,
-                    },
-                );
-            }),
-        ];
+        const injectedOutbounds = injector.addVirtualHostAsOutbound
+            ? [this.buildOutbound(host, 'proxy')]
+            : [];
+        for (const entry of injector.injectHosts ?? []) {
+            const selected = await this.resolveHosts(
+                entry.selector,
+                entry.selectFrom,
+                host,
+                allHosts,
+                deadline,
+            );
+            injectedOutbounds.push(
+                ...this.buildTaggedOutbounds(selected, {
+                    tagPrefix: entry.tagPrefix,
+                    useHostRemarkAsTag: entry.useHostRemarkAsTag,
+                    useHostTagAsTag: entry.useHostTagAsTag,
+                }),
+            );
+        }
 
         const config: XrayJsonConfig = {
             ...template,
@@ -531,8 +559,8 @@ export class XrayJsonGeneratorService {
         if (isExtendedClient) {
             config.meta = {
                 alwaysAvailable: host.metadata.alwaysAvailable === true,
-                    isRemark: host.metadata.uuid === '00000000-0000-0000-0000-000000000000',
-                    serverDescription: Buffer.from(
+                isRemark: host.metadata.uuid === '00000000-0000-0000-0000-000000000000',
+                serverDescription: Buffer.from(
                     host.clientOverrides.serverDescription ?? '',
                     'base64',
                 ).toString(),

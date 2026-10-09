@@ -3213,5 +3213,18 @@
         "disabled": "Disabled",
         "hidden": "Hidden",
         "visible": "Visible"
+    },
+    "panelUpdate": {
+        "update": "Update to {{version}}",
+        "warning": "The panel will be unavailable during the update.",
+        "setupRequired": "Updates from the panel are not configured. Update the installer on the server first.",
+        "startFailed": "Could not start the update. Check the panel status and try again.",
+        "running": "Updating panel",
+        "failed": "Update did not complete",
+        "checking": "Checking the installer release.",
+        "wait": "Please wait. This page will reload when the update finishes.",
+        "releaseNotReady": "The installer does not include this panel version yet. Try again later.",
+        "failureHint": "Check the update log on the server before trying again.",
+        "return": "Return to panel"
     }
 }

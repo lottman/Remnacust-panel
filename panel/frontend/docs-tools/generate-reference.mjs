@@ -245,9 +245,9 @@ for (const file of backendFiles)
     })
 const manifest = {
     generatedAt: new Date().toISOString(),
-    backendVersion: spec.info.version,
-    coreVersion: '1.1.2',
-    nodeVersion: '1.1.3',
+    backendVersion: JSON.parse(fs.readFileSync(path.join(backend, 'package.json'), 'utf8')).version,
+    coreVersion: '1.1.4',
+    nodeVersion: '1.1.6',
     upstreamPanelVersion: '3.4.5',
     upstreamBackendPatches: [
         {
@@ -269,9 +269,27 @@ const manifest = {
                 fa: 'فیلتر دقیق شناسه کاربران و گزارش‌های تورنت',
                 zh: '用户及种子报告的精确 ID 筛选'
             }
+        },
+        {
+            commit: 'ea12b0ba70d750b4e38c9be33dd55d5f155cdf95',
+            date: '2026-10-06',
+            description: {
+                ru: 'Настройка SNI при подключении к ноде',
+                en: 'SNI setting for node connections',
+                fa: 'تنظیم SNI برای اتصال نود',
+                zh: '节点连接 SNI 设置'
+            }
+        },
+        {
+            commit: '8274de8d14ca7c8bafac5435e02dc6ca2da03095',
+            date: '2026-10-06',
+            description: {
+                ru: 'Плагин postStart с уведомлением о запуске ядра',
+                en: 'postStart plugin with core startup notification',
+                fa: 'افزونه postStart برای اعلان شروع هسته',
+                zh: 'postStart 内核启动通知插件'
+            }
         }
-        ,{ commit: 'ea12b0ba70d750b4e38c9be33dd55d5f155cdf95', date: '2026-10-06', description: { ru: 'Настройка SNI при подключении к ноде', en: 'SNI setting for node connections', fa: 'تنظیم SNI برای اتصال نود', zh: '节点连接 SNI 设置' } },
-        { commit: '8274de8d14ca7c8bafac5435e02dc6ca2da03095', date: '2026-10-06', description: { ru: 'Плагин postStart с уведомлением о запуске ядра', en: 'postStart plugin with core startup notification', fa: 'افزونه postStart برای اعلان شروع هسته', zh: 'postStart 内核启动通知插件' } }
     ],
     upstreamBackendCommit: '010b365ab1fabea01192b5e6ade4e98e66ee1dbd',
     upstreamFrontendCommit: '36df977a8d985be2c35a586529250506c749c354',
@@ -288,9 +306,4 @@ const manifest = {
     specSha256: crypto.createHash('sha256').update(JSON.stringify(spec)).digest('hex')
 }
 fs.writeFileSync(path.join(output, 'manifest.json'), JSON.stringify(manifest, null, 2))
-fs.mkdirSync(path.resolve(root, '../audit-documentation-20261001'), { recursive: true })
-fs.writeFileSync(
-    path.resolve(root, '../audit-documentation-20261001/source-inventory.json'),
-    JSON.stringify(inventory, null, 2)
-)
 console.log(JSON.stringify(manifest))

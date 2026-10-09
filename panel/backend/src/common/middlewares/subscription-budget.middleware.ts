@@ -4,7 +4,8 @@ import { RequestHandler } from 'express';
 export function subscriptionBudget(maximum = 64): RequestHandler {
     let active = 0;
     return (req, res, next) => {
-        if (!req.path.startsWith('/api/sub/')) return next();
+        // Express routes are case-insensitive unless explicitly configured otherwise.
+        if (!req.path.toLowerCase().startsWith('/api/sub/')) return next();
         if (active >= maximum) {
             res.set('Cache-Control', 'private, no-store');
             res.set('Retry-After', '2');

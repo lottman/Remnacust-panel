@@ -329,7 +329,11 @@ export class SystemService implements OnApplicationBootstrap {
 
             const inputHeaders = request.headers;
 
-            const result = this.srrMatcher.matchRules(parsedResponseRules, inputHeaders, undefined);
+            const result = await this.srrMatcher.matchRules(
+                parsedResponseRules,
+                inputHeaders,
+                undefined,
+            );
 
             const responseBody = {
                 matched: result.matched,

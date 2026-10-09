@@ -39,6 +39,7 @@ import {
     TbDownload,
     TbLink,
     TbSearch,
+    TbVersions,
     TbX
 } from 'react-icons/tb'
 import ReactMarkdown from 'react-markdown'
@@ -245,13 +246,8 @@ function DocumentationContentPage({ mode }: { mode: 'guide' | 'api' }) {
     }, [articleId, operationId, schemaName, mode])
     const copyLink = async () => {
         const url = new URL(window.location.href)
-        if (url.pathname.endsWith('.audit-design.html')) {
-            url.searchParams.set('view', apiMode ? 'api' : 'documentation')
-            for (const [key, value] of params) url.searchParams.set(key, value)
-        } else {
-            url.pathname = location.pathname
-            url.search = params.toString()
-        }
+        url.pathname = location.pathname
+        url.search = params.toString()
         url.hash = location.hash
         try {
             await navigator.clipboard.writeText(url.href)
@@ -331,7 +327,8 @@ function DocumentationContentPage({ mode }: { mode: 'guide' | 'api' }) {
                     </Button>
                     <Button
                         component={Link}
-                        to={`${ROUTES.DASHBOARD.DOCUMENTATION.GUIDE}?tab=versions`}
+                        to={`${ROUTES.DASHBOARD.DOCUMENTATION.GUIDE}?tab=versions&language=${language}`}
+                        leftSection={<TbVersions size={17} />}
                         variant="subtle"
                     >
                         {compatibilityTabLabel(language)}

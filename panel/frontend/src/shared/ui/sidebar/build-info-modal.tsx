@@ -1,7 +1,6 @@
 import {
     ActionIcon,
     Badge,
-    Box,
     Button,
     CopyButton,
     Divider,
@@ -30,6 +29,7 @@ import { formatTimeUtil } from '@shared/utils/time-utils'
 
 import { CopyableCodeBlock } from '../copyable-code-block'
 import { Logo } from '../logo'
+import { PanelUpdateButton } from '../panel-update-gate/panel-update-button'
 import classes from './build-info-modal.module.css'
 
 interface BuildInfoModalProps {
@@ -42,40 +42,6 @@ export function BuildInfoModal({ remnawaveMetadata, isNewVersionAvailable }: Bui
 
     return (
         <Stack gap="md">
-            {isNewVersionAvailable && (
-                <Paper className={classes.updateCard} p="md" radius="md">
-                    <Group align="center" gap="md" wrap="wrap">
-                        <Group gap="sm" wrap="nowrap">
-                            <Box className={classes.updateIconBox}>
-                                <Logo color="var(--mantine-color-teal-4)" size={24} />
-                            </Box>
-                            <Stack className={classes.updateTextWrapper} gap={4}>
-                                <Text c="teal.4" fw={600} size="sm">
-                                    {uiText('update-available-ff8b555')}
-                                </Text>
-                                <Text c="dimmed" size="xs">
-                                    {uiText('a-new-version-is-available-e848cbe')}
-                                </Text>
-                            </Stack>
-                        </Group>
-
-                        <Button
-                            color="teal"
-                            component="a"
-                            href="https://github.com/lottman/Remnacust-panel/releases"
-                            leftSection={<TbBrandGithub size={14} />}
-                            ml="auto"
-                            radius="md"
-                            size="xs"
-                            target="_blank"
-                            variant="light"
-                        >
-                            {uiText('check-out-326e405')}
-                        </Button>
-                    </Group>
-                </Paper>
-            )}
-
             <Paper className={classes.mainCard} p="md">
                 <Stack gap="md">
                     <Group justify="space-between">
@@ -241,6 +207,7 @@ export function BuildInfoModal({ remnawaveMetadata, isNewVersionAvailable }: Bui
                     GitHub
                 </Button>
             </Group>
+            <PanelUpdateButton available={isNewVersionAvailable} />
         </Stack>
     )
 }

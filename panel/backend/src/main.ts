@@ -34,6 +34,7 @@ import { boundedJsonParser } from '@common/middlewares/bounded-json.middleware';
 import { subscriptionBudget } from '@common/middlewares/subscription-budget.middleware';
 import { RawCacheService } from '@common/raw-cache';
 import { customLogFilter } from '@common/utils/filter-logs';
+import { httpLogPath } from '@common/utils/http-log-path';
 import { getDocs, isDevelopment, isDevOrDebugLogsEnabled } from '@common/utils/startup-app';
 
 import { AppModule } from './app.module';
@@ -131,7 +132,7 @@ async function bootstrap(): Promise<void> {
     if (config.getOrThrow('IS_HTTP_LOGGING_ENABLED')) {
         // The backend-tools login uses a one-time token in the query string.
         // Never include query parameters in access logs.
-        morgan.token('safe-path', (req) => req.url?.split('?', 1)[0] ?? '');
+        morgan.token('safe-path', (req) => httpLogPath(req.url));
         app.use(
             morgan(
                 ':remote-addr - ":method :safe-path HTTP/:http-version" :status :res[content-length] ":user-agent"',

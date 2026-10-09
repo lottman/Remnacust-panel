@@ -35,7 +35,12 @@ export const RemnawaveSettingsPageComponent = (props: IProps) => {
         <Page title={t('constants.remnawave-settings')}>
             <PageHeaderShared icon={<Logo size={24} />} title={t('constants.remnawave-settings')} />
             <Container fluid p={0} size="xl">
-                <SimpleGrid cols={{ base: 1, xl: 2 }} spacing="lg" verticalSpacing="lg">
+                <SimpleGrid
+                    cols={{ base: 1, xl: 2 }}
+                    spacing="lg"
+                    verticalSpacing="lg"
+                    style={{ alignItems: 'start' }}
+                >
                     <AuthentificationSettingsCardWidget
                         oauth2Settings={remnawaveSettings.oauth2Settings}
                         passkeySettings={remnawaveSettings.passkeySettings}

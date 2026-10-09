@@ -14,7 +14,7 @@ import {
 
 import { HashedSet } from '@remnawave/hashed-set';
 
-import { readPemLines } from '@common/utils/certs';
+import { readPemLines, UnsafePemFileError } from '@common/utils/certs';
 import { getVlessFlow } from '@common/utils/flow/get-vless-flow';
 
 import { UserForConfigEntity } from '@modules/users/entities/users-for-config';
@@ -28,7 +28,11 @@ import {
 } from './ss-cipher';
 
 const MANAGED_CLIENT_PROTOCOLS = new Set(['hysteria', 'masque', 'shadowsocks', 'trojan', 'vless']);
-type ManagedInboundSettings = VLessInboundConfig | TrojanInboundConfig | ShadowsocksInboundConfig | MasqueInboundConfig;
+type ManagedInboundSettings =
+    | VLessInboundConfig
+    | TrojanInboundConfig
+    | ShadowsocksInboundConfig
+    | MasqueInboundConfig;
 
 const ALLOWED_PROTOCOLS = new Set([
     'dokodemo-door',
@@ -112,7 +116,14 @@ export class XRayConfig {
                 tag: inbound.tag!,
                 rawInbound: inbound as unknown as object,
                 type: inbound.protocol,
-                network: ((inbound.streamSettings as { method?: string; network?: string } | undefined)?.method ?? inbound.streamSettings?.network)?.toLowerCase() ?? null,
+                network:
+                    (
+                        (
+                            inbound.streamSettings as
+                                | { method?: string; network?: string }
+                                | undefined
+                        )?.method ?? inbound.streamSettings?.network
+                    )?.toLowerCase() ?? null,
                 security: inbound.streamSettings?.security ?? null,
                 port: this.parsePort(inbound.port),
             }));
@@ -159,7 +170,8 @@ export class XRayConfig {
             }
 
             return resolved;
-        } catch {
+        } catch (error) {
+            if (error instanceof UnsafePemFileError) throw error;
             return cert;
         }
     }
@@ -270,7 +282,11 @@ export class XRayConfig {
                 inbound.settings ??= {};
                 inbound.settings.clients ??= [];
                 for (const user of users) {
-                    inbound.settings.clients.push({ email: user.id.toString(), pass: user.vlessUuid, level: 0 });
+                    inbound.settings.clients.push({
+                        email: user.id.toString(),
+                        pass: user.vlessUuid,
+                        level: 0,
+                    });
                 }
                 break;
 
@@ -310,7 +326,9 @@ export class XRayConfig {
             }
 
             default:
-                throw new XrayConfigValidationError(`Protocol ${inbound.protocol} is not supported.`);
+                throw new XrayConfigValidationError(
+                    `Protocol ${inbound.protocol} is not supported.`,
+                );
         }
     }
 
@@ -452,14 +470,26 @@ export class XRayConfig {
     }
 
     private validateNetwork(inbound: InboundConfig): void {
-        if (inbound.streamSettings && (typeof inbound.streamSettings !== 'object' || Array.isArray(inbound.streamSettings))) {
-            throw new XrayConfigValidationError(`Inbound "${inbound.tag}": streamSettings must be an object.`);
+        if (
+            inbound.streamSettings &&
+            (typeof inbound.streamSettings !== 'object' || Array.isArray(inbound.streamSettings))
+        ) {
+            throw new XrayConfigValidationError(
+                `Inbound "${inbound.tag}": streamSettings must be an object.`,
+            );
         }
-        const transport = (inbound.streamSettings as { method?: string } | undefined)?.method ?? inbound.streamSettings?.network;
+        const transport =
+            (inbound.streamSettings as { method?: string } | undefined)?.method ??
+            inbound.streamSettings?.network;
         if (transport !== undefined && typeof transport !== 'string') {
-            throw new XrayConfigValidationError(`Inbound "${inbound.tag}": network must be a string.`);
+            throw new XrayConfigValidationError(
+                `Inbound "${inbound.tag}": network must be a string.`,
+            );
         }
-        const network = ((inbound.streamSettings as { method?: string } | undefined)?.method ?? inbound.streamSettings?.network)?.toLowerCase();
+        const network = (
+            (inbound.streamSettings as { method?: string } | undefined)?.method ??
+            inbound.streamSettings?.network
+        )?.toLowerCase();
         if (network && !ALLOWED_NETWORKS.has(network)) {
             throw new XrayConfigValidationError(
                 `Invalid network type "${network}" in inbound "${inbound.tag}". ` +
@@ -470,7 +500,9 @@ export class XRayConfig {
 
     private validateProtocol(inbound: InboundConfig): void {
         if (typeof inbound.protocol !== 'string' || !inbound.protocol.trim()) {
-            throw new XrayConfigValidationError(`Inbound "${inbound.tag ?? '?'}": field "protocol" is required.`);
+            throw new XrayConfigValidationError(
+                `Inbound "${inbound.tag ?? '?'}": field "protocol" is required.`,
+            );
         }
         if (!ALLOWED_PROTOCOLS.has(inbound.protocol)) {
             throw new XrayConfigValidationError(
@@ -481,12 +513,19 @@ export class XRayConfig {
     }
 
     private validateMasque(inbound: InboundConfig): void {
-        const network = ((inbound.streamSettings as { method?: string } | undefined)?.method ?? inbound.streamSettings?.network)?.toLowerCase();
+        const network = (
+            (inbound.streamSettings as { method?: string } | undefined)?.method ??
+            inbound.streamSettings?.network
+        )?.toLowerCase();
         if (network === 'masque' && inbound.protocol !== 'masque') {
-            throw new XrayConfigValidationError('The masque transport requires the masque protocol.');
+            throw new XrayConfigValidationError(
+                'The masque transport requires the masque protocol.',
+            );
         }
-        if (inbound.protocol === 'masque' &&
-            (network !== 'masque' || inbound.streamSettings?.security !== 'tls')) {
+        if (
+            inbound.protocol === 'masque' &&
+            (network !== 'masque' || inbound.streamSettings?.security !== 'tls')
+        ) {
             throw new XrayConfigValidationError('MASQUE requires network masque and TLS security.');
         }
     }

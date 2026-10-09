@@ -3213,5 +3213,18 @@
         "disabled": "已禁用",
         "hidden": "隐藏",
         "visible": "可见"
+    },
+    "panelUpdate": {
+        "update": "更新至 {{version}}",
+        "warning": "更新期间面板将无法使用。",
+        "setupRequired": "尚未配置面板内更新。请先更新服务器上的安装程序。",
+        "startFailed": "无法开始更新。请检查面板状态后重试。",
+        "running": "正在更新面板",
+        "failed": "更新未完成",
+        "checking": "正在检查安装程序版本。",
+        "wait": "请稍候。更新完成后页面会自动重新加载。",
+        "releaseNotReady": "安装程序尚未包含此面板版本。请稍后重试。",
+        "failureHint": "重试前请检查服务器上的更新日志。",
+        "return": "返回面板"
     }
 }

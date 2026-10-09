@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 
 import { useIsMobile } from '@shared/hooks'
 import { HeaderControls } from '@shared/ui/header-buttons'
+import { PanelUpdateGate } from '@shared/ui/panel-update-gate/panel-update-gate'
 import { QuickLauncher } from '@shared/ui/quick-launcher'
 
 import {
@@ -24,7 +25,16 @@ export function MainLayout() {
     const isLoadingUpdates = useIsLoadingRemnawaveUpdates()
     const { getRemnawaveInfo } = useUpdatesStoreActions()
     useEffect(() => {
-        void getRemnawaveInfo()
+        const refresh = () => {
+            if (document.visibilityState === 'visible') void getRemnawaveInfo()
+        }
+        refresh()
+        const timer = window.setInterval(refresh, 30 * 60 * 1000)
+        window.addEventListener('focus', refresh)
+        return () => {
+            window.clearInterval(timer)
+            window.removeEventListener('focus', refresh)
+        }
     }, [getRemnawaveInfo])
     const launcherRoutes = useQuickLauncherRoutes()
 
@@ -42,19 +52,21 @@ export function MainLayout() {
 
     if (isMobile) {
         return (
-            <MobileLayout
-                headerControls={headerControls}
-                isSocialButtons={isMobile}
-                isLoadingUpdates={isLoadingUpdates}
-                remnawaveInfo={remnawaveInfo}
-            />
+            <PanelUpdateGate>
+                <MobileLayout
+                    headerControls={headerControls}
+                    isSocialButtons={isMobile}
+                    isLoadingUpdates={isLoadingUpdates}
+                    remnawaveInfo={remnawaveInfo}
+                />
+            </PanelUpdateGate>
         )
     }
 
     return (
-        <>
+        <PanelUpdateGate>
             <SidebarLayout headerControls={headerControls} />
             <QuickLauncher routes={launcherRoutes} />
-        </>
+        </PanelUpdateGate>
     )
 }

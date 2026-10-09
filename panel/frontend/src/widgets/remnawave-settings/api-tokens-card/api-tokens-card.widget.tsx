@@ -48,7 +48,7 @@ export const ApiTokensCardWidget = (props: IProps) => {
 
             <SettingsCardShared.Content>
                 {apiTokensData.tokens.length === 0 && (
-                    <Center h="300px">
+                    <Center mih={160} p="lg">
                         <Stack align="center" gap="xs">
                             <PiEmpty size={48} />
                             <Text c="dimmed" size="sm" ta="center">
@@ -75,7 +75,7 @@ export const ApiTokensCardWidget = (props: IProps) => {
                                         </Text>
                                         <span />
                                     </Box>
-                                    <ScrollArea.Autosize mah={300} mih={300}>
+                                    <ScrollArea.Autosize mah={300} type="auto">
                                         <Stack gap={0}>
                                             {apiTokensData.tokens.map((apiToken) => (
                                                 <ApiTokenItem

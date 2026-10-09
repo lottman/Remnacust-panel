@@ -21,3 +21,18 @@ editor/go/assets/xray-remnacust/
 release/
 
 *.tar.gz.sha256
+
+.private/
+.playwright-cli/
+playwright-report/
+test-results/
+.superdesign/
+audit-*.json
+*.tmp
+*.bak
+*.orig
+*.rej
+*.pyc
+*~
+backup-password.txt
+.backup-key

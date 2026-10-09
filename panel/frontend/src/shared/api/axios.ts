@@ -73,6 +73,10 @@ instance.interceptors.response.use(
         return response
     },
     async (error) => {
+        if (error.response?.data?.errorCode === 'PANEL_UPDATING') {
+            window.dispatchEvent(new Event('remnacust-panel-updating'))
+            return Promise.reject(error)
+        }
         if (
             axios.isAxiosError(error) &&
             ([502, 503, 504].includes(error.response?.status ?? 0) ||
@@ -81,11 +85,15 @@ instance.interceptors.response.use(
             return retryRead(error, error.config)
         if (error.response) {
             const responseStatus = error.response.status
-            const requestAuthorization = error.config?.headers?.get?.('Authorization')
-                ?? error.config?.headers?.Authorization
+            const requestAuthorization =
+                error.config?.headers?.get?.('Authorization') ??
+                error.config?.headers?.Authorization
             // A late response from an old session must not log out a newer login.
-            if (responseStatus === 401 && authorizationToken &&
-                requestAuthorization === `Bearer ${authorizationToken}`) {
+            if (
+                responseStatus === 401 &&
+                authorizationToken &&
+                requestAuthorization === `Bearer ${authorizationToken}`
+            ) {
                 try {
                     logoutEvents.emit()
                 } catch (error) {

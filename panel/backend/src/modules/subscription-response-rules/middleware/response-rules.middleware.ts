@@ -6,6 +6,7 @@ import { Injectable, NestMiddleware, Logger } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 
 import { HttpExceptionWithErrorCodeType } from '@common/exception/http-exeception-with-error-code.type';
+import { configuredRegex } from '@common/utils/bounded-regex';
 import { extractHwidHeaders } from '@common/utils/extract-hwid-headers/extract-hwid-headers.util';
 import { truncateHeader } from '@common/utils/truncate-header.util';
 import {
@@ -22,7 +23,6 @@ import { ResponseRulesMatcherService } from '../services/response-rules-matcher.
 @Injectable()
 export class ResponseRulesMiddleware implements NestMiddleware {
     private readonly logger = new Logger(ResponseRulesMiddleware.name);
-    private readonly regexCache = new Map<string, RegExp>();
 
     constructor(
         private readonly queryBus: QueryBus,
@@ -59,7 +59,7 @@ export class ResponseRulesMiddleware implements NestMiddleware {
                 overrideClientType = req.params.clientType as unknown as TRequestTemplateTypeKeys;
             }
 
-            const result = this.matcher.matchRules(
+            const result = await this.matcher.matchRules(
                 settingsEntity.responseRules,
                 {
                     ...req.headers,
@@ -79,7 +79,7 @@ export class ResponseRulesMiddleware implements NestMiddleware {
             const ssrContext: ISRRContext = {
                 userAgent,
                 hwidHeaders: extractHwidHeaders(req),
-                isExtendedClient: this.resolveExtendedClients(
+                isExtendedClient: await this.resolveExtendedClients(
                     userAgent,
                     result.matchedRule?.responseModifications?.additionalExtendedClientsRegex,
                 ),
@@ -164,22 +164,18 @@ export class ResponseRulesMiddleware implements NestMiddleware {
         }
     }
 
-    private resolveExtendedClients(
+    private async resolveExtendedClients(
         userAgent: string,
         clientRegexes: string[] | undefined,
-    ): boolean {
+    ): Promise<boolean> {
         if (isExtendedClient(userAgent)) {
             return true;
         }
 
         if (clientRegexes && clientRegexes.length > 0) {
+            const deadline = Date.now() + 1000;
             for (const pattern of clientRegexes) {
-                let compiled = this.regexCache.get(pattern);
-                if (!compiled) {
-                    compiled = new RegExp(pattern);
-                    this.regexCache.set(pattern, compiled);
-                }
-                if (compiled.test(userAgent)) {
+                if (await configuredRegex.test(pattern, userAgent, '', deadline)) {
                     return true;
                 }
             }

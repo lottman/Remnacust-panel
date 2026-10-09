@@ -7,6 +7,7 @@ import type {
 
 import { Injectable, Logger } from '@nestjs/common';
 
+import { configuredRegex, RegexBudgetError } from '@common/utils/bounded-regex';
 import {
     REQUEST_TEMPLATE_TYPE,
     RESPONSE_RULES_CONDITION_OPERATORS,
@@ -20,11 +21,11 @@ import {
 export class ResponseRulesMatcherService {
     private readonly logger = new Logger(ResponseRulesMatcherService.name);
 
-    public matchRules(
+    public async matchRules(
         responseRules: TResponseRulesConfig,
         requestHeaders: Record<string, string | string[] | undefined>,
         overrideClientType: TRequestTemplateTypeKeys | undefined,
-    ): ISrrMatchedResult {
+    ): Promise<ISrrMatchedResult> {
         if (overrideClientType) {
             if (responseRules.settings && responseRules.settings.disableSubscriptionAccessByPath) {
                 return {
@@ -36,12 +37,20 @@ export class ResponseRulesMatcherService {
             return this.handleOverrideClientType(overrideClientType);
         }
 
+        const deadline = Date.now() + 1000;
         for (const rule of responseRules.rules) {
             if (!rule.enabled) {
                 continue;
             }
 
-            const matched = this.matchRule(rule, requestHeaders);
+            let matched: boolean;
+            try {
+                matched = await this.matchRule(rule, requestHeaders, deadline);
+            } catch (error) {
+                if (!(error instanceof RegexBudgetError)) throw error;
+                // A failed NOT_REGEX must not become a match or fall through to an allow rule.
+                return { matched: true, responseType: 'BLOCK' };
+            }
 
             if (matched) {
                 return {
@@ -55,32 +64,36 @@ export class ResponseRulesMatcherService {
         return { matched: false };
     }
 
-    private matchRule(
+    private async matchRule(
         rule: TResponseRule,
         requestHeaders: Record<string, string | string[] | undefined>,
-    ): boolean {
+        deadline: number,
+    ): Promise<boolean> {
         if (rule.conditions.length === 0) {
             // Assuming that if there are no conditions, the rule should be matched
             return true;
         }
 
         if (rule.operator === RESPONSE_RULES_OPERATORS.AND) {
-            return rule.conditions.every((condition) =>
-                this.matchCondition(condition, requestHeaders),
-            );
+            for (const condition of rule.conditions) {
+                if (!(await this.matchCondition(condition, requestHeaders, deadline))) return false;
+            }
+            return true;
         } else if (rule.operator === RESPONSE_RULES_OPERATORS.OR) {
-            return rule.conditions.some((condition) =>
-                this.matchCondition(condition, requestHeaders),
-            );
+            for (const condition of rule.conditions) {
+                if (await this.matchCondition(condition, requestHeaders, deadline)) return true;
+            }
+            return false;
         }
 
         throw new Error(`Unknown operator: ${rule.operator}`);
     }
 
-    private matchCondition(
+    private async matchCondition(
         condition: TResponseRuleCondition,
         requestHeaders: Record<string, string | string[] | undefined>,
-    ): boolean {
+        deadline: number,
+    ): Promise<boolean> {
         let headerValue = this.getHeaderValue(requestHeaders, condition.headerName);
 
         if (headerValue === undefined) {
@@ -89,19 +102,25 @@ export class ResponseRulesMatcherService {
 
         let compareValue = condition.value;
 
-        if (!condition.caseSensitive) {
+        if (
+            !condition.caseSensitive &&
+            condition.operator !== 'REGEX' &&
+            condition.operator !== 'NOT_REGEX'
+        ) {
             compareValue = compareValue.toLowerCase();
             headerValue = headerValue.toLowerCase();
         }
 
         try {
-            return this.applyOperator(
+            return await this.applyOperator(
                 headerValue,
                 condition.operator,
                 compareValue,
                 condition.caseSensitive,
+                deadline,
             );
         } catch (error) {
+            if (error instanceof RegexBudgetError) throw error;
             this.logger.error(`Error matching condition "${condition.headerName}": ${error}`);
             return false;
         }
@@ -116,12 +135,13 @@ export class ResponseRulesMatcherService {
         return Array.isArray(headerValue) ? headerValue.join(',') : headerValue;
     }
 
-    private applyOperator(
+    private async applyOperator(
         headerValue: string,
         operator: TResponseRulesConditionOperator,
         compareValue: string,
         caseSensitive: boolean = true,
-    ): boolean {
+        deadline = Date.now() + 1000,
+    ): Promise<boolean> {
         switch (operator) {
             case RESPONSE_RULES_CONDITION_OPERATORS.EQUALS:
                 return headerValue === compareValue;
@@ -148,22 +168,20 @@ export class ResponseRulesMatcherService {
                 return !headerValue.endsWith(compareValue);
 
             case RESPONSE_RULES_CONDITION_OPERATORS.REGEX:
-                try {
-                    const regex = new RegExp(compareValue, caseSensitive ? '' : 'i');
-                    return regex.test(headerValue);
-                } catch {
-                    this.logger.error(`Invalid regex: ${compareValue}`);
-                    return false;
-                }
+                return configuredRegex.test(
+                    compareValue,
+                    headerValue,
+                    caseSensitive ? '' : 'i',
+                    deadline,
+                );
 
             case RESPONSE_RULES_CONDITION_OPERATORS.NOT_REGEX:
-                try {
-                    const regex = new RegExp(compareValue, caseSensitive ? '' : 'i');
-                    return !regex.test(headerValue);
-                } catch {
-                    this.logger.error(`Invalid regex: ${compareValue}`);
-                    return false;
-                }
+                return !(await configuredRegex.test(
+                    compareValue,
+                    headerValue,
+                    caseSensitive ? '' : 'i',
+                    deadline,
+                ));
 
             default:
                 throw new Error(`Unknown operator: ${operator}`);

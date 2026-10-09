@@ -31,6 +31,7 @@ const { ConfigProfileService } = source('modules/config-profiles/config-profile.
 
 function setup(queueFails = false) {
     const events = [];
+    const queued = [];
     const record = { uuid: 'profile', name: 'Profile', config: config(), inbounds: [], nodes: [] };
     const repository = {
         getConfigProfileByUUID: async () => record,
@@ -39,10 +40,19 @@ function setup(queueFails = false) {
         createManyConfigProfileInbounds: async rows => events.push(['inbounds', rows]),
         update: async changes => { events.push('write'); Object.assign(record, changes); return record; },
     };
-    const queues = { startAllNodesByProfile: async () => { events.push('queue'); if (queueFails) throw Error('redis unavailable'); } };
+    const queues = { startAllNodesByProfile: async payload => { queued.push(payload); events.push('queue'); if (queueFails) throw Error('redis unavailable'); } };
     const cache = { delMany: async () => events.push('cache') };
-    return { service: new ConfigProfileService(repository, queues, {}, cache), record, events };
+    return { service: new ConfigProfileService(repository, queues, {}, cache), record, events, queued };
 }
+
+test('saving unchanged config queues only the selected profile so updated snippets can be applied', async () => {
+    const { service, record, events, queued } = setup();
+    const result = await service.updateConfigProfile(record.uuid, undefined, structuredClone(record.config));
+    assert.equal(result.isOk, true);
+    assert.equal(result.response.applyStatus, 'queued');
+    assert.deepEqual(queued, [{ profileUuid: record.uuid, emitter: 'updateConfigProfile' }]);
+    assert.ok(events.indexOf('cache') < events.indexOf('queue'));
+});
 
 test('missing/misspelled protocol and malformed config are rejected with a config error', () => {
     for (const value of [null, [], 'null', { inbounds: {} }, { inbounds: [null] }, { inbounds: [{ tag: 'SERVICE', protol: 'vless' }] }, { inbounds: [{ tag: 'SERVICE', protocol: 5 }] }]) {

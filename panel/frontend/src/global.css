@@ -308,6 +308,9 @@ body {
     }
 }
 @media (pointer: coarse) {
+    html.panel-themed .mantine-Input-input {
+        font-size: max(16px, var(--input-fz, 16px));
+    }
     .mantine-Menu-item,
     .mantine-Combobox-option {
         min-height: 44px;

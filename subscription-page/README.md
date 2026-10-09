@@ -19,7 +19,7 @@ curl -fsSL --proto '=https' --proto-redir '=https' https://github.com/lottman/Re
 Из этой папки:
 
 ```bash
-docker build -t remnacust-subscription-page:1.1.7.8 .
+docker build -t remnacust-subscription-page:1.1.7.9 .
 ```
 
 Образ самостоятельно собирает backend и frontend. Исходники панели для этой сборки не нужны.
@@ -30,7 +30,7 @@ docker build -t remnacust-subscription-page:1.1.7.8 .
 
 При размещении в Docker-сети панели адрес может быть `http://remnawave:3000`. Публичный домен направьте через HTTPS reverse proxy на порт `3010`. API и секреты панели в браузер не передаются.
 
-Для существующей установки замените только образ сервиса `remnawave-subscription-page` на `remnacust-subscription-page:1.1.7.8`. Сохраните окружение, Docker-сеть, порт и `CUSTOM_SUB_PREFIX`. Затем запустите только этот сервис:
+Для существующей установки замените только образ сервиса `remnawave-subscription-page` на `remnacust-subscription-page:1.1.7.9`. Сохраните окружение, Docker-сеть, порт и `CUSTOM_SUB_PREFIX`. Затем запустите только этот сервис:
 
 ```bash
 docker compose up -d --no-deps --pull never remnawave-subscription-page

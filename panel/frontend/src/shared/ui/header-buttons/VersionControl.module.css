@@ -16,4 +16,23 @@
 }
 .newVersion {
     color: var(--panel-accent-text);
+    animation: updatePulse 3s ease-in-out infinite;
+}
+.version[data-update-available] .icon {
+    color: var(--panel-accent-text);
+    animation: updatePulse 3s ease-in-out infinite;
+}
+@keyframes updatePulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.65;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .newVersion,
+    .version[data-update-available] .icon {
+        animation: none;
+    }
 }

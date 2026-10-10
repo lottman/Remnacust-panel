@@ -247,7 +247,7 @@ export const BaseHostForm = <
                                         key={form.key('remark')}
                                         label={t('base-host-form.remark')}
                                         {...form.getInputProps('remark')}
-                                        leftSection={<TemplateInfoPopoverShared compact />}
+                                        rightSection={<TemplateInfoPopoverShared compact />}
                                         required={!removeRequiredFields}
                                     />
 

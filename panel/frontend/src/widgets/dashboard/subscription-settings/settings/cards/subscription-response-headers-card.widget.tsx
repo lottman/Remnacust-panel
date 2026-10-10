@@ -8,7 +8,7 @@ import { PiChatsCircle, PiInfo, PiPlus, PiTrash } from 'react-icons/pi'
 import { HelpActionIconShared } from '@shared/_modals/universal/help-drawer/help-action-icon.shared'
 import { queryClient } from '@shared/api'
 import { QueryKeys, useUpdateSubscriptionSettings } from '@shared/api/hooks'
-import { FlagTextarea } from '@shared/ui/flag-picker/flag-picker'
+import { FlagPickerButton, FlagTextarea } from '@shared/ui/flag-picker/flag-picker'
 import { TemplateInfoPopoverShared } from '@shared/ui/popovers/template-info-popover/template-info-popover.shared'
 import { SettingsCardShared } from '@shared/ui/settings-card'
 import { handleFormErrors, sortResponseHeadersByPriority } from '@shared/utils/misc'
@@ -204,7 +204,7 @@ export const SubscriptionResponseHeadersCardWidget = (props: IProps) => {
                                     />
                                     <FlagTextarea
                                         autosize
-                                        leftSection={<TemplateInfoPopoverShared compact />}
+                                        rightSection={<TemplateInfoPopoverShared compact />}
                                         maxRows={6}
                                         minRows={1}
                                         onChange={(e) =>
@@ -235,7 +235,10 @@ export const SubscriptionResponseHeadersCardWidget = (props: IProps) => {
                 <SettingsCardShared.Bottom>
                     <Group justify="flex-end">
                         <HelpActionIconShared screen="PAGE_RESPONSE_HEADERS" />
-                        <TemplateInfoPopoverShared />
+                        <Group gap={0} wrap="nowrap">
+                            <TemplateInfoPopoverShared compact />
+                            <FlagPickerButton />
+                        </Group>
 
                         <Button
                             leftSection={<PiPlus size="16px" />}

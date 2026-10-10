@@ -1,0 +1,92 @@
+.button {
+    --field-action-size: 30px;
+    --field-icon-size: 20px;
+
+    position: relative;
+    isolation: isolate;
+    flex-shrink: 0;
+    overflow: visible;
+    border: 0;
+    background: transparent;
+    color: var(--panel-accent-text, var(--mantine-primary-color-light-color));
+}
+
+.button[data-compact] {
+    --field-action-size: 24px;
+    --field-icon-size: 16px;
+}
+
+.button::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    inline-size: var(--field-action-size);
+    block-size: var(--field-action-size);
+    border: 1px solid color-mix(in srgb, var(--panel-accent, currentColor) 24%, transparent);
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--panel-accent, currentColor) 8%, transparent);
+    pointer-events: none;
+    transition:
+        background-color 160ms ease,
+        border-color 160ms ease;
+}
+
+.icon {
+    position: relative;
+}
+
+.icon svg {
+    inline-size: var(--field-icon-size);
+    block-size: var(--field-icon-size);
+    flex-shrink: 0;
+}
+
+.button:not(:disabled, [data-disabled]):focus-visible::before {
+    border-color: var(--panel-accent, currentColor);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .button:not(:disabled, [data-disabled]):hover::before {
+        border-color: color-mix(in srgb, var(--panel-accent, currentColor) 48%, transparent);
+        background: color-mix(in srgb, var(--panel-accent, currentColor) 16%, transparent);
+    }
+}
+
+:global(html.panel-themed)
+    .button[data-field-action]:not(:disabled, [data-disabled]):is(:hover, :active) {
+    transform: none;
+    box-shadow: none;
+}
+
+.button:not(:disabled, [data-disabled]):active::before {
+    background: color-mix(in srgb, var(--panel-accent, currentColor) 22%, transparent);
+}
+
+.button:disabled,
+.button[data-disabled] {
+    color: var(--panel-muted, var(--mantine-color-dimmed));
+    opacity: 0.45;
+}
+
+.button:disabled::before,
+.button[data-disabled]::before {
+    border-color: var(--panel-border, var(--mantine-color-default-border));
+    background: transparent;
+}
+
+@media (pointer: coarse) {
+    .button[data-compact] {
+        width: 40px;
+        min-width: 40px;
+        height: 40px;
+        min-height: 40px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .button,
+    .button::before {
+        transition: none;
+    }
+}

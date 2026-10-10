@@ -26,3 +26,14 @@
     overflow-wrap: anywhere;
     font-size: 14px;
 }
+
+.textarea :global(.mantine-Input-section)[data-position='right'] {
+    inset-block-start: auto;
+    inset-block-end: 0;
+    block-size: 44px;
+}
+
+.textarea :global(.mantine-Textarea-input) {
+    padding-inline-end: var(--input-padding-x, 12px);
+    padding-block-end: 44px;
+}

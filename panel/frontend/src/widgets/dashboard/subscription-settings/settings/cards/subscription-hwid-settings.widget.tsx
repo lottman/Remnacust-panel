@@ -1,4 +1,4 @@
-import { Button, Group, NumberInput, px, Stack, Switch, Text, Textarea } from '@mantine/core'
+import { Button, Group, NumberInput, px, Stack, Switch, Text } from '@mantine/core'
 import { useForm, schemaResolver } from '@mantine/form'
 import { UpdateSubscriptionSettingsCommand } from '@remnawave/backend-contract'
 import { useTranslation } from 'react-i18next'
@@ -8,6 +8,7 @@ import { Link } from 'react-router'
 
 import { queryClient } from '@shared/api'
 import { QueryKeys, useUpdateSubscriptionSettings } from '@shared/api/hooks'
+import { FlagTextarea } from '@shared/ui/flag-picker/flag-picker'
 import { TemplateInfoPopoverShared } from '@shared/ui/popovers'
 import { SettingsCardShared } from '@shared/ui/settings-card'
 import { handleFormErrors } from '@shared/utils/misc'
@@ -96,13 +97,13 @@ export const SubscriptionHwidSettingsWidget = (props: IProps) => {
                             {...form.getInputProps('hwidSettings.fallbackDeviceLimit')}
                         />
 
-                        <Textarea
+                        <FlagTextarea
                             description={t(
                                 'subscription-hwid-settings.widget.max-devices-announce-description'
                             )}
                             key={form.key('hwidSettings.maxDevicesAnnounce')}
                             label={t('subscription-hwid-settings.widget.max-devices-announce')}
-                            leftSection={<TemplateInfoPopoverShared compact />}
+                            rightSection={<TemplateInfoPopoverShared compact />}
                             maxLength={200}
                             minRows={4}
                             placeholder={t('subscription-hwid-settings.widget.max-200-characters')}

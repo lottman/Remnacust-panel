@@ -1,14 +1,4 @@
-import {
-    ActionIcon,
-    Badge,
-    Card,
-    Collapse,
-    Group,
-    Select,
-    Stack,
-    Text,
-    TextInput
-} from '@mantine/core'
+import { ActionIcon, Badge, Card, Collapse, Group, Select, Stack, Text } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import {
     BUTTON_TYPES_VALUES,
@@ -23,6 +13,7 @@ import { useTranslation } from 'react-i18next'
 import { TbExternalLink } from 'react-icons/tb'
 
 import { useUiText } from '@shared/i18n/interface-text'
+import { FlagTextInput } from '@shared/ui/flag-picker/flag-picker'
 import { TemplateInfoPopoverShared } from '@shared/ui/popovers'
 
 import styles from '../subpage-config-visual-editor.module.css'
@@ -146,11 +137,12 @@ export function ButtonEditor(props: IProps) {
                             value={button.type}
                         />
 
-                        <TextInput
+                        <FlagTextInput
                             classNames={{ input: styles.inputDark }}
                             label={t('button-editor.component.link')}
-                            leftSection={
+                            rightSection={
                                 <TemplateInfoPopoverShared
+                                    compact
                                     templateKeys={SUBSCRIPTION_PAGE_TEMPLATE_KEYS}
                                 />
                             }

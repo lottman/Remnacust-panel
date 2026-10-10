@@ -8,7 +8,6 @@ import {
     Stack,
     Switch,
     Text,
-    Textarea,
     Transition
 } from '@mantine/core'
 import {
@@ -22,6 +21,7 @@ import { TbDeviceFloppy, TbDevices2 } from 'react-icons/tb'
 
 import { queryClient } from '@shared/api'
 import { QueryKeys, useUpdateExternalSquad } from '@shared/api/hooks'
+import { FlagTextarea } from '@shared/ui/flag-picker/flag-picker'
 import { TemplateInfoPopoverShared } from '@shared/ui/popovers'
 
 interface IProps {
@@ -219,12 +219,12 @@ export const ExternalSquadsHwidSettingsTabWidget = (props: IProps) => {
 
                             <Paper bg="dark.7" p="md" withBorder>
                                 <Box style={{ flex: 1 }}>
-                                    <Textarea
+                                    <FlagTextarea
                                         error={errors.maxDevicesAnnounce}
                                         label={t(
                                             'subscription-hwid-settings.widget.max-devices-announce'
                                         )}
-                                        leftSection={<TemplateInfoPopoverShared compact />}
+                                        rightSection={<TemplateInfoPopoverShared compact />}
                                         maxLength={200}
                                         minRows={3}
                                         onChange={(e) =>

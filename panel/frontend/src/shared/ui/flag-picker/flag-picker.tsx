@@ -1,5 +1,4 @@
 import {
-    ActionIcon,
     CopyButton,
     Group,
     ScrollArea,
@@ -9,13 +8,16 @@ import {
     TextareaProps,
     TextInput,
     TextInputProps,
-    Tooltip,
     UnstyledButton
 } from '@mantine/core'
 import { modals } from '@mantine/modals'
+import cx from 'clsx'
 import { forwardRef, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbCheck, TbFlag, TbSearch } from 'react-icons/tb'
+
+import { FieldActionButton } from '@shared/ui/field-action-button/field-action-button'
+import { TemplateInfoPopoverShared } from '@shared/ui/popovers/template-info-popover/template-info-popover.shared'
 
 import { COUNTRY_FLAG_CODES } from './country-flag-codes'
 import classes from './flag-picker.module.css'
@@ -98,42 +100,37 @@ export function CountryFlagPicker() {
 export function FlagPickerButton({ disabled }: { disabled?: boolean }) {
     const { t } = useTranslation()
     return (
-        <Tooltip label={t('flag-picker.open')}>
-            <ActionIcon
-                aria-label={t('flag-picker.open')}
-                color="blue"
-                size={30}
-                variant="soft"
-                disabled={disabled}
-                onClick={() =>
-                    modals.open({
-                        title: t('flag-picker.title'),
-                        centered: true,
-                        size: 500,
-                        children: <CountryFlagPicker />
-                    })
-                }
-            >
-                <TbFlag size={18} />
-            </ActionIcon>
-        </Tooltip>
+        <FieldActionButton
+            label={t('flag-picker.open')}
+            disabled={disabled}
+            onClick={() =>
+                modals.open({
+                    title: t('flag-picker.title'),
+                    centered: true,
+                    size: 500,
+                    children: <CountryFlagPicker />
+                })
+            }
+        >
+            <TbFlag size={16} aria-hidden />
+        </FieldActionButton>
     )
 }
 
 function sections(props: TextInputProps | TextareaProps) {
-    const extraWidth = props.rightSection
-        ? typeof props.rightSectionWidth === 'number'
-            ? Math.max(44, props.rightSectionWidth)
-            : 44
-        : 0
+    const disabled = props.disabled || props.readOnly
+    const extraWidth =
+        typeof props.rightSectionWidth === 'number' ? Math.max(40, props.rightSectionWidth) : 40
     return {
         rightSection: (
-            <Group gap={4} wrap="nowrap">
-                {props.rightSection}
-                <FlagPickerButton disabled={props.disabled || props.readOnly} />
+            <Group gap={0} wrap="nowrap">
+                {props.rightSection ?? (
+                    <TemplateInfoPopoverShared compact copyOnly disabled={disabled} />
+                )}
+                <FlagPickerButton disabled={disabled} />
             </Group>
         ),
-        rightSectionWidth: 44 + extraWidth,
+        rightSectionWidth: 40 + extraWidth,
         rightSectionPointerEvents: 'auto' as const
     }
 }
@@ -143,6 +140,11 @@ export const FlagTextInput = forwardRef<HTMLInputElement, TextInputProps>((props
 ))
 FlagTextInput.displayName = 'FlagTextInput'
 export const FlagTextarea = forwardRef<HTMLTextAreaElement, TextareaProps>((props, ref) => (
-    <Textarea {...props} {...sections(props)} ref={ref} />
+    <Textarea
+        {...props}
+        {...sections(props)}
+        className={cx(classes.textarea, props.className)}
+        ref={ref}
+    />
 ))
 FlagTextarea.displayName = 'FlagTextarea'

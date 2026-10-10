@@ -207,7 +207,7 @@ export const RemarksManager = ({
                                     </Stack>
                                 ) : (
                                     <FlagTextInput
-                                        leftSection={<TemplateInfoPopoverShared compact />}
+                                        rightSection={<TemplateInfoPopoverShared compact />}
                                         onChange={(e) => updateLocalRemark(index, e.target.value)}
                                         placeholder={t('remarks-manager.widget.enter-remark')}
                                         style={{ flex: 1 }}

@@ -1,30 +1,30 @@
-import { ActionIcon, Box, SimpleGrid, Stack, Text, Tooltip } from '@mantine/core'
+import { Box, SimpleGrid, Stack, Text, Tooltip } from '@mantine/core'
 import { modals } from '@mantine/modals'
 import { TEMPLATE_KEYS, TemplateKeys } from '@remnawave/backend-contract'
 import { TSubscriptionPageTemplateKey } from '@remnawave/subscription-page-types'
 import { useTranslation } from 'react-i18next'
-import { TbInfoSquare } from 'react-icons/tb'
+import { TbInfoCircle, TbInfoSquare } from 'react-icons/tb'
 
 import { useIsMobile } from '@shared/hooks'
 import { CopyableCodeBlock } from '@shared/ui/copyable-code-block'
+import { FieldActionButton } from '@shared/ui/field-action-button/field-action-button'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 
 interface IProps {
     compact?: boolean
+    copyOnly?: boolean
+    disabled?: boolean
     templateKeys?:
         | readonly (TemplateKeys | 'HOST_SPEED')[]
         | readonly TSubscriptionPageTemplateKey[]
 }
 
 const HOST_TEMPLATE_KEYS = [
-    ...new Set<TemplateKeys | 'HOST_SPEED'>([
-        ...TEMPLATE_KEYS,
-        'HOST_SPEED'
-    ])
+    ...new Set<TemplateKeys | 'HOST_SPEED'>([...TEMPLATE_KEYS, 'HOST_SPEED'])
 ]
 
 export const TemplateInfoPopoverShared = (props: IProps) => {
-    const { templateKeys = HOST_TEMPLATE_KEYS, compact = false } = props
+    const { templateKeys = HOST_TEMPLATE_KEYS, compact = false, copyOnly = false, disabled } = props
 
     const isMobile = useIsMobile()
 
@@ -35,10 +35,14 @@ export const TemplateInfoPopoverShared = (props: IProps) => {
             children: (
                 <Stack>
                     <Text size="sm">
-                        {t(
-                            'template-info-popover.shared.you-can-use-template-variables-in-this-field'
+                        {!copyOnly && (
+                            <>
+                                {t(
+                                    'template-info-popover.shared.you-can-use-template-variables-in-this-field'
+                                )}
+                                <br />
+                            </>
                         )}
-                        <br />
                         {t('template-info-popover.shared.available-variables-are-listed-below')}
                     </Text>
 
@@ -66,7 +70,6 @@ export const TemplateInfoPopoverShared = (props: IProps) => {
             fullScreen: isMobile,
             title: (
                 <BaseOverlayHeader
-                    iconColor="lime"
                     IconComponent={TbInfoSquare}
                     iconVariant="soft"
                     title={t('template-info-popover.shared.template-variables')}
@@ -76,17 +79,13 @@ export const TemplateInfoPopoverShared = (props: IProps) => {
     }
 
     return (
-        <Tooltip label={t('template-info-popover.shared.template-variables')} withArrow>
-            <ActionIcon
-                aria-label={t('template-info-popover.shared.template-variables')}
-                color="lime"
-                onClick={handleClick}
-                radius="md"
-                size={compact ? 'sm' : 'input-md'}
-                variant="soft"
-            >
-                <TbInfoSquare size={compact ? 18 : 24} />
-            </ActionIcon>
-        </Tooltip>
+        <FieldActionButton
+            compact={compact}
+            disabled={disabled}
+            label={t('template-info-popover.shared.template-variables')}
+            onClick={handleClick}
+        >
+            <TbInfoCircle size={16} aria-hidden />
+        </FieldActionButton>
     )
 }

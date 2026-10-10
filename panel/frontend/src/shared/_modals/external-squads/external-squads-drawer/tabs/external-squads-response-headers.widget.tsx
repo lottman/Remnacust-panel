@@ -240,7 +240,7 @@ export const ExternalSquadsResponseHeadersTabWidget = (props: IProps) => {
                                 />
                                 <FlagTextarea
                                     autosize
-                                    leftSection={<TemplateInfoPopoverShared compact />}
+                                    rightSection={<TemplateInfoPopoverShared compact />}
                                     maxRows={6}
                                     minRows={1}
                                     onChange={(e) => updateLocalHeaderValue(index, e.target.value)}

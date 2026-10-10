@@ -126,6 +126,17 @@ export const BaseHostForm = <
             ?.inbounds.find((item) => item.uuid === inbound)
         if (!selectedInbound) return
 
+        form.clearFieldError('inbound')
+        form.clearFieldError('inbound.configProfileUuid')
+        form.clearFieldError('inbound.configProfileInboundUuid')
+        const currentInbound = form.getValues().inbound
+        if (
+            currentInbound?.configProfileUuid === configProfileUuid &&
+            currentInbound.configProfileInboundUuid === inbound
+        ) {
+            return
+        }
+
         form.setValues({
             inbound: {
                 configProfileInboundUuid: inbound,
@@ -139,9 +150,6 @@ export const BaseHostForm = <
             inbound: true,
             ...(selectedInbound.port != null ? { port: true } : {})
         }))
-        form.clearFieldError('inbound')
-        form.clearFieldError('inbound.configProfileUuid')
-        form.clearFieldError('inbound.configProfileInboundUuid')
     }
 
     const patternHoverCard = (showSingle = true, showMulti = true, showWildcard = true) => {

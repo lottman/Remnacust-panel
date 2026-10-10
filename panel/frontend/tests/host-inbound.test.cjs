@@ -197,3 +197,12 @@ test('invalid selections are ignored; inbounds without a port preserve the expli
     noPort.picker.onSaveInbound(inboundUuid, profileUuid)
     assert.equal(noPort.form.getValues().port, 1234)
 })
+
+test('confirming the current inbound preserves a custom port and does not dirty the binding', () => {
+    const { form, picker } = renderSelection({ remark: 'Changed', port: 1234, inbound: validInbound })
+    picker.onSaveInbound(inboundUuid, profileUuid)
+    assert.equal(form.getValues().port, 1234)
+    assert.equal(form.isDirty('inbound'), false)
+    assert.equal(form.isDirty('port'), false)
+    assert.equal(form.isDirty('remark'), true)
+})

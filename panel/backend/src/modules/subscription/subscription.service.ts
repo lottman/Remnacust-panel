@@ -448,7 +448,7 @@ export class SubscriptionService {
             const hostLimitRemarks = [
                 ...(pausedHosts.length
                     ? (subscriptionSettings.customRemarks.hostTrafficPaused ?? [
-                          'Трафик временно приостановлен',
+                          'Traffic is temporarily paused',
                       ])
                     : []),
                 ...(presentationHosts.some(

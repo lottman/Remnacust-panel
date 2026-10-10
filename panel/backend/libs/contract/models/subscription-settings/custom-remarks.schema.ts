@@ -1,5 +1,19 @@
 import z from 'zod';
 
+// These values are subscription content, independent of the administrator's UI language.
+export const DEFAULT_SUBSCRIPTION_REMARKS = {
+    expiredUsers: ['⌛ Subscription expired', 'Contact support'],
+    limitedUsers: ['🚧 Subscription limited', 'Contact support'],
+    disabledUsers: ['🚫 Subscription disabled', 'Contact support'],
+    emptyHosts: ['→ Remnacust', '→ No hosts found', '→ Check Hosts tab', '→ Check Internal Squads tab'],
+    HWIDMaxDevicesExceeded: ['Limit of devices reached'],
+    HWIDNotSupported: ['App not supported'],
+    HWIDRegistrationBlocked: ['New device registration is disabled'],
+    HWIDBlocked: ['Device is blocked'],
+    hostTrafficLimit: ['Host traffic limit reached'],
+    hostTrafficPaused: ['Traffic is temporarily paused'],
+};
+
 export const SubscriptionActionSchema = z.object({
         text: z.string().trim().max(500),
         buttonText: z.string().trim().min(1).max(60),
@@ -24,9 +38,9 @@ export const CustomRemarksSchema = z.object({
     emptyHosts: z.array(z.string()).min(1),
     HWIDMaxDevicesExceeded: z.array(z.string()).min(1),
     HWIDNotSupported: z.array(z.string()).min(1),
-    HWIDRegistrationBlocked: z.array(z.string()).max(24).default(['Добавление новых устройств запрещено']),
+    HWIDRegistrationBlocked: z.array(z.string()).max(24).default(() => [...DEFAULT_SUBSCRIPTION_REMARKS.HWIDRegistrationBlocked]),
     HWIDBlocked: z.array(z.string()).default([]),
-    hostTrafficPaused: z.array(z.string()).max(24).default(['Трафик временно приостановлен']),
+    hostTrafficPaused: z.array(z.string()).max(24).default(() => [...DEFAULT_SUBSCRIPTION_REMARKS.hostTrafficPaused]),
     hostTrafficLimit: z.array(z.string()).default([]),
 });
 

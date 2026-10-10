@@ -1,4 +1,16 @@
 import z from 'zod';
+export declare const DEFAULT_SUBSCRIPTION_REMARKS: {
+    expiredUsers: string[];
+    limitedUsers: string[];
+    disabledUsers: string[];
+    emptyHosts: string[];
+    HWIDMaxDevicesExceeded: string[];
+    HWIDNotSupported: string[];
+    HWIDRegistrationBlocked: string[];
+    HWIDBlocked: string[];
+    hostTrafficLimit: string[];
+    hostTrafficPaused: string[];
+};
 export declare const SubscriptionActionSchema: z.ZodObject<{
     text: z.ZodString;
     buttonText: z.ZodString;

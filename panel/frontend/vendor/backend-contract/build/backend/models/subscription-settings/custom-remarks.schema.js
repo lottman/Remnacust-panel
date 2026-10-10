@@ -3,8 +3,21 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CustomRemarksSchema = exports.SubscriptionActionSchema = void 0;
+exports.CustomRemarksSchema = exports.SubscriptionActionSchema = exports.DEFAULT_SUBSCRIPTION_REMARKS = void 0;
 const zod_1 = __importDefault(require("zod"));
+// These values are subscription content, independent of the administrator's UI language.
+exports.DEFAULT_SUBSCRIPTION_REMARKS = {
+    expiredUsers: ['⌛ Subscription expired', 'Contact support'],
+    limitedUsers: ['🚧 Subscription limited', 'Contact support'],
+    disabledUsers: ['🚫 Subscription disabled', 'Contact support'],
+    emptyHosts: ['→ Remnacust', '→ No hosts found', '→ Check Hosts tab', '→ Check Internal Squads tab'],
+    HWIDMaxDevicesExceeded: ['Limit of devices reached'],
+    HWIDNotSupported: ['App not supported'],
+    HWIDRegistrationBlocked: ['New device registration is disabled'],
+    HWIDBlocked: ['Device is blocked'],
+    hostTrafficLimit: ['Host traffic limit reached'],
+    hostTrafficPaused: ['Traffic is temporarily paused'],
+};
 exports.SubscriptionActionSchema = zod_1.default.object({
     text: zod_1.default.string().trim().max(500),
     buttonText: zod_1.default.string().trim().min(1).max(60),
@@ -28,8 +41,8 @@ exports.CustomRemarksSchema = zod_1.default.object({
     emptyHosts: zod_1.default.array(zod_1.default.string()).min(1),
     HWIDMaxDevicesExceeded: zod_1.default.array(zod_1.default.string()).min(1),
     HWIDNotSupported: zod_1.default.array(zod_1.default.string()).min(1),
-    HWIDRegistrationBlocked: zod_1.default.array(zod_1.default.string()).max(24).default(['Добавление новых устройств запрещено']),
+    HWIDRegistrationBlocked: zod_1.default.array(zod_1.default.string()).max(24).default(() => [...exports.DEFAULT_SUBSCRIPTION_REMARKS.HWIDRegistrationBlocked]),
     HWIDBlocked: zod_1.default.array(zod_1.default.string()).default([]),
-    hostTrafficPaused: zod_1.default.array(zod_1.default.string()).max(24).default(['Трафик временно приостановлен']),
+    hostTrafficPaused: zod_1.default.array(zod_1.default.string()).max(24).default(() => [...exports.DEFAULT_SUBSCRIPTION_REMARKS.hostTrafficPaused]),
     hostTrafficLimit: zod_1.default.array(zod_1.default.string()).default([]),
 });

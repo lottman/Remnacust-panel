@@ -2,7 +2,10 @@ import { CodeHighlight } from '@mantine/code-highlight'
 import { Button, Card, Group, Paper, Stack, Switch, Text, Transition } from '@mantine/core'
 import { modals } from '@mantine/modals'
 import { notifications } from '@mantine/notifications'
-import { GetExternalSquadByUuidCommand } from '@remnawave/backend-contract'
+import {
+    DEFAULT_SUBSCRIPTION_REMARKS,
+    GetExternalSquadByUuidCommand
+} from '@remnawave/backend-contract'
 import { RemarksManager } from '@widgets/dashboard/subscription-settings/settings/cards/managers/remarks-manager.widget'
 import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -29,23 +32,12 @@ export const ExternalSquadsCustomRemarksTabWidget = (props: IProps) => {
     const { t } = useTranslation()
 
     const defaultRemarks = {
-        expired: [
-            `⌛ ${t('subscription-user-remarks-card.widget.subscription-expired')}`,
-            t('subscription-user-remarks-card.widget.contact-support')
-        ],
-        limited: [
-            `🚧 ${t('subscription-user-remarks-card.widget.subscription-limited')}`,
-            t('subscription-user-remarks-card.widget.contact-support')
-        ],
-        disabled: [
-            `🚫 ${t('subscription-user-remarks-card.widget.subscription-disabled')}`,
-            t('subscription-user-remarks-card.widget.contact-support')
-        ],
-        emptyHosts: [`🚫 ${t('subscription-user-remarks-card.widget.no-hosts-found')}`],
-        HWIDMaxDevicesExceeded: [
-            `🚫 ${t('subscription-user-remarks-card.widget.hwid-max-devices-exceeded')}`
-        ],
-        HWIDNotSupported: [`🚫 ${t('subscription-user-remarks-card.widget.hwid-not-supported')}`]
+        expired: DEFAULT_SUBSCRIPTION_REMARKS.expiredUsers,
+        limited: DEFAULT_SUBSCRIPTION_REMARKS.limitedUsers,
+        disabled: DEFAULT_SUBSCRIPTION_REMARKS.disabledUsers,
+        emptyHosts: DEFAULT_SUBSCRIPTION_REMARKS.emptyHosts,
+        HWIDMaxDevicesExceeded: DEFAULT_SUBSCRIPTION_REMARKS.HWIDMaxDevicesExceeded,
+        HWIDNotSupported: DEFAULT_SUBSCRIPTION_REMARKS.HWIDNotSupported
     }
 
     const [extras, setExtras] = useState<ExtraRemarks>(externalSquad.customRemarks ?? {})
@@ -221,13 +213,12 @@ export const ExternalSquadsCustomRemarksTabWidget = (props: IProps) => {
                     emptyHosts: emptyHostsFiltered,
                     HWIDMaxDevicesExceeded: HWIDMaxDevicesExceededFiltered,
                     HWIDNotSupported: HWIDNotSupportedFiltered,
-                    HWIDRegistrationBlocked: extras.HWIDRegistrationBlocked ?? [
-                        t('subscription-user-remarks-card.widget.deny-new-devices')
-                    ],
+                    HWIDRegistrationBlocked:
+                        extras.HWIDRegistrationBlocked ??
+                        DEFAULT_SUBSCRIPTION_REMARKS.HWIDRegistrationBlocked,
                     HWIDBlocked: HWIDBlockedFiltered,
-                    hostTrafficPaused: extras.hostTrafficPaused ?? [
-                        t('subscription-user-remarks-card.widget.traffic-paused')
-                    ],
+                    hostTrafficPaused:
+                        extras.hostTrafficPaused ?? DEFAULT_SUBSCRIPTION_REMARKS.hostTrafficPaused,
                     hostTrafficLimit: hostTrafficLimitFiltered
                 }
             }
@@ -248,9 +239,8 @@ export const ExternalSquadsCustomRemarksTabWidget = (props: IProps) => {
                             icon={<TbDevices2 size="24px" />}
                             iconColor="orange"
                             initialRemarks={
-                                extras.HWIDRegistrationBlocked ?? [
-                                    t('subscription-user-remarks-card.widget.deny-new-devices')
-                                ]
+                                extras.HWIDRegistrationBlocked ??
+                                DEFAULT_SUBSCRIPTION_REMARKS.HWIDRegistrationBlocked
                             }
                             onChange={(value) =>
                                 setExtras((prev) => ({ ...prev, HWIDRegistrationBlocked: value }))
@@ -264,9 +254,8 @@ export const ExternalSquadsCustomRemarksTabWidget = (props: IProps) => {
                         icon={<TbDevices2 size="24px" />}
                         iconColor="yellow"
                         initialRemarks={
-                            extras.hostTrafficPaused ?? [
-                                t('subscription-user-remarks-card.widget.traffic-paused')
-                            ]
+                            extras.hostTrafficPaused ??
+                            DEFAULT_SUBSCRIPTION_REMARKS.hostTrafficPaused
                         }
                         onChange={(value) =>
                             setExtras((prev) => ({ ...prev, hostTrafficPaused: value }))

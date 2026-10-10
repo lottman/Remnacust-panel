@@ -1,5 +1,7 @@
-import { UpdateSubscriptionSettingsCommand } from '@remnawave/backend-contract'
-import i18n from 'i18next'
+import {
+    DEFAULT_SUBSCRIPTION_REMARKS,
+    UpdateSubscriptionSettingsCommand
+} from '@remnawave/backend-contract'
 
 export const processRemarks = (remarksData: string | string[] | undefined): string[] => {
     if (!remarksData) return ['']
@@ -21,15 +23,13 @@ export const computeRemarks = (
         HWIDMaxDevicesExceeded: processRemarks(settings.customRemarks.HWIDMaxDevicesExceeded),
         HWIDNotSupported: processRemarks(settings.customRemarks.HWIDNotSupported),
         HWIDRegistrationBlocked: processRemarks(
-            settings.customRemarks.HWIDRegistrationBlocked ?? [
-                i18n.t('subscription-user-remarks-card.widget.deny-new-devices')
-            ]
+            settings.customRemarks.HWIDRegistrationBlocked ??
+                DEFAULT_SUBSCRIPTION_REMARKS.HWIDRegistrationBlocked
         ),
         HWIDBlocked: processRemarks(settings.customRemarks.HWIDBlocked ?? []),
         hostTrafficPaused: processRemarks(
-            settings.customRemarks.hostTrafficPaused ?? [
-                i18n.t('subscription-user-remarks-card.widget.traffic-paused')
-            ]
+            settings.customRemarks.hostTrafficPaused ??
+                DEFAULT_SUBSCRIPTION_REMARKS.hostTrafficPaused
         ),
         hostTrafficLimit: processRemarks(settings.customRemarks.hostTrafficLimit ?? [])
     }

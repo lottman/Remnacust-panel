@@ -1,7 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import consola from 'consola';
 
-import { CustomRemarksSchema, TCustomRemarks } from '@libs/contracts/models';
+import { CustomRemarksSchema, DEFAULT_SUBSCRIPTION_REMARKS, TCustomRemarks } from '@libs/contracts/models';
 
 import { getDefaultHwidSettings } from '../default';
 
@@ -9,21 +9,7 @@ export async function seedSubscriptionSettings(prisma: PrismaClient) {
     consola.start('Seeding subscription settings...');
 
     const customRemarks = {
-        expiredUsers: ['⌛ Subscription expired', 'Contact support'],
-        limitedUsers: ['🚧 Subscription limited', 'Contact support'],
-        disabledUsers: ['🚫 Subscription disabled', 'Contact support'],
-        emptyHosts: [
-            '→ Remnacust',
-            '→ No hosts found',
-            '→ Check Hosts tab',
-            '→ Check Internal Squads tab',
-        ],
-        HWIDMaxDevicesExceeded: ['Limit of devices reached'],
-        HWIDNotSupported: ['App not supported'],
-        HWIDRegistrationBlocked: ['Добавление новых устройств запрещено'],
-        HWIDBlocked: ['Device is blocked'],
-        hostTrafficLimit: ['Host traffic limit reached'],
-        hostTrafficPaused: ['Трафик временно приостановлен'],
+        ...DEFAULT_SUBSCRIPTION_REMARKS,
         combineSubscriptionAndHwidRemarks: true,
         subscriptionAndHwidRemarkOrder: ['EXPIRED', 'DISABLED', 'HWID_BLOCKED'],
     } satisfies TCustomRemarks;

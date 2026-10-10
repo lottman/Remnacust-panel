@@ -10,5 +10,5 @@ export function registrationBlockedRemarks(user: { status: string; expireAt: Dat
     const showStatus = status && order.indexOf(status) < order.indexOf('HWID_REGISTRATION_BLOCKED');
     const selected = showStatus ? status === 'DISABLED' ? remarks.disabledUsers : remarks.expiredUsers : remarks.HWIDRegistrationBlocked;
     const safe = (selected ?? []).filter(isTextRemark);
-    return safe.length ? safe : [showStatus ? status === 'DISABLED' ? 'User is disabled' : 'Subscription expired' : 'Добавление новых устройств запрещено'];
+    return safe.length ? safe : [showStatus ? status === 'DISABLED' ? 'User is disabled' : 'Subscription expired' : 'New device registration is disabled'];
 }

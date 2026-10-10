@@ -3,7 +3,10 @@ import { Button, Card, Group, Stack } from '@mantine/core'
 import { useForm, schemaResolver } from '@mantine/form'
 import { modals } from '@mantine/modals'
 import { notifications } from '@mantine/notifications'
-import { UpdateSubscriptionSettingsCommand } from '@remnawave/backend-contract'
+import {
+    DEFAULT_SUBSCRIPTION_REMARKS,
+    UpdateSubscriptionSettingsCommand
+} from '@remnawave/backend-contract'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiClockCountdown, PiClockUser, PiListChecks, PiProhibit } from 'react-icons/pi'
@@ -173,13 +176,13 @@ export const SubscriptionUserRemarksCardWidget = (props: IProps) => {
                     emptyHosts: emptyHostsFiltered,
                     HWIDMaxDevicesExceeded: HWIDMaxDevicesExceededFiltered,
                     HWIDNotSupported: HWIDNotSupportedFiltered,
-                    HWIDRegistrationBlocked: remarks.HWIDRegistrationBlocked?.filter((x) =>
-                        x.trim()
-                    ) ?? [t('subscription-user-remarks-card.widget.deny-new-devices')],
+                    HWIDRegistrationBlocked:
+                        remarks.HWIDRegistrationBlocked?.filter((x) => x.trim()) ??
+                        DEFAULT_SUBSCRIPTION_REMARKS.HWIDRegistrationBlocked,
                     HWIDBlocked: HWIDBlockedFiltered,
-                    hostTrafficPaused: remarks.hostTrafficPaused?.filter((x) => x.trim()) ?? [
-                        t('subscription-user-remarks-card.widget.traffic-paused')
-                    ],
+                    hostTrafficPaused:
+                        remarks.hostTrafficPaused?.filter((x) => x.trim()) ??
+                        DEFAULT_SUBSCRIPTION_REMARKS.hostTrafficPaused,
                     hostTrafficLimit: hostTrafficLimitFiltered
                 }
             }

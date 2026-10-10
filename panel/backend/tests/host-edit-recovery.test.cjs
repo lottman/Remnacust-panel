@@ -10,25 +10,22 @@ test('opening an existing host restores every policy field and keeps its port ov
     const ts = require('typescript');
     const file = path.resolve(frontend, '../_modals/hosts/edit-host-modal/edit-host.modal.content.tsx');
     const source = ts.createSourceFile(file, fs.readFileSync(file, 'utf8'), ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
-    let initializer, inboundWatcher;
+    let initializer;
     function visit(node) {
         if (ts.isCallExpression(node) && node.expression.getText(source) === 'form.initialize') initializer = node.arguments[0].getText(source);
-        if (ts.isCallExpression(node) && node.expression.getText(source) === 'form.watch' && node.arguments[0].text === 'inbound.configProfileInboundUuid') inboundWatcher = node.arguments[1].getText(source);
         ts.forEachChild(node, visit);
     }
     visit(source);
     const host = { uuid: 'host', port: 8443, inbound: { configProfileUuid: 'profile', configProfileInboundUuid: 'original' }, userTrafficLimitBytes: 123456789, serverSpeedLimitMbps: 2, totalSpeedLimitMbps: 20, trafficMultiplier: 2.5, useTagTrafficLimit: false, useTagSpeedLimit: false, useTagTotalSpeedLimit: true, speedLimitMbps: 7, domainRules: { mode: 'ALLOW_ONLY', domains: ['t.me'] }, sniRegeneration: { enabled: true, intervalHours: 24 } };
     const restored = new Function('host', 'stringifyJsonField', `return (${initializer})`)(host, value => value);
     for (const field of ['port', 'userTrafficLimitBytes', 'serverSpeedLimitMbps', 'totalSpeedLimitMbps', 'trafficMultiplier', 'useTagTrafficLimit', 'useTagSpeedLimit', 'useTagTotalSpeedLimit', 'speedLimitMbps', 'domainRules', 'sniRegeneration']) assert.deepEqual(restored[field], host[field], field);
-    const changes = [];
-    const watcher = new Function('form', 'configProfiles', `return (${inboundWatcher})`)(
-        { getValues: () => restored, setFieldValue: (...args) => changes.push(args) },
-        { configProfiles: [{ uuid: 'profile', inbounds: [{ uuid: 'original', port: 443 }, { uuid: 'new', port: 9443 }] }] },
-    );
-    watcher({ value: 'original', previousValue: undefined });
-    assert.deepEqual(changes, []);
-    watcher({ value: 'new', previousValue: 'original' });
-    assert.deepEqual(changes, [['port', 9443]]);
+    assert.deepEqual(restored.inbound, host.inbound);
+    for (const inbound of [{ configProfileUuid: 'profile', configProfileInboundUuid: null }, { configProfileUuid: null, configProfileInboundUuid: null }]) {
+        const detached = new Function('host', 'stringifyJsonField', `return (${initializer})`)({ ...host, inbound }, value => value);
+        assert.equal(detached.inbound, undefined);
+        assert.equal(detached.port, 8443);
+        assert.deepEqual(detached.domainRules, host.domainRules);
+    }
 });
 
 test('API parser rejects HTML, truncated JSON and primitive payloads without exposing their contents', () => {

@@ -121,20 +121,27 @@ export const BaseHostForm = <
     }
 
     const saveInbound = (inbound: string, configProfileUuid: string) => {
+        const selectedInbound = configProfiles
+            .find((profile) => profile.uuid === configProfileUuid)
+            ?.inbounds.find((item) => item.uuid === inbound)
+        if (!selectedInbound) return
+
         form.setValues({
             inbound: {
                 configProfileInboundUuid: inbound,
                 configProfileUuid
-            }
+            },
+            ...(selectedInbound.port != null ? { port: selectedInbound.port } : {})
         } as Partial<T>)
-        form.setTouched({
-            configProfileInboundUuid: true,
-            configProfileUuid: true
-        })
-        form.setDirty({
-            configProfileInboundUuid: true,
-            configProfileUuid: true
-        })
+        form.setTouched((current) => ({ ...current, inbound: true }))
+        form.setDirty((current) => ({
+            ...current,
+            inbound: true,
+            ...(selectedInbound.port != null ? { port: true } : {})
+        }))
+        form.clearFieldError('inbound')
+        form.clearFieldError('inbound.configProfileUuid')
+        form.clearFieldError('inbound.configProfileInboundUuid')
     }
 
     const patternHoverCard = (showSingle = true, showMulti = true, showWildcard = true) => {
@@ -263,6 +270,7 @@ export const BaseHostForm = <
                                             }
                                             configProfiles={configProfiles}
                                             error={
+                                                form.errors.inbound ??
                                                 form.errors['inbound.configProfileUuid'] ??
                                                 form.errors['inbound.configProfileInboundUuid'] ??
                                                 null

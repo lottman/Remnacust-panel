@@ -21,6 +21,7 @@ import {
 import { LoadingScreen } from '@shared/ui'
 import { BaseHostForm } from '@shared/ui/forms/hosts/base-host-form'
 import { validateHostDomainRules } from '@shared/ui/forms/hosts/base-host-form/domain-presets'
+import { validateHostInbound } from '@shared/ui/forms/hosts/base-host-form/validate-host-inbound'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { parseJsonField } from '@shared/utils/misc'
 
@@ -54,9 +55,10 @@ export const EditManyHostsDrawer = NiceModal.create((props: IProps) => {
             }
         },
         validate: (values) => ({
-            ...schemaResolver(UpdateManyHostsCommand.RequestBodySchema.omit({ uuids: true }))(
-                values
-            ),
+            ...schemaResolver(UpdateManyHostsCommand.RequestBodySchema.omit({ uuids: true }), {
+                sync: true
+            })(values),
+            ...validateHostInbound(values.inbound, configProfiles?.configProfiles),
             ...validateHostDomainRules(values)
         }),
 
@@ -82,23 +84,6 @@ export const EditManyHostsDrawer = NiceModal.create((props: IProps) => {
                     queryKey: QueryKeys.hosts.getAllHosts.queryKey
                 })
             }
-        }
-    })
-
-    form.watch('inbound.configProfileInboundUuid', ({ value }) => {
-        const { inbound } = form.getValues()
-        if (!inbound?.configProfileUuid) {
-            return
-        }
-
-        const configProfile = configProfiles?.configProfiles.find(
-            (configProfile) => configProfile.uuid === inbound.configProfileUuid
-        )
-        if (configProfile) {
-            form.setFieldValue(
-                'port',
-                configProfile.inbounds.find((inbound) => inbound.uuid === value)?.port ?? undefined
-            )
         }
     })
 

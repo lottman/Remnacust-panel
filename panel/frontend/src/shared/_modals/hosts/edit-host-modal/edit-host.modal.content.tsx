@@ -15,6 +15,7 @@ import {
 import { BaseHostForm } from '@shared/ui/forms/hosts/base-host-form'
 import { validateHostDomainRules } from '@shared/ui/forms/hosts/base-host-form/domain-presets'
 import { HostFormLoading } from '@shared/ui/forms/hosts/base-host-form/host-form-loading'
+import { validateHostInbound } from '@shared/ui/forms/hosts/base-host-form/validate-host-inbound'
 import { parseJsonField, stringifyJsonField } from '@shared/utils/misc'
 
 interface IProps {
@@ -46,7 +47,10 @@ export const EditHostDrawerContent = (props: IProps) => {
             }
         },
         validate: (values) => ({
-            ...schemaResolver(UpdateHostCommand.RequestBodySchema.omit({ uuid: true }))(values),
+            ...schemaResolver(UpdateHostCommand.RequestBodySchema.omit({ uuid: true }), {
+                sync: true
+            })(values),
+            ...validateHostInbound(values.inbound, configProfiles?.configProfiles),
             ...validateHostDomainRules(values)
         })
     })
@@ -91,10 +95,13 @@ export const EditHostDrawerContent = (props: IProps) => {
                 path: host.path ?? undefined,
                 alpn: host.alpn ?? undefined,
                 fingerprint: host.fingerprint ?? undefined,
-                inbound: {
-                    configProfileUuid: host.inbound.configProfileUuid ?? '',
-                    configProfileInboundUuid: host.inbound.configProfileInboundUuid ?? ''
-                },
+                inbound:
+                    host.inbound.configProfileUuid && host.inbound.configProfileInboundUuid
+                        ? {
+                              configProfileUuid: host.inbound.configProfileUuid,
+                              configProfileInboundUuid: host.inbound.configProfileInboundUuid
+                          }
+                        : undefined,
                 serverDescription: host.serverDescription ?? undefined,
                 xhttpExtraParams: stringifyJsonField(host.xhttpExtraParams),
                 muxParams: stringifyJsonField(host.muxParams),
@@ -118,25 +125,6 @@ export const EditHostDrawerContent = (props: IProps) => {
             })
         }
     }, [configProfiles, host])
-
-    form.watch('inbound.configProfileInboundUuid', ({ value, previousValue }) => {
-        // Initializing a saved host must preserve its explicit port override.
-        if (previousValue === undefined || previousValue === value) return
-        const { inbound } = form.getValues()
-        if (!inbound?.configProfileUuid) {
-            return
-        }
-
-        const configProfile = configProfiles?.configProfiles.find(
-            (configProfile) => configProfile.uuid === inbound.configProfileUuid
-        )
-        if (configProfile) {
-            form.setFieldValue(
-                'port',
-                configProfile.inbounds.find((inbound) => inbound.uuid === value)?.port ?? undefined
-            )
-        }
-    })
 
     const handleSubmit = form.onSubmit(async (values) => {
         updateHost({

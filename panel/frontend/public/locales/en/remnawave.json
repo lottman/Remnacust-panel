@@ -2175,6 +2175,7 @@
         "unavailable": "Cannot reach the server. Try again shortly.",
         "http-status": "Request failed (HTTP {{status}}).",
         "unauthorized": "Authentication failed. Check your credentials.",
+        "invalidRequest": "Check the entered values and try again.",
         "invalidResponse": "The server response does not match this panel version. Refresh the page; if it continues, check the panel and API versions.",
         "forbidden": "You do not have permission for this action.",
         "unknown": "The request failed unexpectedly.",

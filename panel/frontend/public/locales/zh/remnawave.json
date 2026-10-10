@@ -2160,6 +2160,7 @@
         "unavailable": "无法连接服务器，请稍后重试。",
         "http-status": "请求失败（HTTP {{status}}）。",
         "unauthorized": "身份验证失败，请检查登录信息。",
+        "invalidRequest": "请检查输入的值，然后重试。",
         "invalidResponse": "服务器响应与当前面板版本不匹配。请刷新页面；如果问题仍然存在，请检查面板和 API 版本。",
         "forbidden": "您没有执行此操作的权限。",
         "unknown": "请求意外失败。",

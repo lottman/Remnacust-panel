@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import i18n from 'i18next'
 import { z } from 'zod'
 
 import { instance } from '../axios'
@@ -45,12 +46,16 @@ export function createMutationHook<
             variables?: z.infer<BodySchema>
         }) => {
             const url = createUrl(baseUrl, query, route)
+            const body = bodySchema?.safeParse(variables)
+            if (body && !body.success) {
+                throw new Error(i18n.t('requestErrors.invalidRequest'), { cause: body.error })
+            }
 
             return instance
                 .request({
                     method: requestMethod,
                     url,
-                    data: bodySchema?.parse(variables)
+                    data: body?.data
                 })
                 .then(async (response) => {
                     if (!responseSchema) {

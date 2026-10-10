@@ -2,7 +2,7 @@
 
 Панель управления пользователями, подписками, хостами и нодами Xray. Backend хранит данные в PostgreSQL, выполняет фоновые задачи и передаёт конфигурации нодам. Frontend предоставляет веб-интерфейс и документацию.
 
-**Версия: 1.1.7.17** · **Основа: Remnawave 3.4.5**
+**Версия: 1.1.7.18** · **Основа: Remnawave 3.4.5**
 
 При первом входе создайте администратора. Пароль должен содержать минимум 24 символа, заглавные и строчные латинские буквы и цифры. Кнопка в форме генерирует и копирует подходящий пароль из 32 символов. Ошибки ввода показываются под соответствующими полями до отправки запроса.
 
@@ -43,7 +43,7 @@
 curl -fsSL --proto '=https' --proto-redir '=https' https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh -o installer.sh && sudo bash installer.sh install-panel
 ```
 
-[Скачать installer.sh](https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh). Скрипт предложит выбрать версию выпуска установщика; Enter выбирает `latest`. Для конкретного выпуска добавьте `--version 1.2.39` (панель 1.1.7.17, нода 1.1.7 и ядро 1.1.5). Настройка доменов и reverse proxy: [INSTALLER.md](../docs/INSTALLER.md).
+[Скачать installer.sh](https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh). Скрипт предложит выбрать версию выпуска установщика; Enter выбирает `latest`. Для конкретного выпуска добавьте `--version 1.2.40` (панель 1.1.7.18, нода 1.1.7 и ядро 1.1.5). Настройка доменов и reverse proxy: [INSTALLER.md](../docs/INSTALLER.md).
 
 ## Установка из исходников
 

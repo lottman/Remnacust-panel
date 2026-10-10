@@ -89,6 +89,11 @@ export function HostSelectInboundFeature(props: IProps) {
                     <TbChevronRight className={classes.affordance} size={18} />
                 </Group>
             </Box>
+            {error && (
+                <Text c="red" role="alert" size="xs">
+                    {error}
+                </Text>
+            )}
         </Stack>
     )
 }

@@ -15,7 +15,7 @@ interface IProps {
 export const MobileLayout = ({ headerControls }: IProps) => {
     const [opened, { toggle, close }] = useDisclosure()
     const { pathname } = useLocation()
-    useHotkeys([['Escape', close]])
+    useHotkeys(opened ? [['Escape', close]] : [])
     useEffect(() => {
         close()
     }, [pathname, close])

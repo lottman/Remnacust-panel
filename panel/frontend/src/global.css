@@ -295,6 +295,23 @@ body {
     .mantine-Drawer-content {
         max-width: 100vw;
     }
+    :is(.mantine-Drawer-title, .mantine-Modal-title) .mantine-Title-root {
+        font-size: 18px;
+        line-height: 1.35;
+    }
+    :is(.mantine-Drawer-title, .mantine-Modal-title) .mantine-Text-root {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    :is(.mantine-Drawer-close, .mantine-Modal-close) {
+        min-width: 44px;
+        min-height: 44px;
+        flex-shrink: 0;
+    }
+    :is(.mantine-Popover-dropdown, .mantine-Combobox-dropdown, .mantine-Menu-dropdown) {
+        max-width: calc(100vw - 16px);
+    }
     .mantine-Input-input {
         font-size: max(16px, var(--input-fz, 16px));
     }
@@ -414,7 +431,11 @@ body {
     border-radius: var(--mantine-radius-default);
 }
 .monaco-editor .suggest-widget .monaco-list-row.focused {
-    background: color-mix(in srgb, var(--panel-accent, #54aeff) 30%, var(--panel-elevated, #1c2128)) !important;
+    background: color-mix(
+        in srgb,
+        var(--panel-accent, #54aeff) 30%,
+        var(--panel-elevated, #1c2128)
+    ) !important;
     color: var(--panel-text, #ffffff) !important;
     box-shadow: inset 3px 0 0 var(--panel-accent, #54aeff);
 }

@@ -17,8 +17,14 @@ function hasManagedModalOpen(): boolean {
 
 function handleKeyDown(e: KeyboardEvent) {
     if (e.key !== 'Escape') return
+    if (e.defaultPrevented || e.isComposing) return
     if (isPseudoFullscreenActive()) return
     if (hasManagedModalOpen()) return
+    // A popup gets the first Escape; the editor remains open underneath it.
+    const popups = document.querySelectorAll('[role="listbox"], [role="menu"]')
+    for (const popup of popups) {
+        if (!popup.closest('[role="dialog"]') && popup.getClientRects().length > 0) return
+    }
     const top = stack[stack.length - 1]
     if (!top) return
     top.hide()

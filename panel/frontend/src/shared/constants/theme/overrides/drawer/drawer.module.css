@@ -15,6 +15,9 @@
 @media (max-width: 48em) {
     .drawerContent {
         border-radius: 0;
+        height: calc(100dvh - var(--drawer-offset, 0px) * 2);
+        max-height: calc(100dvh - var(--drawer-offset, 0px) * 2);
+        overscroll-behavior: contain;
     }
     .drawerHeader {
         padding-inline: 16px;

@@ -1,14 +1,14 @@
 # Изменения официальных проектов
 
-Панель 1.1.7.12 включает изменения [Remnawave backend 3.4.5](https://github.com/remnawave/backend/releases/tag/3.4.5) и frontend 3.4.5. Более новые безопасные версии зависимостей нашего проекта сохранены.
+Панель 1.1.7.13 включает изменения [Remnawave backend 3.4.5](https://github.com/remnawave/backend/releases/tag/3.4.5) и frontend 3.4.5. Более новые безопасные версии зависимостей нашего проекта сохранены.
 
 - gRPC `multiMode` сохраняется в JSON подписках.
 - Фильтр числового ID ищет точное значение.
 - `SERVICE_SNI_VERIFICATION=true` управляет SNI при подключении к ноде; клиентский сертификат, CA и проверка TLS сохраняются.
 - `postStart` отправляет событие `service.core_started` с метаданными запуска. Доставка идёт в фоне с таймаутом 5 секунд; ошибка webhook не останавливает ядро.
 
-Нода 1.1.6 включает изменения [Remnawave Node 3.4.2](https://github.com/remnawave/node/releases/tag/3.4.2), SDK 0.17.0 и node-plugins 0.8.3. Для postStart обновите агент вместе с панелью.
+Нода 1.1.7 включает изменения [Remnawave Node 3.4.2](https://github.com/remnawave/node/releases/tag/3.4.2), SDK 0.17.0 и node-plugins 0.8.3. Для postStart обновите агент вместе с панелью.
 
-Ядро 1.1.4 сохраняет основу Xray 26.9.30 и включает десять исправлений официальной ветки до коммита `7da5dae6502b787fc6d903863e9a6c5043d107a2`: отмена контекста gRPC, закрытие Mux, хвосты QUIC, утечки и IPv6 в WireGuard, IPv6 TUN, закрытие XDNS и его новые поля. Старый формат XDNS продолжает приниматься. Полные коммиты перечислены в [метаданных ядра](https://github.com/lottman/Remnacust-core/blob/main/xray/REMNACUST-UPSTREAM.json).
+Ядро 1.1.5 сохраняет основу Xray 26.9.30 и включает десять исправлений официальной ветки до коммита `7da5dae6502b787fc6d903863e9a6c5043d107a2`: отмена контекста gRPC, закрытие Mux, хвосты QUIC, утечки и IPv6 в WireGuard, IPv6 TUN, закрытие XDNS и его новые поля. Старый формат XDNS продолжает приниматься. Полные коммиты перечислены в [метаданных ядра](https://github.com/lottman/Remnacust-core/blob/main/xray/REMNACUST-UPSTREAM.json).
 
 Перенос не меняет управляющий порт, SECRET_KEY, Nginx/Caddy, сертификаты и тома существующей установки. Ноды со стандартными профилями продолжают работать по прежнему API.

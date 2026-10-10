@@ -35,7 +35,7 @@ jobs:
         ports:
           - 55439:5432
         options: >-
-          --health-cmd "pg_isready -U postgres"
+          --health-cmd "pg_isready -h 127.0.0.1 -U postgres"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
@@ -47,7 +47,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: lottman/Remnacust-node
-          ref: v1.1.6
+          ref: v1.1.7
           path: node-repository
       - uses: actions/setup-node@v4
         with:

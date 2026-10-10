@@ -43,6 +43,7 @@ export function AddOptionButton() {
             }}
             position="bottom-end"
             store={combobox}
+            styles={{ dropdown: { maxWidth: 'calc(100vw - 16px)' } }}
             width={rem(320)}
             withinPortal={true}
         >
@@ -60,14 +61,25 @@ export function AddOptionButton() {
                 </Button>
             </Combobox.Target>
 
-            <Combobox.Dropdown>
+            <Combobox.Dropdown
+                onKeyDown={(event) => {
+                    if (event.key === 'Escape') {
+                        event.preventDefault()
+                        event.stopPropagation()
+                        combobox.closeDropdown()
+                    }
+                }}
+            >
                 <Combobox.Search
                     onChange={(event) => setSearch(event.currentTarget.value)}
                     placeholder={t('common.action.search')}
                     value={search}
                 />
 
-                <Combobox.Options mah={280} style={{ overflowY: 'auto' }}>
+                <Combobox.Options
+                    mah="min(280px, calc(100dvh - 160px))"
+                    style={{ overflowY: 'auto', overscrollBehavior: 'contain' }}
+                >
                     {groups.length ? (
                         groups.map(({ group, options }) => (
                             <Combobox.Group

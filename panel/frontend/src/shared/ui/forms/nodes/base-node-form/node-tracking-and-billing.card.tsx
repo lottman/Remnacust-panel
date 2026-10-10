@@ -7,8 +7,7 @@ import {
     Stack,
     Switch,
     TagsInput,
-    Text,
-    Textarea
+    Text
 } from '@mantine/core'
 import { UseFormReturnType } from '@mantine/form'
 import { CreateNodeCommand, UpdateNodeCommand } from '@remnawave/backend-contract'
@@ -20,6 +19,7 @@ import { TbBell, TbChartBar, TbChartLine, TbClock, TbExternalLink } from 'react-
 
 import { useGetNodesTags } from '@shared/api/hooks'
 import { useUiText } from '@shared/i18n/interface-text'
+import { FlagTextarea } from '@shared/ui/flag-picker/flag-picker'
 import { TrafficLimitInput } from '@shared/ui/forms/traffic-limit-input'
 import { SelectInfraProviderShared } from '@shared/ui/infra-billing/select-infra-provider/select-infra-provider.shared'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
@@ -200,7 +200,7 @@ export const NodeTrackingAndBillingCard = <
                         />
 
                         <Stack gap={6}>
-                            <Textarea
+                            <FlagTextarea
                                 key={form.key('note')}
                                 label={t('node-tracking-and-billing.card.note')}
                                 resize="vertical"

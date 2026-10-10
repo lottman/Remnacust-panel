@@ -1,4 +1,5 @@
 import { QueryKey, useQuery, UseQueryResult } from '@tanstack/react-query'
+import { isCancel } from 'axios'
 import { z } from 'zod'
 
 import { instance } from '../axios'
@@ -95,6 +96,7 @@ export function createGetQueryHook<
 }) {
     const queryFn = async (params?: {
         errorHandler?: ErrorHandler
+        signal?: AbortSignal
         query?: z.infer<RequestQuerySchema>
         route?: z.infer<RouteParamsSchema>
     }) => {
@@ -103,7 +105,7 @@ export function createGetQueryHook<
         const url = createUrl(endpoint, validatedQuery, params?.route ?? routeParams)
 
         return instance
-            .get<z.infer<ResponseSchema>>(url)
+            .get<z.infer<ResponseSchema>>(url, { signal: params?.signal })
             .then(async (response) => {
                 const result = await responseSchema.safeParseAsync(response.data)
                 if (!result.success) {
@@ -111,7 +113,10 @@ export function createGetQueryHook<
                 }
                 return result.data.response
             })
-            .catch((error) => errorHandler?.(error) ?? handleRequestError(error))
+            .catch((error) => {
+                if (isCancel(error)) throw error
+                return errorHandler?.(error) ?? handleRequestError(error)
+            })
     }
 
     return (params?: {
@@ -126,6 +131,6 @@ export function createGetQueryHook<
                 route: params?.route,
                 query: params?.query
             }),
-            queryFn: () => queryFn(params)
+            queryFn: ({ signal }) => queryFn({ ...params, signal })
         }) as UseQueryResult<z.infer<ResponseSchema>['response']>
 }

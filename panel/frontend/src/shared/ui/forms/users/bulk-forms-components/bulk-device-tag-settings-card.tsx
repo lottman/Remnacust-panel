@@ -1,4 +1,4 @@
-import { Anchor, Checkbox, Code, Input, NumberInput, Stack, Text, Textarea } from '@mantine/core'
+import { Anchor, Checkbox, Code, Input, NumberInput, Stack, Text } from '@mantine/core'
 import { UseFormReturnType } from '@mantine/form'
 import { BulkAllUpdateUsersCommand, GetUsersTagsCommand } from '@remnawave/backend-contract'
 import { ForwardRefComponent, HTMLMotionProps, Variants } from 'motion/react'
@@ -7,6 +7,7 @@ import { TbDevices2, TbSettings } from 'react-icons/tb'
 
 import { useUiText } from '@shared/i18n/interface-text'
 import { CreateableTagInputShared } from '@shared/ui/createable-tag-input/createable-tag-input'
+import { FlagTextarea } from '@shared/ui/flag-picker/flag-picker'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SectionCard } from '@shared/ui/section-card'
 
@@ -98,7 +99,7 @@ export function BulkDeviceTagSettingsCard(props: IProps) {
                             value={form.getValues().tag}
                         />
 
-                        <Textarea
+                        <FlagTextarea
                             description={t('create-user-modal.widget.user-description')}
                             key={form.key('description')}
                             label={t('common.field.description')}

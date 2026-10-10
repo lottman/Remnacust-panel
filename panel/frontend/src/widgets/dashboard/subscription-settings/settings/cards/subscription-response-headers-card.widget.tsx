@@ -1,15 +1,4 @@
-import {
-    ActionIcon,
-    Alert,
-    Button,
-    Card,
-    Code,
-    Group,
-    Stack,
-    Text,
-    Textarea,
-    TextInput
-} from '@mantine/core'
+import { ActionIcon, Alert, Button, Card, Code, Group, Stack, Text, TextInput } from '@mantine/core'
 import { useForm, schemaResolver } from '@mantine/form'
 import { UpdateSubscriptionSettingsCommand } from '@remnawave/backend-contract'
 import { useCallback, useState } from 'react'
@@ -19,6 +8,7 @@ import { PiChatsCircle, PiInfo, PiPlus, PiTrash } from 'react-icons/pi'
 import { HelpActionIconShared } from '@shared/_modals/universal/help-drawer/help-action-icon.shared'
 import { queryClient } from '@shared/api'
 import { QueryKeys, useUpdateSubscriptionSettings } from '@shared/api/hooks'
+import { FlagTextarea } from '@shared/ui/flag-picker/flag-picker'
 import { TemplateInfoPopoverShared } from '@shared/ui/popovers/template-info-popover/template-info-popover.shared'
 import { SettingsCardShared } from '@shared/ui/settings-card'
 import { handleFormErrors, sortResponseHeadersByPriority } from '@shared/utils/misc'
@@ -212,7 +202,7 @@ export const SubscriptionResponseHeadersCardWidget = (props: IProps) => {
                                         style={{ flex: '0 0 35%' }}
                                         value={header.key}
                                     />
-                                    <Textarea
+                                    <FlagTextarea
                                         autosize
                                         leftSection={<TemplateInfoPopoverShared compact />}
                                         maxRows={6}

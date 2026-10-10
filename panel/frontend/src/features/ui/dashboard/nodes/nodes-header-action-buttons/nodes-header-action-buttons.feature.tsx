@@ -54,8 +54,7 @@ export const NodesHeaderActionButtonsFeature = (props: IProps) => {
         data: nodes = [],
         isLoading: isGetNodesPending,
         refetch: refetchNodes,
-        isPending,
-        isRefetching
+        isPending
     } = useGetNodes()
     const { mutate: restartAllNodes, isPending: isRestartAllNodesPending } = useRestartAllNodes()
 
@@ -122,7 +121,7 @@ export const NodesHeaderActionButtonsFeature = (props: IProps) => {
                 <Tooltip label={t('common.action.update')}>
                     <RefreshActionIcon
                         aria-label={t('common.action.update')}
-                        loading={isGetNodesPending || isPending || isRefetching}
+                        loading={isGetNodesPending || isPending}
                         onClick={() => refetchNodes()}
                         size={44}
                         color="gray"
@@ -302,7 +301,7 @@ export const NodesHeaderActionButtonsFeature = (props: IProps) => {
                 <Tooltip label={t('common.action.update')} withArrow>
                     <RefreshActionIcon
                         aria-label={t('common.action.update')}
-                        loading={isGetNodesPending || isPending || isRefetching}
+                        loading={isGetNodesPending || isPending}
                         onClick={() => refetchNodes()}
                         size={44}
                         variant="soft"

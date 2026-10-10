@@ -8,7 +8,6 @@ import {
     Stack,
     TagsInput,
     Text,
-    Textarea,
     TextInput
 } from '@mantine/core'
 import { GetExternalSquadByUuidCommand } from '@remnawave/backend-contract'
@@ -21,6 +20,7 @@ import { HelpActionIconShared } from '@shared/_modals/universal'
 import { queryClient } from '@shared/api'
 import { QueryKeys, useGetSubscriptionSettings, useUpdateExternalSquad } from '@shared/api/hooks'
 import { usePanelReducedMotion } from '@shared/ui/appearance/appearance'
+import { FlagTextarea } from '@shared/ui/flag-picker/flag-picker'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { TemplateInfoPopoverShared } from '@shared/ui/popovers/template-info-popover/template-info-popover.shared'
 import { SectionCard } from '@shared/ui/section-card'
@@ -238,7 +238,7 @@ export const ExternalSquadsResponseHeadersTabWidget = (props: IProps) => {
                                     style={{ flex: '0 0 35%' }}
                                     value={header.key}
                                 />
-                                <Textarea
+                                <FlagTextarea
                                     autosize
                                     leftSection={<TemplateInfoPopoverShared compact />}
                                     maxRows={6}

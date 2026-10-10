@@ -1,0 +1,28 @@
+.list {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+}
+.country {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 8px 10px;
+    min-height: 44px;
+    border-radius: 8px;
+}
+.country:hover {
+    background: var(--panel-subtle);
+}
+.flag {
+    font-size: 24px;
+    line-height: 1;
+    flex-shrink: 0;
+}
+.name {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    font-size: 14px;
+}

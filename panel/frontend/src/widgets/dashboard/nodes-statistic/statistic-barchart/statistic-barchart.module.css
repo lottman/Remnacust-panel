@@ -1,19 +1,205 @@
-.chart :global(.highcharts-tooltip:not([visibility='hidden'])) {
-    animation: tooltipAppear 160ms ease-out;
+.chart {
+    min-width: 0;
 }
-
+.plotShell {
+    position: relative;
+    border-radius: 6px;
+}
+.markerViewport {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+.viewport {
+    overflow: auto;
+    scrollbar-gutter: stable;
+    position: relative;
+    overscroll-behavior: contain;
+}
+.canvas {
+    display: block;
+    position: sticky;
+    top: 0;
+    pointer-events: none;
+    animation: chartAppear 320ms cubic-bezier(0.22, 0.8, 0.24, 1);
+}
+.dayButton {
+    position: absolute;
+    inset-inline: 0;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    touch-action: pan-y;
+}
+.dayButton:focus-visible {
+    outline: 2px solid var(--mantine-primary-color-filled);
+    outline-offset: -2px;
+    background: color-mix(in srgb, var(--panel-accent) 5%, transparent);
+}
+.marker {
+    position: absolute;
+    height: 28px;
+    pointer-events: none;
+    border: 1px solid var(--panel-text);
+    opacity: 0.65;
+}
+.marker[hidden] {
+    display: none;
+}
+.tooltipPosition {
+    position: absolute;
+    right: 16px;
+    top: 8px;
+    width: min(250px, calc(100% - 28px));
+    pointer-events: none;
+    z-index: 2;
+}
+.tooltip {
+    padding: 12px;
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+    background: var(--panel-surface);
+    color: var(--panel-text);
+    box-shadow: 0 4px 16px rgb(0 0 0 / 16%);
+    animation: tooltipAppear 150ms ease-out;
+}
+.nodeName {
+    overflow-wrap: anywhere;
+    font-size: 14px;
+    font-weight: 600;
+}
+.tooltipMuted {
+    font-size: 12px;
+    color: var(--panel-muted);
+}
+.tooltipValue {
+    font-size: 18px;
+    font-weight: 700;
+}
+.nearby {
+    margin-block: 8px;
+}
+.nearbyRow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    min-width: 0;
+}
+.nearbyRow > span:first-child {
+    flex: 0 0 44px;
+}
+.nearbyRow > span:last-child {
+    flex: 0 0 52px;
+    text-align: end;
+}
+.miniTrack {
+    flex: 1;
+    height: 5px;
+    background: var(--panel-subtle);
+    border-radius: 3px;
+    overflow: hidden;
+}
+.miniTrack > span {
+    display: block;
+    height: 100%;
+}
+.axis {
+    display: flex;
+    justify-content: space-between;
+    gap: 6px;
+    padding: 8px 12px 12px 0;
+    color: var(--panel-muted);
+    font-size: 11px;
+}
+.axis > span {
+    white-space: nowrap;
+}
+.legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4px;
+    padding: 10px;
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+    max-height: 160px;
+    overflow: auto;
+}
+.legendButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 36px;
+    padding: 6px 8px;
+    border: 0;
+    background: transparent;
+    border-radius: 6px;
+    max-width: 100%;
+    font: inherit;
+    font-size: 12px;
+    color: var(--panel-text);
+    cursor: pointer;
+}
+.legendButton > span {
+    overflow-wrap: anywhere;
+}
+.legendButton:hover {
+    background: var(--panel-subtle);
+}
+.legendButton[aria-pressed='false'] {
+    color: var(--panel-muted);
+    text-decoration: line-through;
+}
+.legendButton[aria-pressed='false'] .legendDot {
+    opacity: 0.35;
+}
+.legendDot {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+@keyframes chartAppear {
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
 @keyframes tooltipAppear {
     from {
         opacity: 0;
+        transform: translateY(3px);
     }
-
     to {
         opacity: 1;
+        transform: translateY(0);
     }
 }
-
+@media (pointer: coarse) {
+    .legendButton {
+        min-height: 44px;
+    }
+}
+@media (max-width: 24em) {
+    .axis {
+        font-size: 9px;
+        gap: 2px;
+    }
+}
+.chart[data-reduced-motion] :is(.canvas, .tooltip) {
+    animation: none;
+}
 @media (prefers-reduced-motion: reduce) {
-    .chart :global(.highcharts-tooltip) {
+    .canvas,
+    .tooltip {
         animation: none;
     }
 }

@@ -3230,5 +3230,13 @@
         "releaseNotReady": "The installer does not include this panel version yet. Try again later.",
         "failureHint": "Check the update log on the server before trying again.",
         "return": "Return to panel"
+    },
+    "flag-picker": {
+        "open": "Choose a flag",
+        "title": "Country flags",
+        "search": "Search by country or code",
+        "hint": "Select a country to copy its flag.",
+        "empty": "No countries found",
+        "sark": "Sark"
     }
 }

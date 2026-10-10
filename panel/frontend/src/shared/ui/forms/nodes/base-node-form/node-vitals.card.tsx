@@ -33,6 +33,7 @@ import {
 
 import { useUiText } from '@shared/i18n/interface-text'
 import { CopyableFieldShared } from '@shared/ui/copyable-field/copyable-field'
+import { FlagTextInput } from '@shared/ui/flag-picker/flag-picker'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SectionCard } from '@shared/ui/section-card'
 import { TagInputPill } from '@shared/ui/tag-input-pill'
@@ -104,7 +105,7 @@ export const NodeVitalsCard = <
                             }}
                         />
 
-                        <TextInput
+                        <FlagTextInput
                             key={form.key('name')}
                             label={t('base-node-form.internal-name')}
                             {...form.getInputProps('name')}

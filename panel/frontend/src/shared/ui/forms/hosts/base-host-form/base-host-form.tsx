@@ -23,6 +23,7 @@ import { HiQuestionMarkCircle } from 'react-icons/hi'
 import { PiFloppyDiskDuotone } from 'react-icons/pi'
 
 import { DrawerFooter } from '@shared/ui/drawer-footer'
+import { FlagTextInput } from '@shared/ui/flag-picker/flag-picker'
 import { TemplateInfoPopoverShared } from '@shared/ui/popovers'
 import { PopoverWithInfoShared } from '@shared/ui/popovers/popover-with-info'
 import { SectionCard } from '@shared/ui/section-card'
@@ -242,7 +243,7 @@ export const BaseHostForm = <
                             </SectionCard.Section>
                             <SectionCard.Section>
                                 <Stack gap="md">
-                                    <TextInput
+                                    <FlagTextInput
                                         key={form.key('remark')}
                                         label={t('base-host-form.remark')}
                                         {...form.getInputProps('remark')}

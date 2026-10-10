@@ -102,8 +102,7 @@ export const StatisticNodesPage = () => {
     const {
         data: nodesStats,
         isLoading,
-        refetch,
-        isRefetching
+        refetch
     } = useGetStatsNodesUsage({
         query: {
             start: queryRange.start,
@@ -231,7 +230,7 @@ export const StatisticNodesPage = () => {
                         />
 
                         <RefreshActionIcon
-                            loading={isRefetching}
+                            loading={isLoading}
                             onClick={() => refetch()}
                             size="input-md"
                             variant="soft"

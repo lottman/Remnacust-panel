@@ -31,6 +31,7 @@ import {
 import { useGetNodePlugins, useGetNodesTags } from '@shared/api/hooks'
 import { useUiText } from '@shared/i18n/interface-text'
 import { CopyableFieldShared } from '@shared/ui/copyable-field/copyable-field'
+import { FlagTextInput } from '@shared/ui/flag-picker/flag-picker'
 import { getLocalizedCountries } from '@shared/ui/forms/nodes/base-node-form/constants'
 import { SelectInfraProviderShared } from '@shared/ui/infra-billing/select-infra-provider/select-infra-provider.shared'
 import { TagInputPill } from '@shared/ui/tag-input-pill'
@@ -112,7 +113,7 @@ export const CreateNodeStep1Connection = ({ form, onNext, secretKey, port }: IPr
                         value={secretKey ?? ''}
                     />
 
-                    <TextInput
+                    <FlagTextInput
                         key={form.key('name')}
                         label={t('base-node-form.internal-name')}
                         leftSection={<TbId size={16} />}

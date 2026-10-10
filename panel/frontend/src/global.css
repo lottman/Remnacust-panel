@@ -98,6 +98,12 @@ html .xera-users-table .mrt-table-head-cell-content {
     min-width: 0;
     max-width: 100%;
 }
+/* Keep glyphs compact when touch controls grow; MRT otherwise uses size="100%". */
+html .xera-users-table .mrt-table-head-cell-content svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
 html .xera-users-table {
     border-radius: var(--mantine-radius-md);
     overflow: hidden;

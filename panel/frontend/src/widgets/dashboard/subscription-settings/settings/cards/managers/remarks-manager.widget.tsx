@@ -18,6 +18,7 @@ import { PiPlus, PiTrash, PiArrowUp, PiArrowDown, PiLink, PiGlobe } from 'react-
 
 import { useUiText } from '@shared/i18n/interface-text'
 import { usePanelReducedMotion } from '@shared/ui/appearance/appearance'
+import { FlagTextInput } from '@shared/ui/flag-picker/flag-picker'
 import { TemplateInfoPopoverShared } from '@shared/ui/popovers/template-info-popover/template-info-popover.shared'
 
 const EMPTY_REMARKS = ['']
@@ -171,7 +172,7 @@ export const RemarksManager = ({
                                                 )
                                             }
                                         />
-                                        <TextInput
+                                        <FlagTextInput
                                             required
                                             label={uiText('button-text-ec208ea')}
                                             maxLength={60}
@@ -205,7 +206,7 @@ export const RemarksManager = ({
                                         />
                                     </Stack>
                                 ) : (
-                                    <TextInput
+                                    <FlagTextInput
                                         leftSection={<TemplateInfoPopoverShared compact />}
                                         onChange={(e) => updateLocalRemark(index, e.target.value)}
                                         placeholder={t('remarks-manager.widget.enter-remark')}

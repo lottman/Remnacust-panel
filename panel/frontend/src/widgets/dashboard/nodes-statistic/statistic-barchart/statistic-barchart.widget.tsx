@@ -21,12 +21,14 @@ import { useTranslation } from 'react-i18next'
 import { PiEmpty } from 'react-icons/pi'
 import { TbChartBar } from 'react-icons/tb'
 
+import { usePanelReducedMotion } from '@shared/ui/appearance/appearance'
 import { CountryFlag } from '@shared/ui/get-country-flag'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { prettifyBytesUtil } from '@shared/utils/bytes'
 import { formatTimeUtil } from '@shared/utils/time-utils'
 
 import { createNodesTooltipFormatter } from './statistic-tooltip'
+import classes from './statistic-barchart.module.css'
 
 interface IProps {
     categories: string[] | undefined
@@ -41,6 +43,7 @@ export const NodesStatisticBarchartWidget = memo((props: IProps) => {
     const { categories = EMPTY_CATEGORIES, series = EMPTY_SERIES, isLoading } = props
 
     const { t, i18n } = useTranslation()
+    const reducedMotion = usePanelReducedMotion()
 
     const handleBarClick = useCallback(
         (category: string, pointIndex: number) => {
@@ -144,7 +147,7 @@ export const NodesStatisticBarchartWidget = memo((props: IProps) => {
         () => ({
             chart: {
                 type: 'bar',
-                animation: false,
+                animation: reducedMotion ? false : { duration: 250 },
                 height: '60%',
                 backgroundColor: 'transparent',
                 style: { fontFamily: 'inherit' }
@@ -157,7 +160,7 @@ export const NodesStatisticBarchartWidget = memo((props: IProps) => {
                     cursor: 'pointer'
                 },
                 series: {
-                    animation: false,
+                    animation: reducedMotion ? false : { duration: 600 },
                     states: {
                         normal: { animation: false },
                         hover: { enabled: true, brightness: 0.1, animation: false },
@@ -249,7 +252,7 @@ export const NodesStatisticBarchartWidget = memo((props: IProps) => {
                 gridLineColor: undefined
             },
             tooltip: {
-                animation: false,
+                animation: reducedMotion ? false : { duration: 150 },
                 shared: false,
                 backgroundColor: 'var(--mantine-color-body)',
                 borderColor: 'var(--mantine-color-gray-4)',
@@ -275,7 +278,7 @@ export const NodesStatisticBarchartWidget = memo((props: IProps) => {
                 }
             })
         }),
-        [categories, series, handleBarClick, tooltipFormatter, i18n.language]
+        [categories, series, handleBarClick, tooltipFormatter, i18n.language, reducedMotion]
     )
 
     if (isLoading) {
@@ -298,7 +301,7 @@ export const NodesStatisticBarchartWidget = memo((props: IProps) => {
     }
 
     return (
-        <Card p="xs" withBorder>
+        <Card className={reducedMotion ? undefined : classes.chart} p="xs" withBorder>
             <Chart title="" options={options} />
         </Card>
     )

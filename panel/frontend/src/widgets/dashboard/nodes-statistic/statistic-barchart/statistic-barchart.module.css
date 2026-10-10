@@ -1,0 +1,19 @@
+.chart :global(.highcharts-tooltip:not([visibility='hidden'])) {
+    animation: tooltipAppear 160ms ease-out;
+}
+
+@keyframes tooltipAppear {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .chart :global(.highcharts-tooltip) {
+        animation: none;
+    }
+}

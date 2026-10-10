@@ -268,7 +268,7 @@ export const NodesDataTableWidget = memo((props: IProps) => {
         sortStatus
     ])
 
-    if (!nodes || !configProfiles) return <LoadingScreen height="60vh" />
+    if (!nodes) return <LoadingScreen height="60vh" />
 
     return (
         <>

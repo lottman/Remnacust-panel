@@ -200,7 +200,7 @@ export const NodesTableWidget = memo((props: IProps) => {
         showModal('nodes_editNodeModal', { nodeUuid })
     }, [])
 
-    if (!nodes || !nodePlugins || !nodeIntegrations) {
+    if (!nodes) {
         return null
     }
 

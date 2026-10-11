@@ -24,6 +24,11 @@ for (const [label, version] of [
     ['OpenAPI', spec.info.version]
 ])
     assert.equal(version, packageVersion, `${label}: regenerate documentation for this panel version`)
+assert.equal(
+    spec.info.title,
+    `Remnacust API v${packageVersion}`,
+    'OpenAPI title: regenerate documentation for this panel version'
+)
 const walk = (dir) =>
     fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
         const file = path.join(dir, entry.name)
@@ -123,12 +128,12 @@ const backendRoot = path.resolve(
 )
 const variablePath = path.join(backendRoot, 'src/common/utils/templates/template-variables.ts')
 const backendSpec = path.join(backendRoot, 'openapi.json')
-if (fs.existsSync(backendSpec))
-    assert.deepEqual(
-        spec,
-        JSON.parse(fs.readFileSync(backendSpec, 'utf8')),
-        'API reference must match the current backend contract'
-    )
+assert.ok(fs.existsSync(backendSpec), 'Backend OpenAPI is required to validate the API reference')
+assert.deepEqual(
+    spec,
+    JSON.parse(fs.readFileSync(backendSpec, 'utf8')),
+    'API reference must match the current backend contract'
+)
 if (fs.existsSync(variablePath)) {
     const sourceVars = fs.readFileSync(variablePath, 'utf8')
     const sourceNames = [...sourceVars.matchAll(/^    ([A-Z][A-Z_0-9]+): \{ args: /gm)].map(

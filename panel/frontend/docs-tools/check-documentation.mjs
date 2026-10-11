@@ -17,6 +17,13 @@ const catalog = read('catalog.json')
 const api = read('api.json')
 const spec = read('openapi.json')
 const manifest = read('manifest.json')
+const packageVersion = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8')).version
+for (const [label, version] of [
+    ['manifest', manifest.backendVersion],
+    ['API reference', api.version],
+    ['OpenAPI', spec.info.version]
+])
+    assert.equal(version, packageVersion, `${label}: regenerate documentation for this panel version`)
 const walk = (dir) =>
     fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
         const file = path.join(dir, entry.name)
@@ -115,6 +122,13 @@ const backendRoot = path.resolve(
     fs.existsSync(path.resolve(root, '../backend')) ? '../backend' : '../backend-3.4.4-xera'
 )
 const variablePath = path.join(backendRoot, 'src/common/utils/templates/template-variables.ts')
+const backendSpec = path.join(backendRoot, 'openapi.json')
+if (fs.existsSync(backendSpec))
+    assert.deepEqual(
+        spec,
+        JSON.parse(fs.readFileSync(backendSpec, 'utf8')),
+        'API reference must match the current backend contract'
+    )
 if (fs.existsSync(variablePath)) {
     const sourceVars = fs.readFileSync(variablePath, 'utf8')
     const sourceNames = [...sourceVars.matchAll(/^    ([A-Z][A-Z_0-9]+): \{ args: /gm)].map(

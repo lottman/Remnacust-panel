@@ -70,7 +70,7 @@
     },
     "hwid-notifications": {
         "device-deleted": "设备已成功删除",
-        "delete-failed-check-state": "删除未完成。请检查刷新的设备列表和节点状态，然后重试。",
+        "delete-failed-check-state": "删除未完成。请检查刷新的设备列表，然后重试。",
         "unblocked-devices-deleted": "未封禁的设备已删除；已封禁的设备已保留。",
         "subscription-blocked": "HWID 已封禁。已连接节点会立即撤销其密钥；离线节点将在重新连接后应用封禁。",
         "device-unblocked": "设备已解除封禁",
@@ -816,7 +816,7 @@
             "model": "型号",
             "added": "添加时间",
             "delete-device": "删除设备",
-            "delete-device-confirmation": "删除此设备？如果节点不可用，删除可能无法完成；请检查刷新的列表。",
+            "delete-device-confirmation": "删除此设备？离线节点将在重新连接后应用访问权限变更。如果允许注册新设备，此设备可以再次注册。",
             "devices": "设备",
             "hwid-devices": "HWID 设备列表",
             "delete-all-devices": "删除所有未封禁的设备",

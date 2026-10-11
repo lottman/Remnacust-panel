@@ -3,6 +3,11 @@ export declare namespace StartXrayCommand {
     const url: "/node/xray/start";
     const RequestSchema: z.ZodObject<{
         internals: z.ZodObject<{
+            reconciliation: z.ZodOptional<z.ZodObject<{
+                url: z.ZodURL;
+                token: z.ZodString;
+                revision: z.ZodDefault<z.ZodString>;
+            }, z.core.$strip>>;
             metadata: z.ZodOptional<z.ZodObject<{
                 name: z.ZodString;
                 uuid: z.ZodString;

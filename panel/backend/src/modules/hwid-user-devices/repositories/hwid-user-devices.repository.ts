@@ -165,72 +165,100 @@ export class HwidUserDevicesRepository implements Omit<
         return { exists: !!result.exists, blocked: !!result.blocked };
     }
 
-    public async deleteByHwidAndUserId(hwid: string, userId: bigint): Promise<boolean> {
-        const result = await this.prisma.tx.hwidUserDevices.delete({
-            where: { hwid_userId: { hwid, userId } },
-        });
-        return !!result;
+    @Transactional()
+    public async deleteDevicesAndQueue(
+        userId: bigint,
+        devices: Pick<HwidUserDeviceEntity, 'hwid' | 'createdAt' | 'updatedAt'>[],
+        includeBlocked: boolean,
+        reconcile: boolean,
+    ): Promise<string[]> {
+        if (!devices.length) return [];
+        await this.prisma.tx
+            .$executeRaw`SELECT pg_advisory_xact_lock(${HWID_LOCK_PREFIX + userId})`;
+        const snapshots = devices.map(
+            (device) =>
+                sql`(${device.hwid},${device.createdAt}::timestamp,${device.updatedAt}::timestamp)`,
+        );
+        const result = await sql<{ hwid: string }>`WITH removed AS (
+            DELETE FROM hwid_user_devices d USING (VALUES ${sql.join(snapshots)}) AS requested(hwid,created_at,updated_at)
+            WHERE d.user_id=${userId} AND d.hwid=requested.hwid
+              AND d.created_at=requested.created_at AND d.updated_at=requested.updated_at
+              AND (${includeBlocked} OR NOT d.blocked)
+            RETURNING d.hwid
+        ), queued AS (
+            INSERT INTO xera_device_reconciliation(user_id,hwid)
+            SELECT ${userId},hwid FROM removed WHERE ${reconcile}
+            ON CONFLICT(user_id,hwid) DO UPDATE SET revision=gen_random_uuid(),attempts=0,next_attempt_at=now()
+            RETURNING hwid
+        ) SELECT hwid FROM removed`.execute(this.qb.kysely);
+        return result.rows.map((row) => row.hwid);
     }
 
+    public async claimDeviceReconciliation(
+        limit = 32,
+    ): Promise<Array<{ userId: bigint; hwid: string; revision: string; attempts: number }>> {
+        const result = await sql<{
+            userId: bigint;
+            hwid: string;
+            revision: string;
+            attempts: number;
+        }>`WITH due AS (
+            SELECT user_id,hwid FROM xera_device_reconciliation WHERE next_attempt_at<=now()
+            ORDER BY next_attempt_at LIMIT ${limit} FOR UPDATE SKIP LOCKED
+        ) UPDATE xera_device_reconciliation q SET attempts=q.attempts+1,next_attempt_at=now()+interval '2 minutes'
+          FROM due WHERE q.user_id=due.user_id AND q.hwid=due.hwid
+          RETURNING q.user_id AS "userId",q.hwid,q.revision::text,q.attempts`.execute(
+            this.qb.kysely,
+        );
+        return result.rows;
+    }
+
+    public async finishDeviceReconciliation(
+        task: { userId: bigint; hwid: string; revision: string },
+        success: boolean,
+        attempts: number,
+    ): Promise<void> {
+        if (success) {
+            await sql`WITH finished AS (
+                DELETE FROM xera_device_reconciliation WHERE user_id=${task.userId} AND hwid=${task.hwid}
+                AND revision=${task.revision}::uuid RETURNING user_id
+            ) UPDATE xera_device_state SET revision=revision+1 WHERE id=1 AND NOT EXISTS(SELECT 1 FROM finished)`.execute(
+                this.qb.kysely,
+            );
+        } else {
+            const delay = Math.min(300, 10 * 2 ** Math.min(attempts - 1, 5));
+            // An older worker can finish after a new registration's job was already
+            // acknowledged. Fence its late node writes with a fresh configuration revision.
+            await sql`WITH retried AS (
+                UPDATE xera_device_reconciliation SET next_attempt_at=now()+${delay}*interval '1 second'
+                WHERE user_id=${task.userId} AND hwid=${task.hwid} AND revision=${task.revision}::uuid RETURNING user_id
+            ) UPDATE xera_device_state SET revision=revision+1 WHERE id=1 AND NOT EXISTS(SELECT 1 FROM retried)`.execute(
+                this.qb.kysely,
+            );
+        }
+    }
+
+    @Transactional()
     public async blockByHwidAndUserId(
         hwid: string,
         userId: bigint,
         blocked: boolean,
     ): Promise<void> {
+        await this.prisma.tx
+            .$executeRaw`SELECT pg_advisory_xact_lock(${HWID_LOCK_PREFIX + userId})`;
         const result = await sql`UPDATE hwid_user_devices SET blocked=${blocked},
             updated_at=GREATEST(date_trunc('milliseconds',clock_timestamp())::timestamp,updated_at+interval '1 millisecond')
             WHERE hwid=${hwid} AND user_id=${userId} RETURNING hwid`.execute(this.qb.kysely);
         if (!result.rows.length) throw new NotFoundException('Device not found');
+        await this.queueReconciliation(userId, hwid);
     }
 
-    public async stageDeletion(
-        userId: bigint,
-        hwids: string[],
-        includeBlocked = false,
-    ): Promise<{ hwid: string; version: string }[]> {
-        if (!hwids.length) return [];
-        // Denial commits before network I/O. The version fences a concurrent administrator action.
-        const result = await sql<{
-            hwid: string;
-            version: string;
-        }>`UPDATE hwid_user_devices SET blocked=true,
-            updated_at=GREATEST(date_trunc('milliseconds',clock_timestamp())::timestamp,updated_at+interval '1 millisecond')
-            WHERE user_id=${userId} AND hwid IN (${sql.join(hwids)}) AND (${includeBlocked} OR NOT blocked)
-            RETURNING hwid,updated_at::text AS version`.execute(this.qb.kysely);
-        return result.rows;
-    }
-
-    public async completeDeletion(
-        userId: bigint,
-        device: { hwid: string; version: string },
-    ): Promise<boolean> {
-        const result = await sql`DELETE FROM hwid_user_devices WHERE user_id=${userId}
-            AND hwid=${device.hwid} AND blocked AND updated_at::text=${device.version}
-            RETURNING hwid`.execute(this.qb.kysely);
-        return result.rows.length === 1;
-    }
-
-    public async restoreDeletion(
-        userId: bigint,
-        device: { hwid: string; version: string },
-        wasBlocked: boolean,
-    ): Promise<boolean> {
-        // Only undo our own staging write. A concurrent admin action wins.
-        const result = await sql`UPDATE hwid_user_devices SET blocked=${wasBlocked},
-            updated_at=GREATEST(date_trunc('milliseconds',clock_timestamp())::timestamp,updated_at+interval '1 millisecond')
-            WHERE user_id=${userId} AND hwid=${device.hwid} AND blocked
-              AND updated_at::text=${device.version} RETURNING hwid`.execute(this.qb.kysely);
-        return result.rows.length === 1;
-    }
-
-    public async deleteUnblockedByUserId(userId: bigint, hwids: string[]): Promise<boolean> {
-        if (hwids.length === 0) return false;
-        const result = await this.prisma.tx.hwidUserDevices.deleteMany({
-            // Keep blocks even if an administrator blocks a device after the bulk request starts.
-            // Restrict the deletion to the devices captured before node synchronization.
-            where: { userId, blocked: false, hwid: { in: hwids } },
-        });
-        return result.count > 0;
+    private async queueReconciliation(userId: bigint, hwid: string): Promise<void> {
+        if (process.env.XERA_PERSONAL_SUBSCRIPTIONS !== 'true') return;
+        await sql`INSERT INTO xera_device_reconciliation(user_id,hwid) VALUES(${userId},${hwid})
+            ON CONFLICT(user_id,hwid) DO UPDATE SET revision=gen_random_uuid(),attempts=0,next_attempt_at=now()`.execute(
+            this.qb.kysely,
+        );
     }
 
     public async getAllHwidDevices({
@@ -454,6 +482,7 @@ export class HwidUserDevicesRepository implements Omit<
         const result = await this.prisma.tx.hwidUserDevices.create({
             data: this.converter.fromEntityToPrismaModel(entity),
         });
+        await this.queueReconciliation(entity.userId, entity.hwid);
 
         return { status: 'CREATED', hwidDevice: this.converter.fromPrismaModelToEntity(result) };
     }

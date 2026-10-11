@@ -70,7 +70,7 @@
     },
     "hwid-notifications": {
         "device-deleted": "Device deleted successfully",
-        "delete-failed-check-state": "Deletion did not finish. Check the refreshed device list and node status, then retry.",
+        "delete-failed-check-state": "Deletion did not finish. Check the refreshed device list, then retry.",
         "unblocked-devices-deleted": "Unblocked devices were deleted; blocked devices were kept.",
         "subscription-blocked": "HWID blocked. Connected nodes revoke its key now; offline nodes apply the block when they reconnect.",
         "device-unblocked": "Device unblocked successfully",
@@ -816,7 +816,7 @@
             "model": "Model",
             "added": "Added",
             "delete-device": "Delete device",
-            "delete-device-confirmation": "Delete this device? If a node is unavailable, deletion may not finish; check the refreshed list.",
+            "delete-device-confirmation": "Delete this device? Offline nodes will apply the access change after reconnecting. If new device registration is allowed, this device can register again.",
             "devices": "Devices",
             "hwid-devices": "HWID devices",
             "delete-all-devices": "Delete all unblocked devices",

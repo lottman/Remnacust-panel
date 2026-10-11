@@ -247,7 +247,7 @@ const manifest = {
     generatedAt: new Date().toISOString(),
     backendVersion: JSON.parse(fs.readFileSync(path.join(backend, 'package.json'), 'utf8')).version,
     coreVersion: '1.1.5',
-    nodeVersion: '1.1.7',
+    nodeVersion: '1.1.8',
     upstreamPanelVersion: '3.4.5',
     upstreamBackendPatches: [
         {

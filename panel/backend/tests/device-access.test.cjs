@@ -21,11 +21,12 @@ new Function('require', 'module', 'exports', output)((id) => {
     if (id.endsWith('/get-user-by-unique-field')) return { GetUserByUniqueFieldQuery };
     if (id.endsWith('/get-user-with-resolved-inbounds')) return { GetUserWithResolvedInboundsQuery };
     if (id.endsWith('/get-vless-flow')) return { getVlessFlowFromDbInbound: () => '' };
+    if (id === '@common/utils/settle-concurrent') return require('./load-typescript.cjs')(path.join(__dirname,'../src/common/utils/settle-concurrent.ts'));
     return {};
 }, moduleRef, moduleRef.exports);
 const { DeviceAccessService } = moduleRef.exports;
 
-function fixture({ offline = false, noInbounds = false, exceptionInbound = false, protocol = 'vless' } = {}) {
+function fixture({ offline = false, noInbounds = false, exceptionInbound = false, protocol = 'vless', count = 1 } = {}) {
     const state = { user: { id: 1n, status: 'ACTIVE', expireAt: new Date(Date.now() + 60_000), vlessUuid: 'parent' }, device: { exists: true, blocked: false } };
     const calls = [];
     const node = { uuid: 'online', address: 'online', activeConfigProfileUuid: 'profile', activeInbounds: [{ uuid: 'inbound' }] };
@@ -39,8 +40,8 @@ function fixture({ offline = false, noInbounds = false, exceptionInbound = false
         createWithAdvisoryLock: async () => ({ status: 'OK', hwidDevice: { blocked: false } }),
     };
     const service = new DeviceAccessService({ getOrThrow: () => 'secret' }, devices, {
-        findAllNodes: async () => offline ? [node, { uuid: 'offline', activeConfigProfileUuid: 'profile', activeInbounds: [{ uuid: 'inbound' }] }] : [node],
-        findConnectedNodes: async () => [node],
+        findAllNodes: async () => offline ? [node, { uuid: 'offline', activeConfigProfileUuid: 'profile', activeInbounds: [{ uuid: 'inbound' }] }] : Array.from({length:count},(_,i)=>({...node,uuid:'node-'+i})),
+        findConnectedNodes: async () => Array.from({length:count},(_,i)=>({...node,uuid:offline?'online':'node-'+i})),
     }, axios, {synchronizeUser:async()=>true}, { execute: async (query) => ({ isOk: true, response: query instanceof GetUserByUniqueFieldQuery
         ? { ...state.user } : { ...state.user, inbounds: noInbounds || (!exceptionInbound && (state.user.status !== 'ACTIVE' || state.user.expireAt <= new Date())) ? [] : [{ uuid: 'inbound', profileUuid: 'profile', type: protocol, tag: 'tag' }] } }) });
     return { state, calls, axios, service };
@@ -177,4 +178,11 @@ test('ordinary registration does not wait for host policy synchronization, but c
         assert.equal(result, 'OK');
         assert.deepEqual(calls, [['add', '1~device']]);
     } finally { clearTimeout(timer); }
+});
+
+for(const blocked of [false,true]) test('large fleet synchronization is bounded and isolates failed nodes: '+blocked,async()=>{
+ const {service,axios}=fixture({count:25});let active=0,peak=0,calls=0;
+ const action=async()=>{peak=Math.max(peak,++active);const i=++calls;await new Promise(r=>setImmediate(r));active--;if(i===3)throw Error('offline');return success;};
+ axios.addUser=action;axios.deleteUser=action;
+ assert.equal(await service.syncDevice(1n,'device',blocked),false);assert.equal(calls,25);assert.equal(peak,8);
 });

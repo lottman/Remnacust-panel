@@ -16,6 +16,7 @@ import {
 } from '@common/utils/device-identity';
 import { HwidHeaders } from '@common/utils/extract-hwid-headers';
 import { getVlessFlowFromDbInbound } from '@common/utils/flow/get-vless-flow';
+import { settleConcurrent } from '@common/utils/settle-concurrent';
 import { USERS_STATUS } from '@libs/contracts/constants';
 import { THwidSettings } from '@libs/contracts/models';
 
@@ -31,6 +32,7 @@ import { HwidUserDevicesRepository } from './repositories/hwid-user-devices.repo
 export class DeviceAccessService {
     private readonly logger = new Logger(DeviceAccessService.name);
     private readonly secret: string;
+    private reconciliation: Promise<void> | null = null;
 
     constructor(
         config: TypedConfigService,
@@ -71,6 +73,44 @@ export class DeviceAccessService {
 
     public async devicesForConfig(userIds: bigint[]) {
         return this.devices.findForConfig(userIds);
+    }
+
+    public kickReconciliation(): void {
+        setImmediate(() => {
+            void this.reconcilePendingDevices().catch(() =>
+                this.logger.warn('Device reconciliation will retry from the database'),
+            );
+        });
+    }
+
+    public reconcilePendingDevices(): Promise<void> {
+        if (this.reconciliation) return this.reconciliation;
+        const running = this.processPendingDevices().finally(() => {
+            if (this.reconciliation === running) this.reconciliation = null;
+        });
+        this.reconciliation = running;
+        return running;
+    }
+
+    private async processPendingDevices(): Promise<void> {
+        if (!this.enabled) return;
+        const pending = await this.devices.claimDeviceReconciliation();
+        await settleConcurrent(pending, 4, async (task) => {
+            let success = false;
+            try {
+                // Reconcile the current row, not a stale delete event. Registration or an
+                // administrator may have deliberately changed this device in the meantime.
+                const current = await this.devices.checkHwidExists(task.hwid, task.userId);
+                success = await this.syncDevice(
+                    task.userId,
+                    task.hwid,
+                    !current.exists || current.blocked,
+                );
+            } catch {
+                this.logger.warn(`Device reconciliation pending for user ${task.userId}`);
+            }
+            await this.devices.finishDeviceReconciliation(task, success, task.attempts);
+        });
     }
 
     public async register(
@@ -292,15 +332,13 @@ export class DeviceAccessService {
             }
         }
         if (blocked) {
-            const results = await Promise.all(
-                nodes.map((node) =>
-                    this.axios.deleteUser(
-                        {
-                            username: credentials.username,
-                            hashData: { vlessUuid: credentials.vlessUuid },
-                        },
-                        { address: node.address, port: node.port, proxyUrl: node.proxyUrl },
-                    ),
+            const results = await settleConcurrent(nodes, 8, (node) =>
+                this.axios.deleteUser(
+                    {
+                        username: credentials.username,
+                        hashData: { vlessUuid: credentials.vlessUuid },
+                    },
+                    { address: node.address, port: node.port, proxyUrl: node.proxyUrl },
                 ),
             );
             if (!complete && allowOfflineNodes) {
@@ -310,10 +348,11 @@ export class DeviceAccessService {
                 (complete || allowOfflineNodes) &&
                 results.every(
                     (result) =>
-                        result.isOk &&
-                        result.response?.success === true &&
+                        result.status === 'fulfilled' &&
+                        result.value.isOk &&
+                        result.value.response?.success === true &&
                         (
-                            result.response as typeof result.response & {
+                            result.value.response as typeof result.value.response & {
                                 deviceRevocationSupported?: boolean;
                             }
                         ).deviceRevocationSupported === true,
@@ -326,90 +365,88 @@ export class DeviceAccessService {
         // on its next full start. Revocations above still require confirmation.
         if (!nodes.length && !complete) return false;
 
-        const results = await Promise.all(
-            nodes.map(async (node) => {
-                const inbounds = resolved.response.inbounds.filter(
-                    (inbound) =>
-                        inbound.profileUuid === node.activeConfigProfileUuid &&
-                        node.activeInbounds.some((active) => active.uuid === inbound.uuid),
-                );
-                if (!inbounds.length) {
-                    const response = await this.axios.deleteUser(
-                        {
-                            username: credentials.username,
-                            hashData: { vlessUuid: credentials.vlessUuid },
-                        },
-                        { address: node.address, port: node.port, proxyUrl: node.proxyUrl },
-                    );
-                    return (
-                        response.isOk &&
-                        response.response?.success === true &&
-                        (
-                            response.response as typeof response.response & {
-                                deviceRevocationSupported?: boolean;
-                            }
-                        ).deviceRevocationSupported === true
-                    );
-                }
-                const data = inbounds.map((inbound) => {
-                    const common = { tag: inbound.tag, username: credentials.username };
-                    switch (inbound.type) {
-                        case 'vless':
-                            return {
-                                ...common,
-                                type: 'vless' as const,
-                                uuid: credentials.vlessUuid,
-                                flow: getVlessFlowFromDbInbound(inbound),
-                            };
-                        case 'trojan':
-                            return {
-                                ...common,
-                                type: 'trojan' as const,
-                                password: credentials.trojanPassword,
-                            };
-                        case 'masque':
-                        case 'hysteria':
-                            return {
-                                ...common,
-                                type: inbound.type as 'masque' | 'hysteria',
-                                password: credentials.vlessUuid,
-                            };
-                        case 'shadowsocks':
-                            if (isSS2022Method(inbound.rawInbound))
-                                return {
-                                    ...common,
-                                    type: 'shadowsocks22' as const,
-                                    password: getSsPassword(
-                                        credentials.ssPassword,
-                                        true,
-                                        (
-                                            inbound.rawInbound as {
-                                                settings?: { method?: string };
-                                            } | null
-                                        )?.settings?.method,
-                                    ),
-                                };
-                            return {
-                                ...common,
-                                type: 'shadowsocks' as const,
-                                password: credentials.ssPassword,
-                                cipherType: getCipherTypeFromString(inbound.rawInbound),
-                                ivCheck: false,
-                            };
-                        default:
-                            throw new Error(`Unsupported device inbound: ${inbound.type}`);
-                    }
-                });
-                const response = await this.axios.addUser(
+        const results = await settleConcurrent(nodes, 8, async (node) => {
+            const inbounds = resolved.response.inbounds.filter(
+                (inbound) =>
+                    inbound.profileUuid === node.activeConfigProfileUuid &&
+                    node.activeInbounds.some((active) => active.uuid === inbound.uuid),
+            );
+            if (!inbounds.length) {
+                const response = await this.axios.deleteUser(
                     {
+                        username: credentials.username,
                         hashData: { vlessUuid: credentials.vlessUuid },
-                        data,
                     },
                     { address: node.address, port: node.port, proxyUrl: node.proxyUrl },
                 );
-                return response.isOk && response.response?.success === true;
-            }),
-        );
+                return (
+                    response.isOk &&
+                    response.response?.success === true &&
+                    (
+                        response.response as typeof response.response & {
+                            deviceRevocationSupported?: boolean;
+                        }
+                    ).deviceRevocationSupported === true
+                );
+            }
+            const data = inbounds.map((inbound) => {
+                const common = { tag: inbound.tag, username: credentials.username };
+                switch (inbound.type) {
+                    case 'vless':
+                        return {
+                            ...common,
+                            type: 'vless' as const,
+                            uuid: credentials.vlessUuid,
+                            flow: getVlessFlowFromDbInbound(inbound),
+                        };
+                    case 'trojan':
+                        return {
+                            ...common,
+                            type: 'trojan' as const,
+                            password: credentials.trojanPassword,
+                        };
+                    case 'masque':
+                    case 'hysteria':
+                        return {
+                            ...common,
+                            type: inbound.type as 'masque' | 'hysteria',
+                            password: credentials.vlessUuid,
+                        };
+                    case 'shadowsocks':
+                        if (isSS2022Method(inbound.rawInbound))
+                            return {
+                                ...common,
+                                type: 'shadowsocks22' as const,
+                                password: getSsPassword(
+                                    credentials.ssPassword,
+                                    true,
+                                    (
+                                        inbound.rawInbound as {
+                                            settings?: { method?: string };
+                                        } | null
+                                    )?.settings?.method,
+                                ),
+                            };
+                        return {
+                            ...common,
+                            type: 'shadowsocks' as const,
+                            password: credentials.ssPassword,
+                            cipherType: getCipherTypeFromString(inbound.rawInbound),
+                            ivCheck: false,
+                        };
+                    default:
+                        throw new Error(`Unsupported device inbound: ${inbound.type}`);
+                }
+            });
+            const response = await this.axios.addUser(
+                {
+                    hashData: { vlessUuid: credentials.vlessUuid },
+                    data,
+                },
+                { address: node.address, port: node.port, proxyUrl: node.proxyUrl },
+            );
+            return response.isOk && response.response?.success === true;
+        });
         // Recheck after I/O: a concurrent block, expiry or rotation must not leave
         // credentials installed by an older subscription request.
         const [latestUser, latestDevice, latestResolved] = await Promise.all([
@@ -428,20 +465,18 @@ export class DeviceAccessService {
             !latestDevice.exists ||
             latestDevice.blocked
         ) {
-            await Promise.all(
-                nodes.map((node) =>
-                    this.axios.deleteUser(
-                        {
-                            username: credentials.username,
-                            hashData: { vlessUuid: credentials.vlessUuid },
-                        },
-                        { address: node.address, port: node.port, proxyUrl: node.proxyUrl },
-                    ),
+            await settleConcurrent(nodes, 8, (node) =>
+                this.axios.deleteUser(
+                    {
+                        username: credentials.username,
+                        hashData: { vlessUuid: credentials.vlessUuid },
+                    },
+                    { address: node.address, port: node.port, proxyUrl: node.proxyUrl },
                 ),
             );
             return false;
         }
-        return results.every(Boolean);
+        return results.every((result) => result.status === 'fulfilled' && result.value);
     }
 
     private async getNodeTargets() {

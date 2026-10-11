@@ -7,8 +7,12 @@ import { CommandBus, QueryBus } from '@nestjs/cqrs';
 
 import { AxiosService } from '@common/axios/axios.service';
 import { HostPolicyService } from '@common/host-policy/host-policy.service';
-import { hostPolicyRetryKey, syncHostPolicyForStart } from '@common/host-policy/sync-host-policy-for-start';
+import {
+    hostPolicyRetryKey,
+    syncHostPolicyForStart,
+} from '@common/host-policy/sync-host-policy-for-start';
 import { RawCacheService } from '@common/raw-cache';
+import { nodeReconciliationEnrollment } from '@common/utils/node-reconciliation';
 import { nodeSupportsPlugins } from '@common/utils/node-version';
 import { CACHE_KEYS, CACHE_KEYS_TTL } from '@libs/contracts/constants';
 
@@ -20,6 +24,7 @@ import { GetAllPluginsQuery } from '@modules/node-plugins/queries/get-all-plugin
 import { NodesEntity } from '@modules/nodes';
 import { UpdateNodeCommand } from '@modules/nodes/commands/update-node';
 import { FindNodesByCriteriaQuery } from '@modules/nodes/queries/find-nodes-by-criteria';
+import { GetDeviceStateRevisionQuery } from '@modules/nodes/queries/get-device-state-revision';
 import { GetPreparedConfigWithUsersQuery } from '@modules/users/queries/get-prepared-config-with-users/get-prepared-config-with-users.query';
 
 import { NodesQueuesService } from '@queue/_nodes';
@@ -163,6 +168,7 @@ export class StartAllNodesByProfileQueueProcessor extends WorkerHost {
             }
 
             const startTime = Date.now();
+            const deviceRevision = await this.queryBus.execute(new GetDeviceStateRevisionQuery());
 
             const config = await this.queryBus.execute(
                 new GetPreparedConfigWithUsersQuery(
@@ -184,10 +190,12 @@ export class StartAllNodesByProfileQueueProcessor extends WorkerHost {
                     throw new Error('Failed to get active node inbounds tags');
                 }
                 const activeNodeInboundsTags = new Set(tags);
-                await this.commandBus.execute(new UpdateNodeCommand({
-                    uuid: node.uuid,
-                    isConnecting: true,
-                }));
+                await this.commandBus.execute(
+                    new UpdateNodeCommand({
+                        uuid: node.uuid,
+                        isConnecting: true,
+                    }),
+                );
 
                 const nodeIntegrations = mergeNodeIntegrations(
                     node.integrationUuids
@@ -240,7 +248,9 @@ export class StartAllNodesByProfileQueueProcessor extends WorkerHost {
 
                         if (!nodePlugin) {
                             this.logger.error(`Node plugin not found: ${node.activePluginUuid}`);
-                            throw new Error('Assigned node plugin is unavailable. Check the assigned plugin and retry.');
+                            throw new Error(
+                                'Assigned node plugin is unavailable. Check the assigned plugin and retry.',
+                            );
                         }
 
                         plugin = {
@@ -283,16 +293,25 @@ export class StartAllNodesByProfileQueueProcessor extends WorkerHost {
                     (inbound) => activeNodeInboundsTags.has(inbound.tag),
                 );
 
-                const policy = await syncHostPolicyForStart(node, this.hostPolicies, this.axios, this.rawCacheService);
+                const policy = await syncHostPolicyForStart(
+                    node,
+                    this.hostPolicies,
+                    this.axios,
+                    this.rawCacheService,
+                );
                 if (!policy.ready) {
-                    await this.commandBus.execute(new UpdateNodeCommand({
-                        uuid: node.uuid,
-                        isConnected: policy.running,
-                        isConnecting: false,
-                        lastStatusChange: new Date(),
-                        lastStatusMessage: policy.message,
-                    }));
-                    this.logger.warn(`Node ${node.uuid}: host policy pending; running=${policy.running}`);
+                    await this.commandBus.execute(
+                        new UpdateNodeCommand({
+                            uuid: node.uuid,
+                            isConnected: policy.running,
+                            isConnecting: false,
+                            lastStatusChange: new Date(),
+                            lastStatusMessage: policy.message,
+                        }),
+                    );
+                    this.logger.warn(
+                        `Node ${node.uuid}: host policy pending; running=${policy.running}`,
+                    );
                     return;
                 }
 
@@ -307,6 +326,7 @@ export class StartAllNodesByProfileQueueProcessor extends WorkerHost {
                             ),
                         } as unknown as Record<string, unknown>,
                         internals: {
+                            reconciliation: nodeReconciliationEnrollment(node.uuid, deviceRevision),
                             hashes: {
                                 emptyConfig: config.response.hashesPayload.emptyConfig,
                                 inbounds: filteredInboundsHashes,
@@ -388,18 +408,25 @@ export class StartAllNodesByProfileQueueProcessor extends WorkerHost {
                 try {
                     await startNode(node);
                 } catch (error) {
-                    await this.commandBus.execute(new UpdateNodeCommand({
-                        uuid: node.uuid,
-                        isConnecting: false,
-                        lastStatusMessage: 'Node start failed. Check the configuration, assigned plugin and connection.',
-                        lastStatusChange: new Date(),
-                    }));
+                    await this.commandBus.execute(
+                        new UpdateNodeCommand({
+                            uuid: node.uuid,
+                            isConnecting: false,
+                            lastStatusMessage:
+                                'Node start failed. Check the configuration, assigned plugin and connection.',
+                            lastStatusChange: new Date(),
+                        }),
+                    );
                     this.logger.error(`Failed to start node ${node.uuid}: ${error}`);
                 }
             };
-            await pMap(nodes.filter((node) => activeNodeTags.has(node.uuid)), mapper, {
-                concurrency: this.CONCURRENCY,
-            });
+            await pMap(
+                nodes.filter((node) => activeNodeTags.has(node.uuid)),
+                mapper,
+                {
+                    concurrency: this.CONCURRENCY,
+                },
+            );
 
             this.logger.log(
                 `Started all nodes with profile ${payload.profileUuid} in ${Date.now() - startTime}ms`,
@@ -414,7 +441,8 @@ export class StartAllNodesByProfileQueueProcessor extends WorkerHost {
                 this.nodesQueuesService.queues.startAllNodes.resume(),
             ]);
             for (const result of resumed) {
-                if (result.status === 'rejected') this.logger.error(`Failed to resume node queue: ${result.reason}`);
+                if (result.status === 'rejected')
+                    this.logger.error(`Failed to resume node queue: ${result.reason}`);
             }
         }
     }

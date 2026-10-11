@@ -3,7 +3,6 @@ import { QueryBus } from '@nestjs/cqrs';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 
 import { fail, ok, TResult } from '@common/types';
-import { settleConcurrent } from '@common/utils/settle-concurrent';
 import { ERRORS, EVENTS } from '@libs/contracts/constants';
 import { THwidSettings } from '@libs/contracts/models';
 
@@ -254,24 +253,22 @@ export class HwidUserDevicesService {
             });
 
             if (!hwidDevice) {
-                return fail(ERRORS.HWID_DEVICE_NOT_FOUND);
+                // Retrying an accepted deletion after a lost HTTP response is harmless.
+                return ok(
+                    await this.hwidUserDevicesRepository.findByCriteria({
+                        userId: user.response.id,
+                    }),
+                );
             }
 
-            if (this.deviceAccess.enabled) {
-                const [staged] = await this.hwidUserDevicesRepository.stageDeletion(
-                    user.response.id,
-                    [hwid],
-                    true,
-                );
-                if (
-                    !staged ||
-                    !(await this.deleteStagedDevice(user.response.id, staged, hwidDevice.blocked))
-                ) {
-                    return fail(ERRORS.DELETE_HWID_USER_DEVICE_ERROR);
-                }
-            } else {
-                await this.hwidUserDevicesRepository.deleteByHwidAndUserId(hwid, user.response.id);
-            }
+            const deleted = await this.hwidUserDevicesRepository.deleteDevicesAndQueue(
+                user.response.id,
+                [hwidDevice],
+                true,
+                this.deviceAccess.enabled,
+            );
+            if (!deleted.includes(hwid)) return fail(ERRORS.DELETE_HWID_USER_DEVICE_ERROR);
+            this.deviceAccess.kickReconciliation();
 
             this.eventEmitter.emit(
                 EVENTS.USER_HWID_DEVICES.DELETED,
@@ -316,22 +313,13 @@ export class HwidUserDevicesService {
                 userId: user.response.id,
                 blocked: false,
             });
-            if (this.deviceAccess.enabled) {
-                const staged = await this.hwidUserDevicesRepository.stageDeletion(
-                    user.response.id,
-                    devices.map((device) => device.hwid),
-                );
-                const results = await settleConcurrent(staged, 4, async (device) => {
-                    return this.deleteStagedDevice(user.response.id, device, false);
-                });
-                if (!results.every((r) => r.status === 'fulfilled' && r.value))
-                    return fail(ERRORS.DELETE_HWID_USER_DEVICES_ERROR);
-            } else {
-                await this.hwidUserDevicesRepository.deleteUnblockedByUserId(
-                    user.response.id,
-                    devices.map((device) => device.hwid),
-                );
-            }
+            await this.hwidUserDevicesRepository.deleteDevicesAndQueue(
+                user.response.id,
+                devices,
+                false,
+                this.deviceAccess.enabled,
+            );
+            this.deviceAccess.kickReconciliation();
 
             const userHwidDevices = await this.hwidUserDevicesRepository.findByCriteria({
                 userId: user.response.id,
@@ -342,35 +330,6 @@ export class HwidUserDevicesService {
             this.logger.error(error);
             return fail(ERRORS.DELETE_HWID_USER_DEVICES_ERROR);
         }
-    }
-
-    private async deleteStagedDevice(
-        userId: bigint,
-        device: { hwid: string; version: string },
-        wasBlocked: boolean,
-    ): Promise<boolean> {
-        try {
-            if (
-                (await this.deviceAccess.syncDevice(userId, device.hwid, true)) &&
-                (await this.hwidUserDevicesRepository.completeDeletion(userId, device))
-            )
-                return true;
-        } catch (error) {
-            this.logger.error(error);
-        }
-        try {
-            if (await this.hwidUserDevicesRepository.restoreDeletion(userId, device, wasBlocked)) {
-                // A partially completed node update must be reconciled with the restored row.
-                setImmediate(() => {
-                    void this.deviceAccess
-                        .syncDevice(userId, device.hwid, wasBlocked)
-                        .catch((error: unknown) => this.logger.error(error));
-                });
-            }
-        } catch (error) {
-            this.logger.error(error);
-        }
-        return false;
     }
 
     public async getAllHwidDevices(dto: GetHwidDevicesQueryDto): Promise<

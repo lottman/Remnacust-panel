@@ -405,6 +405,7 @@ const classMock = (name) =>
 const queryTypes = Object.fromEntries(
     [
         'GetNodeByUuidQuery',
+        'GetDeviceStateRevisionQuery',
         'GetPreparedConfigWithUsersQuery',
         'GetResolvedIntegrationsQuery',
         'GetAllPluginsQuery',
@@ -426,6 +427,7 @@ const processorMocks = {
     '@nestjs/cqrs': {},
     '@nestjs/event-emitter': {},
     '@common/utils/node-version': versions,
+    '@common/utils/node-reconciliation': load(path.join(__dirname, '../src/common/utils/node-reconciliation.ts')),
     '@common/axios': {},
     '@common/axios/axios.service': {},
     '@common/axios/axios.interfaces': {},
@@ -452,6 +454,9 @@ const processorMocks = {
     '@modules/nodes/commands/update-node': { UpdateNodeCommand },
     '@modules/nodes/queries/get-node-by-uuid': {
         GetNodeByUuidQuery: queryTypes.GetNodeByUuidQuery,
+    },
+    '@modules/nodes/queries/get-device-state-revision': {
+        GetDeviceStateRevisionQuery: queryTypes.GetDeviceStateRevisionQuery,
     },
     '@modules/nodes/queries/find-nodes-by-criteria': {
         FindNodesByCriteriaQuery: queryTypes.FindNodesByCriteriaQuery,
@@ -513,6 +518,7 @@ for (const version of ['1.0.0', '1.6.4', '2.6.1', '3.4.1'])
         const queryBus = {
             execute: async (query) => {
                 switch (query.constructor.name) {
+                    case 'GetDeviceStateRevisionQuery': return '1';
                     case 'GetNodeByUuidQuery':
                         return result.ok(node);
                     case 'FindNodesByCriteriaQuery':
@@ -594,6 +600,7 @@ function pendingFixture() {
     }};
     const queryBus={execute:async query=>{
         switch(query.constructor.name){
+            case 'GetDeviceStateRevisionQuery':return '1';
             case 'GetNodeByUuidQuery':return result.ok(byId.get(query.data));
             case 'FindNodesByCriteriaQuery':return result.ok(nodes);
             case 'GetPreparedConfigWithUsersQuery':configReads++;return result.ok({config,hashesPayload:start.internals.hashes});

@@ -71,6 +71,15 @@ export class NodesRepository implements ICrud<NodesEntity> {
         return nodesList.map((value) => new NodesEntity(value));
     }
 
+    public async deviceStateRevision(): Promise<string> {
+        if (process.env.XERA_PERSONAL_SUBSCRIPTIONS !== 'true') return '0';
+        const result = await sql<{
+            revision: string;
+        }>`SELECT revision::text FROM xera_device_state WHERE id=1`.execute(this.qb.kysely);
+        if (!result.rows[0]) throw new Error('Device state migration is missing');
+        return result.rows[0].revision;
+    }
+
     public async findConnectedNodesPartial(): Promise<IGetOnlineNodesPartialResponse[]> {
         const nodesList = await this.qb.kysely
             .selectFrom('nodes')
@@ -406,7 +415,9 @@ export class NodesRepository implements ICrud<NodesEntity> {
         const result = await this.qb.kysely
             .updateTable('nodes')
             .set({
-                integrationUuids: sql<string[]>`array_remove(${sql.ref('nodes.integration_uuids')}, ${getKyselyUuid(integrationUuid)})`,
+                integrationUuids: sql<
+                    string[]
+                >`array_remove(${sql.ref('nodes.integration_uuids')}, ${getKyselyUuid(integrationUuid)})`,
             })
             .where(
                 sql<boolean>`${sql.ref('nodes.integration_uuids')} @> ARRAY[${getKyselyUuid(integrationUuid)}]`,

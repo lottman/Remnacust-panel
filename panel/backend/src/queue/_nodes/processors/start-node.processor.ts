@@ -7,9 +7,13 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 
 import { AxiosService } from '@common/axios/axios.service';
 import { HostPolicyService } from '@common/host-policy/host-policy.service';
-import { hostPolicyRetryKey, syncHostPolicyForStart } from '@common/host-policy/sync-host-policy-for-start';
+import {
+    hostPolicyRetryKey,
+    syncHostPolicyForStart,
+} from '@common/host-policy/sync-host-policy-for-start';
 import { RawCacheService } from '@common/raw-cache';
 import { formatExecutionTime, getTime } from '@common/utils/get-elapsed-time';
+import { nodeReconciliationEnrollment } from '@common/utils/node-reconciliation';
 import { nodeSupportsPlugins } from '@common/utils/node-version';
 import { CACHE_KEYS, CACHE_KEYS_TTL, EVENTS } from '@libs/contracts/constants';
 
@@ -19,6 +23,7 @@ import { GetResolvedIntegrationsQuery } from '@modules/node-integrations/queries
 import { mergeNodeIntegrations } from '@modules/node-integrations/utils';
 import { GetPluginByUuidQuery } from '@modules/node-plugins/queries/get-plugin-by-uuid';
 import { UpdateNodeCommand } from '@modules/nodes/commands/update-node';
+import { GetDeviceStateRevisionQuery } from '@modules/nodes/queries/get-device-state-revision';
 import { GetNodeByUuidQuery } from '@modules/nodes/queries/get-node-by-uuid';
 import { GetPreparedConfigWithUsersQuery } from '@modules/users/queries/get-prepared-config-with-users';
 
@@ -125,7 +130,8 @@ export class StartNodeProcessor extends WorkerHost {
 
                 return;
             }
-            confirmedRunning = xrayStatusResponse.response.isAlive === true &&
+            confirmedRunning =
+                xrayStatusResponse.response.isAlive === true &&
                 xrayStatusResponse.response.xrayInternalStatusCached === true;
 
             if (nodeSupportsPlugins(xrayStatusResponse.response.nodeVersion)) {
@@ -144,7 +150,9 @@ export class StartNodeProcessor extends WorkerHost {
                         this.logger.error(
                             `Failed to get node plugin: ${getNodePluginResult.message}`,
                         );
-                        throw new Error('Assigned node plugin is unavailable. Check the assigned plugin and retry.');
+                        throw new Error(
+                            'Assigned node plugin is unavailable. Check the assigned plugin and retry.',
+                        );
                     }
                     const { response: nodePlugin } = getNodePluginResult;
                     plugin = {
@@ -188,6 +196,7 @@ export class StartNodeProcessor extends WorkerHost {
             }
 
             const startTime = getTime();
+            const deviceRevision = await this.queryBus.execute(new GetDeviceStateRevisionQuery());
             const config = await this.queryBus.execute(
                 new GetPreparedConfigWithUsersQuery(
                     node.activeConfigProfileUuid,
@@ -217,16 +226,25 @@ export class StartNodeProcessor extends WorkerHost {
 
             const reqStartTime = getTime();
 
-            const policy = await syncHostPolicyForStart(node, this.hostPolicies, this.axios, this.rawCacheService);
+            const policy = await syncHostPolicyForStart(
+                node,
+                this.hostPolicies,
+                this.axios,
+                this.rawCacheService,
+            );
             if (!policy.ready) {
-                await this.commandBus.execute(new UpdateNodeCommand({
-                    uuid: node.uuid,
-                    isConnected: policy.running,
-                    isConnecting: false,
-                    lastStatusMessage: policy.message,
-                    lastStatusChange: new Date(),
-                }));
-                this.logger.warn(`Node ${node.uuid}: host policy pending; running=${policy.running}`);
+                await this.commandBus.execute(
+                    new UpdateNodeCommand({
+                        uuid: node.uuid,
+                        isConnected: policy.running,
+                        isConnecting: false,
+                        lastStatusMessage: policy.message,
+                        lastStatusChange: new Date(),
+                    }),
+                );
+                this.logger.warn(
+                    `Node ${node.uuid}: host policy pending; running=${policy.running}`,
+                );
                 return;
             }
 
@@ -235,6 +253,7 @@ export class StartNodeProcessor extends WorkerHost {
                 {
                     xrayConfig: config.response.config as unknown as Record<string, unknown>,
                     internals: {
+                        reconciliation: nodeReconciliationEnrollment(node.uuid, deviceRevision),
                         hashes: config.response.hashesPayload,
                         forceRestart: force ?? false,
                         metadata: {

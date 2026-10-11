@@ -68,30 +68,41 @@ function deletionFixture() {
         findFirstByCriteria:async ({hwid})=>records.get(hwid),
         findByCriteria:async ({blocked})=>[...records.values()].filter(d=>blocked===undefined||d.blocked===blocked),
         blockByHwidAndUserId:async(hwid,id,blocked)=>{records.get(hwid).blocked=blocked;calls.push('persist:'+hwid);},
-        stageDeletion:async(id,hwids,includeBlocked)=>hwids.filter(hwid=>includeBlocked||!records.get(hwid).blocked).map(hwid=>{records.get(hwid).blocked=true;calls.push('stage:'+hwid);return {hwid,version:'v'};}),
-        completeDeletion:async(id,{hwid})=>{calls.push('delete:'+hwid);return records.delete(hwid);},
+        deleteDevicesAndQueue:async(id,devices,includeBlocked)=>devices.filter(device=>records.has(device.hwid)&&(includeBlocked||!records.get(device.hwid).blocked)).map(({hwid})=>{calls.push('delete:'+hwid);records.delete(hwid);calls.push('queue:'+hwid);return hwid;}),
     };
-    const access={enabled:true,retireSharedCredential:async()=>true,syncDevice:async(id,hwid)=>{
+    const access={enabled:true,kickReconciliation:()=>calls.push('kick'),retireSharedCredential:async()=>true,syncDevice:async(id,hwid)=>{
         assert.equal(records.get(hwid).blocked,true,'deny must commit before revocation');calls.push('revoke:'+hwid);return true;
     }};
     const service=new HwidUserDevicesService({emit(){}},repo,{execute:async()=>({isOk:true,response:{id:42n,vlessUuid:'parent'}})},access);
     return {service,records,calls,access};
 }
-test('deletion commits denial before revocation, then removes only the confirmed device',async()=>{
+test('deletion removes the device and persists reconciliation before notifying the worker',async()=>{
     const {service,records,calls}=deletionFixture();
     assert.equal((await service.deleteUserHwidDevice('one',42)).isOk,true);
-    assert.deepEqual(calls,['stage:one','revoke:one','delete:one']);
+    assert.deepEqual(calls,['delete:one','queue:one','kick']);
     assert.equal(records.get('two').blocked,false);
 });
-test('failed bulk revocation retains denial and still processes other devices, preserving prior bans',async()=>{
+test('bulk deletion succeeds while node synchronization is unavailable and preserves prior bans',async()=>{
     const {service,records,calls,access}=deletionFixture();
     const sync=access.syncDevice;
     access.syncDevice=async(id,hwid)=>{await sync(id,hwid);if(hwid==='one')throw Error('offline');return true;};
-    assert.equal((await service.deleteAllUserHwidDevices(42)).isOk,false);
-    assert.equal(records.get('one').blocked,true);
+    assert.equal((await service.deleteAllUserHwidDevices(42)).isOk,true);
+    assert.equal(records.has('one'),false);
     assert.equal(records.has('two'),false);
     assert.equal(records.get('banned').blocked,true);
     assert.ok(!calls.some(c=>c.includes('banned')));
+});
+
+test('single deletion never waits for a hanging node and a repeated request is idempotent',async()=>{
+    const {service,records,access}=deletionFixture();
+    access.syncDevice=()=>new Promise(()=>{});
+    let timer;
+    try {
+        const result=await Promise.race([service.deleteUserHwidDevice('one',42),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('delete waited for node')),200);})]);
+        assert.equal(result.isOk,true);
+        assert.equal(records.has('one'),false);
+        assert.equal((await service.deleteUserHwidDevice('one',42)).isOk,true);
+    } finally {clearTimeout(timer);}
 });
 test('shared-key revocation cannot delay device-key revocation',async()=>{
     const {service,access,calls}=deletionFixture();

@@ -16,6 +16,7 @@ import { decryptSecret, isXeraEnvelope } from '@common/utils/xera-crypto';
 import { ERRORS } from '@libs/contracts/constants';
 import { BackupSettingsSchema, TBackupFile, TBackupSettings } from '@libs/contracts/models';
 
+import { backupDumpArguments } from './backup-dump-options';
 import { verifyEncryptedBackupZip, writeEncryptedBackupZip } from './backup-zip';
 
 const BACKUP_NAME_RE = /^[A-Za-z0-9._-]+\.(?:zip|dump(?:\.enc)?)$/;
@@ -189,16 +190,12 @@ export class BackupsService {
                 'pgbouncer',
             ])
                 connection.searchParams.delete(parameter);
-            const dumpProcess = spawn(
-                'pg_dump',
-                ['--format=custom', '--compress=6', `--dbname=${connection}`],
-                {
-                    env: { ...process.env, PGPASSWORD: password },
-                    stdio: ['ignore', 'pipe', 'pipe'],
-                    timeout: 15 * 60_000,
-                    killSignal: 'SIGKILL',
-                },
-            );
+            const dumpProcess = spawn('pg_dump', backupDumpArguments(connection), {
+                env: { ...process.env, PGPASSWORD: password },
+                stdio: ['ignore', 'pipe', 'pipe'],
+                timeout: 15 * 60_000,
+                killSignal: 'SIGKILL',
+            });
             let errorOutput = '';
             dumpProcess.stderr.on('data', (chunk: Buffer) => {
                 errorOutput = (errorOutput + chunk.toString()).slice(-2048);

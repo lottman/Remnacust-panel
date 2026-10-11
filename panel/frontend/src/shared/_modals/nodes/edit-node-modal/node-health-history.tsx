@@ -121,7 +121,7 @@ export function NodeHealthHistory({ node }: { node: GetNodeCommand.Response['res
             return result.data.response.days
         }
     })
-    const days = daysOverride ?? retention.data ?? 30
+    const days = daysOverride ?? retention.data ?? 3
     const xrayLogs = useQuery({
         queryKey: ['node-xray-logs', node.uuid],
         queryFn: async () => {
@@ -362,7 +362,7 @@ export function NodeHealthHistory({ node }: { node: GetNodeCommand.Response['res
                             label={uiText('days-e08c0aa')}
                             max={365}
                             min={1}
-                            onChange={(value) => setDaysOverride(Number(value) || 30)}
+                            onChange={(value) => setDaysOverride(Number(value) || 3)}
                             value={days}
                             w={120}
                         />

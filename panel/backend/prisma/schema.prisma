@@ -47,7 +47,7 @@ model RemnawaveSettings {
 
 model NodeHealthLogSettings {
   id            Int @id @default(1)
-  retentionDays Int @default(30) @map("retention_days")
+  retentionDays Int @default(3) @map("retention_days")
 
   @@map("xera_node_health_log_settings")
 }

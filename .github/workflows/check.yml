@@ -47,7 +47,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: lottman/Remnacust-node
-          ref: v1.1.8
+          ref: v1.1.9
           path: node-repository
       - uses: actions/setup-node@v4
         with:
@@ -68,7 +68,7 @@ jobs:
           DATABASE_URL: postgresql://postgres@127.0.0.1:55439/postgres
           DIRECT_URL: postgresql://postgres@127.0.0.1:55439/postgres
       - name: Check access policies and limits with PostgreSQL
-        run: node tests/host-policy-database.integration.cjs && node tests/limit-management-database.integration.cjs && node tests/device-reconciliation-database.integration.cjs
+        run: node tests/host-policy-database.integration.cjs && node tests/limit-management-database.integration.cjs && node tests/device-reconciliation-database.integration.cjs && node tests/node-health-retention-database.integration.cjs
   subscription-page:
     runs-on: ubuntu-latest
     steps:

@@ -3,6 +3,9 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '@common/database/prisma.service';
 
 type HealthStatus = 'ok' | 'retry' | 'unreachable' | 'xray_missing' | 'error';
+export const DEFAULT_NODE_HEALTH_RETENTION_DAYS = 3;
+const CLEANUP_BATCH_SIZE = 5_000;
+const CLEANUP_MAX_BATCHES = 20;
 
 interface HealthLogRow {
     id: bigint;
@@ -17,7 +20,7 @@ interface HealthLogRow {
 @Injectable()
 export class NodeHealthLogService {
     private readonly logger = new Logger(NodeHealthLogService.name);
-    private lastCleanup = 0;
+    private cleaning = false;
 
     constructor(private readonly prisma: PrismaService) {}
 
@@ -40,10 +43,6 @@ export class NodeHealthLogService {
                 VALUES
                     (${input.nodeUuid}::uuid, ${input.status}, ${input.attempt ?? 1}, ${message}, ${JSON.stringify(input.metrics ?? {})}::jsonb)
             `;
-            if (Date.now() - this.lastCleanup > 3_600_000) {
-                this.lastCleanup = Date.now();
-                await this.cleanup();
-            }
         } catch (error) {
             this.logger.warn(`Could not save node health log: ${error}`);
         }
@@ -74,7 +73,7 @@ export class NodeHealthLogService {
         const rows = await this.prisma.$queryRaw<Array<{ retention_days: number }>>`
             SELECT retention_days FROM xera_node_health_log_settings WHERE id = 1
         `;
-        return rows[0]?.retention_days ?? 30;
+        return rows[0]?.retention_days ?? DEFAULT_NODE_HEALTH_RETENTION_DAYS;
     }
 
     async setRetentionDays(days: number): Promise<number> {
@@ -97,10 +96,26 @@ export class NodeHealthLogService {
     }
 
     async cleanup(): Promise<void> {
-        const days = await this.retentionDays();
-        const cutoff = new Date(Date.now() - days * 86_400_000);
-        await this.prisma.$executeRaw`
-            DELETE FROM xera_node_health_logs WHERE checked_at < ${cutoff}
-        `;
+        if (this.cleaning) return;
+        this.cleaning = true;
+        try {
+            const days = await this.retentionDays();
+            const cutoff = new Date(Date.now() - days * 86_400_000);
+            for (let batch = 0; batch < CLEANUP_MAX_BATCHES; batch++) {
+                const removed = await this.prisma.$executeRaw`
+                    DELETE FROM xera_node_health_logs
+                    WHERE id IN (
+                        SELECT id FROM xera_node_health_logs
+                        WHERE checked_at < ${cutoff}
+                        ORDER BY checked_at, id
+                        LIMIT ${CLEANUP_BATCH_SIZE}
+                        FOR UPDATE SKIP LOCKED
+                    )
+                `;
+                if (removed < CLEANUP_BATCH_SIZE) break;
+            }
+        } finally {
+            this.cleaning = false;
+        }
     }
 }

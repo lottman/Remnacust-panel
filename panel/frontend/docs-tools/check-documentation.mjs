@@ -3,6 +3,7 @@ import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
 
+import { getCompatibilityVersions } from './component-versions.mjs'
 import { panelArticleIds, panelFieldArticleIds } from './production-guide.mjs'
 
 const root = path.resolve(import.meta.dirname, '..')
@@ -18,12 +19,22 @@ const api = read('api.json')
 const spec = read('openapi.json')
 const manifest = read('manifest.json')
 const packageVersion = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8')).version
+for (const [field, version] of Object.entries(getCompatibilityVersions(root)))
+    assert.equal(
+        manifest[field],
+        version,
+        `${field}: documentation differs from component compatibility`
+    )
 for (const [label, version] of [
     ['manifest', manifest.backendVersion],
     ['API reference', api.version],
     ['OpenAPI', spec.info.version]
 ])
-    assert.equal(version, packageVersion, `${label}: regenerate documentation for this panel version`)
+    assert.equal(
+        version,
+        packageVersion,
+        `${label}: regenerate documentation for this panel version`
+    )
 assert.equal(
     spec.info.title,
     `Remnacust API v${packageVersion}`,

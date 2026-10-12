@@ -3,6 +3,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import ts from 'typescript'
 
+import { getCompatibilityVersions } from './component-versions.mjs'
 import { fieldDescriptions } from './field-descriptions.mjs'
 import { operatorFieldHelp } from './operator-field-help.mjs'
 import { panelFieldArticleIds } from './production-guide.mjs'
@@ -246,8 +247,8 @@ for (const file of backendFiles)
 const manifest = {
     generatedAt: new Date().toISOString(),
     backendVersion: JSON.parse(fs.readFileSync(path.join(backend, 'package.json'), 'utf8')).version,
-    coreVersion: '1.1.5',
-    nodeVersion: '1.1.8',
+    coreVersion: getCompatibilityVersions(root).coreVersion,
+    nodeVersion: getCompatibilityVersions(root).nodeVersion,
     upstreamPanelVersion: '3.4.5',
     upstreamBackendPatches: [
         {

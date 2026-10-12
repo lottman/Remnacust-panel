@@ -6,6 +6,25 @@
     letter-spacing: -0.02em;
     margin-bottom: 14px;
 }
+.runtimeHeader {
+    margin-block: var(--mantine-spacing-xs) 14px;
+}
+.runtimeHeader .title {
+    min-width: 0;
+    margin: 0;
+}
+.runtimeActions {
+    flex: 0 0 auto;
+}
+.runtimeAction {
+    flex: 0 0 auto;
+}
+@media (max-width: 48em) {
+    .runtimeAction {
+        min-width: 44px;
+        min-height: 44px;
+    }
+}
 .card {
     min-width: 0;
     height: 100%;

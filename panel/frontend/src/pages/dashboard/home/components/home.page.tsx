@@ -189,48 +189,60 @@ export const HomePage = (props: IProps) => {
 
                 {remnawaveHealth.runtimeMetrics && remnawaveHealth.runtimeMetrics.length > 0 && (
                     <div className={classes.section}>
-                        <Group align="center" gap="xs" m="xs" ml={0}>
+                        <Group
+                            align="center"
+                            className={classes.runtimeHeader}
+                            gap="md"
+                            justify="space-between"
+                            wrap="nowrap"
+                        >
                             <Title className={classes.title} order={4}>
                                 {t('dashboard-ui.runtime')}
                             </Title>
 
-                            <ActionIcon
-                                color="gray"
-                                loading={copying}
-                                onClick={() => copyRuntimeScreenshot()}
-                                radius="md"
-                                size="sm"
-                                variant="transparent"
-                            >
-                                <TbCamera size={24} />
-                            </ActionIcon>
+                            <Group className={classes.runtimeActions} gap="xs" wrap="nowrap">
+                                <ActionIcon
+                                    aria-label={`${t('common.action.copy')}: ${t('dashboard-ui.runtime')}`}
+                                    className={classes.runtimeAction}
+                                    color="gray"
+                                    loading={copying}
+                                    onClick={() => copyRuntimeScreenshot()}
+                                    radius="md"
+                                    size="lg"
+                                    variant="subtle"
+                                >
+                                    <TbCamera size={20} />
+                                </ActionIcon>
 
-                            <ActionIcon
-                                color="gray"
-                                onClick={() => {
-                                    modals.open({
-                                        title: (
-                                            <BaseOverlayHeader
-                                                iconColor="cyan"
-                                                IconComponent={TbInfoCircle}
-                                                iconSize={20}
-                                                iconVariant="soft"
-                                                subtitle={t('home.runtime-info.subtitle')}
-                                                title={t('home.runtime-info.title')}
-                                            />
-                                        ),
-                                        size: 'xl',
-                                        centered: true,
-                                        fullScreen: isMobile,
-                                        children: <RuntimeInfoModalContent />
-                                    })
-                                }}
-                                radius="md"
-                                size="sm"
-                                variant="transparent"
-                            >
-                                <TbInfoCircle size={24} />
-                            </ActionIcon>
+                                <ActionIcon
+                                    aria-label={t('home.runtime-info.title')}
+                                    className={classes.runtimeAction}
+                                    color="gray"
+                                    onClick={() => {
+                                        modals.open({
+                                            title: (
+                                                <BaseOverlayHeader
+                                                    iconColor="cyan"
+                                                    IconComponent={TbInfoCircle}
+                                                    iconSize={20}
+                                                    iconVariant="soft"
+                                                    subtitle={t('home.runtime-info.subtitle')}
+                                                    title={t('home.runtime-info.title')}
+                                                />
+                                            ),
+                                            size: 'xl',
+                                            centered: true,
+                                            fullScreen: isMobile,
+                                            children: <RuntimeInfoModalContent />
+                                        })
+                                    }}
+                                    radius="md"
+                                    size="lg"
+                                    variant="subtle"
+                                >
+                                    <TbInfoCircle size={20} />
+                                </ActionIcon>
+                            </Group>
                         </Group>
                         <SimpleGrid cols={{ base: 1, sm: 1, xl: 2 }} ref={runtimeRef} spacing="xs">
                             {remnawaveHealth.runtimeMetrics.map((metric, index) => (

@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-10-11T12:55:42.715Z",
-  "backendVersion": "1.1.7.25",
+  "generatedAt": "2026-10-12T06:12:42.026Z",
+  "backendVersion": "1.1.7.26",
   "coreVersion": "1.1.5",
-  "nodeVersion": "1.1.8",
+  "nodeVersion": "1.1.9",
   "upstreamPanelVersion": "3.4.5",
   "upstreamBackendPatches": [
     {
@@ -58,5 +58,5 @@
   "apiTokenEndpoints": 210,
   "controls": 214,
   "sourceFiles": 3645,
-  "specSha256": "da878913e2b1e17626a7254dc4fd70bebd50e32dc2346fb26f489b6494cbcbf0"
+  "specSha256": "2e64bf75c64839d269957d5ed430462ad2f57c3f1b499e4e99b941e026dc03b6"
 }

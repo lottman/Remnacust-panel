@@ -1,4 +1,6 @@
 **
+!docs/
+!docs/COMPATIBILITY.md
 !panel/
 !panel/Dockerfile
 !panel/frontend/

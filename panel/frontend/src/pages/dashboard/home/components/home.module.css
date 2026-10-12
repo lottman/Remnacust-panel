@@ -20,7 +20,7 @@
     flex: 0 0 auto;
 }
 @media (max-width: 48em) {
-    .runtimeAction {
+    .runtimeHeader .runtimeActions .runtimeAction {
         min-width: 44px;
         min-height: 44px;
     }

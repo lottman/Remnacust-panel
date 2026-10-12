@@ -69,6 +69,10 @@ jobs:
           DIRECT_URL: postgresql://postgres@127.0.0.1:55439/postgres
       - name: Check access policies and limits with PostgreSQL
         run: node tests/host-policy-database.integration.cjs && node tests/limit-management-database.integration.cjs && node tests/device-reconciliation-database.integration.cjs && node tests/node-health-retention-database.integration.cjs
+      - name: Check hidden host injection with PostgreSQL
+        run: node tests/xray-hidden-hosts-database.integration.cjs
+        env:
+          XRAY_INJECTION_TEST_DATABASE_URL: postgresql://postgres@127.0.0.1:55439/postgres
       - name: Restore compact database backup and verify retained credentials
         run: node tests/backup-dump-database.integration.cjs
   subscription-page:

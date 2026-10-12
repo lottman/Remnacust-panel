@@ -1,4 +1,4 @@
-# Remnacust API 1.1.7.26
+# Remnacust API 1.1.7.27
 
 Generated from the current OpenAPI. 231 operations; 210 accept scoped API tokens.
 

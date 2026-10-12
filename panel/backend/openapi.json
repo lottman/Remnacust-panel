@@ -18801,9 +18801,9 @@
     }
   },
   "info": {
-    "title": "Remnacust API v1.1.7.26",
+    "title": "Remnacust API v1.1.7.27",
     "description": "\nRemnacust manages Xray users, nodes, configuration profiles and subscriptions.\n\n## Resources\n* https://t.me/lottman\n* https://github.com/lottman/Remnacust-panel\n",
-    "version": "1.1.7.26",
+    "version": "1.1.7.27",
     "contact": {},
     "license": {
       "name": "AGPL-3.0",

@@ -18,8 +18,9 @@ jobs:
           cache: npm
           cache-dependency-path: panel/frontend/package-lock.json
       - run: npm ci
+      - run: npm ci --prefix ../backend
       - run: npm run typecheck
-      - run: node --test tests/*.test.cjs tests/*.test.mjs
+      - run: node --test tests/*.test.cjs tests/*.test.mjs scripts/*.test.cjs
       - run: npm run i18n:check
       - run: npm run docs:check
       - run: npm run cb
@@ -68,7 +69,7 @@ jobs:
           DATABASE_URL: postgresql://postgres@127.0.0.1:55439/postgres
           DIRECT_URL: postgresql://postgres@127.0.0.1:55439/postgres
       - name: Check access policies and limits with PostgreSQL
-        run: node tests/host-policy-database.integration.cjs && node tests/limit-management-database.integration.cjs && node tests/device-reconciliation-database.integration.cjs && node tests/node-health-retention-database.integration.cjs
+        run: node tests/hwid-default-database.integration.cjs && node tests/host-policy-database.integration.cjs && node tests/limit-management-database.integration.cjs && node tests/device-reconciliation-database.integration.cjs && node tests/node-health-retention-database.integration.cjs
       - name: Check hidden host injection with PostgreSQL
         run: node tests/xray-hidden-hosts-database.integration.cjs
         env:

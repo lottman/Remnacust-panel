@@ -233,20 +233,18 @@ export class SubscriptionService {
                             subscriptionSettings,
                         );
                     }
-                    const message = 'Лимит устройств исчерпан';
-                    return new SubscriptionWithConfigResponse({
-                        headers: {
-                            ...this.getUserProfileHeadersInfo(
-                                user.response,
-                                subscriptionSettings,
-                                false,
-                            ),
-                            'x-hwid-max-devices-reached': 'true',
-                            announce: `base64:${Buffer.from(message).toString('base64')}`,
+                    return this.getHwidDeniedSubscription(
+                        srrContext,
+                        user.response,
+                        subscriptionSettings,
+                        {
+                            subscriptionAllowed: false,
+                            maxDeviceReached: true,
+                            hwidNotSupported: false,
+                            limitBypassed: false,
+                            deviceBlocked: false,
                         },
-                        body: message,
-                        contentType: 'text/plain',
-                    });
+                    );
                 }
             }
 
@@ -324,66 +322,12 @@ export class SubscriptionService {
                             subscriptionSettings,
                         );
                     }
-                    const hwidRemarks = hwidCheckup.maxDeviceReached
-                        ? subscriptionSettings.customRemarks.HWIDMaxDevicesExceeded
-                        : subscriptionSettings.customRemarks.HWIDNotSupported;
-                    const response = new SubscriptionWithConfigResponse({
-                        headers: this.getUserProfileHeadersInfo(
-                            user.response,
-                            subscriptionSettings,
-                            false,
-                            hwidRemarks,
-                        ),
-                        body: '',
-                        contentType: 'text/plain',
-                    });
-
-                    if (!hwidCheckup.limitBypassed) {
-                        response.headers['x-hwid-active'] = 'true';
-                    }
-
-                    if (
-                        hwidCheckup.maxDeviceReached &&
-                        subscriptionSettings.hwidSettings.maxDevicesAnnounce
-                    ) {
-                        response.headers.announce = TemplateEngine.formatWithUser(
-                            `rwEncodeBase64:${subscriptionSettings.hwidSettings.maxDevicesAnnounce}`,
-                            user.response,
-                            subscriptionSettings,
-                            this.subPublicDomain,
-                        );
-                    }
-
-                    if (
-                        (hwidCheckup.maxDeviceReached || hwidCheckup.hwidNotSupported) &&
-                        subscriptionSettings.isShowCustomRemarks
-                    ) {
-                        const { subscription, contentType } =
-                            await this.renderTemplatesService.generateSubscription({
-                                srrContext,
-                                user: user.response,
-                                hosts: [],
-                                fallbackOptions: {
-                                    showHwidMaxDeviceRemarks: hwidCheckup.maxDeviceReached,
-                                    showHwidNotSupportedRemarks: hwidCheckup.hwidNotSupported,
-                                },
-                            });
-
-                        response.body = subscription;
-                        response.contentType = contentType;
-                    }
-
-                    if (hwidCheckup.hwidNotSupported) {
-                        response.headers['x-hwid-not-supported'] = 'true';
-                    }
-
-                    if (hwidCheckup.maxDeviceReached) {
-                        response.headers['x-hwid-max-devices-reached'] = 'true';
-                    }
-
-                    response.headers['x-hwid-limit'] = 'true'; // v2rayTUN
-
-                    return response;
+                    return this.getHwidDeniedSubscription(
+                        srrContext,
+                        user.response,
+                        subscriptionSettings,
+                        hwidCheckup,
+                    );
                 }
             } else {
                 void this.checkAndUpsertHwidUserDevice(user.response, hwidHeaders, srrContext.ip);
@@ -913,6 +857,74 @@ export class SubscriptionService {
             this.logger.error(`Error getting all subscriptions: ${error}`);
             return fail(ERRORS.GETTING_ALL_SUBSCRIPTIONS_ERROR);
         }
+    }
+
+    private async getHwidDeniedSubscription(
+        srrContext: ISRRContext,
+        user: UserEntity,
+        subscriptionSettings: SubscriptionSettingsEntity,
+        hwidCheckup: IHwidCheckupResult,
+    ): Promise<SubscriptionWithConfigResponse> {
+        const hwidRemarks = hwidCheckup.maxDeviceReached
+            ? subscriptionSettings.customRemarks.HWIDMaxDevicesExceeded
+            : subscriptionSettings.customRemarks.HWIDNotSupported;
+        const response = new SubscriptionWithConfigResponse({
+            headers: this.getUserProfileHeadersInfo(
+                user,
+                subscriptionSettings,
+                false,
+                hwidRemarks,
+            ),
+            body: '',
+            contentType: 'text/plain',
+        });
+
+        if (!hwidCheckup.limitBypassed) {
+            response.headers['x-hwid-active'] = 'true';
+        }
+
+        if (
+            hwidCheckup.maxDeviceReached &&
+            subscriptionSettings.hwidSettings.maxDevicesAnnounce
+        ) {
+            response.headers.announce = TemplateEngine.formatWithUser(
+                `rwEncodeBase64:${subscriptionSettings.hwidSettings.maxDevicesAnnounce}`,
+                user,
+                subscriptionSettings,
+                this.subPublicDomain,
+            );
+        }
+
+        if (
+            (hwidCheckup.maxDeviceReached || hwidCheckup.hwidNotSupported) &&
+            subscriptionSettings.isShowCustomRemarks
+        ) {
+            const { subscription, contentType } =
+                await this.renderTemplatesService.generateSubscription({
+                    srrContext,
+                    user,
+                    hosts: [],
+                    fallbackOptions: {
+                        showHwidMaxDeviceRemarks: hwidCheckup.maxDeviceReached,
+                        showHwidNotSupportedRemarks: hwidCheckup.hwidNotSupported,
+                    },
+                });
+
+            response.body = subscription;
+            response.contentType = contentType;
+        }
+
+        if (hwidCheckup.hwidNotSupported) {
+            response.headers['x-hwid-not-supported'] = 'true';
+        }
+
+        if (hwidCheckup.maxDeviceReached) {
+            response.headers['x-hwid-max-devices-reached'] = 'true';
+        }
+
+        response.headers['x-hwid-limit'] = 'true'; // v2rayTUN
+
+        return response;
     }
 
     private async getRegistrationBlockedSubscription(

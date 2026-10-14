@@ -2,7 +2,7 @@ const assert = require('node:assert/strict');
 const { test } = require('node:test');
 const path = require('node:path');
 const { createStore } = require('zustand/vanilla');
-const load = require('../../backend-3.4.4-xera/tests/load-typescript.cjs');
+const load = require('../../backend/tests/load-typescript.cjs');
 
 function fixture(pauseAt) {
     let release, reached, logout;

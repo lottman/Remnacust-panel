@@ -1,7 +1,7 @@
 const assert = require('node:assert/strict');
 const { test } = require('node:test');
 const path = require('node:path');
-const load = require('../../backend-3.4.4-xera/tests/load-typescript.cjs');
+const load = require('../../backend/tests/load-typescript.cjs');
 
 function tabs({ storageOnly = false, blockedStorage = false } = {}) {
     const channels = [], windows = [];

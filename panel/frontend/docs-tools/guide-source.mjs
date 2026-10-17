@@ -484,9 +484,9 @@ add(
     [
         [
             'Совместимость',
-            'Remnacust сохраняет наше расширенное ядро Xray на базе 26.9.30. Оно поддерживает политики хостов/тегов и отзыв устройств. Замена обычным ядром может убрать принудительное соблюдение этих политик. Управление ядром — отдельная административная операция; скачивание артефакта не равно успешному обновлению ноды.',
+            'Remnacust сохраняет наше расширенное ядро Xray на базе официального тега 26.10.10 (предварительный выпуск). Оно поддерживает политики хостов/тегов и отзыв устройств. Замена обычным ядром может убрать принудительное соблюдение этих политик. Управление ядром — отдельная административная операция; скачивание артефакта не равно успешному обновлению ноды.',
             'Compatibility',
-            'Remnacust retains our extended Xray based on 26.9.30, including host/tag policies and device revocation. Replacing it with a stock core can remove policy enforcement. Core management is an administrator operation; downloading an artifact is not a successful node upgrade.'
+            'Remnacust retains our extended Xray based on the official 26.10.10 tag (prerelease), including host/tag policies and device revocation. Replacing it with a stock core can remove policy enforcement. Core management is an administrator operation; downloading an artifact is not a successful node upgrade.'
         ],
         [
             'Задачи',
@@ -618,9 +618,9 @@ add(
     [
         [
             'Инструменты редактора',
-            'Редактор предоставляет подсветку, подсказки, ошибки схемы и проверку нашим WebAssembly-парсером Xray 26.9.30. Форматирование, поиск, полноэкранный режим и сохранение помогают работать с JSON. Сообщение об успешной проверке не проверяет доступность внешнего сервера, наличие файлов сертификатов или свободный порт на каждой ноде.',
+            'Редактор предоставляет подсветку, подсказки, ошибки схемы и проверку нашим WebAssembly-парсером Xray 26.10.10. Форматирование, поиск, полноэкранный режим и сохранение помогают работать с JSON. Сообщение об успешной проверке не проверяет доступность внешнего сервера, наличие файлов сертификатов или свободный порт на каждой ноде.',
             'Editor tools',
-            'The editor provides highlighting, completions, schema errors and validation with our Xray 26.9.30 WebAssembly parser. Formatting, search, fullscreen and save assist JSON editing. Passing validation does not check remote reachability, certificate files or free ports on each node.'
+            'The editor provides highlighting, completions, schema errors and validation with our Xray 26.10.10 WebAssembly parser. Formatting, search, fullscreen and save assist JSON editing. Passing validation does not check remote reachability, certificate files or free ports on each node.'
         ],
         [
             'Генерация shortId',

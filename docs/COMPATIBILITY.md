@@ -3,7 +3,7 @@
 | Компонент | Remnacust | Официальная основа |
 | --- | --- | --- |
 | Backend и frontend | 1.1.7.32 | Remnawave 3.4.5 |
-| Агент ноды | 1.1.9-remnacust | Remnawave Node 3.4.2 |
+| Агент ноды | 1.1.10-remnacust | Remnawave Node 3.4.2 |
 | Ядро | 1.1.6 | Официальный тег Xray-core v26.10.10 (prerelease) |
 | Страница подписки | 1.1.7.32 | Subscription Page 8.0.0 |
 

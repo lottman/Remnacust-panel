@@ -4,13 +4,13 @@ import { EventsHandler } from '@nestjs/cqrs';
 
 import { AddUsersCommand as AddUsersToNodeCommandSdk } from '@remnawave/node-contract';
 
-import { getSsPassword, isSS2022Method } from '@common/helpers/xray-config/ss-cipher';
 import { TypedConfigService } from '@common/config/app-config';
+import { getSsPassword, isSS2022Method } from '@common/helpers/xray-config/ss-cipher';
 import { deviceCredentials } from '@common/utils/device-identity';
 import { getVlessFlowFromDbInbound } from '@common/utils/flow/get-vless-flow';
-import { GetUserDevicesQuery } from '@modules/hwid-user-devices/queries/get-user-devices.query';
 
 import { ConfigProfileInboundEntity } from '@modules/config-profiles/entities';
+import { GetUserDevicesQuery } from '@modules/hwid-user-devices/queries/get-user-devices.query';
 import { GetUsersWithResolvedInboundsQuery } from '@modules/users/queries/get-users-with-resolved-inbounds';
 
 import { NodesQueuesService } from '@queue/_nodes';
@@ -59,7 +59,9 @@ export class AddUsersToNodeHandler implements IEventHandler<AddUsersToNodeEvent>
 
                 for (const user of usersResult.response) {
                     const { id, trojanPassword, vlessUuid, ssPassword, inbounds } = user;
-                    const filteredInbounds = inbounds.filter((ib) => ib.profileUuid === node.activeConfigProfileUuid && node.activeInbounds.some(active => active.uuid === ib.uuid));
+                    const filteredInbounds = inbounds.filter((ib) =>
+                        node.activeInbounds.some((active) => active.uuid === ib.uuid),
+                    );
 
                     if (process.env.XERA_PERSONAL_SUBSCRIPTIONS === 'true') {
                         const devices = await this.queryBus.execute(new GetUserDevicesQuery(id));
@@ -68,9 +70,17 @@ export class AddUsersToNodeHandler implements IEventHandler<AddUsersToNodeEvent>
                             usersToRemove.push({ userId: id.toString(), hashUuid: vlessUuid });
                         }
                         for (const device of devices) {
-                            const identity = deviceCredentials(this.config.getOrThrow('APP_SECRET'), id, device.hwid, vlessUuid);
+                            const identity = deviceCredentials(
+                                this.config.getOrThrow('APP_SECRET'),
+                                id,
+                                device.hwid,
+                                vlessUuid,
+                            );
                             if (device.blocked || filteredInbounds.length === 0) {
-                                usersToRemove.push({ userId: identity.username, hashUuid: identity.vlessUuid });
+                                usersToRemove.push({
+                                    userId: identity.username,
+                                    hashUuid: identity.vlessUuid,
+                                });
                             } else {
                                 usersForNode.push({
                                     userData: {
@@ -83,13 +93,38 @@ export class AddUsersToNodeHandler implements IEventHandler<AddUsersToNodeEvent>
                                     inboundData: filteredInbounds.map((inbound) => {
                                         const type = this.resolveInboundType(inbound);
                                         switch (type) {
-                                            case 'vless': return { type, tag: inbound.tag, flow: getVlessFlowFromDbInbound(inbound) };
-                                            case 'trojan': return { type, tag: inbound.tag };
-                                            case 'shadowsocks': return { type, tag: inbound.tag };
-                                            case 'shadowsocks22': return { type, tag: inbound.tag, password: getSsPassword(identity.ssPassword, true, (inbound.rawInbound as { settings?: { method?: string } } | null)?.settings?.method) };
-                                            case 'masque': return { type, tag: inbound.tag };
-                                            case 'hysteria': return { type, tag: inbound.tag };
-                                            default: throw new Error(`Unsupported inbound type: ${type}`);
+                                            case 'vless':
+                                                return {
+                                                    type,
+                                                    tag: inbound.tag,
+                                                    flow: getVlessFlowFromDbInbound(inbound),
+                                                };
+                                            case 'trojan':
+                                                return { type, tag: inbound.tag };
+                                            case 'shadowsocks':
+                                                return { type, tag: inbound.tag };
+                                            case 'shadowsocks22':
+                                                return {
+                                                    type,
+                                                    tag: inbound.tag,
+                                                    password: getSsPassword(
+                                                        identity.ssPassword,
+                                                        true,
+                                                        (
+                                                            inbound.rawInbound as {
+                                                                settings?: { method?: string };
+                                                            } | null
+                                                        )?.settings?.method,
+                                                    ),
+                                                };
+                                            case 'masque':
+                                                return { type, tag: inbound.tag };
+                                            case 'hysteria':
+                                                return { type, tag: inbound.tag };
+                                            default:
+                                                throw new Error(
+                                                    `Unsupported inbound type: ${type}`,
+                                                );
                                         }
                                     }),
                                 });
@@ -134,7 +169,19 @@ export class AddUsersToNodeHandler implements IEventHandler<AddUsersToNodeEvent>
                                 case 'shadowsocks':
                                     return { type: inboundType, tag: inbound.tag };
                                 case 'shadowsocks22':
-                                    return { type: inboundType, tag: inbound.tag, password: getSsPassword(ssPassword, true, (inbound.rawInbound as { settings?: { method?: string } } | null)?.settings?.method) };
+                                    return {
+                                        type: inboundType,
+                                        tag: inbound.tag,
+                                        password: getSsPassword(
+                                            ssPassword,
+                                            true,
+                                            (
+                                                inbound.rawInbound as {
+                                                    settings?: { method?: string };
+                                                } | null
+                                            )?.settings?.method,
+                                        ),
+                                    };
                                 default:
                                     throw new Error(`Unsupported inbound type: ${inboundType}`);
                             }

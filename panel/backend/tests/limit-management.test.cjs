@@ -19,8 +19,15 @@ test('limit targets are explicit; individual IDs normalized, bounded and cannot 
 });
 test('limit endpoints require their own token scopes, with writes isolated from reads',()=>{
  const {endpoints,authorize,ROLE}=require('./api-permissions-fixture.cjs');
- const limits=endpoints.filter(e=>e.url.startsWith('/api/limits'));
+ const limits=endpoints.filter(e=>e.controller.name==='LimitsController');
  assert.equal(limits.length,6);
+ const recovery=endpoints.filter(e=>e.url.startsWith('/api/limits/quota-recovery'));assert.equal(recovery.length,47);
+ assert.ok(recovery.some(e=>e.method==='GET'&&e.url==='/api/limits/quota-recovery/nodes/{uuid}/held-policy'));
+ assert.ok(recovery.some(e=>e.method==='POST'&&e.url==='/api/limits/quota-recovery/nodes/{uuid}/held-policy'));
+ assert.ok(recovery.some(e=>e.method==='GET'&&e.url==='/api/limits/quota-recovery/nodes/{uuid}/held-policy/{request}'));
+ for(const action of ['preview','resolve'])assert.ok(recovery.some(e=>e.method==='POST'&&e.url==='/api/limits/quota-recovery/nodes/{uuid}/settlements/'+action));
+ for(const action of ['preview','resolve'])assert.ok(recovery.some(e=>e.method==='POST'&&e.url==='/api/limits/quota-recovery/nodes/{uuid}/native-import/'+action));
+ for(const endpoint of recovery){assert.equal(authorize(endpoint,ROLE.ADMIN),true);assert.equal(authorize(endpoint,ROLE.API,['*']),false);assert.equal(authorize(endpoint,ROLE.API,['limits:list','limits:actions']),false);}
  for(const endpoint of limits){
    const scope=endpoint.url==='/api/limits'? 'limits:list':`limits:${endpoint.url.split('/').at(-1)}`;
    assert.equal(authorize(endpoint,ROLE.ADMIN),true);

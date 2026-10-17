@@ -1,0 +1,73 @@
+// Requires the explicitly named migrated, seeded legacy recovery fixture.
+const assert=require('node:assert/strict'),path=require('node:path'),{randomUUID,createHash}=require('node:crypto');
+const {PrismaClient}=require('@prisma/client'),{TransactionHost}=require('@nestjs-cls/transactional'),k=require('kysely'),load=require('./load-typescript.cjs');
+const {Queue,Worker}=require('bullmq'),Redis=require('ioredis');
+const {PrismaTxDriver}=require('../node_modules/@kastov/nestjs-prisma-kysely/build/drivers/prisma-tx.driver.js');
+const url=process.env.LEGACY_QUOTA_RECOVERY_TEST_DATABASE_URL;assert.ok(url);const parsed=new URL(url);
+assert.equal(parsed.hostname,'127.0.0.1');assert.equal(parsed.port,'55439');assert.equal(parsed.pathname,'/remnacust_legacy_decisions_test');
+const prisma=new PrismaClient({datasourceUrl:url});
+const tx=new TransactionHost({defaultTxOptions:{},getFallbackInstance:()=>prisma,wrapWithTransaction:(opts,fn,set)=>prisma.$transaction(async client=>{set(client);const result=await fn();return result;},opts)});
+const {CustomCamelCasePlugin,JSON_COLUMNS}=load(path.join(__dirname,'../src/common/database/camel-case.plugin.ts'));
+const db={kysely:new k.Kysely({dialect:{createDriver:()=>new PrismaTxDriver(tx),createAdapter:()=>new k.PostgresAdapter(),createIntrospector:db=>new k.PostgresIntrospector(db),createQueryCompiler:()=>new k.PostgresQueryCompiler()},plugins:[new CustomCamelCasePlugin({excludeColumns:JSON_COLUMNS})]})};
+const model=load(path.join(__dirname,'../src/common/host-policy/legacy-recovery-plan.ts'));
+const {LegacyQuotaRecoveryService}=load(path.join(__dirname,'../src/common/host-policy/legacy-quota-recovery.service.ts'),{'@common/database':{},'./legacy-recovery-plan':model});
+const {BulkUpdateUserUsedTrafficBuilder}=load(path.join(__dirname,'../src/modules/users/builders/bulk-update-user-used-traffic/bulk-update-user-used-traffic.builder.ts'));
+const {LegacyBillingService,LegacyBillingSourceError}=load(path.join(__dirname,'../src/common/host-policy/legacy-billing.service.ts'),{'@common/database':{},'@libs/contracts/constants':{EVENTS:{USER:{FIRST_CONNECTED:'first'}}},'@modules/users/builders/bulk-update-user-used-traffic':{BulkUpdateUserUsedTrafficBuilder},'@queue/_users/users-queues.service':{}});
+const constants=load(path.join(__dirname,'../src/queue/_users/constants/users-job-name.constant.ts'));
+const {LegacyQueueRecoveryService}=load(path.join(__dirname,'../src/common/host-policy/legacy-queue-recovery.service.ts'),{'@common/database':{},'@queue/_users/users-queues.service':{},'@queue/_users/constants/users-job-name.constant':constants,'./legacy-billing.service':{LegacyBillingService,LegacyBillingSourceError},'./legacy-recovery-plan':model});
+const {UpdateUsersUsageQueueProcessor}=load(path.join(__dirname,'../src/queue/_users/processors/update-users-usage.processor.ts'),{'@common/host-policy/legacy-billing.service':{LegacyBillingService},'@common/types':{ok:response=>({isOk:true,response})},'@queue/queue.enum':load(path.join(__dirname,'../src/queue/queue.enum.ts'))});
+const redisUrl=process.env.LEGACY_QUEUE_RECOVERY_TEST_REDIS_URL;assert.ok(redisUrl);
+const redisParsed=new URL(redisUrl);assert.equal(redisParsed.hostname,'127.0.0.1');assert.equal(redisParsed.port,'56381');assert.equal(redisParsed.pathname,'/15');
+const redis=new Redis(redisUrl,{maxRetriesPerRequest:null}),prefix='legacy-recovery-audit-'+randomUUID();
+const queue=new Queue('USERS_UPDATE_USERS_USAGE_QUEUE',{prefix,connection:redis});let worker;
+const queues={queues:{updateUsersUsage:queue}},billing=new LegacyBillingService(db,tx,{fireUserEventBulk:()=>assert.fail('Historical recovery must not emit user events')});
+const recovery=new LegacyQuotaRecoveryService(db,tx),capture=new LegacyQueueRecoveryService(db,tx,queues,billing);
+const hash=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
+const receiptOf=job=>hash([job.prefix,job.queueName,job.id,job.timestamp]);
+const waitFor=async check=>{const until=Date.now()+15000;while(Date.now()<until){if(await check())return;await new Promise(r=>setTimeout(r,25));}assert.fail('Owned queue did not reach expected state');};
+const accounting=async()=>JSON.stringify(await prisma.$queryRaw`SELECT row_to_json(t)::text AS value FROM user_traffic t ORDER BY id`);
+const approveLoss=async(receipt,generation)=>{const draft=model.legacyRecoveryDraft.parse({generation,allocations:[{owner:'903',action:'LOSS'}],note:'Explicit lost historical usage reviewed in queue fixture'}),preview=await recovery.preview(receipt,draft);return recovery.resolve(receipt,{...draft,requestId:randomUUID(),planDigest:preview.planDigest},randomUUID());};
+(async()=>{try{
+ assert((await prisma.$queryRaw`SELECT count(*) AS n FROM _prisma_migrations`)[0].n>=168n,'Legacy decisions schema must be installed');
+ const state=(await prisma.$queryRaw`SELECT generation,reconciled_at FROM xera_quota_restore_state WHERE singleton`)[0];assert.equal(state.reconciled_at,null);
+ const generation=state.generation,before=await accounting(),node=randomUUID(),jobs=[];
+ worker=new Worker(queue.name,async()=>{throw Error('Simulated pre-upgrade failure before SQL intent');},{prefix,connection:redis,concurrency:4});
+ for(let i=0;i<25;i++)jobs.push(await queue.add(constants.USERS_JOB_NAMES.UPDATE_USERS_USAGE,[{u:'903',b:'7',n:node}],{removeOnFail:false,removeOnComplete:false}));
+ await waitFor(async()=>(await queue.getJobCounts('failed')).failed===25);await worker.close();worker=null;
+ for(const job of jobs)assert.equal((await prisma.$queryRaw`SELECT count(*) AS n FROM xera_legacy_usage_jobs WHERE receipt=${receiptOf(job)}`)[0].n,0n);
+ const first=await capture.capture({generation,offset:0}),second=await capture.capture({generation,offset:20});
+ assert.equal(first.entries.length,20);assert.equal(first.nextOffset,20);assert.equal(second.entries.length,5);assert.equal(second.nextOffset,null);
+ const receipts=[...first.entries,...second.entries].map(row=>row.receipt);assert.equal(new Set(receipts).size,25);assert([...first.entries,...second.entries].every(row=>row.state==='CAPTURED'));
+ assert.deepEqual(new Set(receipts),new Set(jobs.map(receiptOf)));assert.equal(await accounting(),before);
+ console.log('PASS bounded real Bull failed-job discovery preserves original namespace/id/timestamp/payload and captures all 25 intents without billing');
+
+ const decidedReceipt=first.entries[0].receipt,decidedJob=jobs.find(job=>receiptOf(job)===decidedReceipt),identity={id:decidedJob.id,timestamp:decidedJob.timestamp,data:decidedJob.data};
+ await approveLoss(decidedReceipt,generation);
+ const processor=new UpdateUsersUsageQueueProcessor(billing);
+ worker=new Worker(queue.name,job=>processor.process(job),{prefix,connection:redis,concurrency:2});
+ const retried=await capture.capture({generation,offset:0});assert(retried.entries.some(row=>row.receipt===decidedReceipt&&row.state==='RETRY_SCHEDULED'));
+ await waitFor(async()=>await decidedJob.getState()==='completed');
+ const stored=await queue.getJob(decidedJob.id);assert.deepEqual({id:stored.id,timestamp:stored.timestamp,data:stored.data},identity);
+ assert.equal(await accounting(),before);assert.equal((await prisma.$queryRaw`SELECT reconciled_at FROM xera_quota_restore_state WHERE singleton`)[0].reconciled_at,null);
+ const unresolved=receipts.find(receipt=>receipt!==decidedReceipt);await assert.rejects(billing.settle(unresolved),/REQUIRES_RECONCILIATION/);
+ console.log('PASS the actual usage processor finishes only a reviewed receipt during quarantine; no second charge/events, unchanged job identity and restore barrier');
+
+ const changed=jobs.find(job=>receiptOf(job)===unresolved);await approveLoss(unresolved,generation);await changed.updateData([{u:'903',b:'8',n:node}]);
+ const changedResult=await capture.capture({generation,offset:0});assert(changedResult.entries.some(row=>row.state==='INVALID_SOURCE'));
+ assert.equal(await changed.getState(),'failed');assert.equal(await accounting(),before);
+ const invalid=await queue.add(constants.USERS_JOB_NAMES.UPDATE_USERS_USAGE,[{u:'903',b:'not-a-number',n:node}],{removeOnFail:false});
+ await waitFor(async()=>await invalid.getState()==='failed');
+ const invalidPage=await capture.capture({generation,offset:20});assert(invalidPage.entries.some(row=>row.state==='INVALID_SOURCE'));
+ assert.equal((await prisma.$queryRaw`SELECT count(*) AS n FROM xera_legacy_usage_jobs WHERE receipt=${receiptOf(invalid)}`)[0].n,0n);
+ console.log('PASS changed recovered payload and invalid source stay failed; no zero-value replacement, deletion, guessed owner or false queue-drain proof');
+
+ await assert.rejects(capture.capture({generation:randomUUID(),offset:0}),/NOT_PENDING/);
+ await assert.rejects(tx.withTransaction({},()=>capture.capture({generation,offset:0})),/standalone/);
+ const unavailable=new LegacyQueueRecoveryService(db,tx,{queues:{updateUsersUsage:{getJobs:async()=>{throw Error('Private Redis transport details');}}}},billing);
+ await assert.rejects(unavailable.capture({generation,offset:0}),/QUEUE_UNAVAILABLE/);
+ assert.equal(await accounting(),before);
+ console.log('PASS stale generation, caller transaction and unavailable Redis cannot mutate accounting or expose transport errors');
+}finally{
+ await worker?.close();await queue.close();let cursor='0';do{const [next,keys]=await redis.scan(cursor,'MATCH',prefix+':*','COUNT',100);cursor=next;if(keys.length){assert(keys.every(key=>key.startsWith(prefix+':')));await redis.del(...keys);}}while(cursor!=='0');
+ await redis.quit();await db.kysely.destroy();await prisma.$disconnect();
+}})().catch(error=>{console.error(error);process.exitCode=1;});

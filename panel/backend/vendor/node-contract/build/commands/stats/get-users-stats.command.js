@@ -11,6 +11,7 @@ var GetUsersStatsCommand;
     });
     GetUsersStatsCommand.ResponseSchema = zod_1.z.object({
         response: zod_1.z.object({
+            coreProcessId: zod_1.z.uuid().nullable().optional(),
             users: zod_1.z.array(zod_1.z.object({
                 username: zod_1.z.string(),
                 downlink: zod_1.z.number(),

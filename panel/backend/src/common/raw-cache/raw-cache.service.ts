@@ -155,6 +155,56 @@ export class RawCacheService {
         await pipe.exec();
     }
 
+    async setManyFenced(
+        fenceKey: string,
+        epoch: string,
+        entries: { key: string; value: unknown; ttlSeconds?: number }[],
+    ): Promise<boolean> {
+        if (
+            !/^[1-9][0-9]{0,18}$/.test(epoch) ||
+            BigInt(epoch) > 9223372036854775807n ||
+            entries.length > 256
+        )
+            throw new Error('Invalid cache delivery epoch');
+        const args: string[] = [epoch];
+        for (const entry of entries) {
+            const ttl = entry.ttlSeconds ?? 0;
+            if (!Number.isInteger(ttl) || ttl < 0 || ttl > 2147483647)
+                throw new Error('Invalid cache TTL');
+            const value =
+                typeof entry.value === 'number' || typeof entry.value === 'string'
+                    ? String(entry.value)
+                    : JSON.stringify(entry.value);
+            if (value === undefined) throw new Error('Invalid cache value');
+            args.push(value, String(ttl));
+        }
+        // Compare canonical decimal strings, not Lua doubles: delivery epochs
+        // remain exact above 2^53. A delayed worker cannot replace newer data.
+        const applied = await this.redis.eval(
+            `
+            local old=redis.call('GET',KEYS[1])
+            local epoch=ARGV[1]
+            if old then
+                if not string.match(old,'^[1-9][0-9]*$') then return redis.error_reply('Invalid cached delivery epoch') end
+                if #old>#epoch or (#old==#epoch and old>epoch) then return 0 end
+            end
+            redis.call('SET',KEYS[1],epoch)
+            for i=2,#KEYS do
+                local value=ARGV[2+(i-2)*2]
+                local ttl=ARGV[3+(i-2)*2]
+                if ttl=='0' then redis.call('SET',KEYS[i],value)
+                else redis.call('SET',KEYS[i],value,'EX',ttl) end
+            end
+            return 1`,
+            1 + entries.length,
+            fenceKey,
+            ...entries.map((e) => e.key),
+            ...args,
+        );
+        if (applied === 1) await this.memoryCacheService.invalidateMany(entries.map((e) => e.key));
+        return applied === 1;
+    }
+
     createPipeline(): ChainableCommander {
         return this.redis.pipeline();
     }
@@ -174,6 +224,35 @@ export class RawCacheService {
             '~',
             maxLenApprox,
             '*',
+            ...Object.entries(fields).flat(),
+        );
+    }
+
+    async xaddUsageReceiptOnce(
+        key: string,
+        maxLenApprox: number,
+        fields: Record<string, string>,
+        stream: string,
+        sequence: string,
+        batch: number,
+    ): Promise<void> {
+        // One bounded hash per node instance, one high-water mark per batch.
+        // Decimal string comparison remains exact beyond Lua's 53-bit numbers.
+        await this.redis.eval(
+            `local old=redis.call('HGET',KEYS[2],ARGV[1])
+            local next=ARGV[2]
+            if old and (#old>#next or (#old==#next and old>=next)) then return 0 end
+            local args={'MAXLEN','~',ARGV[3],'*'}
+            for i=4,#ARGV do args[#args+1]=ARGV[i] end
+            redis.call('XADD',KEYS[1],unpack(args))
+            redis.call('HSET',KEYS[2],ARGV[1],next)
+            return 1`,
+            2,
+            key,
+            `xera:usage-export:${stream}`,
+            String(batch),
+            sequence,
+            String(maxLenApprox),
             ...Object.entries(fields).flat(),
         );
     }

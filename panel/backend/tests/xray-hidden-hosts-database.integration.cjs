@@ -22,6 +22,7 @@ const common = {
     '@common/utils/bounded-work-queue': source('common/utils/bounded-work-queue.ts'),
     '@common/utils/settle-concurrent': source('common/utils/settle-concurrent.ts'),
     './host-policy-scopes': source('common/host-policy/host-policy-scopes.ts'),
+    './quota-policy': source('common/host-policy/quota-policy.ts'),
     './destination-rule': source('common/host-policy/destination-rule.ts'),
 };
 const { HostPolicyService } = source('common/host-policy/host-policy.service.ts', common);
@@ -57,6 +58,7 @@ const { ResolveProxyConfigService } = source('modules/subscription-template/reso
     },
 });
 const { XrayJsonGeneratorService } = source('modules/subscription-template/generators/xray-json.generator.service.ts', {
+    './inject-host-selection': source('modules/subscription-template/generators/inject-host-selection.ts'),
     '../host-mapper': { applyHostMapper: outbound => outbound },
     '@common/utils': { isNonEmptyObject: value => value && Object.keys(value).length > 0 },
 });
@@ -80,6 +82,7 @@ async function main() {
     const prisma = new PrismaClient({ datasourceUrl: databaseUrl });
     const cls = new AsyncLocalStorage();
     const transactions = {
+        isTransactionActive:()=>!!cls.getStore(),
         get tx() { return cls.getStore() ?? prisma; },
         withTransaction: (options, fn) => prisma.$transaction(tx => cls.run(tx, fn), options),
     };
@@ -97,7 +100,7 @@ async function main() {
         addUser: async () => ({ isOk: true, response: { success: true } }),
         deleteUser: async () => ({ isOk: true, response: { success: true, deviceRevocationSupported: true } }),
     };
-    const policies = new HostPolicyService(db, axios, { get: async () => true },
+    const policies = new HostPolicyService(db, axios, require('./host-policy-cache.cjs')(),
         { getOrThrow: () => 'hidden-injection-fixture-secret' }, transactions);
     const access = new HostAccessService(db, policies, axios);
     const repository = new HostsRepository(transactions, db, {});
@@ -218,7 +221,7 @@ async function main() {
             'Exhausted hidden host must still be removed by the quota filter');
         console.log('PASS hidden VK/YCCDN injection: real SQL/repository/scoped credentials/resolver/JSON, visibility, offline node, disabled host, squads, EXCLUDE, rotated parent, HWID, registration, expiry, free sources, quota');
     } finally {
-        await Promise.all([...access.preparing.values()]);
+        await Promise.all(access.preparing.values());
         if (seeded) {
             await execute('DELETE FROM users WHERE id IN (901,902)');
             await execute('DELETE FROM hosts WHERE uuid IN ($1::uuid,$2::uuid,$3::uuid)', recipient, vk, yc);

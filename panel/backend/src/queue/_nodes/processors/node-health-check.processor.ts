@@ -7,6 +7,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 
 import { AxiosService, INodeConnectionOpts } from '@common/axios';
 import { INodeSystemStatsResponse } from '@common/axios/axios.interfaces';
+import { nodeBindingTrafficKey, parseProfileTraffic } from '@common/axios/profile-traffic.schema';
 import { hostPolicyRetryKey } from '@common/host-policy/sync-host-policy-for-start';
 import { RawCacheService } from '@common/raw-cache';
 import { CACHE_KEYS, CACHE_KEYS_TTL, EVENTS } from '@libs/contracts/constants';
@@ -126,6 +127,11 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
 
         await this.rawCacheService.setMany([
             {
+                key: nodeBindingTrafficKey(nodeUuid),
+                value: parseProfileTraffic(stats.bindingTraffic),
+                ttlSeconds: Math.min(CACHE_KEYS_TTL.NODE_SYSTEM_STATS, 120),
+            },
+            {
                 key: CACHE_KEYS.NODE_SYSTEM_STATS(nodeUuid),
                 value: stats.system?.stats ?? null,
                 ttlSeconds: CACHE_KEYS_TTL.NODE_SYSTEM_STATS,
@@ -187,7 +193,8 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
                 new NodeEvent(nodeUpdatedResponse.response, EVENTS.NODE.CONNECTION_RESTORED),
             );
         } else {
-            if (typeof retryAt === 'number' && Number.isFinite(retryAt) && retryAt <= Date.now()) {
+            if ((typeof retryAt === 'number' && Number.isFinite(retryAt) && retryAt <= Date.now()) ||
+                (stats.userStateSynchronized === false && retryDue)) {
                 await this.nodesQueuesService.startNode({ nodeUuid });
             }
         }

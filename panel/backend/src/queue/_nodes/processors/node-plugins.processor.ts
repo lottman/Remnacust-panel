@@ -10,11 +10,13 @@ import { EVENTS } from '@libs/contracts/constants/events/events';
 
 import { GetPluginByUuidQuery } from '@modules/node-plugins/queries/get-plugin-by-uuid';
 import { GetNodeByUuidQuery } from '@modules/nodes/queries/get-node-by-uuid';
+import { GetPortPlanNodeUuidsQuery } from '@modules/nodes/queries/get-port-plan-node-uuids';
 
 import { UsersQueuesService } from '@queue/_users/users-queues.service';
 
 import { QUEUES_NAMES } from '../../queue.enum';
 import { NODES_JOB_NAMES } from '../constants';
+import { NodeConfigurationService } from '../node-configuration.service';
 
 @Processor(QUEUES_NAMES.NODES.PLUGINS, {
     concurrency: 20,
@@ -27,6 +29,7 @@ export class NodePluginsProcessor extends WorkerHost {
         private readonly axios: AxiosService,
         private readonly queryBus: QueryBus,
         private readonly usersQueuesService: UsersQueuesService,
+        private readonly configurations: NodeConfigurationService,
     ) {
         super();
         this.CONCURRENCY = 20;
@@ -47,6 +50,11 @@ export class NodePluginsProcessor extends WorkerHost {
     private async handleSyncNodePlugins(job: Job<{ nodeUuid: string }>) {
         try {
             const { nodeUuid } = job.data;
+            const managed = await this.queryBus.execute(new GetPortPlanNodeUuidsQuery([nodeUuid]));
+            if (managed.includes(nodeUuid)) {
+                await this.configurations.apply({ nodeUuid });
+                return;
+            }
 
             const getNodeResult = await this.queryBus.execute(new GetNodeByUuidQuery(nodeUuid));
 

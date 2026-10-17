@@ -3,11 +3,16 @@ import { createZodDto } from 'nestjs-zod';
 import {
     UpdateSubscriptionTemplateCommand,
     GetSubscriptionTemplateCommand,
+    GetSubscriptionTemplateRevisionsCommand,
     GetSubscriptionTemplatesCommand,
     DeleteSubscriptionTemplateCommand,
     CreateSubscriptionTemplateCommand,
     ReorderSubscriptionTemplateCommand,
 } from '@libs/contracts/commands';
+
+export class GetTemplateRevisionsResponseDto extends createZodDto(
+    GetSubscriptionTemplateRevisionsCommand.ResponseSchema,
+) {}
 
 export class GetTemplatesResponseDto extends createZodDto(
     GetSubscriptionTemplatesCommand.ResponseSchema,

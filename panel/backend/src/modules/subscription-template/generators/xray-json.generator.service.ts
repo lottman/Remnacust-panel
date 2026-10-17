@@ -3,13 +3,14 @@ import { Injectable, Logger } from '@nestjs/common';
 import { isNonEmptyObject } from '@common/utils';
 import { configuredRegex } from '@common/utils/bounded-regex';
 import type {
+    TInjectHostsEntry,
     TRemnawaveInjectorSelectFrom,
-    TRemnawaveInjectorSelector,
 } from '@libs/contracts/models';
 
 import { applyHostMapper } from '../host-mapper';
 import { ResolvedProxyConfig } from '../resolve-proxy/interfaces';
 import { SubscriptionTemplateService } from '../subscription-template.service';
+import { selectInjectHosts } from './inject-host-selection';
 import {
     IGenerateConfigParams,
     Outbound,
@@ -228,7 +229,11 @@ export class XrayJsonGeneratorService {
                     : ((host.clientOverrides.xrayJsonTemplate as XrayJsonConfig) ??
                       templateContent);
 
-                if (baseTemplate.remnawave) {
+                if (
+                    baseTemplate.remnawave &&
+                    (baseTemplate.remnawave.injectHosts !== undefined ||
+                        baseTemplate.remnawave.addVirtualHostAsOutbound)
+                ) {
                     const injected = await this.applyRemnawaveInjector(
                         baseTemplate,
                         host,
@@ -246,8 +251,9 @@ export class XrayJsonGeneratorService {
                 const templateOutbounds = [...(baseTemplate.outbounds ?? [])];
                 const routing = this.buildDomainRulesRouting(host, templateOutbounds);
 
+                const { remnawave: _injector, ...clientTemplate } = baseTemplate;
                 configs.push({
-                    ...baseTemplate,
+                    ...clientTemplate,
                     outbounds: [...outboundConfig.outbounds, ...templateOutbounds],
                     ...(routing ? { routing } : {}),
                     remarks: outboundConfig.remarks,
@@ -449,12 +455,13 @@ export class XrayJsonGeneratorService {
     }
 
     private async resolveHosts(
-        selector: TRemnawaveInjectorSelector,
+        entry: TInjectHostsEntry,
         selectFrom: TRemnawaveInjectorSelectFrom,
         host: ResolvedProxyConfig,
         allHosts: ResolvedProxyConfig[],
         deadline: number,
     ): Promise<ResolvedProxyConfig[]> {
+        const selector = entry.selector;
         const source = selectFrom ?? 'HIDDEN';
         const recipientUuid = host.metadata.uuid;
         let candidates: ResolvedProxyConfig[] = [];
@@ -476,9 +483,8 @@ export class XrayJsonGeneratorService {
 
         switch (selector.type) {
             case 'uuids':
-                return selector.values
-                    .map((uuid) => candidates.find((h) => h.metadata.uuid === uuid))
-                    .filter(Boolean) as ResolvedProxyConfig[];
+            case 'tags':
+                return selectInjectHosts(entry, candidates);
 
             case 'remarkRegex': {
                 const selected: ResolvedProxyConfig[] = [];
@@ -535,12 +541,15 @@ export class XrayJsonGeneratorService {
             : [];
         for (const entry of injector.injectHosts ?? []) {
             const selected = await this.resolveHosts(
-                entry.selector,
+                entry,
                 entry.selectFrom,
                 host,
                 allHosts,
                 deadline,
             );
+            // A new bounded pool with no eligible member must not emit an invalid balancer
+            // or silently fall back to the recipient's placeholder address.
+            if (entry.mode && selected.length === 0) return null;
             injectedOutbounds.push(
                 ...this.buildTaggedOutbounds(selected, {
                     tagPrefix: entry.tagPrefix,

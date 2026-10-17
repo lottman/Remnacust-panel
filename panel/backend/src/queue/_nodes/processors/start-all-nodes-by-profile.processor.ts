@@ -24,13 +24,16 @@ import { GetAllPluginsQuery } from '@modules/node-plugins/queries/get-all-plugin
 import { NodesEntity } from '@modules/nodes';
 import { UpdateNodeCommand } from '@modules/nodes/commands/update-node';
 import { FindNodesByCriteriaQuery } from '@modules/nodes/queries/find-nodes-by-criteria';
+import { nodesUsingProfile } from '@modules/nodes/queries/find-nodes-by-criteria/find-nodes-by-criteria.query';
 import { GetDeviceStateRevisionQuery } from '@modules/nodes/queries/get-device-state-revision';
+import { GetPortPlanNodeUuidsQuery } from '@modules/nodes/queries/get-port-plan-node-uuids';
 import { GetPreparedConfigWithUsersQuery } from '@modules/users/queries/get-prepared-config-with-users/get-prepared-config-with-users.query';
 
 import { NodesQueuesService } from '@queue/_nodes';
 
 import { QUEUES_NAMES } from '../../queue.enum';
 import { NODES_JOB_NAMES } from '../constants';
+import { NodeConfigurationService } from '../node-configuration.service';
 
 @Processor(
     {
@@ -52,6 +55,7 @@ export class StartAllNodesByProfileQueueProcessor extends WorkerHost {
         private readonly queryBus: QueryBus,
         private readonly commandBus: CommandBus,
         private readonly rawCacheService: RawCacheService,
+        private readonly configurations: NodeConfigurationService,
     ) {
         super();
         this.CONCURRENCY = 20;
@@ -76,10 +80,7 @@ export class StartAllNodesByProfileQueueProcessor extends WorkerHost {
             await this.nodesQueuesService.queues.startNode.pause();
             await this.nodesQueuesService.queues.startAllNodes.pause();
             const findNodesByCriteriaResult = await this.queryBus.execute(
-                new FindNodesByCriteriaQuery({
-                    isDisabled: false,
-                    activeConfigProfileUuid: payload.profileUuid,
-                }),
+                new FindNodesByCriteriaQuery(nodesUsingProfile(payload.profileUuid)),
             );
 
             if (!findNodesByCriteriaResult.isOk) {
@@ -88,10 +89,28 @@ export class StartAllNodesByProfileQueueProcessor extends WorkerHost {
 
             const { response: nodes } = findNodesByCriteriaResult;
 
+            // Port-managed nodes need their complete per-node plan. A shared
+            // profile payload would remove the other profiles' listeners.
+            const managedIds = new Set(
+                await this.queryBus.execute(
+                    new GetPortPlanNodeUuidsQuery(nodes.map((node) => node.uuid)),
+                ),
+            );
+            await pMap(
+                nodes.filter((node) => managedIds.has(node.uuid)),
+                (node) => this.configurations.apply({ nodeUuid: node.uuid, force: payload.force }),
+                { concurrency: this.CONCURRENCY },
+            );
+            const legacyNodes = nodes.filter(
+                (node) =>
+                    !managedIds.has(node.uuid) &&
+                    node.activeConfigProfileUuid === payload.profileUuid,
+            );
+
             const activeInboundsOnNodes = new Map<string, ConfigProfileInboundEntity>();
             const activeNodeTags = new Map<string, string[]>();
 
-            for (const node of nodes) {
+            for (const node of legacyNodes) {
                 await this.rawCacheService.delMany([
                     CACHE_KEYS.NODE_SYSTEM_STATS(node.uuid),
                     CACHE_KEYS.NODE_USERS_ONLINE(node.uuid),
@@ -158,7 +177,7 @@ export class StartAllNodesByProfileQueueProcessor extends WorkerHost {
 
             const integrationsResult = await this.queryBus.execute(
                 new GetResolvedIntegrationsQuery([
-                    ...new Set(nodes.flatMap((node) => node.integrationUuids)),
+                    ...new Set(legacyNodes.flatMap((node) => node.integrationUuids)),
                 ]),
             );
 
@@ -421,7 +440,7 @@ export class StartAllNodesByProfileQueueProcessor extends WorkerHost {
                 }
             };
             await pMap(
-                nodes.filter((node) => activeNodeTags.has(node.uuid)),
+                legacyNodes.filter((node) => activeNodeTags.has(node.uuid)),
                 mapper,
                 {
                     concurrency: this.CONCURRENCY,

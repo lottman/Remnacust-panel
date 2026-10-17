@@ -19,7 +19,6 @@ import {
     TbRadar2,
     TbReportAnalytics,
     TbRoute,
-    TbSitemap,
     TbStar,
     TbTools,
     TbWebhook,
@@ -147,12 +146,6 @@ export const useDesktopMenuSections = (): MenuItem[] => {
                         href: ROUTES.DASHBOARD.MANAGEMENT.CONFIG_PROFILES,
                         icon: XrayLogo,
                         id: 'config-profiles'
-                    },
-                    {
-                        name: t('dashboard-ui.canvases'),
-                        href: ROUTES.DASHBOARD.MANAGEMENT.PROFILE_CANVASES,
-                        icon: TbSitemap,
-                        id: 'profile-canvases'
                     }
                 ]
             },

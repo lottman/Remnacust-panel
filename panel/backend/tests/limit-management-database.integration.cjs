@@ -5,16 +5,16 @@ const {PrismaTxDriver}=require('../node_modules/@kastov/nestjs-prisma-kysely/bui
 const selection=load(path.join(__dirname,'../src/modules/hosts/limit-selection.ts'));
 const {LimitsService}=load(path.join(__dirname,'../src/modules/hosts/limits.service.ts'),{'@common/database':{},'@common/host-policy/host-policy.service':{},'./repositories/hosts.repository':{},'./hosts.service':{},'./limit-selection':selection,'./limit-scopes.query':load(path.join(__dirname,'../src/modules/hosts/limit-scopes.query.ts'))});
 const {CustomCamelCasePlugin,JSON_COLUMNS}=load(path.join(__dirname,'../src/common/database/camel-case.plugin.ts'));
-const {HostPolicyService}=load(path.join(__dirname,'../src/common/host-policy/host-policy.service.ts'),{'@common/database':{},'@common/axios':{},'@common/raw-cache':{},'@common/config/app-config':{},'@common/config/app-config/typed-config.service':{},'@common/utils/host-identity':load(path.join(__dirname,'../src/common/utils/host-identity.ts')),'./destination-rule':load(path.join(__dirname,'../src/common/host-policy/destination-rule.ts')),'./host-policy-scopes':load(path.join(__dirname,'../src/common/host-policy/host-policy-scopes.ts'))});
+const {HostPolicyService}=load(path.join(__dirname,'../src/common/host-policy/host-policy.service.ts'),{'@common/database':{},'@common/axios':{},'@common/raw-cache':{},'@common/config/app-config':{},'@common/config/app-config/typed-config.service':{},'@common/utils/host-identity':load(path.join(__dirname,'../src/common/utils/host-identity.ts')),'./destination-rule':load(path.join(__dirname,'../src/common/host-policy/destination-rule.ts')),'./host-policy-scopes':load(path.join(__dirname,'../src/common/host-policy/host-policy-scopes.ts')),'./quota-policy':load(path.join(__dirname,'../src/common/host-policy/quota-policy.ts'))});
 const {HostsRepository}=load(path.join(__dirname,'../src/modules/hosts/repositories/hosts.repository.ts'),{'@common/database':{},'@common/helpers':{},'@common/helpers/kysely/values':{},'@libs/contracts/constants':{INTERNAL_SQUADS_MODE:{ALLOW_ONLY:'ALLOW_ONLY',EXCLUDE:'EXCLUDE'}},'../hosts.converter':{}});
 const H='11111111-1111-4111-8111-111111111111',H2='22222222-2222-4222-8222-222222222222',IS='11111111-aaaa-4aaa-8aaa-aaaaaaaaaaaa',ES='33333333-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 async function main(){
  const prisma=new PrismaClient({datasourceUrl:process.env.LIMITS_TEST_DATABASE_URL ?? 'postgresql://postgres@127.0.0.1:55439/postgres'});const cls=new AsyncLocalStorage();
- const transactions={get tx(){return cls.getStore()??prisma},withTransaction:(options,fn)=>prisma.$transaction(tx=>cls.run(tx,fn),options)};
+ const transactions={get tx(){return cls.getStore()??prisma},isTransactionActive:()=>!!cls.getStore(),withTransaction:(options,fn)=>prisma.$transaction(tx=>cls.run(tx,fn),options)};
  const db={kysely:new k.Kysely({dialect:{createDriver:()=>new PrismaTxDriver(transactions),createAdapter:()=>new k.PostgresAdapter(),createIntrospector:db=>new k.PostgresIntrospector(db),createQueryCompiler:()=>new k.PostgresQueryCompiler()},plugins:[new CustomCamelCasePlugin({excludeColumns:JSON_COLUMNS})]})};
  const execute=s=>prisma.$executeRawUnsafe(s);const query=s=>prisma.$queryRawUnsafe(s);
  let syncs=0;let validationFails=false;
- const service=new LimitsService(db,transactions,{lockPolicies:async()=>k.sql`SELECT 1 FROM pg_advisory_xact_lock(911234)`.execute(db.kysely),findAll:()=>prisma.hosts.findMany()}, {validatePolicyState:async()=>{if(validationFails)throw new Error('unsupported-node')}},{syncConnected:async()=>{syncs++}});
+ const service=new LimitsService(db,transactions,{lockPolicies:async()=>k.sql`SELECT 1 FROM pg_advisory_xact_lock(911234)`.execute(db.kysely),findAll:()=>prisma.hosts.findMany()}, {validatePolicyState:async()=>{if(validationFails)throw new Error('unsupported-node')}},{requestSync:()=>{assert.equal(transactions.isTransactionActive(),false);syncs++}});
  const state=async(kind,key,user=901)=>(await query(`SELECT * FROM xera_limit_state('${kind}','${key}',${user})`))[0];
  const act=(action,selection={type:'ALL'},extra={})=>service.act({kind:'TAG',key:'alpha',action,amountBytes:action==='ADD'?100:0,requestId:randomUUID(),selection,...extra});
  try{
@@ -118,7 +118,7 @@ async function main(){
   await act('PAUSE',{type:'SQUAD',squadType:'EXTERNAL',squadUuid:ES});
   assert.equal((await state('TAG','alpha',902)).paused,true);
   await act('RESUME',specific);assert.equal((await state('TAG','alpha',901)).paused,false);assert.equal((await state('TAG','alpha',902)).paused,true);
-  const policies=[];const policy=new HostPolicyService(db,{hostPolicy:async(node,payload)=>{policies.push(payload);return {isOk:true,response:{version:'xera-host-policy-v2',applied:true}}}},{get:async()=>true},{getOrThrow:()=> 'test-only'},transactions);
+  const policies=[];const policy=new HostPolicyService(db,{hostPolicy:async(node,payload)=>{if(payload)policies.push(payload);return {isOk:true,response:{version:'xera-host-policy-v2',applied:true}}}},require('./host-policy-cache.cjs')(),{getOrThrow:()=> 'test-only'},transactions);
   await policy.syncNode({uuid:'cccccccc-cccc-4ccc-8ccc-cccccccccccc'});
   assert.deepEqual(policies.at(-1).groups['tag:alpha'].blockedOwners,{'902':true});
   assert(policies.at(-1).hosts[H.replaceAll('-','')].groups.includes('tag:alpha'));
@@ -132,7 +132,7 @@ async function main(){
   await policy.syncNode({uuid:'cccccccc-cccc-4ccc-8ccc-cccccccccccc'});
   assert.equal(policies.at(-1).groups['tag:alpha'].blockedOwners['901'],undefined,'node unblocks exhausted unlimited owner');
   assert.equal(policies.at(-1).groups['host:'+H].blockedOwners['901'],undefined);
-  const pausedGrant=await act('PAUSE',specific);
+  await act('PAUSE',specific);
   await policy.syncNode({uuid:'cccccccc-cccc-4ccc-8ccc-cccccccccccc'});
   assert.equal(policies.at(-1).groups['tag:alpha'].blockedOwners['901'],true,'node pause preserved for unlimited owner');
   await act('RESUME',specific);
@@ -154,6 +154,38 @@ async function main(){
   assert.equal(policies.at(-1).hosts[H.replaceAll('-','')].groups.includes('tag:alpha'),false);
   assert(policies.at(-1).hosts[H2.replaceAll('-','')].groups.includes('tag:alpha'));
   assert(syncs>10);
+  assert.equal((await query('SELECT count(*) AS n FROM xera_quota_budget_actions'))[0].n,0n,
+      'Legacy actions without a reserve bank must not create per-user quota metadata or advisory locks');
+  // The action endpoint must rotate/update the bank in the SAME transaction as
+  // the ordinary meter adjustment, not just call the SQL helpers in isolation.
+  const bankNode='cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+  const bankInstance='aaaaaaaa-cccc-4ccc-8ccc-cccccccccccc';
+  const allocate=()=>prisma.$queryRaw`SELECT * FROM xera_allocate_quota_reserves('HOST',${H},901::bigint,
+      ARRAY[${bankNode}::uuid],0::bigint,${JSON.stringify({[bankNode]:bankInstance})}::jsonb)`;
+  const oldBank=await allocate();assert.equal(oldBank.length,1);
+  const beforeReset=await state('HOST',H);
+  const resetRequest=randomUUID();
+  await act('RESET',specific,{kind:'HOST',key:H,requestId:resetRequest});
+  const afterReset=await state('HOST',H);assert.equal(afterReset.used_bytes,0n);
+  const newBank=await allocate();assert.equal(newBank.length,1);
+  assert.notEqual(newBank[0].id,oldBank[0].id);
+  assert.equal(newBank[0].ceiling_bytes,beforeReset.effective_limit);
+  assert.equal((await act('RESET',specific,{kind:'HOST',key:H,requestId:resetRequest})).replayed,true);
+  assert.deepEqual(await allocate(),newBank);
+  const addRequest=randomUUID();
+  await act('ADD',specific,{kind:'HOST',key:H,amountBytes:50,requestId:addRequest});
+  await act('ADD',specific,{kind:'HOST',key:H,amountBytes:50,requestId:addRequest});
+  const pools=await query(`SELECT limit_bytes FROM xera_quota_reserve_pools p WHERE p.kind='HOST' AND p.key='${H}'
+      AND budget_epoch=xera_current_quota_epoch(p.kind,p.key,p.user_id,p.window_start)`);
+  assert.equal(pools[0].limit_bytes,newBank[0].ceiling_bytes+50n);
+  const savedTransaction=transactions.withTransaction;
+  const savedSyncs=syncs;
+  transactions.withTransaction=(options,fn)=>savedTransaction(options,async()=>{await fn();throw Error('injected commit failure')});
+  await assert.rejects(act('RESET',specific,{kind:'HOST',key:H}),/injected commit failure/);
+  transactions.withTransaction=savedTransaction;
+  assert.equal(syncs,savedSyncs,'A rolled-back reset must never request node delivery');
+  assert.deepEqual(await allocate(),newBank,'Failed commit cannot rotate the budget or reuse old grant IDs');
+  console.log('PASS: real LimitsService RESET/ADD, request replay and SQL rollback preserve reserve epochs and postcommit delivery');
   console.log('PASS: real PostgreSQL limits, all/individual/internal+external squad actions, entitlement, concurrency/idempotency, raw reset baseline, multipliers, period bonus expiry, persistent pauses, scope isolation and leaving tags');
  }finally{
   await execute('DELETE FROM users WHERE id IN(901,902)');await execute('DELETE FROM hosts');await execute('DELETE FROM nodes WHERE id=901');await execute('DELETE FROM internal_squads');await execute('DELETE FROM external_squads');await execute('DELETE FROM config_profiles');await execute('DELETE FROM xera_host_tag_limits');await prisma.$disconnect();

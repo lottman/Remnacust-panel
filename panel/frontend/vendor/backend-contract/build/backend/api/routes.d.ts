@@ -149,6 +149,7 @@ export declare const REST_API: {
         };
     };
     readonly SUBSCRIPTION_TEMPLATE: {
+        readonly GET_REVISIONS: (uuid: string) => string;
         readonly GET: (uuid: string) => string;
         readonly UPDATE: "/api/subscription-templates/";
         readonly DELETE: (uuid: string) => string;

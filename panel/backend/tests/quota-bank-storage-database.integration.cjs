@@ -1,0 +1,57 @@
+// Read-only recovery bank verification in the seeded disposable legacy fixture.
+const assert=require('node:assert/strict'),path=require('node:path'),{randomUUID}=require('node:crypto');
+const {PrismaClient}=require('@prisma/client'),{TransactionHost}=require('@nestjs-cls/transactional'),k=require('kysely'),load=require('./load-typescript.cjs');
+const {PrismaTxDriver}=require('../node_modules/@kastov/nestjs-prisma-kysely/build/drivers/prisma-tx.driver.js');
+const url=process.env.LEGACY_QUOTA_RECOVERY_TEST_DATABASE_URL;assert.ok(url);const parsed=new URL(url);
+assert.equal(parsed.hostname,'127.0.0.1');assert.equal(parsed.port,'55439');assert.equal(parsed.pathname,'/remnacust_legacy_decisions_test');
+const prisma=new PrismaClient({datasourceUrl:url});let failCommit=false;
+const tx=new TransactionHost({defaultTxOptions:{},getFallbackInstance:()=>prisma,wrapWithTransaction:(opts,fn,set)=>prisma.$transaction(async client=>{set(client);const result=await fn();if(failCommit){failCommit=false;throw Error("Injected bank COMMIT failure");}return result;},opts)});
+const {CustomCamelCasePlugin,JSON_COLUMNS}=load(path.join(__dirname,'../src/common/database/camel-case.plugin.ts'));
+const db={kysely:new k.Kysely({dialect:{createDriver:()=>new PrismaTxDriver(tx),createAdapter:()=>new k.PostgresAdapter(),createIntrospector:db=>new k.PostgresIntrospector(db),createQueryCompiler:()=>new k.PostgresQueryCompiler()},plugins:[new CustomCamelCasePlugin({excludeColumns:JSON_COLUMNS})]})};
+const {QuotaBankRecoveryService}=load(path.join(__dirname,'../src/common/host-policy/quota-bank-recovery.service.ts'),{'@common/database':{}});
+const service=new QuotaBankRecoveryService(db,tx),actor=randomUUID();
+const financial=async()=>JSON.stringify(await prisma.$queryRaw`SELECT row_to_json(t)::text AS data FROM user_traffic t ORDER BY id`);
+const archiveState=async()=>(await prisma.$queryRaw`SELECT (SELECT count(*)::text FROM xera_quota_recovery_banks) AS banks,(SELECT count(*)::text FROM xera_quota_recovery_bank_parts) AS parts,(SELECT count(*)::text FROM xera_quota_recovery_artifacts) AS blobs`)[0];
+(async()=>{try{
+ const generation=(await prisma.$queryRaw`SELECT generation FROM xera_quota_restore_state WHERE singleton AND reconciled_at IS NULL`)[0].generation;
+ const before=await financial(),request=randomUUID();
+ const [first,duplicate]=await Promise.all([service.capture(generation,request,actor),service.capture(generation,request,actor)]);
+ assert.deepEqual(duplicate,first);assert(first.partCount>40);assert(BigInt(first.rowCount)>1500n);assert.equal(await financial(),before);
+ assert.equal((await service.compare(request,generation)).matches,true);
+ await assert.rejects(service.capture(generation,request,randomUUID()),/REQUEST_CONFLICT/);
+ await assert.rejects(service.capture(randomUUID(),request,actor),/REQUEST_CONFLICT/);
+ console.log('PASS concurrent same-request capture commits one complete immutable global bank; exact idempotency, source comparison and no financial mutation');
+ const originalArchive=await archiveState(),another=await service.capture(generation,randomUUID(),actor);
+ assert.equal(another.sourceDigest,first.sourceDigest);assert.equal((await archiveState()).blobs,originalArchive.blobs);
+ const parts=await service.parts(request);assert(parts.entries.some(part=>part.rows===0));let downloaded=0,after;
+ do{const page=await service.parts(request,after);assert(page.entries.length<=20);for(const part of page.entries){const file=await service.download(request,part.digest);assert(Buffer.isBuffer(file.data));const raw=require('node:zlib').gunzipSync(file.data);assert.equal(require('node:crypto').createHash('sha256').update(raw).digest('hex'),part.digest);assert(!raw.includes('"trojan_password"'));downloaded++;}after=page.nextAfter;}while(after!==null);
+ assert.equal(downloaded,first.partCount);
+ console.log('PASS content-addressed compression deduplicates unchanged snapshots, keeps empty sections and verifies original bytes before bounded downloads');
+ const original=(await prisma.$queryRaw`SELECT used_traffic_bytes::text AS used FROM user_traffic WHERE id=903`)[0].used;
+ try{await prisma.$executeRaw`UPDATE user_traffic SET used_traffic_bytes=used_traffic_bytes+1 WHERE id=903`;const changed=await service.compare(request,generation);assert.equal(changed.matches,false);assert.deepEqual(changed.changedSections,['user_traffic']);}finally{await prisma.$executeRaw`UPDATE user_traffic SET used_traffic_bytes=${original}::bigint WHERE id=903`;}
+ assert.equal((await service.compare(request,generation)).matches,true);assert.equal(await financial(),before);
+ console.log('PASS changed usage invalidates the saved baseline and reports only the changed section, without reassigning owners or releasing traffic');
+ const count=await archiveState();failCommit=true;await assert.rejects(service.capture(generation,randomUUID(),actor),/COMMIT failure/);assert.deepEqual(await archiveState(),count);
+ for(const table of ['xera_quota_recovery_banks','xera_quota_recovery_bank_parts'])for(const query of ['UPDATE '+table+' SET request_id=gen_random_uuid()','DELETE FROM '+table,'TRUNCATE '+table+' CASCADE'])await assert.rejects(prisma.$executeRawUnsafe(query),/immutable/);
+ const digest=parts.entries[0].digest;
+ await assert.rejects(prisma.$transaction(async client=>{await client.$executeRaw`INSERT INTO xera_quota_recovery_bank_parts(request_id,ordinal,section,digest,row_count) VALUES(${request}::uuid,99999,'users',${digest},0)`;}),/incomplete recovery bank/);
+ await assert.rejects(prisma.$transaction(async client=>{await client.$executeRaw`INSERT INTO xera_quota_recovery_banks(request_id,generation,actor_uuid,version,catalog_text,source_digest,part_count,row_count) VALUES(${randomUUID()}::uuid,${generation}::uuid,${actor}::uuid,'remnacust-quota-bank-v1','["users"]',repeat('a',64),1,0)`;}),/incomplete recovery bank/);
+ assert.deepEqual(await archiveState(),count);
+ console.log('PASS failed commit leaves no orphan archive; immutable tables and deferred complete-manifest checks reject edits, partial headers and late extra parts');
+ await assert.rejects(service.compare(request,randomUUID()),/NOT_PENDING/);await assert.rejects(service.download(randomUUID(),digest),/MISSING/);
+ await assert.rejects(tx.withTransaction({},()=>service.capture(generation,randomUUID(),actor)),/standalone/);
+ await prisma.$queryRaw`SELECT xera_quarantine_restored_quotas()`;
+ assert.equal((await service.details(request)).sourceDigest,first.sourceDigest);
+ assert.deepEqual(await service.capture(generation,request,actor),first,'Historical retry returns original archive without new mutation');
+ await assert.rejects(service.compare(request,generation),/NOT_PENDING/);
+ assert.equal((await prisma.$queryRaw`SELECT reconciled_at FROM xera_quota_restore_state WHERE singleton`)[0].reconciled_at,null);
+ console.log('PASS old-generation snapshots remain readable after a new restore but cannot certify its current state; request-bound downloads and standalone capture enforced');
+ for(let i=0;i<21;i++)await prisma.$transaction(async client=>{
+  const id=randomUUID();await client.$executeRaw`INSERT INTO xera_quota_recovery_bank_parts(request_id,ordinal,section,digest,row_count) SELECT ${id}::uuid,ordinal,section,digest,row_count FROM xera_quota_recovery_bank_parts WHERE request_id=${request}::uuid`;
+  await client.$executeRaw`INSERT INTO xera_quota_recovery_banks(request_id,generation,actor_uuid,version,catalog_text,source_digest,part_count,row_count,created_at) SELECT ${id}::uuid,generation,actor_uuid,version,catalog_text,source_digest,part_count,row_count,'2000-01-01 00:00:00.123456+00'::timestamptz FROM xera_quota_recovery_banks WHERE request_id=${request}::uuid`;
+ });
+ let cursor,seen=[];do{const page=await service.list(cursor);assert(page.entries.length<=20);seen.push(...page.entries.map(row=>row.requestId));cursor=page.nextAfter;}while(cursor);
+ assert.equal(new Set(seen).size,seen.length);assert.equal(BigInt(seen.length),(await prisma.$queryRaw`SELECT count(*) AS n FROM xera_quota_recovery_banks`)[0].n);
+ assert.equal(await financial(),before);await assert.rejects(service.list(randomUUID()),/MISSING/);
+ console.log('PASS real 20-row history keyset retains all snapshots with equal microsecond timestamps, without duplicate or missing rows');
+}finally{await db.kysely.destroy();await prisma.$disconnect();}})().catch(error=>{console.error(error);process.exitCode=1;});

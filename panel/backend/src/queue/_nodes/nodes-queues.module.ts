@@ -1,9 +1,12 @@
 import { CqrsModule } from '@nestjs/cqrs';
+
 import { NodeHealthLogService } from '@modules/nodes/node-health-log.service';
 
 import { QUEUES_NAMES } from '@queue/queue.enum';
 import { createDomainQueueModule } from '@queue/queue.factory';
 
+import { NodeConfigurationService } from './node-configuration.service';
+import { PortPlanLeaseService } from './port-plan-lease.service';
 import { NodesQueuesService } from './nodes-queues.service';
 import {
     NodeHealthCheckQueueProcessor,
@@ -40,5 +43,5 @@ export const NodesQueuesModule = createDomainQueueModule({
     queues,
     service: NodesQueuesService,
     imports: [CqrsModule],
-    extraProviders: [NodeHealthLogService],
+    extraProviders: [NodeHealthLogService, NodeConfigurationService, PortPlanLeaseService],
 });

@@ -3,6 +3,19 @@ export declare namespace GetSystemStatsCommand {
     const url: "/node/stats/get-system-stats";
     const ResponseSchema: z.ZodObject<{
         response: z.ZodObject<{
+            userStateSynchronized: z.ZodOptional<z.ZodBoolean>;
+            bindingTraffic: z.ZodOptional<z.ZodNullable<z.ZodObject<{
+                capability: z.ZodLiteral<"remnacust-profile-traffic-v1">;
+                coreProcessId: z.ZodUUID;
+                capturedAt: z.ZodISODateTime;
+                bindings: z.ZodArray<z.ZodObject<{
+                    bindingUuid: z.ZodUUID;
+                    uplink: z.ZodString;
+                    downlink: z.ZodString;
+                    available: z.ZodBoolean;
+                    retired: z.ZodBoolean;
+                }, z.core.$strip>>;
+            }, z.core.$strip>>>;
             xrayInfo: z.ZodNullable<z.ZodObject<{
                 numGoroutine: z.ZodNumber;
                 numGC: z.ZodNumber;

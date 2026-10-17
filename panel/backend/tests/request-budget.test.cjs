@@ -8,7 +8,7 @@ const {boundedJsonParser}=load(path.join(__dirname,'../src/common/middlewares/bo
 test('large JSON requires a valid signed administrative credential; parsing never grants authorization',async()=>{
  const app=express();app.use(boundedJsonParser('test-secret'));
  app.post('/api/test',(req,res)=>res.status(403).json({parsed:true}));
- app.use((error,req,res,next)=>res.status(error.status||500).end());
+ app.use((error,req,res,_next)=>res.status(error.status||500).end());
  const server=app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));
  const url=`http://127.0.0.1:${server.address().port}/api/test`;
  try{

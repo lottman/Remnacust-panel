@@ -9,6 +9,8 @@ var GetSystemStatsCommand;
     GetSystemStatsCommand.url = api_1.REST_API.STATS.GET_SYSTEM_STATS;
     GetSystemStatsCommand.ResponseSchema = zod_1.z.object({
         response: zod_1.z.object({
+            userStateSynchronized: zod_1.z.boolean().optional(),
+            bindingTraffic: models_1.ProfileTrafficSchema.nullable().optional(),
             xrayInfo: zod_1.z
                 .object({
                 numGoroutine: zod_1.z.number(),

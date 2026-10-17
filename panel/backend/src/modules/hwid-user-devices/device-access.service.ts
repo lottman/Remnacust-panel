@@ -366,10 +366,8 @@ export class DeviceAccessService {
         if (!nodes.length && !complete) return false;
 
         const results = await settleConcurrent(nodes, 8, async (node) => {
-            const inbounds = resolved.response.inbounds.filter(
-                (inbound) =>
-                    inbound.profileUuid === node.activeConfigProfileUuid &&
-                    node.activeInbounds.some((active) => active.uuid === inbound.uuid),
+            const inbounds = resolved.response.inbounds.filter((inbound) =>
+                node.activeInbounds.some((active) => active.uuid === inbound.uuid),
             );
             if (!inbounds.length) {
                 const response = await this.axios.deleteUser(

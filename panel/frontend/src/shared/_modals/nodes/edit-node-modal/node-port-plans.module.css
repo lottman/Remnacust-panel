@@ -1,0 +1,75 @@
+.root {
+    min-width: 0;
+    padding-bottom: 16px;
+}
+.layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+    gap: 16px;
+    align-items: start;
+}
+.editor,
+.preview {
+    min-width: 0;
+}
+.binding {
+    border: 1px solid var(--mantine-color-default-border);
+    border-radius: var(--mantine-radius-md);
+    padding: 12px;
+}
+.fields {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px;
+}
+.fields > * {
+    min-width: 0;
+}
+.traffic {
+    margin-top: 8px;
+    overflow-wrap: anywhere;
+    font-variant-numeric: tabular-nums;
+}
+.preview {
+    border-inline-start: 2px solid var(--mantine-primary-color-light-color);
+    padding-inline-start: 14px;
+}
+.code {
+    max-height: 420px;
+    max-width: 100%;
+    overflow: auto;
+    font-size: 12px;
+}
+.actions {
+    padding-block: 12px;
+    background: var(--mantine-color-body);
+    border-top: 1px solid var(--mantine-color-default-border);
+}
+.historyRow {
+    padding-block: 8px;
+    border-bottom: 1px solid var(--mantine-color-default-border);
+    overflow-wrap: anywhere;
+}
+@media (max-width: 48em) {
+    .layout {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .fields {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .actions > button {
+        flex: 1 1 140px;
+        min-height: 44px;
+        min-width: 0;
+    }
+    .fields :global(input) {
+        min-height: 44px;
+    }
+    .editor > :global(button),
+    .historyRow > :global(button) {
+        min-height: 44px;
+    }
+    .code {
+        max-height: 280px;
+    }
+}

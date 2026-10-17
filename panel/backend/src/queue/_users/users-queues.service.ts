@@ -248,13 +248,14 @@ export class UsersQueuesService implements OnApplicationBootstrap {
         );
     }
 
-    public async fireUserEventBulk(payload: IFireUserEventPayload) {
+    public async fireUserEventBulk(payload: IFireUserEventPayload, receipt?: string) {
         const chunks = chunk(payload.users, 3000);
 
         for (const batch of chunks) {
             await this.userEventsQueue.addBulk(
                 batch.map((user) => ({
                     name: USERS_JOB_NAMES.FIRE_USER_EVENT,
+                    ...(receipt ? { opts: { jobId: `event-${receipt}-${user.id}` } } : {}),
                     data: {
                         id: user.id.toString(),
                         meta: payload.meta,
@@ -295,9 +296,7 @@ export class UsersQueuesService implements OnApplicationBootstrap {
                     age: 3_600,
                     count: 1_000,
                 },
-                removeOnFail: {
-                    age: 24 * 3_600,
-                },
+                removeOnFail: false,
                 attempts: 3,
                 backoff: {
                     type: 'fixed',

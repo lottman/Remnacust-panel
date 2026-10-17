@@ -65,12 +65,49 @@
   {
     "path": "node_modules/xray-typed/dist/transport/stream.d.ts",
     "beforeSha256": "f6e71bd3ae764baf21abbc44e7ea3e4922383cd3b97b304cbd9fb936c76879da",
-    "afterSha256": "7fc92169d958f0c8d9a795c37585ca0cb00a9b9fbef504cc6e62029b1aece65b",
+    "afterSha256": "d96daa247fd8efacc24f16094f64ea1da184e73a0396cdf09a534960a0d67583",
     "changes": [
       {
         "before": "    hysteriaSettings?: HysteriaConfig;\n    /** Socket options. */\n    sockopt?: SocketConfig;\n}\n/**\n * Maps transport protocol to its corresponding settings type.\n",
         "after": "    hysteriaSettings?: HysteriaConfig;\n    /** Socket options. */\n    sockopt?: SocketConfig;\n    masqueSettings?: { host?: string; path?: string; user?: string; pass?: string; headers?: Record<string, string> };\n    xdriveSettings?: Record<string, unknown>;\n    xeraHttpSettings?: Record<string, unknown>;\n}\n/**\n * Maps transport protocol to its corresponding settings type.\n"
+      },
+      {
+        "before": "    hysteriaSettings?: HysteriaConfig;\n",
+        "after": "    hysteriaSettings?: HysteriaConfig;\n    /** MASQUE CONNECT-IP transport, including WARP and XMUX (26.10.10+). */\n    masqueSettings?: {\n        host?: string;\n        path?: string;\n        user?: string;\n        pass?: string;\n        headers?: Record<string, string>;\n        warp?: { privateKey: string; publicKey: string; address: string[] };\n        xmux?: SplitHTTPConfig['xmux'];\n    };\n"
       }
     ]
+  },
+  {
+    "path": "node_modules/xray-typed/dist/config/dns.d.ts",
+    "beforeSha256": "d85f7ce5740de6f2690353edc570f15b8ad3924baf26b39774284b4b292162cf",
+    "changes": [
+      {
+        "before": "export interface DNSConfig {\n",
+        "after": "export interface DNSConfig {\n    /** Lua file path or inline base64/base64+gzip script (Xray 26.10.10+). */\n    script?: string;\n"
+      }
+    ],
+    "afterSha256": "2e40d7eee91b8c46fe1a105140a1beb182694a2ca7dc7e80730d40890e7a874f"
+  },
+  {
+    "path": "node_modules/xray-typed/dist/config/routing.d.ts",
+    "beforeSha256": "632449f96a4e42589e0da52a3a425fc304a2079e76fa5bcb21407f3d8ca29980",
+    "changes": [
+      {
+        "before": "export interface RoutingConfig {\n",
+        "after": "export interface RoutingConfig {\n    /** Lua routing replaces domainStrategy/rules (Xray 26.10.10+). */\n    script?: string;\n"
+      }
+    ],
+    "afterSha256": "bf4d8ee93e1be749418c9c945a571ad4ca552efeba64cc34552e9e08b9922d8b"
+  },
+  {
+    "path": "node_modules/xray-typed/dist/transport/tls.d.ts",
+    "beforeSha256": "f273b28093e5d1b27a03771536e5a0ef65af81d6b47280f634cd9f0149f5816b",
+    "changes": [
+      {
+        "before": "export interface TLSConfig {\n",
+        "after": "export interface TLSConfig {\n    /** Opt into OS roots instead of the built-in root set. */\n    useSystemCA?: boolean;\n"
+      }
+    ],
+    "afterSha256": "0b97d2672c2834ba79f736b44fba9c762a2f7f92b9c1a2490527c3951bb403cf"
   }
 ]

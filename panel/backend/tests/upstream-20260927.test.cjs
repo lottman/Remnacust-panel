@@ -4,6 +4,7 @@ const { source, database, userFilter, reportFilter } = require('./upstream-filte
 const { XrayJsonGeneratorService } = source(
     'modules/subscription-template/generators/xray-json.generator.service.ts',
     {
+        './inject-host-selection': source('modules/subscription-template/generators/inject-host-selection.ts'),
         '../host-mapper': { applyHostMapper: (outbound) => outbound },
         '@common/utils': { isNonEmptyObject: (value) => value && Object.keys(value).length > 0 },
     },

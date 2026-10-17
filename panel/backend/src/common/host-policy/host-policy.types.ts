@@ -24,6 +24,7 @@ export type PolicyHost = {
 };
 export type PolicyIdentity = {
     userId: string;
+    expireAt?: Date;
     hostUuid: string;
     hwid: string | null;
     parent: string;
@@ -49,6 +50,15 @@ export type PolicySnapshot = {
     groups: PolicyGroup[];
     identities: PolicyIdentity[];
     protectedInboundIds: Set<string>;
+    users?: PolicyUser[];
+    consumptionMultiplier?: string;
+};
+
+export type PolicyUser = {
+    userId: string;
+    allowed: boolean;
+    expireAt: Date;
+    limit: string;
 };
 
 export type PolicyTag = Omit<PolicyGroup, 'key' | 'hostUuids' | 'nodeUuids'> & { tag: string };

@@ -16,6 +16,7 @@ import {
     CreateSubscriptionTemplateCommand,
     DeleteSubscriptionTemplateCommand,
     GetSubscriptionTemplateCommand,
+    GetSubscriptionTemplateRevisionsCommand,
     GetSubscriptionTemplatesCommand,
     ReorderSubscriptionTemplateCommand,
     UpdateSubscriptionTemplateCommand,
@@ -36,6 +37,7 @@ import {
     DeleteSubscriptionTemplateParamDto,
     GetTemplateParamDto,
     GetTemplateResponseDto,
+    GetTemplateRevisionsResponseDto,
     GetTemplatesResponseDto,
     ReorderSubscriptionTemplatesBodyDto,
     ReorderSubscriptionTemplatesResponseDto,
@@ -84,7 +86,6 @@ export class SubscriptionTemplateController {
         };
     }
 
-
     @Endpoint({
         command: GetSubscriptionTemplatesCommand,
         httpCode: HttpStatus.OK,
@@ -96,6 +97,19 @@ export class SubscriptionTemplateController {
         const data = errorHandler(result);
         return {
             response: data,
+        };
+    }
+
+    @Endpoint({
+        command: GetSubscriptionTemplateRevisionsCommand,
+        httpCode: HttpStatus.OK,
+        type: GetTemplateRevisionsResponseDto,
+    })
+    async getRevisions(
+        @Param() param: GetTemplateParamDto,
+    ): Promise<GetTemplateRevisionsResponseDto> {
+        return {
+            response: errorHandler(await this.subscriptionTemplateService.getRevisions(param.uuid)),
         };
     }
 
@@ -176,5 +190,4 @@ export class SubscriptionTemplateController {
             response: data,
         };
     }
-
 }

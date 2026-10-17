@@ -30,6 +30,7 @@ const { ResolveProxyConfigService } = source(
 const { XrayJsonGeneratorService } = source(
     'modules/subscription-template/generators/xray-json.generator.service.ts',
     {
+        './inject-host-selection': source('modules/subscription-template/generators/inject-host-selection.ts'),
         '../host-mapper': { applyHostMapper: (x) => x },
         '@common/utils': { isNonEmptyObject: (x) => x && Object.keys(x).length > 0 },
     },

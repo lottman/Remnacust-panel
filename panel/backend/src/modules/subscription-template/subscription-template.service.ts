@@ -59,6 +59,29 @@ export class SubscriptionTemplateService {
         }
     }
 
+    public async getRevisions(uuid: string) {
+        try {
+            if (!(await this.subscriptionTemplateRepository.findByUUID(uuid)))
+                return fail(ERRORS.SUBSCRIPTION_TEMPLATE_NOT_FOUND);
+            const revisions = await this.subscriptionTemplateRepository.getRevisions(uuid);
+            return ok(
+                revisions.map((revision) => ({
+                    uuid: revision.uuid,
+                    name: revision.name,
+                    templateJson: revision.templateJson,
+                    encodedTemplateYaml:
+                        revision.templateYaml === null
+                            ? null
+                            : Buffer.from(revision.templateYaml, 'utf8').toString('base64'),
+                    createdAt: revision.createdAt.toISOString(),
+                })),
+            );
+        } catch (error) {
+            this.logger.error(error);
+            return fail(ERRORS.GET_SUBSCRIPTION_TEMPLATE_BY_UUID_ERROR);
+        }
+    }
+
     public async updateTemplate(
         uuid: string,
         name: string | undefined,

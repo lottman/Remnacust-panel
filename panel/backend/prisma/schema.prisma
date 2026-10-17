@@ -403,9 +403,23 @@ model SubscriptionTemplate {
 
   externalSquadsTemplates ExternalSquadsTemplates[]
   hosts                   Hosts[]
+  revisions               SubscriptionTemplateRevisions[]
 
   @@unique([templateType, name])
   @@map("subscription_templates")
+}
+
+model SubscriptionTemplateRevisions {
+  id           Int      @id @default(autoincrement())
+  uuid         String   @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  templateUuid String   @map("template_uuid") @db.Uuid
+  name         String
+  templateJson Json?    @map("template_json")
+  templateYaml String?  @map("template_yaml")
+  createdAt    DateTime @default(now()) @map("created_at")
+  template SubscriptionTemplate @relation(fields: [templateUuid], references: [uuid], onDelete: Cascade)
+  @@index([templateUuid, id(sort: Desc)])
+  @@map("subscription_template_revisions")
 }
 
 model SubscriptionSettings {

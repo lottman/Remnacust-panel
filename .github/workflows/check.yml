@@ -29,6 +29,15 @@ jobs:
     env:
       REMNACUST_NODE_SOURCE: ${{ github.workspace }}/node-repository/node
     services:
+      valkey:
+        image: valkey/valkey:9-alpine
+        ports:
+          - 56381:6379
+        options: >-
+          --health-cmd "valkey-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
       postgres:
         image: mirror.gcr.io/library/postgres:17.6
         env:
@@ -61,7 +70,7 @@ jobs:
       - run: npm run typecheck
       - run: node --test tests/*.test.cjs
       - name: Check private Xray IPC and certificate files on Linux
-        run: sudo --preserve-env=REMNACUST_NODE_SOURCE "$(command -v node)" --test tests/node-api-socket.test.cjs tests/pem-file-security.test.cjs
+        run: sudo --preserve-env=REMNACUST_NODE_SOURCE "$(command -v node)" --test tests/node-api-socket.test.cjs tests/pem-file-security.test.cjs tests/node-upgrade-script.test.cjs
       - run: npm run build
       - name: Apply migrations to the disposable test database
         run: npm run migrate:deploy
@@ -74,8 +83,187 @@ jobs:
         run: node tests/xray-hidden-hosts-database.integration.cjs
         env:
           XRAY_INJECTION_TEST_DATABASE_URL: postgresql://postgres@127.0.0.1:55439/postgres
+      - name: Check template history, restore and upgrade preservation with PostgreSQL
+        run: node tests/template-history-database.integration.cjs
+        env:
+          TEMPLATE_HISTORY_TEST_DATABASE_URL: postgresql://postgres@127.0.0.1:55439/postgres
       - name: Restore compact database backup and verify retained credentials
         run: node tests/backup-dump-database.integration.cjs
+      - name: Check durable quota reservation issuance in a separate empty database
+        run: |
+          node - <<'NODE'
+          const {PrismaClient}=require('@prisma/client');
+          const database=new PrismaClient({datasourceUrl:'postgresql://postgres@127.0.0.1:55439/postgres'});
+          (async()=>{try{await database.$executeRawUnsafe('CREATE DATABASE remnacust_quota_reserves_test');}finally{await database.$disconnect();}})().catch(error=>{console.error(error);process.exitCode=1;});
+          NODE
+          npm run migrate:deploy
+          node tests/quota-reserves-database.integration.cjs
+        env:
+          DATABASE_URL: postgresql://postgres@127.0.0.1:55439/remnacust_quota_reserves_test
+          DIRECT_URL: postgresql://postgres@127.0.0.1:55439/remnacust_quota_reserves_test
+          QUOTA_RESERVES_TEST_DATABASE_URL: postgresql://postgres@127.0.0.1:55439/remnacust_quota_reserves_test
+      - name: Check global user reserves and native checkpoint acknowledgement in an empty database
+        run: |
+          node - <<'NODE'
+          const {PrismaClient}=require('@prisma/client');
+          const database=new PrismaClient({datasourceUrl:'postgresql://postgres@127.0.0.1:55439/postgres'});
+          (async()=>{try{await database.$executeRawUnsafe('CREATE DATABASE remnacust_global_quota_test');}finally{await database.$disconnect();}})().catch(error=>{console.error(error);process.exitCode=1;});
+          NODE
+          npm run migrate:deploy
+          node tests/user-quota-database.integration.cjs
+        env:
+          DATABASE_URL: postgresql://postgres@127.0.0.1:55439/remnacust_global_quota_test
+          DIRECT_URL: postgresql://postgres@127.0.0.1:55439/remnacust_global_quota_test
+          USER_QUOTA_TEST_DATABASE_URL: postgresql://postgres@127.0.0.1:55439/remnacust_global_quota_test
+      - name: Check legacy usage cutover, rollback and old queue retries with PostgreSQL
+        run: |
+          node - <<'NODE'
+          const {PrismaClient}=require('@prisma/client');
+          const database=new PrismaClient({datasourceUrl:'postgresql://postgres@127.0.0.1:55439/postgres'});
+          (async()=>{try{await database.$executeRawUnsafe('CREATE DATABASE remnacust_legacy_usage_test');}finally{await database.$disconnect();}})().catch(error=>{console.error(error);process.exitCode=1;});
+          NODE
+          npm run migrate:deploy
+          node tests/legacy-usage-database.integration.cjs
+          node tests/quota-cutover-database.integration.cjs
+        env:
+          DATABASE_URL: postgresql://postgres@127.0.0.1:55439/remnacust_legacy_usage_test
+          DIRECT_URL: postgresql://postgres@127.0.0.1:55439/remnacust_legacy_usage_test
+          LEGACY_USAGE_TEST_DATABASE_URL: postgresql://postgres@127.0.0.1:55439/remnacust_legacy_usage_test
+          QUOTA_CUTOVER_TEST_REDIS_URL: redis://127.0.0.1:56381/15
+      - name: Check legacy billing and destructive collection during restore in a separate database
+        run: |
+          node - <<'NODE'
+          const {PrismaClient}=require('@prisma/client');
+          const database=new PrismaClient({datasourceUrl:'postgresql://postgres@127.0.0.1:55439/postgres'});
+          (async()=>{try{await database.$executeRawUnsafe('CREATE DATABASE remnacust_legacy_recovery_test');}finally{await database.$disconnect();}})().catch(error=>{console.error(error);process.exitCode=1;});
+          NODE
+          npm run migrate:deploy
+          node tests/legacy-usage-database.integration.cjs
+        env:
+          DATABASE_URL: postgresql://postgres@127.0.0.1:55439/remnacust_legacy_recovery_test
+          DIRECT_URL: postgresql://postgres@127.0.0.1:55439/remnacust_legacy_recovery_test
+          LEGACY_USAGE_TEST_DATABASE_URL: postgresql://postgres@127.0.0.1:55439/remnacust_legacy_recovery_test
+      - name: Check explicit legacy accounting recovery decisions in an empty database
+        run: |
+          node - <<'NODE'
+          const {PrismaClient}=require('@prisma/client');
+          const database=new PrismaClient({datasourceUrl:'postgresql://postgres@127.0.0.1:55439/postgres'});
+          (async()=>{try{await database.$executeRawUnsafe('CREATE DATABASE remnacust_legacy_decisions_test');}finally{await database.$disconnect();}})().catch(error=>{console.error(error);process.exitCode=1;});
+          NODE
+          npm run migrate:deploy
+          node tests/legacy-quota-recovery-database.integration.cjs
+          node tests/legacy-queue-recovery-database.integration.cjs
+          node tests/quota-recovery-bank-database.integration.cjs
+          node tests/quota-bank-storage-database.integration.cjs
+        env:
+          DATABASE_URL: postgresql://postgres@127.0.0.1:55439/remnacust_legacy_decisions_test
+          DIRECT_URL: postgresql://postgres@127.0.0.1:55439/remnacust_legacy_decisions_test
+          LEGACY_QUOTA_RECOVERY_TEST_DATABASE_URL: postgresql://postgres@127.0.0.1:55439/remnacust_legacy_decisions_test
+          LEGACY_QUEUE_RECOVERY_TEST_REDIS_URL: redis://127.0.0.1:56381/15
+      - name: Check approved native receipt recovery without ACK or global resume
+        run: |
+          node - <<'NODE'
+          const {PrismaClient}=require('@prisma/client');
+          const database=new PrismaClient({datasourceUrl:'postgresql://postgres@127.0.0.1:55439/postgres'});
+          (async()=>{try{await database.$executeRawUnsafe('CREATE DATABASE remnacust_native_recovery_test');}finally{await database.$disconnect();}})().catch(error=>{console.error(error);process.exitCode=1;});
+          NODE
+          npm run migrate:deploy
+          node tests/native-quota-recovery-database.integration.cjs
+        env:
+          DATABASE_URL: postgresql://postgres@127.0.0.1:55439/remnacust_native_recovery_test
+          DIRECT_URL: postgresql://postgres@127.0.0.1:55439/remnacust_native_recovery_test
+          NATIVE_QUOTA_RECOVERY_TEST_DATABASE_URL: postgresql://postgres@127.0.0.1:55439/remnacust_native_recovery_test
+      - name: Check reviewed native quota settlements while recovery remains pending
+        run: |
+          node - <<'NODE'
+          const {PrismaClient}=require('@prisma/client');
+          const database=new PrismaClient({datasourceUrl:'postgresql://postgres@127.0.0.1:55439/postgres'});
+          (async()=>{try{await database.$executeRawUnsafe('CREATE DATABASE remnacust_recovery_settlement_test');}finally{await database.$disconnect();}})().catch(error=>{console.error(error);process.exitCode=1;});
+          NODE
+          npm run migrate:deploy
+          node tests/quota-recovery-settlement-database.integration.cjs
+        env:
+          DATABASE_URL: postgresql://postgres@127.0.0.1:55439/remnacust_recovery_settlement_test
+          DIRECT_URL: postgresql://postgres@127.0.0.1:55439/remnacust_recovery_settlement_test
+          QUOTA_RECOVERY_SETTLEMENT_TEST_DATABASE_URL: postgresql://postgres@127.0.0.1:55439/remnacust_recovery_settlement_test
+      - name: Check resumable two-node quota coordinator with PostgreSQL
+        run: |
+          node - <<'NODE'
+          const {PrismaClient}=require('@prisma/client');
+          const database=new PrismaClient({datasourceUrl:'postgresql://postgres@127.0.0.1:55439/postgres'});
+          (async()=>{try{await database.$executeRawUnsafe('CREATE DATABASE remnacust_coordinator_test');}finally{await database.$disconnect();}})().catch(error=>{console.error(error);process.exitCode=1;});
+          NODE
+          npm run migrate:deploy
+          node tests/quota-coordinator-database.integration.cjs
+        env:
+          DATABASE_URL: postgresql://postgres@127.0.0.1:55439/remnacust_coordinator_test
+          DIRECT_URL: postgresql://postgres@127.0.0.1:55439/remnacust_coordinator_test
+          QUOTA_COORDINATOR_TEST_DATABASE_URL: postgresql://postgres@127.0.0.1:55439/remnacust_coordinator_test
+      - name: Check process-specific outside-grant debt coverage
+        run: |
+          node - <<'NODE'
+          const {PrismaClient}=require('@prisma/client');
+          const database=new PrismaClient({datasourceUrl:'postgresql://postgres@127.0.0.1:55439/postgres'});
+          (async()=>{try{await database.$executeRawUnsafe('CREATE DATABASE remnacust_exposure_test');}finally{await database.$disconnect();}})().catch(error=>{console.error(error);process.exitCode=1;});
+          NODE
+          npm run migrate:deploy
+          node tests/quota-exposure-database.integration.cjs
+        env:
+          DATABASE_URL: postgresql://postgres@127.0.0.1:55439/remnacust_exposure_test
+          DIRECT_URL: postgresql://postgres@127.0.0.1:55439/remnacust_exposure_test
+          QUOTA_EXPOSURE_TEST_DATABASE_URL: postgresql://postgres@127.0.0.1:55439/remnacust_exposure_test
+      - name: Check durable quota journal enrollment and restore barriers
+        run: |
+          node - <<'NODE'
+          const {PrismaClient}=require('@prisma/client');
+          const database=new PrismaClient({datasourceUrl:'postgresql://postgres@127.0.0.1:55439/postgres'});
+          (async()=>{try{await database.$executeRawUnsafe('CREATE DATABASE remnacust_watermark_test');}finally{await database.$disconnect();}})().catch(error=>{console.error(error);process.exitCode=1;});
+          NODE
+          npm run migrate:deploy
+          node tests/quota-journal-database.integration.cjs
+        env:
+          DATABASE_URL: postgresql://postgres@127.0.0.1:55439/remnacust_watermark_test
+          DIRECT_URL: postgresql://postgres@127.0.0.1:55439/remnacust_watermark_test
+          QUOTA_JOURNAL_TEST_DATABASE_URL: postgresql://postgres@127.0.0.1:55439/remnacust_watermark_test
+      - name: Inspect restored quota journals without changing reserves or the restore barrier
+        run: |
+          node - <<'NODE'
+          const {PrismaClient}=require('@prisma/client');
+          const database=new PrismaClient({datasourceUrl:'postgresql://postgres@127.0.0.1:55439/postgres'});
+          (async()=>{try{await database.$executeRawUnsafe('CREATE DATABASE remnacust_quota_recovery_test');}finally{await database.$disconnect();}})().catch(error=>{console.error(error);process.exitCode=1;});
+          NODE
+          npm run migrate:deploy
+          node tests/quota-recovery-database.integration.cjs
+        env:
+          DATABASE_URL: postgresql://postgres@127.0.0.1:55439/remnacust_quota_recovery_test
+          DIRECT_URL: postgresql://postgres@127.0.0.1:55439/remnacust_quota_recovery_test
+          QUOTA_RECOVERY_TEST_DATABASE_URL: postgresql://postgres@127.0.0.1:55439/remnacust_quota_recovery_test
+      - name: Verify stable quota owners across deletion and numeric ID reuse
+        run: |
+          node - <<'NODE'
+          const {PrismaClient}=require('@prisma/client');
+          const database=new PrismaClient({datasourceUrl:'postgresql://postgres@127.0.0.1:55439/postgres'});
+          (async()=>{try{await database.$executeRawUnsafe('CREATE DATABASE remnacust_quota_subject_test');}finally{await database.$disconnect();}})().catch(error=>{console.error(error);process.exitCode=1;});
+          NODE
+          npm run migrate:deploy
+          node tests/quota-subject-database.integration.cjs
+        env:
+          DATABASE_URL: postgresql://postgres@127.0.0.1:55439/remnacust_quota_subject_test
+          DIRECT_URL: postgresql://postgres@127.0.0.1:55439/remnacust_quota_subject_test
+          QUOTA_SUBJECT_TEST_DATABASE_URL: postgresql://postgres@127.0.0.1:55439/remnacust_quota_subject_test
+      - name: Archive original node outboxes without applying usage or ACK
+        run: |
+          node - <<'NODE'
+          const {PrismaClient}=require('@prisma/client');
+          const database=new PrismaClient({datasourceUrl:'postgresql://postgres@127.0.0.1:55439/postgres'});
+          (async()=>{try{await database.$executeRawUnsafe('CREATE DATABASE remnacust_receipt_archive_test');}finally{await database.$disconnect();}})().catch(error=>{console.error(error);process.exitCode=1;});
+          NODE
+          npm run migrate:deploy
+          node tests/quota-receipt-archives-database.integration.cjs
+        env:
+          DATABASE_URL: postgresql://postgres@127.0.0.1:55439/remnacust_receipt_archive_test
+          DIRECT_URL: postgresql://postgres@127.0.0.1:55439/remnacust_receipt_archive_test
+          QUOTA_RECEIPT_ARCHIVE_TEST_DATABASE_URL: postgresql://postgres@127.0.0.1:55439/remnacust_receipt_archive_test
   subscription-page:
     runs-on: ubuntu-latest
     steps:

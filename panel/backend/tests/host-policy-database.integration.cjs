@@ -20,6 +20,7 @@ const common = {
     '@common/config/app-config/typed-config.service': {},
     '@common/utils/host-identity': identity,
     './host-policy-scopes': scopes,
+        './quota-policy': load(path.join(__dirname, '../src/common/host-policy/quota-policy.ts')),
     './destination-rule': load(
         path.join(__dirname, '../src/common/host-policy/destination-rule.ts'),
     ),
@@ -53,11 +54,21 @@ const { CustomCamelCasePlugin, JSON_COLUMNS } = load(
     path.join(__dirname, '../src/common/database/camel-case.plugin.ts'),
 );
 async function main() {
+    const databaseUrl = process.env.HOST_POLICY_TEST_DATABASE_URL ?? 'postgresql://postgres@127.0.0.1:55439/postgres';
+    const target = new URL(databaseUrl);
+    assert.equal(target.hostname, '127.0.0.1');
+    assert.equal(target.port, '55439');
+    assert.ok(['/postgres','/remnacust_host_policy_test'].includes(target.pathname));
     const prisma = new PrismaClient({
-        datasourceUrl: process.env.HOST_POLICY_TEST_DATABASE_URL ?? 'postgresql://postgres@127.0.0.1:55439/postgres',
+        datasourceUrl: databaseUrl,
     });
+    if ((await prisma.$queryRaw`SELECT count(*) AS n FROM users`)[0].n !== 0n) {
+        await prisma.$disconnect();
+        throw new Error('Refuse a disposable database containing existing user data');
+    }
     const cls = new AsyncLocalStorage();
     const transactions = {
+        isTransactionActive: () => !!cls.getStore(),
         get tx() {
             return cls.getStore() ?? prisma;
         },
@@ -78,7 +89,7 @@ async function main() {
     const pending = {};
     let failAck = false;
     const cache = {
-        get: async () => true,
+        ...require('./host-policy-cache.cjs')(),
         hsetJson: async (key, id, batch) => {
             (pending[key] ??= {})[id] = batch;
         },
@@ -101,6 +112,10 @@ async function main() {
     const axios = {
         hostPolicy: async (node, policy) => {
             calls.push({ node, policy });
+            if (!policy) return {isOk:true,response:{version:'xera-host-policy-v2',supported:true,
+                policyRevisionsSupported:true,policyRevision:'0'}};
+            assert.equal(transactions.isTransactionActive(),false,'Revision delivery must follow the actual Prisma commit');
+            assert.match(policy.revision,/^[1-9][0-9]*$/);
             return { isOk: true, response: { version: 'xera-host-policy-v2', applied: true } };
         },
         addUser: async () => ({ isOk: true, response: { success: true } }),
@@ -142,7 +157,7 @@ async function main() {
             },
         ]);
         assert(keys.get('11111111-1111-4111-8111-111111111111').vlessUuid !== user.vlessUuid);
-        await Promise.all([...access.preparing.values()]);
+        await Promise.all(access.preparing.values());
         const config = await access.configIdentities('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa');
         assert.equal(config.length, 1);
         assert(config[0].id.includes('~h'));
@@ -298,6 +313,30 @@ async function main() {
             ).get('11111111-1111-4111-8111-111111111111'),
             null,
         );
+        let releaseFirst, enterFirst;
+        const firstStarted = new Promise(resolve => { enterFirst=resolve; });
+        const release = new Promise(resolve => { releaseFirst=resolve; });
+        let secondEntered=false;
+        const firstSample=usage.collect(901n,async()=>{
+            enterFirst();await release;
+            return {isOk:true,response:{users:[]}};
+        });
+        await Promise.race([firstStarted,firstSample]);
+        const secondSample=usage.collect(901n,async()=>{
+            secondEntered=true;
+            return {isOk:true,response:{users:[]}};
+        });
+        const samples=Promise.all([firstSample,secondSample]);
+        samples.catch(()=>{});
+        try {
+            await new Promise(resolve=>setTimeout(resolve,100));
+            assert.equal(secondEntered,false,'A stalled duplicate job must wait before resetting counters');
+        } finally {releaseFirst();}
+        const [firstCollected,secondCollected]=await samples;
+        assert.equal(secondEntered,true);
+        assert.ok(secondCollected.requestedAt>=firstCollected.requestedAt);
+        assert.ok(Number.isSafeInteger(firstCollected.requestedAt)&&firstCollected.requestedAt>0);
+        console.log('PASS: SQL serializes concurrent destructive stats reads and timestamps only committed samples');
         console.log(
             'PASS: actual Prisma/Kysely transactions, SQL, scoped credentials, restart, revocation, usage replay, overlapping groups, per-host tag speeds, weighted user quotas, host overrides and preserved history',
         );

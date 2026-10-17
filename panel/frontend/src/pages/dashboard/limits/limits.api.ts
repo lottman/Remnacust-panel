@@ -54,6 +54,12 @@ export type LimitUser = {
     accessNow: boolean
     unlimited: boolean
 }
+export type QuotaSynchronization = {
+    totalNodes: number
+    appliedNodes: number
+    unavailableNodes: number
+    pendingNodes: { uuid: string; name: string; unavailable: boolean }[]
+}
 export type UsersResponse = {
     scope: Scope
     users: LimitUser[]
@@ -62,6 +68,7 @@ export type UsersResponse = {
     page: number
     pageSize: number
     summary: { usedBytes: string; pausedUsers: number; exhaustedUsers: number }
+    synchronization?: QuotaSynchronization | null
 }
 export type SelectionState = {
     total: number
@@ -116,10 +123,16 @@ export const useLimitUsers = (
     enabled = true,
     filters?: UserFilters
 ) =>
-    useQuery({
+    useQuery<UsersResponse>({
         queryKey: [...key, scope.kind, scope.key, page, search, squad, filters],
         enabled,
-        refetchInterval: 15000,
+        refetchInterval: (query) => {
+            const progress = query.state.data?.synchronization
+            return progress &&
+                progress.totalNodes - progress.appliedNodes > progress.unavailableNodes
+                ? 3000
+                : 15000
+        },
         staleTime: 0,
         refetchOnWindowFocus: true,
         queryFn: ({ signal }) =>

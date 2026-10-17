@@ -35,7 +35,7 @@ export class BulkUpdateUserUsedTrafficBuilder {
             "lifetime_used_traffic_bytes" = u."lifetime_used_traffic_bytes" + d."inc_used",
             "online_at"                   = NOW(),
             "first_connected_at"          = COALESCE(u."first_connected_at", NOW()),
-            "last_connected_node_uuid"    = d."last_connected_node_uuid"
+            "last_connected_node_uuid"    = (SELECT n.uuid FROM nodes n WHERE n.uuid=d."last_connected_node_uuid")
           FROM data d
           JOIN locked l ON l."id" = d."id"
           WHERE d."id" = u."id"

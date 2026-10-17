@@ -95,13 +95,14 @@ test('subscription injector uses the same bounded regex for remarks and tags', a
         '@common/utils': {},
         '@common/utils/bounded-regex': bounded,
         '../host-mapper': {},
+        './inject-host-selection': load(path.join(__dirname, '../src/modules/subscription-template/generators/inject-host-selection.ts')),
     });
     const generator = new XrayJsonGeneratorService({});
     const host = { finalRemark: 'recipient', metadata: { uuid: 'r', isHidden: false, tags: ['LTE'] } };
     const hidden = { finalRemark: 'LTE', metadata: { uuid: 'h', isHidden: true, tags: ['LTE'] } };
     for (const type of ['remarkRegex', 'tagRegex']) {
-        assert.deepEqual(await generator.resolveHosts({ type, pattern: '^LTE$' }, 'HIDDEN', host, [host, hidden], Date.now() + 1000), [hidden]);
+        assert.deepEqual(await generator.resolveHosts({ selector: { type, pattern: '^LTE$' } }, 'HIDDEN', host, [host, hidden], Date.now() + 1000), [hidden]);
         const hostile = { ...hidden, finalRemark: 'a'.repeat(100) + '!', metadata: { ...hidden.metadata, tags: ['a'.repeat(100) + '!'] } };
-        await assert.rejects(generator.resolveHosts({ type, pattern: '^(a+)+$' }, 'HIDDEN', host, [host, hostile], Date.now() + 1000), bounded.RegexBudgetError);
+        await assert.rejects(generator.resolveHosts({ selector: { type, pattern: '^(a+)+$' } }, 'HIDDEN', host, [host, hostile], Date.now() + 1000), bounded.RegexBudgetError);
     }
 });

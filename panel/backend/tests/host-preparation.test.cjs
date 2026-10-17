@@ -8,7 +8,7 @@ const deferred = () => {
 };
 function fixture() {
     const state = { allowed: true, denied: new Set(), queries: [], calls: [], active: 0, peak: 0 };
-    const sql = (parts, ...args) => ({
+    const sql = (parts, ..._args) => ({
         execute: async () => {
             state.queries.push(parts.join(''));
             return {
@@ -98,7 +98,7 @@ function fixture() {
 test('preparation synchronizes only requested hosts/device; full revoke still includes every bound node', async () => {
     const f = fixture();
     assert.equal((await f.service.prepare(f.user, f.requested)).size, 1);
-    await Promise.all([...f.service.preparing.values()]);
+    await Promise.all(f.service.preparing.values());
     assert.deepEqual(f.state.calls, ['policy:online', 'add:online', 'policy:online']);
     assert.equal(await f.service.synchronizeUser(1n, undefined, true), false);
     assert.match(
@@ -124,7 +124,7 @@ test('overlapping requests share sync but each checks access after I/O', async (
     gate.resolve();
     await Promise.all(requests);
     assert.equal(f.state.queries.filter((q) => q.includes('AS "hostUuid"')).length, 4);
-    await Promise.all([...f.service.preparing.values()]);
+    await Promise.all(f.service.preparing.values());
     assert.equal(f.service.preparing.size, 0);
 });
 test('block during issuance refuses keys and forces fresh synchronization', async () => {
@@ -141,7 +141,7 @@ test('block during issuance refuses keys and forces fresh synchronization', asyn
 test('an offline protected host retains its scoped key without a shared credential fallback', async () => {
     const f = fixture();
     const online = (await f.service.prepare(f.user, f.requested)).get('a');
-    await Promise.all([...f.service.preparing.values()]);
+    await Promise.all(f.service.preparing.values());
     f.state.calls.length = 0;
     f.nodes[0].isConnected = false;
     const offline = (await f.service.prepare(f.user, f.requested)).get('a');
@@ -247,21 +247,21 @@ test('a pending node synchronization cannot delay subscription credentials', asy
         assert(result.get('a')?.vlessUuid);
         assert.notEqual(result.get('a').vlessUuid, f.user.vlessUuid);
         assert.equal(f.service.preparing.size, 1, 'synchronization continues after response');
-    } finally { clearTimeout(timer); gate.resolve(); await Promise.all([...f.service.preparing.values()]); }
+    } finally { clearTimeout(timer); gate.resolve(); await Promise.all(f.service.preparing.values()); }
 });
 
 test('successful synchronization is reused briefly while every request rechecks permission', async () => {
     const f = fixture(); let syncs = 0;
     f.service.synchronize = async () => { syncs++; return { allSynchronized: true, readyHosts: new Set(['a']) }; };
     assert((await f.service.prepare(f.user, f.requested)).get('a')?.vlessUuid);
-    await Promise.all([...f.service.preparing.values()]);
+    await Promise.all(f.service.preparing.values());
     assert((await f.service.prepare(f.user, f.requested)).get('a')?.vlessUuid);
     assert.equal(syncs, 1);
     f.state.denied.add('a');
     assert.equal((await f.service.prepare(f.user, f.requested)).get('a'), null, 'sync cache cannot grant denied access');
     f.state.denied.clear();
     for (const key of f.service.synchronizedUntil.keys()) f.service.synchronizedUntil.set(key, 0);
-    await f.service.prepare(f.user, f.requested); await Promise.all([...f.service.preparing.values()]);
+    await f.service.prepare(f.user, f.requested); await Promise.all(f.service.preparing.values());
     assert.equal(syncs, 2, 'expired success retries synchronization');
 });
 
@@ -269,10 +269,10 @@ test('failed background synchronization is handled and retried without hiding a 
     const f = fixture(); let syncs = 0;
     f.service.synchronize = async () => { syncs++; throw new Error('node unavailable'); };
     assert((await f.service.prepare(f.user, f.requested)).get('a')?.vlessUuid);
-    await Promise.all([...f.service.preparing.values()]);
+    await Promise.all(f.service.preparing.values());
     assert.equal(f.service.synchronizedUntil.size, 0);
     assert((await f.service.prepare(f.user, f.requested)).get('a')?.vlessUuid);
-    await Promise.all([...f.service.preparing.values()]);
+    await Promise.all(f.service.preparing.values());
     assert.equal(syncs, 2);
 });
 
@@ -290,8 +290,8 @@ test('a burst of distinct subscribers keeps node work bounded without delaying d
         assert(results.every(r => r.get('a')?.vlessUuid));
         assert(peak <= 4, `distinct subscribers started ${peak} parallel fleet synchronizations`);
         gate.resolve();
-        await Promise.all([...f.service.preparing.values()]);
+        await Promise.all(f.service.preparing.values());
         assert.equal(completed, 80);
         assert.equal(f.service.preparing.size, 0);
-    } finally { gate.resolve(); await Promise.all([...f.service.preparing.values()]); }
+    } finally { gate.resolve(); await Promise.all(f.service.preparing.values()); }
 });

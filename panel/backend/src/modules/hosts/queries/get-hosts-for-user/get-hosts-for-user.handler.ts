@@ -9,6 +9,10 @@ import { HostWithRawInbound } from '@modules/hosts/entities/host-with-inbound-ta
 
 import { HostTagLimitsRepository } from '../../repositories/host-tag-limits.repository';
 import { HostsRepository } from '../../repositories/hosts.repository';
+import {
+    assignedXrayTemplate,
+    indexXrayTemplateAssignments,
+} from '../../utils/xray-template-assignments';
 import { GetHostsForUserQuery } from './get-hosts-for-user.query';
 
 @QueryHandler(GetHostsForUserQuery)
@@ -27,7 +31,11 @@ export class GetHostsForUserHandler implements IQueryHandler<GetHostsForUserQuer
                 query.returnDisabledHosts,
                 query.returnHiddenHosts,
             );
-            const tagUsage = await this.tagLimitsRepository.usageForUser(query.userId);
+            const [tagUsage, assignedTemplates] = await Promise.all([
+                this.tagLimitsRepository.usageForUser(query.userId),
+                this.hostsRepository.getAssignedXrayTemplates(),
+            ]);
+            const assignments = indexXrayTemplateAssignments(assignedTemplates);
 
             const inboundUuids = new Set<string>();
             const templateUuids = new Set<string>();
@@ -71,7 +79,7 @@ export class GetHostsForUserHandler implements IQueryHandler<GetHostsForUserQuer
                         inboundTag: inbound.tag,
                         xrayJsonTemplate: h.xrayJsonTemplateUuid
                             ? (templates.get(h.xrayJsonTemplateUuid) ?? null)
-                            : null,
+                            : assignedXrayTemplate(h, assignments),
                     });
                     result.tagTrafficLimits = limits.map((item) => ({
                         tag: item.tag,

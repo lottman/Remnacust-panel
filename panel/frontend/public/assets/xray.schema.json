@@ -207,6 +207,9 @@
           "description": "\nДля трафика запросов, исходящих от встроенного DNS (кроме режимов `localhost`, `fakedns`, `TCPL`, `DOHL` и `DOQL`), можно использовать этот тег для сопоставления в маршрутизации через `inboundTag`.\n\n",
           "markdownDescription": "\nДля трафика запросов, исходящих от встроенного DNS (кроме режимов `localhost`, `fakedns`, `TCPL`, `DOHL` и `DOQL`), можно использовать этот тег для сопоставления в маршрутизации через `inboundTag`.\n\n",
           "type": "string"
+        },
+        "script": {
+          "type": "string"
         }
       },
       "additionalProperties": false
@@ -1842,6 +1845,9 @@
         },
         "version": {
           "$ref": "#/definitions/RemnacustCoreVersionConfig"
+        },
+        "remnacustUserQuotaRequired": {
+          "type": "boolean"
         }
       },
       "additionalProperties": false
@@ -3645,6 +3651,9 @@
           "items": {
             "$ref": "#/definitions/BalancerObject"
           }
+        },
+        "script": {
+          "type": "string"
         }
       },
       "additionalProperties": false
@@ -5375,6 +5384,9 @@
           "description": "\nНастраивает низкоуровневые параметры сокета для соединения, которое используется при DNS-запросе ECH-записей.\n\n",
           "markdownDescription": "\nНастраивает низкоуровневые параметры сокета для соединения, которое используется при DNS-запросе ECH-записей.\n\n",
           "type": "object"
+        },
+        "useSystemCA": {
+          "type": "boolean"
         }
       },
       "additionalProperties": false
@@ -5716,6 +5728,9 @@
         "policy": {
           "$ref": "#/definitions/RemnacustCorePolicyConfig"
         },
+        "remnacustUserQuotaRequired": {
+          "type": "boolean"
+        },
         "reverse": {
           "$ref": "#/definitions/RemnacustCoreReverseConfig"
         },
@@ -5826,6 +5841,9 @@
           "$ref": "#/definitions/RemnacustCoreHostsWrapper"
         },
         "queryStrategy": {
+          "type": "string"
+        },
+        "script": {
           "type": "string"
         },
         "serveExpiredTTL": {
@@ -6708,6 +6726,9 @@
         },
         "user": {
           "type": "string"
+        },
+        "warp": {
+          "$ref": "#/definitions/RemnacustCoreMasqueWarpConfig"
         }
       },
       "type": "object"
@@ -6881,6 +6902,9 @@
         },
         "finalQuery": {
           "type": "boolean"
+        },
+        "id": {
+          "type": "string"
         },
         "port": {
           "type": "integer"
@@ -7514,6 +7538,9 @@
         "rules": {
           "items": {},
           "type": "array"
+        },
+        "script": {
+          "type": "string"
         }
       },
       "type": "object"
@@ -8302,6 +8329,9 @@
         },
         "serverName": {
           "type": "string"
+        },
+        "useSystemCA": {
+          "type": "boolean"
         },
         "verifyPeerCertByName": {
           "type": "string"
@@ -9347,12 +9377,30 @@
         }
       },
       "type": "object"
+    },
+    "RemnacustCoreMasqueWarpConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "address": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "privateKey": {
+          "type": "string"
+        },
+        "publicKey": {
+          "type": "string"
+        }
+      },
+      "type": "object"
     }
   },
   "x-remnacust-upstream": {
-    "version": "v26.9.30",
-    "commit": "b26a91de4f3294e26a0ad0a970b81a386a41f789",
-    "patchCommit": "7da5dae6502b787fc6d903863e9a6c5043d107a2",
-    "coreVersion": "1.1.2"
+    "version": "v26.10.10",
+    "commit": "701af60772cda123492f86e383e1fdba066614a9",
+    "patchCommit": null,
+    "coreVersion": "1.1.6"
   }
 }

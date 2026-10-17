@@ -1,0 +1,21 @@
+const assert=require('node:assert/strict'),path=require('node:path'),{randomUUID}=require('node:crypto');
+const {PrismaClient}=require('@prisma/client'),{TransactionHost}=require('@nestjs-cls/transactional'),k=require('kysely'),load=require('./load-typescript.cjs');
+const {PrismaTxDriver}=require('../node_modules/@kastov/nestjs-prisma-kysely/build/drivers/prisma-tx.driver.js');
+const url=process.env.NATIVE_QUOTA_RECOVERY_TEST_DATABASE_URL,parsed=new URL(url);
+assert.equal(parsed.hostname,'127.0.0.1');assert.equal(parsed.port,'55439');assert.equal(parsed.pathname,'/remnacust_recovery_receipt_jobs_test');
+const prisma=new PrismaClient({datasourceUrl:url});
+const tx=new TransactionHost({defaultTxOptions:{},getFallbackInstance:()=>prisma,wrapWithTransaction:(opts,fn,set)=>prisma.$transaction(async client=>{set(client);return fn();},opts)});
+const {CustomCamelCasePlugin,JSON_COLUMNS}=load(path.join(__dirname,'../src/common/database/camel-case.plugin.ts'));
+const db={kysely:new k.Kysely({dialect:{createDriver:()=>new PrismaTxDriver(tx),createAdapter:()=>new k.PostgresAdapter(),createIntrospector:db=>new k.PostgresIntrospector(db),createQueryCompiler:()=>new k.PostgresQueryCompiler()},plugins:[new CustomCamelCasePlugin({excludeColumns:JSON_COLUMNS})]})};
+const {QuotaBankRecoveryService}=load(path.join(__dirname,'../src/common/host-policy/quota-bank-recovery.service.ts'),{'@common/database':{}});
+(async()=>{try{
+ const {generation}= (await prisma.$queryRaw`SELECT generation FROM xera_quota_restore_state WHERE singleton AND reconciled_at IS NULL`)[0];
+ const job=(await prisma.$queryRaw`SELECT request_id FROM xera_quota_recovery_receipt_jobs WHERE result IS NOT NULL LIMIT 1`)[0];assert.ok(job);
+ const bank=new QuotaBankRecoveryService(db,tx),request=randomUUID();
+ await bank.capture(generation,request,randomUUID());assert.equal((await bank.compare(request,generation)).matches,true);
+ await prisma.$executeRaw`UPDATE xera_quota_recovery_receipt_jobs SET lease_owner=${randomUUID()}::uuid,lease_until=clock_timestamp()+interval '1 second' WHERE request_id=${job.request_id}::uuid`;
+ assert.equal((await bank.compare(request,generation)).matches,true);
+ const parts=[];let cursor=-1;do{const page=await bank.parts(request,cursor);parts.push(...page.entries);cursor=page.nextAfter;}while(cursor!==null);
+ assert.ok(parts.some(p=>p.section==='xera_quota_recovery_receipt_jobs'&&p.rows>0));
+ console.log('PASS full financial recovery bank includes immutable receipt intents/results and ignores transient receipt leases');
+}finally{await db.kysely.destroy();await prisma.$disconnect();}})().catch(error=>{console.error(error);process.exitCode=1;});

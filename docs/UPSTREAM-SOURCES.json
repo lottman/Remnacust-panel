@@ -1,0 +1,58 @@
+{
+  "checkedAt": "2026-10-17T12:09:18.269641+00:00",
+  "components": [
+    {
+      "component": "backend",
+      "repository": "https://github.com/remnawave/backend",
+      "version": "3.4.5",
+      "commit": "010b365ab1fabea01192b5e6ade4e98e66ee1dbd",
+      "checkedAt": "2026-10-17T12:09:18.269641+00:00",
+      "status": "already-integrated",
+      "ref": "refs/tags/3.4.5",
+      "tagEvidence": "https://api.github.com/repos/remnawave/backend/git/ref/tags/3.4.5"
+    },
+    {
+      "component": "frontend",
+      "repository": "https://github.com/remnawave/frontend",
+      "version": "3.4.5",
+      "commit": "36df977a8d985be2c35a586529250506c749c354",
+      "checkedAt": "2026-10-17T12:09:18.269641+00:00",
+      "status": "already-integrated",
+      "ref": "refs/tags/3.4.5",
+      "tagEvidence": "https://api.github.com/repos/remnawave/frontend/git/ref/tags/3.4.5"
+    },
+    {
+      "component": "node",
+      "repository": "https://github.com/remnawave/node",
+      "version": "3.4.2",
+      "commit": "ea7a835485af81ec464ebbf7acaaa7d6dd486a05",
+      "checkedAt": "2026-10-17T12:09:18.269641+00:00",
+      "status": "already-integrated",
+      "ref": "refs/tags/3.4.2",
+      "tagEvidence": "https://api.github.com/repos/remnawave/node/git/ref/tags/3.4.2"
+    },
+    {
+      "component": "subscription-page",
+      "repository": "https://github.com/remnawave/subscription-page",
+      "version": "8.0.0",
+      "commit": "2a125d180240bb4f373871daf1100f9bb0e2ae3f",
+      "checkedAt": "2026-10-17T12:09:18.269641+00:00",
+      "status": "already-integrated",
+      "ref": "refs/tags/8.0.0",
+      "tagEvidence": "https://api.github.com/repos/remnawave/subscription-page/git/ref/tags/8.0.0"
+    },
+    {
+      "component": "xray",
+      "repository": "https://github.com/XTLS/Xray-core",
+      "version": "v26.10.10",
+      "commit": "701af60772cda123492f86e383e1fdba066614a9",
+      "checkedAt": "2026-10-17T12:09:18.269641+00:00",
+      "status": "integrated-in-unreleased-source",
+      "ref": "refs/tags/v26.10.10",
+      "prerelease": true,
+      "tagEvidence": "https://api.github.com/repos/XTLS/Xray-core/git/ref/tags/v26.10.10"
+    }
+  ],
+  "releaseStatus": "not-built-or-published",
+  "updatePolicy": "published-official-releases-only"
+}

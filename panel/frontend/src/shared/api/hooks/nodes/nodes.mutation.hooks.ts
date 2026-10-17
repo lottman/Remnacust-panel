@@ -33,6 +33,7 @@ export const useCreateNode = createMutationHook({
         },
         onError: (error) => {
             notifications.show({
+                id: 'create-node-error',
                 title: i18next.t('common.message.error'),
                 message:
                     error instanceof Error

@@ -10,6 +10,7 @@ import zh from './guide-zh.mjs'
 import { explainOperatorWorkflows, supportGuide } from './operator-guide.mjs'
 import { productionArticles } from './production-guide.mjs'
 import { xeraGuide } from './xera-guide.mjs'
+import { explainAutoselect } from './autoselect-guide.mjs'
 import { explainRelease1171 } from './release-1171-guide.mjs'
 
 const articles = productionArticles([...sourceArticles, xeraGuide, supportGuide])
@@ -31,6 +32,7 @@ for (const language of ['fa', 'zh']) {
 explainOperatorWorkflows(articles)
 explainListInteractions(articles)
 explainRelease1171(articles)
+explainAutoselect(articles)
 
 const target = path.resolve(import.meta.dirname, '../public/documentation')
 fs.mkdirSync(target, { recursive: true })

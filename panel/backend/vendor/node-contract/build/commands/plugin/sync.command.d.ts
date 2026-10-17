@@ -2,6 +2,14 @@ import { z } from 'zod';
 export declare namespace SyncCommand {
     const url: "/node/plugin/sync";
     const RequestSchema: z.ZodObject<{
+        portPlanDelivery: z.ZodOptional<z.ZodObject<{
+            revision: z.ZodString;
+            enabled: z.ZodBoolean;
+            delivery: z.ZodOptional<z.ZodObject<{
+                epoch: z.ZodString;
+                owner: z.ZodUUID;
+            }, z.core.$strip>>;
+        }, z.core.$strip>>;
         plugin: z.ZodNullable<z.ZodObject<{
             config: z.ZodRecord<z.ZodString, z.ZodUnknown>;
             uuid: z.ZodUUID;

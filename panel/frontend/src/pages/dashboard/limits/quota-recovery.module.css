@@ -1,0 +1,48 @@
+.heading {
+    flex: 1 1 260px;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+.node {
+    flex: 1 1 180px;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+.summary {
+    cursor: pointer;
+    width: fit-content;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+}
+.summary:focus-visible {
+    outline: 2px solid var(--mantine-primary-color-filled);
+    outline-offset: 3px;
+    border-radius: 2px;
+}
+.findings {
+    overflow-wrap: anywhere;
+}
+.issues {
+    padding-inline-start: 20px;
+    margin-block: 0;
+}
+
+.action {
+    margin-inline-start: auto;
+}
+
+@media (max-width: 36em) {
+    .summary {
+        min-height: 44px;
+        padding-block: 10px;
+    }
+    .mobileControls :global(.mantine-Button-root) {
+        min-height: 44px;
+        height: auto;
+        padding-block: 8px;
+    }
+    .mobileControls :global(.mantine-Button-label) {
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+}

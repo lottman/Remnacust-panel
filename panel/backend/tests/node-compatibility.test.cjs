@@ -407,6 +407,8 @@ const queryTypes = Object.fromEntries(
         'GetNodeByUuidQuery',
         'GetDeviceStateRevisionQuery',
         'GetPreparedConfigWithUsersQuery',
+        'GetPreparedNodePortsQuery',
+        'GetPortPlanNodeUuidsQuery',
         'GetResolvedIntegrationsQuery',
         'GetAllPluginsQuery',
         'FindNodesByCriteriaQuery',
@@ -414,9 +416,13 @@ const queryTypes = Object.fromEntries(
     ].map((name) => [name, classMock(name)]),
 );
 const UpdateNodeCommand = classMock('UpdateNodeCommand');
+class RecordPortPlanResultCommand {
+    constructor(nodeUuid,revision,applied){Object.assign(this,{nodeUuid,revision,applied});}
+}
 const processorMocks = {
     '@nestjs/bullmq': { Processor: () => (value) => value, WorkerHost: class {} },
     '@nestjs/common': {
+        Injectable: () => value => value,
         Logger: class {
             log() {}
             error() {}
@@ -434,6 +440,7 @@ const processorMocks = {
     '@common/host-policy/host-policy.service': {},
     '@common/host-policy/sync-host-policy-for-start': load(path.join(__dirname, '../src/common/host-policy/sync-host-policy-for-start.ts')),
     '@common/raw-cache': {},
+    '@common/types': result,
     '@common/utils/get-elapsed-time': { getTime: () => 0, formatExecutionTime: () => '' },
     '@libs/contracts/constants': {
         CACHE_KEYS: cacheKeys,
@@ -452,6 +459,10 @@ const processorMocks = {
         GetAllPluginsQuery: queryTypes.GetAllPluginsQuery,
     },
     '@modules/nodes/commands/update-node': { UpdateNodeCommand },
+    '@modules/nodes/commands/record-port-plan-result': { RecordPortPlanResultCommand },
+    '@modules/nodes/profile-port-plan': load(path.join(__dirname,'../src/modules/nodes/profile-port-plan.ts')),
+    '@modules/nodes/queries/get-prepared-node-ports': { GetPreparedNodePortsQuery: queryTypes.GetPreparedNodePortsQuery },
+    '@modules/nodes/queries/get-port-plan-node-uuids': { GetPortPlanNodeUuidsQuery: queryTypes.GetPortPlanNodeUuidsQuery },
     '@modules/nodes/queries/get-node-by-uuid': {
         GetNodeByUuidQuery: queryTypes.GetNodeByUuidQuery,
     },
@@ -461,6 +472,7 @@ const processorMocks = {
     '@modules/nodes/queries/find-nodes-by-criteria': {
         FindNodesByCriteriaQuery: queryTypes.FindNodesByCriteriaQuery,
     },
+    '@modules/nodes/queries/find-nodes-by-criteria/find-nodes-by-criteria.query': load(path.join(__dirname,'../src/modules/nodes/queries/find-nodes-by-criteria/find-nodes-by-criteria.query.ts')),
     '@modules/users/queries/get-prepared-config-with-users': {
         GetPreparedConfigWithUsersQuery: queryTypes.GetPreparedConfigWithUsersQuery,
     },
@@ -473,6 +485,12 @@ const processorMocks = {
     '../constants/nodes-job-name.constant': { NODES_JOB_NAMES: {} },
     'p-map': { __esModule: true, default: async (items, fn) => Promise.all(items.map(fn)) },
 };
+const leaseContract=load(path.join(__dirname,'../src/queue/_nodes/port-plan-lease.service.ts'));
+processorMocks['./port-plan-lease.service']=leaseContract;
+const { NodeConfigurationService } = load(
+    path.join(__dirname, '../src/queue/_nodes/node-configuration.service.ts'),
+    processorMocks,
+);
 const { StartNodeProcessor } = load(
     path.join(__dirname, '../src/queue/_nodes/processors/start-node.processor.ts'),
     processorMocks,
@@ -486,6 +504,7 @@ const { NodeHealthCheckQueueProcessor } = load(
     {
         ...processorMocks,
         '@modules/nodes/node-health-log.service': {},
+        '@common/axios/profile-traffic.schema': load(path.join(__dirname, '../src/common/axios/profile-traffic.schema.ts')),
     },
 );
 
@@ -519,6 +538,8 @@ for (const version of ['1.0.0', '1.6.4', '2.6.1', '3.4.1'])
             execute: async (query) => {
                 switch (query.constructor.name) {
                     case 'GetDeviceStateRevisionQuery': return '1';
+                    case 'GetPreparedNodePortsQuery': return null;
+                    case 'GetPortPlanNodeUuidsQuery': return [];
                     case 'GetNodeByUuidQuery':
                         return result.ok(node);
                     case 'FindNodesByCriteriaQuery':
@@ -545,7 +566,7 @@ for (const version of ['1.0.0', '1.6.4', '2.6.1', '3.4.1'])
         };
         const cache = { delMany: async () => {}, setMany: async () => {}, get: async () => null, set: async () => {} };
         const policies = { syncNode: async () => {} };
-        const single = new StartNodeProcessor(
+        const configurations = new NodeConfigurationService(
             service,
             queues,
             queryBus,
@@ -553,7 +574,9 @@ for (const version of ['1.0.0', '1.6.4', '2.6.1', '3.4.1'])
             commandBus,
             cache,
             policies,
+            {acquire:async()=>null},
         );
+        const single = new StartNodeProcessor(configurations);
         await single.process({ data: { nodeUuid: uuid } });
         assert.equal(updates.at(-1).isConnected, true, JSON.stringify(updates));
         const bulk = new StartAllNodesByProfileQueueProcessor(
@@ -563,6 +586,7 @@ for (const version of ['1.0.0', '1.6.4', '2.6.1', '3.4.1'])
             queryBus,
             commandBus,
             cache,
+            configurations,
         );
         await bulk.process({ name: 'start-profile', data: { profileUuid: 'profile' } });
         assert.equal(updates.at(-1).isConnected, true, JSON.stringify(updates));
@@ -590,17 +614,20 @@ function pendingFixture() {
         isConnecting:false, isConnected:true, activeInbounds:[{tag:'vless',protocol:'vless'}],
     }));
     const byId = new Map(nodes.map(node=>[node.uuid,node]));
-    const values=new Map(), starts=[], queued=[], updates=[], failures=new Set(['pending']);
+    const values=new Map(), starts=[], queued=[], updates=[], planResults=[], failures=new Set(['pending']);
     let running=true, available=true, configReads=0;
     const cache={get:async key=>values.get(key)??null,set:async(key,value)=>values.set(key,value),
-        delMany:async keys=>keys.forEach(key=>values.delete(key)),setMany:async()=>{}};
+        delMany:async keys=>keys.forEach(key=>values.delete(key)),setMany:async()=>{},setManyFenced:async()=>true};
     const commandBus={execute:async command=>{
+        if(command instanceof RecordPortPlanResultCommand){planResults.push(command);return true;}
         updates.push(command.data);const node=byId.get(command.data.uuid);
         Object.assign(node,command.data);return result.ok(node);
     }};
     const queryBus={execute:async query=>{
         switch(query.constructor.name){
             case 'GetDeviceStateRevisionQuery':return '1';
+            case 'GetPreparedNodePortsQuery':return null;
+            case 'GetPortPlanNodeUuidsQuery':return [];
             case 'GetNodeByUuidQuery':return result.ok(byId.get(query.data));
             case 'FindNodesByCriteriaQuery':return result.ok(nodes);
             case 'GetPreparedConfigWithUsersQuery':configReads++;return result.ok({config,hashesPayload:start.internals.hashes});
@@ -611,7 +638,7 @@ function pendingFixture() {
     }};
     const axios={
         hostPolicy:async()=>({isOk:false,code:'NODE_HTTP_404'}),
-        syncNodePlugins:async()=>result.ok({}),
+        syncNodePlugins:async()=>result.ok({accepted:true}),
         getNodeHealth:async()=>available?result.ok({isAlive:true,nodeVersion:'1.0.0',xrayInternalStatusCached:running}):{isOk:false},
         startXray:async(payload,node)=>{starts.push({payload,node});return result.ok({isStarted:true,error:null,nodeInformation:{version:'1.0.0'},version:'test'})},
         getSystemStats:async()=>available&&running?result.ok({xrayInfo,system:null}):{isOk:false,message:'Core statistics unavailable'},
@@ -619,14 +646,180 @@ function pendingFixture() {
     const policies={syncNode:async node=>{if(failures.has(node.uuid))throw Object.assign(Error('unsupported host policy; secret must not leak'),{code:'HOST_POLICY_NOT_APPLIED'})}};
     const queues={queues:{startNode:{pause:async()=>{},resume:async()=>{}},startAllNodes:{pause:async()=>{},resume:async()=>{}}},
         startNode:async payload=>queued.push(payload)};
-    return {nodes,values,starts,queued,updates,failures,axios,policies,queryBus,
+    const configurations=new NodeConfigurationService(axios,queues,queryBus,{emit:()=>{}},commandBus,cache,policies,{acquire:async()=>null});
+    return {nodes,values,starts,queued,updates,planResults,failures,axios,policies,queryBus,commandBus,
         setRunning:value=>running=value,setAvailable:value=>available=value,
         configReads:()=>configReads,
-        single:new StartNodeProcessor(axios,queues,queryBus,{emit:()=>{}},commandBus,cache,policies),
-        bulk:new StartAllNodesByProfileQueueProcessor(axios,policies,queues,queryBus,commandBus,cache),
+        single:new StartNodeProcessor(configurations),
+        bulk:new StartAllNodesByProfileQueueProcessor(axios,policies,queues,queryBus,commandBus,cache,configurations),
         health:new NodeHealthCheckQueueProcessor(commandBus,{emit:()=>{}},axios,queues,cache,{record:async()=>{}}),
     };
 }
+
+function portPlanFixture({supported=true,force=false,responseError=null,transportError=false}={}) {
+    const f=pendingFixture();f.failures.clear();
+    const plan={config:{...config,outbounds:[{tag:'port-profile:second:o:direct',protocol:'freedom'}]},
+        hashesPayload:{emptyConfig:'prepared-port-plan',inbounds:[]},portPlanRevision:'7'};
+    const execute=f.queryBus.execute;
+    f.queryBus.execute=async query=>query.constructor.name==='GetPreparedNodePortsQuery'?plan:execute(query);
+    f.axios.getNodeHealth=async()=>result.ok({isAlive:true,nodeVersion:'1.1.9-remnacust',
+        xrayInternalStatusCached:true,nativePortPlansSupported:supported,portPlanDeliverySupported:true,portPlanDeliveryEpoch:'0'});
+    const lease={revision:'7',delivery:{epoch:'1',owner:'aaaaaaaa-1111-4111-8111-111111111111'},assert:async()=>{},commit:async fn=>fn(),close:async()=>{}};
+    f.single.configurations.leases.acquire=async()=>lease;
+    f.lease=lease;
+    const start=f.axios.startXray;
+    f.axios.startXray=async(payload,node)=>{
+        if(transportError){f.starts.push({payload,node});return {isOk:false,message:'Transport unavailable'};}
+        const value=await start(payload,node);value.response.error=responseError;return value;
+    };
+    return {...f,plan,run:()=>f.single.process({data:{nodeUuid:'pending',force}})};
+}
+
+test('a native port plan uses its prepared profiles and requires live application before reporting applied',async()=>{
+    const f=portPlanFixture();await f.run();
+    assert.equal(f.starts.length,1);assert.equal(f.configReads(),0);
+    assert.deepEqual(f.starts[0].payload.xrayConfig,f.plan.config);
+    assert.equal(f.starts[0].payload.internals.requireLiveApply,true);
+    assert.equal(f.starts[0].payload.internals.forceRestart,false);
+    assert.deepEqual(f.starts[0].payload.internals.portPlan,{revision:'7',enabled:true,delivery:f.lease.delivery});
+    assert.deepEqual(f.planResults.map(r=>[r.nodeUuid,r.revision,r.applied]),[['pending','7',true]]);
+    assert.equal(f.nodes[0].isConnected,true);assert.equal(f.nodes[0].lastStatusMessage,null);
+});
+
+test('an incompatible node rejects a port plan before plugin changes while retaining its running status',async()=>{
+    const f=portPlanFixture({supported:false});
+    f.axios.syncNodePlugins=async()=>assert.fail('Must not mutate plugins before capability check');
+    await f.run();assert.equal(f.starts.length,0);assert.equal(f.configReads(),0);
+    assert.equal(f.nodes[0].isConnected,true);assert.equal(f.nodes[0].isConnecting,false);
+    assert.equal(f.planResults.at(-1).applied,false);
+    assert.match(f.nodes[0].lastStatusMessage,/Update the node/);
+});
+
+test('a rejected live port plan never becomes applied just because the old core is still running',async()=>{
+    const f=portPlanFixture({responseError:'Port is occupied'});await f.run();
+    assert.equal(f.starts.length,1);assert.equal(f.nodes[0].isConnected,true);
+    assert.equal(f.nodes[0].lastStatusMessage,'Port is occupied');
+    assert.deepEqual(f.planResults.map(r=>r.applied),[false]);
+});
+
+test('a lost port-plan transport acknowledgement cannot report a successful apply or retry with force',async()=>{
+    const f=portPlanFixture({transportError:true});await f.run();
+    assert.equal(f.starts.length,1);assert.equal(f.starts[0].payload.internals.forceRestart,false);
+    assert.deepEqual(f.planResults.map(r=>r.applied),[false]);assert.equal(f.nodes[0].isConnecting,false);
+});
+
+test('only an explicit maintenance restart bypasses mandatory live apply for a port plan',async()=>{
+    const f=portPlanFixture({force:true});await f.run();
+    assert.equal(f.starts.length,1);assert.equal(f.starts[0].payload.internals.forceRestart,true);
+    assert.equal(f.starts[0].payload.internals.requireLiveApply,undefined);
+    assert.deepEqual(f.starts[0].payload.internals.portPlan,{revision:'7',enabled:true,delivery:f.lease.delivery});
+    assert.equal(f.planResults.at(-1).applied,true);
+});
+
+test('the reconciliation clock precedes port preparation so concurrent saves are not acknowledged early',async()=>{
+    const f=portPlanFixture();const execute=f.queryBus.execute;let currentRevision='10';
+    const previousDomain=process.env.PANEL_DOMAIN,previousSecret=process.env.APP_SECRET;
+    process.env.PANEL_DOMAIN='https://reconciliation.invalid';process.env.APP_SECRET='synthetic-reconciliation-secret';
+    try{
+        f.queryBus.execute=async query=>{
+            if(query.constructor.name==='GetDeviceStateRevisionQuery')return currentRevision;
+            if(query.constructor.name==='GetPreparedNodePortsQuery')currentRevision='11';
+            return execute(query);
+        };
+        await f.run();assert.equal(f.starts.length,1);
+        const enrolled=f.starts[0].payload.internals.reconciliation.revision;
+        assert.equal(enrolled,'10');assert.notEqual(enrolled,currentRevision,'The next node poll must still detect the concurrent save');
+    }finally{
+        if(previousDomain===undefined)delete process.env.PANEL_DOMAIN;else process.env.PANEL_DOMAIN=previousDomain;
+        if(previousSecret===undefined)delete process.env.APP_SECRET;else process.env.APP_SECRET=previousSecret;
+    }
+});
+
+test('a failed status write after a live ACK clears connecting and retains the confirmed running core',async()=>{
+    const f=portPlanFixture();const execute=f.commandBus.execute;
+    f.commandBus.execute=async command=>{
+        if(command instanceof RecordPortPlanResultCommand)throw Error('Status database unavailable');
+        return execute(command);
+    };
+    await f.run();assert.equal(f.starts.length,1);
+    assert.equal(f.nodes[0].isConnecting,false);assert.equal(f.nodes[0].isConnected,true);
+    assert.match(f.nodes[0].lastStatusMessage,/Status database unavailable/);
+    assert.equal(f.planResults.length,0);
+});
+
+function managedBulkFixture(options={}){
+    const f=portPlanFixture(options);const execute=f.queryBus.execute;
+    f.nodes[0].activeConfigProfileUuid='another-primary';
+    f.nodes[0].activeInbounds=[{uuid:'secondary-inbound',profileUuid:'profile',tag:'secondary',protocol:'vless'}];
+    f.queryBus.execute=async query=>{
+        if(query.constructor.name==='GetPortPlanNodeUuidsQuery')return ['pending'];
+        if(query.constructor.name==='FindNodesByCriteriaQuery'){
+            assert.deepEqual(query.data.OR,[{activeConfigProfileUuid:'profile'},
+                {configProfileInboundsToNodes:{some:{configProfileInbounds:{profileUuid:'profile'}}}}]);
+        }
+        if(query.constructor.name==='GetPreparedNodePortsQuery')return query.data==='pending'?f.plan:null;
+        return execute(query);
+    };
+    return {...f,runBulk:(force=false)=>f.bulk.process({name:'start-profile',data:{profileUuid:'profile',force}})};
+}
+
+test('bulk apply includes secondary profiles and never sends their node a shared single-profile config',async()=>{
+    const f=managedBulkFixture();await f.runBulk();assert.equal(f.starts.length,2);
+    const managed=f.starts.find(item=>item.payload.internals.metadata.uuid==='pending').payload;
+    const legacy=f.starts.find(item=>item.payload.internals.metadata.uuid==='ordinary').payload;
+    assert.deepEqual(managed.xrayConfig,f.plan.config);assert.equal(managed.internals.requireLiveApply,true);
+    assert.deepEqual(legacy.xrayConfig,config);assert.equal(legacy.internals.requireLiveApply,undefined);
+    assert.deepEqual(f.planResults.map(r=>[r.nodeUuid,r.revision,r.applied]),[['pending','7',true]]);
+    assert.equal(f.configReads(),1,'Only the legacy path prepares the shared profile');
+});
+
+test('bulk live rejection keeps that node online and does not prevent applying the ordinary node',async()=>{
+    const f=managedBulkFixture();const start=f.axios.startXray;
+    f.axios.startXray=async(payload,node)=>{const response=await start(payload,node);
+        if(payload.internals.requireLiveApply)response.response.error='Listener occupied';return response;};
+    await f.runBulk();assert.equal(f.starts.length,2);assert.equal(f.nodes[0].isConnected,true);
+    assert.equal(f.nodes[0].lastStatusMessage,'Listener occupied');assert.equal(f.nodes[1].lastStatusMessage,null);
+    assert.equal(f.planResults.at(-1).applied,false);
+});
+
+test('legacy bulk preparation failure cannot suppress an independently prepared port plan',async()=>{
+    const f=managedBulkFixture();const execute=f.queryBus.execute;
+    f.queryBus.execute=async query=>query.constructor.name==='GetAllPluginsQuery'?{isOk:false,message:'Unavailable'}:execute(query);
+    await f.runBulk();assert.equal(f.starts.length,1);
+    assert.deepEqual(f.starts[0].payload.xrayConfig,f.plan.config);assert.equal(f.planResults.at(-1).applied,true);
+    assert(f.nodes.every(node=>!node.isConnecting));
+});
+
+test('an explicitly requested bulk maintenance restart reaches the complete port plan',async()=>{
+    const f=managedBulkFixture();await f.runBulk(true);
+    const managed=f.starts.find(item=>item.payload.internals.metadata.uuid==='pending').payload;
+    assert.deepEqual(managed.xrayConfig,f.plan.config);assert.equal(managed.internals.forceRestart,true);
+    assert.equal(managed.internals.requireLiveApply,undefined);
+});
+
+test('a port-managed node disabled after bulk discovery cannot be started by stale discovery',async()=>{
+    const f=managedBulkFixture();const execute=f.queryBus.execute;
+    f.queryBus.execute=async query=>{if(query.constructor.name==='GetNodeByUuidQuery')f.nodes[0].isDisabled=true;return execute(query);};
+    await f.runBulk();assert.equal(f.starts.length,1);
+    assert.equal(f.starts[0].payload.internals.metadata.uuid,'ordinary');assert.equal(f.planResults.length,0);
+});
+
+test('a failed preparation records its version as failed without touching plugins or the running core',async()=>{
+    const f=pendingFixture();f.failures.clear();const execute=f.queryBus.execute;
+    const {PortPlanPreparationError}=processorMocks['@modules/nodes/profile-port-plan'];
+    f.queryBus.execute=async query=>{if(query.constructor.name==='GetPreparedNodePortsQuery')throw new PortPlanPreparationError('INBOUND_MISSING','8');return execute(query);};
+    f.axios.syncNodePlugins=async()=>assert.fail('No plugin mutation for an invalid port plan');
+    await f.single.process({data:{nodeUuid:'pending'}});
+    assert.equal(f.starts.length,0);assert.equal(f.nodes[0].isConnected,true);assert.equal(f.nodes[0].isConnecting,false);
+    assert.deepEqual(f.planResults.map(r=>[r.revision,r.applied]),[['8',false]]);
+});
+
+test('a confirmed versioned profile mode can update on a node whose selected core lacks native ports',async()=>{
+    const f=portPlanFixture({supported:false});f.plan.portPlanEnabled=false;
+    f.axios.getNodeHealth=async()=>result.ok({isAlive:true,nodeVersion:'1.1.9-remnacust',xrayInternalStatusCached:true,nativePortPlansSupported:false,portPlanStateSupported:true,portPlanDeliverySupported:true,portPlanDeliveryEpoch:'0'});
+    await f.run();assert.equal(f.starts.length,1);assert.deepEqual(f.starts[0].payload.internals.portPlan,{revision:'7',enabled:false,delivery:f.lease.delivery});
+    assert.equal(f.starts[0].payload.internals.requireLiveApply,undefined);assert.equal(f.planResults.at(-1).applied,true);
+});
 
 test('an unavailable assigned plugin clears the connecting state and permits a later retry',async()=>{
     const f=pendingFixture();
@@ -787,4 +980,38 @@ test('reconnection keeps a future policy deadline, while an ordinary failure ret
     assert.equal(ordinary.nodes[1].isConnected,false);
     assert.deepEqual(ordinary.queued,[{nodeUuid:'ordinary'}]);
     assert.equal(ordinary.nodes[1].lastStatusMessage,'Core statistics unavailable');
+});
+
+
+test('owned delivery recovers an abandoned connecting flag without waiting for a health timestamp',async()=>{
+    const f=portPlanFixture();f.nodes[0].isConnecting=true;await f.run();
+    assert.equal(f.starts.length,1);assert.equal(f.nodes[0].isConnecting,false);assert.equal(f.planResults.at(-1).applied,true);
+});
+test('a busy delivery leaves the current owner untouched',async()=>{
+    const f=portPlanFixture();f.nodes[0].isConnecting=true;f.single.configurations.leases.acquire=async()=> 'busy';
+    await f.run();assert.equal(f.starts.length,0);assert.equal(f.updates.length,0);assert.equal(f.nodes[0].isConnecting,true);
+});
+test('late native response from a lost owner cannot acknowledge the plan or clear a new owner status',async()=>{
+    const f=portPlanFixture(),start=f.axios.startXray;
+    f.axios.startXray=async(...args)=>{
+        const response=await start(...args);f.nodes[0].lastStatusMessage='new-owner';
+        f.lease.assert=async()=>{throw new leaseContract.PortPlanLeaseLostError();};return response;
+    };
+    await f.run();assert.equal(f.starts.length,1);assert.equal(f.planResults.length,0);
+    assert.equal(f.nodes[0].isConnecting,true);assert.equal(f.nodes[0].lastStatusMessage,'new-owner');
+});
+test('native port capability without delivery fencing rejects managed mutations before plugins',async()=>{
+    const f=portPlanFixture(),health=f.axios.getNodeHealth;
+    f.axios.getNodeHealth=async()=>{const response=await health();delete response.response.portPlanDeliverySupported;return response;};
+    f.axios.syncNodePlugins=async()=>assert.fail('Must not change plugins without delivery fencing');
+    await f.run();assert.equal(f.starts.length,0);assert.equal(f.nodes[0].isConnected,true);assert.match(f.nodes[0].lastStatusMessage,/Update the node/);
+});
+test('standalone plugin updates for port-managed nodes use the same owned executor',async()=>{
+    const {NodePluginsProcessor}=load(path.join(__dirname,'../src/queue/_nodes/processors/node-plugins.processor.ts'),{
+        ...processorMocks,'@libs/contracts/constants/events/events':{EVENTS:{}},'@queue/_users/users-queues.service':{},
+    });
+    const calls=[],processor=new NodePluginsProcessor({syncNodePlugins:async()=>assert.fail('No unversioned sync')},
+        {execute:async query=>{assert.equal(query.constructor.name,'GetPortPlanNodeUuidsQuery');return ['managed'];}},
+        {},{apply:async payload=>calls.push(payload)});
+    await processor.handleSyncNodePlugins({data:{nodeUuid:'managed'}});assert.deepEqual(calls,[{nodeUuid:'managed'}]);
 });

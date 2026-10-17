@@ -9,6 +9,8 @@ export interface INodeRequestOpts {
     logAxiosError?: boolean;
     method?: 'get' | 'post';
     timeout?: number;
+    maxResponseBytes?: number;
+    recoveryProof?: string;
 }
 
 export type INodeStartResponse = Omit<
@@ -24,6 +26,8 @@ export type INodeSystemStatsResponse = Omit<
     import('@remnawave/node-contract').GetSystemStatsCommand.Response['response'],
     'system' | 'plugins'
 > & {
+    userStateSynchronized?: boolean;
+    bindingTraffic?: import('./profile-traffic.schema').ProfileTrafficSnapshot | null;
     system:
         | import('@remnawave/node-contract').GetSystemStatsCommand.Response['response']['system']
         | null;

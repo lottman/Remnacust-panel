@@ -54,6 +54,38 @@ import {
 
 import { GetNodeJwtCommand } from '@modules/keygen/commands/get-node-jwt';
 
+import { recoveryFenceSchema, type RecoveryFence } from '../host-policy/quota-recovery-fence';
+import {
+    recoveryPolicyTransportProof,
+    RECOVERY_POLICY_PROOF_HEADER,
+    parseRecoveryPolicyTransportProof,
+    recoveryPolicyRequestSchema,
+    recoveryPolicyReplyMatches,
+    type RecoveryPolicyRequest,
+    type RecoveryPolicyReply,
+} from '../host-policy/quota-recovery-policy';
+import {
+    recoveryReleaseRequestSchema,
+    recoveryReleaseReplyMatches,
+    type RecoveryReleaseRequest,
+    type RecoveryReleaseReply,
+} from '../host-policy/quota-recovery-release';
+import {
+    recoveryQuiescenceReplySchema,
+    recoveryQuiescenceReplyMatches,
+} from '../host-policy/recovery-quiescence';
+import {
+    recoveryUsageAckRequest,
+    recoveryUsageAckMatches,
+    type RecoveryUsageAckRequest,
+    type RecoveryUsageAckReply,
+} from '../host-policy/recovery-usage-ack';
+import {
+    recoveryUsageSampleRequest,
+    recoveryUsageSampleMatches,
+    type RecoveryUsageSampleRequest,
+    type RecoveryUsageSampleReply,
+} from '../host-policy/recovery-usage-sample';
 import { fail, ok, TResult } from '../types';
 import {
     INodeConnectionOpts,
@@ -82,6 +114,26 @@ const ZSTD_OPTIONS: ZstdOptions = {
 @Injectable()
 export class AxiosService {
     private initialization?: Promise<void>;
+    private readonly recoveryProofs = new Map<string, string>();
+    private rememberRecoveryProof(opts: INodeConnectionOpts, status: unknown) {
+        const key = this.connectionKey(opts);
+        this.recoveryProofs.delete(key);
+        try {
+            const proof = recoveryPolicyTransportProof(
+                status as Parameters<typeof recoveryPolicyTransportProof>[0],
+            );
+            if (proof) {
+                if (this.recoveryProofs.size >= 10000) {
+                    const oldest = this.recoveryProofs.keys().next().value;
+                    if (oldest !== undefined) this.recoveryProofs.delete(oldest);
+                }
+                this.recoveryProofs.set(key, proof);
+            }
+        } catch {
+            /* An unverified status cannot supply a transport binding. */
+        }
+    }
+
     private readonly nodeVersions = new Map<string, { version: string; expires: number }>();
     private readonly versionRequests = new Map<string, Promise<TResult<string>>>();
 
@@ -125,14 +177,243 @@ export class AxiosService {
             logAxiosError: false,
         });
     }
-    public async hostPolicy<T>(opts: INodeConnectionOpts, data?: unknown): Promise<TResult<T>> {
-        return this.request<{ response: T }>({
+    public async hostPolicy<T>(
+        opts: INodeConnectionOpts,
+        data?: unknown,
+        recoveryProof?: string,
+    ): Promise<TResult<T>> {
+        if (recoveryProof !== undefined) {
+            try {
+                if (!data) throw new Error('Unexpected recovery policy proof');
+                parseRecoveryPolicyTransportProof(recoveryProof);
+            } catch {
+                return fail(
+                    ERRORS.NODE_ERROR_WITH_MSG.withMessage('Invalid recovery policy proof'),
+                );
+            }
+        }
+        const result = await this.request<{ response: T }>({
             label: 'HOST POLICY',
             opts,
+            ...(recoveryProof === undefined ? {} : { recoveryProof }),
             path: '/node/xray/host-policy',
             method: data ? 'post' : 'get',
             data,
             timeout: 8_000,
+            logAxiosError: false,
+        });
+        if (!data && result.isOk) this.rememberRecoveryProof(opts, result.response);
+        return result;
+    }
+    public async hostQuotaState<T>(opts: INodeConnectionOpts, data: unknown): Promise<TResult<T>> {
+        return this.request<{ response: T }>({
+            label: 'HOST QUOTA STATE',
+            opts,
+            path: '/node/xray/host-policy/quota-state',
+            method: 'post',
+            data,
+            timeout: 8_000,
+            logAxiosError: false,
+        });
+    }
+    public async hostQuotaSnapshot<T>(
+        opts: INodeConnectionOpts,
+        data: unknown,
+    ): Promise<TResult<T>> {
+        return this.request<{ response: T }>({
+            label: 'HOST QUOTA SNAPSHOT',
+            opts,
+            path: '/node/xray/host-policy/quota-snapshot',
+            method: 'post',
+            data,
+            timeout: 18_000,
+            maxResponseBytes: 48 * 1024 * 1024,
+            logAxiosError: false,
+        });
+    }
+    public async hostQuotaRecoveryFence<T>(
+        opts: INodeConnectionOpts,
+        data: unknown,
+    ): Promise<TResult<T>> {
+        return this.request<{ response: T }>({
+            label: 'HOST QUOTA RECOVERY PAUSE',
+            opts,
+            path: '/node/xray/host-policy/quota-recovery-fence',
+            method: 'post',
+            data,
+            timeout: 8_000,
+            maxResponseBytes: 16 * 1024,
+            logAxiosError: false,
+        });
+    }
+    public async hostQuotaRecoveryPolicy(
+        opts: INodeConnectionOpts,
+        data: RecoveryPolicyRequest,
+    ): Promise<TResult<RecoveryPolicyReply>> {
+        const parsed = recoveryPolicyRequestSchema.safeParse(data);
+        if (!parsed.success)
+            return fail(ERRORS.NODE_ERROR_WITH_MSG.withMessage('Invalid recovery policy request'));
+        const result = await this.request<{ response: RecoveryPolicyReply }>({
+            label: 'HOST QUOTA RECOVERY POLICY',
+            opts,
+            path: '/node/xray/host-policy/quota-recovery-policy',
+            method: 'post',
+            data: parsed.data,
+            timeout: 18_000,
+            maxResponseBytes: 16 * 1024,
+            logAxiosError: false,
+        });
+        if (!result.isOk) return result;
+        if (!recoveryPolicyReplyMatches(parsed.data, result.response))
+            return fail(
+                ERRORS.NODE_ERROR_WITH_MSG.withMessage('Recovery policy acknowledgement changed'),
+            );
+        return result;
+    }
+    // Called only by a durable financially approved recovery delivery job.
+    // No automatic policy/receipt path invokes this transition.
+    public async hostQuotaRecoveryRelease(
+        opts: INodeConnectionOpts,
+        data: RecoveryReleaseRequest,
+        previous: RecoveryFence,
+    ): Promise<TResult<RecoveryReleaseReply>> {
+        const parsed = recoveryReleaseRequestSchema.safeParse(data),
+            prior = recoveryFenceSchema.safeParse(previous);
+        if (
+            !parsed.success ||
+            !prior.success ||
+            prior.data.state !== 'FENCED' ||
+            prior.data.digest !== parsed.data.previous ||
+            prior.data.generation !== parsed.data.generation
+        )
+            return fail(ERRORS.NODE_ERROR_WITH_MSG.withMessage('Invalid recovery release source'));
+        const result = await this.request<{ response: RecoveryReleaseReply }>({
+            label: 'HOST QUOTA RECOVERY RELEASE',
+            opts,
+            path: '/node/xray/host-policy/quota-recovery-release',
+            method: 'post',
+            data: parsed.data,
+            timeout: 18000,
+            maxResponseBytes: 16 * 1024,
+            logAxiosError: false,
+        });
+        if (!result.isOk) return result;
+        if (!recoveryReleaseReplyMatches(parsed.data, prior.data, result.response))
+            return fail(
+                ERRORS.NODE_ERROR_WITH_MSG.withMessage('Recovery release acknowledgement changed'),
+            );
+        return result;
+    }
+    public async usageReceipt<T>(opts: INodeConnectionOpts, data: unknown): Promise<TResult<T>> {
+        const ack = (data as { action?: unknown } | null)?.action === 'ack';
+        const key = this.connectionKey(opts);
+        const proof = ack ? this.recoveryProofs.get(key) : undefined;
+        const send = (binding?: string) =>
+            this.request<{ response: T }>({
+                label: 'NODE USAGE RECEIPT',
+                opts,
+                path: '/node/xray/usage-receipts',
+                method: 'post',
+                data,
+                ...(binding === undefined ? {} : { recoveryProof: binding }),
+                timeout: 18000,
+                maxResponseBytes: 16 * 1024 * 1024,
+                logAxiosError: false,
+            });
+        const result = await send(proof);
+        if (!ack || result.isOk) return result;
+        // The node always validates its current gate. Normal ACKs need no
+        // additional status read; a changed binding refreshes on rejection.
+        const status =
+            await this.hostPolicy<Parameters<typeof recoveryPolicyTransportProof>[0]>(opts);
+        if (!status.isOk) return result;
+        const refreshed = this.recoveryProofs.get(key);
+        if (!refreshed || refreshed === proof) return result;
+        // One bounded retry, preserving the exact original frame and digest.
+        return send(refreshed);
+    }
+    public async usageRecoveryAck(
+        opts: INodeConnectionOpts,
+        data: RecoveryUsageAckRequest,
+    ): Promise<TResult<RecoveryUsageAckReply>> {
+        const parsed = recoveryUsageAckRequest.safeParse(data);
+        if (!parsed.success)
+            return fail(ERRORS.NODE_ERROR_WITH_MSG.withMessage('Invalid recovery receipt request'));
+        const result = await this.request<{ response: RecoveryUsageAckReply }>({
+            label: 'RECOVERY USAGE ACK',
+            opts,
+            path: '/node/xray/usage-receipts/recovery-ack',
+            method: 'post',
+            data: parsed.data,
+            timeout: 30000,
+            maxResponseBytes: 16 * 1024,
+            logAxiosError: false,
+        });
+        if (!result.isOk) return result;
+        if (!recoveryUsageAckMatches(parsed.data, result.response))
+            return fail(
+                ERRORS.NODE_ERROR_WITH_MSG.withMessage('Recovery receipt acknowledgement changed'),
+            );
+        return result;
+    }
+    public async usageRecoverySample(
+        opts: INodeConnectionOpts,
+        data: RecoveryUsageSampleRequest,
+    ): Promise<TResult<RecoveryUsageSampleReply>> {
+        const parsed = recoveryUsageSampleRequest.safeParse(data);
+        if (!parsed.success)
+            return fail(ERRORS.NODE_ERROR_WITH_MSG.withMessage('Invalid prepared recovery sample'));
+        const result = await this.request<{ response: RecoveryUsageSampleReply }>({
+            label: 'RECOVERY USAGE SAMPLE',
+            opts,
+            path: '/node/xray/usage-receipts/recovery-sample',
+            method: 'post',
+            data: parsed.data,
+            timeout: 30000,
+            maxResponseBytes: 16 * 1024 * 1024,
+            logAxiosError: false,
+        });
+        if (!result.isOk) return result;
+        if (!recoveryUsageSampleMatches(parsed.data, result.response))
+            return fail(ERRORS.NODE_ERROR_WITH_MSG.withMessage('Prepared recovery sample changed'));
+        return result;
+    }
+    public async usageRecoveryQuiescence(
+        opts: INodeConnectionOpts,
+        data: RecoveryUsageSampleRequest,
+    ) {
+        const parsed = recoveryUsageSampleRequest.safeParse(data);
+        if (!parsed.success)
+            return fail(
+                ERRORS.NODE_ERROR_WITH_MSG.withMessage('Invalid recovery quiescence request'),
+            );
+        const result = await this.request<{ response: { witness: unknown } }>({
+            label: 'RECOVERY QUIESCENCE',
+            opts,
+            path: '/node/xray/usage-receipts/recovery-quiescence',
+            method: 'post',
+            data: parsed.data,
+            timeout: 18000,
+            maxResponseBytes: 16384,
+            logAxiosError: false,
+        });
+        if (!result.isOk) return result;
+        const decoded = recoveryQuiescenceReplySchema.safeParse(result.response);
+        if (!decoded.success || !recoveryQuiescenceReplyMatches(parsed.data, decoded.data))
+            return fail(
+                ERRORS.NODE_ERROR_WITH_MSG.withMessage('Recovery quiescence binding changed'),
+            );
+        return { isOk: true as const, response: decoded.data };
+    }
+    public async usageArchive<T>(opts: INodeConnectionOpts, data: unknown): Promise<TResult<T>> {
+        return this.request<{ response: T }>({
+            label: 'NODE USAGE ARCHIVE',
+            opts,
+            path: '/node/xray/usage-receipts/archive',
+            method: 'post',
+            data,
+            timeout: 18000,
+            maxResponseBytes: 20 * 1024 * 1024,
             logAxiosError: false,
         });
     }
@@ -282,6 +563,8 @@ export class AxiosService {
             logAxiosError = true,
             method = 'post',
             timeout,
+            maxResponseBytes,
+            recoveryProof,
         } = params;
 
         const url = this.getNodeUrl(opts.address, path, opts.port);
@@ -320,8 +603,17 @@ export class AxiosService {
                 }
             }
 
+            if (recoveryProof !== undefined)
+                headers = { ...headers, [RECOVERY_POLICY_PROOF_HEADER]: recoveryProof };
+
             // A node cannot redirect the panel's authenticated request to another service.
-            const config: AxiosRequestConfig = { headers, httpsAgent, timeout, maxRedirects: 0 };
+            const config: AxiosRequestConfig = {
+                headers,
+                httpsAgent,
+                timeout,
+                maxRedirects: 0,
+                ...(maxResponseBytes === undefined ? {} : { maxContentLength: maxResponseBytes }),
+            };
             if (opts.proxyUrl && url.startsWith('http://')) config.httpAgent = httpsAgent;
 
             const response: AxiosResponse<TResponse> =
@@ -439,8 +731,8 @@ export class AxiosService {
 
     public async getNodeHealth(
         opts: INodeConnectionOpts,
-    ): Promise<TResult<GetNodeHealthCheckCommand.Response['response']>> {
-        let result = await this.request<GetNodeHealthCheckCommand.Response>({
+    ): Promise<TResult<GetNodeHealthCheckCommand.Response['response'] & { profileGraphDeliverySupported?: boolean }>> {
+        let result = await this.request<{ response: GetNodeHealthCheckCommand.Response['response'] & { profileGraphDeliverySupported?: boolean } }>({
             label: 'GET NODE HEALTH',
             path: GetNodeHealthCheckCommand.url,
             opts,

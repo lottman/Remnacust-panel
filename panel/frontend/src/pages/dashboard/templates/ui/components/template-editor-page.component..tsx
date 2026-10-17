@@ -57,6 +57,7 @@ export const TemplateEditorPageComponent = (props: Props) => {
                 title={template.name}
             />
             <SubscriptionTemplateEditorWidget
+                key={template.uuid}
                 editorType={editorType}
                 hosts={hosts}
                 template={template}

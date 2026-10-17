@@ -45,10 +45,21 @@ export class NodesRepository implements ICrud<NodesEntity> {
         private readonly nodesConverter: NodesConverter,
     ) {}
 
-    public async create(entity: NodesEntity): Promise<NodesEntity> {
+    public async create(entity: NodesEntity, inboundUuids?: string[]): Promise<NodesEntity> {
         const model = this.nodesConverter.fromEntityToPrismaModel(entity);
         const result = await this.prisma.tx.nodes.create({
-            data: model,
+            data: {
+                ...model,
+                ...(inboundUuids?.length ? {
+                    configProfileInboundsToNodes: {
+                        createMany: {
+                            data: inboundUuids.map((configProfileInboundUuid) => ({
+                                configProfileInboundUuid,
+                            })),
+                        },
+                    },
+                } : {}),
+            },
             include: INCLUDE_RESOLVED_INBOUNDS,
         });
 
@@ -72,7 +83,6 @@ export class NodesRepository implements ICrud<NodesEntity> {
     }
 
     public async deviceStateRevision(): Promise<string> {
-        if (process.env.XERA_PERSONAL_SUBSCRIPTIONS !== 'true') return '0';
         const result = await sql<{
             revision: string;
         }>`SELECT revision::text FROM xera_device_state WHERE id=1`.execute(this.qb.kysely);

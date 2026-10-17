@@ -65,6 +65,8 @@ import {
     useLimitUsers
 } from './limits.api'
 import classes from './limits.module.css'
+import { QuotaRecoveryPanel } from './quota-recovery'
+import { QuotaSynchronizationStatus } from './quota-synchronization'
 import { trafficBlockAction } from './traffic-block-action'
 import { hasVisibleLimit } from './visible-limit-scope'
 
@@ -78,6 +80,7 @@ export function LimitsPage() {
     const uiText = useUiText()
 
     const client = useQueryClient()
+    const [refreshing, setRefreshing] = useState(false)
     const locale = useTranslation().i18n.language
     const scopes = useLimitScopes()
     const [sort, setSort] = useLocalStorage<ScopeSort>({
@@ -114,16 +117,25 @@ export function LimitsPage() {
                 actions={
                     <RefreshButton
                         variant="light"
-                        loading={scopes.isFetching}
+                        loading={scopes.isFetching || refreshing}
                         leftSection={<TbRefresh />}
-                        onClick={() =>
-                            void client.invalidateQueries({ queryKey: ['limit-management'] })
-                        }
+                        onClick={async () => {
+                            setRefreshing(true)
+                            try {
+                                await Promise.all([
+                                    client.invalidateQueries({ queryKey: ['limit-management'] }),
+                                    client.invalidateQueries({ queryKey: ['quota-recovery'] })
+                                ])
+                            } finally {
+                                setRefreshing(false)
+                            }
+                        }}
                     >
                         {uiText('refresh-0e91610')}
                     </RefreshButton>
                 }
             />
+            <QuotaRecoveryPanel />
             {selected ? (
                 <ScopeUsers
                     key={selected.kind + selected.key}
@@ -469,6 +481,9 @@ function ScopeUsers({ scope: initial, back }: { scope: Scope; back: () => void }
                 <Alert color="teal" withCloseButton onClose={() => setSuccess('')}>
                     {success}
                 </Alert>
+            )}
+            {users.data?.synchronization && (
+                <QuotaSynchronizationStatus progress={users.data.synchronization} />
             )}
             <Card withBorder radius="lg">
                 <Stack>

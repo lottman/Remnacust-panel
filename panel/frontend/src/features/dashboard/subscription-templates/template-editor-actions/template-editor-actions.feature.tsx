@@ -28,10 +28,12 @@ interface Props {
     editorRef: RefObject<editor.IStandaloneCodeEditor | null>
     editorType: 'json' | 'yaml'
     template: GetSubscriptionTemplateCommand.Response['response']
+    getValue?: () => string
+    canSave?: boolean
 }
 
 export function TemplateEditorActionsFeature(props: Props) {
-    const { editorRef, editorType, template } = props
+    const { editorRef, editorType, template, getValue, canSave = true } = props
     const { t } = useTranslation()
 
     const isMobile = useIsMobile()
@@ -46,6 +48,12 @@ export function TemplateEditorActionsFeature(props: Props) {
                         .queryKey,
                     data
                 )
+                void queryClient.invalidateQueries({
+                    queryKey: QueryKeys.subscriptionTemplate.getSubscriptionTemplates.queryKey
+                })
+                void queryClient.invalidateQueries({
+                    queryKey: ['subscription-template-revisions', template.uuid]
+                })
             }
         }
     })
@@ -57,12 +65,8 @@ export function TemplateEditorActionsFeature(props: Props) {
     })
 
     const handleSave = () => {
-        if (!editorRef.current) return
-        if (typeof editorRef.current !== 'object') return
-        if (!('getValue' in editorRef.current)) return
-        if (typeof editorRef.current.getValue !== 'function') return
-
-        const currentValue = editorRef.current.getValue()
+        if (!canSave) return
+        const currentValue = getValue?.() ?? editorRef.current?.getValue()
 
         if (currentValue && currentValue.trim()) {
             if (editorType === 'yaml') {
@@ -91,10 +95,8 @@ export function TemplateEditorActionsFeature(props: Props) {
     }
 
     const handleCopyConfig = () => {
-        if (!editorRef.current) return
-
-        const currentValue = editorRef.current.getValue()
-        clipboard.copy(currentValue)
+        const currentValue = getValue?.() ?? editorRef.current?.getValue()
+        if (currentValue) clipboard.copy(currentValue)
     }
 
     const formatDocument = () => {
@@ -158,6 +160,7 @@ export function TemplateEditorActionsFeature(props: Props) {
                 color="teal"
                 leftSection={<PiFloppyDisk size={16} />}
                 loading={isUpdating}
+                disabled={!canSave}
                 onClick={handleSave}
                 variant="soft"
             >

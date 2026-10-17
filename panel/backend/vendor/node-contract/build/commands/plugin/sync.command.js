@@ -3,10 +3,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.SyncCommand = void 0;
 const zod_1 = require("zod");
 const api_1 = require("../../api");
+const models_1 = require("../../models");
 var SyncCommand;
 (function (SyncCommand) {
     SyncCommand.url = api_1.REST_API.PLUGIN.SYNC;
     SyncCommand.RequestSchema = zod_1.z.object({
+        portPlanDelivery: models_1.PortPlanTargetSchema.refine((target) => !!target.delivery).optional(),
         plugin: zod_1.z
             .object({
             config: zod_1.z.record(zod_1.z.string(), zod_1.z.unknown()),

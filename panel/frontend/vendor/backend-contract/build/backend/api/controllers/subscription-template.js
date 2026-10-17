@@ -6,6 +6,7 @@ const ACTIONS_ROUTE = 'actions';
 exports.SUBSCRIPTION_TEMPLATE_ROUTES = {
     GET_ALL: '', // get
     GET: (uuid) => `${uuid}`, // get
+    GET_REVISIONS: (uuid) => `${uuid}/revisions`,
     UPDATE: '', // patch
     DELETE: (uuid) => `${uuid}`, // delete
     CREATE: '', // post

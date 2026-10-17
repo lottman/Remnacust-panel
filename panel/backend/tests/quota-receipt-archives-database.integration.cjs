@@ -1,0 +1,68 @@
+const assert=require('node:assert/strict'),path=require('node:path'),{randomUUID,createHash}=require('node:crypto'),{gzipSync,gunzipSync}=require('node:zlib');
+const {PrismaClient}=require('@prisma/client'),{TransactionHost}=require('@nestjs-cls/transactional'),k=require('kysely'),load=require('./load-typescript.cjs');
+const {PrismaTxDriver}=require('../node_modules/@kastov/nestjs-prisma-kysely/build/drivers/prisma-tx.driver.js');
+const url=process.env.QUOTA_RECEIPT_ARCHIVE_TEST_DATABASE_URL;assert.ok(url);const parsed=new URL(url);assert.equal(parsed.hostname,'127.0.0.1');assert.equal(parsed.port,'55439');assert.equal(parsed.pathname,'/remnacust_receipt_archive_test');
+const prisma=new PrismaClient({datasourceUrl:url});let rejectCommit=false;
+const tx=new TransactionHost({defaultTxOptions:{},getFallbackInstance:()=>prisma,wrapWithTransaction:(opts,fn,set)=>prisma.$transaction(async client=>{set(client);const result=await fn();if(rejectCommit){rejectCommit=false;throw Error('Injected archive commit failure');}return result;},opts)});
+const {CustomCamelCasePlugin,JSON_COLUMNS}=load(path.join(__dirname,'../src/common/database/camel-case.plugin.ts'));
+const db={kysely:new k.Kysely({dialect:{createDriver:()=>new PrismaTxDriver(tx),createAdapter:()=>new k.PostgresAdapter(),createIntrospector:db=>new k.PostgresIntrospector(db),createQueryCompiler:()=>new k.PostgresQueryCompiler()},plugins:[new CustomCamelCasePlugin({excludeColumns:JSON_COLUMNS})]})};
+const mocks={'@common/axios':{},'@common/database':{}};
+const {QuotaReceiptRecoveryService}=load(path.join(__dirname,'../src/common/host-policy/quota-receipt-recovery.service.ts'),mocks);
+const {QuotaRecoveryService}=load(path.join(__dirname,'../src/common/host-policy/quota-recovery.service.ts'),mocks);
+const N=randomUUID(),A=randomUUID(),I=randomUUID(),oldCore=randomUUID(),hash=b=>createHash('sha256').update(b).digest('hex');
+const payload=Buffer.from(JSON.stringify({version:1,stream:I,acked:'1',ackDigest:'a'.repeat(64),pending:{sequence:'2',coreProcessId:oldCore,capturedAt:'1792140000000',stats:[{name:'user>>>901>>>traffic>>>downlink',value:'9007199254740993'},{name:'user>>>901>>>traffic>>>uplink',value:'7'}]}}));
+const valid=Buffer.concat([Buffer.from('REMNACUST-USAGE-1\n'+hash(payload)+'\n'),payload]);
+let original=valid,available=true,corruptNonce=false,gate=null,arrive=null,afterRPC=null,calls=0;
+const axios={usageArchive:async(opts,request)=>{
+ calls++;assert.equal(tx.isTransactionActive(),false);assert.equal(opts.address,'private-address');
+ const intent=(await prisma.$queryRaw`SELECT actor_uuid,generation FROM xera_quota_receipt_requests WHERE request_id=${request.requestId}::uuid`)[0];assert.equal(intent.actor_uuid,A);assert.equal(intent.generation,request.generation);
+ const pending=gate;if(pending){arrive();await pending;}
+ if(available==='throw')throw Error('private-transport-secret');if(!available)return {isOk:false};
+ await afterRPC?.();
+ const body=Buffer.from(JSON.stringify({version:'remnacust-usage-archives-v1',...request,...(corruptNonce?{requestId:randomUUID()}:{}),capturedAt:Date.now(),journal:original===null?null:{bytes:original.length,sha256:hash(original),data:original.toString('base64')}}));
+ return {isOk:true,response:{version:'remnacust-usage-archives-v1',encoding:'gzip-base64',bytes:body.length,sha256:hash(body),data:gzipSync(body).toString('base64')}};
+}};
+const service=new QuotaReceiptRecoveryService(db,tx,axios),root=new QuotaRecoveryService(db,tx,axios);
+const generation=async()=>String((await prisma.$queryRaw`SELECT generation FROM xera_quota_restore_state`)[0].generation);
+const quarantine=()=>prisma.$queryRaw`SELECT xera_quarantine_restored_quotas()`;
+const financial=async()=>JSON.stringify(await prisma.$queryRaw`SELECT jsonb_build_object('traffic',(SELECT jsonb_agg(to_jsonb(t)) FROM user_traffic t),'grants',(SELECT jsonb_agg(to_jsonb(g)) FROM xera_quota_reserves g),'pools',(SELECT jsonb_agg(to_jsonb(p)) FROM xera_quota_reserve_pools p))::text AS state`);
+function suspend(){let release;gate=new Promise(resolve=>release=resolve);const entered=new Promise(resolve=>arrive=resolve);return {entered,release:()=>{gate=null;release();}};}
+(async()=>{try{
+ assert.equal((await prisma.$queryRaw`SELECT count(*) AS n FROM nodes`)[0].n,0n);await assert.rejects(service.capture(N,randomUUID(),A),/NOT_PENDING/);assert.equal(calls,0);
+ await prisma.$executeRaw`INSERT INTO nodes(id,uuid,name,address,is_disabled) VALUES(901,${N}::uuid,'Outbox node','private-address',true)`;
+ await prisma.$executeRaw`INSERT INTO users(id,username,short_uuid,expire_at,trojan_password,vless_uuid,ss_password) VALUES(901,'outbox-user','outbox-user',now(),'disposable-secret',${randomUUID()}::uuid,'disposable-secret')`;
+ await prisma.$executeRaw`INSERT INTO user_traffic(id) VALUES(901)`;await quarantine();let gen=await generation();const money=await financial();
+ const first=await service.capture(N,gen,A);assert.equal(first.state,'PRESENT');
+ let history=await service.history(N),entry=history.entries[0];assert.equal(entry.actorUuid,A);assert.equal(entry.metadata.stream,I);assert.equal(entry.metadata.pending.coreProcessId,oldCore);assert.equal(entry.metadata.pending.counters,2);assert.equal(entry.metadata.pending.sequence,'2');
+ assert.deepEqual(gunzipSync((await service.download(N,first.requestId)).data),valid);assert.equal(await financial(),money);assert(!JSON.stringify(history).includes('private-'));
+ for(let n=0;n<21;n++)await service.capture(N,gen,A);
+ history=await service.history(N);assert.equal(history.entries.length,20);const tail=await service.history(N,history.nextAfter);assert.equal(tail.entries.length,2);assert.equal(tail.nextAfter,null);
+ assert.equal((await prisma.$queryRaw`SELECT count(*) AS n FROM xera_quota_recovery_artifacts WHERE kind='USAGE_JOURNAL'`)[0].n,1n);
+ console.log('PASS existing old-core outbox is archived for a disabled node with actor, original bytes and exact int64; repeated snapshots deduplicate source bytes and paginate without billing');
+ for(const bytes of [Buffer.from('corrupt-journal'),Buffer.alloc(0)]){original=bytes;const result=await service.capture(N,gen,A);assert.equal(result.state,'INVALID');assert.deepEqual(gunzipSync((await service.download(N,result.requestId)).data),bytes);assert.equal((await service.history(N)).entries[0].metadata,null);}
+ original=null;const absent=await service.capture(N,gen,A);assert.equal(absent.state,'ABSENT');await assert.rejects(service.download(N,absent.requestId),/SOURCE_MISSING/);
+ for(const availability of [false,'throw']){available=availability;const result=await service.capture(N,gen,A);assert.equal(result.state,'UNAVAILABLE');assert(!JSON.stringify((await service.history(N)).entries[0]).includes('secret'));}available=true;original=valid;
+ corruptNonce=true;assert.equal((await service.capture(N,gen,A)).state,'UNAVAILABLE');corruptNonce=false;assert.equal((await service.history(N)).entries[0].reason,'INVALID_RESPONSE');
+ console.log('PASS missing, corrupt, empty and unreachable sources remain distinct immutable findings; nonce replay never becomes valid evidence');
+ const held=suspend(),firstHeld=service.capture(N,gen,A);await held.entered;
+ await prisma.$transaction(client=>client.$queryRaw`SELECT 1 FROM xera_quota_restore_state FOR UPDATE NOWAIT`);
+ const requestsBefore=(await prisma.$queryRaw`SELECT count(*) AS n FROM xera_quota_receipt_requests`)[0].n;await assert.rejects(service.capture(N,gen,A),/BUSY/);assert.equal((await prisma.$queryRaw`SELECT count(*) AS n FROM xera_quota_receipt_requests`)[0].n,requestsBefore);
+ assert((await service.history(N)).entries.some(e=>e.state==='CAPTURING'));
+ await prisma.$executeRaw`UPDATE xera_quota_receipt_capture_leases SET started_at=clock_timestamp()-interval '91 seconds'`;
+ const newer=suspend(),newerCapture=service.capture(N,gen,A);await newer.entered;held.release();await firstHeld;
+ assert.equal((await prisma.$queryRaw`SELECT count(*) AS n FROM xera_quota_receipt_capture_leases`)[0].n,1n,'Late old capture cannot release a newer lease');newer.release();await newerCapture;
+ console.log('PASS capture lease is global, bounded and nontransactional during Node I/O; late source capture cannot overwrite another request or release its lease');
+ afterRPC=quarantine;const oldGeneration=gen;await service.capture(N,gen,A);afterRPC=null;gen=await generation();assert.notEqual(gen,oldGeneration);assert.equal((await service.history(N)).entries[0].generation,oldGeneration);
+ assert.equal(await financial(),money);await assert.rejects(prisma.$queryRaw`SELECT 1 FROM xera_assert_quota_restore_reconciled()`,/REQUIRES_RECONCILIATION/);
+ console.log('PASS a new restore generation cannot relabel original capture evidence or clear the pending budget barrier');
+ original=Buffer.from('uncommitted-unique-source');const blobs=(await prisma.$queryRaw`SELECT count(*) AS n FROM xera_quota_recovery_artifacts`)[0].n;
+ afterRPC=()=>{rejectCommit=true;};await assert.rejects(service.capture(N,gen,A),/Injected archive commit failure/);afterRPC=null;
+ assert.equal((await prisma.$queryRaw`SELECT count(*) AS n FROM xera_quota_recovery_artifacts`)[0].n,blobs);await prisma.$executeRaw`UPDATE xera_quota_receipt_capture_leases SET started_at=clock_timestamp()-interval '91 seconds'`;
+ assert.equal((await service.history(N)).entries[0].state,'INTERRUPTED');original=valid;await service.capture(N,gen,A);
+ console.log('PASS failed final SQL commit leaves no partial artifact/capture and exposes an interrupted intent after lease expiry');
+ for(const statement of ['UPDATE xera_quota_receipt_requests SET actor_uuid=gen_random_uuid()','DELETE FROM xera_quota_receipt_requests','UPDATE xera_quota_receipt_captures SET state=\'ABSENT\'','DELETE FROM xera_quota_receipt_captures','TRUNCATE xera_quota_receipt_captures','TRUNCATE xera_quota_receipt_requests CASCADE'])await assert.rejects(prisma.$executeRawUnsafe(statement),/immutable/);
+ await assert.rejects(service.download(randomUUID(),first.requestId),/SOURCE_MISSING/);await assert.rejects(service.history(N,randomUUID()),/SOURCE_MISSING/);
+ await prisma.$executeRaw`DELETE FROM nodes WHERE uuid=${N}::uuid`;assert.deepEqual(gunzipSync((await service.download(N,first.requestId)).data),valid);
+ assert((await root.status()).nodes.some(n=>n.uuid===N&&n.name===null));await assert.rejects(service.capture(N,gen,A),/NODE_MISSING/);assert.equal(await financial(),money);
+ console.log('PASS immutable audit/source survive node deletion, stay bound to original node/request, and retain a history-only node in recovery');
+}finally{await prisma.$disconnect();}})().catch(error=>{console.error(error);process.exitCode=1;});

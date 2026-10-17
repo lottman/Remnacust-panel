@@ -18,6 +18,7 @@ __exportStar(require("./actions"), exports);
 __exportStar(require("./create-template.command"), exports);
 __exportStar(require("./delete-subscription-template.command"), exports);
 __exportStar(require("./get-template.command"), exports);
+__exportStar(require("./get-template-revisions.command"), exports);
 __exportStar(require("./get-templates.command"), exports);
 __exportStar(require("./update-template.command"), exports);
 __exportStar(require("./tags"), exports);

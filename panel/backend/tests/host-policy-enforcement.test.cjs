@@ -19,6 +19,7 @@ function fixture(usage = [], paused = []) {
             '@common/config/app-config/typed-config.service': { TypedConfigService: class {} },
             '@common/utils/host-identity': identity,
             './host-policy-scopes': scopes,
+        './quota-policy': load(path.join(__dirname, '../src/common/host-policy/quota-policy.ts'), {kysely: {sql}}),
             './destination-rule': load(path.join(__dirname, '../src/common/host-policy/destination-rule.ts')),
         },
     );
@@ -29,13 +30,13 @@ function fixture(usage = [], paused = []) {
         db,
         {
             hostPolicy: async (node, policy) => {
-                calls.push({ node, policy });
+                if (policy) calls.push({ node, policy });
                 return { isOk: true, response: { version: 'xera-host-policy-v2', staged: true } };
             },
         },
-        { get: async (key) => !missing.has(key.split(':').at(-1)) },
+        require('./host-policy-cache.cjs')((key)=>!missing.has(key.split(':').at(-1))),
         { getOrThrow: () => 'test-secret' },
-        { withTransaction: async (options, fn) => fn() },
+        { isTransactionActive:()=>false,withTransaction: async (options, fn) => fn() },
     );
     const a = {
         uuid: '11111111-1111-4111-8111-111111111111',

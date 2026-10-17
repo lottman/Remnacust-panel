@@ -25,7 +25,6 @@ import {
     TbRadar2,
     TbReportAnalytics,
     TbRoute,
-    TbSitemap,
     TbWebhook,
     TbVersions
 } from 'react-icons/tb'
@@ -105,12 +104,6 @@ export const useMobileMenuSections = (): MenuItem[] => {
                     href: ROUTES.DASHBOARD.MANAGEMENT.CONFIG_PROFILES,
                     icon: XrayLogo,
                     id: 'config-profiles'
-                },
-                {
-                    name: t('dashboard-ui.canvases'),
-                    href: ROUTES.DASHBOARD.MANAGEMENT.PROFILE_CANVASES,
-                    icon: TbSitemap,
-                    id: 'profile-canvases'
                 },
                 {
                     name: t('constants.hosts'),

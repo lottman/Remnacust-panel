@@ -28,9 +28,11 @@ test('upgrade only accepts a fixed operation and safe absolute directory', () =>
     assert.ok(script.includes(Buffer.from('/opt/нода $(id); file').toString('base64')));
     assert.ok(!script.includes('Authorization:'));
     assert.ok(!script.includes('storage-token'));
-    assert.ok(!script.includes('curl '));
-    assert.ok(script.includes('pull remnanode'));
-    assert.ok(script.includes('--wait --wait-timeout 120 remnanode'));
+    assert.ok(script.includes("--proto '=https' --proto-redir '=https'"));
+    assert.ok(script.includes('Installer checksum mismatch'));
+    assert.ok(script.includes('Installer release digest mismatch'));
+    assert.ok(script.includes('upgrade-node --directory "$directory" --version "$version" --yes'));
+    assert.ok(!script.includes('pull remnanode'));
 });
 
 function ssh(exitCode) {

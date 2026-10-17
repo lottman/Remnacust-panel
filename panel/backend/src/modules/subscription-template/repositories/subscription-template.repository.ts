@@ -1,4 +1,4 @@
-import { TransactionHost } from '@nestjs-cls/transactional';
+import { Transactional, TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { Prisma } from '@prisma/client';
 import { sql } from 'kysely';
@@ -27,6 +27,16 @@ export class SubscriptionTemplateRepository implements ICrud<SubscriptionTemplat
             data: {
                 ...model,
                 templateJson: model.templateJson as Prisma.InputJsonValue,
+                revisions: {
+                    create: {
+                        name: entity.name,
+                        templateYaml: model.templateYaml,
+                        templateJson:
+                            model.templateJson == null
+                                ? Prisma.DbNull
+                                : (model.templateJson as Prisma.InputJsonValue),
+                    },
+                },
             },
         });
 
@@ -43,10 +53,17 @@ export class SubscriptionTemplateRepository implements ICrud<SubscriptionTemplat
         return this.converter.fromPrismaModelToEntity(result);
     }
 
+    @Transactional()
     public async update({
         uuid,
         ...data
     }: Partial<SubscriptionTemplateEntity>): Promise<SubscriptionTemplateEntity> {
+        await this.prisma.tx
+            .$queryRaw`SELECT uuid FROM subscription_templates WHERE uuid = ${uuid}::uuid FOR UPDATE`;
+        const before = await this.prisma.tx.subscriptionTemplate.findUniqueOrThrow({
+            where: { uuid },
+        });
+        await this.saveRevision(before);
         const model = this.converter.fromEntityToPrismaModel({
             uuid,
             ...data,
@@ -59,7 +76,55 @@ export class SubscriptionTemplateRepository implements ICrud<SubscriptionTemplat
             },
         });
 
+        await this.saveRevision(result);
         return this.converter.fromPrismaModelToEntity(result);
+    }
+
+    public async getRevisions(templateUuid: string) {
+        return this.prisma.tx.subscriptionTemplateRevisions.findMany({
+            where: { templateUuid },
+            orderBy: { id: 'desc' },
+            take: 30,
+        });
+    }
+
+    private async saveRevision(template: {
+        uuid: string;
+        name: string;
+        templateJson: unknown;
+        templateYaml: string | null;
+    }) {
+        const latest = await this.prisma.tx.subscriptionTemplateRevisions.findFirst({
+            where: { templateUuid: template.uuid },
+            orderBy: { id: 'desc' },
+        });
+        if (
+            latest?.name === template.name &&
+            latest.templateYaml === template.templateYaml &&
+            JSON.stringify(latest.templateJson) === JSON.stringify(template.templateJson)
+        )
+            return;
+        await this.prisma.tx.subscriptionTemplateRevisions.create({
+            data: {
+                templateUuid: template.uuid,
+                name: template.name,
+                templateJson:
+                    template.templateJson === null
+                        ? Prisma.DbNull
+                        : (template.templateJson as Prisma.InputJsonValue),
+                templateYaml: template.templateYaml,
+            },
+        });
+        const expired = await this.prisma.tx.subscriptionTemplateRevisions.findMany({
+            where: { templateUuid: template.uuid },
+            orderBy: { id: 'desc' },
+            skip: 30,
+            select: { id: true },
+        });
+        if (expired.length)
+            await this.prisma.tx.subscriptionTemplateRevisions.deleteMany({
+                where: { id: { in: expired.map((item) => item.id) } },
+            });
     }
 
     public async findByCriteria(

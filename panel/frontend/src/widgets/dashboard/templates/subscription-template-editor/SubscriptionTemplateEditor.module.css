@@ -3,6 +3,22 @@
     flex-direction: column;
 }
 
+@media (max-width: 639px) {
+    .tabsList {
+        flex-wrap: nowrap;
+    }
+    .tabsList [role='tab'] {
+        flex: 1;
+        min-width: 0;
+        min-height: 44px;
+        padding-inline: 8px;
+        font-size: 12px;
+    }
+    .tabsList svg {
+        display: none;
+    }
+}
+
 .validationMessage {
     flex-shrink: 0;
 }

@@ -8,6 +8,7 @@ import { TbCpu } from 'react-icons/tb'
 
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
 import { queryClient } from '@shared/api'
+import { RequestError } from '@shared/api/helpers/handler-request-error'
 import {
     configProfilesQueryKeys,
     QueryKeys,
@@ -45,6 +46,14 @@ export const CreateNodeModal = NiceModal.create(() => {
 
     const { mutate: createNode, isPending: isCreateNodePending } = useCreateNode({
         mutationFns: {
+            onError: (error) => {
+                if (!(error instanceof RequestError)) return
+                const field = error.errorCode === 'A033' ? 'name'
+                    : error.errorCode === 'A034' ? 'address' : undefined
+                if (!field) return
+                form.setFieldError(field, error.message)
+                setActiveStep(0)
+            },
             onSuccess: (data) => {
                 queryClient.refetchQueries({
                     queryKey: configProfilesQueryKeys.getConfigProfiles.queryKey
@@ -57,6 +66,7 @@ export const CreateNodeModal = NiceModal.create(() => {
     })
 
     const handleCreateNode = () => {
+        if (isCreateNodePending || form.validate().hasErrors) return
         const values = form.getValues()
         createNode({
             variables: {

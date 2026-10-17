@@ -18,3 +18,5 @@ __exportStar(require("./node-system.schema"), exports);
 __exportStar(require("./torrent-blocker.report.schema"), exports);
 __exportStar(require("./xray-webhook.schema"), exports);
 __exportStar(require("./node-metadata.schema"), exports);
+__exportStar(require("./port-plan-delivery.schema"), exports);
+__exportStar(require("./profile-traffic.schema"), exports);

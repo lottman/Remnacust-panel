@@ -8,7 +8,7 @@ import rehypeSanitize from 'rehype-sanitize'
 import remarkGfm from 'remark-gfm'
 
 const render = (content, plugins = [rehypeRaw, rehypeSanitize]) =>
-    renderToStaticMarkup(createElement(ReactMarkdown, { rehypePlugins: plugins, remarkPlugins: [remarkGfm], children: content }))
+    renderToStaticMarkup(createElement(ReactMarkdown, { rehypePlugins: plugins, remarkPlugins: [remarkGfm] }, content))
 
 test('raw HTML articles cannot embed active frames, scripts, forms or event handlers', () => {
     const hostile = '<iframe srcdoc="<script>parent.document.body.innerHTML=1</script>"></iframe>\n\n<form action="https://invalid.example"><input name="secret"></form>\n\n<img src="x" onerror="alert(1)"><script>alert(2)</script>'

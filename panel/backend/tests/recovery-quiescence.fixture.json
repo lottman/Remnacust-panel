@@ -1,0 +1,43 @@
+{
+  "version": "remnacust-recovery-quiescence-v1",
+  "request": {
+    "generation": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    "requestId": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+    "coreProcessId": "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+    "instance": "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+    "previous": "0fcfed7289950d4d090d43528d67ea014a7cf715c56ab9015aa079cda15b6d5d",
+    "preparationDigest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "sourceDigest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "retainedDigest": null,
+    "prior": {
+      "sequence": "9007199254740993",
+      "digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+    },
+    "receipt": {
+      "stream": "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+      "sequence": "9007199254740994",
+      "coreProcessId": "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+      "action": "sample"
+    }
+  },
+  "frame": {
+    "stream": "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+    "sequence": "9007199254740994",
+    "coreProcessId": "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+    "capability": "remnacust-usage-receipts-v1",
+    "capturedAt": "1",
+    "digest": "a79a0adfa6cf1447ad6ae18c69753264d92d5716f8c10a8313bc7ce84bd807ce",
+    "stats": []
+  },
+  "fence": {
+    "version": "remnacust-quota-recovery-fence-v1",
+    "generation": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    "token": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+    "state": "FENCED",
+    "sequence": "1",
+    "previous": null,
+    "digest": "0fcfed7289950d4d090d43528d67ea014a7cf715c56ab9015aa079cda15b6d5d"
+  },
+  "journalDigest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+  "digest": "a6b1b5d6922ec15742e2e6fe6cf9cf99913e7cc6bbb8d5871eb1815f787f5eae"
+}

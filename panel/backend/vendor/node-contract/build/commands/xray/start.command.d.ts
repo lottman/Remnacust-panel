@@ -17,6 +17,15 @@ export declare namespace StartXrayCommand {
             }, z.core.$strip>>;
             integrations: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodUnknown>>;
             forceRestart: z.ZodDefault<z.ZodBoolean>;
+            requireLiveApply: z.ZodOptional<z.ZodBoolean>;
+            portPlan: z.ZodOptional<z.ZodObject<{
+                revision: z.ZodString;
+                enabled: z.ZodBoolean;
+                delivery: z.ZodOptional<z.ZodObject<{
+                    epoch: z.ZodString;
+                    owner: z.ZodUUID;
+                }, z.core.$strip>>;
+            }, z.core.$strip>>;
             hashes: z.ZodObject<{
                 emptyConfig: z.ZodString;
                 inbounds: z.ZodArray<z.ZodObject<{

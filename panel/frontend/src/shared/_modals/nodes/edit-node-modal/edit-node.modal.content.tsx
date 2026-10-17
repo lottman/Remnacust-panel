@@ -1,10 +1,11 @@
-import { Tabs } from '@mantine/core'
+import { Tabs, Text } from '@mantine/core'
 import { useForm, schemaResolver } from '@mantine/form'
 import { UpdateNodeCommand } from '@remnawave/backend-contract'
 import { NodeDetailsCardWidget } from '@widgets/dashboard/nodes/node-details-card'
 import { NodeSystemCardWidget } from '@widgets/dashboard/nodes/node-system-card'
 import { motion } from 'motion/react'
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { queryClient } from '@shared/api'
 import {
@@ -22,6 +23,8 @@ import { LoaderModalShared } from '@shared/ui/loader-modal'
 import { withNodeIpsErrors } from '@shared/ui/node-ips'
 
 import { NodeHealthHistory } from './node-health-history'
+import { NodePortPlans } from './node-port-plans'
+import { useNodePortPlan } from './node-port-plans.api'
 
 interface IProps {
     nodeUuid: string
@@ -30,9 +33,12 @@ interface IProps {
 
 export const EditNodeByUuidModalContent = (props: IProps) => {
     const uiText = useUiText()
+    const { t } = useTranslation()
 
     const { nodeUuid, onClose } = props
     const [activeTab, setActiveTab] = useState<string | null>('settings')
+    const [portBusy, setPortBusy] = useState(false)
+    const portPlan = useNodePortPlan(nodeUuid)
 
     const isFormInitialized = useRef(false)
 
@@ -157,9 +163,21 @@ export const EditNodeByUuidModalContent = (props: IProps) => {
     return (
         <Tabs keepMounted onChange={setActiveTab} value={activeTab}>
             <Tabs.List>
-                <Tabs.Tab value="settings">{uiText('settings-74a883a')}</Tabs.Tab>
-                <Tabs.Tab value="health">{uiText('health-and-logs-abdf03a')}</Tabs.Tab>
+                <Tabs.Tab value="settings" disabled={portBusy}>
+                    {uiText('settings-74a883a')}
+                </Tabs.Tab>
+                <Tabs.Tab value="ports" disabled={form.isDirty() || portBusy}>
+                    {t('nodePorts.title')}
+                </Tabs.Tab>
+                <Tabs.Tab value="health" disabled={portBusy}>
+                    {uiText('health-and-logs-abdf03a')}
+                </Tabs.Tab>
             </Tabs.List>
+            {form.isDirty() && activeTab === 'settings' && (
+                <Text size="xs" c="dimmed" mt="xs">
+                    {t('nodePorts.saveSettings')}
+                </Text>
+            )}
             <Tabs.Panel value="settings" pt="md">
                 {secretKey && nodePlugins && nodeIntegrations ? (
                     <BaseNodeForm
@@ -168,6 +186,8 @@ export const EditNodeByUuidModalContent = (props: IProps) => {
                         handleSubmit={handleSubmit}
                         isDataSubmitting={isUpdateNodePending}
                         node={fetchedNode}
+                        portPlansEnabled={portPlan.data?.enabled ?? false}
+                        onManagePorts={() => setActiveTab('ports')}
                         nodeDetailsCard={<NodeDetailsCardWidget node={fetchedNode} />}
                         nodeIntegrations={nodeIntegrations.nodeIntegrations}
                         nodePlugins={nodePlugins.nodePlugins}
@@ -177,6 +197,31 @@ export const EditNodeByUuidModalContent = (props: IProps) => {
                 ) : (
                     <LoaderModalShared mih="50vh" />
                 )}
+            </Tabs.Panel>
+            <Tabs.Panel value="ports" pt="md">
+                <NodePortPlans
+                    nodeUuid={nodeUuid}
+                    active={activeTab === 'ports'}
+                    onBusyChange={setPortBusy}
+                    onSaved={(state) => {
+                        const configProfile = {
+                            activeConfigProfileUuid: state.profileUuid ?? '',
+                            activeInbounds: state.enabled
+                                ? state.bindings.map((b) => b.configProfileInboundUuid)
+                                : state.activeInbounds
+                        }
+                        const values = { ...form.getValues(), configProfile }
+                        form.setInitialValues({ ...form.getInitialValues(), configProfile })
+                        form.resetDirty(values)
+                        form.setFieldValue('configProfile', configProfile)
+                        queryClient.invalidateQueries({
+                            queryKey: nodesQueryKeys.getAllNodes.queryKey
+                        })
+                        queryClient.invalidateQueries({
+                            queryKey: nodesQueryKeys.getNode({ uuid: nodeUuid }).queryKey
+                        })
+                    }}
+                />
             </Tabs.Panel>
             <Tabs.Panel value="health">
                 {activeTab === 'health' && <NodeHealthHistory node={fetchedNode} />}

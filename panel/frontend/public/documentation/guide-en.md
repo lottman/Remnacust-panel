@@ -569,6 +569,22 @@ Xray JSON, Mihomo, Stash, Singbox and Clash have separate templates. Choose a fo
 
 Create or select a template for the required format. When renaming it, choose a name not already used by another template of that format. If the name exists, the panel marks the field and explains the error while keeping your input. Before deleting a template, check subscription settings and external squads that use it. After editing, fetch a test user’s subscription and import it into the client: valid JSON or YAML does not verify a connection.
 
+### Autoselect in code and UI
+
+The Xray JSON Editing and Autoselect tabs share one draft. Editing an existing pool or balancer immediately updates its JSON. A new pool adds injectHosts, a balancer, routing and observation for leastPing or leastLoad. Other outbounds, rules and settings remain intact. The changes panel compares against the last save; on phones it appears below the form. Save applies the entire draft.
+
+### Host pools and tags
+
+selector.type supports uuids and exact tags. mode all injects all eligible sources, random selects at most selector.expected unique hosts, and group chooses one nonempty eligible group from selector.groups. Groups can be a named object or an array of arrays. Missing mode keeps legacy all; missing selectFrom selects hidden hosts. Access, visibility, limits and exclusions are checked before selection. Sampling occurs when a subscription is generated, not for each VPN connection. A profile with an explicit mode and no eligible sources is omitted.
+
+### Assignment and balancing
+
+remnawave.assignTo.hosts assigns the template to recipient hosts; assignTo.tags also covers future recipients with those tags. Priority is the host card’s explicit template, then template UUID assignment, then tag assignment. Conflicts use the first template in list order. Assignments never expand user access. The client balancer uses already selected outbounds: random, roundRobin, leastPing or leastLoad. The last two need observation. fallbackTag specifies a fallback outbound.
+
+### History and recovery
+
+Xray JSON, Singbox, Mihomo, Clash and Stash retain the last 30 saved versions. The database upgrade preserves existing code as the first version. History shows dates and a comparison with the current draft. Open in editor restores all code, including autoselect, balancers and assignments. Replacing an unsaved draft requires confirmation. Saving creates a new version, so a restore can itself be undone. An unsuccessful save changes neither code nor history.
+
 ## Variables {{…}} in names and headers
 
 ### Substitution context

@@ -28,7 +28,7 @@ export declare const XRAY_API_INBOUND_MODEL: ({ xtlsApiSocketPath }: {
     xtlsApiSocketPath: string;
 }) => {
     readonly tag: "REMNAWAVE_API_INBOUND";
-    readonly listen: `@${string}`;
+    readonly listen: `${string},0600`;
     readonly protocol: "tunnel";
 };
 export declare const XRAY_ROUTING_RULES_MODEL: {

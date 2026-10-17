@@ -11,10 +11,14 @@ import { GetNodesByPluginUuidHandler } from './get-nodes-by-plugin-uuid';
 import { GetNodesRecapHandler } from './get-nodes-recap';
 import { GetNodesSystemStatsHandler } from './get-nodes-system-stats';
 import { GetOnlineNodesHandler } from './get-online-nodes';
+import { GetPortPlanNodeUuidsHandler } from './get-port-plan-node-uuids';
+import { GetPreparedNodePortsHandler } from './get-prepared-node-ports';
 import { GetProfileUuidsByIntegrationUuidHandler } from './get-profile-uuids-by-integration-uuid';
 import { GetUserTrafficPathsHandler } from './get-user-traffic-paths';
 
 export const QUERIES = [
+    GetPortPlanNodeUuidsHandler,
+    GetPreparedNodePortsHandler,
     GetDeviceStateRevisionHandler,
     GetEnabledNodesHandler,
     GetOnlineNodesHandler,

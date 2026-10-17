@@ -1,3 +1,5 @@
+import type { DNSConfig, RoutingConfig } from 'xray-typed';
+
 import type { TRemnawaveInjector } from '@libs/contracts/models';
 
 import { ResolvedProxyConfig } from '@modules/subscription-template/resolve-proxy/interfaces';
@@ -17,6 +19,7 @@ export interface StreamSettings {
     sockopt?: unknown;
     kcpSettings?: unknown;
     finalmask?: unknown;
+    masqueSettings?: unknown;
 }
 
 export interface OutboundSettings {
@@ -53,6 +56,8 @@ export interface Outbound {
 
 export interface XrayJsonConfig {
     remarks: string;
+    dns?: DNSConfig;
+    routing?: RoutingConfig;
     outbounds: Outbound[];
     meta?: {
         serverDescription?: string;

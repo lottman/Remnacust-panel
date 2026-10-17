@@ -1,10 +1,12 @@
 import { CamelCasePlugin, CamelCasePluginOptions, UnknownRow } from 'kysely';
 
 export const JSON_COLUMNS = [
+    'applied_policy',
     'branding_settings',
     'config',
     'custom_remarks',
     'custom_response_headers',
+    'desired_policy',
     'final_mask',
     'host_overrides',
     'hwid_settings',

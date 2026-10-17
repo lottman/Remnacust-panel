@@ -26,10 +26,10 @@ new Function('require', 'module', 'exports', output)((id) => {
 }, moduleRef, moduleRef.exports);
 const { DeviceAccessService } = moduleRef.exports;
 
-function fixture({ offline = false, noInbounds = false, exceptionInbound = false, protocol = 'vless', count = 1 } = {}) {
+function fixture({ offline = false, noInbounds = false, exceptionInbound = false, protocol = 'vless', count = 1, primaryProfile = 'profile', selectedInbound = 'inbound' } = {}) {
     const state = { user: { id: 1n, status: 'ACTIVE', expireAt: new Date(Date.now() + 60_000), vlessUuid: 'parent' }, device: { exists: true, blocked: false } };
     const calls = [];
-    const node = { uuid: 'online', address: 'online', activeConfigProfileUuid: 'profile', activeInbounds: [{ uuid: 'inbound' }] };
+    const node = { uuid: 'online', address: 'online', activeConfigProfileUuid: primaryProfile, activeInbounds: [{ uuid: selectedInbound }] };
     const axios = {
         deleteUser: async (data) => { calls.push(['delete', data.username]); return success; },
         addUser: async (data) => { calls.push(['add', data.data[0].username]); axios.lastGrant = data; return success; },
@@ -145,6 +145,18 @@ test('MASQUE device grant uses the same personal account as its subscription', a
     const { service, axios } = fixture({ protocol: 'masque' });
     assert.equal(await service.syncDevice(1n,'device',false), true);
     assert.deepEqual(axios.lastGrant.data, [{ type:'masque', tag:'tag', username:credentials.username, password:credentials.vlessUuid }]);
+});
+
+test('personal credentials also reach a selected inbound from a secondary port profile',async()=>{
+    const {service,calls}=fixture({primaryProfile:'different-primary'});
+    assert.equal(await service.syncDevice(1n,'device',false),true);
+    assert.deepEqual(calls,[['add','1~device']]);
+});
+
+test('a primary profile or matching display tag cannot authorize an unselected inbound UUID',async()=>{
+    const {service,calls}=fixture({selectedInbound:'another-inbound'});
+    assert.equal(await service.syncDevice(1n,'device',false),true);
+    assert.deepEqual(calls,[['delete','1~device']]);
 });
 
 test('slow host policy synchronization does not postpone personal credential revocation', async () => {

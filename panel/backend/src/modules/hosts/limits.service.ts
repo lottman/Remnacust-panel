@@ -54,6 +54,54 @@ export class LimitsService {
     async list(withUsage = true): Promise<LimitScope[]> {
         return (await limitScopesQuery(withUsage).execute(this.db.kysely)).rows;
     }
+    private async synchronization(kind: LimitKind, key: string) {
+        const result = await sql<{
+            totalNodes: number;
+            appliedNodes: number;
+            unavailableNodes: number;
+            pendingNodes: { uuid: string; name: string; unavailable: boolean }[];
+        }>`WITH targets AS (
+            SELECT h.* FROM xera_quota_budget_heads h JOIN xera_quota_reserve_pools p
+              USING(kind,key,user_id,window_start,budget_epoch)
+            WHERE h.kind=${kind} AND h.key=${key} AND p.expires_at>now()
+              AND h.window_start=(SELECT window_start FROM xera_limit_state(h.kind,h.key,h.user_id))
+              AND (SELECT effective_limit FROM xera_limit_state(h.kind,h.key,h.user_id))>0
+              AND NOT EXISTS(SELECT 1 FROM xera_limit_user_adjustments a WHERE a.kind=h.kind AND a.key=h.key AND a.user_id=h.user_id AND a.unlimited)
+        ), participants AS (
+            SELECT DISTINCT t.user_id,t.window_start,t.budget_epoch,g.node_uuid FROM targets t
+            JOIN xera_quota_reserves g USING(kind,key,user_id,window_start)
+            WHERE EXISTS(SELECT 1 FROM hosts host JOIN config_profile_inbounds_to_nodes binding
+                ON binding.config_profile_inbound_uuid=host.config_profile_inbound_uuid
+                WHERE binding.node_uuid=g.node_uuid AND
+                  ((${kind}='HOST' AND host.uuid::text=${key}) OR
+                   (${kind}='TAG' AND ${key}=ANY(host.tags) AND host.use_tag_traffic_limit))
+                  AND (NOT EXISTS(SELECT 1 FROM hosts_to_nodes hn WHERE hn.host_uuid=host.uuid)
+                    OR EXISTS(SELECT 1 FROM hosts_to_nodes hn WHERE hn.host_uuid=host.uuid AND hn.node_uuid=g.node_uuid)))
+        ), epoch_progress AS (
+            SELECT r.node_uuid,n.name,NOT COALESCE(n.is_connected AND NOT n.is_disabled,false) AS unavailable,
+              bool_and(COALESCE(e.applied_epoch=r.budget_epoch,false)) AS applied
+            FROM participants r LEFT JOIN nodes n ON n.uuid=r.node_uuid
+            LEFT JOIN xera_quota_node_epochs e ON e.kind=${kind} AND e.key=${key} AND e.user_id=r.user_id
+              AND e.window_start=r.window_start AND e.node_uuid=r.node_uuid
+            GROUP BY r.node_uuid,n.name,n.is_connected,n.is_disabled
+        ), progress AS (
+            SELECT node_uuid,COALESCE(name,node_uuid::text) AS name,bool_or(unavailable) AS unavailable,bool_and(applied) AS applied
+            FROM (
+                SELECT * FROM epoch_progress
+                UNION ALL
+                SELECT p.node_uuid,n.name,NOT COALESCE(n.is_connected AND NOT n.is_disabled,false) AS unavailable,
+                    p.released_at IS NOT NULL AS applied
+                FROM xera_quota_transitions t JOIN xera_quota_transition_nodes p ON p.transition_id=t.id
+                LEFT JOIN nodes n ON n.uuid=p.node_uuid
+                WHERE t.kind=${kind} AND t.key=${key} AND t.phase<>'ACTIVE'
+            ) states GROUP BY node_uuid,name
+        ) SELECT count(*)::integer AS "totalNodes",count(*) FILTER(WHERE applied)::integer AS "appliedNodes",
+            count(*) FILTER(WHERE NOT applied AND unavailable)::integer AS "unavailableNodes",
+            COALESCE((SELECT json_agg(v) FROM (SELECT node_uuid AS uuid,name,unavailable FROM progress
+              WHERE NOT applied ORDER BY unavailable,name,node_uuid LIMIT 50) v),'[]'::json) AS "pendingNodes"
+          FROM progress`.execute(this.db.kysely);
+        return result.rows[0]?.totalNodes ? result.rows[0] : null;
+    }
     private async scope(kind: LimitKind, key: string) {
         const scope = (await this.list(false)).find(
             (item) => item.kind === kind && item.key === key,
@@ -200,6 +248,7 @@ export class LimitsService {
         const row = result.rows[0];
         return {
             scope,
+            synchronization: await this.synchronization(kind, key),
             users: row.users,
             total: row.total,
             allUsers: all.rows[0].total,
@@ -341,12 +390,28 @@ export class LimitsService {
                     this.db.kysely,
                 );
             }
+            if (action === 'RESET' || action === 'ADD') {
+                // Rotate only an already initialized reserve bank. The legacy
+                // meter and the new epoch commit together; HTTP follows commit.
+                await sql`SELECT xera_adjust_quota_budget(${requestId}::uuid,${kind},${key},u.id,
+                    ${action},${action === 'ADD' ? amountBytes : 0}::bigint)
+                    FROM users u WHERE ${selectedRecipients} AND EXISTS(
+                        SELECT 1 FROM xera_quota_reserve_pools p WHERE p.kind=${kind} AND p.key=${key} AND p.user_id=u.id
+                          AND p.window_start=(SELECT window_start FROM xera_limit_state(${kind},${key},u.id))
+                          AND p.budget_epoch=xera_current_quota_epoch(p.kind,p.key,p.user_id,p.window_start)
+                    ) ORDER BY u.id`.execute(this.db.kysely);
+            }
             await sql`INSERT INTO xera_limit_actions(id,kind,key,action,amount_bytes,affected_users,selection) VALUES(${requestId}::uuid,${kind},${key},${action},${amountBytes}::bigint,${count.rows[0].total},${fingerprint}::jsonb)`.execute(
                 this.db.kysely,
             );
             return { affectedUsers: count.rows[0].total, replayed: false };
         });
-        await this.policy.syncConnected();
-        return { ...result, saved: true, enforcement: 'synchronizing' as const };
+        this.policy.requestSync();
+        return {
+            ...result,
+            saved: true,
+            enforcement: 'synchronizing' as const,
+            synchronization: await this.synchronization(kind, key),
+        };
     }
 }

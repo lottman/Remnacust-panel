@@ -45,8 +45,22 @@ export class NodesService {
         try {
             const { configProfile, ...nodeData } = body;
 
+            const configProfileResponse = await this.queryBus.execute(
+                new GetConfigProfileByUuidQuery(configProfile.activeConfigProfileUuid),
+            );
+            if (!configProfileResponse.isOk) {
+                return configProfileResponse;
+            }
+            const inbounds = configProfileResponse.response.inbounds;
+            if (!configProfile.activeInbounds.every((uuid) =>
+                inbounds.some((inbound) => inbound.uuid === uuid),
+            )) {
+                return fail(ERRORS.CONFIG_PROFILE_INBOUND_NOT_FOUND_IN_SPECIFIED_PROFILE);
+            }
+
             const nodeEntity = new NodesEntity({
                 ...nodeData,
+                name: nodeData.name.trim(),
                 address: nodeData.address.trim(),
                 isConnected: false,
                 isConnecting: false,
@@ -57,47 +71,32 @@ export class NodesService {
                 activeConfigProfileUuid: configProfile.activeConfigProfileUuid,
             });
 
-            const result = await this.nodesRepository.create(nodeEntity);
-
-            if (configProfile) {
-                const configProfileResponse = await this.queryBus.execute(
-                    new GetConfigProfileByUuidQuery(configProfile.activeConfigProfileUuid),
-                );
-
-                if (configProfileResponse.isOk) {
-                    const inbounds = configProfileResponse.response.inbounds;
-
-                    const areAllInboundsFromConfigProfile = configProfile.activeInbounds.every(
-                        (activeInboundUuid) =>
-                            inbounds.some((inbound) => inbound.uuid === activeInboundUuid),
-                    );
-
-                    if (areAllInboundsFromConfigProfile) {
-                        await this.nodesRepository.addInboundsToNode(
-                            result.uuid,
-                            configProfile.activeInbounds,
-                        );
-                    } else {
-                        return fail(ERRORS.CONFIG_PROFILE_INBOUND_NOT_FOUND_IN_SPECIFIED_PROFILE);
-                    }
-                }
-            }
-
-            const node = await this.nodesRepository.findByUUID(result.uuid);
-
-            if (!node) {
-                throw new Error('Node not found');
-            }
-
-            await this.nodesQueuesService.startNode({
-                nodeUuid: node.uuid,
-            });
-
-            this.eventEmitter.emit(EVENTS.NODE.CREATED, new NodeEvent(node, EVENTS.NODE.CREATED));
-
-            return ok(
-                new NodeResponseModel(node, await this.nodesSystemCacheService.getOne(node.uuid)),
+            // Prisma's nested write commits the node and all inbound links together.
+            const result = await this.nodesRepository.create(
+                nodeEntity,
+                [...new Set(configProfile.activeInbounds)],
             );
+
+            // Creation is committed. An unavailable queue/cache must not turn it
+            // into a failed create response and invite a duplicate-name retry.
+            try {
+                await this.nodesQueuesService.startNode({ nodeUuid: result.uuid });
+            } catch {
+                this.logger.warn(`Node ${result.uuid} created; startup queue unavailable. Health checks will retry.`);
+                result.lastStatusMessage = 'Node created; startup is pending a health-check retry.';
+            }
+            try {
+                this.eventEmitter.emit(EVENTS.NODE.CREATED, new NodeEvent(result, EVENTS.NODE.CREATED));
+            } catch {
+                this.logger.warn(`Node ${result.uuid} created; creation notification could not be emitted.`);
+            }
+            const system = await this.nodesSystemCacheService.getOne(result.uuid).catch(() => ({
+                system: null,
+                versions: null,
+                xrayUptime: 0,
+                onlineUsers: 0,
+            }));
+            return ok(new NodeResponseModel(result, system));
         } catch (error) {
             if (
                 error instanceof Prisma.PrismaClientKnownRequestError &&

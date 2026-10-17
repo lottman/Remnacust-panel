@@ -1,7 +1,9 @@
-import { ComponentType, lazy } from 'react'
+import { lazy } from 'react'
 
 import { loadWithAssetRecovery } from './asset-recovery'
 
-export function lazyWithRecovery<T extends ComponentType<any>>(load: () => Promise<{ default: T }>) {
+type LazyComponent = Awaited<ReturnType<Parameters<typeof lazy>[0]>>['default']
+
+export function lazyWithRecovery<T extends LazyComponent>(load: () => Promise<{ default: T }>) {
     return lazy(() => loadWithAssetRecovery(load))
 }

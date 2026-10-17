@@ -1,0 +1,100 @@
+// Native usage import in a dedicated disposable database; no RPC ACK or barrier release.
+const assert=require('node:assert/strict'),path=require('node:path'),{randomUUID}=require('node:crypto');
+const {PrismaClient}=require('@prisma/client'),{TransactionHost}=require('@nestjs-cls/transactional'),k=require('kysely'),load=require('./load-typescript.cjs');
+const {PrismaTxDriver}=require('../node_modules/@kastov/nestjs-prisma-kysely/build/drivers/prisma-tx.driver.js');
+const url=process.env.NATIVE_QUOTA_RECOVERY_TEST_DATABASE_URL;assert.ok(url);const parsed=new URL(url);
+assert.equal(parsed.hostname,'127.0.0.1');assert.equal(parsed.port,'55439');assert.ok(['/remnacust_native_recovery_test','/remnacust_native_ack_source_test','/remnacust_recovery_receipt_jobs_test','/remnacust_receipt_ui_test'].includes(parsed.pathname));
+const prisma=new PrismaClient({datasourceUrl:url});let failCommit=false;
+const tx=new TransactionHost({defaultTxOptions:{},getFallbackInstance:()=>prisma,wrapWithTransaction:(opts,fn,set)=>prisma.$transaction(async client=>{set(client);const result=await fn();if(failCommit){failCommit=false;throw Error("Injected bank COMMIT failure");}return result;},opts)});
+const {CustomCamelCasePlugin,JSON_COLUMNS}=load(path.join(__dirname,'../src/common/database/camel-case.plugin.ts'));
+const db={kysely:new k.Kysely({dialect:{createDriver:()=>new PrismaTxDriver(tx),createAdapter:()=>new k.PostgresAdapter(),createIntrospector:db=>new k.PostgresIntrospector(db),createQueryCompiler:()=>new k.PostgresQueryCompiler()},plugins:[new CustomCamelCasePlugin({excludeColumns:JSON_COLUMNS})]})};
+
+const crypto=require('node:crypto'),zlib=require('node:zlib');
+const mocks={'@common/database':{},'@common/axios':{},'@common/utils/device-identity':load(path.join(__dirname,'../src/common/utils/device-identity.ts')),'@common/utils/nano':load(path.join(__dirname,'../src/common/utils/nano/nano.util.ts'))};
+const {QuotaBankRecoveryService}=load(path.join(__dirname,'../src/common/host-policy/quota-bank-recovery.service.ts'),mocks);
+const {NativeQuotaRecoveryService}=load(path.join(__dirname,'../src/common/host-policy/native-quota-recovery.service.ts'),mocks);
+const {QuotaReceiptRecoveryService}=load(path.join(__dirname,'../src/common/host-policy/quota-receipt-recovery.service.ts'),mocks);
+const model=load(path.join(__dirname,'../src/common/host-policy/native-recovery-plan.ts'),mocks);
+const {frameDigest}=load(path.join(__dirname,'../src/common/host-policy/usage-receipt.ts'));
+const banks=new QuotaBankRecoveryService(db,tx),service=new NativeQuotaRecoveryService(db,tx,banks);
+const actor=randomUUID(),node=randomUUID(),stream=randomUUID(),core=randomUUID(),key=randomUUID();let account,generation,frame;
+const hash=value=>crypto.createHash('sha256').update(value).digest('hex');
+const captures=new QuotaReceiptRecoveryService(db,tx,{usageArchive:async(_,request)=>{
+ const payload=Buffer.from(JSON.stringify({version:1,stream,acked:String(BigInt(frame.sequence)-1n),ackDigest:frame.sequence==='1'?'':'a'.repeat(64),pending:frame}));
+ const original=Buffer.concat([Buffer.from('REMNACUST-USAGE-1\n'+hash(payload)+'\n'),payload]);
+ const raw=Buffer.from(JSON.stringify({version:'remnacust-usage-archives-v1',...request,capturedAt:Date.now(),journal:{bytes:original.length,sha256:hash(original),data:original.toString('base64')}}));
+ return {isOk:true,response:{version:'remnacust-usage-archives-v1',encoding:'gzip-base64',bytes:raw.length,sha256:hash(raw),data:zlib.gzipSync(raw).toString('base64')}};
+}});
+const state=async()=>({users:await prisma.$queryRaw`SELECT to_jsonb(t)::text AS body FROM user_traffic t ORDER BY id`,pool:await prisma.$queryRaw`SELECT baseline_bytes::text AS baseline,unreserved_nano::text AS nano FROM xera_quota_reserve_pools WHERE usage_account=${account}::uuid`,ticket:await prisma.$queryRaw`SELECT committed_digest,pending_effects FROM xera_node_usage_streams WHERE node_uuid=${node}::uuid`,exposures:await prisma.$queryRaw`SELECT core_uuid FROM xera_quota_usage_exposures WHERE node_uuid=${node}::uuid ORDER BY core_uuid`});
+(async()=>{try{
+ for(const id of [901,903]){await prisma.$executeRaw`INSERT INTO users(id,username,short_uuid,expire_at,trojan_password,vless_uuid,ss_password) VALUES(${id}::bigint,${'native-'+id},${'native-'+id},now()+interval '1 year','fixture',${randomUUID()}::uuid,'fixture')`;await prisma.$executeRaw`INSERT INTO user_traffic(id) VALUES(${id}::bigint)`;}
+ await prisma.$executeRaw`INSERT INTO nodes(uuid,name,address,port) VALUES(${node}::uuid,${'native-'+node},${node+'.invalid'},2222)`;
+ await prisma.$executeRaw`INSERT INTO xera_quota_reserve_pools(kind,key,user_id,window_start,expires_at,baseline_bytes,limit_bytes) VALUES('HOST',${key},901,'2026-01-01','2030-01-01',0,1000)`;
+ account=(await prisma.$queryRaw`SELECT usage_account FROM xera_quota_reserve_pools WHERE key=${key}`)[0].usage_account;
+ await prisma.$executeRaw`INSERT INTO xera_quota_usage_deliveries(usage_account,node_uuid,instance_uuid,factor,scale,first_revision,last_revision) VALUES(${account}::uuid,${node}::uuid,${stream}::uuid,150,100,1,1)`;
+ const nodeId=(await prisma.$queryRaw`SELECT id FROM nodes WHERE uuid=${node}::uuid`)[0].id;
+ await prisma.$executeRaw`INSERT INTO xera_node_usage_streams(stream_id,node_uuid,node_id,expected_core,requested_at,consumption_multiplier) VALUES(${stream}::uuid,${node}::uuid,${nodeId},${core}::uuid,clock_timestamp(),1500000000)`;
+ await prisma.$queryRaw`SELECT xera_quarantine_restored_quotas()`;generation=(await prisma.$queryRaw`SELECT generation FROM xera_quota_restore_state WHERE singleton`)[0].generation;
+ frame={sequence:'1',coreProcessId:core,capturedAt:String(Date.now()),stats:[{name:`qfree>>>${account}>>>901>>>150>>>100>>>traffic>>>uplink`,value:'3'},{name:'user>>>901>>>traffic>>>uplink',value:'7'}]};
+
+ const oldCore=randomUUID();
+ for(const exposedCore of [core,oldCore])await prisma.$executeRaw`INSERT INTO xera_quota_usage_exposures(node_uuid,core_uuid,instance_uuid,kind,key,user_id,first_revision,last_revision,unbounded,fenced_at,fenced_sequence) VALUES(${node}::uuid,${exposedCore}::uuid,${stream}::uuid,'HOST',${key},901,1,1,true,clock_timestamp()-interval '1 minute',1)`;
+ const capture=await captures.capture(node,generation,actor),bank=await banks.capture(generation,randomUUID(),actor);
+ const details=await service.details(node,capture.requestId,generation);assert.equal(details.owners[0].b,'10');assert.equal(details.accounts[0].eligible,true);assert.equal(details.accounts[0].prices[0].bytes,'3');await assert.rejects(service.details(node,capture.requestId,randomUUID()),/NOT_PENDING/);
+ const subject=(await prisma.$queryRaw`SELECT subject_uuid FROM xera_quota_current_subjects WHERE user_id=903`)[0].subject_uuid;
+ const draft=model.nativeRecoveryDraft.parse({generation,sourceRequest:capture.requestId,bankRequest:bank.requestId,allocations:[{owner:'901',action:'CHARGE',subject,period:'CURRENT'}],accounts:[{account,action:'APPLY'}],note:'Reviewed original receipt, old factor and explicit owner assignment'});
+ const before=await state(),preview=await service.preview(node,draft);assert.equal(preview.plan.billing.totals.charged,'10');assert.equal(preview.plan.applyOutside.length,1);assert.equal(preview.plan.accountChanges[0].after,'5');
+ const approval={...draft,requestId:randomUUID(),planDigest:preview.planDigest};
+ failCommit=true;await assert.rejects(service.resolve(node,approval,actor),/COMMIT failure/);assert.deepEqual(await state(),before);
+ assert.equal((await prisma.$queryRaw`SELECT count(*) AS n FROM xera_native_quota_recovery_decisions`)[0].n,0n);
+ console.log('PASS actual pending journal yields exact raw charge and separate unreserved liability; failed COMMIT rolls back both ledgers, stream and immutable decision');
+ await prisma.$executeRaw`UPDATE user_traffic SET used_traffic_bytes=1 WHERE id=903`;await assert.rejects(service.resolve(node,approval,actor),/STALE_PLAN/);await prisma.$executeRaw`UPDATE user_traffic SET used_traffic_bytes=0 WHERE id=903`;
+ await assert.rejects(service.recoveryAcknowledgementSource(node,approval.requestId,generation),/active transaction/);
+ await assert.rejects(tx.withTransaction({timeout:10000},()=>service.recoveryAcknowledgementSource(node,approval.requestId,generation)),/SOURCE_MISSING/);
+ const [result,retry]=await Promise.all([service.resolve(node,approval,actor),service.resolve(node,approval,actor)]);assert.deepEqual(retry,result);
+ const beforeAck=await state();const ackSource=await tx.withTransaction({timeout:10000},()=>service.recoveryAcknowledgementSource(node,approval.requestId,generation));
+ assert.equal(ackSource.decisionRequest,approval.requestId);assert.equal(ackSource.decisionDigest,approval.planDigest);assert.equal(ackSource.sourceRequest,capture.requestId);
+ assert.deepEqual(ackSource.receipt,{action:'ack',stream,sequence:'1',coreProcessId:frame.coreProcessId,digest:frameDigest(frame)});assert.match(ackSource.sourceDigest,/^[a-f0-9]{64}$/);assert.deepEqual(await state(),beforeAck);
+ await assert.rejects(tx.withTransaction({timeout:10000},()=>service.recoveryAcknowledgementSource(randomUUID(),approval.requestId,generation)),/SOURCE_MISSING/);
+ await assert.rejects(tx.withTransaction({timeout:10000},()=>service.recoveryAcknowledgementSource(node,approval.requestId,randomUUID())),/NOT_PENDING/);
+ await prisma.$executeRaw`UPDATE xera_node_usage_streams SET committed_digest=NULL WHERE node_uuid=${node}::uuid`;
+ await assert.rejects(tx.withTransaction({timeout:10000},()=>service.recoveryAcknowledgementSource(node,approval.requestId,generation)),/TICKET_CHANGED/);
+ await prisma.$executeRaw`UPDATE xera_node_usage_streams SET committed_digest=${frameDigest(frame)} WHERE node_uuid=${node}::uuid`;
+ if(['/remnacust_recovery_receipt_jobs_test','/remnacust_receipt_ui_test'].includes(parsed.pathname))await require('./recovery-receipt-jobs.fixture.cjs')({prisma,db,tx,native:service,node,stream,core,generation,actor,decision:approval.requestId,ackSource,state,setFailCommit:()=>{failCommit=true;}});
+ assert.deepEqual(await state(),beforeAck);
+ console.log('PASS recovery ACK source requires an immutable committed decision, original archive and exact current ticket; validation itself changes no financial data');
+
+ const after=await state();assert.equal(JSON.parse(after.users[1].body).used_traffic_bytes,10);assert.equal(JSON.parse(after.users[0].body).used_traffic_bytes,0);assert.deepEqual(after.pool,[{baseline:'5',nano:'4500000000'}]);assert.equal(after.ticket[0].committed_digest,frameDigest(frame));assert.equal(after.ticket[0].pending_effects,null);assert.deepEqual(after.exposures,[{core_uuid:oldCore}]);assert.equal((await prisma.$queryRaw`SELECT last_committed_sequence FROM xera_node_usage_streams WHERE node_uuid=${node}::uuid`)[0].last_committed_sequence,1n);
+ assert.equal(JSON.parse(after.users[1].body).online_at,null);assert.equal(JSON.parse(after.users[1].body).first_connected_at,null);
+ await assert.rejects(service.resolve(node,{...approval,note:'Changed approved reason'},actor),/REQUEST_CONFLICT/);
+ assert.equal((await prisma.$queryRaw`SELECT reconciled_at FROM xera_quota_restore_state WHERE singleton`)[0].reconciled_at,null);
+ console.log('PASS exact old multiplier survives import; concurrent same approval charges once, accounts qfree once, keeps historical import offline and never ACKs or releases recovery');
+ frame={...frame,sequence:'2',capturedAt:String(Date.now())};await prisma.$executeRaw`UPDATE xera_node_usage_streams SET next_sequence=2,committed_digest=${frameDigest(frame)},pending_effects='{"owners":[],"firstConnected":[],"capturedAt":"1"}'::jsonb WHERE node_uuid=${node}::uuid`;
+ const recoveredDecision=await service.details(node,capture.requestId,generation);assert.equal(recoveredDecision.decision.requestId,approval.requestId);assert.equal(recoveredDecision.decision.plan.billing.totals.charged,'10');assert.equal(recoveredDecision.alreadyCommitted,true);
+ const secondCapture=await captures.capture(node,generation,actor),secondBank=await banks.capture(generation,randomUUID(),actor);
+ const committed={...draft,sourceRequest:secondCapture.requestId,bankRequest:secondBank.requestId,allocations:[],accounts:[]},known=await service.preview(node,committed);assert.equal(known.plan.billing.totals.charged,'0');assert.equal(known.plan.applyOutside.length,0);
+ const counters=JSON.stringify({users:after.users,pool:after.pool});await service.resolve(node,{...committed,requestId:randomUUID(),planDigest:known.planDigest},actor);
+ const final=await state();assert.equal(JSON.stringify({users:final.users,pool:final.pool}),counters);assert.equal(final.ticket[0].pending_effects,null);
+ for(const command of ['UPDATE xera_native_quota_recovery_decisions SET actor_uuid=gen_random_uuid()','DELETE FROM xera_native_quota_recovery_decisions','TRUNCATE xera_native_quota_recovery_decisions CASCADE'])await assert.rejects(prisma.$executeRawUnsafe(command),/immutable/);
+ await prisma.$queryRaw`SELECT xera_quarantine_restored_quotas()`;assert.deepEqual(await service.resolve(node,approval,actor),result);
+ console.log('PASS already SQL-committed native receipt does not bill users or pools again; original decision survives a later restore, journal is immutable and stale effects are discarded');
+ generation=(await prisma.$queryRaw`SELECT generation FROM xera_quota_restore_state WHERE singleton`)[0].generation;
+ const missing=randomUUID();frame={...frame,sequence:'3',stats:[{name:`qfree>>>${missing}>>>901>>>150>>>100>>>traffic>>>uplink`,value:'9007199254740993'}]};
+ await prisma.$executeRaw`UPDATE xera_node_usage_streams SET next_sequence=3,committed_digest=NULL WHERE node_uuid=${node}::uuid`;
+ const orphanCapture=await captures.capture(node,generation,actor),orphanBank=await banks.capture(generation,randomUUID(),actor);
+ const unknownDetails=await service.details(node,orphanCapture.requestId,generation);assert.equal(unknownDetails.accounts[0].eligible,false);assert.equal(unknownDetails.accounts[0].prices[0].bytes,'9007199254740993');
+ const orphan={...draft,generation,sourceRequest:orphanCapture.requestId,bankRequest:orphanBank.requestId,allocations:[],accounts:[{account:missing,action:'APPLY'}]};
+ await assert.rejects(service.preview(node,orphan),/ACCOUNT_UNPROVEN/);
+ const explicit={...orphan,accounts:[{account:missing,action:'LOSS'}]},loss=await service.preview(node,explicit);
+ assert.equal(loss.plan.lostOutside[0].bytes,'9007199254740993');assert.equal(loss.plan.billing.totals.charged,'0');
+ const beforeLoss=await state();await service.resolve(node,{...explicit,requestId:randomUUID(),planDigest:loss.planDigest},actor);const afterLoss=await state();assert.deepEqual(afterLoss.users,beforeLoss.users);assert.deepEqual(afterLoss.pool,beforeLoss.pool);
+ console.log('PASS unknown unreserved account cannot be applied; explicit reviewed loss preserves exact >2^53 debt and changes no user or surviving pool');
+ frame={...frame,sequence:'4',stats:[{name:`qfree>>>${account}>>>901>>>150>>>100>>>traffic>>>uplink`,value:'3'}]};await prisma.$executeRaw`UPDATE xera_node_usage_streams SET next_sequence=4,committed_digest=NULL,requested_at=clock_timestamp() WHERE node_uuid=${node}::uuid`;
+ const fractionalCapture=await captures.capture(node,generation,actor),fractionalBank=await banks.capture(generation,randomUUID(),actor);
+ const fractional={...explicit,sourceRequest:fractionalCapture.requestId,bankRequest:fractionalBank.requestId,accounts:[{account,action:'APPLY'}]},fractionalPreview=await service.preview(node,fractional);
+ assert.equal(fractionalPreview.plan.billing.totals.charged,'0');assert.equal(fractionalPreview.plan.accountChanges[0].charged,'4');assert.equal(fractionalPreview.plan.accountChanges[0].after,'9');const beforeFraction=await state();await service.resolve(node,{...fractional,requestId:randomUUID(),planDigest:fractionalPreview.planDigest},actor);const afterFraction=await state();
+ assert.deepEqual(afterFraction.users,beforeFraction.users);assert.deepEqual(afterFraction.pool,[{baseline:'9',nano:'9000000000'}]);
+ console.log('PASS metadata-only receipt binds the original node without a raw subscriber row and carries fractional pool debt exactly across frames');
+
+
+}finally{await db.kysely.destroy();await prisma.$disconnect();}})().catch(error=>{console.error(error);process.exitCode=1;});

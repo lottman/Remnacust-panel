@@ -351,6 +351,15 @@ export type SubscriptionTemplate = {
     createdAt: Generated<Timestamp>;
     updatedAt: Generated<Timestamp>;
 };
+export type SubscriptionTemplateRevisions = {
+    id: Generated<number>;
+    uuid: Generated<string>;
+    templateUuid: string;
+    name: string;
+    templateJson: object | null;
+    templateYaml: string | null;
+    createdAt: Generated<Timestamp>;
+};
 export type TorrentBlockerReports = {
     id: Generated<bigint>;
     userId: bigint;
@@ -453,6 +462,7 @@ export type DB = {
     sharedLists: SharedLists;
     subscriptionPageConfig: SubscriptionPageConfig;
     subscriptionSettings: SubscriptionSettings;
+    subscriptionTemplateRevisions: SubscriptionTemplateRevisions;
     subscriptionTemplates: SubscriptionTemplate;
     torrentBlockerReports: TorrentBlockerReports;
     userMeta: UserMeta;

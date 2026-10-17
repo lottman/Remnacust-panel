@@ -54,5 +54,13 @@
     }
   ],
   "releaseStatus": "not-built-or-published",
-  "updatePolicy": "published-official-releases-only"
+  "updatePolicy": "published-official-releases-only",
+  "dependencySecurityUpdates": [
+    {
+      "component": "xray",
+      "module": "golang.org/x/net",
+      "version": "v0.60.0",
+      "report": "https://pkg.go.dev/vuln/GO-2026-6617"
+    }
+  ]
 }

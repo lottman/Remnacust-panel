@@ -575,11 +575,11 @@ The Xray JSON Editing and Autoselect tabs share one draft. Editing an existing p
 
 ### Host pools and tags
 
-selector.type supports uuids and exact tags. mode all injects all eligible sources, random selects at most selector.expected unique hosts, and group chooses one nonempty eligible group from selector.groups. Groups can be a named object or an array of arrays. Missing mode keeps legacy all; missing selectFrom selects hidden hosts. Access, visibility, limits and exclusions are checked before selection. Sampling occurs when a subscription is generated, not for each VPN connection. A profile with an explicit mode and no eligible sources is omitted.
+selector.type supports uuids, exact tags, tagRegex, remarkRegex and sameTagAsRecipient. All support all/random/group; tag groups contain tags, other groups contain eligible host UUIDs. mode all injects all eligible sources, random selects at most selector.expected unique hosts, and group chooses one nonempty eligible group from selector.groups. Groups can be a named object or an array of arrays. Missing mode keeps legacy all; missing selectFrom selects hidden hosts. Access, visibility, limits and exclusions are checked before selection. Sampling occurs when a subscription is generated, not for each VPN connection. A profile with an explicit mode and no eligible sources is omitted.
 
 ### Assignment and balancing
 
-remnawave.assignTo.hosts assigns the template to recipient hosts; assignTo.tags also covers future recipients with those tags. Priority is the host card’s explicit template, then template UUID assignment, then tag assignment. Conflicts use the first template in list order. Assignments never expand user access. The client balancer uses already selected outbounds: random, roundRobin, leastPing or leastLoad. The last two need observation. fallbackTag specifies a fallback outbound.
+remnawave.assignTo.hosts assigns the template to recipient hosts; assignTo.tags also covers future recipients with those tags. Priority is the host card’s explicit template, then template UUID assignment, then tag assignment. Conflicts use the first template in list order. Assignments never expand user access. The client balancer uses already selected outbounds: random, roundRobin, leastPing or leastLoad. The last two need observation; random and roundRobin do not. The leastLoad GUI edits current expected, tolerance, baselines and maxRTT without replacing other fields. fallbackTag specifies a fallback outbound.
 
 ### History and recovery
 

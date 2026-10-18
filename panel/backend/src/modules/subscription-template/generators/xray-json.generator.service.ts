@@ -2,10 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import { isNonEmptyObject } from '@common/utils';
 import { configuredRegex } from '@common/utils/bounded-regex';
-import type {
-    TInjectHostsEntry,
-    TRemnawaveInjectorSelectFrom,
-} from '@libs/contracts/models';
+import type { TInjectHostsEntry, TRemnawaveInjectorSelectFrom } from '@libs/contracts/models';
 
 import { applyHostMapper } from '../host-mapper';
 import { ResolvedProxyConfig } from '../resolve-proxy/interfaces';
@@ -499,15 +496,18 @@ export class XrayJsonGeneratorService {
                     )
                         selected.push(candidate);
                 }
-                return selected;
+                return selectInjectHosts(entry, selected);
             }
 
             case 'sameTagAsRecipient':
-                return candidates.filter(
-                    (h) =>
-                        h.metadata.tags.length > 0 &&
-                        host.metadata.tags.length > 0 &&
-                        h.metadata.tags.some((t) => host.metadata.tags.includes(t)),
+                return selectInjectHosts(
+                    entry,
+                    candidates.filter(
+                        (h) =>
+                            h.metadata.tags.length > 0 &&
+                            host.metadata.tags.length > 0 &&
+                            h.metadata.tags.some((t) => host.metadata.tags.includes(t)),
+                    ),
                 );
 
             case 'tagRegex': {
@@ -520,7 +520,7 @@ export class XrayJsonGeneratorService {
                         }
                     }
                 }
-                return selected;
+                return selectInjectHosts(entry, selected);
             }
         }
     }

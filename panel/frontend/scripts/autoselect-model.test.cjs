@@ -40,3 +40,42 @@ test('prefix allocation terminates for old overlapping names and probing updates
     const code = m.observerFor(JSON.stringify(existing), ['custom'], 'leastLoad');
     assert.deepEqual(m.parseTemplate(code), existing);
 });
+
+
+test('random and roundRobin remove their own unused probes but keep manual fields and other active balances', () => {
+ const base={outbounds:[],unknown:{keep:true},routing:{balancers:[{tag:'a',selector:['p'],strategy:{type:'leastLoad',settings:{expected:2,tolerance:0.3,baselines:['50ms'],costs:[{keep:true}]}}}]},burstObservatory:{subjectSelector:['p'],pingConfig:{interval:'30s'}}};
+ for(const type of ['random','roundRobin']){
+  const next=m.parseTemplate(m.setBalancerStrategy(JSON.stringify(base),0,type));
+  assert.equal(next.burstObservatory,undefined);assert.deepEqual(next.unknown,base.unknown);
+  assert.deepEqual(next.routing.balancers[0].strategy.settings,base.routing.balancers[0].strategy.settings);
+ }
+ const shared=structuredClone(base);shared.routing.balancers.push({tag:'b',selector:['p'],strategy:{type:'leastPing'}});
+ assert.deepEqual(m.parseTemplate(m.setBalancerStrategy(JSON.stringify(shared),0,'random')).burstObservatory,shared.burstObservatory);
+ const manual=structuredClone(base);manual.burstObservatory.subjectSelector.push('manual');
+ assert.deepEqual(m.parseTemplate(m.setBalancerStrategy(JSON.stringify(manual),0,'random')).burstObservatory.subjectSelector,['manual']);
+});
+
+test('leastLoad edits preserve manual settings and validate expected/tolerance/duration bounds', () => {
+ const base={routing:{balancers:[{tag:'a',selector:['p'],strategy:{type:'leastLoad',settings:{expected:1,tolerance:0.5,maxRTT:'8000ms',baselines:['50ms','1s'],costs:[{regexp:true,match:'p',value:1}]}}}]}};
+ assert.equal(m.validationPath(base),null);
+ const next=m.parseTemplate(m.editTemplate(JSON.stringify(base),['routing','balancers',0,'strategy','settings','expected'],3));
+ assert.equal(next.routing.balancers[0].strategy.settings.expected,3);assert.deepEqual(next.routing.balancers[0].strategy.settings.costs,base.routing.balancers[0].strategy.settings.costs);
+ for(const [field,value] of [['expected',-1],['expected',1.5],['tolerance',2],['maxRTT','bad'],['baselines',['no']]]){
+  const changed=structuredClone(base);changed.routing.balancers[0].strategy.settings[field]=value;
+  assert.equal(m.validationPath(changed),`routing.balancers.0.strategy.settings.${field}`);
+ }
+ for(const [field,value] of [['expected',{}],['tolerance','bad'],['maxRTT',100],['baselines','50ms'],['baselines',[{}]]]){
+  const changed=structuredClone(base);changed.routing.balancers[0].strategy.settings[field]=value;
+  assert.throws(()=>m.parseTemplate(JSON.stringify(changed)),/balancer-settings-fields/);
+ }
+});
+
+const {injectorCompletionValues}=load(path.join(__dirname,'../src/widgets/dashboard/templates/subscription-template-editor/utils/injector-completions.ts'));
+test('partial JSON supplies live host/tag completions and leaves enums to the native schema',()=>{
+ const hosts=[{uuid:'10000000-0000-4000-8000-000000000001',remark:'Netherlands',tags:['NL']},{uuid:'10000000-0000-4000-8000-000000000002',remark:'Germany',tags:['DE','NL']}];
+ const suggestions=(fragment)=>{const text='{ "remnawave": {"injectHosts": ['+fragment;return injectorCompletionValues(text,text.length,hosts)};
+ assert.deepEqual(suggestions('{"mode":"'),[]); // Native schema supplies enums without duplicates.
+ assert.deepEqual(suggestions('{"mode":"random","selector":{"type":"tags","values":["').map(x=>x.value),['DE','NL']);
+ assert.equal(suggestions('{"selector":{"type":"uuids","values":["')[0].detail,'Netherlands');
+ assert.deepEqual(injectorCompletionValues('{"unrelated":"',14,hosts),[]);
+});

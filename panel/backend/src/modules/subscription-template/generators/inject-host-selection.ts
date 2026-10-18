@@ -38,14 +38,17 @@ export function selectInjectHosts<T extends Candidate>(
     pick = randomInt,
 ): T[] {
     const selector = entry.selector;
-    if (selector.type !== 'uuids' && selector.type !== 'tags') return candidates;
+    const type = selector.type === 'tags' ? 'tags' : 'uuids';
     if (entry.mode === 'group') {
         const groups = Object.values(selector.groups ?? {})
-            .map((values) => selectPool(selector.type, values, candidates))
+            .map((values) => selectPool(type, values, candidates))
             .filter((group) => group.length > 0);
         return groups.length ? groups[pick(groups.length)] : [];
     }
-    const pool = selectPool(selector.type, selector.values ?? [], candidates);
+    const pool =
+        selector.type === 'uuids' || selector.type === 'tags'
+            ? selectPool(selector.type, selector.values ?? [], candidates)
+            : uniqueHosts(candidates);
     if (entry.mode !== 'random') return pool;
     const count = Math.min(selector.expected ?? 0, pool.length);
     for (let index = 0; index < count; index++) {

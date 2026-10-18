@@ -12,11 +12,17 @@ declare const HostSelectorSchema: z.ZodDiscriminatedUnion<[z.ZodObject<{
 }, z.core.$strip>, z.ZodObject<{
     type: z.ZodLiteral<"remarkRegex">;
     pattern: z.ZodString;
+    expected: z.ZodOptional<z.ZodInt>;
+    groups: z.ZodOptional<z.ZodUnion<readonly [z.ZodArray<z.ZodArray<z.ZodType<string, unknown, z.core.$ZodTypeInternals<string, unknown>>>>, z.ZodRecord<z.ZodString, z.ZodArray<z.ZodType<string, unknown, z.core.$ZodTypeInternals<string, unknown>>>>]>>;
 }, z.core.$strip>, z.ZodObject<{
     type: z.ZodLiteral<"tagRegex">;
     pattern: z.ZodString;
+    expected: z.ZodOptional<z.ZodInt>;
+    groups: z.ZodOptional<z.ZodUnion<readonly [z.ZodArray<z.ZodArray<z.ZodType<string, unknown, z.core.$ZodTypeInternals<string, unknown>>>>, z.ZodRecord<z.ZodString, z.ZodArray<z.ZodType<string, unknown, z.core.$ZodTypeInternals<string, unknown>>>>]>>;
 }, z.core.$strip>, z.ZodObject<{
     type: z.ZodLiteral<"sameTagAsRecipient">;
+    expected: z.ZodOptional<z.ZodInt>;
+    groups: z.ZodOptional<z.ZodUnion<readonly [z.ZodArray<z.ZodArray<z.ZodType<string, unknown, z.core.$ZodTypeInternals<string, unknown>>>>, z.ZodRecord<z.ZodString, z.ZodArray<z.ZodType<string, unknown, z.core.$ZodTypeInternals<string, unknown>>>>]>>;
 }, z.core.$strip>], "type">;
 export declare const InjectHostsEntrySchema: z.ZodObject<{
     selector: z.ZodDiscriminatedUnion<[z.ZodObject<{
@@ -32,11 +38,17 @@ export declare const InjectHostsEntrySchema: z.ZodObject<{
     }, z.core.$strip>, z.ZodObject<{
         type: z.ZodLiteral<"remarkRegex">;
         pattern: z.ZodString;
+        expected: z.ZodOptional<z.ZodInt>;
+        groups: z.ZodOptional<z.ZodUnion<readonly [z.ZodArray<z.ZodArray<z.ZodType<string, unknown, z.core.$ZodTypeInternals<string, unknown>>>>, z.ZodRecord<z.ZodString, z.ZodArray<z.ZodType<string, unknown, z.core.$ZodTypeInternals<string, unknown>>>>]>>;
     }, z.core.$strip>, z.ZodObject<{
         type: z.ZodLiteral<"tagRegex">;
         pattern: z.ZodString;
+        expected: z.ZodOptional<z.ZodInt>;
+        groups: z.ZodOptional<z.ZodUnion<readonly [z.ZodArray<z.ZodArray<z.ZodType<string, unknown, z.core.$ZodTypeInternals<string, unknown>>>>, z.ZodRecord<z.ZodString, z.ZodArray<z.ZodType<string, unknown, z.core.$ZodTypeInternals<string, unknown>>>>]>>;
     }, z.core.$strip>, z.ZodObject<{
         type: z.ZodLiteral<"sameTagAsRecipient">;
+        expected: z.ZodOptional<z.ZodInt>;
+        groups: z.ZodOptional<z.ZodUnion<readonly [z.ZodArray<z.ZodArray<z.ZodType<string, unknown, z.core.$ZodTypeInternals<string, unknown>>>>, z.ZodRecord<z.ZodString, z.ZodArray<z.ZodType<string, unknown, z.core.$ZodTypeInternals<string, unknown>>>>]>>;
     }, z.core.$strip>], "type">;
     mode: z.ZodOptional<z.ZodEnum<{
         random: "random";
@@ -67,11 +79,17 @@ export declare const RemnawaveInjectorSchema: z.ZodObject<{
         }, z.core.$strip>, z.ZodObject<{
             type: z.ZodLiteral<"remarkRegex">;
             pattern: z.ZodString;
+            expected: z.ZodOptional<z.ZodInt>;
+            groups: z.ZodOptional<z.ZodUnion<readonly [z.ZodArray<z.ZodArray<z.ZodType<string, unknown, z.core.$ZodTypeInternals<string, unknown>>>>, z.ZodRecord<z.ZodString, z.ZodArray<z.ZodType<string, unknown, z.core.$ZodTypeInternals<string, unknown>>>>]>>;
         }, z.core.$strip>, z.ZodObject<{
             type: z.ZodLiteral<"tagRegex">;
             pattern: z.ZodString;
+            expected: z.ZodOptional<z.ZodInt>;
+            groups: z.ZodOptional<z.ZodUnion<readonly [z.ZodArray<z.ZodArray<z.ZodType<string, unknown, z.core.$ZodTypeInternals<string, unknown>>>>, z.ZodRecord<z.ZodString, z.ZodArray<z.ZodType<string, unknown, z.core.$ZodTypeInternals<string, unknown>>>>]>>;
         }, z.core.$strip>, z.ZodObject<{
             type: z.ZodLiteral<"sameTagAsRecipient">;
+            expected: z.ZodOptional<z.ZodInt>;
+            groups: z.ZodOptional<z.ZodUnion<readonly [z.ZodArray<z.ZodArray<z.ZodType<string, unknown, z.core.$ZodTypeInternals<string, unknown>>>>, z.ZodRecord<z.ZodString, z.ZodArray<z.ZodType<string, unknown, z.core.$ZodTypeInternals<string, unknown>>>>]>>;
         }, z.core.$strip>], "type">;
         mode: z.ZodOptional<z.ZodEnum<{
             random: "random";

@@ -575,11 +575,11 @@ Xray JSON 的编辑和自动选择标签页共享同一草稿。修改现有池�
 
 ### 主机池和标签
 
-selector.type 支持 uuids 和精确标签 tags。all 注入所有符合条件的来源，random 最多选择 selector.expected 个不重复主机，group 从 selector.groups 选择一个非空且符合条件的组。组可以是命名对象或二维数组。省略 mode 保持旧版 all；省略 selectFrom 选择隐藏主机。访问权限、可见性、限制和排除在选择前检查。随机选择在生成订阅时发生，而非每次 VPN 连接。显式模式没有可用来源时省略该配置。
+selector.type 支持 uuids、精确标签 tags、tagRegex、remarkRegex 和 sameTagAsRecipient。所有方式均支持 all/random/group；tags 分组包含标签，其他分组包含筛选后的主机 UUID。all 注入所有符合条件的来源，random 最多选择 selector.expected 个不重复主机，group 从 selector.groups 选择一个非空且符合条件的组。组可以是命名对象或二维数组。省略 mode 保持旧版 all；省略 selectFrom 选择隐藏主机。访问权限、可见性、限制和排除在选择前检查。随机选择在生成订阅时发生，而非每次 VPN 连接。显式模式没有可用来源时省略该配置。
 
 ### 分配与均衡
 
-remnawave.assignTo.hosts 将模板分配给接收主机；assignTo.tags 也适用于以后具有这些标签的主机。优先级为主机卡片的显式模板、模板中的 UUID 分配、标签分配。冲突时采用列表中最靠前的模板。分配不会扩大用户访问权限。客户端均衡器仅使用已选出站，支持 random、roundRobin、leastPing 和 leastLoad。后两者需要观测；fallbackTag 指定备用出站。
+remnawave.assignTo.hosts 将模板分配给接收主机；assignTo.tags 也适用于以后具有这些标签的主机。优先级为主机卡片的显式模板、模板中的 UUID 分配、标签分配。冲突时采用列表中最靠前的模板。分配不会扩大用户访问权限。客户端均衡器仅使用已选出站，支持 random、roundRobin、leastPing 和 leastLoad。后两者需要观测；random 和 roundRobin 不需要探测。leastLoad 界面编辑当前 expected、tolerance、baselines 和 maxRTT，并保留其他字段。fallbackTag 指定备用出站。
 
 ### 历史与恢复
 

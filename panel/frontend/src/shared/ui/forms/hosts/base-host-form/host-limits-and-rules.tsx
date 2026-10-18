@@ -52,7 +52,7 @@ function TagLimitSwitch({
             label={label}
             description={hasTags ? description : uiText('assign-a-tag-to-this-host-first-636effb')}
             disabled={!hasTags}
-            checked={hasTags && enabled}
+            checked={enabled}
             onChange={(event) => form.setFieldValue(field, event.currentTarget.checked)}
         />
     )
@@ -198,7 +198,7 @@ export function HostLimitsAndRules() {
                                 : uiText('the-host-s-own-quota-uses-1-218665d')
                         }
                         disabled={!hasTags}
-                        checked={hasTags && multiplier === null}
+                        checked={multiplier === null}
                         onChange={(event) =>
                             form.setFieldValue(
                                 'trafficMultiplier',

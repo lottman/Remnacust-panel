@@ -30,13 +30,19 @@ const HostSelectorSchema = z.discriminatedUnion('type', [
     z.object({
         type: z.literal('remarkRegex'),
         pattern: z.string().min(1),
+        expected: z.int().min(1).max(1000).optional(),
+        groups: groups(z.uuid()).optional(),
     }),
     z.object({
         type: z.literal('tagRegex'),
         pattern: z.string().min(1),
+        expected: z.int().min(1).max(1000).optional(),
+        groups: groups(z.uuid()).optional(),
     }),
     z.object({
         type: z.literal('sameTagAsRecipient'),
+        expected: z.int().min(1).max(1000).optional(),
+        groups: groups(z.uuid()).optional(),
     }),
 ]);
 
@@ -53,11 +59,11 @@ export const InjectHostsEntrySchema = z
         const selector = entry.selector;
         const pooled = selector.type === 'uuids' || selector.type === 'tags';
         if (entry.mode === 'group') {
-            if (!pooled || !selector.groups)
+            if (!selector.groups)
                 context.addIssue({
                     code: 'custom',
                     path: ['selector', 'groups'],
-                    message: 'Group mode requires UUID or tag groups',
+                    message: 'Group mode requires host groups (tag groups for a tag selector)',
                 });
         } else if (pooled && !selector.values?.length) {
             context.addIssue({
@@ -66,11 +72,11 @@ export const InjectHostsEntrySchema = z
                 message: 'Select at least one host or tag',
             });
         }
-        if (entry.mode === 'random' && (!pooled || !selector.expected))
+        if (entry.mode === 'random' && !selector.expected)
             context.addIssue({
                 code: 'custom',
                 path: ['selector', 'expected'],
-                message: 'Random mode requires a UUID or tag pool and expected count',
+                message: 'Random mode requires an expected count',
             });
     });
 

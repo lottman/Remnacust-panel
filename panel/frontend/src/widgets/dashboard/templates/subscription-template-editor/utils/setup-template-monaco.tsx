@@ -1,3 +1,5 @@
+import type { editor, IPosition } from 'monaco-editor'
+
 import { Monaco } from '@monaco-editor/react'
 import {
     GetHostsCommand,
@@ -6,12 +8,15 @@ import {
 } from '@remnawave/backend-contract'
 import axios from 'axios'
 import consola from 'consola'
+import { getLocation } from 'jsonc-parser'
 import { configureMonacoYaml, MonacoYaml, MonacoYamlOptions, SchemasSettings } from 'monaco-yaml'
 import { app } from 'src/config'
 
 import { translateUiText as uiText } from '@shared/i18n/interface-text'
-import { injectorJsonSchema } from './injector-json-schema'
 import { registerJsonSchema } from '@shared/utils/monaco/json-schema-registry'
+
+import { injectorCompletionValues } from './injector-completions'
+import { injectorJsonSchema } from './injector-json-schema'
 
 type Host = GetHostsCommand.Response['response'][number]
 
@@ -35,6 +40,7 @@ const YAML_OPTIONS: MonacoYamlOptions = {
 }
 
 let monacoYaml: MonacoYaml | undefined
+let injectorCompletion: { dispose(): void } | undefined
 
 const configureYaml = (monaco: Monaco, schemas?: SchemasSettings[]) => {
     const options: MonacoYamlOptions = { ...YAML_OPTIONS, schemas }
@@ -46,7 +52,6 @@ const configureYaml = (monaco: Monaco, schemas?: SchemasSettings[]) => {
 
     monacoYaml = configureMonacoYaml(monaco, options)
 }
-
 
 function getHostStatus(host: Host): { icon: string; label: string } {
     if (host.isDisabled)
@@ -124,6 +129,42 @@ export const configureMonaco = async (
         }
 
         if (language === 'json') {
+            injectorCompletion?.dispose()
+            injectorCompletion = monaco.languages.registerCompletionItemProvider('json', {
+                triggerCharacters: ['"'],
+                provideCompletionItems(model: editor.ITextModel, position: IPosition) {
+                    if (!model.uri.toString().startsWith('subscription-template://'))
+                        return { suggestions: [] }
+                    const text = model.getValue()
+                    const offset = model.getOffsetAt(position)
+                    const previous = getLocation(text, offset).previousNode
+                    const replace =
+                        previous?.type === 'string' &&
+                        previous.offset <= offset &&
+                        offset <= previous.offset + previous.length
+                    const start = replace ? model.getPositionAt(previous.offset) : position
+                    const end = replace
+                        ? model.getPositionAt(previous.offset + previous.length)
+                        : position
+                    return {
+                        suggestions: injectorCompletionValues(text, offset, hosts).map(
+                            ({ value, detail }) => ({
+                                label: value,
+                                detail: detail === value ? undefined : detail,
+                                filterText: JSON.stringify(value),
+                                insertText: JSON.stringify(value),
+                                kind: monaco.languages.CompletionItemKind.EnumMember,
+                                range: {
+                                    startLineNumber: start.lineNumber,
+                                    startColumn: start.column,
+                                    endLineNumber: end.lineNumber,
+                                    endColumn: end.column
+                                }
+                            })
+                        )
+                    }
+                }
+            })
             const hostUuids = hosts.map((h) => h.uuid)
             const hostDescriptions = hosts.map(buildMarkdownDescription)
 

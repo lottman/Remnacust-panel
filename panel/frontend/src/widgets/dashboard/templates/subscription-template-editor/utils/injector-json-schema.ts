@@ -3,11 +3,9 @@
 export function injectorJsonSchema(hostUuids: string[], descriptions: string[], tags: string[]) {
     const host = {
         type: 'string',
-        format: 'uuid',
-        examples: hostUuids,
-        markdownEnumDescriptions: descriptions
+        format: 'uuid'
     }
-    const tag = { type: 'string', minLength: 1, maxLength: 255, examples: tags }
+    const tag = { type: 'string', minLength: 1, maxLength: 255 }
     const groups = (item: object) => ({
         anyOf: [
             {
@@ -44,8 +42,20 @@ export function injectorJsonSchema(hostUuids: string[], descriptions: string[], 
                     assignTo: {
                         type: 'object',
                         properties: {
-                            hosts: { type: 'array', maxItems: 10000, items: host },
-                            tags: { type: 'array', maxItems: 10000, items: tag }
+                            hosts: {
+                                type: 'array',
+                                maxItems: 10000,
+                                items: {
+                                    ...host,
+                                    examples: hostUuids,
+                                    markdownEnumDescriptions: descriptions
+                                }
+                            },
+                            tags: {
+                                type: 'array',
+                                maxItems: 10000,
+                                items: { ...tag, examples: tags }
+                            }
                         },
                         additionalProperties: false
                     },
@@ -71,14 +81,28 @@ export function injectorJsonSchema(hostUuids: string[], descriptions: string[], 
                                             type: 'object',
                                             properties: {
                                                 type: { const: type },
-                                                pattern: { type: 'string', minLength: 1 }
+                                                pattern: { type: 'string', minLength: 1 },
+                                                expected: {
+                                                    type: 'integer',
+                                                    minimum: 1,
+                                                    maximum: 1000
+                                                },
+                                                groups: groups(host)
                                             },
                                             required: ['type', 'pattern'],
                                             additionalProperties: false
                                         })),
                                         {
                                             type: 'object',
-                                            properties: { type: { const: 'sameTagAsRecipient' } },
+                                            properties: {
+                                                type: { const: 'sameTagAsRecipient' },
+                                                expected: {
+                                                    type: 'integer',
+                                                    minimum: 1,
+                                                    maximum: 1000
+                                                },
+                                                groups: groups(host)
+                                            },
                                             required: ['type'],
                                             additionalProperties: false
                                         }
@@ -96,7 +120,6 @@ export function injectorJsonSchema(hostUuids: string[], descriptions: string[], 
                                     then: {
                                         properties: {
                                             selector: {
-                                                properties: { type: { enum: ['uuids', 'tags'] } },
                                                 required: ['groups']
                                             }
                                         }
@@ -123,8 +146,7 @@ export function injectorJsonSchema(hostUuids: string[], descriptions: string[], 
                                     then: {
                                         properties: {
                                             selector: {
-                                                properties: { type: { enum: ['uuids', 'tags'] } },
-                                                required: ['expected', 'values']
+                                                required: ['expected']
                                             }
                                         }
                                     }

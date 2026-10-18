@@ -3331,7 +3331,15 @@
         "validation-help": "Check the indicated path: members, group, count or tag must be valid. Other settings have not been removed.",
         "legacy-tags": "This existing pool uses host remarks or tags as outbound names. To use a prefix balancer, explicitly switch to prefix naming.",
         "use-prefix": "Use prefix names",
-        "balancer-name": "Balancer name"
+        "balancer-name": "Balancer name",
+        "least-load-help": "Existing values come from this JSON. Empty fields keep Xray defaults; editing changes only the selected setting.",
+        "least-load-expected": "Expected candidates (expected)",
+        "least-load-tolerance": "Allowed failure rate (tolerance, 0–1)",
+        "least-load-max-rtt": "Maximum RTT (maxRTT)",
+        "least-load-baselines": "RTT thresholds (baselines)",
+        "least-load-baselines-help": "Enter durations, for example 50ms, 100ms, 1s. Press Enter after each value.",
+        "probes-not-needed": "Random and round-robin balancing do not need connection probes. Existing manually configured probes remain in the code until you remove them.",
+        "remove-unused-probes": "Remove unused probes"
     },
     "template-history": {
         "title": "History",

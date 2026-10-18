@@ -2,6 +2,8 @@ import type { GetHostsCommand } from '@remnawave/backend-contract'
 
 import {
     Alert,
+    Accordion,
+    TagsInput,
     Badge,
     Button,
     Code,
@@ -26,6 +28,9 @@ import {
     renameBalancer,
     editTemplate,
     observerFor,
+    needsProbes,
+    setBalancerStrategy,
+    removeUnusedProbes,
     parseTemplate,
     poolsOf,
     removeBalancer,
@@ -147,12 +152,18 @@ function PoolCard({
                                       }
                                     : {
                                           type: value,
+                                          ...(mode === 'random'
+                                              ? { expected: selector.expected ?? 3 }
+                                              : {}),
+                                          ...(mode === 'group'
+                                              ? { groups: { 'group-1': [] } }
+                                              : {}),
                                           ...(['tagRegex', 'remarkRegex'].includes(value)
                                               ? { pattern: '' }
                                               : {})
                                       }
                             )
-                            return pooled ? next : updatePool(next, index, ['mode'], 'all')
+                            return next
                         })
                     }
                 />
@@ -162,8 +173,7 @@ function PoolCard({
                     allowDeselect={false}
                     data={(['all', 'random', 'group'] as const).map((value) => ({
                         value,
-                        label: t(`autoselect.mode-${value}`),
-                        disabled: !['uuids', 'tags'].includes(type) && value !== 'all'
+                        label: t(`autoselect.mode-${value}`)
                     }))}
                     onChange={(value) => value && selectMode(value)}
                 />
@@ -379,18 +389,7 @@ function BalancerCard({
                         label: t(`autoselect.strategy-${value}`, { defaultValue: value })
                     }))}
                     onChange={(value) =>
-                        value &&
-                        edit((text) =>
-                            observerFor(
-                                editTemplate(
-                                    text,
-                                    ['routing', 'balancers', index, 'strategy', 'type'],
-                                    value
-                                ),
-                                values,
-                                value
-                            )
-                        )
+                        value && edit((text) => setBalancerStrategy(text, index, value))
                     }
                 />
                 <TextInput
@@ -402,6 +401,68 @@ function BalancerCard({
                     }
                 />
             </div>
+            {strategy === 'leastLoad' && (
+                <Stack gap="md" mt="md">
+                    <Text size="xs" c="dimmed">
+                        {t('autoselect.least-load-help')}
+                    </Text>
+                    <div className={styles.fields}>
+                        <NumberInput
+                            label={t('autoselect.least-load-expected')}
+                            min={0}
+                            max={2147483647}
+                            allowDecimal={false}
+                            allowNegative={false}
+                            value={balance.strategy?.settings?.expected ?? ''}
+                            placeholder="0"
+                            onChange={(value) =>
+                                patch(
+                                    ['strategy', 'settings', 'expected'],
+                                    value === '' ? undefined : Number(value)
+                                )
+                            }
+                        />
+                        <NumberInput
+                            label={t('autoselect.least-load-tolerance')}
+                            min={0}
+                            max={1}
+                            step={0.05}
+                            decimalScale={6}
+                            allowNegative={false}
+                            value={balance.strategy?.settings?.tolerance ?? ''}
+                            placeholder="0"
+                            onChange={(value) =>
+                                patch(
+                                    ['strategy', 'settings', 'tolerance'],
+                                    value === '' ? undefined : Number(value)
+                                )
+                            }
+                        />
+                        <TextInput
+                            label={t('autoselect.least-load-max-rtt')}
+                            value={balance.strategy?.settings?.maxRTT ?? ''}
+                            placeholder="0s"
+                            onChange={(event) =>
+                                patch(
+                                    ['strategy', 'settings', 'maxRTT'],
+                                    event.currentTarget.value || undefined
+                                )
+                            }
+                        />
+                    </div>
+                    <TagsInput
+                        label={t('autoselect.least-load-baselines')}
+                        description={t('autoselect.least-load-baselines-help')}
+                        value={balance.strategy?.settings?.baselines ?? []}
+                        onChange={(value) =>
+                            patch(
+                                ['strategy', 'settings', 'baselines'],
+                                value.length ? value : undefined
+                            )
+                        }
+                    />
+                </Stack>
+            )}
             <MultiSelect
                 mt="md"
                 searchable
@@ -539,45 +600,58 @@ export function AutoselectPanel({
                     />
                 ))}
                 {pools.length > 0 && <Alert variant="light">{t('autoselect.access-help')}</Alert>}
-                <Paper withBorder p="md">
-                    <Title order={4} mb="sm">
-                        {t('autoselect.assignment')}
-                    </Title>
-                    <Text size="sm" c="dimmed" mb="md">
-                        {t('autoselect.assignment-help')}
-                    </Text>
-                    <Stack gap="md">
-                        <MultiSelect
-                            searchable
-                            clearable
-                            limit={50}
-                            label={t('autoselect.assignment-hosts')}
-                            data={optionsWithSaved(options, assignment.hosts ?? [])}
-                            value={assignment.hosts ?? []}
-                            onChange={(value) =>
-                                edit((text) =>
-                                    editTemplate(text, ['remnawave', 'assignTo', 'hosts'], value)
-                                )
-                            }
-                        />
-                        <MultiSelect
-                            searchable
-                            clearable
-                            limit={50}
-                            label={t('autoselect.assignment-tags')}
-                            data={optionsWithSaved(tags, assignment.tags ?? [])}
-                            value={assignment.tags ?? []}
-                            onChange={(value) =>
-                                edit((text) =>
-                                    editTemplate(text, ['remnawave', 'assignTo', 'tags'], value)
-                                )
-                            }
-                        />
-                        <Text size="xs" c="dimmed">
-                            {t('autoselect.assignment-priority')}
-                        </Text>
-                    </Stack>
-                </Paper>
+                <Accordion variant="contained">
+                    <Accordion.Item value="assignment">
+                        <Accordion.Control>
+                            {t('autoselect.assignment')} ·{' '}
+                            {(assignment.hosts?.length ?? 0) + (assignment.tags?.length ?? 0)}
+                        </Accordion.Control>
+                        <Accordion.Panel>
+                            <Text size="sm" c="dimmed" mb="md">
+                                {t('autoselect.assignment-help')}
+                            </Text>
+                            <Stack gap="md">
+                                <MultiSelect
+                                    searchable
+                                    clearable
+                                    limit={50}
+                                    label={t('autoselect.assignment-hosts')}
+                                    data={optionsWithSaved(options, assignment.hosts ?? [])}
+                                    value={assignment.hosts ?? []}
+                                    onChange={(value) =>
+                                        edit((text) =>
+                                            editTemplate(
+                                                text,
+                                                ['remnawave', 'assignTo', 'hosts'],
+                                                value
+                                            )
+                                        )
+                                    }
+                                />
+                                <MultiSelect
+                                    searchable
+                                    clearable
+                                    limit={50}
+                                    label={t('autoselect.assignment-tags')}
+                                    data={optionsWithSaved(tags, assignment.tags ?? [])}
+                                    value={assignment.tags ?? []}
+                                    onChange={(value) =>
+                                        edit((text) =>
+                                            editTemplate(
+                                                text,
+                                                ['remnawave', 'assignTo', 'tags'],
+                                                value
+                                            )
+                                        )
+                                    }
+                                />
+                                <Text size="xs" c="dimmed">
+                                    {t('autoselect.assignment-priority')}
+                                </Text>
+                            </Stack>
+                        </Accordion.Panel>
+                    </Accordion.Item>
+                </Accordion>
                 {balancers.length > 0 && (
                     <>
                         <Title order={3}>{t('autoselect.balancers')}</Title>
@@ -592,61 +666,75 @@ export function AutoselectPanel({
                         ))}
                     </>
                 )}
-                {(config.observatory || config.burstObservatory) && (
-                    <Paper withBorder p="md">
-                        <Title order={4} mb="sm">
-                            {t('autoselect.probes')}
-                        </Title>
-                        <Text size="sm" c="dimmed" mb="md">
-                            {t('autoselect.probes-help')}
-                        </Text>
-                        {['observatory', 'burstObservatory']
-                            .filter((key) => config[key])
-                            .map((key) => (
-                                <Stack key={key} gap="sm" mt="sm">
-                                    <Badge variant="light">{key}</Badge>
-                                    <TextInput
-                                        label={t('autoselect.probe-url')}
-                                        value={
-                                            key === 'observatory'
-                                                ? (config[key].probeUrl ?? '')
-                                                : (config[key].pingConfig?.destination ?? '')
-                                        }
-                                        onChange={(event) =>
-                                            edit((text) =>
-                                                editTemplate(
-                                                    text,
-                                                    key === 'observatory'
-                                                        ? [key, 'probeUrl']
-                                                        : [key, 'pingConfig', 'destination'],
-                                                    event.currentTarget.value
+                {(config.observatory || config.burstObservatory) &&
+                    !balancers.some((balance) => needsProbes(balance.strategy?.type)) && (
+                        <Alert>
+                            <Text size="sm">{t('autoselect.probes-not-needed')}</Text>
+                            <Button
+                                mt="sm"
+                                variant="light"
+                                onClick={() => edit(removeUnusedProbes)}
+                            >
+                                {t('autoselect.remove-unused-probes')}
+                            </Button>
+                        </Alert>
+                    )}
+                {(config.observatory || config.burstObservatory) &&
+                    balancers.some((balance) => needsProbes(balance.strategy?.type)) && (
+                        <Paper withBorder p="md">
+                            <Title order={4} mb="sm">
+                                {t('autoselect.probes')}
+                            </Title>
+                            <Text size="sm" c="dimmed" mb="md">
+                                {t('autoselect.probes-help')}
+                            </Text>
+                            {['observatory', 'burstObservatory']
+                                .filter((key) => config[key])
+                                .map((key) => (
+                                    <Stack key={key} gap="sm" mt="sm">
+                                        <Badge variant="light">{key}</Badge>
+                                        <TextInput
+                                            label={t('autoselect.probe-url')}
+                                            value={
+                                                key === 'observatory'
+                                                    ? (config[key].probeUrl ?? '')
+                                                    : (config[key].pingConfig?.destination ?? '')
+                                            }
+                                            onChange={(event) =>
+                                                edit((text) =>
+                                                    editTemplate(
+                                                        text,
+                                                        key === 'observatory'
+                                                            ? [key, 'probeUrl']
+                                                            : [key, 'pingConfig', 'destination'],
+                                                        event.currentTarget.value
+                                                    )
                                                 )
-                                            )
-                                        }
-                                    />
-                                    <TextInput
-                                        label={t('autoselect.probe-interval')}
-                                        value={
-                                            key === 'observatory'
-                                                ? (config[key].probeInterval ?? '')
-                                                : (config[key].pingConfig?.interval ?? '')
-                                        }
-                                        onChange={(event) =>
-                                            edit((text) =>
-                                                editTemplate(
-                                                    text,
-                                                    key === 'observatory'
-                                                        ? [key, 'probeInterval']
-                                                        : [key, 'pingConfig', 'interval'],
-                                                    event.currentTarget.value
+                                            }
+                                        />
+                                        <TextInput
+                                            label={t('autoselect.probe-interval')}
+                                            value={
+                                                key === 'observatory'
+                                                    ? (config[key].probeInterval ?? '')
+                                                    : (config[key].pingConfig?.interval ?? '')
+                                            }
+                                            onChange={(event) =>
+                                                edit((text) =>
+                                                    editTemplate(
+                                                        text,
+                                                        key === 'observatory'
+                                                            ? [key, 'probeInterval']
+                                                            : [key, 'pingConfig', 'interval'],
+                                                        event.currentTarget.value
+                                                    )
                                                 )
-                                            )
-                                        }
-                                    />
-                                </Stack>
-                            ))}
-                    </Paper>
-                )}
+                                            }
+                                        />
+                                    </Stack>
+                                ))}
+                        </Paper>
+                    )}
                 <Paper withBorder p="md">
                     <Switch
                         label={t('autoselect.recipient-outbound')}

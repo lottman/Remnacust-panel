@@ -8,6 +8,7 @@ const { InjectHostsEntrySchema, RemnawaveInjectorSchema } = load(path.join(__dir
 const { indexXrayTemplateAssignments, assignedXrayTemplate } = source('modules/hosts/utils/xray-template-assignments.ts');
 const { XrayJsonGeneratorService } = source('modules/subscription-template/generators/xray-json.generator.service.ts', {
     './inject-host-selection': { selectInjectHosts }, '../host-mapper': { applyHostMapper: value => value },
+    '@common/utils/bounded-regex': { configuredRegex: { test: async (pattern,value) => new RegExp(pattern).test(value) } },
     '@common/utils': { isNonEmptyObject: value => value && Object.keys(value).length > 0 }
 });
 const id = n => `10000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
@@ -35,7 +36,7 @@ test('groups accept named and array shapes; inaccessible groups are excluded bef
 });
 test('invalid modes, pools and counts fail validation; assignment lists use UUIDs', () => {
     for (const expected of [0, 1.5, 1001]) assert.equal(InjectHostsEntrySchema.safeParse({ ...pool, selector: { ...pool.selector, expected } }).success, false);
-    for (const entry of [{ ...pool, selector: { type: 'uuids', values: [id(1)] } }, { ...pool, mode: 'group' }, { ...pool, selector: { type: 'tagRegex', pattern: 'LTE', expected: 2 } }]) assert.equal(InjectHostsEntrySchema.safeParse(entry).success, false);
+    for (const entry of [{ ...pool, selector: { type: 'uuids', values: [id(1)] } }, { ...pool, mode: 'group' }, { ...pool, selector: { type: 'tagRegex', pattern: 'LTE' } }]) assert.equal(InjectHostsEntrySchema.safeParse(entry).success, false);
     assert.equal(RemnawaveInjectorSchema.safeParse({ assignTo: { hosts: ['bad'] } }).success, false);
     assert.equal(InjectHostsEntrySchema.safeParse({ mode: 'group', tagPrefix: 'g', selector: { type: 'tags', groups: JSON.parse('{"__proto__":["LTE"]}') } }).success, false);
 });
@@ -58,4 +59,20 @@ test('template assignments prefer recipient UUID, then template order for tags, 
     assert.equal(assignedXrayTemplate({ uuid: id(10), tags: ['YC', 'VK'] }, index), first);
     assert.equal(assignedXrayTemplate({ uuid: id(11), tags: ['YC'] }, index), second);
     assert.equal(assignedXrayTemplate({ uuid: id(12), tags: [] }, index), null);
+});
+
+
+test('regex and recipient-tag selectors support random and UUID groups after eligibility filtering', async () => {
+ const generator = new XrayJsonGeneratorService({});
+ const recipient = host(0, ['LTE']);
+ for(const selector of [{type:'tagRegex',pattern:'^LTE$'}, {type:'remarkRegex',pattern:'^[124]$'}, {type:'sameTagAsRecipient'}]) {
+  const random={mode:'random',tagPrefix:'g',selector:{...selector,expected:2}};
+  assert.equal(InjectHostsEntrySchema.safeParse(random).success,true);
+  const sampled=await generator.resolveHosts(random,'HIDDEN',recipient,[recipient,...candidates],Date.now()+10000);
+  assert.equal(sampled.length,2);assert.equal(new Set(sampled.map(h=>h.metadata.uuid)).size,2);
+  assert.ok(sampled.every(h=>[id(1),id(2),id(4)].includes(h.metadata.uuid)));
+  const grouped={...random,mode:'group',selector:{...selector,groups:{denied:[id(90)],allowed:[id(1),id(4)]}}};
+  assert.equal(InjectHostsEntrySchema.safeParse(grouped).success,true);
+  assert.deepEqual((await generator.resolveHosts(grouped,'HIDDEN',recipient,candidates,Date.now()+10000)).map(h=>h.metadata.uuid),[id(1),id(4)]);
+ }
 });

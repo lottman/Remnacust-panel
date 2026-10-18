@@ -76,7 +76,7 @@ export function parseTemplate(text: string): JsonObject {
         )
             throw new Error('pool-groups')
     }
-    for (const balance of config.routing?.balancers ?? [])
+    for (const balance of config.routing?.balancers ?? []) {
         if (
             !balance ||
             typeof balance !== 'object' ||
@@ -85,6 +85,22 @@ export function parseTemplate(text: string): JsonObject {
                     balance.selector.some((value: unknown) => typeof value !== 'string')))
         )
             throw new Error('balancer-object')
+        const settings = balance.strategy?.settings
+        if (balance.strategy?.type === 'leastLoad' && settings !== undefined) {
+            if (!settings || typeof settings !== 'object' || Array.isArray(settings))
+                throw new Error('balancer-settings-object')
+            if (
+                ['expected', 'tolerance'].some(
+                    (key) => settings[key] !== undefined && typeof settings[key] !== 'number'
+                ) ||
+                (settings.maxRTT !== undefined && typeof settings.maxRTT !== 'string') ||
+                (settings.baselines !== undefined &&
+                    (!Array.isArray(settings.baselines) ||
+                        settings.baselines.some((value: unknown) => typeof value !== 'string')))
+            )
+                throw new Error('balancer-settings-fields')
+        }
+    }
     return config
 }
 
@@ -189,6 +205,50 @@ export function observerFor(text: string, prefixes: string[], strategy: string):
         if (!selected.some((value) => prefix.startsWith(value)))
             next = append(next, [key, 'subjectSelector'], prefix)
     return next
+}
+
+export const needsProbes = (strategy: string) => ['leastPing', 'leastLoad'].includes(strategy)
+
+export function setBalancerStrategy(text: string, index: number, strategy: string): string {
+    const before = parseTemplate(text)
+    const oldSelectors: string[] = before.routing.balancers[index].selector ?? []
+    let next = editTemplate(text, ['routing', 'balancers', index, 'strategy', 'type'], strategy)
+    if (needsProbes(strategy)) return observerFor(next, oldSelectors, strategy)
+    const after = parseTemplate(next)
+    const required: string[] = (after.routing.balancers ?? [])
+        .filter((balance: JsonObject) => needsProbes(balance.strategy?.type))
+        .flatMap((balance: JsonObject) => balance.selector ?? [])
+    for (const key of ['observatory', 'burstObservatory']) {
+        const selected = after[key]?.subjectSelector
+        if (!Array.isArray(selected)) continue
+        // Remove only selectors belonging to this balancer, preserving other probes and settings.
+        const retained = selected.filter(
+            (prefix: string) =>
+                !oldSelectors.includes(prefix) || required.some((value) => value.startsWith(prefix))
+        )
+        if (retained.length !== selected.length)
+            next = editTemplate(
+                next,
+                retained.length ? [key, 'subjectSelector'] : [key],
+                retained.length ? retained : undefined
+            )
+    }
+    return next
+}
+
+export function removeUnusedProbes(text: string): string {
+    const config = parseTemplate(text)
+    if (
+        (config.routing?.balancers ?? []).some((balance: JsonObject) =>
+            needsProbes(balance.strategy?.type)
+        )
+    )
+        return text
+    return editTemplate(
+        editTemplate(text, ['observatory'], undefined),
+        ['burstObservatory'],
+        undefined
+    )
 }
 
 export function addBalancer(text: string, prefix: string, strategy = 'leastPing'): string {
@@ -363,6 +423,34 @@ export function validationPath(config: JsonObject): string | null {
         balanceTags.add(balancer.tag)
         if (!balancer.tag || !Array.isArray(balancer.selector) || !balancer.selector.length)
             return `routing.balancers.${index}`
+        if (balancer.strategy?.type === 'leastLoad' && balancer.strategy.settings !== undefined) {
+            const settings = balancer.strategy.settings
+            const path = `routing.balancers.${index}.strategy.settings`
+            if (!settings || typeof settings !== 'object' || Array.isArray(settings)) return path
+            if (
+                settings.expected !== undefined &&
+                (!Number.isInteger(settings.expected) ||
+                    settings.expected < 0 ||
+                    settings.expected > 2147483647)
+            )
+                return `${path}.expected`
+            if (
+                settings.tolerance !== undefined &&
+                (typeof settings.tolerance !== 'number' ||
+                    settings.tolerance < 0 ||
+                    settings.tolerance > 1)
+            )
+                return `${path}.tolerance`
+            const duration = (value: unknown) =>
+                typeof value === 'string' &&
+                /^(?:0|(?:(?:\d+(?:\.\d*)?|\.\d+)(?:ns|us|µs|μs|ms|s|m|h))+)$/.test(value)
+            if (settings.maxRTT !== undefined && !duration(settings.maxRTT)) return `${path}.maxRTT`
+            if (
+                settings.baselines !== undefined &&
+                (!Array.isArray(settings.baselines) || !settings.baselines.every(duration))
+            )
+                return `${path}.baselines`
+        }
     }
     return null
 }

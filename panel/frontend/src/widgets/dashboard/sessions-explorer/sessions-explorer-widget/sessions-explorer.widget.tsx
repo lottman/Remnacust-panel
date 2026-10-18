@@ -1,5 +1,6 @@
 import {
     ActionIcon,
+    Alert,
     Affix,
     Badge,
     Center,
@@ -34,7 +35,6 @@ import {
 import { VirtuosoGrid, VirtuosoGridHandle } from 'react-virtuoso'
 
 import { useGetNodes } from '@shared/api/hooks'
-import { EmptyPageLayout } from '@shared/ui/layouts/empty-page'
 import { MetricCardShared } from '@shared/ui/metrics/metric-card'
 import { PageHeaderShared } from '@shared/ui/page-header'
 import { RefreshButton, RefreshActionIcon } from '@shared/ui/refresh-control'
@@ -224,7 +224,19 @@ function LiveSessionsExplorer() {
                 </Group>
             )}
 
-            {aggregatedUsers.length === 0 && <EmptyPageLayout icon={<TbRadar size="3rem" />} />}
+            {stats && (stats.nodesFailed > 0 || stats.unmappedUsers > 0) && (
+                <Alert color="yellow" icon={<TbAlertTriangle size={20} />}>
+                    {t('session-recording.partial-scan', {
+                        failed: stats.nodesFailed,
+                        unmapped: stats.unmappedUsers
+                    })}
+                </Alert>
+            )}
+            {aggregatedUsers.length === 0 && (
+                <Alert color="blue" icon={<TbRadar size={20} />}>
+                    {t('session-recording.empty-scan')}
+                </Alert>
+            )}
 
             {isSearchActive && filteredUsers.length === 0 && (
                 <SectionCard.Root gap="sm">

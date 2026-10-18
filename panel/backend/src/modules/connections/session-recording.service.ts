@@ -255,6 +255,10 @@ export class SessionRecordingService implements OnApplicationBootstrap, OnApplic
                             if (result?.isFailed) throw new Error('Failed job');
                             if (result?.isCompleted) {
                                 if (!result.result?.success) throw new Error('Failed node');
+                                if (result.result.unmappedUsers) {
+                                    state.failedNodePolls++;
+                                    if (state.lastFailures.length < 100) state.lastFailures.push(node.uuid);
+                                }
                                 const observedAt = new Date().toISOString();
                                 const incoming = result.result.users.flatMap((user) =>
                                     user.ips.map((ip) => ({

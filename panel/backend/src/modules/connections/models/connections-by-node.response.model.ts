@@ -13,6 +13,7 @@ export class ConnectionsByNodeResultResponseModel {
     public readonly isFailed: boolean;
     public readonly result: {
         success: boolean;
+        unmappedUsers: number;
         nodeUuid: string;
         users: IGetUserIpListItem[];
     } | null;
@@ -20,6 +21,6 @@ export class ConnectionsByNodeResultResponseModel {
     constructor(data: IGetUsersIpsListResult) {
         this.isCompleted = data.isCompleted;
         this.isFailed = data.isFailed;
-        this.result = data.result;
+        this.result = data.result ? { ...data.result, unmappedUsers: data.result.unmappedUsers ?? 0 } : null;
     }
 }

@@ -8,6 +8,7 @@ import { QueryBus } from '@nestjs/cqrs';
 import { AxiosService } from '@common/axios/axios.service';
 import { TypedConfigService } from '@common/config/app-config';
 import { RawCacheService } from '@common/raw-cache';
+import { sessionObservations } from '@common/utils/session-observations';
 import { EXPORT_TO_STREAM_KEYS } from '@libs/contracts/constants';
 import { NODE_CONNECTIONS_STREAM_MESSAGE_VERSION } from '@libs/contracts/models';
 
@@ -207,10 +208,7 @@ export class QueryNodesQueueProcessor extends WorkerHost implements OnApplicatio
             return {
                 success: true,
                 nodeUuid: job.data.nodeUuid,
-                users: result.response.users
-                    .map((user) => ({ ...user, userId: Number(user.userId) }))
-                    .filter((user) => Number.isFinite(user.userId))
-                    .sort((a, b) => a.userId - b.userId),
+                ...sessionObservations(result.response.users),
             };
         } catch (error) {
             this.logger.error(`Failed to fetch users IPs list: ${error}`);

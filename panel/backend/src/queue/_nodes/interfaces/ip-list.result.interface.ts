@@ -34,5 +34,6 @@ export interface IGetUsersIpsListResult {
         success: boolean;
         nodeUuid: string;
         users: IGetUserIpListItem[];
+        unmappedUsers?: number;
     } | null;
 }

@@ -20,6 +20,7 @@ var ConnectionsByNodeResultCommand;
                 .object({
                 success: zod_1.z.boolean(),
                 nodeUuid: zod_1.z.uuid(),
+                unmappedUsers: zod_1.z.number().int().nonnegative().optional().default(0),
                 users: zod_1.z.array(zod_1.z.object({
                     userId: zod_1.z.number(),
                     ips: zod_1.z.array(zod_1.z.object({

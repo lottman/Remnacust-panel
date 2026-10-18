@@ -7,6 +7,36 @@ import { Injectable, ServiceUnavailableException, ConflictException } from '@nes
 
 import { TypedConfigService } from '@common/config/app-config';
 
+const updateProgressSchema = z.object({
+    stage: z.enum([
+        'checking',
+        'download',
+        'preparation',
+        'backup',
+        'applying',
+        'readiness',
+        'verifying',
+        'cleanup'
+    ]),
+    stageIndex: z.number().int().min(1).max(8),
+    stageCount: z.literal(8),
+    completedStages: z.number().int().min(0).max(8),
+    percent: z.number().min(0).max(100),
+    startedAt: z.number().nonnegative(),
+    updatedAt: z.number().nonnegative(),
+    elapsedSeconds: z.number().nonnegative(),
+    estimatedRemainingSeconds: z.number().nonnegative().nullable(),
+    events: z
+        .array(
+            z.object({
+                at: z.number().nonnegative(),
+                label: z.string().max(120),
+                event: z.enum(['running', 'done', 'failed'])
+            })
+        )
+        .max(24)
+});
+
 export const panelUpdateStateSchema = z.object({
     available: z.boolean(),
     installedVersion: z.string().nullable(),
@@ -15,6 +45,7 @@ export const panelUpdateStateSchema = z.object({
     jobId: z.string().uuid().nullable(),
     targetVersion: z.string().nullable(),
     error: z.string().nullable(),
+    progress: updateProgressSchema.nullable().optional(),
 });
 const CONTROL = '/run/remnacust-control';
 const unavailable = {

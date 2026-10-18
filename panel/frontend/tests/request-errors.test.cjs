@@ -101,6 +101,7 @@ for (const language of ['en', 'ru', 'fa', 'zh']) {
 test('query notifications and mutation errors share descriptions; unauthorized errors remain suppressed', () => {
     const { getMessage, RequestError } = handler('ru')
     const messages = []
+    const maintenance = require('../../backend/tests/load-typescript.cjs')(path.join(__dirname, '../src/shared/utils/panel-maintenance.ts'))
     const exports = {}
     const notificationSource = ts.transpileModule(fs.readFileSync(path.join(__dirname, '../src/shared/api/tsq-helpers/error-handler.ts'), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText
     vm.runInNewContext(notificationSource, { exports, require(name) {
@@ -110,6 +111,7 @@ test('query notifications and mutation errors share descriptions; unauthorized e
         if (name === 'zod') return { ZodError: class extends Error {} }
         if (name === '../api-response') return { ApiResponseError: class extends Error {} }
         if (name === '../helpers/handler-request-error') return { getRequestErrorMessage: getMessage, RequestError }
+        if (name === '@shared/utils/panel-maintenance') return maintenance
         throw Error(name)
     } })
     const raw = { isAxiosError: true, response: { status: 409, data: { errorCode: 'A113' } } }
@@ -121,4 +123,16 @@ test('query notifications and mutation errors share descriptions; unauthorized e
     exports.errorHandler(unauthenticated, 'query')
     exports.errorHandler(new RequestError(unauthenticated), 'mutation')
     assert.equal(messages.length, 2)
+    const updating = { isAxiosError: true, response: { status: 503, data: { errorCode: 'PANEL_UPDATING' } } }
+    exports.errorHandler(updating, 'updating-query')
+    exports.errorHandler(new RequestError(updating), 'updating-mutation')
+    assert.equal(messages.length, 2)
+    maintenance.setPanelMaintenance(true)
+    exports.errorHandler(new RequestError({ code: 'ERR_NETWORK' }), 'restart-network')
+    assert.equal(messages.length, 2)
+    exports.errorHandler(raw, 'real-conflict')
+    assert.equal(messages.length, 3)
+    maintenance.setPanelMaintenance(false)
+    exports.errorHandler(new RequestError({ code: 'ERR_NETWORK' }), 'real-network')
+    assert.equal(messages.length, 4)
 })

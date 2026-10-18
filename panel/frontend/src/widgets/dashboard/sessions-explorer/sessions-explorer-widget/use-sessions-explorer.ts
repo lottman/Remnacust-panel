@@ -28,6 +28,7 @@ export interface AggregatedUser {
 
 export interface ExplorerStats {
     nodesFailed: number
+    unmappedUsers: number
     nodesScanned: number
     totalIps: number
     totalUsers: number
@@ -103,6 +104,7 @@ function isAbortError(err: unknown): boolean {
 }
 
 interface NodeResult {
+    unmappedUsers: number
     countryCode: string
     nodeName: string
     nodeUuid: string
@@ -246,6 +248,7 @@ export function useSessionsExplorer(nodes: NodeType[] | undefined) {
                         nodeUuid: node.uuid,
                         nodeName: node.name,
                         users: pollResult.users,
+                        unmappedUsers: pollResult.unmappedUsers ?? 0,
                         countryCode: node.countryCode
                     })
                     completed++
@@ -296,7 +299,8 @@ export function useSessionsExplorer(nodes: NodeType[] | undefined) {
                 uniqueIps: uniqueIpCount,
                 totalUsers: sorted.length,
                 nodesScanned: completed,
-                nodesFailed: failed
+                nodesFailed: failed,
+                unmappedUsers: results.reduce((sum, node) => sum + node.unmappedUsers, 0)
             })
             setPhase(failed === total ? 'failed' : 'completed')
         } catch (err: unknown) {

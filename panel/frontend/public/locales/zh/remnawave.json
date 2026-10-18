@@ -104,7 +104,9 @@
         "policy-pending-title": "配置等待应用",
         "policy-pending-message": "主机策略未能应用。新配置未发送到节点；正在运行的 Xray 保留原配置。请检查节点和内核是否支持主机隔离 v2。恢复支持后，面板会重试。已配置的限制仍保持启用。",
         "upgrade-required-title": "需要更新节点",
-        "upgrade-required-message": "请将节点更新至包含我们 Xray 的 Remnacust Node 1.1.1。此配置需要主机隔离 v2。更新前，其限制和新连接无法生效。当前运行配置会保留；更新后，面板将自动应用新配置。"
+        "upgrade-required-message": "请将节点更新至包含我们 Xray 的 Remnacust Node 1.1.1。此配置需要主机隔离 v2。更新前，其限制和新连接无法生效。当前运行配置会保留；更新后，面板将自动应用新配置。",
+        "connecting": "节点连接尚未完成",
+        "score-help": "没有确认的连接、活动配置或运行内核的新鲜数据时为 0/100。四项通过的信号各占 25 分。"
     },
     "xera-node-optimization": {
         "title": "节点优化",
@@ -3240,7 +3242,31 @@
         "wait": "请稍候。更新完成后页面会自动重新加载。",
         "releaseNotReady": "安装程序尚未包含此面板版本。请稍后重试。",
         "failureHint": "重试前请检查服务器上的更新日志。",
-        "return": "返回面板"
+        "return": "返回面板",
+        "reconnecting": "面板正在重启或暂时无法连接。保留最后确认的进度，连接将自动恢复。",
+        "stageCount": "第 {{current}} 阶段，共 {{total}} 阶段",
+        "elapsed": "已用时间：{{time}}",
+        "estimated": "预计剩余：{{time}}",
+        "remainingStages": "当前阶段之后还剩：{{count}}",
+        "estimateHint": "时间根据上一次成功更新估算；尚无记录时显示剩余阶段数。",
+        "journal": "更新日志",
+        "downloadJournal": "下载日志",
+        "journalHint": "显示最近 24 条阶段事件。完整技术输出保留在服务器的私有更新日志中。",
+        "stages": {
+            "checking": "验证发布完整性",
+            "download": "下载镜像",
+            "preparation": "检查当前安装",
+            "backup": "创建备份",
+            "applying": "更新 Compose、数据库和应用",
+            "readiness": "等待面板启动",
+            "verifying": "验证数据保留",
+            "cleanup": "清理旧镜像"
+        },
+        "events": {
+            "running": "进行中",
+            "done": "完成",
+            "failed": "失败"
+        }
     },
     "flag-picker": {
         "open": "选择国旗",
@@ -3763,6 +3789,8 @@
         }
     },
     "session-recording": {
+        "partial-scan": "结果不完整：{{failed}} 个节点查询失败；{{unmapped}} 个 Xray 标识无法关联用户。有效观测结果显示在下方。",
+        "empty-scan": "本次扫描未观测到活动的已认证连接。这是当前快照，并非全部流量历史。请在连接活动时刷新，或开启定期记录。",
         "live": "Live sessions",
         "tab": "Recording",
         "explanation": "Recording runs on the server even when this tab is closed. It samples active sessions, not browsing content. Connections between polls may be missed. The JSON download includes observed users, their current subscription links, nodes, IPs and observation times.",

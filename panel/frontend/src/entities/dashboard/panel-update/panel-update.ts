@@ -4,7 +4,38 @@ import { z } from 'zod'
 import { create } from 'zustand'
 
 import { instance } from '@shared/api/axios'
+import { setPanelMaintenance } from '@shared/utils/panel-maintenance'
 import { isPanelVersionNewer, isValidPanelVersion } from '@shared/utils/panel-version'
+
+const updateProgressSchema = z.object({
+    stage: z.enum([
+        'checking',
+        'download',
+        'preparation',
+        'backup',
+        'applying',
+        'readiness',
+        'verifying',
+        'cleanup'
+    ]),
+    stageIndex: z.number().int().min(1).max(8),
+    stageCount: z.literal(8),
+    completedStages: z.number().int().min(0).max(8),
+    percent: z.number().min(0).max(100),
+    startedAt: z.number().nonnegative(),
+    updatedAt: z.number().nonnegative(),
+    elapsedSeconds: z.number().nonnegative(),
+    estimatedRemainingSeconds: z.number().nonnegative().nullable(),
+    events: z
+        .array(
+            z.object({
+                at: z.number().nonnegative(),
+                label: z.string().max(120),
+                event: z.enum(['running', 'done', 'failed'])
+            })
+        )
+        .max(24)
+})
 
 export const panelUpdateSchema = z.object({
     available: z.boolean(),
@@ -13,7 +44,8 @@ export const panelUpdateSchema = z.object({
     phase: z.enum(['idle', 'queued', 'checking', 'updating', 'completed', 'failed']),
     jobId: z.string().uuid().nullable(),
     targetVersion: z.string().nullable(),
-    error: z.string().nullable()
+    error: z.string().nullable(),
+    progress: updateProgressSchema.nullable().optional()
 })
 export type PanelUpdateStatus = z.infer<typeof panelUpdateSchema>
 const key = ['panel-update-status'] as const
@@ -44,12 +76,16 @@ function remember(job: string | null, version: string | null = null) {
         else sessionStorage.removeItem(versionKey)
     } catch {}
 }
+setPanelMaintenance(Boolean(savedJob()))
 export const usePanelUpdateStore = create<{
     status?: PanelUpdateStatus
     observedJob: string | null
     starting: boolean
     confirmed: boolean
     expectedVersion: string | null
+    reachable: boolean
+    receivedAt: number
+    setReachable: (reachable: boolean) => void
     accept: (status: PanelUpdateStatus) => void
     start: (version: string) => Promise<void>
     dismiss: () => void
@@ -58,7 +94,14 @@ export const usePanelUpdateStore = create<{
     starting: false,
     confirmed: Boolean(savedJob()),
     expectedVersion: savedVersion(),
+    reachable: true,
+    receivedAt: Date.now(),
+    setReachable: (reachable) => set({ reachable }),
     accept: (status) => {
+        const previous = get().status
+        const retainedProgress =
+            !status.progress && status.jobId === previous?.jobId && previous?.progress
+        if (retainedProgress) status = { ...status, progress: retainedProgress }
         if (get().starting && !status.active && status.jobId !== get().observedJob) {
             set({ status })
             return
@@ -83,7 +126,12 @@ export const usePanelUpdateStore = create<{
             }
             return
         }
+        set({
+            receivedAt: retainedProgress ? get().receivedAt : Date.now(),
+            reachable: status.available || !status.active
+        })
         if (status.active && status.jobId) {
+            setPanelMaintenance(true)
             remember(status.jobId, status.targetVersion)
             set({
                 status,
@@ -92,12 +140,15 @@ export const usePanelUpdateStore = create<{
                 expectedVersion: status.targetVersion
             })
         } else if (status.phase === 'completed' && status.jobId === get().observedJob) {
+            setPanelMaintenance(false)
             remember(null)
             set({ status, observedJob: null, confirmed: false, expectedVersion: null })
             window.location.reload()
         } else if (status.jobId === get().observedJob && status.phase === 'failed') {
+            setPanelMaintenance(false)
             set({ status })
         } else {
+            setPanelMaintenance(false)
             remember(null)
             set({ status, observedJob: null, confirmed: false, expectedVersion: null })
         }
@@ -106,6 +157,7 @@ export const usePanelUpdateStore = create<{
         if (get().starting || get().status?.active) return
         const requestId = crypto.randomUUID()
         set({ starting: true, observedJob: requestId, confirmed: false, expectedVersion: null })
+        setPanelMaintenance(true)
         try {
             const result = await instance.post(
                 '/api/system/update/start',
@@ -120,6 +172,7 @@ export const usePanelUpdateStore = create<{
         }
     },
     dismiss: () => {
+        setPanelMaintenance(false)
         remember(null)
         set({ observedJob: null, confirmed: false, expectedVersion: null })
     }
@@ -129,6 +182,7 @@ export function usePanelUpdateMonitor() {
     const accept = usePanelUpdateStore((state) => state.accept)
     const observed = usePanelUpdateStore((state) => state.observedJob)
     const client = useQueryClient()
+    const setReachable = usePanelUpdateStore((state) => state.setReachable)
     const query = useQuery({
         queryKey: key,
         queryFn: async () => {
@@ -143,6 +197,9 @@ export function usePanelUpdateMonitor() {
     useEffect(() => {
         if (query.data) accept(query.data)
     }, [query.data, query.dataUpdatedAt, accept])
+    useEffect(() => {
+        setReachable(!query.isError)
+    }, [query.isError, setReachable])
     useEffect(() => {
         const refresh = () => {
             void client.invalidateQueries({ queryKey: key })

@@ -1,4 +1,4 @@
-import { Box, Button, Loader, Modal, Stack, Text } from '@mantine/core'
+import { Box, Button, Modal, Stack } from '@mantine/core'
 import { useReducedMotion } from '@mantine/hooks'
 import { modals } from '@mantine/modals'
 import { useEffect } from 'react'
@@ -9,11 +9,13 @@ import {
     usePanelUpdateStore
 } from '@entities/dashboard/panel-update/panel-update'
 
+import { PanelUpdateProgress } from './panel-update-progress'
+
 export function PanelUpdateGate({ children }: { children: React.ReactNode }) {
     const { t } = useTranslation()
     const reducedMotion = useReducedMotion()
     usePanelUpdateMonitor()
-    const { status, observedJob, starting, dismiss } = usePanelUpdateStore()
+    const { status, observedJob, starting, dismiss, reachable, receivedAt } = usePanelUpdateStore()
     const failed = status?.phase === 'failed' && status.jobId === observedJob
     const blocked = Boolean(starting || observedJob || status?.active)
     useEffect(() => {
@@ -51,27 +53,19 @@ export function PanelUpdateGate({ children }: { children: React.ReactNode }) {
                 closeOnClickOutside={false}
                 closeOnEscape={false}
                 centered
-                size="sm"
+                size="lg"
                 zIndex={10000}
                 portalProps={{ id: 'remnacust-panel-update-portal', reuseTargetNode: false }}
                 transitionProps={{ transition: 'fade', duration: reducedMotion ? 0 : 160 }}
                 title={t(failed ? 'panelUpdate.failed' : 'panelUpdate.running')}
             >
-                <Stack align="center" gap="md" role="status" aria-live="polite">
-                    {!failed && <Loader size="sm" />}
-                    <Text size="sm" ta="center">
-                        {failed
-                            ? t(
-                                  status?.error === 'RELEASE_NOT_READY'
-                                      ? 'panelUpdate.releaseNotReady'
-                                      : 'panelUpdate.failureHint'
-                              )
-                            : t(
-                                  status?.phase === 'checking' || status?.phase === 'queued'
-                                      ? 'panelUpdate.checking'
-                                      : 'panelUpdate.wait'
-                              )}
-                    </Text>
+                <Stack gap="md">
+                    <PanelUpdateProgress
+                        status={status?.jobId === observedJob ? status : undefined}
+                        failed={failed}
+                        reachable={reachable}
+                        receivedAt={receivedAt}
+                    />
                     {failed && (
                         <Button onClick={dismiss} variant="default">
                             {t('panelUpdate.return')}

@@ -24,6 +24,7 @@ function store(post = async () => ({ data: { response: active } }), saved = null
     let reloads = 0, requests = 0
     const { usePanelUpdateStore } = compile('src/entities/dashboard/panel-update/panel-update.ts', {
         '@shared/utils/panel-version': compile('src/shared/utils/panel-version.ts', {}),
+        '@shared/utils/panel-maintenance': compile('src/shared/utils/panel-maintenance.ts', {}),
         '@shared/api/axios': { instance: { post: async (...args) => { requests++; return post(...args) } } }
     }, {
         crypto: { randomUUID: () => id }, Event: class {},
@@ -80,6 +81,17 @@ test('failed jobs release the panel only after the user dismisses the result', (
     browser.store.getState().dismiss()
     assert.equal(browser.store.getState().observedJob, null)
     assert.equal(browser.memory.size, 0)
+})
+
+test('a temporary host-service fallback retains the last journal and its clock origin', () => {
+    const browser = store()
+    const progress = { stage: 'backup', events: [{ label: 'Backup', event: 'running', at: 1 }] }
+    browser.store.getState().accept({ ...active, progress })
+    const received = browser.store.getState().receivedAt
+    browser.store.getState().accept({ ...active, available: false })
+    assert.deepEqual(browser.store.getState().status.progress, progress)
+    assert.equal(browser.store.getState().receivedAt, received)
+    assert.equal(browser.store.getState().reachable, false)
 })
 
 test('double clicks send one request and an interrupted response defers to server status', async () => {

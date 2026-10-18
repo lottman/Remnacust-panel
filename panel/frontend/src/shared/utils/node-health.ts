@@ -2,18 +2,14 @@ import { GetNodesCommand } from '@remnawave/backend-contract'
 
 type Node = Pick<
     GetNodesCommand.Response['response'][number],
-    | 'configProfile'
-    | 'isConnected'
-    | 'isConnecting'
-    | 'isDisabled'
-    | 'system'
-    | 'xrayUptime'
+    'configProfile' | 'isConnected' | 'isConnecting' | 'isDisabled' | 'system' | 'xrayUptime'
 >
 
 export type NodeHealthLevel = 'attention' | 'critical' | 'disabled' | 'healthy' | 'limited'
 export type NodeHealthSignal =
     | 'configuration'
     | 'connection'
+    | 'connecting'
     | 'high-load'
     | 'high-memory'
     | 'resources'
@@ -34,19 +30,32 @@ export function getNodeHealth(node: Node): NodeHealth {
     const unavailableSignals: NodeHealthSignal[] = []
 
     if (node.isDisabled) {
-        return { checkedSignals: 0, issues, level: 'disabled', score: 0, totalSignals, unavailableSignals }
+        return {
+            checkedSignals: 0,
+            issues,
+            level: 'disabled',
+            score: 0,
+            totalSignals,
+            unavailableSignals
+        }
     }
 
     const configured = Boolean(
         node.configProfile.activeConfigProfileUuid && node.configProfile.activeInbounds.length
     )
     if (!configured) issues.push('configuration')
-    if (!node.isConnected && !node.isConnecting) issues.push('connection')
+    if (node.isConnecting) issues.push('connecting')
+    else if (!node.isConnected) issues.push('connection')
 
     let checkedSignals = 2
     let passingSignals = Number(configured) + Number(node.isConnected)
 
-    if (node.isConnected && node.xrayUptime > 0) {
+    const coreReady =
+        node.isConnected &&
+        !node.isConnecting &&
+        Number.isFinite(node.xrayUptime) &&
+        node.xrayUptime > 0
+    if (coreReady) {
         checkedSignals += 1
         passingSignals += 1
     } else {
@@ -57,10 +66,15 @@ export function getNodeHealth(node: Node): NodeHealth {
     if (
         node.isConnected &&
         system &&
+        Number.isFinite(system.info.memoryTotal) &&
         system.info.memoryTotal > 0 &&
+        Number.isFinite(system.info.cpus) &&
         system.info.cpus > 0 &&
         Number.isFinite(system.stats.memoryUsed) &&
-        Number.isFinite(system.stats.loadAvg[0])
+        system.stats.memoryUsed >= 0 &&
+        system.stats.memoryUsed <= system.info.memoryTotal &&
+        Number.isFinite(system.stats.loadAvg[0]) &&
+        system.stats.loadAvg[0] >= 0
     ) {
         checkedSignals += 1
         const memoryRatio = system.stats.memoryUsed / system.info.memoryTotal
@@ -76,19 +90,22 @@ export function getNodeHealth(node: Node): NodeHealth {
         unavailableSignals.push('resources')
     }
 
-    const level: NodeHealthLevel = !configured || (!node.isConnected && !node.isConnecting)
-        ? 'critical'
-        : node.isConnecting || issues.length > 0
-          ? 'attention'
-          : checkedSignals < totalSignals
-            ? 'limited'
-            : 'healthy'
+    const level: NodeHealthLevel =
+        !configured || (!node.isConnected && !node.isConnecting)
+            ? 'critical'
+            : node.isConnecting || issues.length > 0
+              ? 'attention'
+              : checkedSignals < totalSignals
+                ? 'limited'
+                : 'healthy'
 
     return {
         checkedSignals,
         issues,
         level,
-        score: Math.round((passingSignals / checkedSignals) * 100),
+        // Configuration, connection and a fresh running core are required to serve traffic.
+        // Missing telemetry never increases the score by shrinking its denominator.
+        score: configured && coreReady ? Math.round((passingSignals / totalSignals) * 100) : 0,
         totalSignals,
         unavailableSignals
     }

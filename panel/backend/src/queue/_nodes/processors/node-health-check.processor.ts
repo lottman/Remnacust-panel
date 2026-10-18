@@ -106,6 +106,11 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
         stats: INodeSystemStatsResponse,
     ) {
         if (stats.xrayInfo === null) {
+            await this.rawCacheService.delMany([
+                CACHE_KEYS.NODE_SYSTEM_STATS(nodeUuid),
+                CACHE_KEYS.NODE_XRAY_UPTIME(nodeUuid),
+                CACHE_KEYS.NODE_USERS_ONLINE(nodeUuid),
+            ]);
             await this.healthLog.record({
                 nodeUuid,
                 status: 'xray_missing',
@@ -210,6 +215,7 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
         await this.healthLog.record({ nodeUuid, status: 'unreachable', attempt: 2, message });
         await this.rawCacheService.delMany([
             CACHE_KEYS.NODE_SYSTEM_INFO(nodeUuid),
+            CACHE_KEYS.NODE_SYSTEM_STATS(nodeUuid),
             CACHE_KEYS.NODE_USERS_ONLINE(nodeUuid),
             CACHE_KEYS.NODE_XRAY_UPTIME(nodeUuid),
         ]);

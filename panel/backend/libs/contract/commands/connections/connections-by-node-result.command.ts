@@ -26,6 +26,7 @@ export namespace ConnectionsByNodeResultCommand {
                 .object({
                     success: z.boolean(),
                     nodeUuid: z.uuid(),
+                    unmappedUsers: z.number().int().nonnegative().optional().default(0),
                     users: z.array(
                         z.object({
                             userId: z.number(),

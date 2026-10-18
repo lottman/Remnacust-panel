@@ -59,18 +59,23 @@ export function getRequestErrorMessage(error: AxiosError): string {
 }
 
 export class RequestError extends Error {
+    readonly code: string | undefined
     readonly status: number | undefined
     readonly errorCode: string | undefined
 
     constructor(error: AxiosError) {
         super(getRequestErrorMessage(error), { cause: error.response?.data })
         this.name = 'RequestError'
+        this.code = error.code
         this.status = error.response?.status
         const data: unknown = error.response?.data
-        this.errorCode = data !== null && typeof data === 'object' &&
-            'errorCode' in data && typeof data.errorCode === 'string'
-            ? data.errorCode
-            : undefined
+        this.errorCode =
+            data !== null &&
+            typeof data === 'object' &&
+            'errorCode' in data &&
+            typeof data.errorCode === 'string'
+                ? data.errorCode
+                : undefined
     }
 }
 

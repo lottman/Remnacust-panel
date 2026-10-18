@@ -6,6 +6,7 @@ import axios, { AxiosResponse, InternalAxiosRequestConfig } from 'axios'
 import consola from 'consola/browser'
 
 import { logoutEvents } from '../emitters/emit-logout'
+import { setPanelMaintenance } from '../utils/panel-maintenance'
 import { parseApiResponse } from './api-response'
 
 let authorizationToken = ''
@@ -74,6 +75,7 @@ instance.interceptors.response.use(
     },
     async (error) => {
         if (error.response?.data?.errorCode === 'PANEL_UPDATING') {
+            setPanelMaintenance(true)
             window.dispatchEvent(new Event('remnacust-panel-updating'))
             return Promise.reject(error)
         }

@@ -13,6 +13,7 @@ export declare namespace ConnectionsByNodeResultCommand {
             result: z.ZodNullable<z.ZodObject<{
                 success: z.ZodBoolean;
                 nodeUuid: z.ZodUUID;
+                unmappedUsers: z.ZodDefault<z.ZodOptional<z.ZodNumber>>;
                 users: z.ZodArray<z.ZodObject<{
                     userId: z.ZodNumber;
                     ips: z.ZodArray<z.ZodObject<{

@@ -86,9 +86,10 @@ export class NodeResponseModel {
         this.provider = data.provider;
         this.activePluginUuid = data.activePluginUuid;
 
-        this.system = hotCache.system;
-        this.usersOnline = hotCache.onlineUsers;
+        const serving = data.isConnected && !data.isDisabled && !data.isConnecting;
+        this.system = serving ? hotCache.system : null;
+        this.usersOnline = serving ? hotCache.onlineUsers : 0;
         this.versions = hotCache.versions;
-        this.xrayUptime = hotCache.xrayUptime;
+        this.xrayUptime = serving ? hotCache.xrayUptime : 0;
     }
 }

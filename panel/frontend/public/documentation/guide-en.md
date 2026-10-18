@@ -228,6 +228,10 @@ Update the node to Remnacust Node 1.1.1 with our Xray. This profile requires hos
 
 The health log helps locate connection failures, application errors and restarts. The Xray log shows core messages; its contents depend on logging settings. Compare message timestamps with profile changes.
 
+### How node health is calculated
+
+Disabled, disconnected or still connecting nodes show 0/100. Missing active profile/inbounds or fresh running-Xray confirmation also gives zero. Once these prerequisites hold, each of four signals contributes 25 points: configuration, connection, running core and normal resources. Missing metrics never inflate the result. Cached metrics of disconnected nodes are not presented as current. Unknown data, memory pressure and sustained CPU load are listed separately. Resource cache lasts 30 seconds and Xray uptime 16 seconds; expiry removes confirmation without proving a core crash.
+
 ## Node SSH terminal
 
 ### Server access
@@ -750,7 +754,7 @@ Check whether the client fetched its subscription and whether SRH recording or r
 
 ### Collecting state
 
-Choose a user or node and collect connections. Some operations create a job whose result is fetched afterward; the list is not an instantaneous snapshot of the entire infrastructure. Search supports username, ID, IP and node. The Recording tab accepts 1–10080 minutes and a 10–300 second interval. Recording continues on the server when the tab closes. JSON contains users, current subscription links, IPs, nodes and observation times; store it privately. Up to 20 recordings are retained for 3 days after completion. Recording stops with a warning at 20,000 user/node/IP combinations. Offline nodes and failed polls are reported separately. Short connections between polls may be missed.
+Choose a user or node and collect connections. Some operations create a job whose result is fetched afterward; the list is not an instantaneous snapshot of the entire infrastructure. Search supports username, ID, IP and node. The Recording tab accepts 1–10080 minutes and a 10–300 second interval. Recording continues on the server when the tab closes. JSON contains users, current subscription links, IPs, nodes and observation times; store it privately. Up to 20 recordings are retained for 3 days after completion. Recording stops with a warning at 20,000 user/node/IP combinations. Offline nodes and failed polls are reported separately. Short connections between polls may be missed. IP observation does not require NET_ADMIN. Update the node and wait for the panel to apply its configuration to enable observation. Personal device and host sessions are grouped by owner. A failed poll is not a successful empty response; partial results show failed polls and unknown Xray identities.
 
 ### Dropping connections
 
@@ -862,6 +866,8 @@ Enable “Reduce motion” if you prefer a calmer interface. The panel also resp
 When a new version is available, the header version number uses the theme accent color. Click it to find Update below the support and GitHub buttons. For an older installation, run upgrade-panel with the new installer once to configure the update service.
 
 Starting an update blocks all open panel sessions. The installer checks the release, backs up the database and updates the applications while preserving keys, volumes and Compose settings. Nodes and existing Nginx/Caddy are not updated. Closing the browser does not stop the operation. After the applications restart, the page reloads. If the update fails, read the message and check panel-update-<identifier>.log in the installer logs directory before retrying.
+
+The update dialog shows the current stage out of eight, stage completion percentage, elapsed time and stages after the current one. The journal contains the 24 most recent step events and can be downloaded as JSON; full technical output remains in a private server file. Remaining time is estimated from a previous successful update, or remaining stages are shown when no history exists. During an API restart the dialog retains the last confirmed progress until reconnection; expected PANEL_UPDATING errors do not create notifications.
 
 ### Launcher and appearance reset
 

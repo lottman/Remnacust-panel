@@ -104,7 +104,9 @@
         "policy-pending-title": "Configuration pending",
         "policy-pending-message": "Host policies could not be applied. The new configuration was not sent to the node; a running Xray keeps its previous configuration. Check host isolation v2 support in the node and core. The panel will retry once support is restored. The configured limits remain enabled.",
         "upgrade-required-title": "Node update required",
-        "upgrade-required-message": "Update the node to Remnacust Node 1.1.1 with our Xray. This profile requires host isolation v2. Its limits and new connections will not work until the update. The running configuration is kept; after updating, the panel will apply the new one automatically."
+        "upgrade-required-message": "Update the node to Remnacust Node 1.1.1 with our Xray. This profile requires host isolation v2. Its limits and new connections will not work until the update. The running configuration is kept; after updating, the panel will apply the new one automatically.",
+        "connecting": "Node connection is still pending",
+        "score-help": "Without a confirmed connection, active profile or fresh running-core data: 0/100. Each of the four passing signals contributes 25 points."
     },
     "xera-node-optimization": {
         "title": "Node optimization",
@@ -3240,7 +3242,31 @@
         "wait": "Please wait. This page will reload when the update finishes.",
         "releaseNotReady": "The installer does not include this panel version yet. Try again later.",
         "failureHint": "Check the update log on the server before trying again.",
-        "return": "Return to panel"
+        "return": "Return to panel",
+        "reconnecting": "The panel is restarting or temporarily unreachable. The latest confirmed progress is kept; connection will resume automatically.",
+        "stageCount": "Stage {{current}} of {{total}}",
+        "elapsed": "Elapsed: {{time}}",
+        "estimated": "Approximately {{time}} remaining",
+        "remainingStages": "Stages after the current one: {{count}}",
+        "estimateHint": "Time is estimated from a previous successful update. Until that is available, the remaining stages are shown.",
+        "journal": "Update journal",
+        "downloadJournal": "Download journal",
+        "journalHint": "The latest 24 step events are shown. Raw technical output remains in the private update log on the server.",
+        "stages": {
+            "checking": "Checking release integrity",
+            "download": "Downloading images",
+            "preparation": "Checking the current installation",
+            "backup": "Creating a backup",
+            "applying": "Updating Compose, database and applications",
+            "readiness": "Waiting for the panel to start",
+            "verifying": "Verifying retained data",
+            "cleanup": "Cleaning up old images"
+        },
+        "events": {
+            "running": "In progress",
+            "done": "Done",
+            "failed": "Failed"
+        }
     },
     "flag-picker": {
         "open": "Choose a flag",
@@ -3763,6 +3789,8 @@
         }
     },
     "session-recording": {
+        "partial-scan": "Partial results: {{failed}} nodes could not be queried; {{unmapped}} Xray identities could not be linked to a user. Valid observations are shown below.",
+        "empty-scan": "No active authenticated connections were observed during this scan. This is a snapshot, not a history of all traffic. Refresh during an active connection or use recording for periodic observations.",
         "live": "Live sessions",
         "tab": "Recording",
         "explanation": "Recording runs on the server even when this tab is closed. It samples active sessions, not browsing content. Connections between polls may be missed. The JSON download includes observed users, their current subscription links, nodes, IPs and observation times.",

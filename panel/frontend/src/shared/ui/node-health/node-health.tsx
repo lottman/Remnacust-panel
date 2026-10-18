@@ -136,7 +136,7 @@ export function NodeHealthDetails({ node }: { node: GetNodeCommand.Response['res
                         {t(`xera-node-health.${health.level}`)}
                     </Badge>
                 </Group>
-                {health.level !== 'disabled' && (
+                {
                     <>
                         <Group gap="xs">
                             <Text fw={700} size="lg">
@@ -151,7 +151,7 @@ export function NodeHealthDetails({ node }: { node: GetNodeCommand.Response['res
                         </Group>
                         <Progress color={healthColors[health.level]} value={health.score} />
                     </>
-                )}
+                }
                 {health.issues.map((signal) => (
                     <Text
                         c={signal === 'connection' || signal === 'configuration' ? 'red' : 'yellow'}
@@ -166,6 +166,9 @@ export function NodeHealthDetails({ node }: { node: GetNodeCommand.Response['res
                         • {signalLabel(signal)} — {t('xera-node-health.not-measured')}
                     </Text>
                 ))}
+                <Text c="dimmed" size="xs">
+                    {t('xera-node-health.score-help')}
+                </Text>
                 {node.lastStatusChange && (
                     <Text c="dimmed" size="xs">
                         {t('xera-node-health.last-change')}:{' '}

@@ -12,7 +12,6 @@ import {
 } from '@entities/dashboard/updates-store'
 
 import { DASHBOARD_LINKS } from './layout-shared'
-import { MobileLayout } from './layout-variants/mobile.layout'
 import { SidebarLayout } from './layout-variants/sidebar.layout'
 import { useQuickLauncherRoutes } from './menu-sections/use-quick-launcher-routes'
 
@@ -50,23 +49,10 @@ export function MainLayout() {
         />
     )
 
-    if (isMobile) {
-        return (
-            <PanelUpdateGate>
-                <MobileLayout
-                    headerControls={headerControls}
-                    isSocialButtons={isMobile}
-                    isLoadingUpdates={isLoadingUpdates}
-                    remnawaveInfo={remnawaveInfo}
-                />
-            </PanelUpdateGate>
-        )
-    }
-
     return (
         <PanelUpdateGate>
-            <SidebarLayout headerControls={headerControls} />
-            <QuickLauncher routes={launcherRoutes} />
+            <SidebarLayout headerControls={headerControls} mobile={isMobile} />
+            {!isMobile && <QuickLauncher routes={launcherRoutes} />}
         </PanelUpdateGate>
     )
 }

@@ -72,3 +72,5 @@ docker build -f panel/Dockerfile -t remnacust-panel:1.1.7.32 .
 Backend, frontend и страница подписки сохраняют лицензии Remnawave AGPL-3.0. Исходное авторство и лицензии зависимостей перечислены в [NOTICE.md](NOTICE.md). Официальные материалы Remnawave: [remna.st](https://remna.st/) и [docs.rw](https://docs.rw/).
 
 Подробности редактора, автовыбора и истории всех типов: [Автовыбор шаблонов](docs/XRAY-AUTOSELECT.md).
+
+Запись подключений и выгрузка пользователей с подписками: [руководство](docs/SESSIONS-RECORDING.md).

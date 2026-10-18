@@ -229,7 +229,8 @@ export function ConfigEditorWidget(props: IProps) {
                     className={styles.monacoEditor}
                     defaultLanguage="json"
                     loading={<LoaderModalShared mih="100%" />}
-                    onChange={() => {
+                    onChange={(value) => {
+                        props.onDraftChange?.(value ?? '')
                         if (validationTimer.current) clearTimeout(validationTimer.current)
                         validationTimer.current = setTimeout(() => {
                             ConfigValidationFeature.validate(
@@ -248,6 +249,7 @@ export function ConfigEditorWidget(props: IProps) {
                             if (validationTimer.current) clearTimeout(validationTimer.current)
                         })
                         applyRestoreDraft()
+                        props.onDraftChange?.(editor.getValue())
 
                         editor.getAction('editor.foldLevel7')?.run()
 
@@ -262,7 +264,7 @@ export function ConfigEditorWidget(props: IProps) {
                     options={{
                         stickyScroll: { enabled: false }
                     }}
-                    path="xray-config://*"
+                    path={`xray-config://${configProfile.uuid}`}
                     value={configText}
                 />
             </Paper>

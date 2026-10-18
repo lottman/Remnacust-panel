@@ -8,4 +8,5 @@ export interface IProps {
     onRestartWasm: () => void
     snippets: GetSnippetsCommand.Response['response']
     restoreDraft?: { uuid: string; config: unknown } | null
+    onDraftChange?: (code: string) => void
 }

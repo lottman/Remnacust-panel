@@ -1,0 +1,13 @@
+.root {
+    min-width: 0;
+}
+.comparison {
+    direction: ltr;
+    overflow: hidden;
+    min-width: 0;
+}
+@media (max-width: 639px) {
+    .root button {
+        min-height: 44px;
+    }
+}

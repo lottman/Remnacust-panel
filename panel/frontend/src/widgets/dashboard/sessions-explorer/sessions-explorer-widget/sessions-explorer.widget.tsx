@@ -12,6 +12,7 @@ import {
     Tooltip,
     Transition
 } from '@mantine/core'
+import { Tabs } from '@mantine/core'
 import { useDebouncedValue, useWindowScroll } from '@mantine/hooks'
 import { useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -40,12 +41,31 @@ import { RefreshButton, RefreshActionIcon } from '@shared/ui/refresh-control'
 import { SectionCard } from '@shared/ui/section-card'
 
 import { SessionsExplorerVirtualizedGridComponents } from './grid-components'
+import { SessionRecordings } from './session-recordings'
 import { SessionsExplorerCard } from './sessions-explorer-card'
 import { SessionsExplorerIdle } from './sessions-explorer-idle'
 import { SessionsExplorerProgress } from './sessions-explorer-progress'
 import { useSessionsExplorer } from './use-sessions-explorer'
 
 export function SessionsExplorerWidget() {
+    const { t } = useTranslation()
+    return (
+        <Tabs defaultValue="live" keepMounted={false}>
+            <Tabs.List mb="md">
+                <Tabs.Tab value="live">{t('session-recording.live')}</Tabs.Tab>
+                <Tabs.Tab value="recording">{t('session-recording.tab')}</Tabs.Tab>
+            </Tabs.List>
+            <Tabs.Panel value="live">
+                <LiveSessionsExplorer />
+            </Tabs.Panel>
+            <Tabs.Panel value="recording">
+                <SessionRecordings />
+            </Tabs.Panel>
+        </Tabs>
+    )
+}
+
+function LiveSessionsExplorer() {
     const { t } = useTranslation()
 
     const { data: nodes } = useGetNodes()
@@ -59,10 +79,18 @@ export function SessionsExplorerWidget() {
     const [debouncedSearch] = useDebouncedValue(ipSearch, 200)
 
     const filteredUsers = useMemo(() => {
-        const q = debouncedSearch.trim()
+        const q = debouncedSearch.trim().toLocaleLowerCase()
         if (!q) return aggregatedUsers
-        return aggregatedUsers.filter((u) =>
-            u.nodes.some((n) => n.ips.some((ip) => ip.ip.includes(q)))
+        return aggregatedUsers.filter(
+            (u) =>
+                String(u.userId).includes(q) ||
+                u.username?.toLocaleLowerCase().includes(q) ||
+                u.nodes.some(
+                    (n) =>
+                        n.nodeName.toLocaleLowerCase().includes(q) ||
+                        n.nodeUuid.includes(q) ||
+                        n.ips.some((ip) => ip.ip.toLocaleLowerCase().includes(q))
+                )
         )
     }, [aggregatedUsers, debouncedSearch])
 
@@ -172,7 +200,7 @@ export function SessionsExplorerWidget() {
                     <TextInput
                         leftSection={<TbSearch size={16} />}
                         onChange={(e) => setIpSearch(e.currentTarget.value)}
-                        placeholder={t('sessions-explorer.widget.search-by-ip')}
+                        placeholder={t('session-recording.search')}
                         rightSection={
                             ipSearch ? (
                                 <ActionIcon

@@ -1,6 +1,7 @@
 import { ConnectionsByNodeResultCommand, GetNodesCommand } from '@remnawave/backend-contract'
 import { useEffect, useRef, useState } from 'react'
 
+import { instance } from '@shared/api'
 import { useConnectionsByNodeResultMutation, useConnectionsByNode } from '@shared/api/hooks'
 
 type NodeType = GetNodesCommand.Response['response'][number]
@@ -18,6 +19,7 @@ export interface AggregatedUserNode {
 }
 
 export interface AggregatedUser {
+    username?: string
     nodes: AggregatedUserNode[]
     totalIps: number
     uniqueIps: number
@@ -52,7 +54,14 @@ const POLL_INTERVAL = 1000
 
 function delay(ms: number, signal: AbortSignal): Promise<void> {
     return new Promise((resolve, reject) => {
-        const timer = setTimeout(resolve, ms)
+        if (signal.aborted) {
+            reject(new DOMException('Aborted', 'AbortError'))
+            return
+        }
+        const timer = setTimeout(() => {
+            signal.removeEventListener('abort', onAbort)
+            resolve()
+        }, ms)
         const onAbort = () => {
             clearTimeout(timer)
             reject(new DOMException('Aborted', 'AbortError'))
@@ -191,6 +200,7 @@ export function useSessionsExplorer(nodes: NodeType[] | undefined) {
         const activeNodesMap = new Map<string, ActiveNodeInfo>()
 
         const syncProgress = () => {
+            if (signal.aborted) return
             setProgress({
                 completed,
                 failed,
@@ -199,7 +209,11 @@ export function useSessionsExplorer(nodes: NodeType[] | undefined) {
             })
         }
 
-        const pollUntilDone = async (jobId: string): Promise<null | PollResult> => {
+        const pollUntilDone = async (
+            jobId: string,
+            deadline = Date.now() + 30_000
+        ): Promise<null | PollResult> => {
+            if (Date.now() >= deadline || signal.aborted) return null
             await delay(POLL_INTERVAL, signal)
             const resp = await connectionsByNodeResult({ route: { jobId }, query: { signal } })
 
@@ -212,7 +226,7 @@ export function useSessionsExplorer(nodes: NodeType[] | undefined) {
             }
 
             if (signal.aborted) return null
-            return pollUntilDone(jobId)
+            return pollUntilDone(jobId, deadline)
         }
 
         const processNode = async (node: NodeType) => {
@@ -253,6 +267,28 @@ export function useSessionsExplorer(nodes: NodeType[] | undefined) {
             if (signal.aborted) return
 
             const { sorted, totalIpCount, uniqueIpCount } = aggregateResults(results)
+
+            // Resolve in bounded batches. A lookup failure must not hide observed sessions.
+            for (let offset = 0; offset < sorted.length; offset += 1000) {
+                if (signal.aborted) return
+                try {
+                    const batch = sorted.slice(offset, offset + 1000)
+                    const { data } = await instance.post<{
+                        response: Array<{ id: number; username: string }>
+                    }>(
+                        '/api/connections/recordings/users',
+                        { ids: batch.map((user) => user.userId) },
+                        { signal, timeout: 10_000 }
+                    )
+                    const names = new Map(data.response.map((user) => [user.id, user.username]))
+                    batch.forEach((user) => {
+                        user.username = names.get(user.userId)
+                    })
+                } catch {
+                    /* Numeric IDs and sessions remain available if lookup fails. */
+                }
+            }
+            if (signal.aborted) return
 
             setAggregatedUsers(sorted)
             setStats({

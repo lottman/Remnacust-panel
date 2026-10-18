@@ -1,7 +1,7 @@
 import { ActionIcon, ActionIconGroup, Group, Tabs, Tooltip } from '@mantine/core'
 import { GetConfigProfileByUuidCommand, GetSnippetsCommand } from '@remnawave/backend-contract'
 import { ConfigEditorWidget } from '@widgets/dashboard/config-profiles/config-editor/config-editor.widget'
-import { useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbArrowBackUp, TbCode, TbFile, TbHistory, TbSitemap } from 'react-icons/tb'
 import { useNavigate } from 'react-router'
@@ -40,7 +40,19 @@ export const ConfigProfileByUuidPageComponent = (props: Props) => {
     const { t } = useTranslation()
     const navigate = useNavigate()
     const [tab, setTab] = useState<string | null>('editor')
-    const [restoreDraft, setRestoreDraft] = useState<{ uuid: string; config: unknown } | null>(null)
+    const [restoreDraft, setRestoreDraft] = useState<{
+        uuid: string
+        config: unknown
+        profileUuid: string
+    } | null>(null)
+    const draftRef = useRef<{ uuid: string; code: string } | null>(null)
+    const [historyDraft, setHistoryDraft] = useState<{ uuid: string; code: string } | null>(null)
+    const onDraftChange = useCallback(
+        (code: string) => {
+            draftRef.current = { uuid: configProfile.uuid, code }
+        },
+        [configProfile.uuid]
+    )
 
     return (
         <>
@@ -99,6 +111,15 @@ export const ConfigProfileByUuidPageComponent = (props: Props) => {
                             )
                             return
                         }
+                        if (value === 'history') {
+                            setHistoryDraft({
+                                uuid: configProfile.uuid,
+                                code:
+                                    draftRef.current?.uuid === configProfile.uuid
+                                        ? draftRef.current.code
+                                        : (JSON.stringify(configProfile.config, null, 2) ?? '')
+                            })
+                        }
                         setTab(value)
                     }}
                     value={tab}
@@ -116,21 +137,36 @@ export const ConfigProfileByUuidPageComponent = (props: Props) => {
                     </Tabs.List>
                     <Tabs.Panel value="editor">
                         <ConfigEditorWidget
+                            key={configProfile.uuid}
                             configProfile={configProfile}
                             isWasmCrashed={isWasmCrashed}
                             isWasmLoading={isWasmLoading}
                             isWasmRestarting={isWasmRestarting}
                             onRestartWasm={onRestartWasm}
                             snippets={snippets}
-                            restoreDraft={restoreDraft}
+                            restoreDraft={
+                                restoreDraft?.profileUuid === configProfile.uuid
+                                    ? restoreDraft
+                                    : null
+                            }
+                            onDraftChange={onDraftChange}
                         />
                     </Tabs.Panel>
                     <Tabs.Panel value="history">
                         {tab === 'history' && (
                             <ProfileHistory
                                 profileUuid={configProfile.uuid}
+                                draft={
+                                    historyDraft?.uuid === configProfile.uuid
+                                        ? historyDraft.code
+                                        : (JSON.stringify(configProfile.config, null, 2) ?? '')
+                                }
+                                baseline={JSON.stringify(configProfile.config, null, 2) ?? ''}
                                 onRestore={(revision) => {
-                                    setRestoreDraft(revision)
+                                    setRestoreDraft({
+                                        ...revision,
+                                        profileUuid: configProfile.uuid
+                                    })
                                     setTab('editor')
                                 }}
                             />

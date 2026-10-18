@@ -530,6 +530,12 @@ html.panel-themed :focus-visible {
     outline: 2px solid var(--panel-accent);
     outline-offset: 2px;
 }
+/* Composite fields and Monaco draw focus on their owning control. */
+html.panel-themed .mantine-PillsInputField-field:focus-visible,
+html.panel-themed .monaco-editor .native-edit-context:focus-visible,
+html.panel-themed .monaco-editor .inputarea:focus-visible {
+    outline: none;
+}
 html.panel-themed .mantine-Progress-root {
     background: var(--panel-border);
 }

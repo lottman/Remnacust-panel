@@ -86,14 +86,16 @@ function trafficBytes(value: string) {
 
 function BindingTraffic({
     snapshot,
-    bindingUuid
+    bindingUuid,
+    now
 }: {
     snapshot: PortPlanView['bindingTraffic']
     bindingUuid: string
+    now: number
 }) {
     const { t } = useTranslation()
     const observed = snapshot?.bindings.find((entry) => entry.bindingUuid === bindingUuid)
-    const age = snapshot ? Date.now() - Date.parse(snapshot.capturedAt) : NaN
+    const age = snapshot ? now - Date.parse(snapshot.capturedAt) : NaN
     const available = observed?.available && age >= -30_000 && age <= 120_000
     return (
         <Text size="xs" c="dimmed" className={classes.traffic}>
@@ -101,9 +103,12 @@ function BindingTraffic({
             {available ? (
                 <bdi dir="ltr">
                     ↑ {trafficBytes(observed.uplink)} · ↓ {trafficBytes(observed.downlink)}
-                    {' · '}{new Date(snapshot!.capturedAt).toLocaleTimeString()}
+                    {' · '}
+                    {new Date(snapshot!.capturedAt).toLocaleTimeString()}
                 </bdi>
-            ) : t('nodePorts.trafficUnavailable')}
+            ) : (
+                t('nodePorts.trafficUnavailable')
+            )}
         </Text>
     )
 }
@@ -197,6 +202,12 @@ function NodePortPlanEditor({
         [baseRevision, setBaseRevision] = useState(current.revision),
         [historyOpen, setHistoryOpen] = useState(false)
     const [requestError, setRequestError] = useState<ReturnType<typeof errorKind> | null>(null)
+    const [now, setNow] = useState(Date.now)
+    useEffect(() => {
+        if (!active) return
+        const timer = setInterval(() => setNow(Date.now()), 5_000)
+        return () => clearInterval(timer)
+    }, [active])
     const submit = useRef<{ signature: string; id: string } | null>(null)
     const history = useQuery({
         queryKey: [...portPlanKey(nodeUuid), 'history'],
@@ -436,8 +447,7 @@ function NodePortPlanEditor({
                                                         update({
                                                             configProfileUuid: uuid,
                                                             configProfileInboundUuid:
-                                                                catalog
-                                                                    .find((p) => p.uuid === uuid)
+                                                                catalog.find((p) => p.uuid === uuid)
                                                                     ?.inbounds[0]?.uuid ?? ''
                                                         })
                                                 }}
@@ -484,6 +494,7 @@ function NodePortPlanEditor({
                                             />
                                         </div>
                                         <BindingTraffic
+                                            now={now}
                                             snapshot={current.bindingTraffic}
                                             bindingUuid={binding.uuid}
                                         />
@@ -493,13 +504,24 @@ function NodePortPlanEditor({
                             {!draft.bindings.length && (
                                 <Text c="dimmed">{t('nodePorts.empty')}</Text>
                             )}
-                            {current.bindingTraffic?.bindings.filter((entry) => entry.retired).map((entry) => (
-                                <div className={classes.binding} key={`retired-${entry.bindingUuid}`}>
-                                    <Text size="sm">{t('nodePorts.draining')}</Text>
-                                    <Text size="xs" className={classes.traffic}>{entry.bindingUuid}</Text>
-                                    <BindingTraffic snapshot={current.bindingTraffic} bindingUuid={entry.bindingUuid} />
-                                </div>
-                            ))}
+                            {current.bindingTraffic?.bindings
+                                .filter((entry) => entry.retired)
+                                .map((entry) => (
+                                    <div
+                                        className={classes.binding}
+                                        key={`retired-${entry.bindingUuid}`}
+                                    >
+                                        <Text size="sm">{t('nodePorts.draining')}</Text>
+                                        <Text size="xs" className={classes.traffic}>
+                                            {entry.bindingUuid}
+                                        </Text>
+                                        <BindingTraffic
+                                            now={now}
+                                            snapshot={current.bindingTraffic}
+                                            bindingUuid={entry.bindingUuid}
+                                        />
+                                    </div>
+                                ))}
                             <Button
                                 variant="light"
                                 leftSection={<TbPlus />}

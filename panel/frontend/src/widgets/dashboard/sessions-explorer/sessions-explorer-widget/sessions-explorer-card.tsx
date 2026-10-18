@@ -96,7 +96,7 @@ export const SessionsExplorerCard = memo(
                             }
                             IconComponent={TbId}
                             iconVariant="soft"
-                            title={user.userId.toString()}
+                            title={user.username ? `${user.username} · ${user.userId}` : user.userId.toString()}
                             titleOrder={5}
                             truncateTitle
                         />

@@ -267,3 +267,5 @@ The exemption persists until revoked and only affects the selected scope. It doe
 | PUT | `/api/metadata/user/{userId}` | Update or create User Metadata | api-token | `metadata:upsert-user` | `metadata` |
 | GET | `/api/metadata/node/{uuid}` | Get node metadata | api-token | `metadata:get-node` | `metadata` |
 | PUT | `/api/metadata/node/{uuid}` | Update or create Node Metadata | api-token | `metadata:upsert-node` | `metadata` |
+
+Запись подключений и выгрузка пользователей с подписками: [руководство](SESSIONS-RECORDING.md).

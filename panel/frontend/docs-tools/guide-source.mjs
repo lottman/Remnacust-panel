@@ -1111,9 +1111,9 @@ add(
     [
         [
             'Запрос состояния',
-            'Выберите пользователя или ноду и запустите сбор соединений. Некоторые операции создают задачу, после чего интерфейс получает её результат: список не является мгновенным снимком всей инфраструктуры. Группировка по IP и нодам помогает найти активность и географию в пределах доступных данных.',
+            'Выберите пользователя или ноду и запустите сбор соединений. Некоторые операции создают задачу, после чего интерфейс получает её результат: список не является мгновенным снимком всей инфраструктуры. Группировка по IP и нодам помогает найти активность. Поиск поддерживает имя пользователя, ID, IP и ноду. На вкладке «Запись» выберите длительность 1–10080 минут и интервал 10–300 секунд. Запись работает на сервере при закрытой вкладке. JSON содержит пользователей, актуальные ссылки подписок, IP, ноды и время наблюдений; храните файл приватно. До 20 записей хранятся 3 дня после окончания. На 20 000 сочетаний пользователь/нода/IP запись остановится с предупреждением. Недоступные ноды и неудачные опросы учитываются отдельно. Короткие сессии между опросами могут быть пропущены.',
             'Collecting state',
-            'Choose a user or node and collect connections. Some operations create a job whose result is fetched afterward; the list is not an instantaneous snapshot of the entire infrastructure. IP/node grouping helps inspect activity and geography in the available data.'
+            'Choose a user or node and collect connections. Some operations create a job whose result is fetched afterward; the list is not an instantaneous snapshot of the entire infrastructure. Search supports username, ID, IP and node. The Recording tab accepts 1–10080 minutes and a 10–300 second interval. Recording continues on the server when the tab closes. JSON contains users, current subscription links, IPs, nodes and observation times; store it privately. Up to 20 recordings are retained for 3 days after completion. Recording stops with a warning at 20,000 user/node/IP combinations. Offline nodes and failed polls are reported separately. Short connections between polls may be missed.'
         ],
         [
             'Принудительное закрытие',

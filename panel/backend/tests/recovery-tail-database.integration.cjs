@@ -1,6 +1,6 @@
 // Dedicated disposable SQL database; shared Node transport fixture is controlled.
 const assert=require('node:assert/strict'),path=require('node:path'),{randomUUID,createHash}=require('node:crypto'),k=require('kysely'),load=require('./load-typescript.cjs');
-const {prisma,tx,db,banks,native,fixture,money,setFailCommit}=require('./recovery-tail.fixture.cjs');
+const {prisma,tx,db,banks,native,fixture,money}=require('./recovery-tail.fixture.cjs');
 const dir=path.join(__dirname,'../src/common/host-policy'),hash=value=>createHash('sha256').update(value).digest('hex');
 const closureReplays=[];
 (async()=>{try{

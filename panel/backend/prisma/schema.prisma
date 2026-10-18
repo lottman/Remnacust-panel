@@ -758,3 +758,18 @@ model TorrentBlockerReports {
 
   @@map("torrent_blocker_reports")
 }
+
+model SessionRecording {
+  id String @id @db.Uuid
+  startedAt DateTime @default(now()) @map("started_at") @db.Timestamptz
+  endsAt DateTime @map("ends_at") @db.Timestamptz
+  intervalSeconds Int @map("interval_seconds")
+  status String @default("running")
+  snapshot Json
+  nextPollAt DateTime @default(now()) @map("next_poll_at") @db.Timestamptz
+  leaseUntil DateTime? @map("lease_until") @db.Timestamptz
+  token String?
+  expiresAt DateTime @map("expires_at") @db.Timestamptz
+  @@index([expiresAt])
+  @@map("xera_session_recordings")
+}

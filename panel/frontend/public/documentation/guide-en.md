@@ -750,7 +750,7 @@ Check whether the client fetched its subscription and whether SRH recording or r
 
 ### Collecting state
 
-Choose a user or node and collect connections. Some operations create a job whose result is fetched afterward; the list is not an instantaneous snapshot of the entire infrastructure. IP/node grouping helps inspect activity and geography in the available data.
+Choose a user or node and collect connections. Some operations create a job whose result is fetched afterward; the list is not an instantaneous snapshot of the entire infrastructure. Search supports username, ID, IP and node. The Recording tab accepts 1–10080 minutes and a 10–300 second interval. Recording continues on the server when the tab closes. JSON contains users, current subscription links, IPs, nodes and observation times; store it privately. Up to 20 recordings are retained for 3 days after completion. Recording stops with a warning at 20,000 user/node/IP combinations. Offline nodes and failed polls are reported separately. Short connections between polls may be missed.
 
 ### Dropping connections
 

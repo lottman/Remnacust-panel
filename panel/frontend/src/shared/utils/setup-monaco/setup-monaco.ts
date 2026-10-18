@@ -1,8 +1,13 @@
 // oxlint-disable
 
 import { loader } from '@monaco-editor/react'
+// Lazy language contributions need these services before the first editor creates its container.
+import 'monaco-editor/editor/contrib/codelens/browser/codeLensCache'
+import 'monaco-editor/editor/common/services/treeViewsDndService'
+import 'monaco-editor/features/documentSymbols/register'
 import * as monaco from 'monaco-editor/editor'
 import editorWorker from 'monaco-editor/editor/editor.worker?worker'
+import 'monaco-editor/features/diffEditor/register'
 import 'monaco-editor/features/bracketMatching/register'
 import 'monaco-editor/features/clipboard/register'
 import 'monaco-editor/features/codeEditor/register'

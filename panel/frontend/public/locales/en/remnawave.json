@@ -3753,5 +3753,26 @@
             "nodeUnavailable": "A node did not respond. Check its connection and retry this operation.",
             "invalidAck": "A node returned a confirmation that could not be verified. Refresh its state before retrying."
         }
+    },
+    "session-recording": {
+        "live": "Live sessions",
+        "tab": "Recording",
+        "explanation": "Recording runs on the server even when this tab is closed. It samples active sessions, not browsing content. Connections between polls may be missed. The JSON download includes observed users, their current subscription links, nodes, IPs and observation times.",
+        "duration": "Duration (minutes, up to 7 days)",
+        "interval": "Poll interval (seconds)",
+        "start": "Start recording",
+        "stop": "Stop recording",
+        "download": "Download users and subscriptions",
+        "delete": "Delete",
+        "delete-confirm": "Delete this recording and its collected data?",
+        "retention": "One recording at a time. Up to 20 recordings, retained for 3 days after the end. Recording stops at 20,000 distinct user/node/IP combinations and reports the limit. Exported subscription links grant access: store the file privately.",
+        "empty": "No recordings yet.",
+        "running": "Recording",
+        "completed": "Completed",
+        "error": "Could not complete the request. Check your connection, active recording and the retention limit, then retry.",
+        "summary": "{{count}} observations · {{polls}} polls · every {{interval}} s · ends {{end}}",
+        "partial": "Failed node polls: {{failed}}. Offline node polls: {{offline}}. Data is partial.",
+        "limit": "The storage limit was reached; recording has stopped.",
+        "search": "Search username, user ID, IP or node"
     }
 }

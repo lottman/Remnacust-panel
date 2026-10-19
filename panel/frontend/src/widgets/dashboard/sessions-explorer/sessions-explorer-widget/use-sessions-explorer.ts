@@ -167,12 +167,6 @@ export function useSessionsExplorer(nodes: NodeType[] | undefined) {
     const { mutateAsync: connectionsByNodeResult } = useConnectionsByNodeResultMutation()
 
     const abortRef = useRef<AbortController | null>(null)
-    const nodesRef = useRef(nodes)
-
-    useEffect(() => {
-        nodesRef.current = nodes
-    }, [nodes])
-
     useEffect(() => {
         return () => {
             abortRef.current?.abort()
@@ -181,8 +175,8 @@ export function useSessionsExplorer(nodes: NodeType[] | undefined) {
 
     const onlineNodes = nodes?.filter((n) => n.isConnected && !n.isDisabled) ?? []
 
-    const start = async () => {
-        const targetNodes = nodesRef.current?.filter((n) => n.isConnected && !n.isDisabled) ?? []
+    const start = async (freshNodes: NodeType[]) => {
+        const targetNodes = freshNodes.filter((n) => n.isConnected && !n.isDisabled)
         if (targetNodes.length === 0) return
 
         abortRef.current?.abort()

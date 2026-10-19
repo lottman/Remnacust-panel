@@ -1,9 +1,8 @@
 import { Alert, Button, Group, Stack, Text, ThemeIcon } from '@mantine/core'
 import { useTranslation } from 'react-i18next'
-import { TbClock, TbInfoCircle, TbRadar2, TbRefresh } from 'react-icons/tb'
+import { TbClock, TbInfoCircle, TbRadar2 } from 'react-icons/tb'
 
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
-import { RefreshButton } from '@shared/ui/refresh-control'
 import { SectionCard } from '@shared/ui/section-card'
 
 interface IProps {
@@ -11,8 +10,6 @@ interface IProps {
     totalNodesCount: number
     isLoading: boolean
     isError: boolean
-    isRefreshing: boolean
-    onRefresh: () => unknown
     onStart: () => void
 }
 
@@ -21,8 +18,6 @@ export function SessionsExplorerIdle({
     totalNodesCount,
     isLoading,
     isError,
-    isRefreshing,
-    onRefresh,
     onStart
 }: IProps) {
     const { t } = useTranslation()
@@ -64,17 +59,9 @@ export function SessionsExplorerIdle({
                 {t(statusKey, { online: onlineNodesCount, total: totalNodesCount })}
             </Alert>
             <Group grow>
-                <RefreshButton
-                    leftSection={<TbRefresh size={18} />}
-                    loading={isRefreshing}
-                    onClick={onRefresh}
-                    variant="default"
-                >
-                    {t('session-recording.refresh-nodes')}
-                </RefreshButton>
                 <Button
                     color="teal"
-                    disabled={blocked}
+                    loading={isLoading}
                     leftSection={<TbRadar2 size={20} />}
                     onClick={onStart}
                     size="md"

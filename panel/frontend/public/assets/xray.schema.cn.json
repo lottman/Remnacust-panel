@@ -9401,6 +9401,6 @@
     "version": "v26.10.10",
     "commit": "701af60772cda123492f86e383e1fdba066614a9",
     "patchCommit": null,
-    "coreVersion": "1.1.6"
+    "coreVersion": "1.1.8"
   }
 }

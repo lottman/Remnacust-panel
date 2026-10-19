@@ -15,7 +15,7 @@ import {
 } from '@mantine/core'
 import { Tabs } from '@mantine/core'
 import { useDebouncedValue, useWindowScroll } from '@mantine/hooks'
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiEmptyDuotone } from 'react-icons/pi'
 import {
@@ -72,11 +72,17 @@ function LiveSessionsExplorer() {
         data: nodes,
         isPending: nodesLoading,
         isError: nodesError,
-        isFetching: nodesRefreshing,
         refetch: refreshNodes
-    } = useGetNodes({
-        rQueryParams: { refetchInterval: 5000 }
-    })
+    } = useGetNodes()
+    const [preparing, setPreparing] = useState(false)
+    const preparingRef = useRef(false)
+    const mountedRef = useRef(true)
+    useEffect(() => {
+        mountedRef.current = true
+        return () => {
+            mountedRef.current = false
+        }
+    }, [])
     const { phase, progress, aggregatedUsers, stats, onlineNodes, start, reset } =
         useSessionsExplorer(nodes)
 
@@ -132,9 +138,20 @@ function LiveSessionsExplorer() {
         )
     }
 
-    const handleStart = () => {
+    const handleStart = async () => {
+        if (preparingRef.current) return
+        preparingRef.current = true
+        setPreparing(true)
         setIpSearch('')
-        start()
+        reset()
+        try {
+            const fresh = await refreshNodes()
+            if (!mountedRef.current || fresh.isError || !fresh.data) return
+            await start(fresh.data)
+        } finally {
+            preparingRef.current = false
+            if (mountedRef.current) setPreparing(false)
+        }
     }
 
     const handleReset = () => {
@@ -290,6 +307,7 @@ function LiveSessionsExplorer() {
                                     <RefreshActionIcon
                                         color="teal"
                                         onClick={handleStart}
+                                        loading={preparing}
                                         size="input-md"
                                         variant="soft"
                                     >
@@ -318,10 +336,8 @@ function LiveSessionsExplorer() {
                 <SessionsExplorerIdle
                     onlineNodesCount={onlineNodes.length}
                     totalNodesCount={nodes?.length ?? 0}
-                    isLoading={nodesLoading}
+                    isLoading={nodesLoading || preparing}
                     isError={nodesError}
-                    isRefreshing={nodesRefreshing}
-                    onRefresh={() => refreshNodes()}
                     onStart={handleStart}
                 />
             )}

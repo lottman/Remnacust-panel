@@ -3792,10 +3792,10 @@
         "scan-help-title": "Session collection",
         "scan-help": "Viewing sessions does not require NET_ADMIN. Update the node to 1.1.12 or newer and wait for the panel to apply its configuration. Scans show active authenticated connections.",
         "nodes-loading": "Loading nodes…",
-        "nodes-load-error": "Could not load the current node list. This does not mean the nodes are offline. Select Refresh nodes to retry.",
+        "nodes-load-error": "Could not load the current node list. This does not mean the nodes are offline. Select Start scan to retry.",
         "nodes-empty": "The panel returned an empty node list. Check Nodes and your account access.",
-        "nodes-offline": "Nodes listed: {{total}}. None are marked connected and enabled by the panel. Check their state in Nodes. Status refreshes automatically every 5 seconds.",
-        "nodes-ready": "Nodes available for scanning: {{online}} of {{total}}. Status refreshes every 5 seconds.",
+        "nodes-offline": "Nodes in the list: {{total}}. None are marked connected and enabled. Starting a scan reloads the list.",
+        "nodes-ready": "{{online}} of {{total}} nodes are available. The list is reloaded before every scan.",
         "refresh-nodes": "Refresh nodes",
 
         "partial-scan": "Partial results: {{failed}} nodes could not be queried; {{unmapped}} Xray identities could not be linked to a user. Valid observations are shown below.",

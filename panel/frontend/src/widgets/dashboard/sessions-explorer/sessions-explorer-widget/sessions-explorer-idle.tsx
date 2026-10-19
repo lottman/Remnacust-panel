@@ -1,95 +1,88 @@
-import { CodeHighlight } from '@mantine/code-highlight'
-import { Button, Group, Stack, Text, ThemeIcon } from '@mantine/core'
-import { Trans, useTranslation } from 'react-i18next'
-import { TbAlertTriangle, TbBrandDocker, TbClock, TbRadar, TbRadar2 } from 'react-icons/tb'
+import { Alert, Button, Group, Stack, Text, ThemeIcon } from '@mantine/core'
+import { useTranslation } from 'react-i18next'
+import { TbClock, TbInfoCircle, TbRadar2, TbRefresh } from 'react-icons/tb'
 
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { RefreshButton } from '@shared/ui/refresh-control'
 import { SectionCard } from '@shared/ui/section-card'
-
-const DOCKER_SNIPPET = `
-    cap_add:
-      - NET_ADMIN
-`
-
-const HIGHLIGHT_SPAN = <Text c="white" component="span" fw={600} size="sm" />
 
 interface IProps {
     onlineNodesCount: number
+    totalNodesCount: number
+    isLoading: boolean
+    isError: boolean
+    isRefreshing: boolean
+    onRefresh: () => unknown
     onStart: () => void
 }
 
-export function SessionsExplorerIdle({ onlineNodesCount, onStart }: IProps) {
+export function SessionsExplorerIdle({
+    onlineNodesCount,
+    totalNodesCount,
+    isLoading,
+    isError,
+    isRefreshing,
+    onRefresh,
+    onStart
+}: IProps) {
     const { t } = useTranslation()
+    const blocked = isLoading || isError || onlineNodesCount === 0
+    const statusKey = isLoading
+        ? 'session-recording.nodes-loading'
+        : isError
+          ? 'session-recording.nodes-load-error'
+          : totalNodesCount === 0
+            ? 'session-recording.nodes-empty'
+            : onlineNodesCount === 0
+              ? 'session-recording.nodes-offline'
+              : 'session-recording.nodes-ready'
 
     return (
         <Stack gap="md">
             <SectionCard.Root gap="md">
                 <SectionCard.Section>
                     <BaseOverlayHeader
-                        iconColor="yellow"
-                        IconComponent={TbAlertTriangle}
+                        iconColor="blue"
+                        IconComponent={TbInfoCircle}
                         iconVariant="soft"
-                        title={t('active-sessions-drawer.widget.requirements')}
+                        title={t('session-recording.scan-help-title')}
                     />
                 </SectionCard.Section>
-
-                <Stack gap="xs">
-                    <Group gap="sm" wrap="nowrap">
-                        <ThemeIcon color="violet" size="md" variant="soft">
-                            <TbBrandDocker size={16} />
-                        </ThemeIcon>
-                        <Text c="dimmed" size="sm">
-                            <Trans
-                                components={{ highlight: HIGHLIGHT_SPAN }}
-                                i18nKey="active-sessions-drawer.widget.warning-docker"
-                            />
-                        </Text>
-                    </Group>
-                    <CodeHighlight
-                        background="var(--panel-elevated, var(--mantine-color-body))"
-                        code={DOCKER_SNIPPET}
-                        language="yaml"
-                        radius="md"
-                        style={{
-                            border: '1px solid var(--panel-border)',
-                            borderRadius: 'var(--mantine-radius-md)'
-                        }}
-                    />
-                </Stack>
-
+                <Text c="dimmed" size="sm">
+                    {t('session-recording.scan-help')}
+                </Text>
                 <Group gap="sm" wrap="nowrap">
                     <ThemeIcon color="cyan" size="md" variant="soft">
                         <TbClock size={16} />
-                    </ThemeIcon>
-                    <Text c="dimmed" size="sm">
-                        <Trans
-                            components={{ highlight: HIGHLIGHT_SPAN }}
-                            i18nKey="active-sessions-drawer.widget.warning-activity"
-                        />
-                    </Text>
-                </Group>
-
-                <Group gap="sm" wrap="nowrap">
-                    <ThemeIcon color="yellow" size="md" variant="soft">
-                        <TbRadar size={16} />
                     </ThemeIcon>
                     <Text c="dimmed" size="sm">
                         {t('sessions-explorer-idle.description-1')}
                     </Text>
                 </Group>
             </SectionCard.Root>
-
-            <Button
-                color="teal"
-                disabled={onlineNodesCount === 0}
-                fullWidth
-                leftSection={<TbRadar2 size={20} />}
-                onClick={onStart}
-                size="md"
-                variant="light"
-            >
-                {t('sessions-explorer-idle.start-exploring')}
-            </Button>
+            <Alert color={isError ? 'red' : blocked ? 'yellow' : 'blue'}>
+                {t(statusKey, { online: onlineNodesCount, total: totalNodesCount })}
+            </Alert>
+            <Group grow>
+                <RefreshButton
+                    leftSection={<TbRefresh size={18} />}
+                    loading={isRefreshing}
+                    onClick={onRefresh}
+                    variant="default"
+                >
+                    {t('session-recording.refresh-nodes')}
+                </RefreshButton>
+                <Button
+                    color="teal"
+                    disabled={blocked}
+                    leftSection={<TbRadar2 size={20} />}
+                    onClick={onStart}
+                    size="md"
+                    variant="light"
+                >
+                    {t('sessions-explorer-idle.start-exploring')}
+                </Button>
+            </Group>
         </Stack>
     )
 }

@@ -1870,7 +1870,7 @@
         }
     },
     "sessions-explorer-idle": {
-        "description-1": "This operation may take a while depending on the number of nodes and users. Sessions are fetched sequentially to avoid overloading the backend.",
+        "description-1": "Collection can take time. At most 10 nodes are queried concurrently. Short connections between polls may be missed.",
         "start-exploring": "Start exploring"
     },
     "sessions-explorer-progress": {
@@ -3789,6 +3789,15 @@
         }
     },
     "session-recording": {
+        "scan-help-title": "Session collection",
+        "scan-help": "Viewing sessions does not require NET_ADMIN. Update the node to 1.1.12 or newer and wait for the panel to apply its configuration. Scans show active authenticated connections.",
+        "nodes-loading": "Loading nodes…",
+        "nodes-load-error": "Could not load the current node list. This does not mean the nodes are offline. Select Refresh nodes to retry.",
+        "nodes-empty": "The panel returned an empty node list. Check Nodes and your account access.",
+        "nodes-offline": "Nodes listed: {{total}}. None are marked connected and enabled by the panel. Check their state in Nodes. Status refreshes automatically every 5 seconds.",
+        "nodes-ready": "Nodes available for scanning: {{online}} of {{total}}. Status refreshes every 5 seconds.",
+        "refresh-nodes": "Refresh nodes",
+
         "partial-scan": "Partial results: {{failed}} nodes could not be queried; {{unmapped}} Xray identities could not be linked to a user. Valid observations are shown below.",
         "empty-scan": "No active authenticated connections were observed during this scan. This is a snapshot, not a history of all traffic. Refresh during an active connection or use recording for periodic observations.",
         "live": "Live sessions",

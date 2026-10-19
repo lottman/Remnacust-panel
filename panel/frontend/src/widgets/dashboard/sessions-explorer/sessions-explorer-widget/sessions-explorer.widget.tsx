@@ -68,7 +68,15 @@ export function SessionsExplorerWidget() {
 function LiveSessionsExplorer() {
     const { t } = useTranslation()
 
-    const { data: nodes } = useGetNodes()
+    const {
+        data: nodes,
+        isPending: nodesLoading,
+        isError: nodesError,
+        isFetching: nodesRefreshing,
+        refetch: refreshNodes
+    } = useGetNodes({
+        rQueryParams: { refetchInterval: 5000 }
+    })
     const { phase, progress, aggregatedUsers, stats, onlineNodes, start, reset } =
         useSessionsExplorer(nodes)
 
@@ -307,7 +315,15 @@ function LiveSessionsExplorer() {
             />
 
             {phase === 'idle' && (
-                <SessionsExplorerIdle onlineNodesCount={onlineNodes.length} onStart={handleStart} />
+                <SessionsExplorerIdle
+                    onlineNodesCount={onlineNodes.length}
+                    totalNodesCount={nodes?.length ?? 0}
+                    isLoading={nodesLoading}
+                    isError={nodesError}
+                    isRefreshing={nodesRefreshing}
+                    onRefresh={() => refreshNodes()}
+                    onStart={handleStart}
+                />
             )}
             {phase === 'running' && <SessionsExplorerProgress progress={progress} />}
             {phase === 'failed' && renderFailedState()}

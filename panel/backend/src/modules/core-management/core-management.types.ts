@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import publishedCoreReleases from './core-releases.json';
+
 export const CORE_QUEUE = 'xera-core-management';
 export const coreJobSchema = z
     .object({
@@ -67,18 +69,29 @@ export interface CoreResult {
 const releaseSchema = z.object({
     id: z.string().regex(/^[\w.+-]{1,100}$/),
     build: z.string().regex(/^[\w.+-]{1,100}$/),
+    sourceCommit: z
+        .string()
+        .regex(/^[a-f0-9]{40}$/)
+        .optional(),
     artifacts: z.record(
         z.enum(['amd64', 'arm64']),
         z.object({ url: z.url(), sha256: z.string().regex(/^[a-f0-9]{64}$/) }),
     ),
 });
 export function coreCatalog() {
+    const configured = process.env.REMNACUST_CORE_CATALOG_JSON;
     return z
         .array(releaseSchema)
         .max(30)
+        .refine(
+            (releases) => new Set(releases.map((release) => release.id)).size === releases.length,
+            'Duplicate core release ID',
+        )
         .parse(
-            process.env.REMNACUST_CORE_CATALOG_JSON
-                ? JSON.parse(process.env.REMNACUST_CORE_CATALOG_JSON)
-                : [],
+            configured === undefined
+                ? publishedCoreReleases
+                : configured.trim()
+                  ? JSON.parse(configured)
+                  : [],
         );
 }

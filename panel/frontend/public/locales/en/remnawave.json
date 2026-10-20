@@ -3850,5 +3850,10 @@
         "active": "Active",
         "hidden": "Hidden",
         "disabled": "Disabled"
+    },
+    "coreCatalog": {
+        "loading": "Loading builds…",
+        "empty": "No verified builds",
+        "empty-help": "No verified builds are available. Refresh the list or update the panel. The bundled core is available in the action selector."
     }
 }

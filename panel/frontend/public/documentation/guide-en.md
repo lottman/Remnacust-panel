@@ -268,7 +268,7 @@ Check reads the actual server state. A chosen level can differ from the last ver
 
 ### Choosing an update
 
-In core management, check the installed version and available updates. Select the required nodes and a compatible version. Updating may temporarily interrupt connections on those servers.
+In node tasks, choose Install release and a verified build. The panel includes a current catalog for amd64 and arm64 and selects a build automatically. Refresh reloads the list. An empty or unavailable catalog shows an explanation and prevents installation; the bundled core remains a separate action. Update both the panel and nodes to use the default public catalog. Switching may temporarily interrupt connections.
 
 ### Operation result
 

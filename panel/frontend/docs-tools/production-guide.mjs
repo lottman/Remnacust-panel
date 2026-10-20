@@ -115,9 +115,9 @@ const edits = {
         [
             [
                 'Выбор обновления',
-                'В разделе управления ядром проверьте установленную версию и доступные варианты обновления. Выберите нужные ноды и совместимую версию. Обновление может временно прервать подключения на выбранных серверах.',
+                'В задачах нод выберите «Установить версию» и проверенную сборку. Панель содержит актуальный каталог для amd64 и arm64; сборка выбирается автоматически. Кнопка обновления повторно получает список. Если он пуст или недоступен, показана причина и установка недоступна; встроенное ядро можно выбрать отдельным действием. Обновите панель и ноды, чтобы использовать стандартный публичный каталог. Переключение может временно прервать подключения.',
                 'Choosing an update',
-                'In core management, check the installed version and available updates. Select the required nodes and a compatible version. Updating may temporarily interrupt connections on those servers.'
+                'In node tasks, choose Install release and a verified build. The panel includes a current catalog for amd64 and arm64 and selects a build automatically. Refresh reloads the list. An empty or unavailable catalog shows an explanation and prevents installation; the bundled core remains a separate action. Update both the panel and nodes to use the default public catalog. Switching may temporarily interrupt connections.'
             ],
             [
                 'Результат операции',

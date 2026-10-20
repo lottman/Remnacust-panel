@@ -29,6 +29,7 @@ import { useUiText } from '@shared/i18n/interface-text'
 import { usePanelReducedMotion } from '@shared/ui/appearance/appearance'
 import { RefreshButton } from '@shared/ui/refresh-control'
 
+import { selectCoreRelease } from './core-release-selection'
 import { selectNodeTargets, type SelectionMode } from './node-selection'
 
 type Node = { uuid: string; name: string; tags?: string[] | null }
@@ -84,7 +85,7 @@ export function CoreManagementFeature({
 
     const [opened, { open, close }] = useDisclosure()
     const mobile = useMediaQuery('(max-width: 48em)')
-    const { i18n } = useTranslation()
+    const { i18n, t } = useTranslation()
     const client = useQueryClient()
     const [action, setAction] = useState<string | null>('install')
     const [releaseId, setReleaseId] = useState<string | null>(null)
@@ -154,7 +155,7 @@ export function CoreManagementFeature({
         retry: false,
         refetchInterval: opened ? 5000 : false
     })
-    const release = releaseId ?? catalog.data?.[0]?.id
+    const release = selectCoreRelease(catalog.data ?? [], releaseId)
     const confirmationKey = JSON.stringify([
         targetFingerprint,
         action,
@@ -442,7 +443,36 @@ export function CoreManagementFeature({
                                             label: item.build
                                         }))}
                                         error={catalog.isError}
+                                        disabled={
+                                            catalog.isPending ||
+                                            catalog.isError ||
+                                            !catalog.data?.length
+                                        }
+                                        placeholder={
+                                            catalog.isPending
+                                                ? t('coreCatalog.loading')
+                                                : t('coreCatalog.empty')
+                                        }
+                                        rightSection={
+                                            catalog.isFetching ? <Loader size="xs" /> : undefined
+                                        }
                                     />
+                                    <RefreshButton
+                                        loading={catalog.isFetching}
+                                        onClick={() => void catalog.refetch()}
+                                        size="xs"
+                                        variant="subtle"
+                                        leftSection={<TbRefresh size={14} />}
+                                    >
+                                        {t('common.action.refresh')}
+                                    </RefreshButton>
+                                    {!catalog.isPending &&
+                                        !catalog.isError &&
+                                        catalog.data?.length === 0 && (
+                                            <Alert color="blue">
+                                                {t('coreCatalog.empty-help')}
+                                            </Alert>
+                                        )}
                                     {catalog.isError && (
                                         <Alert
                                             color="red"
@@ -551,7 +581,8 @@ export function CoreManagementFeature({
                                         selected.length === 1 &&
                                         !status.data) ||
                                     (disruptive && !acknowledged) ||
-                                    (action === 'install' && !release)
+                                    (action === 'install' &&
+                                        (!release || catalog.isPending || catalog.isError))
                                 }
                                 onClick={() => {
                                     if (action !== 'optimize') {

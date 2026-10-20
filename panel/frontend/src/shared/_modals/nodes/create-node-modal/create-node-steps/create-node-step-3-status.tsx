@@ -66,6 +66,8 @@ export const CreateNodeStep3Status = ({ nodeUuid, onClose }: IProps) => {
         }, 300)
     }
 
+    const explanation = errorMessage ? getNodeErrorMessage(errorMessage, t) : null
+
     return (
         <Stack gap="lg" mih={400}>
             <Paper
@@ -141,9 +143,11 @@ export const CreateNodeStep3Status = ({ nodeUuid, onClose }: IProps) => {
                     title={t('common.message.last-error-message')}
                     variant="light"
                 >
-                    <Text size="sm" mb="xs">
-                        {getNodeErrorMessage(errorMessage, t)}
-                    </Text>
+                    {explanation !== errorMessage && (
+                        <Text size="sm" mb="xs">
+                            {explanation}
+                        </Text>
+                    )}
                     <Code>{errorMessage}</Code>
                 </Alert>
             )}

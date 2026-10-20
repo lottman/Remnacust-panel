@@ -3843,8 +3843,7 @@
         "certificates": "Profile certificates could not be prepared. Check PEM format, size and access to certificate and key files.",
         "users": "Profile users could not be prepared. Check the panel log and database availability.",
         "devices": "Device credentials could not be prepared. Check the panel log and database availability.",
-        "identities": "Host credentials could not be prepared. Check the panel log and host access settings.",
-        "listener-change": "Inbound “{{tag}}” has changed its port or transport settings. To apply without dropping connections, create a separate port with a new tag and retain the current listener. Changing the same port requires an explicit core restart; it is never performed automatically."
+        "identities": "Host credentials could not be prepared. Check the panel log and host access settings."
     },
     "connectionKeys": {
         "active": "Active",

@@ -19,7 +19,5 @@ export function getNodeErrorMessage(message: string, t: TFunction): string {
     if (message === 'Failed to get config for node' || message === 'Failed to get config') {
         return t('nodeErrors.preparation')
     }
-    const listener = /Inbound ([^\r\n]{1,128}) changes its port or transport;/.exec(message)
-    if (listener) return t('nodeErrors.listener-change', { tag: listener[1] })
     return message
 }

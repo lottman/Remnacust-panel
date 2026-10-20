@@ -162,9 +162,12 @@ export class NodeConfigurationService {
             // Read the reconciliation clock before preparing any configuration.
             // A save during preparation must remain newer than our enrollment.
             const deviceRevision = await this.queryBus.execute(new GetDeviceStateRevisionQuery());
-            portPlan = await this.queryBus.execute(new GetPreparedNodePortsQuery(
-                node.uuid, xrayStatusResponse.response.profileGraphDeliverySupported === true,
-            ));
+            portPlan = await this.queryBus.execute(
+                new GetPreparedNodePortsQuery(
+                    node.uuid,
+                    xrayStatusResponse.response.profileGraphDeliverySupported === true,
+                ),
+            );
             if (!!portPlan !== !!lease) throw new PortPlanLeaseLostError();
             if (
                 portPlan &&
@@ -267,7 +270,7 @@ export class NodeConfigurationService {
             this.logger.log(`Generated config for node in ${formatExecutionTime(startTime)}`);
 
             if (!config.isOk) {
-                throw new Error('Failed to get config for node');
+                throw new Error(config.message ?? 'Failed to get config for node');
             }
 
             const integrationsResult = await this.queryBus.execute(
@@ -320,7 +323,9 @@ export class NodeConfigurationService {
                 {
                     xrayConfig: {
                         ...(config.response.config as unknown as Record<string, unknown>),
-                        ...(portPlan?.profileGraphs ? { remnacustProfileGraphs: portPlan.profileGraphs } : {}),
+                        ...(portPlan?.profileGraphs
+                            ? { remnacustProfileGraphs: portPlan.profileGraphs }
+                            : {}),
                     },
                     internals: {
                         reconciliation: nodeReconciliationEnrollment(node.uuid, deviceRevision),

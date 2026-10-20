@@ -306,7 +306,7 @@ Create a provider and assign nodes. Set cost and payment date/period using the a
 
 ### Dates and notifications
 
-Payment dates help track renewal. Recording payment or editing a date in the panel does not transfer money to the provider. Check linked nodes and accounting history before deleting a provider.
+Payment dates help track renewal. Dates use UTC calendar days: more than 7 days is neutral, 2–7 days is yellow, tomorrow is orange, and today or overdue is red. Overdue totals are also red. Text distinguishes due today from overdue and shows the day count. Colors adapt to the theme, and statuses update at day changes and when returning to the tab. On phones, amounts and labels wrap, actions stay separate from long node names, and the last card can scroll clear of the bottom toolbar. Recording payment or editing a date in the panel does not transfer money to the provider. Check linked nodes and accounting history before deleting a provider.
 
 ### Fields and controls
 

@@ -1,6 +1,4 @@
 import { Card, Grid, Group, Stack, Text, ThemeIcon } from '@mantine/core'
-import dayjs from 'dayjs'
-import utc from 'dayjs/plugin/utc'
 import { useTranslation } from 'react-i18next'
 import { FaServer } from 'react-icons/fa'
 import { MdPayment, MdTrendingUp } from 'react-icons/md'
@@ -9,23 +7,26 @@ import { TbAlertTriangle } from 'react-icons/tb'
 import { useGetInfraBillingNodes } from '@shared/api/hooks'
 import { formatCurrency } from '@shared/utils/misc'
 
-dayjs.extend(utc)
+import { getBillingDateStatus } from '../billing-date-status'
+import classes from '../billing-date-status.module.css'
+import { useBillingToday } from '../use-billing-today'
 
 export function MobileStatsWidget() {
     const { data: nodes } = useGetInfraBillingNodes()
     const { t } = useTranslation()
 
-    const today = dayjs.utc().startOf('day')
+    const today = useBillingToday()
     const billingNodes = nodes?.billingNodes ?? []
 
-    const overdueCount = billingNodes.filter((node) =>
-        dayjs.utc(node.nextBillingAt).startOf('day').isBefore(today)
+    const overdueCount = billingNodes.filter(
+        (node) => getBillingDateStatus(node.nextBillingAt, today).state === 'overdue'
     ).length
 
     const stats = [
         {
             icon: TbAlertTriangle,
             color: overdueCount > 0 ? 'red' : 'teal',
+            textColor: overdueCount > 0 ? 'var(--billing-overdue-ink)' : undefined,
             value: overdueCount,
             label: t('common.message.overdue')
         },
@@ -50,19 +51,32 @@ export function MobileStatsWidget() {
     ]
 
     return (
-        <Grid gap="xs" mb="md">
+        <Grid className={classes.statusColors} gap="xs" mb="md">
             {stats.map((stat, index) => (
                 <Grid.Col key={index} span={6}>
-                    <Card padding="sm">
+                    <Card
+                        h="100%"
+                        padding="sm"
+                        style={stat.textColor ? { transitionProperty: 'border-color' } : undefined}
+                    >
                         <Group gap="xs" wrap="nowrap">
                             <ThemeIcon color={stat.color} radius="md" size="lg" variant="soft">
                                 <stat.icon size={18} />
                             </ThemeIcon>
                             <Stack gap={0} miw={0}>
-                                <Text fw={700} size="lg" truncate="end">
+                                <Text
+                                    fw={700}
+                                    size="md"
+                                    style={{ color: stat.textColor, overflowWrap: 'anywhere' }}
+                                >
                                     {stat.value}
                                 </Text>
-                                <Text c="dimmed" size="xs" truncate="end">
+                                <Text
+                                    c="dimmed"
+                                    size="xs"
+                                    style={{ color: stat.textColor }}
+                                    lh={1.35}
+                                >
                                     {stat.label}
                                 </Text>
                             </Stack>

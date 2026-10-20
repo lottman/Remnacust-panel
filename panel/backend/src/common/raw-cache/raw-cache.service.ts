@@ -296,21 +296,40 @@ export class RawCacheService {
     ): Promise<Map<string, TVal>> {
         if (ids.length === 0) return new Map();
 
-        const cached = await this.mget<{ v: TVal }>(ids.map(opts.cacheKey));
+        let cached: ({ v: TVal } | null)[];
+        try {
+            cached = await this.mget<{ v: TVal }>(ids.map(opts.cacheKey));
+        } catch (error) {
+            this.logger.warn(
+                `Configuration cache read failed: ${error instanceof Error ? error.name : 'unknown'}`,
+            );
+            cached = ids.map(() => null);
+        }
         const result = new Map<string, TVal>();
         const missed: string[] = [];
 
-        ids.forEach((id, i) => (cached[i] ? result.set(id, cached[i]!.v) : missed.push(id)));
+        ids.forEach((id, i) => {
+            const entry = cached[i];
+            if (entry && typeof entry === 'object' && Object.hasOwn(entry, 'v'))
+                result.set(id, entry.v);
+            else missed.push(id);
+        });
 
         if (missed.length) {
             const rows = await opts.fetch(missed);
-            await this.setMany(
-                rows.map((r) => ({
-                    key: opts.cacheKey(opts.rowId(r)),
-                    value: { v: opts.toValue(r) },
-                    ttlSeconds: opts.ttlSeconds,
-                })),
-            );
+            try {
+                await this.setMany(
+                    rows.map((r) => ({
+                        key: opts.cacheKey(opts.rowId(r)),
+                        value: { v: opts.toValue(r) },
+                        ttlSeconds: opts.ttlSeconds,
+                    })),
+                );
+            } catch (error) {
+                this.logger.warn(
+                    `Configuration cache write failed: ${error instanceof Error ? error.name : 'unknown'}`,
+                );
+            }
             rows.forEach((r) => result.set(opts.rowId(r), opts.toValue(r)));
         }
         return result;

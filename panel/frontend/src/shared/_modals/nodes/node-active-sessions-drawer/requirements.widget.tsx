@@ -8,7 +8,7 @@ const DOCKER_SNIPPET = `
       - NET_ADMIN
 `
 
-const HIGHLIGHT_SPAN = <Text c="white" component="span" fw={600} size="sm" />
+const HIGHLIGHT_SPAN = <Text c="var(--panel-text)" component="span" fw={600} size="sm" />
 
 export const RequirementsWidget = () => {
     return (
@@ -28,12 +28,11 @@ export const RequirementsWidget = () => {
                     </Text>
                 </Group>
                 <CodeHighlight
-                    background="rgba(22, 27, 35)"
                     code={DOCKER_SNIPPET}
                     language="yaml"
                     radius="md"
                     style={{
-                        border: '1px solid rgba(255, 255, 255, 0.08)',
+                        border: '1px solid var(--panel-border)',
                         borderRadius: 'var(--mantine-radius-md)'
                     }}
                 />

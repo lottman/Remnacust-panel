@@ -92,8 +92,26 @@ html[data-panel-reduced-motion='true'] .icon svg {
     font-size: 12px;
 }
 @media (max-width: 48em) {
+    .content {
+        grid-template-columns: minmax(0, 1fr) 32px;
+    }
+    .content > .icon {
+        grid-row: 1;
+        width: 32px;
+        height: 32px;
+    }
+    .title {
+        grid-column: 1 / -1;
+        grid-row: 2;
+    }
     .value {
+        grid-row: 1;
+        align-self: center;
         font-size: 20px;
+    }
+    .subtitle {
+        grid-column: 1 / -1;
+        grid-row: 3;
     }
 }
 @media (max-width: 23em) {

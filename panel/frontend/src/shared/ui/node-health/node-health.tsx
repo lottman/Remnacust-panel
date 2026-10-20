@@ -4,6 +4,7 @@ import { IconActivityHeartbeat } from '@tabler/icons-react'
 import { useTranslation } from 'react-i18next'
 
 import { showModal } from '@shared/_modals/show-modal'
+import { getNodeErrorMessage } from '@shared/utils/node-error-message'
 import { getNodeHealth, NodeHealthLevel, NodeHealthSignal } from '@shared/utils/node-health'
 
 import classes from './node-health.module.css'
@@ -177,7 +178,8 @@ export function NodeHealthDetails({ node }: { node: GetNodeCommand.Response['res
                 )}
                 {!node.isConnected && node.lastStatusMessage && (
                     <Text c="dimmed" size="xs" style={{ overflowWrap: 'anywhere' }}>
-                        {t('xera-node-health.last-status')}: {node.lastStatusMessage}
+                        {t('xera-node-health.last-status')}:{' '}
+                        {getNodeErrorMessage(node.lastStatusMessage, t)}
                     </Text>
                 )}
             </Stack>

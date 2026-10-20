@@ -1,5 +1,4 @@
 import { Grid } from '@mantine/core'
-import dayjs from 'dayjs'
 import { useTranslation } from 'react-i18next'
 import { FaServer } from 'react-icons/fa'
 import { MdPayment, MdTrendingUp } from 'react-icons/md'
@@ -9,22 +8,30 @@ import { useGetInfraBillingNodes } from '@shared/api/hooks'
 import { IMetricCardProps, MetricCardShared } from '@shared/ui/metrics/metric-card'
 import { formatCurrency } from '@shared/utils/misc'
 
+import { getBillingDateStatus } from '../billing-date-status'
+import classes from '../billing-date-status.module.css'
+import { useBillingToday } from '../use-billing-today'
+
 export function StatsWidget() {
-    const currentMonthOnly = dayjs().format('MMMM')
-
     const { data: nodes, isLoading } = useGetInfraBillingNodes()
-    const { t } = useTranslation()
+    const { t, i18n } = useTranslation()
 
-    const today = dayjs().startOf('day')
+    const today = useBillingToday()
+    const currentMonthOnly = new Intl.DateTimeFormat(i18n.language, {
+        month: 'long',
+        calendar: 'gregory',
+        timeZone: 'UTC'
+    }).format(today)
     const billingNodes = nodes?.billingNodes ?? []
 
-    const overdueCount = billingNodes.filter((node) =>
-        dayjs(node.nextBillingAt).startOf('day').isBefore(today)
+    const overdueCount = billingNodes.filter(
+        (node) => getBillingDateStatus(node.nextBillingAt, today).state === 'overdue'
     ).length
 
     const stats: IMetricCardProps[] = [
         {
             title: t('common.message.overdue'),
+            statusColor: overdueCount > 0 ? 'var(--billing-overdue-ink)' : undefined,
             value: overdueCount,
             subtitle:
                 overdueCount > 0
@@ -61,7 +68,7 @@ export function StatsWidget() {
     ]
 
     return (
-        <Grid mb="md">
+        <Grid className={classes.statusColors} mb="md">
             {stats.map((stat, index) => (
                 <Grid.Col key={index} span={{ base: 12, xs: 6, md: 6, sm: 6, lg: 3 }}>
                     <MetricCardShared isLoading={isLoading} key={index} {...stat} />

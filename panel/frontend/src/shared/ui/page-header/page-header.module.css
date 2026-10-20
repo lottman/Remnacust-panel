@@ -24,6 +24,7 @@
     cursor: copy;
     max-width: 70ch;
     border-radius: 4px;
+    overflow-wrap: anywhere;
 }
 .actionsSection {
     flex: 0 1 auto;
@@ -41,5 +42,15 @@
     .actionsSection > :global(.mantine-Group-root) {
         justify-content: flex-start;
         flex-wrap: wrap;
+    }
+    .actionsSection :global(.mantine-Button-root) {
+        max-width: 100%;
+        height: auto;
+        min-height: 40px;
+        padding-block: 8px;
+    }
+    .actionsSection :global(.mantine-Button-label) {
+        white-space: normal;
+        overflow-wrap: anywhere;
     }
 }

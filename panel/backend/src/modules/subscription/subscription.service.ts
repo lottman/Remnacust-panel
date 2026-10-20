@@ -869,12 +869,7 @@ export class SubscriptionService {
             ? subscriptionSettings.customRemarks.HWIDMaxDevicesExceeded
             : subscriptionSettings.customRemarks.HWIDNotSupported;
         const response = new SubscriptionWithConfigResponse({
-            headers: this.getUserProfileHeadersInfo(
-                user,
-                subscriptionSettings,
-                false,
-                hwidRemarks,
-            ),
+            headers: this.getUserProfileHeadersInfo(user, subscriptionSettings, false, hwidRemarks),
             body: '',
             contentType: 'text/plain',
         });
@@ -883,10 +878,7 @@ export class SubscriptionService {
             response.headers['x-hwid-active'] = 'true';
         }
 
-        if (
-            hwidCheckup.maxDeviceReached &&
-            subscriptionSettings.hwidSettings.maxDevicesAnnounce
-        ) {
+        if (hwidCheckup.maxDeviceReached && subscriptionSettings.hwidSettings.maxDevicesAnnounce) {
             response.headers.announce = TemplateEngine.formatWithUser(
                 `rwEncodeBase64:${subscriptionSettings.hwidSettings.maxDevicesAnnounce}`,
                 user,
@@ -1523,15 +1515,15 @@ export class SubscriptionService {
 
             const userEntity = userResult.response;
 
+            if (!userEntity) {
+                return fail(ERRORS.USER_NOT_FOUND);
+            }
+
             if (
                 this.deviceAccess.enabled &&
                 (await this.deviceAccess.hasBlockedDevice(userEntity.id))
             )
                 return fail(ERRORS.FORBIDDEN);
-
-            if (!userEntity) {
-                return fail(ERRORS.USER_NOT_FOUND);
-            }
 
             let settings = await this.queryBus.execute(new GetCachedSubscriptionSettingsQuery());
             let hostsOverrides: ExternalSquadEntity['hostOverrides'] | undefined;
@@ -1557,7 +1549,8 @@ export class SubscriptionService {
                 new GetHostsForUserQuery(userEntity.id, true, true),
             );
 
-            const allHosts = allHostsResult.isOk ? allHostsResult.response : [];
+            if (!allHostsResult.isOk) return fail(ERRORS.GET_ALL_HOSTS_ERROR);
+            const allHosts = allHostsResult.response;
 
             const enabledHosts = allHosts.filter((h) => !h.isDisabled && !h.isHidden);
             const disabledHosts = allHosts.filter((h) => h.isDisabled && !h.isHidden);

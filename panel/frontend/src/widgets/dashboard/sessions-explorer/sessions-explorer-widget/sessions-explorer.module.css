@@ -23,11 +23,6 @@
 }
 
 .ipHighlight {
-    background: linear-gradient(
-        90deg,
-        rgba(45, 212, 191, 0.16) 0%,
-        rgba(45, 212, 191, 0.04) 60%,
-        rgba(45, 212, 191, 0) 100%
-    );
-    box-shadow: inset 2px 0 0 0 var(--mantine-color-teal-5);
+    background: color-mix(in srgb, var(--panel-accent) 10%, var(--panel-surface));
+    border-inline-start: 2px solid var(--panel-accent);
 }

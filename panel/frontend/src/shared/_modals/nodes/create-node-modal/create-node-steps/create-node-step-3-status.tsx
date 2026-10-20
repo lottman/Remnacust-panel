@@ -9,6 +9,7 @@ import { useUiText } from '@shared/i18n/interface-text'
 import { LottieLinkShared } from '@shared/ui/lotties'
 import { LottieCheckmarkShared } from '@shared/ui/lotties/checkmark'
 import { LottieStopShared } from '@shared/ui/lotties/stop'
+import { getNodeErrorMessage } from '@shared/utils/node-error-message'
 
 interface IProps {
     nodeUuid?: string
@@ -140,7 +141,10 @@ export const CreateNodeStep3Status = ({ nodeUuid, onClose }: IProps) => {
                     title={t('common.message.last-error-message')}
                     variant="light"
                 >
-                    <Code color="dark.7">{errorMessage}</Code>
+                    <Text size="sm" mb="xs">
+                        {getNodeErrorMessage(errorMessage, t)}
+                    </Text>
+                    <Code>{errorMessage}</Code>
                 </Alert>
             )}
 

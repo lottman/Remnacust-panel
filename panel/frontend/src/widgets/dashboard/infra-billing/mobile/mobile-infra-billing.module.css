@@ -1,0 +1,38 @@
+.layout {
+    min-width: 0;
+    padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+}
+.tabs {
+    flex-wrap: nowrap;
+}
+:global(html.panel-themed) .tabs .tab {
+    flex: 1 1 0;
+    min-width: 0;
+    padding-inline: 8px;
+    min-height: 44px;
+}
+@media (max-width: 480px) {
+    :global(html.panel-themed) .tabs .tab {
+        padding-inline: 4px;
+        font-size: 12px;
+    }
+    .tabSection {
+        display: none;
+    }
+}
+.tabLabel {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    text-align: center;
+}
+.toolbar {
+    position: fixed;
+    inset-inline-end: max(16px, env(safe-area-inset-right, 0px));
+    bottom: max(16px, env(safe-area-inset-bottom, 0px));
+    z-index: 100;
+    padding: 6px;
+    border: 1px solid var(--panel-border);
+    border-radius: var(--mantine-radius-md);
+    background: var(--panel-surface);
+    box-shadow: 0 4px 12px rgb(0 0 0 / 14%);
+}

@@ -1,0 +1,105 @@
+.statusColors {
+    --billing-overdue-ink: light-dark(var(--mantine-color-red-9), var(--mantine-color-red-3));
+    --billing-tone: var(--mantine-color-gray-6);
+    --billing-ink: var(--panel-muted, var(--mantine-color-dimmed));
+    --billing-card-bg: var(--panel-surface, var(--mantine-color-body));
+    --billing-card-border: var(--panel-border, var(--mantine-color-default-border));
+}
+
+.statusColors[data-billing-state='upcoming'] {
+    --billing-tone: var(--mantine-color-yellow-6);
+    --billing-ink: light-dark(
+        color-mix(in srgb, var(--mantine-color-yellow-9) 62%, black),
+        var(--mantine-color-yellow-3)
+    );
+}
+
+.statusColors[data-billing-state='urgent'] {
+    --billing-tone: var(--mantine-color-orange-6);
+    --billing-ink: light-dark(
+        color-mix(in srgb, var(--mantine-color-orange-9) 80%, black),
+        var(--mantine-color-orange-3)
+    );
+}
+
+.statusColors:is([data-billing-state='today'], [data-billing-state='overdue']) {
+    --billing-tone: var(--mantine-color-red-6);
+    --billing-ink: light-dark(var(--mantine-color-red-9), var(--mantine-color-red-3));
+}
+
+.card:is(
+    [data-billing-state='upcoming'],
+    [data-billing-state='urgent'],
+    [data-billing-state='today'],
+    [data-billing-state='overdue']
+) {
+    --billing-card-bg: color-mix(
+        in srgb,
+        var(--billing-tone) 6%,
+        var(--panel-surface, var(--mantine-color-body))
+    );
+    --billing-card-border: color-mix(
+        in srgb,
+        var(--billing-tone) 45%,
+        var(--panel-border, var(--mantine-color-default-border))
+    );
+}
+
+.statusRow {
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.statusRow .dateButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--billing-ink);
+    font-weight: 600;
+    font-size: var(--mantine-font-size-sm);
+    border-radius: var(--mantine-radius-xs);
+    min-height: 32px;
+}
+
+.dateButton:focus-visible {
+    outline: 2px solid var(--panel-accent, var(--mantine-primary-color-filled));
+    outline-offset: 3px;
+}
+
+.statusRow .badge {
+    color: var(--billing-ink);
+    background: color-mix(
+        in srgb,
+        var(--billing-tone) 12%,
+        var(--panel-surface, var(--mantine-color-body))
+    );
+    border: 1px solid color-mix(in srgb, var(--billing-tone) 30%, transparent);
+    text-transform: none;
+    max-width: 100%;
+    height: auto;
+    min-height: 24px;
+    padding-block: 3px;
+}
+
+.badgeLabel {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    line-height: 1.4;
+}
+.nodeTitle {
+    flex: 1;
+    min-width: 0;
+}
+.nodeActions {
+    flex-shrink: 0;
+    margin-inline-start: auto;
+}
+@media (max-width: 400px) {
+    .nodeHeader {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .nodeTitle {
+        flex-basis: 100%;
+    }
+}

@@ -12,6 +12,7 @@ export interface IMetricCardProps {
     iconSize?: number
     iconVariant: ThemeIconProps['variant']
     isLoading?: boolean
+    statusColor?: string
     subtitle?: string
     themeIconProps?: ThemeIconProps
     title: string
@@ -22,6 +23,7 @@ export interface IMetricCardProps {
 export function MetricCardShared(props: IMetricCardProps) {
     const {
         iconColor,
+        statusColor,
         themeIconProps,
         IconComponent,
         iconSize = 24,
@@ -34,7 +36,12 @@ export function MetricCardShared(props: IMetricCardProps) {
     } = props
 
     return (
-        <Card className={classes.card} data-panel-motion="metric" radius="md">
+        <Card
+            className={classes.card}
+            data-panel-motion="metric"
+            radius="md"
+            style={statusColor ? { transitionProperty: 'border-color' } : undefined}
+        >
             <Box className={`${classes.content}${subtitle ? ` ${classes.withFooter}` : ''}`}>
                 <ThemeIcon
                     aria-hidden="true"
@@ -48,7 +55,9 @@ export function MetricCardShared(props: IMetricCardProps) {
                     <IconComponent size={iconSize} />
                 </ThemeIcon>
 
-                <Text className={classes.title}>{title}</Text>
+                <Text className={classes.title} style={{ color: statusColor }}>
+                    {title}
+                </Text>
                 {isLoading ? (
                     <Box className={classes.value}>
                         <ShimmerSkeleton height={28} width="min(80px, 100%)" />
@@ -56,7 +65,12 @@ export function MetricCardShared(props: IMetricCardProps) {
                 ) : rollingNumberComponent != null ? (
                     <Box className={classes.value}>{rollingNumberComponent}</Box>
                 ) : (
-                    <Text className={classes.value} data-panel-value key={String(value)}>
+                    <Text
+                        className={classes.value}
+                        data-panel-value
+                        key={String(value)}
+                        style={{ color: statusColor }}
+                    >
                         <bdi dir="ltr">{typeof value === 'number' ? formatInt(value) : value}</bdi>
                     </Text>
                 )}

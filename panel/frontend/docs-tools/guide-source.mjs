@@ -571,9 +571,9 @@ add(
         ],
         [
             'Даты и уведомления',
-            'Дата оплаты помогает контролировать продление аренды. Запись оплаты или изменение даты в панели не совершает платёж провайдеру. Перед удалением провайдера проверьте связанные ноды и историю учёта.',
+            'Дата оплаты помогает контролировать продление аренды. Сроки сравниваются по календарным дням UTC: более 7 дней — нейтральный статус, за 2–7 дней — жёлтый, завтра — оранжевый, сегодня и после срока — красный. Просрочка также выделяется красным в сводке. Текст отличает оплату сегодня от просрочки и показывает количество дней. Цвета адаптируются к теме, статус обновляется при смене дня и возвращении на вкладку. На телефоне суммы и подписи переносятся, действия отделены от длинных названий нод, нижняя панель не мешает прокрутке последней карточки. Запись оплаты или изменение даты в панели не совершает платёж провайдеру. Перед удалением провайдера проверьте связанные ноды и историю учёта.',
             'Dates and notifications',
-            'Payment dates help track renewal. Recording payment or editing a date in the panel does not transfer money to the provider. Check linked nodes and accounting history before deleting a provider.'
+            'Payment dates help track renewal. Dates use UTC calendar days: more than 7 days is neutral, 2–7 days is yellow, tomorrow is orange, and today or overdue is red. Overdue totals are also red. Text distinguishes due today from overdue and shows the day count. Colors adapt to the theme, and statuses update at day changes and when returning to the tab. On phones, amounts and labels wrap, actions stay separate from long node names, and the last card can scroll clear of the bottom toolbar. Recording payment or editing a date in the panel does not transfer money to the provider. Check linked nodes and accounting history before deleting a provider.'
         ]
     ]
 )

@@ -34,16 +34,28 @@ export class GetCachedExternalSquadSettingsHandler implements IQueryHandler<GetC
             if (cached) {
                 return cached;
             }
+        } catch (error) {
+            this.logger.warn(
+                `External squad settings cache read failed: ${error instanceof Error ? error.name : 'unknown'}`,
+            );
+        }
 
+        try {
             const result = await this.externalSquadRepository.getExternalSquadSettings(
                 query.externalSquadUuid,
             );
 
-            await this.rawCacheService.set(
-                CACHE_KEYS.EXTERNAL_SQUAD_SETTINGS(query.externalSquadUuid),
-                result,
-                CACHE_KEYS_TTL.EXTERNAL_SQUAD_SETTINGS,
-            );
+            try {
+                await this.rawCacheService.set(
+                    CACHE_KEYS.EXTERNAL_SQUAD_SETTINGS(query.externalSquadUuid),
+                    result,
+                    CACHE_KEYS_TTL.EXTERNAL_SQUAD_SETTINGS,
+                );
+            } catch (error) {
+                this.logger.warn(
+                    `External squad settings cache write failed: ${error instanceof Error ? error.name : 'unknown'}`,
+                );
+            }
 
             return result;
         } catch (error) {

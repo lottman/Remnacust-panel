@@ -28,18 +28,30 @@ export class GetCachedSubscriptionSettingsHandler implements IQueryHandler<GetCa
             if (cached) {
                 return cached;
             }
+        } catch (error) {
+            this.logger.warn(
+                `Subscription settings cache read failed: ${error instanceof Error ? error.name : 'unknown'}`,
+            );
+        }
 
+        try {
             const settings = await this.subscriptionSettingsRepository.findFirst();
 
             if (!settings) {
                 return null;
             }
 
-            await this.rawCacheService.set(
-                CACHE_KEYS.SUBSCRIPTION_SETTINGS,
-                settings,
-                CACHE_KEYS_TTL.SUBSCRIPTION_SETTINGS,
-            );
+            try {
+                await this.rawCacheService.set(
+                    CACHE_KEYS.SUBSCRIPTION_SETTINGS,
+                    settings,
+                    CACHE_KEYS_TTL.SUBSCRIPTION_SETTINGS,
+                );
+            } catch (error) {
+                this.logger.warn(
+                    `Subscription settings cache write failed: ${error instanceof Error ? error.name : 'unknown'}`,
+                );
+            }
 
             return settings;
         } catch (error) {

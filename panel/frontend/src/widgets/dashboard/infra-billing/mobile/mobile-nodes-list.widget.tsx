@@ -1,6 +1,5 @@
 import {
     ActionIcon,
-    Badge,
     Box,
     Center,
     Checkbox,
@@ -15,28 +14,20 @@ import { GetInfraBillingNodesCommand } from '@remnawave/backend-contract'
 import dayjs from 'dayjs'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { TbCalendar, TbCheck, TbCpu, TbCreditCard, TbExternalLink, TbServer } from 'react-icons/tb'
+import { TbCheck, TbCpu, TbExternalLink, TbServer } from 'react-icons/tb'
 
 import { showModal } from '@shared/_modals/show-modal'
 import { queryClient } from '@shared/api'
 import { QueryKeys, useUpdateInfraBillingNode } from '@shared/api/hooks'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SectionCard } from '@shared/ui/section-card'
-import { formatTimeUtil } from '@shared/utils/time-utils'
+
+import { getBillingDateStatus } from '../billing-date-status'
+import { BillingDateStatusRow } from '../billing-date-status-row'
+import classes from '../billing-date-status.module.css'
+import { useBillingToday } from '../use-billing-today'
 
 type BillingNode = GetInfraBillingNodesCommand.Response['response']['billingNodes'][number]
-
-function getNodeStatus(nextBillingAt: Date, language: string) {
-    const now = dayjs().startOf('day')
-    const target = dayjs(nextBillingAt).startOf('day')
-    const isOverdue = target.isBefore(now)
-
-    return {
-        label: target.locale(language).fromNow(),
-        color: isOverdue ? 'red' : 'teal',
-        isOverdue
-    }
-}
 
 interface IProps {
     nodes: GetInfraBillingNodesCommand.Response['response']['billingNodes']
@@ -49,6 +40,7 @@ interface IProps {
 export function MobileNodesListWidget(props: IProps) {
     const { nodes, style, selectMode = false, selectedUuids, onToggleSelect } = props
     const { t, i18n } = useTranslation()
+    const today = useBillingToday()
     const [updatingUuids, setUpdatingUuids] = useState<Set<string>>(new Set())
 
     const { mutate: updateNode } = useUpdateInfraBillingNode({
@@ -101,7 +93,9 @@ export function MobileNodesListWidget(props: IProps) {
         const groups = new Map<string, BillingNode[]>()
 
         for (const node of sorted) {
-            const key = dayjs.utc(node.nextBillingAt).format('YYYY-MM')
+            const key = dayjs.utc(node.nextBillingAt).isValid()
+                ? dayjs.utc(node.nextBillingAt).format('YYYY-MM')
+                : 'unknown'
             const existing = groups.get(key)
             if (existing) {
                 existing.push(node)
@@ -111,10 +105,13 @@ export function MobileNodesListWidget(props: IProps) {
         }
 
         return Array.from(groups.entries()).map(([key, groupNodes]) => ({
-            label: dayjs.utc(key).locale(i18n.language).format('MMMM YYYY'),
+            label:
+                key === 'unknown'
+                    ? t('billing-date-status.date-unavailable')
+                    : dayjs.utc(key).locale(i18n.language).format('MMMM YYYY'),
             nodes: groupNodes
         }))
-    }, [nodes, i18n.language])
+    }, [nodes, i18n.language, t])
 
     if (nodes.length === 0) {
         return (
@@ -152,7 +149,7 @@ export function MobileNodesListWidget(props: IProps) {
                     />
 
                     {group.nodes.map((node) => {
-                        const status = getNodeStatus(node.nextBillingAt, i18n.language)
+                        const status = getBillingDateStatus(node.nextBillingAt, today)
                         const isSelected = selectedUuids?.has(node.uuid) ?? false
 
                         return (
@@ -162,15 +159,28 @@ export function MobileNodesListWidget(props: IProps) {
                                 style={{ cursor: selectMode ? 'pointer' : undefined }}
                             >
                                 <SectionCard.Root
-                                    style={
-                                        selectMode && isSelected
-                                            ? { borderColor: 'var(--mantine-color-cyan-filled)' }
-                                            : undefined
-                                    }
+                                    className={`${classes.statusColors} ${classes.card}`}
+                                    data-billing-state={status.state}
+                                    style={{
+                                        background: 'var(--billing-card-bg)',
+                                        transitionProperty: 'border-color',
+                                        borderColor:
+                                            selectMode && isSelected
+                                                ? 'var(--mantine-primary-color-filled)'
+                                                : 'var(--billing-card-border)'
+                                    }}
                                 >
                                     <SectionCard.Section>
-                                        <Group justify="space-between" wrap="nowrap">
-                                            <Group gap="sm" wrap="nowrap">
+                                        <Group
+                                            className={classes.nodeHeader}
+                                            justify="space-between"
+                                            wrap="nowrap"
+                                        >
+                                            <Group
+                                                className={classes.nodeTitle}
+                                                gap="sm"
+                                                wrap="nowrap"
+                                            >
                                                 {selectMode && (
                                                     <Checkbox
                                                         checked={isSelected}
@@ -203,9 +213,14 @@ export function MobileNodesListWidget(props: IProps) {
                                             </Group>
 
                                             {!selectMode && (
-                                                <Group gap={4} wrap="nowrap">
+                                                <Group
+                                                    className={classes.nodeActions}
+                                                    gap={4}
+                                                    wrap="nowrap"
+                                                >
                                                     {node.node && (
                                                         <ActionIcon
+                                                            aria-label={`${t('common.action.open')}: ${node.node.name}`}
                                                             color="blue"
                                                             onClick={() => handleOpenNode(node)}
                                                             size="input-xs"
@@ -217,6 +232,7 @@ export function MobileNodesListWidget(props: IProps) {
 
                                                     {node.provider.loginUrl && (
                                                         <ActionIcon
+                                                            aria-label={`${t('common.action.open')}: ${node.provider.name}`}
                                                             color="gray"
                                                             onClick={() => handleOpenProvider(node)}
                                                             size="input-xs"
@@ -227,6 +243,7 @@ export function MobileNodesListWidget(props: IProps) {
                                                     )}
 
                                                     <ActionIcon
+                                                        aria-label={t('common.action.update')}
                                                         color="teal"
                                                         loading={updatingUuids.has(node.uuid)}
                                                         onClick={() =>
@@ -246,43 +263,15 @@ export function MobileNodesListWidget(props: IProps) {
                                     </SectionCard.Section>
 
                                     <SectionCard.Section>
-                                        <Group justify="space-between" wrap="nowrap">
-                                            <Group
-                                                gap={6}
-                                                onClick={
-                                                    selectMode
-                                                        ? undefined
-                                                        : () => handleClickBillingAt(node)
-                                                }
-                                                style={{
-                                                    cursor: selectMode ? 'inherit' : 'pointer'
-                                                }}
-                                                wrap="nowrap"
-                                            >
-                                                <TbCalendar
-                                                    color={`var(--mantine-color-${status.color}-5)`}
-                                                    size={16}
-                                                />
-                                                <Text c={status.color} fw={600} size="sm">
-                                                    {formatTimeUtil({
-                                                        time: node.nextBillingAt,
-                                                        template: 'FULL_DATE',
-                                                        language: i18n.language,
-                                                        utc: true
-                                                    })}
-                                                </Text>
-                                            </Group>
-
-                                            <Badge
-                                                color={status.color}
-                                                leftSection={<TbCreditCard size={14} />}
-                                                radius="sm"
-                                                size="sm"
-                                                variant="soft"
-                                            >
-                                                {status.label}
-                                            </Badge>
-                                        </Group>
+                                        <BillingDateStatusRow
+                                            date={node.nextBillingAt}
+                                            today={today}
+                                            onEdit={
+                                                selectMode
+                                                    ? undefined
+                                                    : () => handleClickBillingAt(node)
+                                            }
+                                        />
                                     </SectionCard.Section>
                                 </SectionCard.Root>
                             </Box>

@@ -12,6 +12,7 @@ import {
 import { LoadingScreen } from '@shared/ui'
 import { RefreshActionIcon } from '@shared/ui/refresh-control'
 
+import classes from './mobile-infra-billing.module.css'
 import { MobileNodesListWidget } from './mobile-nodes-list.widget'
 import { MobileProvidersListWidget } from './mobile-providers-list.widget'
 import { MobileStatsWidget } from './mobile-stats.widget'
@@ -89,11 +90,16 @@ export function MobileInfraBillingWidget() {
     }
 
     return (
-        <Stack gap="xs" pos="relative">
+        <Stack className={classes.layout} gap="xs" pos="relative">
             <MobileStatsWidget />
 
             <Tabs
-                color="cyan"
+                classNames={{
+                    list: classes.tabs,
+                    tab: classes.tab,
+                    tabLabel: classes.tabLabel,
+                    tabSection: classes.tabSection
+                }}
                 keepMountedMode="display-none"
                 onChange={(value) => {
                     if (value) {
@@ -170,33 +176,26 @@ export function MobileInfraBillingWidget() {
                 </Tabs.Panel>
             </Tabs>
 
-            <Group
-                bottom={16}
-                gap={8}
-                pos="fixed"
-                right={15}
-                style={{
-                    zIndex: 100,
-                    backgroundColor: 'var(--panel-surface, var(--mantine-color-body))',
-                    padding: 6,
-                    borderRadius: 'var(--mantine-radius-md)',
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.14)'
-                }}
-            >
+            <Group className={classes.toolbar} gap={8}>
                 <RefreshActionIcon
-                    color="cyan"
+                    aria-label={t('common.action.refresh')}
                     loading={
                         isInfraProvidersRefetching ||
                         isInfraBillingNodesRefetching ||
                         isInfraBillingRecordsRefetching
                     }
                     onClick={handleRefetch}
-                    size={40}
+                    size={44}
                     variant="soft"
                 >
                     <TbRefresh size={22} />
                 </RefreshActionIcon>
-                <ActionIcon color="teal" onClick={handleAdd} size={40} variant="soft">
+                <ActionIcon
+                    aria-label={t('common.action.add')}
+                    onClick={handleAdd}
+                    size={44}
+                    variant="soft"
+                >
                     <TbPlus size={22} />
                 </ActionIcon>
             </Group>

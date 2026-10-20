@@ -3797,7 +3797,6 @@
         "nodes-offline": "列表中有 {{total}} 个节点，没有标记为已连接且已启用的节点。开始扫描时将重新加载列表。",
         "nodes-ready": "{{total}} 个节点中有 {{online}} 个可用。每次扫描前都会重新加载列表。",
         "refresh-nodes": "刷新节点",
-
         "partial-scan": "结果不完整：{{failed}} 个节点查询失败；{{unmapped}} 个 Xray 标识无法关联用户。有效观测结果显示在下方。",
         "empty-scan": "本次扫描未观测到活动的已认证连接。这是当前快照，并非全部流量历史。请在连接活动时刷新，或开启定期记录。",
         "live": "Live sessions",
@@ -3819,5 +3818,37 @@
         "partial": "Failed node polls: {{failed}}. Offline node polls: {{offline}}. Data is partial.",
         "limit": "The storage limit was reached; recording has stopped.",
         "search": "Search username, user ID, IP or node"
+    },
+    "billing-date-status": {
+        "overdue_other": "已逾期 {{count}} 天",
+        "remaining_other": "{{count}} 天后付款",
+        "due-today": "今天到期付款",
+        "due-tomorrow": "明天到期付款",
+        "date-unavailable": "未设置付款日期",
+        "edit-date": "修改付款日期：{{date}}",
+        "overdue": "已逾期 {{count}} 天",
+        "overdue_one": "已逾期 {{count}} 天",
+        "overdue_few": "已逾期 {{count}} 天",
+        "overdue_many": "已逾期 {{count}} 天",
+        "remaining": "{{count}} 天后付款",
+        "remaining_one": "{{count}} 天后付款",
+        "remaining_few": "{{count}} 天后付款",
+        "remaining_many": "{{count}} 天后付款"
+    },
+    "nodeErrors": {
+        "preparation": "面板无法准备节点配置。请检查分配的配置、片段和面板日志；运行中的配置未被替换。",
+        "profile": "无法加载分配的配置。请检查配置是否存在且可访问。",
+        "snippets": "无法加载配置片段。请检查面板日志并重试应用。",
+        "validation": "无法准备配置。请检查 JSON、协议和入站设置。",
+        "certificates": "无法准备配置证书。请检查 PEM 格式、大小以及证书和密钥文件的访问权限。",
+        "users": "无法准备配置用户。请检查面板日志和数据库可用性。",
+        "devices": "无法准备设备凭据。请检查面板日志和数据库可用性。",
+        "identities": "无法准备主机凭据。请检查面板日志和主机访问设置。",
+        "listener-change": "入站“{{tag}}”的端口或传输设置已更改。若要在不中断连接的情况下应用，请使用新标签创建单独的端口并保留当前监听器。更改同一端口需要明确重启内核，系统不会自动重启。"
+    },
+    "connectionKeys": {
+        "active": "启用",
+        "hidden": "隐藏",
+        "disabled": "禁用"
     }
 }

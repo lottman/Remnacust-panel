@@ -199,7 +199,7 @@ export class StartAllNodesByProfileQueueProcessor extends WorkerHost {
             this.logger.log(`Generated config for nodes by Profile in ${Date.now() - startTime}ms`);
 
             if (!config.isOk) {
-                throw new Error('Failed to get config');
+                throw new Error(config.message ?? 'Failed to get config');
             }
 
             const startNode = async (node: NodesEntity) => {

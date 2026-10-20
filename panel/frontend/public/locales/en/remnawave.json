@@ -3797,7 +3797,6 @@
         "nodes-offline": "Nodes in the list: {{total}}. None are marked connected and enabled. Starting a scan reloads the list.",
         "nodes-ready": "{{online}} of {{total}} nodes are available. The list is reloaded before every scan.",
         "refresh-nodes": "Refresh nodes",
-
         "partial-scan": "Partial results: {{failed}} nodes could not be queried; {{unmapped}} Xray identities could not be linked to a user. Valid observations are shown below.",
         "empty-scan": "No active authenticated connections were observed during this scan. This is a snapshot, not a history of all traffic. Refresh during an active connection or use recording for periodic observations.",
         "live": "Live sessions",
@@ -3819,5 +3818,37 @@
         "partial": "Failed node polls: {{failed}}. Offline node polls: {{offline}}. Data is partial.",
         "limit": "The storage limit was reached; recording has stopped.",
         "search": "Search username, user ID, IP or node"
+    },
+    "billing-date-status": {
+        "overdue_one": "Overdue by {{count}} day",
+        "overdue_other": "Overdue by {{count}} days",
+        "remaining_one": "Due in {{count}} day",
+        "remaining_other": "Due in {{count}} days",
+        "due-today": "Payment due today",
+        "due-tomorrow": "Payment due tomorrow",
+        "date-unavailable": "Payment date unavailable",
+        "edit-date": "Change payment date: {{date}}",
+        "overdue": "Overdue by {{count}} days",
+        "overdue_few": "Overdue by {{count}} days",
+        "overdue_many": "Overdue by {{count}} days",
+        "remaining": "Due in {{count}} days",
+        "remaining_few": "Due in {{count}} days",
+        "remaining_many": "Due in {{count}} days"
+    },
+    "nodeErrors": {
+        "preparation": "The panel could not prepare the node configuration. Check the assigned profile, snippets and panel log; the running configuration was not replaced.",
+        "profile": "The assigned profile could not be loaded. Check that it exists and is accessible.",
+        "snippets": "Configuration snippets could not be loaded. Check the panel log and retry application.",
+        "validation": "The profile could not be prepared. Check its JSON, protocols and inbound settings.",
+        "certificates": "Profile certificates could not be prepared. Check PEM format, size and access to certificate and key files.",
+        "users": "Profile users could not be prepared. Check the panel log and database availability.",
+        "devices": "Device credentials could not be prepared. Check the panel log and database availability.",
+        "identities": "Host credentials could not be prepared. Check the panel log and host access settings.",
+        "listener-change": "Inbound “{{tag}}” has changed its port or transport settings. To apply without dropping connections, create a separate port with a new tag and retain the current listener. Changing the same port requires an explicit core restart; it is never performed automatically."
+    },
+    "connectionKeys": {
+        "active": "Active",
+        "hidden": "Hidden",
+        "disabled": "Disabled"
     }
 }

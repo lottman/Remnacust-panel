@@ -12,7 +12,7 @@ export const GeocheckProgressWidget = () => {
                 <LottieGlobeShared />
             </div>
 
-            <Text c="white" fw={600} size="md">
+            <Text fw={600} size="md" ta="center">
                 {t('node-geocheck.running')}
             </Text>
 

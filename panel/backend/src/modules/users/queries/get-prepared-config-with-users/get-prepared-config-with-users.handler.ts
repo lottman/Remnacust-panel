@@ -1,10 +1,10 @@
-import { HostAccessService } from '@common/host-policy/host-access.service';
 import { Logger } from '@nestjs/common';
 import { IQueryHandler, QueryBus, QueryHandler } from '@nestjs/cqrs';
 
 import { HashedSet } from '@remnawave/hashed-set';
 
 import { XRayConfig } from '@common/helpers/xray-config/xray-config.validator';
+import { HostAccessService } from '@common/host-policy/host-access.service';
 import { fail, ok, TResult } from '@common/types';
 import { ERRORS } from '@libs/contracts/constants';
 
@@ -14,7 +14,6 @@ import { DeviceAccessService } from '@modules/hwid-user-devices/device-access.se
 import { UsersRepository } from '@modules/users/repositories/users.repository';
 
 import { expandDeviceUsers } from './expand-device-users';
-
 import {
     GetPreparedConfigWithUsersQuery,
     IGetPreparedConfigWithUsersResponse,
@@ -29,7 +28,7 @@ export class GetPreparedConfigWithUsersHandler implements IQueryHandler<
     constructor(
         private readonly usersRepository: UsersRepository,
         private readonly queryBus: QueryBus,
-        private readonly hostAccess:HostAccessService,
+        private readonly hostAccess: HostAccessService,
         private readonly deviceAccess: DeviceAccessService,
     ) {}
 
@@ -39,6 +38,7 @@ export class GetPreparedConfigWithUsersHandler implements IQueryHandler<
         let config: XRayConfig | null = null;
         const inboundsUserSets: Map<string, HashedSet> = new Map();
         const snippetsMap: Map<string, unknown> = new Map();
+        let stage = 'profile';
         try {
             const { configProfileUuid, activeInbounds } = query;
 
@@ -46,11 +46,10 @@ export class GetPreparedConfigWithUsersHandler implements IQueryHandler<
                 new GetConfigProfileByUuidQuery(configProfileUuid),
             );
 
+            if (!configProfile.isOk) return configProfile;
+            stage = 'snippets';
             const snippetsResponse = await this.queryBus.execute(new GetSnippetsQuery());
-
-            if (!configProfile.isOk || !snippetsResponse.isOk) {
-                return fail(ERRORS.INTERNAL_SERVER_ERROR);
-            }
+            if (!snippetsResponse.isOk) return snippetsResponse;
 
             for (const snippet of snippetsResponse.response) {
                 snippetsMap.set(snippet.name, snippet.snippet);
@@ -58,18 +57,20 @@ export class GetPreparedConfigWithUsersHandler implements IQueryHandler<
 
             const activeInboundsTags = new Set(activeInbounds.map((inbound) => inbound.tag));
 
+            stage = 'validation';
             config = new XRayConfig(configProfile.response.config as object);
 
             config.cleanInboundClients(true);
 
-            config.processCertificates();
-
             config.replaceSnippets(snippetsMap);
+            stage = 'certificates';
+            config.processCertificates();
 
             const configHash = config.getConfigHash();
 
             config.leaveInbounds(activeInboundsTags);
 
+            stage = 'users';
             const usersStream = this.usersRepository.getUsersForConfigStream(activeInbounds);
 
             for await (const userBatch of usersStream) {
@@ -78,16 +79,25 @@ export class GetPreparedConfigWithUsersHandler implements IQueryHandler<
                     continue;
                 }
 
-                const records = await this.deviceAccess.devicesForConfig(userBatch.map((user) => BigInt(user.id)));
+                stage = 'devices';
+                const records = await this.deviceAccess.devicesForConfig(
+                    userBatch.map((user) => BigInt(user.id)),
+                );
                 const identities = expandDeviceUsers(
                     userBatch,
                     records,
-                    (userId, hwid, parentKey) => this.deviceAccess.credentials(userId, hwid, parentKey),
+                    (userId, hwid, parentKey) =>
+                        this.deviceAccess.credentials(userId, hwid, parentKey),
                 );
                 config.includeUserBatch(identities, inboundsUserSets);
+                stage = 'users';
             }
 
-            config.includeUserBatch(await this.hostAccess.configIdentities(configProfileUuid),inboundsUserSets);
+            stage = 'identities';
+            config.includeUserBatch(
+                await this.hostAccess.configIdentities(configProfileUuid),
+                inboundsUserSets,
+            );
             for (const [tag, set] of inboundsUserSets) {
                 this.logger.debug(`Inbound ${tag}: hash ${set.hash64String} and ${set.size} users`);
             }
@@ -105,7 +115,10 @@ export class GetPreparedConfigWithUsersHandler implements IQueryHandler<
             });
         } catch (error) {
             this.logger.error(error);
-            return fail(ERRORS.INTERNAL_SERVER_ERROR);
+            return fail({
+                ...ERRORS.INTERNAL_SERVER_ERROR,
+                message: `Node configuration preparation failed [${stage}]`,
+            });
         } finally {
             config = null;
             for (const [, set] of inboundsUserSets) {

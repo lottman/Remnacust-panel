@@ -10,10 +10,11 @@ import {
     ThemeIcon,
     Text,
     Box,
-    Button
+    Button,
+    useComputedColorScheme
 } from '@mantine/core'
 import { modals } from '@mantine/modals'
-import { githubDarkTheme } from 'json-edit-react'
+import { githubDarkTheme, githubLightTheme } from 'json-edit-react'
 import { JsonEditor } from 'json-edit-react'
 import { useTranslation } from 'react-i18next'
 import {
@@ -34,9 +35,12 @@ import { translateUiText as uiText } from '@shared/i18n/interface-text'
 import { EmptyPageLayout } from '@shared/ui/layouts/empty-page'
 import { LoaderModalShared } from '@shared/ui/loader-modal'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { PageQueryError } from '@shared/ui/page-query-error'
 import { QrCodeBuilder } from '@shared/ui/qr-code-builder'
 import { SectionCardRoot } from '@shared/ui/section-card/section-card.root'
 import { SectionCardSection } from '@shared/ui/section-card/section-card.section'
+
+import { connectionKeyLabel } from './connection-key-label'
 
 interface IProps {
     userId: number
@@ -46,6 +50,7 @@ interface IProps {
 export const ConnectionKeysDrawer = NiceModal.create((props: IProps) => {
     const { userId, shortUuid } = props
     const { t } = useTranslation()
+    const colorScheme = useComputedColorScheme('dark')
 
     const modal = useModal()
     const { modalProps } = useNiceMantineModal({
@@ -53,14 +58,16 @@ export const ConnectionKeysDrawer = NiceModal.create((props: IProps) => {
         drawer: true
     })
 
-    const { data: connectionKeys, isLoading } = useGetConnectionKeysByUserId({
+    const keysQuery = useGetConnectionKeysByUserId({
         route: {
             userId: userId
         }
     })
+    const { data: connectionKeys, isLoading } = keysQuery
 
-    const { data: rawSubscription, isLoading: isRawSubscriptionLoading } = useGetRawSubscription({
-        route: { shortUuid }
+    const rawQuery = useGetRawSubscription({
+        route: { shortUuid },
+        rQueryParams: { enabled: false }
     })
 
     const renderQrCode = (link: string, remark: string) => {
@@ -80,8 +87,7 @@ export const ConnectionKeysDrawer = NiceModal.create((props: IProps) => {
     }
 
     const renderLinkItem = (link: string) => {
-        const encodedName = link.split('#').at(-1) || 'Host'
-        const name = decodeURIComponent(encodedName)
+        const name = connectionKeyLabel(link)
 
         return (
             <TextInput
@@ -91,6 +97,7 @@ export const ConnectionKeysDrawer = NiceModal.create((props: IProps) => {
                     <CopyButton timeout={2000} value={link}>
                         {({ copied, copy }) => (
                             <ActionIcon
+                                aria-label={`${t('common.action.copy')}: ${name}`}
                                 color={copied ? 'teal' : 'gray'}
                                 onClick={copy}
                                 variant="subtle"
@@ -102,7 +109,11 @@ export const ConnectionKeysDrawer = NiceModal.create((props: IProps) => {
                 }
                 readOnly
                 rightSection={
-                    <ActionIcon onClick={() => renderQrCode(link, name)} variant="subtle">
+                    <ActionIcon
+                        aria-label={`${t('view-user-modal.widget.qr-code')}: ${name}`}
+                        onClick={() => renderQrCode(link, name)}
+                        variant="subtle"
+                    >
                         <PiQrCodeDuotone size="16px" />
                     </ActionIcon>
                 }
@@ -148,20 +159,20 @@ export const ConnectionKeysDrawer = NiceModal.create((props: IProps) => {
             <Stack gap="md">
                 {renderSection(
                     connectionKeys?.enabledKeys ?? [],
-                    'Active',
+                    t('connectionKeys.active'),
                     <PiWifiHighDuotone />,
                     'teal'
                 )}
 
                 {renderSection(
                     connectionKeys?.hiddenKeys ?? [],
-                    'Hidden',
+                    t('connectionKeys.hidden'),
                     <PiEyeSlashDuotone />,
                     'gray'
                 )}
                 {renderSection(
                     connectionKeys?.disabledKeys ?? [],
-                    'Disabled',
+                    t('connectionKeys.disabled'),
                     <PiProhibitDuotone />,
                     'orange'
                 )}
@@ -169,7 +180,9 @@ export const ConnectionKeysDrawer = NiceModal.create((props: IProps) => {
         )
     }
 
-    const renderRawSubscription = () => {
+    const renderRawSubscription = async () => {
+        const result = await rawQuery.refetch()
+        if (result.isError || result.data === undefined) return
         modals.open({
             centered: true,
             size: 'xl',
@@ -189,7 +202,7 @@ export const ConnectionKeysDrawer = NiceModal.create((props: IProps) => {
                             if (path[0] !== 'resolvedProxyConfigs') return true
                             return path.length > 2
                         }}
-                        data={JSON.parse(JSON.stringify(rawSubscription))}
+                        data={JSON.parse(JSON.stringify(result.data))}
                         indent={4}
                         keySort={([a], [b]) => {
                             if (a === 'resolvedProxyConfigs') return -1
@@ -198,7 +211,7 @@ export const ConnectionKeysDrawer = NiceModal.create((props: IProps) => {
                         }}
                         maxWidth="100%"
                         rootName=""
-                        theme={githubDarkTheme}
+                        theme={colorScheme === 'light' ? githubLightTheme : githubDarkTheme}
                         viewOnly
                         jsonStringify={(data) => JSON.stringify(data)}
                     />
@@ -228,11 +241,20 @@ export const ConnectionKeysDrawer = NiceModal.create((props: IProps) => {
                     onClick={renderRawSubscription}
                     leftSection={<TbJson size="16px" />}
                     variant="soft"
-                    loading={isRawSubscriptionLoading}
+                    loading={rawQuery.isFetching}
                 >
                     {uiText('raw-subscription-9e7ce17')}
                 </Button>
-                {isLoading ? <LoaderModalShared mih="240px" /> : <Stack>{renderLinks()}</Stack>}
+                {rawQuery.isError && rawQuery.data === undefined && (
+                    <PageQueryError queries={[{ ...rawQuery, refetch: renderRawSubscription }]} />
+                )}
+                {isLoading ? (
+                    <LoaderModalShared mih="240px" />
+                ) : keysQuery.isError && connectionKeys === undefined ? (
+                    <PageQueryError queries={[keysQuery]} />
+                ) : (
+                    <Stack>{renderLinks()}</Stack>
+                )}
             </Stack>
         </Drawer>
     )

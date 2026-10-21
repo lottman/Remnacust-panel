@@ -2,6 +2,8 @@ import { Box, NavLink, Stack, Title } from '@mantine/core'
 import { PiArrowRight } from 'react-icons/pi'
 import { NavLink as RouterLink, useLocation } from 'react-router'
 
+import { useUiText } from '@shared/i18n/interface-text'
+
 import { useMobileMenuSections } from '../menu-sections/mobile-menu-sections'
 import classes from './mobile-navigation.module.css'
 
@@ -11,13 +13,14 @@ interface IProps {
 
 export const MobileNavigation = (props: IProps) => {
     const { onClose } = props
+    const uiText = useUiText()
     const { pathname } = useLocation()
     const matches = (href: string) => pathname === href || pathname.startsWith(href + '/')
 
     const menu = useMobileMenuSections()
 
     return (
-        <Stack gap="lg" pb="lg" pt="lg" component="nav">
+        <Stack gap="lg" pb="lg" pt="lg" component="nav" aria-label={uiText('navigation-3db65f8')}>
             {menu.map((item) => (
                 <Box key={item.id}>
                     <Title className={classes.sectionTitle} order={6}>

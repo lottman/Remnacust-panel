@@ -14,6 +14,10 @@ A connection requires a working node, an active profile inbound, an available ho
 
 After saving, check the updated values in the detail view. If a connection still uses the previous settings, check node status and logs, then refresh the subscription in the client.
 
+### Update progress and logs
+
+Panel updates show eight stages, elapsed time and the last 24 events. Remaining time is estimated only when a previous operation supplies timing data; otherwise remaining stages are shown. Closing the tab does not cancel the update. The service pins a fresh installer release before checking and installing it; a newer verified panel may supersede an outdated notification target. Successful updates keep current, previous and container-used images while removing redundant component images. The panel does not receive the Docker socket.
+
 ## First working connection
 
 ### Setup order
@@ -201,6 +205,10 @@ Enable/disable controls the node state in the panel. Restart reapplies Xray oper
 ### Bulk update
 
 Selecting multiple nodes shows the changed fields in confirmation. Before switching profiles, verify certificates, listen addresses and ports on each server. After applying, inspect health on every selected node rather than only the first row.
+
+### Changing an active port
+
+Each port-plan binding selects a port, profile and inbound. Compatible changes are applied through the core while preserving existing connections. A real port, transport or incompatible active-listener change requires a separate port and tag, or an explicit restart that may interrupt connections. A rejection does not trigger a hidden restart. The original technical error is shown verbatim. Updating the container or core binary may interrupt connections.
 
 ### Fields and controls
 
@@ -470,18 +478,22 @@ If the panel loses contact with a node, an authorized host remains in the subscr
 
 Select hosts, choose the fields to update and check the recipients. Selecting the tags field and leaving it empty clears tags; leaving the field unselected preserves existing tags. Record order determines subscription order except where shuffling is enabled. After changing an inbound, visibility or squad, refresh the subscription in a client and check that the intended connection is present.
 
+### One user’s speed
+
+Under “For each user on this host”, set the quota in GiB and speed in Mbps. These are different limits: quota is a data allowance, speed is the transfer rate. All devices and connections of one user on this host share the speed, including upload and download. With 2 Mbps, two devices together get up to 2 Mbps; another user has a separate allowance. Another host uses its own setting. 0 disables only the host’s own cap; enabled tag restrictions remain. Shared speed for all host users and the accounting multiplier appear below.
+
 ### Fields and controls
 
-- **Per-user limit, GiB**: Combined user usage across all tagged hosts, including multipliers.
-- **Per-user speed, Mbps**: For each user independently on each host.
+- **User traffic quota**: Combined user usage across all tagged hosts, including multipliers.
+- **User speed limit**: The same cap for each user separately on each host. Their devices share the host cap; bandwidth is not pooled across hosts. 0 disables the tag’s per-user speed cap.
 - **Tag traffic multiplier**: For hosts using the tag multiplier. Recalculates the current period; subscription usage is unchanged.
-- **Whole-group speed, Mbps**: One shared cap across all users and all tagged hosts.
+- **Shared group speed**: One shared cap across all users and all tagged hosts.
 - **Remark**: Connection name delivered in the subscription. Supported variables resolve when the response is generated.
 - **Address**: Reachable IP/domain used by the client or panel in this form’s context; separate from the display name.
 - **Port**: Port of the selected service. A host client port and node agent management port can differ.
 - **Traffic limit per user**: Quota per user for this host or tag. The host form accepts GiB and stores bytes. Zero removes this quota.
 - **Apply tag traffic quota**: Includes this host’s usage in the user’s shared tag quota. The host’s own quota still applies when disabled.
-- **Server speed limit per user**: Per-user host bandwidth shared by that user’s devices and connections. Measured in Mbps; zero removes this restriction.
+- **User speed limit**: Per-user host bandwidth shared by that user’s devices and connections. Measured in Mbps; zero removes this restriction.
 - **Apply tag per-user speed**: Applies the tag’s per-user bandwidth limit to this host. Each participating host applies the limit separately.
 - **Whole-host speed limit**: Total host or tag bandwidth shared by all users. A 100 Mbps limit is shared between concurrent connections.
 - **Apply tag shared speed**: Includes the host in the tag’s total bandwidth limit, shared by participating connections.
@@ -517,7 +529,7 @@ Rotation uses the configured SNI pool and hourly interval; shortIds rotate when 
 
 - **Traffic limit per user**: Quota per user for this host or tag. The host form accepts GiB and stores bytes. Zero removes this quota.
 - **Apply tag traffic quota**: Includes this host’s usage in the user’s shared tag quota. The host’s own quota still applies when disabled.
-- **Server speed limit per user**: Per-user host bandwidth shared by that user’s devices and connections. Measured in Mbps; zero removes this restriction.
+- **User speed limit**: Per-user host bandwidth shared by that user’s devices and connections. Measured in Mbps; zero removes this restriction.
 - **Apply tag per-user speed**: Applies the tag’s per-user bandwidth limit to this host. Each participating host applies the limit separately.
 - **Whole-host speed limit**: Total host or tag bandwidth shared by all users. A 100 Mbps limit is shared between concurrent connections.
 - **Apply tag shared speed**: Includes the host in the tag’s total bandwidth limit, shared by participating connections.
@@ -545,17 +557,21 @@ Tag quota combines a user’s usage across participating hosts. A tag per-user b
 
 ### Persistent settings
 
-Changing shared tag settings affects associated hosts participating in the tag quota. Check the host list and chosen restrictions before saving. Open “Limits” to manage recipients and personal exceptions.
+Tag settings affect associated hosts with the corresponding quota, user-speed or shared-speed switch enabled. These three switches are independent. Check participating hosts and restrictions before saving. Open “Limits” for recipients and personal exceptions.
+
+### Speed by tag
+
+A tag’s user speed sets the same cap separately on each participating host. Shared group speed is a separate pool for all participating traffic. Each host independently enables the tag quota, user speed and shared speed. When several restrictions apply, the stricter cap wins. 0 means no corresponding cap, not blocked traffic. Mbps already means megabits per second; 8 Mbps is approximately 1 MB/s before overhead.
 
 ### Fields and controls
 
-- **Per-user limit, GiB**: Combined user usage across all tagged hosts, including multipliers.
-- **Per-user speed, Mbps**: For each user independently on each host.
+- **User traffic quota**: Combined user usage across all tagged hosts, including multipliers.
+- **User speed limit**: The same cap for each user separately on each host. Their devices share the host cap; bandwidth is not pooled across hosts. 0 disables the tag’s per-user speed cap.
 - **Tag traffic multiplier**: For hosts using the tag multiplier. Recalculates the current period; subscription usage is unchanged.
-- **Whole-group speed, Mbps**: One shared cap across all users and all tagged hosts.
+- **Shared group speed**: One shared cap across all users and all tagged hosts.
 - **Traffic limit per user**: Quota per user for this host or tag. The host form accepts GiB and stores bytes. Zero removes this quota.
 - **Apply tag traffic quota**: Includes this host’s usage in the user’s shared tag quota. The host’s own quota still applies when disabled.
-- **Server speed limit per user**: Per-user host bandwidth shared by that user’s devices and connections. Measured in Mbps; zero removes this restriction.
+- **User speed limit**: Per-user host bandwidth shared by that user’s devices and connections. Measured in Mbps; zero removes this restriction.
 - **Apply tag per-user speed**: Applies the tag’s per-user bandwidth limit to this host. Each participating host applies the limit separately.
 - **Whole-host speed limit**: Total host or tag bandwidth shared by all users. A 100 Mbps limit is shared between concurrent connections.
 - **Apply tag shared speed**: Includes the host in the tag’s total bandwidth limit, shared by participating connections.
@@ -684,6 +700,10 @@ Compare usage, effective quota, remaining traffic, one-time bonus and access sta
 
 Search by username, identifier, email or Telegram ID. Use status, availability and squad filters, sorting and page size. “Traffic blocked: N of M recipients” refers to the selected recipient mode, not only visible rows.
 
+### When the panel is unavailable
+
+Compatible nodes use quota reserves allocated in advance. While the panel is unavailable, connections can use the remaining local reserve; a new reserve requires connectivity. Exhausting it does not grant unlimited access. A reset applies immediately to reachable nodes; others receive it when reconnecting. While an unreachable node spends its old reserve, total usage can temporarily exceed the new quota. Speed caps and other local rules remain active.
+
 ## Granting, resetting, blocking and unblocking
 
 ### Add traffic and reset usage
@@ -722,7 +742,7 @@ Host/tag reset intervals use days or months; 0 means no automatic reset. The quo
 
 - **Traffic limit per user**: Quota per user for this host or tag. The host form accepts GiB and stores bytes. Zero removes this quota.
 - **Apply tag traffic quota**: Includes this host’s usage in the user’s shared tag quota. The host’s own quota still applies when disabled.
-- **Server speed limit per user**: Per-user host bandwidth shared by that user’s devices and connections. Measured in Mbps; zero removes this restriction.
+- **User speed limit**: Per-user host bandwidth shared by that user’s devices and connections. Measured in Mbps; zero removes this restriction.
 - **Apply tag per-user speed**: Applies the tag’s per-user bandwidth limit to this host. Each participating host applies the limit separately.
 - **Whole-host speed limit**: Total host or tag bandwidth shared by all users. A 100 Mbps limit is shared between concurrent connections.
 - **Apply tag shared speed**: Includes the host in the tag’s total bandwidth limit, shared by participating connections.
@@ -759,6 +779,10 @@ Choose a user or node and collect connections. Some operations create a job whos
 ### Dropping connections
 
 Drop connections closes current sessions for the selected target. It does not disable the account: an allowed client can reconnect. For persistent denial use account status, HWID blocking or the relevant quota scope pause. Collect another snapshot after dropping sessions.
+
+### Node permissions
+
+Reading active-connection IPs through Xray does not require NET_ADMIN. Additional Linux features on the node use it. Node installation and updates ask about it separately when it cannot be confirmed in the running container. An already effective capability is kept without another prompt. For automation, use --net-admin or --no-net-admin; a cap_add entry in an old Compose file alone does not prove the capability is effective.
 
 ## HTTP statistics
 

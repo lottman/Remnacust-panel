@@ -241,7 +241,7 @@ export const useMobileMenuSections = (): MenuItem[] => {
                     id: 'backups'
                 },
                 {
-                    name: 'Subscription Page',
+                    name: t('constants.subscription-page'),
                     href: ROUTES.DASHBOARD.SUBPAGE_CONFIGS.ROOT,
                     icon: PiArrowsInCardinalFill,
                     id: 'subscription-page'

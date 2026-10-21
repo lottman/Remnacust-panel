@@ -1,5 +1,7 @@
 # Remnacust API 1.1.7.31
 
+Области действия `serverSpeedLimitMbps`, общей скорости и квот хостов/тегов: [HOST-LIMITS.md](HOST-LIMITS.md). Скорость — целые Mbps (Мбит/с), квоты API — байты; поле Brutal `speedLimitMbps` самого хоста не является серверным ограничителем.
+
 Generated from the current OpenAPI. 231 operations; 210 accept scoped API tokens.
 
 Full request/response schemas: [openapi.json](../panel/backend/openapi.json). The panel also exposes a separate API reference with searchable operations, schemas and events.

@@ -95,6 +95,9 @@ export function HostLimitsAndRules() {
                     {matchingTagLimits.map((item) => item.tag).join(', ')}
                 </Text>
             )}
+            <Text fw={600} size="sm">
+                {uiText('per-user-host-limits')}
+            </Text>
             <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md" w="100%">
                 <Stack gap="xs">
                     <HostLimitInput
@@ -135,8 +138,8 @@ export function HostLimitsAndRules() {
                         max={10000}
                         allowDecimal={false}
                         allowNegative={false}
-                        rightSection="Mbps"
-                        rightSectionWidth={58}
+                        rightSection={uiText('speed-unit-mbps')}
+                        rightSectionWidth={76}
                     />
                     <TagLimitSwitch
                         field="useTagSpeedLimit"
@@ -147,6 +150,11 @@ export function HostLimitsAndRules() {
                         )}
                     />
                 </Stack>
+            </SimpleGrid>
+            <Text fw={600} size="sm">
+                {uiText('shared-host-limits-and-accounting')}
+            </Text>
+            <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md" w="100%">
                 <Stack gap="xs">
                     <HostLimitInput
                         field="totalSpeedLimitMbps"
@@ -160,8 +168,8 @@ export function HostLimitsAndRules() {
                         max={10000}
                         allowDecimal={false}
                         allowNegative={false}
-                        rightSection="Mbps"
-                        rightSectionWidth={58}
+                        rightSection={uiText('speed-unit-mbps')}
+                        rightSectionWidth={76}
                     />
                     <TagLimitSwitch
                         field="useTagTotalSpeedLimit"

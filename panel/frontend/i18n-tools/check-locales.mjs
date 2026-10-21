@@ -29,6 +29,13 @@ for (const language of languages) {
 const reference = translations.en
 let errors = 0
 const untranslated = {}
+// Technical unit symbols remain identical regardless of the interface language.
+for (const language of languages) {
+    if (translations[language]['interface.speed-unit-mbps'] !== 'Mbps') {
+        console.error(`${language}: speed units must use the invariant symbol Mbps`)
+        errors++
+    }
+}
 for (const language of languages.slice(1)) {
     const current = translations[language]
     untranslated[language] = []

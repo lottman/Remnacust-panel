@@ -424,7 +424,7 @@ export function ProfileCanvas({
                     ? `${uiText('host-domain-rules-0c0ad3c')}: ${host.domainRules.mode} · ${host.domainRules.domains.join(', ')}`
                     : '',
                 host.speedLimitMbps
-                    ? `${uiText('brutal-target-speed-56b4f37')}: ${host.speedLimitMbps} Mbps`
+                    ? `${uiText('brutal-target-speed-56b4f37')}: ${host.speedLimitMbps} ${uiText('speed-unit-mbps')}`
                     : ''
             ].filter(Boolean)
         })),

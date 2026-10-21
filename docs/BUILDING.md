@@ -29,11 +29,11 @@ npm run cb
 
 `npm run docs:generate` пересоздаёт руководство и справочник из актуальных исходников. Frontend dev-сервер запускается через `npm run start:dev` и требует тестового backend.
 
-Полный образ из корня: `docker build -f panel/Dockerfile -t remnacust-panel:1.1.7.40 .`. Проверка запуска: `bash scripts/test-production-startup.sh remnacust-panel:1.1.7.40`. Она создаёт временные контейнеры и отдельную БД.
+Полный образ из корня: `docker build -f panel/Dockerfile -t remnacust-panel:1.1.7.41 .`. Проверка запуска: `bash scripts/test-production-startup.sh remnacust-panel:1.1.7.41`. Она создаёт временные контейнеры и отдельную БД.
 
 В готовом выпуске окно «Информация о сборке» показывает ветку `main`, UTC-время сборки, номер запуска GitHub Actions и коммит из `Remnacust-panel`. Серверная часть и интерфейс находятся в одном репозитории, поэтому их SHA совпадают. Эти данные передаются в образ при сборке и проверяются перед публикацией. У локальной сборки без build args остаются `local` и `unknown`: дата запуска контейнера не подменяет дату сборки.
 
-Страница подписки: `docker build -t remnacust-subscription-page:1.1.7.40 subscription-page`. Для разработки выполните `npm ci` и `npm run typecheck` в `subscription-page/backend` и `subscription-page/frontend`, затем `NODE_ENV=production npm run cb` во frontend и `node --test tests/*.test.cjs` в backend.
+Страница подписки: `docker build -t remnacust-subscription-page:1.1.7.41 subscription-page`. Для разработки выполните `npm ci` и `npm run typecheck` в `subscription-page/backend` и `subscription-page/frontend`, затем `NODE_ENV=production npm run cb` во frontend и `node --test tests/*.test.cjs` в backend.
 
 Ядро и редактор находятся в [Remnacust-core](https://github.com/lottman/Remnacust-core). После обновления WASM пересоберите панель. Порядок выпуска всех компонентов: [Remnacust-installer/docs/PUBLISHING.md](https://github.com/lottman/Remnacust-installer/blob/main/docs/PUBLISHING.md).
 
@@ -48,3 +48,6 @@ python3 panel/backend/scripts/sync-core-catalog.py --tag v1.1.9 --commit 200471a
 Скрипт сверяет тег с коммитом, контрольные суммы выпуска и реально скачанные файлы, включая ELF-архитектуру; только после этого записывает каталог. Добавьте JSON в коммит панели. Пакетировщик выпуска проверяет, что первая сборка каталога соответствует закреплённым версии и коммиту ядра в `component-sources.json`.
 
 `REMNACUST_CORE_CATALOG_JSON`, если задана, полностью заменяет встроенный каталог; пустая строка или `[]` намеренно отключают список. Не добавляйте пустую переменную в стандартный Compose. Для публичных файлов нашего репозитория новая нода не требует `REMNACUST_CORE_ALLOWED_HOSTS`; при явном задании этой переменной сохраняется собственный список разрешённых хостов. SHA-256, архитектура, совместимость квот и проверка конфигурации остаются обязательными.
+
+
+Изменения поведения сверяйте с [картой последних 45 изменений](DOCUMENTATION-SYNC.md). Перед проверкой справочника удалите временные `.audit-*` UI-fixtures и запустите `npm run docs:generate`. Текущие руководства должны различать скорость Mbps, объём GiB, пользовательскую область хоста и общий пул; исторические аудиты сохраняют свои версии и даты.

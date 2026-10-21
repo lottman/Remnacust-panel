@@ -135,7 +135,7 @@ export function HostTagLimitsCard({ tags }: { tags: string[] }) {
                                                     </Text>
                                                     <Text size="xs" c="dimmed" truncate>
                                                         {setting
-                                                            ? `${setting.limitBytes ? (setting.limitBytes / GIB).toLocaleString(i18n.language) + ' GiB' : '∞'} · ${setting.speedLimitMbps ?? '∞'} Mbps · ${setting.trafficMultiplier}×`
+                                                            ? `${setting.limitBytes ? (setting.limitBytes / GIB).toLocaleString(i18n.language) + ' GiB' : '∞'} · ${setting.speedLimitMbps ? setting.speedLimitMbps.toLocaleString(i18n.language) + ' ' + uiText('speed-unit-mbps') : '∞'} · ${setting.trafficMultiplier}×`
                                                             : uiText('unlimited-11dde17')}
                                                     </Text>
                                                 </Button>
@@ -251,6 +251,9 @@ function HostTagEditor({
             <Text c="dimmed" size="sm">
                 {uiText('apply-to-tagged-hosts-with-the-corresponding-inheritance-switc-efe2579')}
             </Text>
+            <Text fw={600} size="sm">
+                {uiText('per-user-tag-limits')}
+            </Text>
             <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
                 <NumberInput
                     allowNegative={false}
@@ -263,6 +266,9 @@ function HostTagEditor({
                     min={0}
                     onChange={setGib}
                     leftSection={<TbChartLine size={16} />}
+                    rightSection="GiB"
+                    rightSectionWidth={48}
+                    hideControls
                     onBlur={() => {
                         if (gib === '') setGib(0)
                     }}
@@ -276,12 +282,20 @@ function HostTagEditor({
                     min={0}
                     max={10000}
                     leftSection={<TbGauge size={16} />}
+                    rightSection={uiText('speed-unit-mbps')}
+                    rightSectionWidth={76}
+                    hideControls
                     onBlur={() => {
                         if (speed === '') setSpeed(0)
                     }}
                     value={speed}
                     onChange={setSpeed}
                 />
+            </SimpleGrid>
+            <Text fw={600} size="sm">
+                {uiText('shared-tag-limits-and-accounting')}
+            </Text>
+            <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
                 <NumberInput
                     min={0.01}
                     max={100}
@@ -310,6 +324,9 @@ function HostTagEditor({
                         'one-shared-cap-across-all-users-and-all-tagged-hosts-3a81bf7'
                     )}
                     leftSection={<TbUsers size={16} />}
+                    rightSection={uiText('speed-unit-mbps')}
+                    rightSectionWidth={76}
+                    hideControls
                     onBlur={() => {
                         if (totalSpeed === '') setTotalSpeed(0)
                     }}

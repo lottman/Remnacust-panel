@@ -2,7 +2,7 @@
 
 Панель управления пользователями, подписками и нодами Xray на основе Remnawave. Backend хранит данные в PostgreSQL, frontend предоставляет интерфейс и встроенное руководство. В этом репозитории также находится отдельная страница подписки.
 
-**Версия 1.1.7.32** · **Основа: Remnawave 3.4.5** · [Установщик](https://github.com/lottman/Remnacust-installer) · [Telegram](https://t.me/lottman)
+**Версия 1.1.7.41** · **Основа: Remnawave 3.4.5** · [Установщик](https://github.com/lottman/Remnacust-installer) · [Telegram](https://t.me/lottman)
 
 ![Главная Remnacust](panel/assets/overview.png)
 
@@ -15,7 +15,10 @@
 - Задавать квоты и скорость для хостов и тегов, выдавать персональный безлимит.
 - Создавать профили Xray, хосты, шаблоны подписок и правила ответа клиентам.
 - Проверять конфигурацию, генерировать ключи и Short ID в редакторе.
-- Показывать состояние нод, статистику, журналы и историю запросов подписки.
+- Показывать здоровье нод со свежестью измерений, статистику, журналы и историю запросов подписки.
+- Записывать наблюдаемые сессии по расписанию и выгружать пользователей с актуальными ссылками подписок.
+- Редактировать автовыбор и балансеры, сравнивать историю профилей и всех типов шаблонов, восстанавливать старый код.
+- Управлять отдельными портами и профилями ноды; совместимые изменения сохраняют открытые соединения. Обновление контейнера или несовместимое изменение listener может потребовать перерыва.
 - Создавать зашифрованные резервные копии БД по расписанию.
 
 В хостах доступны фильтры «Включённые», «Отключённые», «Видимые» и «Скрытые». Видимость не зависит от включённости: отключённый нескрытый хост попадает в «Видимые». Недоступная нода сама по себе не убирает разрешённый хост из подписки.
@@ -34,7 +37,7 @@ Xera HTTP — наш форк транспорта XHTTP (SplitHTTP) из Xray-c
 curl -fsSL --proto '=https' --proto-redir '=https' https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh -o installer.sh && sudo bash installer.sh install-panel
 ```
 
-[Скачать installer.sh](https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh). Скрипт спросит версию выпуска, домен, reverse proxy, способ получения сертификата и email ACME. Доступны автоматический HTTPS, Cloudflare/Gcore DNS и готовый сертификат с ключом. Enter выбирает `latest`; `--version 1.2.57` закрепляет выпуск с панелью 1.1.7.32, нодой 1.1.9 и ядром 1.1.5. Он проверяет готовый образ и запускает PostgreSQL, Valkey, панель и Caddy. При собственном reverse proxy используйте `--proxy existing`. Контейнеры прежней установки обнаруживаются до вопросов и скачивания; для них выбирайте `upgrade-panel`. Обновление и миграция сохраняют существующий Nginx/Caddy и его сертификаты. HWID включён по умолчанию. После запуска откройте домен панели и создайте администратора.
+[Скачать installer.sh](https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh). Скрипт спросит версию выпуска, домен, reverse proxy, способ получения сертификата и email ACME. Доступны автоматический HTTPS, Cloudflare/Gcore DNS и готовый сертификат с ключом. Enter выбирает `latest`; `--version 1.2.72` закрепляет опубликованный комплект с панелью 1.1.7.41, нодой 1.1.15 и ядром 1.1.9. Он проверяет готовый образ и запускает PostgreSQL, Valkey, панель и Caddy. При собственном reverse proxy используйте `--proxy existing`. Контейнеры прежней установки обнаруживаются до вопросов и скачивания; для них выбирайте `upgrade-panel`. Обновление и миграция сохраняют существующий Nginx/Caddy и его сертификаты. HWID включён по умолчанию. После запуска откройте домен панели и создайте администратора.
 
 При новой установке скрипт также спросит пароль резервных копий. Enter создаёт случайный пароль. Он будет показан в конце установки и сохранён в защищённом файле `backup-password.txt` в каталоге панели; сохраните его отдельно для восстановления копий.
 
@@ -52,7 +55,7 @@ sudo bash installer.sh migrate-remnawave-panel --container remnawave
 ```bash
 git clone https://github.com/lottman/Remnacust-panel.git
 cd Remnacust-panel
-docker build -f panel/Dockerfile -t remnacust-panel:1.1.7.32 .
+docker build -f panel/Dockerfile -t remnacust-panel:1.1.7.41 .
 ```
 
 Это сборка образа. Для ручного запуска подготовьте окружение, БД и HTTPS по [README панели](panel/README.md). Исходники страницы подписки и её отдельная установка: [subscription-page/README.md](subscription-page/README.md).
@@ -62,6 +65,9 @@ docker build -f panel/Dockerfile -t remnacust-panel:1.1.7.32 .
 - [Руководство панели на русском](panel/frontend/public/documentation/guide-ru.md); версии [EN](panel/frontend/public/documentation/guide-en.md), [FA](panel/frontend/public/documentation/guide-fa.md), [ZH](panel/frontend/public/documentation/guide-zh.md).
 - [API и права токенов](docs/API.md).
 - [Совместимость нод](docs/NODE-COMPATIBILITY.md).
+- [Квота и скорость хостов и тегов](docs/HOST-LIMITS.md).
+- [Текущее поведение и сверка последних 45 изменений](docs/DOCUMENTATION-SYNC.md).
+- [Прогресс обновления и здоровье нод](docs/UPDATE-PROGRESS-AND-NODE-HEALTH.md).
 - [Резервные копии](docs/BACKUPS.md) и [восстановление старой базы](docs/DATABASE-COMPATIBILITY.md).
 - [Сборка и разработка](docs/BUILDING.md).
 

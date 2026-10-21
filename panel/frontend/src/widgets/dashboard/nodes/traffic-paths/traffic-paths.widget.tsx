@@ -369,7 +369,7 @@ export const TrafficPathsWidget = (props: IProps) => {
                                             {uiText('speed-c372fee')}:{' '}
                                         </Text>
                                         {selectedHost.speedLimitMbps
-                                            ? `${selectedHost.speedLimitMbps} Mbps (Brutal)`
+                                            ? `${selectedHost.speedLimitMbps} ${uiText('speed-unit-mbps')} (Brutal)`
                                             : uiText('unlimited-2044fbd')}
                                     </Text>
                                     {(() => {

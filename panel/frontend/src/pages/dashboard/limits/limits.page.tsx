@@ -270,12 +270,14 @@ export function LimitsPage() {
                                         </Text>
                                         <Text size="sm">
                                             {uiText('speed-per-user-host-f449280')}
-                                            {s.speedLimitMbps ? `${s.speedLimitMbps} Mbps` : '∞'}
+                                            {s.speedLimitMbps
+                                                ? `${s.speedLimitMbps} ${uiText('speed-unit-mbps')}`
+                                                : '∞'}
                                         </Text>
                                         <Text size="sm">
                                             {uiText('shared-speed-2012ee5')}
                                             {s.totalSpeedLimitMbps
-                                                ? `${s.totalSpeedLimitMbps} Mbps`
+                                                ? `${s.totalSpeedLimitMbps} ${uiText('speed-unit-mbps')}`
                                                 : '∞'}{' '}
                                             · {s.trafficMultiplier ?? uiText('tag-1-266d618')}×
                                         </Text>

@@ -1,17 +1,18 @@
-import { explainListInteractions } from './list-guide.mjs'
 import fs from 'node:fs'
 import path from 'node:path'
 
-import fa from './guide-fa.mjs'
+import { explainAutoselect } from './autoselect-guide.mjs'
+import { explainCurrentWorkflows } from './current-workflows-guide.mjs'
 import './additional-guide.mjs'
 import './remnawave-guide.mjs'
+import fa from './guide-fa.mjs'
 import { articles as sourceArticles, categories } from './guide-source.mjs'
 import zh from './guide-zh.mjs'
+import { explainListInteractions } from './list-guide.mjs'
 import { explainOperatorWorkflows, supportGuide } from './operator-guide.mjs'
 import { productionArticles } from './production-guide.mjs'
-import { xeraGuide } from './xera-guide.mjs'
-import { explainAutoselect } from './autoselect-guide.mjs'
 import { explainRelease1171 } from './release-1171-guide.mjs'
+import { xeraGuide } from './xera-guide.mjs'
 
 const articles = productionArticles([...sourceArticles, xeraGuide, supportGuide])
 const translations = { fa, zh }
@@ -33,6 +34,7 @@ explainOperatorWorkflows(articles)
 explainListInteractions(articles)
 explainRelease1171(articles)
 explainAutoselect(articles)
+explainCurrentWorkflows(articles)
 
 const target = path.resolve(import.meta.dirname, '../public/documentation')
 fs.mkdirSync(target, { recursive: true })

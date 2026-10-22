@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { constants } from 'node:fs';
-import { mkdir, open, lstat, rm, writeFile } from 'node:fs/promises';
+import { mkdir, open, lstat, rm, writeFile, rename } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import {
@@ -230,10 +230,12 @@ export class GeofilesService {
                 };
                 try {
                     await writeFile(join(directory, 'data'), data, { flag: 'wx', mode: 0o600 });
-                    await writeFile(join(directory, 'meta.json'), JSON.stringify(item), {
+                    await writeFile(join(directory, 'meta.tmp'), JSON.stringify(item), {
                         flag: 'wx',
                         mode: 0o600,
                     });
+                    // Readers see either an uncommitted slot or complete metadata across workers.
+                    await rename(join(directory, 'meta.tmp'), join(directory, 'meta.json'));
                     return item;
                 } catch (error) {
                     await rm(directory, { recursive: true, force: true });

@@ -295,3 +295,47 @@ test('persistent library deduplicates, constrains names and IDs, preserves refer
         await fs.rm(directory, { recursive: true, force: true });
     }
 });
+
+test('concurrent readers see only fully committed library entries', async () => {
+    const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'remnacust-geofiles-atomic-'));
+    const old = process.env.XERA_BACKUPS_DIR;
+    process.env.XERA_BACKUPS_DIR = directory;
+    let ready, publish;
+    const waiting = new Promise((resolve) => {
+        ready = resolve;
+    });
+    const proceed = new Promise((resolve) => {
+        publish = resolve;
+    });
+    const { GeofilesService } = load(path.join(root, 'geofiles.service.ts'), {
+        ...modules,
+        'node:fs/promises': {
+            ...fs,
+            rename: async (...args) => {
+                ready();
+                await proceed;
+                return fs.rename(...args);
+            },
+        },
+    });
+    const service = new GeofilesService({ getOrThrow: () => 'sub.example.test' }, {}, {});
+    let uploaded;
+    try {
+        uploaded = service.ingest('atomic', 'geoip', async () => fixtures.geoip);
+        await waiting;
+        assert.deepEqual(
+            await service.list(),
+            [],
+            'Unfinished metadata must not leak or break the library',
+        );
+        publish();
+        const item = await uploaded;
+        assert.equal((await service.list())[0].id, item.id);
+    } finally {
+        publish();
+        if (uploaded) await uploaded.catch(() => {});
+        if (old === undefined) delete process.env.XERA_BACKUPS_DIR;
+        else process.env.XERA_BACKUPS_DIR = old;
+        await fs.rm(directory, { recursive: true, force: true });
+    }
+});

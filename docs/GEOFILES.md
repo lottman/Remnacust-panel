@@ -49,3 +49,8 @@ URL файлов общедоступны для клиентов, знающи�
 - [sing-box URLTest](https://sing-box.sagernet.org/configuration/outbound/urltest/) и [rule sets](https://sing-box.sagernet.org/configuration/rule-set/)
 - [Happ Routing](https://www.happ.su/main/ru/dev-docs/routing)
 - [OWASP SSRF](https://cheatsheetseries.owasp.org/cheatsheets/Server_Side_Request_Forgery_Prevention_Cheat_Sheet.html) и [File Upload](https://cheatsheetseries.owasp.org/cheatsheets/File_Upload_Cheat_Sheet.html)
+
+
+## Если загрузка не прошла
+
+Для импорта нужна прямая публичная HTTPS-ссылка без авторизации и HTML-страницы. Если источник не успевает отдать файл за 30 секунд, скачайте его самостоятельно и загрузите с ПК. При HTTP 413 проверьте ограничение тела запроса своего внешнего reverse proxy: оно должно разрешать выбранный размер файла. Встроенные ограничения панели при этом сохраняются.

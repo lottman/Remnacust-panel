@@ -26,3 +26,19 @@
     background: color-mix(in srgb, var(--panel-accent) 10%, var(--panel-surface));
     border-inline-start: 2px solid var(--panel-accent);
 }
+
+.recordingForm {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+    gap: var(--mantine-spacing-md);
+    align-items: end;
+}
+
+@media (max-width: 48em) {
+    .recordingForm {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .recordingForm button {
+        min-height: 44px;
+    }
+}

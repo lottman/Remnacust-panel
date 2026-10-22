@@ -9,7 +9,7 @@ import {
     Group,
     MultiSelect,
     NumberInput,
-    Paper,
+    Card,
     Select,
     Stack,
     Switch,
@@ -102,7 +102,7 @@ function PoolCard({
         )
     }
     return (
-        <Paper withBorder p="md" className={styles.card}>
+        <Card withBorder p="md" className={styles.card}>
             <Group justify="space-between" mb="md" gap="sm">
                 <Group gap="sm">
                     <TbArrowsShuffle aria-hidden size={20} />
@@ -241,7 +241,7 @@ function PoolCard({
                         {t('autoselect.group-help')}
                     </Text>
                     {groups.map(([name, members], groupIndex) => (
-                        <Paper key={name} withBorder p="sm">
+                        <Card key={name} withBorder p="sm">
                             <Group justify="space-between" mb="sm">
                                 <Text fw={600}>{name}</Text>
                                 <Button
@@ -290,7 +290,7 @@ function PoolCard({
                                 }
                                 nothingFoundMessage={t('autoselect.no-results')}
                             />
-                        </Paper>
+                        </Card>
                     ))}
                     <Button variant="light" leftSection={<TbPlus size={16} />} onClick={addGroup}>
                         {t('autoselect.add-group')}
@@ -330,7 +330,7 @@ function PoolCard({
                     {t('autoselect.add-balancer')}
                 </Button>
             </Group>
-        </Paper>
+        </Card>
     )
 }
 
@@ -351,7 +351,7 @@ function BalancerCard({
     const patch = (field: (string | number)[], value: unknown) =>
         edit((text) => editTemplate(text, ['routing', 'balancers', index, ...field], value))
     return (
-        <Paper withBorder p="md" className={styles.card}>
+        <Card withBorder p="md" className={styles.card}>
             <Group justify="space-between" mb="md">
                 <Title order={4}>{balance.tag || t('autoselect.balancer')}</Title>
                 <Button
@@ -484,7 +484,7 @@ function BalancerCard({
             <Text mt="sm" size="xs" c="dimmed">
                 {t('autoselect.remove-balancer-help')}
             </Text>
-        </Paper>
+        </Card>
     )
 }
 
@@ -553,9 +553,9 @@ export function AutoselectPanel({
     return (
         <div className={styles.layout}>
             <Stack gap="md" className={styles.main}>
-                <Paper withBorder p="md">
+                <Card withBorder p="md">
                     <Group justify="space-between" gap="sm">
-                        <div>
+                        <div className={styles.sectionHeader}>
                             <Title order={3}>{t('autoselect.title')}</Title>
                             <Text size="sm" c="dimmed" mt={4}>
                                 {t('autoselect.description')}
@@ -565,7 +565,7 @@ export function AutoselectPanel({
                             {pools.length ? t('autoselect.add-pool') : t('autoselect.create')}
                         </Button>
                     </Group>
-                </Paper>
+                </Card>
                 {error && (
                     <Alert
                         color="red"
@@ -579,7 +579,7 @@ export function AutoselectPanel({
                     </Alert>
                 )}
                 {!pools.length && (
-                    <Paper withBorder p="xl">
+                    <Card withBorder p="xl">
                         <Stack align="center" gap="sm">
                             <TbArrowsShuffle size={32} aria-hidden />
                             <Title order={4}>{t('autoselect.empty')}</Title>
@@ -587,7 +587,7 @@ export function AutoselectPanel({
                                 {t('autoselect.empty-help')}
                             </Text>
                         </Stack>
-                    </Paper>
+                    </Card>
                 )}
                 {pools.map((pool, index) => (
                     <PoolCard
@@ -681,7 +681,7 @@ export function AutoselectPanel({
                     )}
                 {(config.observatory || config.burstObservatory) &&
                     balancers.some((balance) => needsProbes(balance.strategy?.type)) && (
-                        <Paper withBorder p="md">
+                        <Card withBorder p="md">
                             <Title order={4} mb="sm">
                                 {t('autoselect.probes')}
                             </Title>
@@ -733,9 +733,9 @@ export function AutoselectPanel({
                                         />
                                     </Stack>
                                 ))}
-                        </Paper>
+                        </Card>
                     )}
-                <Paper withBorder p="md">
+                <Card withBorder p="md">
                     <Switch
                         label={t('autoselect.recipient-outbound')}
                         description={t('autoselect.recipient-help')}
@@ -750,7 +750,7 @@ export function AutoselectPanel({
                             )
                         }
                     />
-                </Paper>
+                </Card>
             </Stack>
             <TemplateChanges changes={changes} />
         </div>

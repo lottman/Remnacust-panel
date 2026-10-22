@@ -1,6 +1,6 @@
 import type { Change } from './autoselect-model'
 
-import { Badge, Button, Code, Group, Paper, Stack, Text, Title } from '@mantine/core'
+import { Badge, Button, Code, Group, Card, Stack, Text, Title } from '@mantine/core'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbCode } from 'react-icons/tb'
@@ -12,7 +12,7 @@ export function TemplateChanges({ changes }: { changes: Change[] }) {
     const [all, setAll] = useState(false)
     return (
         <aside className={styles.preview} aria-label={t('autoselect.changes')}>
-            <Paper withBorder p="md">
+            <Card withBorder p="md">
                 <Group justify="space-between" mb="sm">
                     <Group gap="xs">
                         <TbCode aria-hidden size={18} />
@@ -69,7 +69,7 @@ export function TemplateChanges({ changes }: { changes: Change[] }) {
                         {t(all ? 'autoselect.less-changes' : 'autoselect.all-changes')}
                     </Button>
                 )}
-            </Paper>
+            </Card>
         </aside>
     )
 }

@@ -3927,6 +3927,15 @@
         "kind-mihomo-ipcidr": "شبکه‌های IP — YAML payload",
         "kind-mihomo-classical": "قوانین — YAML classical",
         "kind-mihomo-text-domain": "دامنه‌ها — متن Mihomo",
-        "kind-mihomo-text-ipcidr": "شبکه‌های IP — متن Mihomo"
+        "kind-mihomo-text-ipcidr": "شبکه‌های IP — متن Mihomo",
+        "click-to-upload": "برای بارگذاری کلیک کنید",
+        "presets": "مجموعه‌های آماده",
+        "presets-help": "مجموعهٔ منتشرشده را به کتابخانه وارد کنید، سپس به قالب اضافه کرده و دسته‌ها و عمل را انتخاب کنید. محتوای یکسان دوباره استفاده می‌شود؛ هیچ قانونی خودکار فعال نمی‌شود.",
+        "choose-preset": "مجموعهٔ داده",
+        "import-preset": "وارد کردن به کتابخانه",
+        "preset-countries": "بازه‌های IP بر اساس کشور، شامل شبکه‌های خصوصی.",
+        "preset-domains": "فهرست دامنه‌ها بر اساس سرویس و دسته.",
+        "preset-private": "فقط بازه‌های IP خصوصی.",
+        "preset-lite": "مجموعهٔ کوچک‌تر سرویس‌های رایج؛ دسته‌های کمتری از GeoSite کامل دارد."
     }
 }

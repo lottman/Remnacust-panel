@@ -627,7 +627,7 @@ Xray JSON、sing-box、Mihomo、Clash 和 Stash 均提供自动选择。sing-box
 
 ### 地理文件库
 
-在地理文件页从电脑上传或通过直接 HTTPS 链接导入，填写名称和内容格式。选择库中已有文件并附加到模板，选择 DAT 分类及 DIRECT、REJECT 或组。支持多个文件和跨模板复用。DAT 在服务器端转换为原生规则；sing-box JSON/SRS 和 Mihomo YAML/text 通过远程 rule_set/rule-providers 提供。Clash/Stash 支持 YAML payload。保存模板并刷新订阅后生效。文件链接公开，请勿上传秘密。最多 32 个 64 MiB 文件，文本最多 8 MiB；拒绝本地地址、压缩包和不相关内容。迁移时另行保留 backups/geofiles，数据库备份不包含二进制文件。删除文件后，历史版本可能需要重新绑定。
+现成数据集提供已发布的 V2Fly 和 MetaCubeX GeoIP/GeoSite；导入同样检查 HTTPS 和内容，不会自动启用规则。本地文件可点击“点击上传”。在地理文件页从电脑上传或通过直接 HTTPS 链接导入，填写名称和内容格式。选择库中已有文件并附加到模板，选择 DAT 分类及 DIRECT、REJECT 或组。支持多个文件和跨模板复用。DAT 在服务器端转换为原生规则；sing-box JSON/SRS 和 Mihomo YAML/text 通过远程 rule_set/rule-providers 提供。Clash/Stash 支持 YAML payload。保存模板并刷新订阅后生效。文件链接公开，请勿上传秘密。最多 32 个 64 MiB 文件，文本最多 8 MiB；拒绝本地地址、压缩包和不相关内容。迁移时另行保留 backups/geofiles，数据库备份不包含二进制文件。删除文件后，历史版本可能需要重新绑定。
 
 ## 名称与请求头中的变量 {{…}}
 

@@ -1,5 +1,5 @@
 .toolbar {
-    gap: 12px;
+    gap: var(--mantine-spacing-sm);
 }
 .username {
     width: 100%;
@@ -12,13 +12,13 @@
     outline-offset: 2px;
 }
 .scopeCard {
-    padding: 20px;
+    padding: var(--mantine-spacing-md);
 }
 .scopeCard :global(.mantine-Button-root) {
-    margin-top: 8px;
+    margin-top: var(--mantine-spacing-xs);
 }
 @media (max-width: 48em) {
-    .scopeCard {
-        padding: 16px;
+    .scopeCard :global(.mantine-Button-root) {
+        min-height: 44px;
     }
 }

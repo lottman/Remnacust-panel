@@ -2,11 +2,11 @@ import {
     Alert,
     Badge,
     Button,
+    Card,
     FileInput,
     Group,
     Loader,
     TagsInput,
-    Paper,
     Progress,
     Select,
     Stack,
@@ -18,13 +18,14 @@ import { modals } from '@mantine/modals'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { TbDatabaseImport, TbPlus, TbTrash } from 'react-icons/tb'
+import { TbPlus, TbTrash } from 'react-icons/tb'
 
 import { instance } from '@shared/api'
 
 import { type JsonObject } from './autoselect-model'
 import styles from './autoselect-panel.module.css'
 import { editClientTemplate, type ClientFormat } from './client-template-model'
+import { geofilePresets } from './geofile-presets'
 
 interface Geofile {
     id: string
@@ -89,6 +90,8 @@ export function GeofilesPanel({
     const [progress, setProgress] = useState<number | null>(null)
     const [error, setError] = useState(false)
     const [selected, setSelected] = useState<string | null>(null)
+    const [presetId, setPresetId] = useState<string | null>(geofilePresets[0].id)
+    const preset = geofilePresets.find((item) => item.id === presetId)
     const refs: Reference[] = Array.isArray(config.remnacust?.geofiles)
         ? config.remnacust.geofiles
         : []
@@ -123,7 +126,7 @@ export function GeofilesPanel({
         }
     }
     const upload = useMutation({
-        mutationFn: async (source: 'file' | 'url') => {
+        mutationFn: async (source: 'file' | 'url' | (typeof geofilePresets)[number]) => {
             setProgress(null)
             if (source === 'file') {
                 if (!file || file.size > 64 * 1024 * 1024) throw new Error('file-size')
@@ -144,20 +147,22 @@ export function GeofilesPanel({
             return (
                 await instance.post<{ response: Geofile }>(
                     '/api/geofiles/import',
-                    { name: name.trim(), kind, url: url.trim() },
+                    typeof source === 'object'
+                        ? { name: source.name, kind: source.kind, url: source.url }
+                        : { name: name.trim(), kind, url: url.trim() },
                     { timeout: 45_000 }
                 )
             ).data.response
         },
-        onSuccess: (item) => {
+        onSuccess: (item, source) => {
             client.setQueryData<Geofile[]>(queryKey, (previous) => [
                 item,
                 ...(previous ?? []).filter((existing) => existing.id !== item.id)
             ])
             setSelected(item.id)
             setError(false)
-            setFile(null)
-            setUrl('')
+            if (source === 'file') setFile(null)
+            if (source === 'url') setUrl('')
             setProgress(null)
         },
         onError: () => {
@@ -188,16 +193,13 @@ export function GeofilesPanel({
             .map((item: JsonObject) => ({ name: item.tag, url: item.url }))
     ].filter((item) => typeof item.url === 'string')
     return (
-        <Stack gap="md">
-            <Paper withBorder p="md">
-                <Group gap="sm">
-                    <TbDatabaseImport size={23} aria-hidden />
-                    <Title order={3}>{t('geofiles.title')}</Title>
-                </Group>
-                <Text size="sm" c="dimmed" mt="sm">
+        <Stack gap="md" className={styles.panel}>
+            <Card p="md">
+                <Title order={3}>{t('geofiles.title')}</Title>
+                <Text size="sm" c="dimmed" mt={4}>
                     {t('geofiles.help')}
                 </Text>
-            </Paper>
+            </Card>
             {(error || filesQuery.isError) && (
                 <Alert color="red" withCloseButton onClose={() => setError(false)}>
                     {t('geofiles.operation-failed')}{' '}
@@ -208,7 +210,7 @@ export function GeofilesPanel({
                     )}
                 </Alert>
             )}
-            <Paper withBorder p="md">
+            <Card p="md" className={styles.card}>
                 <Stack gap="md">
                     <Title order={4}>{t('geofiles.library')}</Title>
                     <Text size="sm" c="dimmed">
@@ -281,12 +283,12 @@ export function GeofilesPanel({
                         </Group>
                     )}
                 </Stack>
-            </Paper>
+            </Card>
             {refs.map((reference, index) => {
                 const item = files.find((file) => file.id === reference.id)
                 const categories = reference.categories ?? []
                 return (
-                    <Paper key={index} withBorder p="md">
+                    <Card key={index} p="md" className={styles.card}>
                         <Stack gap="md">
                             <Group justify="space-between">
                                 <Group>
@@ -358,10 +360,49 @@ export function GeofilesPanel({
                                     : t('geofiles.download-help')}
                             </Text>
                         </Stack>
-                    </Paper>
+                    </Card>
                 )
             })}
-            <Paper withBorder p="md">
+            <Card p="md" className={styles.card}>
+                <Stack gap="md">
+                    <div>
+                        <Title order={4}>{t('geofiles.presets')}</Title>
+                        <Text size="sm" c="dimmed" mt={4}>
+                            {t('geofiles.presets-help')}
+                        </Text>
+                    </div>
+                    <Select
+                        label={t('geofiles.choose-preset')}
+                        value={presetId}
+                        onChange={setPresetId}
+                        allowDeselect={false}
+                        searchable
+                        data={['V2Fly', 'MetaCubeX'].map((provider) => ({
+                            group: provider,
+                            items: geofilePresets
+                                .filter((item) => item.provider === provider)
+                                .map((item) => ({ value: item.id, label: item.name }))
+                        }))}
+                    />
+                    {preset && (
+                        <>
+                            <Text size="sm">{t(`geofiles.preset-${preset.description}`)}</Text>
+                            <Text size="xs" c="dimmed" dir="ltr" className={styles.path}>
+                                {preset.url}
+                            </Text>
+                        </>
+                    )}
+                    <Button
+                        variant="light"
+                        disabled={!preset}
+                        loading={upload.isPending}
+                        onClick={() => preset && upload.mutate(preset)}
+                    >
+                        {t('geofiles.import-preset')}
+                    </Button>
+                </Stack>
+            </Card>
+            <Card p="md" className={styles.card}>
                 <Stack gap="md">
                     <Title order={4}>{t('geofiles.add')}</Title>
                     <div className={styles.fields}>
@@ -384,6 +425,7 @@ export function GeofilesPanel({
                     </div>
                     <FileInput
                         label={t('geofiles.from-computer')}
+                        placeholder={t('geofiles.click-to-upload')}
                         accept=".dat,.srs,.json,.yaml,.yml,.txt"
                         value={file}
                         onChange={(value) => {
@@ -436,9 +478,9 @@ export function GeofilesPanel({
                         {t('geofiles.security-help')}
                     </Text>
                 </Stack>
-            </Paper>
+            </Card>
             {existingUrls.length > 0 && (
-                <Paper withBorder p="md">
+                <Card p="md" className={styles.card}>
                     <Stack gap="sm">
                         <Title order={4}>{t('geofiles.existing')}</Title>
                         <Text size="sm" c="dimmed">
@@ -461,7 +503,7 @@ export function GeofilesPanel({
                             </Group>
                         ))}
                     </Stack>
-                </Paper>
+                </Card>
             )}
         </Stack>
     )

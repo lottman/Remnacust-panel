@@ -66,7 +66,7 @@ FROM node:24.22.1-trixie-slim
 COPY --from=certificates /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 
 LABEL org.opencontainers.image.title="Remnacust"
-LABEL org.opencontainers.image.version="1.1.7.44"
+LABEL org.opencontainers.image.version="1.1.7.45"
 LABEL org.opencontainers.image.description="Powerful proxy management tool"
 LABEL org.opencontainers.image.url="https://github.com/lottman/Remnacust-panel"
 LABEL org.opencontainers.image.source="https://github.com/lottman/Remnacust-panel"

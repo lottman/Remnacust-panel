@@ -3927,6 +3927,15 @@
         "kind-mihomo-ipcidr": "IP-сети — YAML payload",
         "kind-mihomo-classical": "Правила — YAML classical",
         "kind-mihomo-text-domain": "Домены — текст Mihomo",
-        "kind-mihomo-text-ipcidr": "IP-сети — текст Mihomo"
+        "kind-mihomo-text-ipcidr": "IP-сети — текст Mihomo",
+        "click-to-upload": "Нажмите, чтобы загрузить",
+        "presets": "Готовые наборы",
+        "presets-help": "Импортируйте опубликованный набор в библиотеку, затем добавьте его в шаблон и выберите категории и действие. Одинаковое содержимое используется повторно; правила автоматически не включаются.",
+        "choose-preset": "Набор данных",
+        "import-preset": "Импортировать в библиотеку",
+        "preset-countries": "Диапазоны IP по странам, включая частные сети.",
+        "preset-domains": "Списки доменов по сервисам и категориям.",
+        "preset-private": "Только диапазоны частных IP-адресов.",
+        "preset-lite": "Сокращённый набор популярных сервисов; категорий меньше, чем в полном GeoSite."
     }
 }

@@ -3927,6 +3927,15 @@
         "kind-mihomo-ipcidr": "IP 网段 — YAML payload",
         "kind-mihomo-classical": "规则 — YAML classical",
         "kind-mihomo-text-domain": "域名 — Mihomo 文本",
-        "kind-mihomo-text-ipcidr": "IP 网段 — Mihomo 文本"
+        "kind-mihomo-text-ipcidr": "IP 网段 — Mihomo 文本",
+        "click-to-upload": "点击上传",
+        "presets": "现成数据集",
+        "presets-help": "将已发布的数据集导入文件库，再附加到模板并选择分类和操作。相同内容会复用，不会自动启用任何规则。",
+        "choose-preset": "数据集",
+        "import-preset": "导入文件库",
+        "preset-countries": "按国家分组的 IP 范围，包括私有网络。",
+        "preset-domains": "按服务和分类分组的域名列表。",
+        "preset-private": "仅包含私有 IP 范围。",
+        "preset-lite": "常用服务的精简集，分类少于完整的 GeoSite。"
     }
 }

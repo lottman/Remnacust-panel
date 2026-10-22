@@ -6,7 +6,7 @@ import {
     Group,
     MultiSelect,
     NumberInput,
-    Paper,
+    Card,
     Select,
     Stack,
     Switch,
@@ -74,12 +74,12 @@ export function ClientAutoselectPanel({
             .map((value) => ({ value, label: value }))
     ]
     return (
-        <Stack gap="md">
-            <Paper withBorder p="md">
+        <Stack gap="md" className={styles.panel}>
+            <Card withBorder p="md">
                 <Group justify="space-between" gap="md">
-                    <div>
+                    <div className={styles.sectionHeader}>
                         <Title order={3}>{t('autoselect.title')}</Title>
-                        <Text size="sm" c="dimmed">
+                        <Text size="sm" c="dimmed" mt={4}>
                             {t('client-template.native-help')}
                         </Text>
                     </div>
@@ -90,18 +90,18 @@ export function ClientAutoselectPanel({
                         {t('autoselect.create')}
                     </Button>
                 </Group>
-            </Paper>
+            </Card>
             {error && (
                 <Alert color="red" withCloseButton onClose={() => setError(false)}>
                     {t('autoselect.structure-error')}
                 </Alert>
             )}
             {!groups.length && (
-                <Paper withBorder p="xl">
+                <Card withBorder p="xl">
                     <Text ta="center" c="dimmed">
                         {t('autoselect.empty')}
                     </Text>
-                </Paper>
+                </Card>
             )}
             {groups.map(({ group, index }) => {
                 const pool = group.remnawave?.pool
@@ -122,7 +122,7 @@ export function ClientAutoselectPanel({
                 const poolPatch = (path: (string | number)[], value: unknown) =>
                     patch(index, ['remnawave', 'pool', ...path], value)
                 return (
-                    <Paper key={index} withBorder p="md" className={styles.card}>
+                    <Card key={index} withBorder p="md" className={styles.card}>
                         <Stack gap="md">
                             <Group justify="space-between">
                                 <Title order={4}>{name}</Title>
@@ -511,7 +511,7 @@ export function ClientAutoselectPanel({
                                 })}
                             </Text>
                         </Stack>
-                    </Paper>
+                    </Card>
                 )
             })}
             <Alert>{t('autoselect.access-help')}</Alert>

@@ -1,9 +1,12 @@
-import { Alert, Badge, Button, Group, NumberInput, Paper, Stack, Text, Title } from '@mantine/core'
+import { Alert, Badge, Button, Group, NumberInput, Card, Stack, Text, Title } from '@mantine/core'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbDownload, TbPlayerRecord, TbPlayerStop, TbTrash } from 'react-icons/tb'
 
 import { instance } from '@shared/api'
+import { PageHeaderShared } from '@shared/ui/page-header'
+
+import classes from './sessions-explorer.module.css'
 
 interface Recording {
     id: string
@@ -82,11 +85,12 @@ export function SessionRecordings() {
 
     return (
         <Stack gap="md">
+            <PageHeaderShared title={t('session-recording.tab')} />
             <Alert>{t('session-recording.explanation')}</Alert>
             {error && <Alert color="red">{t('session-recording.error')}</Alert>}
-            <Paper withBorder p="md" radius="md">
+            <Card withBorder p="md" radius="md">
                 <Stack>
-                    <Group align="end">
+                    <div className={classes.recordingForm}>
                         <NumberInput
                             label={t('session-recording.duration')}
                             min={1}
@@ -120,17 +124,17 @@ export function SessionRecordings() {
                         >
                             {t('session-recording.start')}
                         </Button>
-                    </Group>
+                    </div>
                     <Text c="dimmed" size="sm">
                         {t('session-recording.retention')}
                     </Text>
                 </Stack>
-            </Paper>
+            </Card>
             {loaded && recordings.length === 0 && (
                 <Text c="dimmed">{t('session-recording.empty')}</Text>
             )}
             {recordings.map((item) => (
-                <Paper key={item.id} withBorder p="md" radius="md">
+                <Card key={item.id} withBorder p="md" radius="md">
                     <Stack gap="sm">
                         <Group justify="space-between">
                             <Title order={5}>{new Date(item.startedAt).toLocaleString()}</Title>
@@ -200,7 +204,7 @@ export function SessionRecordings() {
                             </Button>
                         </Group>
                     </Stack>
-                </Paper>
+                </Card>
             ))}
         </Stack>
     )

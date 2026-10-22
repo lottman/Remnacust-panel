@@ -6,8 +6,13 @@
 }
 .main,
 .preview,
-.card {
+.card,
+.panel {
     min-width: 0;
+}
+.sectionHeader {
+    flex: 1;
+    min-width: min(100%, 240px);
 }
 .fields {
     display: grid;
@@ -48,7 +53,8 @@
     }
 }
 @media (max-width: 639px) {
-    .layout button {
+    .layout button,
+    .panel button {
         min-height: 44px;
     }
     .snippet {

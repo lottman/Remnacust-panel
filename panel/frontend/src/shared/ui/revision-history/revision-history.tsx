@@ -5,7 +5,7 @@ import {
     Badge,
     Button,
     Group,
-    Paper,
+    Card,
     Select,
     Stack,
     Text,
@@ -89,7 +89,7 @@ export function RevisionHistory(props: Props) {
         )
     return (
         <Stack gap="md" className={classes.root}>
-            <Paper withBorder p="md">
+            <Card withBorder p="md">
                 <Group justify="space-between">
                     <Text size="sm" c="dimmed">
                         {help}
@@ -104,7 +104,7 @@ export function RevisionHistory(props: Props) {
                         {t('template-history.refresh')}
                     </Button>
                 </Group>
-            </Paper>
+            </Card>
             {!revision && <Alert>{t('template-history.empty')}</Alert>}
             {revision && (
                 <>
@@ -126,7 +126,7 @@ export function RevisionHistory(props: Props) {
                         <Badge variant="light">{t('template-history.saved-left')}</Badge>
                         <Text size="sm">{t('template-history.draft-right')}</Text>
                     </Group>
-                    <Paper withBorder p={0} className={classes.comparison}>
+                    <Card withBorder p={0} className={classes.comparison}>
                         <DiffEditor
                             height="420px"
                             language={language}
@@ -147,7 +147,7 @@ export function RevisionHistory(props: Props) {
                                 minimap: { enabled: false }
                             }}
                         />
-                    </Paper>
+                    </Card>
                     {confirmed && (
                         <Alert color="yellow" title={t('template-history.unsaved')}>
                             <Text size="sm">{t('template-history.confirm-help')}</Text>

@@ -20,7 +20,7 @@ function harness(overrides = {}) {
             if (!(index in state)) state[index] = initial
             return [state[index], value => { state[index] = value }]
         } }
-        if (name === '@mantine/core') return { ...Object.fromEntries(['Alert', 'Badge', 'Button', 'Group', 'Paper', 'Select', 'Stack', 'Text'].map(key => [key, key])), useMantineColorScheme: () => ({ colorScheme: 'dark' }) }
+        if (name === '@mantine/core') return { ...Object.fromEntries(['Alert', 'Badge', 'Button', 'Group', 'Card', 'Select', 'Stack', 'Text'].map(key => [key, key])), useMantineColorScheme: () => ({ colorScheme: 'dark' }) }
         if (name === 'react-i18next') return { useTranslation: () => ({ t: key => key, i18n: { language: 'en' } }) }
         if (name === '@monaco-editor/react') return { DiffEditor: 'diff' }
         if (name.endsWith('.css')) return { default: {} }

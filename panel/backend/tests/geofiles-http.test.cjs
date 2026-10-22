@@ -74,7 +74,10 @@ test('real HTTP binary upload, admin-only roles, public byte stream and in-use d
     let templates = [];
     const files = new GeofilesService(
         { getOrThrow: () => 'sub.example.test' },
-        { getAllTemplates: async () => templates },
+        {
+            getAllTemplates: async (withContent) =>
+                withContent ? templates : templates.map(() => ({})),
+        },
         { $transaction: async (fn) => fn({ $executeRaw: async () => 1 }) },
     );
     class TestModule {}

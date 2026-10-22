@@ -263,7 +263,10 @@ test('persistent library deduplicates, constrains names and IDs, preserves refer
     let templates = [];
     const service = new GeofilesService(
         { getOrThrow: () => 'sub.example.test' },
-        { getAllTemplates: async () => templates },
+        {
+            getAllTemplates: async (withContent) =>
+                withContent ? templates : templates.map(() => ({})),
+        },
         { $transaction: async (operation) => operation({ $executeRaw: async () => 1 }) },
     );
     try {

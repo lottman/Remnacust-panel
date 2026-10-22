@@ -260,7 +260,7 @@ export class GeofilesService {
                 throw new NotFoundException('Geofile not found');
             });
             if (item.id !== id) throw new NotFoundException('Geofile not found');
-            const templates = await this.repository.getAllTemplates(false);
+            const templates = await this.repository.getAllTemplates(true);
             if (
                 templates.some(
                     (template) =>

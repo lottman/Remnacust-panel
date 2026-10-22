@@ -2,7 +2,7 @@
 
 Панель управления пользователями, подписками и нодами Xray на основе Remnawave. Backend хранит данные в PostgreSQL, frontend предоставляет интерфейс и встроенное руководство. В этом репозитории также находится отдельная страница подписки.
 
-**Версия 1.1.7.42** · **Основа: Remnawave 3.4.5** · [Установщик](https://github.com/lottman/Remnacust-installer) · [Telegram](https://t.me/lottman)
+**Версия 1.1.7.43** · **Основа: Remnawave 3.4.7** · [Установщик](https://github.com/lottman/Remnacust-installer) · [Telegram](https://t.me/lottman)
 
 ![Главная Remnacust](panel/assets/overview.png)
 

@@ -1,6 +1,6 @@
 {
   "name": "@remnacust/backend",
-  "version": "1.1.7.42",
+  "version": "1.1.7.43",
   "private": false,
   "description": "Remnacust Panel Backend",
   "homepage": "https://github.com/lottman/Remnacust-panel",
@@ -150,8 +150,8 @@
     "deepmerge-ts": "8.0.2",
     "lodash": "$lodash",
     "basic-ftp": "6.2.2",
-    "fast-uri": "3.1.8",
-    "ip-address": "10.7.3",
+    "fast-uri": "3.1.9",
+    "ip-address": "10.7.4",
     "js-yaml": "$js-yaml",
     "proxy-addr": "2.0.8",
     "ts-checker-rspack-plugin": {

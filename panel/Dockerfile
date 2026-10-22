@@ -1,5 +1,5 @@
 # Build from the public project root: docker build -f panel/Dockerfile .
-FROM node:24.21-trixie-slim AS backend-build
+FROM node:24.22.1-trixie-slim AS backend-build
 WORKDIR /opt/app
 
 COPY panel/backend/package*.json ./
@@ -39,7 +39,7 @@ RUN cd node_modules/@prisma/client/runtime && \
     find node_modules \( -name '*.js.map' -o -name '*.mjs.map' \) -delete && \
     find node_modules \( -name '*.d.ts' -o -name '*.d.cts' -o -name '*.d.mts' \) -delete
 
-FROM node:24.21-trixie-slim AS frontend
+FROM node:24.22.1-trixie-slim AS frontend
 WORKDIR /opt/frontend
 COPY panel/frontend/package*.json ./
 COPY panel/frontend/vendor ./vendor
@@ -57,16 +57,16 @@ RUN --mount=type=cache,id=remnacust-webfonts,target=/opt/frontend/node_modules/.
 FROM alpine:3.21 AS certificates
 RUN apk add --no-cache ca-certificates
 
-FROM node:24.21-trixie-slim AS runtime-manager
+FROM node:24.22.1-trixie-slim AS runtime-manager
 WORKDIR /opt/pm2
 COPY panel/runtime-manager/package*.json ./
 RUN npm ci --omit=dev --ignore-scripts --no-audit --no-fund
 
-FROM node:24.21-trixie-slim
+FROM node:24.22.1-trixie-slim
 COPY --from=certificates /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 
 LABEL org.opencontainers.image.title="Remnacust"
-LABEL org.opencontainers.image.version="1.1.7.32"
+LABEL org.opencontainers.image.version="1.1.7.43"
 LABEL org.opencontainers.image.description="Powerful proxy management tool"
 LABEL org.opencontainers.image.url="https://github.com/lottman/Remnacust-panel"
 LABEL org.opencontainers.image.source="https://github.com/lottman/Remnacust-panel"

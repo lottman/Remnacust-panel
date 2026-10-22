@@ -1,4 +1,4 @@
-FROM node:24.21-trixie-slim AS backend-build
+FROM node:24.22.1-trixie-slim AS backend-build
 WORKDIR /opt/app
 
 COPY backend/package*.json ./
@@ -12,7 +12,7 @@ COPY backend/ .
 RUN npm run build \
     && npm run trace
 
-FROM node:24.21-trixie-slim AS frontend-build
+FROM node:24.22.1-trixie-slim AS frontend-build
 WORKDIR /opt/frontend
 COPY frontend/package*.json ./
 COPY frontend/.npmrc ./
@@ -21,12 +21,12 @@ COPY frontend/ ./
 RUN npm run typecheck \
     && NODE_ENV=production npm run cb
 
-FROM node:24.21-trixie-slim AS runtime-manager
+FROM node:24.22.1-trixie-slim AS runtime-manager
 WORKDIR /opt/pm2
 COPY runtime-manager/package*.json ./
 RUN npm ci --omit=dev --ignore-scripts --no-audit --no-fund
 
-FROM node:24.21-trixie-slim
+FROM node:24.22.1-trixie-slim
 WORKDIR /opt/app
 
 LABEL org.opencontainers.image.title="Remnacust Subscription Page"

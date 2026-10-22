@@ -249,7 +249,7 @@ const manifest = {
     backendVersion: JSON.parse(fs.readFileSync(path.join(backend, 'package.json'), 'utf8')).version,
     coreVersion: getCompatibilityVersions(root).coreVersion,
     nodeVersion: getCompatibilityVersions(root).nodeVersion,
-    upstreamPanelVersion: '3.4.5',
+    upstreamPanelVersion: '3.4.7',
     upstreamBackendPatches: [
         {
             commit: 'dec0fcca4e47f13e835ebe7466dab68911d03273',
@@ -292,11 +292,11 @@ const manifest = {
             }
         }
     ],
-    upstreamBackendCommit: '010b365ab1fabea01192b5e6ade4e98e66ee1dbd',
-    upstreamFrontendCommit: '36df977a8d985be2c35a586529250506c749c354',
-    upstreamNodeCommit: 'ea7a835485af81ec464ebbf7acaaa7d6dd486a05',
+    upstreamBackendCommit: '52321390ac4efe04a610811446d87335f1d10a93',
+    upstreamFrontendCommit: 'dcb1affbfc42793799caecee988fd20ac0a270b7',
+    upstreamNodeCommit: '2ad154f8f1016c94c1872f337268af878af61b18',
     upstreamCorePatchCommit: null,
-    upstreamNodeVersion: '3.4.2',
+    upstreamNodeVersion: '3.4.3',
     upstreamCoreVersion: '26.10.21',
     upstreamCoreCommit: '1b1647cd9ddf0abc34b981d4611fc03bcac1ca74',
     upstreamCorePrerelease: true,

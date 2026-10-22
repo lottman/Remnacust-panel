@@ -47,13 +47,13 @@
       "version": "v26.10.21",
       "commit": "1b1647cd9ddf0abc34b981d4611fc03bcac1ca74",
       "checkedAt": "2026-10-22T08:00:00Z",
-      "status": "integrated-for-v1.2.73",
+      "status": "integrated-and-released",
       "ref": "refs/tags/v26.10.21",
       "prerelease": true,
       "tagEvidence": "https://api.github.com/repos/XTLS/Xray-core/git/ref/tags/v26.10.21"
     }
   ],
-  "releaseStatus": "prepared-v1.2.73",
+  "releaseStatus": "published-v1.2.73",
   "updatePolicy": "published-official-releases-only",
   "dependencySecurityUpdates": [
     {

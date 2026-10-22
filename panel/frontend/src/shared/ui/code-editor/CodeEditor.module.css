@@ -84,3 +84,20 @@
     transition: border-color 150ms ease;
     background-color: var(--mantine-color-body);
 }
+
+.standalone {
+    margin-top: var(--mantine-spacing-md);
+    border-top: 1px solid var(--mantine-color-default-border);
+    border-radius: var(--mantine-radius-md);
+    background-color: var(--mantine-color-default);
+}
+
+@media (max-width: 639px) {
+    .footer {
+        gap: var(--mantine-spacing-xs);
+        padding: var(--mantine-spacing-sm);
+    }
+    .footer button {
+        min-height: 44px;
+    }
+}

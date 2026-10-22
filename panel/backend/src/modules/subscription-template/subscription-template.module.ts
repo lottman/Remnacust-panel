@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 
 import { TEMPLATE_RENDERERS } from './generators';
+import { GeofilesController, PublicGeofilesController } from './geofiles/geofiles.controller';
+import { GeofilesService } from './geofiles/geofiles.service';
 import { QUERIES } from './queries';
 import { RenderTemplatesService } from './render-templates.service';
 import { SubscriptionTemplateRepository } from './repositories/subscription-template.repository';
@@ -11,8 +13,9 @@ import { SubscriptionTemplateConverter } from './subscription-template.converter
 import { SubscriptionTemplateService } from './subscription-template.service';
 @Module({
     imports: [CqrsModule],
-    controllers: [SubscriptionTemplateController],
+    controllers: [SubscriptionTemplateController, GeofilesController, PublicGeofilesController],
     providers: [
+        GeofilesService,
         SubscriptionTemplateService,
         SubscriptionTemplateRepository,
         SubscriptionTemplateConverter,

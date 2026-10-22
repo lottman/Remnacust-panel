@@ -8,12 +8,19 @@ function source(relative, overrides = {}) {
     const filename = path.join(root, relative);
     const mocks = {};
     for (const match of fs.readFileSync(filename, 'utf8').matchAll(/from '([^']+)'/g)) {
-        if (match[1].startsWith('@common/') || match[1].startsWith('@modules/') ||
-            match[1].startsWith('@libs/') || match[1].startsWith('@contract/') ||
-            match[1].startsWith('prisma/') || match[1].startsWith('.')) {
+        if (
+            match[1].startsWith('@common/') ||
+            match[1].startsWith('@modules/') ||
+            match[1].startsWith('@libs/') ||
+            match[1].startsWith('@contract/') ||
+            match[1].startsWith('prisma/') ||
+            match[1].startsWith('.')
+        ) {
             mocks[match[1]] = {};
         }
     }
+    if (Object.hasOwn(mocks, './client-pool'))
+        mocks['./client-pool'] = require('./client-pool-fixture.cjs').pool;
     return load(filename, { ...mocks, ...overrides });
 }
 

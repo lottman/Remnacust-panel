@@ -621,6 +621,14 @@ remnawave.assignTo.hosts 将模板分配给接收主机；assignTo.tags 也适�
 
 Xray JSON、Singbox、Mihomo、Clash 和 Stash 保留最近 30 个已保存版本。数据库升级将现有代码保留为首个版本。历史显示日期和与当前草稿的比较。在编辑器中打开会恢复全部代码，包括自动选择、均衡器和分配。替换未保存草稿前需要确认。保存会创建新版本，因此恢复操作本身也可以撤销。代码与历史在同一事务中保存。
 
+### 所有可编辑格式的自动选择
+
+Xray JSON、sing-box、Mihomo、Clash 和 Stash 均提供自动选择。sing-box 使用 urltest/selector；YAML 客户端使用 url-test/select/fallback/load-balance。组可按 UUID、标签或正则筛选，设置 all/random/group 和来源可见性。先检查权限；显式空池不会变成 DIRECT。手动成员保留。所有标签页共享草稿；未保存的 Xray 测试池可连同专用均衡器一起删除。表单显示保存和放弃草稿，代码工具仅在编辑页显示。
+
+### 地理文件库
+
+在地理文件页从电脑上传或通过直接 HTTPS 链接导入，填写名称和内容格式。选择库中已有文件并附加到模板，选择 DAT 分类及 DIRECT、REJECT 或组。支持多个文件和跨模板复用。DAT 在服务器端转换为原生规则；sing-box JSON/SRS 和 Mihomo YAML/text 通过远程 rule_set/rule-providers 提供。Clash/Stash 支持 YAML payload。保存模板并刷新订阅后生效。文件链接公开，请勿上传秘密。最多 32 个 64 MiB 文件，文本最多 8 MiB；拒绝本地地址、压缩包和不相关内容。迁移时另行保留 backups/geofiles，数据库备份不包含二进制文件。删除文件后，历史版本可能需要重新绑定。
+
 ## 名称与请求头中的变量 {{…}}
 
 ### 替换时机

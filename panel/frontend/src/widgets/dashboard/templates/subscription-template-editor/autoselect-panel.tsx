@@ -6,7 +6,6 @@ import {
     TagsInput,
     Badge,
     Button,
-    Code,
     Group,
     MultiSelect,
     NumberInput,
@@ -20,7 +19,7 @@ import {
 } from '@mantine/core'
 import { useDeferredValue, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { TbArrowsShuffle, TbCode, TbPlus, TbTrash } from 'react-icons/tb'
+import { TbArrowsShuffle, TbPlus, TbTrash } from 'react-icons/tb'
 
 import {
     addBalancer,
@@ -42,6 +41,7 @@ import {
     type Pool
 } from './autoselect-model'
 import styles from './autoselect-panel.module.css'
+import { TemplateChanges } from './template-changes'
 
 type Host = GetHostsCommand.Response['response'][number]
 type Option = { value: string; label: string }
@@ -116,6 +116,7 @@ function PoolCard({
                     color="red"
                     size="compact-sm"
                     leftSection={<TbTrash size={16} />}
+                    title={t('client-template.remove-pool-help')}
                     onClick={() => edit((text) => removePool(text, index))}
                 >
                     {t('autoselect.remove-pool')}
@@ -502,7 +503,6 @@ export function AutoselectPanel({
 }) {
     const { t } = useTranslation()
     const [error, setError] = useState<string | null>(null)
-    const [showAllChanges, setShowAllChanges] = useState(false)
     const options = useMemo(
         () =>
             hosts.map((host) => ({
@@ -752,70 +752,7 @@ export function AutoselectPanel({
                     />
                 </Paper>
             </Stack>
-            <aside className={styles.preview} aria-label={t('autoselect.changes')}>
-                <Paper withBorder p="md">
-                    <Group justify="space-between" mb="sm">
-                        <Group gap="xs">
-                            <TbCode aria-hidden size={18} />
-                            <Title order={4}>{t('autoselect.changes')}</Title>
-                        </Group>
-                        <Badge variant="light">{changes.length}</Badge>
-                    </Group>
-                    <Text size="sm" c="dimmed" mb="md">
-                        {t('autoselect.changes-help')}
-                    </Text>
-                    {!changes.length && <Text size="sm">{t('autoselect.no-changes')}</Text>}
-                    <Stack gap="md">
-                        {changes.slice(0, showAllChanges ? changes.length : 8).map((change) => (
-                            <div key={change.path} className={styles.change}>
-                                <Badge
-                                    color={
-                                        change.kind === 'removed'
-                                            ? 'red'
-                                            : change.kind === 'changed'
-                                              ? 'yellow'
-                                              : 'teal'
-                                    }
-                                    variant="light"
-                                    mb="xs"
-                                >
-                                    {t(`autoselect.change-${change.kind}`)}
-                                </Badge>
-                                <Text
-                                    size="xs"
-                                    ff="monospace"
-                                    dir="ltr"
-                                    mb="xs"
-                                    className={styles.path}
-                                >
-                                    {change.path}
-                                </Text>
-                                <Code block dir="ltr" className={styles.snippet}>
-                                    {JSON.stringify(
-                                        change.kind === 'removed' ? change.before : change.after,
-                                        null,
-                                        2
-                                    )?.slice(0, 12000)}
-                                </Code>
-                            </div>
-                        ))}
-                    </Stack>
-                    {changes.length > 8 && (
-                        <Button
-                            mt="md"
-                            variant="subtle"
-                            fullWidth
-                            onClick={() => setShowAllChanges((value) => !value)}
-                        >
-                            {t(
-                                showAllChanges
-                                    ? 'autoselect.less-changes'
-                                    : 'autoselect.all-changes'
-                            )}
-                        </Button>
-                    )}
-                </Paper>
-            </aside>
+            <TemplateChanges changes={changes} />
         </div>
     )
 }

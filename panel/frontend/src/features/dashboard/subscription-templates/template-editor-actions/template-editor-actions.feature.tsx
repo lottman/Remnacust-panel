@@ -30,10 +30,18 @@ interface Props {
     template: GetSubscriptionTemplateCommand.Response['response']
     getValue?: () => string
     canSave?: boolean
+    showEditorTools?: boolean
 }
 
 export function TemplateEditorActionsFeature(props: Props) {
-    const { editorRef, editorType, template, getValue, canSave = true } = props
+    const {
+        editorRef,
+        editorType,
+        template,
+        getValue,
+        canSave = true,
+        showEditorTools = true
+    } = props
     const { t } = useTranslation()
 
     const isMobile = useIsMobile()
@@ -167,71 +175,73 @@ export function TemplateEditorActionsFeature(props: Props) {
                 {t('common.action.save')}
             </Button>
 
-            <Group gap={0} wrap="nowrap">
-                <Menu
-                    onClose={() => handlers.close()}
-                    onOpen={() => handlers.open()}
-                    shadow="md"
-                    trigger="click-hover"
-                    withinPortal
-                >
-                    <Menu.Target>
-                        <ActionIcon
-                            className={classes.actionIconLeft}
-                            size={36}
-                            variant={opened ? 'outline' : 'default'}
-                        >
-                            <TbMenuDeep size={20} />
-                        </ActionIcon>
-                    </Menu.Target>
+            {showEditorTools && (
+                <Group gap={0} wrap="nowrap">
+                    <Menu
+                        onClose={() => handlers.close()}
+                        onOpen={() => handlers.open()}
+                        shadow="md"
+                        trigger="click-hover"
+                        withinPortal
+                    >
+                        <Menu.Target>
+                            <ActionIcon
+                                className={classes.actionIconLeft}
+                                size={36}
+                                variant={opened ? 'outline' : 'default'}
+                            >
+                                <TbMenuDeep size={20} />
+                            </ActionIcon>
+                        </Menu.Target>
 
-                    <Menu.Dropdown>
-                        <Menu.Item
-                            color={clipboard.copied ? 'teal' : undefined}
-                            leftSection={<TbClipboardCopy size={14} />}
-                            onClick={handleCopyConfig}
-                        >
-                            {t('config-editor-actions.feature.copy-all-content')}
-                        </Menu.Item>
+                        <Menu.Dropdown>
+                            <Menu.Item
+                                color={clipboard.copied ? 'teal' : undefined}
+                                leftSection={<TbClipboardCopy size={14} />}
+                                onClick={handleCopyConfig}
+                            >
+                                {t('config-editor-actions.feature.copy-all-content')}
+                            </Menu.Item>
 
-                        <Menu.Item
-                            leftSection={<TbSelectAll size={14} />}
-                            onClick={handleSelectAll}
-                        >
-                            {t('common.action.select-all')}
-                        </Menu.Item>
+                            <Menu.Item
+                                leftSection={<TbSelectAll size={14} />}
+                                onClick={handleSelectAll}
+                            >
+                                {t('common.action.select-all')}
+                            </Menu.Item>
 
-                        <Menu.Item leftSection={<TbCut size={14} />} onClick={handleCut}>
-                            {t('config-editor-actions.feature.cut-selection')}
-                        </Menu.Item>
+                            <Menu.Item leftSection={<TbCut size={14} />} onClick={handleCut}>
+                                {t('config-editor-actions.feature.cut-selection')}
+                            </Menu.Item>
 
-                        <Menu.Item
-                            leftSection={<TbClipboardText size={14} />}
-                            onClick={handlePaste}
-                        >
-                            {t('config-editor-actions.feature.paste-from-clipboard')}
-                        </Menu.Item>
+                            <Menu.Item
+                                leftSection={<TbClipboardText size={14} />}
+                                onClick={handlePaste}
+                            >
+                                {t('config-editor-actions.feature.paste-from-clipboard')}
+                            </Menu.Item>
 
-                        <Menu.Divider />
+                            <Menu.Divider />
 
-                        <Menu.Item
-                            leftSection={<TbDownload size={14} />}
-                            onClick={openDownloadModal}
-                        >
-                            {t('common.action.load-from-github')}
-                        </Menu.Item>
-                    </Menu.Dropdown>
-                </Menu>
+                            <Menu.Item
+                                leftSection={<TbDownload size={14} />}
+                                onClick={openDownloadModal}
+                            >
+                                {t('common.action.load-from-github')}
+                            </Menu.Item>
+                        </Menu.Dropdown>
+                    </Menu>
 
-                <Button
-                    className={classes.centeredButton}
-                    leftSection={<PiCheckSquareOffset size={16} />}
-                    onClick={formatDocument}
-                    variant="default"
-                >
-                    {t('config-editor-actions.feature.format')}
-                </Button>
-            </Group>
+                    <Button
+                        className={classes.centeredButton}
+                        leftSection={<PiCheckSquareOffset size={16} />}
+                        onClick={formatDocument}
+                        variant="default"
+                    >
+                        {t('config-editor-actions.feature.format')}
+                    </Button>
+                </Group>
+            )}
         </Group>
     )
 }

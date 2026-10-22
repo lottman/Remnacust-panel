@@ -7,6 +7,7 @@ import type { TInjectHostsEntry, TRemnawaveInjectorSelectFrom } from '@libs/cont
 import { applyHostMapper } from '../host-mapper';
 import { ResolvedProxyConfig } from '../resolve-proxy/interfaces';
 import { SubscriptionTemplateService } from '../subscription-template.service';
+import { ClientPoolError } from './client-pool';
 import { selectInjectHosts } from './inject-host-selection';
 import {
     IGenerateConfigParams,
@@ -214,17 +215,32 @@ export class XrayJsonGeneratorService {
                 overrideTemplateName,
             )) as unknown as XrayJsonConfig;
 
-            const configs: XrayJsonConfig[] = [];
+            const configs: string[] = [];
+            let outputBytes = 2;
+            const append = (config: XrayJsonConfig) => {
+                const serialized = JSON.stringify(config);
+                outputBytes += Buffer.byteLength(serialized) + (configs.length ? 1 : 0);
+                if (outputBytes > 16 * 1024 * 1024)
+                    throw new ClientPoolError('subscription-size-limit');
+                configs.push(serialized);
+            };
             const regexDeadline = Date.now() + 1000;
 
             for (const host of hosts) {
                 if (host.metadata.isHidden) continue;
                 if (host.metadata.excludeFromSubscriptionTypes.includes('XRAY_JSON')) continue;
 
-                const baseTemplate = ignoreHostXrayJsonTemplate
+                const selectedTemplate = ignoreHostXrayJsonTemplate
                     ? templateContent
                     : ((host.clientOverrides.xrayJsonTemplate as XrayJsonConfig) ??
                       templateContent);
+                const baseTemplate =
+                    selectedTemplate === templateContent || !('remnacust' in selectedTemplate)
+                        ? selectedTemplate
+                        : ((await this.subscriptionTemplateService.prepareClientTemplate(
+                              selectedTemplate as unknown as Record<string, unknown>,
+                              'XRAY_JSON',
+                          )) as unknown as XrayJsonConfig);
 
                 if (
                     baseTemplate.remnawave &&
@@ -238,7 +254,7 @@ export class XrayJsonGeneratorService {
                         isExtendedClient,
                         regexDeadline,
                     );
-                    if (injected) configs.push(injected);
+                    if (injected) append(injected);
                     continue;
                 }
 
@@ -249,7 +265,7 @@ export class XrayJsonGeneratorService {
                 const routing = this.buildDomainRulesRouting(host, templateOutbounds);
 
                 const { remnawave: _injector, ...clientTemplate } = baseTemplate;
-                configs.push({
+                append({
                     ...clientTemplate,
                     outbounds: [...outboundConfig.outbounds, ...templateOutbounds],
                     ...(routing ? { routing } : {}),
@@ -258,8 +274,9 @@ export class XrayJsonGeneratorService {
                 });
             }
 
-            return JSON.stringify(configs, null, 0);
+            return `[${configs.join(',')}]`;
         } catch (error) {
+            if (error instanceof ClientPoolError) throw error;
             this.logger.error(`Error generating xray-json config: ${error}`);
             return '';
         }

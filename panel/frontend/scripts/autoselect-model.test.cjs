@@ -23,9 +23,24 @@ test('editing existing pools and balances updates their linked code without dupl
     assert.equal(config.remnawave.injectHosts.length, 1); assert.equal(config.routing.balancers.length, 2);
     assert.deepEqual(config.routing.balancers[1].selector, ['lte']); assert.equal(config.routing.balancers[1].fallbackTag, 'lte');
     assert.equal(config.routing.rules[1].balancerTag, 'lte-balance'); assert.deepEqual(config.observatory.subjectSelector, ['custom', 'lte']);
-    assert.throws(() => m.removePool(code, 0), /remove-balancer-first/);
-    const cleaned = m.parseTemplate(m.removePool(m.removeBalancer(code, 1), 0));
+    const cleaned = m.parseTemplate(m.removePool(code, 0));
     assert.deepEqual(cleaned.routing.rules, existing.routing.rules); assert.deepEqual(cleaned.routing.balancers, existing.routing.balancers);
+});
+
+test('a newly created unsaved pool can be removed in one action without leaving an empty injector', () => {
+    const original = { outbounds: [{tag:'direct',protocol:'freedom'}] };
+    const cleaned = m.parseTemplate(m.removePool(m.addPool(JSON.stringify(original)), 0));
+    assert.deepEqual(cleaned, original);
+});
+
+test('pool removal preserves shared balancers, other selectors, manual probes and fallback validity', () => {
+    const original = { remnawave: {injectHosts:[{tagPrefix:'p-a',mode:'all',selector:{type:'tags',values:['A']}},{tagPrefix:'p-b',mode:'all',selector:{type:'tags',values:['B']}}]}, outbounds:[{tag:'manual',protocol:'socks'}], routing:{balancers:[{tag:'shared',selector:['p'],fallbackTag:'p-a',strategy:{type:'leastPing'}}],rules:[{balancerTag:'shared',type:'field'}]}, observatory:{subjectSelector:['p','manual'],probeUrl:'https://example.test/204'} };
+    const result = m.parseTemplate(m.removePool(JSON.stringify(original),0));
+    assert.deepEqual(result.routing.balancers[0].selector,['p']);
+    assert.equal(result.routing.balancers[0].fallbackTag,'p-b');
+    assert.deepEqual(result.routing.rules,original.routing.rules);
+    assert.deepEqual(result.observatory,original.observatory);
+    assert.deepEqual(result.outbounds,original.outbounds);
 });
 test('code-authored groups preserve other selectors and untouched formatting; invalid code is retained outside GUI', () => {
     const code = '{ "remnawave": { "injectHosts": [{"mode":"group","tagPrefix":"g","selector":{"type":"tags","groups":[["VK"],["YC"]]}}]}, "manual" :  { "unchanged" : true } }';

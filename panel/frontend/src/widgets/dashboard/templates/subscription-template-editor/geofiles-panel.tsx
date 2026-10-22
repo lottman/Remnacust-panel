@@ -1,0 +1,468 @@
+import {
+    Alert,
+    Badge,
+    Button,
+    FileInput,
+    Group,
+    Loader,
+    TagsInput,
+    Paper,
+    Progress,
+    Select,
+    Stack,
+    Text,
+    TextInput,
+    Title
+} from '@mantine/core'
+import { modals } from '@mantine/modals'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { TbDatabaseImport, TbPlus, TbTrash } from 'react-icons/tb'
+
+import { instance } from '@shared/api'
+
+import { type JsonObject } from './autoselect-model'
+import styles from './autoselect-panel.module.css'
+import { editClientTemplate, type ClientFormat } from './client-template-model'
+
+interface Geofile {
+    id: string
+    name: string
+    kind: string
+    size: number
+    sha256: string
+    filename: string
+    url: string
+    categories?: string[]
+}
+interface Reference {
+    id: string
+    categories?: string[]
+    target: string
+}
+const queryKey = ['template-geofiles']
+const kinds = [
+    'geoip',
+    'geosite',
+    'singbox-json',
+    'singbox-srs',
+    'mihomo-domain',
+    'mihomo-ipcidr',
+    'mihomo-classical',
+    'mihomo-text-domain',
+    'mihomo-text-ipcidr'
+] as const
+const compatible = (kind: string, format: ClientFormat) =>
+    ['geoip', 'geosite'].includes(kind) ||
+    (format === 'SINGBOX'
+        ? kind.startsWith('singbox-')
+        : format === 'XRAY_JSON'
+          ? false
+          : kind.startsWith('mihomo-') && (format === 'MIHOMO' || !kind.startsWith('mihomo-text-')))
+
+export function GeofilesPanel({
+    text,
+    config,
+    format,
+    onChange
+}: {
+    text: string
+    config: JsonObject
+    format: ClientFormat
+    onChange: (value: string) => void
+}) {
+    const { t } = useTranslation()
+    const client = useQueryClient()
+    const filesQuery = useQuery({
+        queryKey,
+        queryFn: async ({ signal }) =>
+            (await instance.get<{ response: Geofile[] }>('/api/geofiles', { signal })).data
+                .response,
+        staleTime: 20_000
+    })
+    const files = filesQuery.data ?? []
+    const [name, setName] = useState('')
+    const [kind, setKind] = useState<string | null>('geoip')
+    const [url, setUrl] = useState('')
+    const [file, setFile] = useState<File | null>(null)
+    const [progress, setProgress] = useState<number | null>(null)
+    const [error, setError] = useState(false)
+    const [selected, setSelected] = useState<string | null>(null)
+    const refs: Reference[] = Array.isArray(config.remnacust?.geofiles)
+        ? config.remnacust.geofiles
+        : []
+    const targets = [
+        ...new Set([
+            'DIRECT',
+            'REJECT',
+            ...(format === 'XRAY_JSON'
+                ? [
+                      'proxy',
+                      ...(config.routing?.balancers ?? []).map((item: JsonObject) => item.tag),
+                      ...(config.outbounds ?? []).map((item: JsonObject) => item.tag)
+                  ]
+                : format === 'SINGBOX'
+                  ? (config.outbounds ?? []).map((item: JsonObject) => item.tag)
+                  : (config['proxy-groups'] ?? []).map((item: JsonObject) => item.name))
+        ])
+    ].filter((value): value is string => typeof value === 'string')
+    const patch = (value: Reference[]) => {
+        try {
+            onChange(
+                editClientTemplate(
+                    text,
+                    format,
+                    ['remnacust', 'geofiles'],
+                    value.length ? value : undefined
+                )
+            )
+            setError(false)
+        } catch {
+            setError(true)
+        }
+    }
+    const upload = useMutation({
+        mutationFn: async (source: 'file' | 'url') => {
+            setProgress(null)
+            if (source === 'file') {
+                if (!file || file.size > 64 * 1024 * 1024) throw new Error('file-size')
+                return (
+                    await instance.post<{ response: Geofile }>('/api/geofiles/upload', file, {
+                        params: { name: name.trim() || file.name, kind },
+                        headers: { 'Content-Type': 'application/octet-stream' },
+                        timeout: 45_000,
+                        onUploadProgress: (event) =>
+                            setProgress(
+                                event.total
+                                    ? Math.min(100, (event.loaded / event.total) * 100)
+                                    : null
+                            )
+                    })
+                ).data.response
+            }
+            return (
+                await instance.post<{ response: Geofile }>(
+                    '/api/geofiles/import',
+                    { name: name.trim(), kind, url: url.trim() },
+                    { timeout: 45_000 }
+                )
+            ).data.response
+        },
+        onSuccess: (item) => {
+            client.setQueryData<Geofile[]>(queryKey, (previous) => [
+                item,
+                ...(previous ?? []).filter((existing) => existing.id !== item.id)
+            ])
+            setSelected(item.id)
+            setError(false)
+            setFile(null)
+            setUrl('')
+            setProgress(null)
+        },
+        onError: () => {
+            setError(true)
+            setProgress(null)
+        }
+    })
+    const remove = useMutation({
+        mutationFn: (id: string) => instance.delete(`/api/geofiles/${id}`),
+        onSuccess: () => {
+            void client.invalidateQueries({ queryKey })
+            setError(false)
+        },
+        onError: () => setError(true)
+    })
+    const existingUrls = [
+        ...(config.geodata?.assets ?? []).map((asset: JsonObject) => ({
+            name: asset.file,
+            url: asset.url
+        })),
+        ...Object.entries(config['geox-url'] ?? {}).map(([name, url]) => ({ name, url })),
+        ...Object.entries(config['rule-providers'] ?? {}).map(([name, provider]) => ({
+            name,
+            url: (provider as JsonObject).url
+        })),
+        ...(config.route?.rule_set ?? [])
+            .filter((item: JsonObject) => item.url)
+            .map((item: JsonObject) => ({ name: item.tag, url: item.url }))
+    ].filter((item) => typeof item.url === 'string')
+    return (
+        <Stack gap="md">
+            <Paper withBorder p="md">
+                <Group gap="sm">
+                    <TbDatabaseImport size={23} aria-hidden />
+                    <Title order={3}>{t('geofiles.title')}</Title>
+                </Group>
+                <Text size="sm" c="dimmed" mt="sm">
+                    {t('geofiles.help')}
+                </Text>
+            </Paper>
+            {(error || filesQuery.isError) && (
+                <Alert color="red" withCloseButton onClose={() => setError(false)}>
+                    {t('geofiles.operation-failed')}{' '}
+                    {filesQuery.isError && (
+                        <Button variant="subtle" onClick={() => void filesQuery.refetch()}>
+                            {t('common.action.refresh')}
+                        </Button>
+                    )}
+                </Alert>
+            )}
+            <Paper withBorder p="md">
+                <Stack gap="md">
+                    <Title order={4}>{t('geofiles.library')}</Title>
+                    <Text size="sm" c="dimmed">
+                        {t('geofiles.library-help')}
+                    </Text>
+                    {filesQuery.isPending ? (
+                        <Loader size="sm" />
+                    ) : (
+                        <Select
+                            searchable
+                            clearable
+                            label={t('geofiles.choose')}
+                            value={selected}
+                            onChange={setSelected}
+                            data={files
+                                .filter((item) => compatible(item.kind, format))
+                                .map((item) => ({
+                                    value: item.id,
+                                    label: `${item.name} · ${item.kind} · ${(item.size / 1048576).toFixed(1)} MiB`
+                                }))}
+                            nothingFoundMessage={t('geofiles.no-compatible')}
+                        />
+                    )}
+                    <Button
+                        leftSection={<TbPlus size={16} />}
+                        disabled={!selected || refs.some((ref) => ref.id === selected)}
+                        onClick={() => {
+                            const item = files.find((file) => file.id === selected)
+                            if (item)
+                                patch([
+                                    ...refs,
+                                    {
+                                        id: item.id,
+                                        ...(['geoip', 'geosite'].includes(item.kind)
+                                            ? { categories: [] }
+                                            : {}),
+                                        target: ''
+                                    }
+                                ])
+                        }}
+                    >
+                        {t('geofiles.attach')}
+                    </Button>
+                    {selected && files.find((item) => item.id === selected) && (
+                        <Group justify="space-between">
+                            <Text size="xs" c="dimmed" style={{ overflowWrap: 'anywhere' }}>
+                                SHA-256: {files.find((item) => item.id === selected)?.sha256}
+                            </Text>
+                            <Button
+                                color="red"
+                                variant="subtle"
+                                leftSection={<TbTrash size={16} />}
+                                loading={remove.isPending}
+                                disabled={refs.some((ref) => ref.id === selected)}
+                                onClick={() =>
+                                    modals.openConfirmModal({
+                                        title: t('geofiles.delete-title'),
+                                        children: <Text>{t('geofiles.delete-help')}</Text>,
+                                        labels: {
+                                            confirm: t('common.action.delete'),
+                                            cancel: t('common.action.cancel')
+                                        },
+                                        confirmProps: { color: 'red' },
+                                        onConfirm: () => selected && remove.mutate(selected)
+                                    })
+                                }
+                            >
+                                {t('common.action.delete')}
+                            </Button>
+                        </Group>
+                    )}
+                </Stack>
+            </Paper>
+            {refs.map((reference, index) => {
+                const item = files.find((file) => file.id === reference.id)
+                const categories = reference.categories ?? []
+                return (
+                    <Paper key={index} withBorder p="md">
+                        <Stack gap="md">
+                            <Group justify="space-between">
+                                <Group>
+                                    <Title order={4}>{item?.name ?? reference.id}</Title>
+                                    {item && <Badge variant="light">{item.kind}</Badge>}
+                                </Group>
+                                <Button
+                                    color="red"
+                                    variant="subtle"
+                                    onClick={() => patch(refs.filter((_, i) => i !== index))}
+                                >
+                                    {t('geofiles.detach')}
+                                </Button>
+                            </Group>
+                            {!item && !filesQuery.isPending && (
+                                <Alert color="red">{t('geofiles.missing')}</Alert>
+                            )}
+                            {item && ['geoip', 'geosite'].includes(item.kind) && (
+                                <TagsInput
+                                    label={t('geofiles.categories')}
+                                    description={t('geofiles.categories-help')}
+                                    clearable
+                                    value={categories}
+                                    data={[...new Set([...(item.categories ?? []), ...categories])]}
+                                    error={
+                                        !categories.length
+                                            ? t('geofiles.select-category')
+                                            : undefined
+                                    }
+                                    onChange={(value) =>
+                                        patch(
+                                            refs.map((ref, i) =>
+                                                i === index ? { ...ref, categories: value } : ref
+                                            )
+                                        )
+                                    }
+                                />
+                            )}
+                            <Select
+                                label={t('geofiles.target')}
+                                placeholder={t('geofiles.choose-target')}
+                                error={!reference.target ? t('geofiles.choose-target') : undefined}
+                                value={reference.target || null}
+                                allowDeselect={false}
+                                searchable
+                                data={[...new Set([...targets, reference.target])]
+                                    .filter(Boolean)
+                                    .map((value) => ({
+                                        value,
+                                        label:
+                                            value === 'DIRECT'
+                                                ? t('geofiles.direct')
+                                                : value === 'REJECT'
+                                                  ? t('geofiles.reject')
+                                                  : value
+                                    }))}
+                                onChange={(value) =>
+                                    value &&
+                                    patch(
+                                        refs.map((ref, i) =>
+                                            i === index ? { ...ref, target: value } : ref
+                                        )
+                                    )
+                                }
+                            />
+                            <Text size="xs" c="dimmed">
+                                {item && ['geoip', 'geosite'].includes(item.kind)
+                                    ? t('geofiles.inline-help')
+                                    : t('geofiles.download-help')}
+                            </Text>
+                        </Stack>
+                    </Paper>
+                )
+            })}
+            <Paper withBorder p="md">
+                <Stack gap="md">
+                    <Title order={4}>{t('geofiles.add')}</Title>
+                    <div className={styles.fields}>
+                        <TextInput
+                            label={t('geofiles.name')}
+                            maxLength={128}
+                            value={name}
+                            onChange={(event) => setName(event.currentTarget.value)}
+                        />
+                        <Select
+                            label={t('geofiles.format')}
+                            value={kind}
+                            onChange={setKind}
+                            allowDeselect={false}
+                            data={kinds.map((value) => ({
+                                value,
+                                label: t(`geofiles.kind-${value}`)
+                            }))}
+                        />
+                    </div>
+                    <FileInput
+                        label={t('geofiles.from-computer')}
+                        accept=".dat,.srs,.json,.yaml,.yml,.txt"
+                        value={file}
+                        onChange={(value) => {
+                            setFile(value)
+                            if (value && !name) setName(value.name)
+                            if (value) {
+                                const filename = value.name.toLowerCase()
+                                if (filename.endsWith('.srs')) setKind('singbox-srs')
+                                else if (filename.endsWith('.json')) setKind('singbox-json')
+                                else if (filename.endsWith('.dat') && filename.includes('geosite'))
+                                    setKind('geosite')
+                                else if (filename.endsWith('.dat') && filename.includes('geoip'))
+                                    setKind('geoip')
+                            }
+                        }}
+                        clearable
+                        error={
+                            file && file.size > 64 * 1024 * 1024
+                                ? t('geofiles.size-limit')
+                                : undefined
+                        }
+                    />
+                    <Button
+                        disabled={!file || !kind || file.size > 64 * 1024 * 1024}
+                        loading={upload.isPending}
+                        onClick={() => upload.mutate('file')}
+                    >
+                        {t('geofiles.upload')}
+                    </Button>
+                    {progress !== null && (
+                        <Progress value={progress} aria-label={t('geofiles.upload')} />
+                    )}
+                    <TextInput
+                        label={t('geofiles.from-url')}
+                        dir="ltr"
+                        type="url"
+                        placeholder="https://example.com/geosite.dat"
+                        value={url}
+                        onChange={(event) => setUrl(event.currentTarget.value)}
+                    />
+                    <Button
+                        variant="light"
+                        disabled={!url.trim() || !name.trim() || !kind}
+                        loading={upload.isPending}
+                        onClick={() => upload.mutate('url')}
+                    >
+                        {t('geofiles.import')}
+                    </Button>
+                    <Text size="xs" c="dimmed">
+                        {t('geofiles.security-help')}
+                    </Text>
+                </Stack>
+            </Paper>
+            {existingUrls.length > 0 && (
+                <Paper withBorder p="md">
+                    <Stack gap="sm">
+                        <Title order={4}>{t('geofiles.existing')}</Title>
+                        <Text size="sm" c="dimmed">
+                            {t('geofiles.existing-help')}
+                        </Text>
+                        {existingUrls.map((item, i) => (
+                            <Group key={i} justify="space-between">
+                                <Text size="sm" style={{ overflowWrap: 'anywhere' }}>
+                                    {String(item.name)}
+                                </Text>
+                                <Button
+                                    variant="subtle"
+                                    onClick={() => {
+                                        setUrl(item.url)
+                                        setName(String(item.name))
+                                    }}
+                                >
+                                    {t('geofiles.reuse-url')}
+                                </Button>
+                            </Group>
+                        ))}
+                    </Stack>
+                </Paper>
+            )}
+        </Stack>
+    )
+}

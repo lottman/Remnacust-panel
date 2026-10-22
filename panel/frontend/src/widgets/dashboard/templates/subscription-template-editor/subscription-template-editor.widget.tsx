@@ -1,15 +1,15 @@
 import type { editor } from 'monaco-editor'
 
 import { TemplateEditorActionsFeature } from '@features/dashboard/subscription-templates/template-editor-actions'
-import { Alert, Box, Paper, Tabs } from '@mantine/core'
+import { Alert, Box, Button, Paper, Tabs } from '@mantine/core'
 import { Monaco } from '@monaco-editor/react'
 import 'monaco-yaml/yaml.worker.js'
 import { GetHostsCommand, GetSubscriptionTemplateCommand } from '@remnawave/backend-contract'
 import { decode } from '@stablelib/base64'
 import clsx from 'clsx'
-import { useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useDeferredValue, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { TbArrowsShuffle, TbCode, TbHistory } from 'react-icons/tb'
+import { TbArrowsShuffle, TbCode, TbDatabaseImport, TbHistory } from 'react-icons/tb'
 
 import { usePseudoFullscreen, useViewportFillHeight } from '@shared/hooks'
 import { fullscreenClasses, FullscreenToggleButton } from '@shared/ui'
@@ -17,9 +17,18 @@ import { CodeEditor, editorClasses, EditorFooter } from '@shared/ui/code-editor'
 import { preventBackScroll } from '@shared/utils/misc'
 import { setupSuggestWidget } from '@shared/utils/setup-monaco/setup-suggest-monaco'
 
-import { parseTemplate, poolsOf, validationPath } from './autoselect-model'
+import { parseTemplate, poolsOf, templateChanges, validationPath } from './autoselect-model'
 import { AutoselectPanel } from './autoselect-panel'
+import panelStyles from './autoselect-panel.module.css'
+import { ClientAutoselectPanel } from './client-autoselect-panel'
+import {
+    clientValidationPath,
+    readClientTemplate,
+    type ClientFormat
+} from './client-template-model'
+import { GeofilesPanel } from './geofiles-panel'
 import styles from './SubscriptionTemplateEditor.module.css'
+import { TemplateChanges } from './template-changes'
 import { TemplateHistory } from './template-history'
 import { configureMonaco, getTemplateModelPath } from './utils/setup-template-monaco'
 
@@ -33,6 +42,7 @@ export function SubscriptionTemplateEditorWidget(props: Props) {
     const { editorType, hosts, template } = props
     const { t } = useTranslation()
     const isXray = template.templateType === 'XRAY_JSON'
+    const format = template.templateType as ClientFormat
     const [activeTab, setActiveTab] = useState<string | null>('code')
 
     const { isFullscreen, toggle: toggleFullscreen } = usePseudoFullscreen()
@@ -58,15 +68,29 @@ export function SubscriptionTemplateEditorWidget(props: Props) {
         setValue(next)
     }
     const draft = useMemo(() => {
-        if (editorType !== 'json') return { config: null, error: null }
         try {
-            const config = parseTemplate(value)
-            poolsOf(config)
-            return { config, error: isXray ? validationPath(config) : null }
+            const config = isXray ? parseTemplate(value) : readClientTemplate(value, format)
+            if (isXray) poolsOf(config)
+            return {
+                config,
+                error:
+                    (isXray ? validationPath(config) : null) ?? clientValidationPath(config, format)
+            }
         } catch {
             return { config: null, error: 'JSON' }
         }
-    }, [value, editorType, isXray])
+    }, [value, format, isXray])
+    const deferredValue = useDeferredValue(value)
+    const changes = useMemo(() => {
+        try {
+            return templateChanges(
+                readClientTemplate(baseline, format),
+                readClientTemplate(deferredValue, format)
+            )
+        } catch {
+            return []
+        }
+    }, [baseline, deferredValue, format])
 
     const handleEditorWillMount = (monaco: Monaco) => {
         configureMonaco(monaco, editorType, hosts, template.templateType)
@@ -102,11 +126,12 @@ export function SubscriptionTemplateEditorWidget(props: Props) {
                     <Tabs.Tab value="code" leftSection={<TbCode size={17} />}>
                         {t('autoselect.editing')}
                     </Tabs.Tab>
-                    {isXray && (
-                        <Tabs.Tab value="autoselect" leftSection={<TbArrowsShuffle size={17} />}>
-                            {t('autoselect.title')}
-                        </Tabs.Tab>
-                    )}
+                    <Tabs.Tab value="autoselect" leftSection={<TbArrowsShuffle size={17} />}>
+                        {t('autoselect.title')}
+                    </Tabs.Tab>
+                    <Tabs.Tab value="geofiles" leftSection={<TbDatabaseImport size={17} />}>
+                        {t('geofiles.title')}
+                    </Tabs.Tab>
                     <Tabs.Tab value="history" leftSection={<TbHistory size={17} />}>
                         {t('template-history.title')}
                     </Tabs.Tab>
@@ -152,9 +177,9 @@ export function SubscriptionTemplateEditorWidget(props: Props) {
                         />
                     </Paper>
                 </Tabs.Panel>
-                {isXray && (
-                    <Tabs.Panel value="autoselect">
-                        {draft.config ? (
+                <Tabs.Panel value="autoselect">
+                    {draft.config ? (
+                        isXray ? (
                             <AutoselectPanel
                                 text={value}
                                 baseline={baseline}
@@ -163,12 +188,43 @@ export function SubscriptionTemplateEditorWidget(props: Props) {
                                 onChange={setDraft}
                             />
                         ) : (
-                            <Alert color="red" title={t('autoselect.invalid-json')}>
-                                {t('autoselect.invalid-json-help')}
-                            </Alert>
-                        )}
-                    </Tabs.Panel>
-                )}
+                            <div className={panelStyles.layout}>
+                                <div className={panelStyles.main}>
+                                    <ClientAutoselectPanel
+                                        text={value}
+                                        config={draft.config}
+                                        format={format}
+                                        hosts={hosts}
+                                        onChange={setDraft}
+                                    />
+                                </div>
+                                <TemplateChanges changes={changes} />
+                            </div>
+                        )
+                    ) : (
+                        <Alert color="red" title={t('autoselect.validation')}>
+                            {t('client-template.invalid-help')}
+                        </Alert>
+                    )}
+                </Tabs.Panel>
+                <Tabs.Panel value="geofiles">
+                    {activeTab === 'geofiles' &&
+                        (draft.config ? (
+                            <div className={panelStyles.layout}>
+                                <div className={panelStyles.main}>
+                                    <GeofilesPanel
+                                        text={value}
+                                        config={draft.config}
+                                        format={format}
+                                        onChange={setDraft}
+                                    />
+                                </div>
+                                <TemplateChanges changes={changes} />
+                            </div>
+                        ) : (
+                            <Alert color="red">{t('client-template.invalid-help')}</Alert>
+                        ))}
+                </Tabs.Panel>
                 <Tabs.Panel value="history">
                     {activeTab === 'history' && (
                         <TemplateHistory
@@ -193,13 +249,15 @@ export function SubscriptionTemplateEditorWidget(props: Props) {
             )}
 
             {!isFullscreen && (
-                <EditorFooter ref={footerRef}>
-                    <FullscreenToggleButton
-                        floating={false}
-                        isFullscreen={isFullscreen}
-                        onToggle={toggleFullscreen}
-                        size={36}
-                    />
+                <EditorFooter ref={footerRef} attached={activeTab === 'code'}>
+                    {activeTab === 'code' && (
+                        <FullscreenToggleButton
+                            floating={false}
+                            isFullscreen={isFullscreen}
+                            onToggle={toggleFullscreen}
+                            size={36}
+                        />
+                    )}
 
                     <TemplateEditorActionsFeature
                         editorRef={editorRef}
@@ -207,7 +265,17 @@ export function SubscriptionTemplateEditorWidget(props: Props) {
                         template={template}
                         getValue={() => valueRef.current}
                         canSave={!draft.error && value.trim().length > 0}
+                        showEditorTools={activeTab === 'code'}
                     />
+                    {activeTab !== 'code' && (
+                        <Button
+                            variant="default"
+                            disabled={value === baseline}
+                            onClick={() => setDraft(baseline)}
+                        >
+                            {t('client-template.reset-draft')}
+                        </Button>
+                    )}
                 </EditorFooter>
             )}
         </Box>

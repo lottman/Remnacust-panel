@@ -8,6 +8,12 @@ import { FINGERPRINTS } from '@libs/contracts/constants';
 import { SubscriptionTemplateService } from '@modules/subscription-template/subscription-template.service';
 
 import { ResolvedProxyConfig } from '../resolve-proxy/interfaces';
+import {
+    ClientPoolError,
+    clientName,
+    renderClientGroups,
+    type ClientCandidate,
+} from './client-pool';
 
 interface NetworkConfig {
     'early-data-header-name'?: string;
@@ -46,7 +52,14 @@ interface ClashData {
     rules: string[];
 }
 
-const UNSUPPORTED_TRANSPORTS = new Set(['masque', 'xdrive', 'xera-http', 'hysteria', 'kcp', 'xhttp']);
+const UNSUPPORTED_TRANSPORTS = new Set([
+    'masque',
+    'xdrive',
+    'xera-http',
+    'hysteria',
+    'kcp',
+    'xhttp',
+]);
 const UNSUPPORTED_PROTOCOLS = new Set(['masque', 'hysteria', 'vless']);
 
 @Injectable()
@@ -60,10 +73,27 @@ export class ClashGeneratorService {
         overrideTemplateName?: string,
     ): Promise<string> {
         try {
+            const yamlConfig = (await this.subscriptionTemplateService.getCachedTemplateByType(
+                'CLASH',
+                overrideTemplateName,
+            )) as Record<string, unknown>;
+            const withPools =
+                Array.isArray(yamlConfig['proxy-groups']) &&
+                (yamlConfig['proxy-groups'] as Record<string, unknown>[]).some(
+                    (group) => (group.remnawave as Record<string, unknown> | undefined)?.pool,
+                );
             const data: ClashData = { proxies: [], rules: [] };
             const proxyRemarks: string[] = [];
+            const candidates: ClientCandidate[] = [];
+            const usedNames = new Set<string>([
+                ...((yamlConfig.proxies ?? []) as ProxyNode[]).map((item) => item.name),
+                ...((yamlConfig['proxy-groups'] ?? []) as Record<string, unknown>[]).map((item) =>
+                    String(item.name),
+                ),
+            ]);
 
             for (const host of hosts) {
+                if (host.metadata.isHidden && !withPools) continue;
                 if (host.metadata.excludeFromSubscriptionTypes.includes('CLASH')) continue;
                 if (UNSUPPORTED_TRANSPORTS.has(host.transport)) continue;
                 if (UNSUPPORTED_PROTOCOLS.has(host.protocol)) continue;
@@ -71,12 +101,15 @@ export class ClashGeneratorService {
                 const node = this.buildProxyNode(host);
                 if (!node) continue;
 
+                node.name = clientName(node.name, host.metadata.uuid, usedNames);
                 data.proxies.push(node);
-                proxyRemarks.push(host.finalRemark);
+                if (!host.metadata.isHidden) proxyRemarks.push(node.name);
+                candidates.push({ host, name: node.name });
             }
 
-            return await this.renderConfig(data, proxyRemarks, overrideTemplateName);
+            return await this.renderConfig(data, proxyRemarks, yamlConfig, candidates);
         } catch (error) {
+            if (error instanceof ClientPoolError) throw error;
             this.logger.error('Error generating clash config:', error);
             return '';
         }
@@ -266,13 +299,9 @@ export class ClashGeneratorService {
     private async renderConfig(
         data: ClashData,
         proxyRemarks: string[],
-        overrideTemplateName?: string,
+        yamlConfig: Record<string, unknown>,
+        candidates: ClientCandidate[],
     ): Promise<string> {
-        const yamlConfig = (await this.subscriptionTemplateService.getCachedTemplateByType(
-            'CLASH',
-            overrideTemplateName,
-        )) as Record<string, unknown>;
-
         try {
             const sourceGroups = Array.isArray(yamlConfig['proxy-groups'])
                 ? (yamlConfig['proxy-groups'] as Record<string, unknown>[])
@@ -286,27 +315,14 @@ export class ClashGeneratorService {
                         : []),
                     ...data.proxies,
                 ],
-                'proxy-groups': sourceGroups.map((group) => {
-                    const remnawaveCustom = group.remnawave as Record<string, unknown> | undefined;
-                    const { remnawave: _remnawave, ...restGroup } = group;
-                    const cleanGroup = remnawaveCustom ? restGroup : group;
-
-                    const remarks = this.resolveGroupRemarks(remnawaveCustom, proxyRemarks);
-
-                    return {
-                        ...cleanGroup,
-                        proxies: [
-                            ...(Array.isArray(cleanGroup.proxies)
-                                ? (cleanGroup.proxies as string[])
-                                : []),
-                            ...remarks,
-                        ],
-                    };
-                }),
+                'proxy-groups': await renderClientGroups(sourceGroups, candidates, (custom) =>
+                    this.resolveGroupRemarks(custom, proxyRemarks),
+                ),
             };
 
             return dump(finalConfig);
         } catch (error) {
+            if (error instanceof ClientPoolError) throw error;
             this.logger.error('Error rendering yaml config:', error);
             return '';
         }

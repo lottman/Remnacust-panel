@@ -1,4 +1,3 @@
-import { getUdpHop } from './udp-hop';
 import { dump } from 'js-yaml';
 import _ from 'lodash';
 
@@ -11,6 +10,13 @@ import { SubscriptionTemplateService } from '@modules/subscription-template/subs
 
 import { applyHostMapper } from '../host-mapper';
 import { ResolvedProxyConfig } from '../resolve-proxy/interfaces';
+import {
+    ClientPoolError,
+    clientName,
+    renderClientGroups,
+    type ClientCandidate,
+} from './client-pool';
+import { getUdpHop } from './udp-hop';
 
 export interface MihomoData {
     proxies: ProxyNode[];
@@ -148,11 +154,23 @@ export class MihomoGeneratorService {
                 (yamlConfig.remnawave as RemnawaveRootConfig | undefined)?.includeHiddenHosts ??
                 false;
 
+            const withPools =
+                Array.isArray(yamlConfig['proxy-groups']) &&
+                (yamlConfig['proxy-groups'] as Record<string, unknown>[]).some(
+                    (group) => (group.remnawave as Record<string, unknown> | undefined)?.pool,
+                );
             const data: MihomoData = { proxies: [], rules: [] };
             const proxyRemarks: string[] = [];
+            const candidates: ClientCandidate[] = [];
+            const usedNames = new Set<string>([
+                ...((yamlConfig.proxies ?? []) as ProxyNode[]).map((item) => item.name),
+                ...((yamlConfig['proxy-groups'] ?? []) as Record<string, unknown>[]).map((item) =>
+                    String(item.name),
+                ),
+            ]);
 
             for (const host of hosts) {
-                if (!includeHidden && host.metadata.isHidden) continue;
+                if (!includeHidden && !withPools && host.metadata.isHidden) continue;
                 if (host.metadata.excludeFromSubscriptionTypes.includes(templateType)) continue;
 
                 if (UNSUPPORTED_TRANSPORTS.has(host.transport)) continue;
@@ -162,12 +180,15 @@ export class MihomoGeneratorService {
                 const node = this.buildProxyNode(host, isExtendedClient);
                 if (!node) continue;
 
+                node.name = clientName(node.name, host.metadata.uuid, usedNames);
                 data.proxies.push(node);
-                proxyRemarks.push(host.finalRemark);
+                if (!host.metadata.isHidden || includeHidden) proxyRemarks.push(node.name);
+                candidates.push({ host, name: node.name });
             }
 
-            return await this.renderConfig(data, proxyRemarks, yamlConfig);
+            return await this.renderConfig(data, proxyRemarks, yamlConfig, candidates);
         } catch (error) {
+            if (error instanceof ClientPoolError) throw error;
             this.logger.error('Error generating clash config:', error);
             return '';
         }
@@ -566,6 +587,7 @@ export class MihomoGeneratorService {
         data: MihomoData,
         proxyRemarks: string[],
         yamlConfig: Record<string, unknown>,
+        candidates: ClientCandidate[],
     ): Promise<string> {
         try {
             const { remnawave: _remnawave, ...templateConfig } = yamlConfig;
@@ -582,23 +604,9 @@ export class MihomoGeneratorService {
                         : []),
                     ...data.proxies,
                 ],
-                'proxy-groups': sourceGroups.map((group) => {
-                    const remnawaveCustom = group.remnawave as Record<string, unknown> | undefined;
-                    const { remnawave: _remnawave, ...restGroup } = group;
-                    const cleanGroup = remnawaveCustom ? restGroup : group;
-
-                    const remarks = this.resolveGroupRemarks(remnawaveCustom, proxyRemarks);
-
-                    return {
-                        ...cleanGroup,
-                        proxies: [
-                            ...(Array.isArray(cleanGroup.proxies)
-                                ? (cleanGroup.proxies as string[])
-                                : []),
-                            ...remarks,
-                        ],
-                    };
-                }),
+                'proxy-groups': await renderClientGroups(sourceGroups, candidates, (custom) =>
+                    this.resolveGroupRemarks(custom, proxyRemarks),
+                ),
             };
 
             const providers = this.buildProxyProviders(yamlConfig, data);
@@ -608,6 +616,7 @@ export class MihomoGeneratorService {
 
             return dump(finalConfig);
         } catch (error) {
+            if (error instanceof ClientPoolError) throw error;
             this.logger.error(`Error rendering yaml config: ${error}`);
             return '';
         }

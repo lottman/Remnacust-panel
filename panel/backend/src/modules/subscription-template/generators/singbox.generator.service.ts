@@ -1,4 +1,3 @@
-import { getUdpHop } from './udp-hop';
 import { Injectable, Logger } from '@nestjs/common';
 
 import { isNonEmptyObject, parseIntRangeUtil } from '@common/utils';
@@ -8,6 +7,13 @@ import { SubscriptionTemplateService } from '@modules/subscription-template/subs
 
 import { applyHostMapper } from '../host-mapper';
 import { ResolvedProxyConfig } from '../resolve-proxy/interfaces';
+import {
+    ClientPoolError,
+    clientName,
+    renderClientGroups,
+    type ClientCandidate,
+} from './client-pool';
+import { getUdpHop } from './udp-hop';
 
 /**
  * Target: sing-box 1.13.x
@@ -25,7 +31,7 @@ interface OutboundConfig {
     obfs?: ObfsConfig;
     outbounds?: string[];
     password?: string;
-    remnawave?: { includeProxies?: boolean };
+    remnawave?: { includeProxies?: boolean; pool?: unknown };
     server: string;
     server_port: number;
     server_ports?: string[];
@@ -103,7 +109,6 @@ interface Hysteria2FinalMask {
 
 const UNSUPPORTED_TRANSPORTS = new Set(['masque', 'xdrive', 'xera-http', 'kcp', 'xhttp']);
 const PROXY_PROTOCOL_TYPES = new Set(['hysteria2', 'shadowsocks', 'trojan', 'vless']);
-const SELECTOR_TYPES = new Set([...PROXY_PROTOCOL_TYPES, 'urltest']);
 const MULTIPLEX_PROTOCOLS = new Set(['h2mux', 'smux', 'yamux']);
 const DURATION_REGEX = /^\d+(\.\d+)?(ns|us|µs|ms|s|m|h)$/;
 
@@ -124,19 +129,32 @@ export class SingBoxGeneratorService {
             )) as Record<string, unknown>;
 
             const userOutbounds: OutboundConfig[] = [];
+            const candidates: ClientCandidate[] = [];
+            const usedNames = new Set<string>(
+                ((template.outbounds ?? []) as OutboundConfig[]).map((item) => item.tag),
+            );
+            const withPools =
+                Array.isArray(template.outbounds) &&
+                (template.outbounds as OutboundConfig[]).some(
+                    (item) => (item.remnawave as Record<string, unknown> | undefined)?.pool,
+                );
 
             for (const host of hosts) {
+                if (host.metadata.isHidden && !withPools) continue;
                 if (host.metadata.excludeFromSubscriptionTypes.includes('SINGBOX')) continue;
                 if (UNSUPPORTED_TRANSPORTS.has(host.transport)) continue;
 
                 const outbound = this.buildOutbound(host);
                 if (!outbound) continue;
 
+                outbound.tag = clientName(outbound.tag, host.metadata.uuid, usedNames);
                 userOutbounds.push(outbound);
+                candidates.push({ host, name: outbound.tag });
             }
 
-            return this.renderConfig(template, userOutbounds);
+            return await this.renderConfig(template, userOutbounds, candidates);
         } catch (error) {
+            if (error instanceof ClientPoolError) throw error;
             this.logger.error(`Error generating sing-box config: ${error}`);
             return '';
         }
@@ -572,35 +590,49 @@ export class SingBoxGeneratorService {
         return FINGERPRINTS.find((fp) => fingerprint?.includes(fp)) ?? 'chrome';
     }
 
-    private renderConfig(
+    private async renderConfig(
         template: Record<string, unknown>,
         userOutbounds: OutboundConfig[],
-    ): string {
-        const allOutbounds = [...(template.outbounds as OutboundConfig[]), ...userOutbounds];
-
+        candidates: ClientCandidate[],
+    ): Promise<string> {
+        const allOutbounds = [
+            ...((template.outbounds as OutboundConfig[]) ?? []),
+            ...userOutbounds,
+        ];
+        const visible = new Set(
+            candidates.filter((item) => !item.host.metadata.isHidden).map((item) => item.name),
+        );
         const urltestTags = allOutbounds
-            .filter((o) => PROXY_PROTOCOL_TYPES.has(o.type))
+            .filter(
+                (o) =>
+                    PROXY_PROTOCOL_TYPES.has(o.type) &&
+                    (!candidates.some((item) => item.name === o.tag) || visible.has(o.tag)),
+            )
             .map((o) => o.tag);
-
         const selectorTags = allOutbounds
-            .filter((o) => SELECTOR_TYPES.has(o.type))
+            .filter((o) => o.type === 'urltest' || urltestTags.includes(o.tag))
             .map((o) => o.tag);
-
-        const finalOutbounds = allOutbounds.map((outbound) => {
-            const { remnawave, ...cleanOutbound } = outbound;
-
-            if (remnawave?.includeProxies === false) {
-                return cleanOutbound;
+        const finalOutbounds: Record<string, unknown>[] = [];
+        for (const outbound of allOutbounds) {
+            if (outbound.type === 'selector' || outbound.type === 'urltest') {
+                const groups = await renderClientGroups(
+                    [outbound as unknown as Record<string, unknown>],
+                    candidates,
+                    (custom) =>
+                        custom?.includeProxies === false
+                            ? []
+                            : outbound.type === 'urltest'
+                              ? urltestTags
+                              : selectorTags,
+                    true,
+                );
+                finalOutbounds.push(...groups);
+            } else {
+                const { remnawave: _custom, ...clean } = outbound;
+                finalOutbounds.push(clean);
             }
-            if (cleanOutbound.type === 'urltest') {
-                return { ...cleanOutbound, outbounds: urltestTags };
-            }
-            if (cleanOutbound.type === 'selector') {
-                return { ...cleanOutbound, outbounds: selectorTags };
-            }
-            return cleanOutbound;
-        });
-
-        return JSON.stringify({ ...template, outbounds: finalOutbounds }, null, 0);
+        }
+        const { remnawave: _custom, ...cleanTemplate } = template;
+        return JSON.stringify({ ...cleanTemplate, outbounds: finalOutbounds });
     }
 }

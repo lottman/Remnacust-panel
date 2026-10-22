@@ -5,7 +5,8 @@
 
 @media (max-width: 639px) {
     .tabsList {
-        flex-wrap: nowrap;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
     .tabsList [role='tab'] {
         flex: 1;

@@ -347,8 +347,9 @@ export class SubscriptionService {
                 new GetHostsForUserQuery(
                     user.response.id,
                     false,
-                    srrContext.matchedResponseType === 'XRAY_JSON' ||
-                        srrContext.matchedResponseType === 'MIHOMO',
+                    ['XRAY_JSON', 'MIHOMO', 'STASH', 'CLASH', 'SINGBOX'].includes(
+                        srrContext.matchedResponseType,
+                    ),
                 ),
             );
 

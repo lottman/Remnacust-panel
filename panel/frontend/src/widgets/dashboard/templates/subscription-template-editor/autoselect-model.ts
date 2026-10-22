@@ -345,6 +345,14 @@ export function renamePoolPrefix(text: string, index: number, prefix: string): s
         for (const [selectorIndex, selector] of (config[observer]?.subjectSelector ?? []).entries())
             if (selector === previous)
                 next = editTemplate(next, [observer, 'subjectSelector', selectorIndex], prefix)
+    return remapGeofileTargets(next, previous, prefix)
+}
+
+function remapGeofileTargets(text: string, old: string, name: string): string {
+    let next = text
+    for (const [i, ref] of (parseTemplate(text).remnacust?.geofiles ?? []).entries())
+        if (ref?.target === old)
+            next = editTemplate(next, ['remnacust', 'geofiles', i, 'target'], name)
     return next
 }
 
@@ -355,7 +363,7 @@ export function renameBalancer(text: string, index: number, name: string): strin
     for (const [ruleIndex, rule] of (config.routing.rules ?? []).entries())
         if (rule.balancerTag === old)
             next = editTemplate(next, ['routing', 'rules', ruleIndex, 'balancerTag'], name)
-    return next
+    return remapGeofileTargets(next, old, name)
 }
 
 export function removeBalancer(text: string, index: number): string {
@@ -365,20 +373,76 @@ export function removeBalancer(text: string, index: number): string {
     for (let rule = (config.routing?.rules?.length ?? 0) - 1; rule >= 0; rule--)
         if (config.routing.rules[rule].balancerTag === tag)
             next = editTemplate(next, ['routing', 'rules', rule], undefined)
-    return next
+    return remapGeofileTargets(next, tag, '')
 }
 
 export function removePool(text: string, index: number): string {
     const config = parseTemplate(text)
     const prefix = poolsOf(config)[index].tagPrefix
-    if (
-        prefix &&
-        (config.routing?.balancers ?? []).some((balance: JsonObject) =>
-            balance.selector?.some((selector: string) => prefix.startsWith(selector))
+    let next = editTemplate(text, ['remnawave', 'injectHosts', index], undefined)
+    if (!prefix) return next
+    const remaining = parseTemplate(next)
+    const available: string[] = [
+        ...poolsOf(remaining)
+            .map((pool) => pool.tagPrefix)
+            .filter(Boolean),
+        ...(remaining.outbounds ?? []).map((outbound: JsonObject) => outbound.tag).filter(Boolean)
+    ]
+    // A pool and its generated balancer are one reversible draft operation.
+    // Shared selectors retain their other pools and manually authored outbounds.
+    for (let i = (config.routing?.balancers?.length ?? 0) - 1; i >= 0; i--) {
+        const balance = config.routing.balancers[i]
+        const selected: string[] = balance.selector ?? []
+        const retained = selected.filter(
+            (selector) =>
+                !prefix.startsWith(selector) || available.some((tag) => tag.startsWith(selector))
         )
-    )
-        throw new Error('remove-balancer-first')
-    return editTemplate(text, ['remnawave', 'injectHosts', index], undefined)
+        if (retained.length === selected.length) {
+            if (balance.fallbackTag === prefix)
+                next = editTemplate(
+                    next,
+                    ['routing', 'balancers', i, 'fallbackTag'],
+                    available.find((tag) => retained.some((selector) => tag.startsWith(selector)))
+                )
+            continue
+        }
+        if (!retained.length) next = removeBalancer(next, i)
+        else {
+            next = editTemplate(next, ['routing', 'balancers', i, 'selector'], retained)
+            if (balance.fallbackTag === prefix)
+                next = editTemplate(
+                    next,
+                    ['routing', 'balancers', i, 'fallbackTag'],
+                    available.find((tag) => retained.some((selector) => tag.startsWith(selector)))
+                )
+        }
+    }
+    for (const observer of ['observatory', 'burstObservatory']) {
+        const selected = parseTemplate(next)[observer]?.subjectSelector
+        if (!Array.isArray(selected)) continue
+        const retained = selected.filter(
+            (selector: string) =>
+                !prefix.startsWith(selector) || available.some((tag) => tag.startsWith(selector))
+        )
+        if (retained.length !== selected.length)
+            next = editTemplate(
+                next,
+                retained.length ? [observer, 'subjectSelector'] : [observer],
+                retained.length ? retained : undefined
+            )
+    }
+    if (!poolsOf(parseTemplate(next)).length)
+        next = editTemplate(next, ['remnawave', 'injectHosts'], undefined)
+    const after = parseTemplate(next)
+    if (after.remnawave && Object.keys(after.remnawave).length === 0)
+        next = editTemplate(next, ['remnawave'], undefined)
+    for (const key of ['balancers', 'rules'])
+        if (parseTemplate(next).routing?.[key]?.length === 0)
+            next = editTemplate(next, ['routing', key], undefined)
+    const routing = parseTemplate(next).routing
+    if (routing && Object.keys(routing).length === 0)
+        next = editTemplate(next, ['routing'], undefined)
+    return next
 }
 
 export function validationPath(config: JsonObject): string | null {

@@ -18,6 +18,8 @@ import {
 } from './constants';
 import { ReorderSubscriptionTemplatesBodyDto } from './dtos';
 import { SubscriptionTemplateEntity } from './entities/subscription-template.entity';
+import { validateClientTemplate } from './generators/validate-client-template';
+import { GeofilesService } from './geofiles/geofiles.service';
 import { BaseTemplateResponseModel } from './models/base-template.response.model';
 import { GetSubscriptionTemplatesResponseModel } from './models/get-templates.response.model';
 import { SubscriptionTemplateRepository } from './repositories/subscription-template.repository';
@@ -31,6 +33,7 @@ export class SubscriptionTemplateService {
     constructor(
         private readonly subscriptionTemplateRepository: SubscriptionTemplateRepository,
         private readonly rawCacheService: RawCacheService,
+        private readonly geofiles: GeofilesService,
     ) {}
 
     public async getAllTemplates(): Promise<TResult<GetSubscriptionTemplatesResponseModel>> {
@@ -158,14 +161,69 @@ export class SubscriptionTemplateService {
                 }
             }
 
-            const updatedTemplate = await this.subscriptionTemplateRepository.update({
-                uuid: template.uuid,
-                name: name ?? undefined,
-                templateJson: templateJson ?? undefined,
-                templateYaml: encodedTemplateYaml
+            if (
+                (isYamlTemplate && encodedTemplateYaml !== undefined) ||
+                (template.templateType === 'SINGBOX' && templateJson !== undefined)
+            ) {
+                try {
+                    validateClientTemplate(
+                        isYamlTemplate
+                            ? load(Buffer.from(encodedTemplateYaml!, 'base64').toString('utf8'), {
+                                  schema: YAML_MERGE_SCHEMA,
+                                  maxAliases: 100,
+                                  maxTotalMergeKeys: 10000,
+                              })
+                            : templateJson,
+                        template.templateType,
+                    );
+                } catch {
+                    return fail(ERRORS.INVALID_REMNAWAVE_INJECTOR);
+                }
+            }
+            const update = () =>
+                this.subscriptionTemplateRepository.update({
+                    uuid: template.uuid,
+                    name: name ?? undefined,
+                    templateJson: templateJson ?? undefined,
+                    templateYaml: encodedTemplateYaml
+                        ? Buffer.from(encodedTemplateYaml, 'base64').toString('utf8')
+                        : undefined,
+                });
+            const oldContent =
+                JSON.stringify(template.templateJson) + (template.templateYaml ?? '');
+            const nextContent =
+                JSON.stringify(templateJson ?? template.templateJson) +
+                (encodedTemplateYaml !== undefined
                     ? Buffer.from(encodedTemplateYaml, 'base64').toString('utf8')
-                    : undefined,
-            });
+                    : (template.templateYaml ?? ''));
+            const updatedTemplate =
+                oldContent.includes('/geofiles/') ||
+                nextContent.includes('/geofiles/') ||
+                oldContent.includes('"geofiles"') ||
+                nextContent.includes('"geofiles"')
+                    ? await this.geofiles.withReferenceLock(async () => {
+                          await this.geofiles.assertReferences(nextContent);
+                          const source = isYamlTemplate
+                              ? load(
+                                    encodedTemplateYaml !== undefined
+                                        ? Buffer.from(encodedTemplateYaml, 'base64').toString(
+                                              'utf8',
+                                          )
+                                        : template.templateYaml!,
+                                    {
+                                        schema: YAML_MERGE_SCHEMA,
+                                        maxAliases: 100,
+                                        maxTotalMergeKeys: 10000,
+                                    },
+                                )
+                              : (templateJson ?? template.templateJson);
+                          await this.prepareClientTemplate(
+                              source as Record<string, unknown>,
+                              template.templateType,
+                          );
+                          return update();
+                      })
+                    : await update();
 
             await this.removeCachedTemplate(template.uuid, template.templateType, template.name);
 
@@ -329,7 +387,7 @@ export class SubscriptionTemplateService {
         );
 
         if (cached) {
-            return cached;
+            return this.prepareClientTemplate(cached as Record<string, unknown>, type);
         }
 
         const template =
@@ -376,7 +434,15 @@ export class SubscriptionTemplateService {
             throw new Error('Template content is null');
         }
 
-        return templateContent;
+        return this.prepareClientTemplate(templateContent as Record<string, unknown>, type);
+    }
+
+    public async prepareClientTemplate(
+        config: Record<string, unknown>,
+        type: string,
+    ): Promise<object> {
+        if (!config?.remnacust) return config;
+        return this.geofiles.prepare(config, type);
     }
 
     private async removeCachedTemplate(

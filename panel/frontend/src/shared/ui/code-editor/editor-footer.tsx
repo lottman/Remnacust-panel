@@ -8,13 +8,14 @@ interface Props {
     children: ReactNode
     className?: string
     ref?: Ref<HTMLDivElement>
+    attached?: boolean
 }
 
 export function EditorFooter(props: Props) {
-    const { children, className, ref } = props
+    const { children, className, ref, attached = true } = props
 
     return (
-        <div className={clsx(styles.footer, className)} ref={ref}>
+        <div className={clsx(styles.footer, !attached && styles.standalone, className)} ref={ref}>
             {children}
         </div>
     )

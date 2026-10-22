@@ -2,13 +2,14 @@ import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/c
 
 import { WebpageModule } from '@modules/webpage/webpage.module';
 
+import { GeofilesController } from './geofiles.controller';
 import { ClientTypeMiddleware } from './middlewares/client-type.middleware';
 import { SubscriptionController } from './subscription.controller';
 import { SubscriptionService } from './subscription.service';
 
 @Module({
     imports: [WebpageModule],
-    controllers: [SubscriptionController],
+    controllers: [SubscriptionController, GeofilesController],
     providers: [SubscriptionService],
 })
 export class SubscriptionModule implements NestModule {

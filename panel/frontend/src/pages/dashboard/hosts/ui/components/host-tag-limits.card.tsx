@@ -138,6 +138,12 @@ export function HostTagLimitsCard({ tags }: { tags: string[] }) {
                                                             ? `${setting.limitBytes ? (setting.limitBytes / GIB).toLocaleString(i18n.language) + ' GiB' : '∞'} · ${setting.speedLimitMbps ? setting.speedLimitMbps.toLocaleString(i18n.language) + ' ' + uiText('speed-unit-mbps') : '∞'} · ${setting.trafficMultiplier}×`
                                                             : uiText('unlimited-11dde17')}
                                                     </Text>
+                                                    {!!setting?.deviceSpeedLimitMbps && (
+                                                        <Text size="xs" c="dimmed" truncate>
+                                                            {uiText('device-speed-limit')}:{' '}
+                                                            {setting.deviceSpeedLimitMbps} Mbps
+                                                        </Text>
+                                                    )}
                                                 </Button>
                                             )
                                         })}
@@ -196,6 +202,9 @@ function HostTagEditor({
     const [multiplier, setMultiplier] = useState<number | string>(initial?.trafficMultiplier ?? 1)
     const [totalSpeed, setTotalSpeed] = useState<number | string>(initial?.totalSpeedLimitMbps ?? 0)
     const [speed, setSpeed] = useState<number | string>(initial?.speedLimitMbps ?? 0)
+    const [deviceSpeed, setDeviceSpeed] = useState<number | string>(
+        initial?.deviceSpeedLimitMbps ?? 0
+    )
     const [resetValue, setResetValue] = useState<number | string>(initial?.resetValue ?? 0)
     const [resetUnit, setResetUnit] = useState<'DAYS' | 'MONTHS'>(initial?.resetUnit ?? 'DAYS')
     const [confirmRemove, setConfirmRemove] = useState(false)
@@ -239,6 +248,9 @@ function HostTagEditor({
         Number.isSafeInteger(Number(totalSpeed)) &&
         Number(totalSpeed) >= 0 &&
         Number(totalSpeed) <= 10000 &&
+        Number.isSafeInteger(Number(deviceSpeed)) &&
+        Number(deviceSpeed) >= 0 &&
+        Number(deviceSpeed) <= 10000 &&
         Number.isSafeInteger(Number(speed)) &&
         Number(speed) >= 0 &&
         Number(speed) <= 10000 &&
@@ -256,6 +268,7 @@ function HostTagEditor({
             </Text>
             <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
                 <NumberInput
+                    style={{ gridColumn: '1 / -1' }}
                     allowNegative={false}
                     decimalScale={8}
                     max={Number.MAX_SAFE_INTEGER / GIB}
@@ -291,7 +304,27 @@ function HostTagEditor({
                     value={speed}
                     onChange={setSpeed}
                 />
+                <NumberInput
+                    label={uiText('device-speed-limit')}
+                    description={uiText('tag-device-speed-description')}
+                    min={0}
+                    max={10000}
+                    allowDecimal={false}
+                    allowNegative={false}
+                    leftSection={<TbGauge size={16} />}
+                    rightSection={uiText('speed-unit-mbps')}
+                    rightSectionWidth={76}
+                    hideControls
+                    value={deviceSpeed}
+                    onChange={setDeviceSpeed}
+                    onBlur={() => {
+                        if (deviceSpeed === '') setDeviceSpeed(0)
+                    }}
+                />
             </SimpleGrid>
+            <Text size="sm" c="dimmed">
+                {uiText('dynamic-device-sharing-description')}
+            </Text>
             <Text fw={600} size="sm">
                 {uiText('shared-tag-limits-and-accounting')}
             </Text>
@@ -366,6 +399,7 @@ function HostTagEditor({
                             trafficMultiplier: Number(multiplier),
                             totalSpeedLimitMbps: Number(totalSpeed) || null,
                             speedLimitMbps: Number(speed) || null,
+                            deviceSpeedLimitMbps: Number(deviceSpeed) || null,
                             resetValue: Number(resetValue),
                             resetUnit
                         })

@@ -3984,6 +3984,7 @@
           "markdownDescription": "\nТип этого слоя маскировки.\n\n",
           "type": "string",
           "enum": [
+            "filter",
             "header-custom",
             "fragment",
             "sudoku",
@@ -4073,6 +4074,25 @@
               }
             }
           }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "filter"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "settings": {
+                "$ref": "#/definitions/RemnacustCoreFilter"
+              }
+            }
+          }
         }
       ]
     },
@@ -4130,6 +4150,7 @@
           "markdownDescription": "\nТип этого слоя маскировки.\n\n",
           "type": "string",
           "enum": [
+            "filter",
             "header-custom",
             "mkcp-legacy",
             "noise",
@@ -4316,6 +4337,25 @@
             "properties": {
               "settings": {
                 "$ref": "#/definitions/RemnacustCoreUDPHop"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "filter"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "settings": {
+                "$ref": "#/definitions/RemnacustCoreFilter"
               }
             }
           }
@@ -6729,6 +6769,9 @@
         },
         "warp": {
           "$ref": "#/definitions/RemnacustCoreMasqueWarpConfig"
+        },
+        "xmux": {
+          "$ref": "#/definitions/RemnacustCoreXmuxConfig"
         }
       },
       "type": "object"
@@ -7020,6 +7063,9 @@
             "integer",
             "string"
           ]
+        },
+        "script": {
+          "type": "string"
         }
       },
       "type": "object"
@@ -8990,6 +9036,9 @@
           },
           "type": "array"
         },
+        "quicConfig": {
+          "$ref": "#/definitions/RemnacustCoreQuicParamsConfig"
+        },
         "settings": {
           "additionalProperties": true,
           "properties": {
@@ -8999,8 +9048,14 @@
           },
           "type": "object"
         },
+        "tlsConfig": {
+          "$ref": "#/definitions/RemnacustCoreTLSConfig"
+        },
         "type": {
           "type": "string"
+        },
+        "worker": {
+          "type": "integer"
         }
       },
       "type": "object"
@@ -9062,7 +9117,10 @@
         "sessionTtlSeconds": {
           "type": "integer"
         },
-        "template": {}
+        "template": {},
+        "xmux": {
+          "$ref": "#/definitions/RemnacustCoreXmuxConfig"
+        }
       },
       "type": "object"
     },
@@ -9395,12 +9453,30 @@
         }
       },
       "type": "object"
+    },
+    "RemnacustCoreFilter": {
+      "additionalProperties": true,
+      "properties": {
+        "allowedSourceIPs": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "blockedSourceIPs": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
     }
   },
   "x-remnacust-upstream": {
-    "version": "v26.10.10",
-    "commit": "701af60772cda123492f86e383e1fdba066614a9",
+    "version": "v26.10.21",
+    "commit": "1b1647cd9ddf0abc34b981d4611fc03bcac1ca74",
     "patchCommit": null,
-    "coreVersion": "1.1.9"
+    "coreVersion": "1.1.11"
   }
 }

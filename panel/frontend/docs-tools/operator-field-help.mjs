@@ -1,5 +1,17 @@
 // Each tuple is RU, EN, FA, ZH. Keep field names aligned with the actual forms.
 export const operatorFieldHelp = {
+    deviceSpeedLimitMbps: [
+        'Скорость одного приватного ключа устройства на этом хосте, Mbps. Все соединения, загрузка и отдача делят предел. 0 отключает свой предел; лимит пользователя остаётся. Действует с совместимыми нодой и ядром.',
+        'Speed ceiling for one private device key on this host, in Mbps. All connections and both directions share it. Zero removes this cap; the user ceiling still applies. Requires compatible node and core.',
+        'سقف سرعت یک کلید خصوصی دستگاه در این میزبان با Mbps؛ همه اتصال‌ها و دو جهت مشترک‌اند. صفر فقط این سقف را حذف می‌کند؛ سقف کاربر باقی است. نود و هسته سازگار لازم است.',
+        '此主机上单个设备私钥的速度上限，单位 Mbps，所有连接和两个方向共用。0 关闭此上限，用户上限仍然有效。需要兼容节点及核心。'
+    ],
+    useTagDeviceSpeedLimit: [
+        'Применяет ограничение скорости ключа устройства из тегов к этому хосту, независимо от остальных переключателей.',
+        'Apply tag device-key speed ceilings to this host independently of other inheritance switches.',
+        'سقف سرعت کلید دستگاه برچسب را مستقل از دیگر کلیدها روی این میزبان اعمال می‌کند.',
+        '独立于其他继承开关，将标签的设备密钥上限应用到此主机。'
+    ],
     defaultSquadUuid: [
         'Дополнительный внутренний сквад для всех создаваемых пользователей. Добавляется даже при восстановлении сквадов из файла; пустое значение не добавляет дополнительный сквад.',
         'Additional internal squad for all users created by the import. It is added even when restoring squads from the file; leave empty to add no extra squad.',
@@ -103,13 +115,13 @@ export const operatorFieldHelp = {
         '此主机或标签的个人流量配额；主机表单按 GiB 输入、按字节存储，0 表示不限制此配额。'
     ],
     serverSpeedLimitMbps: [
-        'Скорость одного пользователя на хосте, общая для его устройств и соединений. Единица — Мбит/с; 0 означает отсутствие этого ограничения.',
+        'Скорость одного пользователя на хосте, общая для его устройств и соединений. Единица — Mbps; 0 означает отсутствие этого ограничения.',
         'Per-user host bandwidth shared by that user’s devices and connections. Measured in Mbps; zero removes this restriction.',
         'سرعت هر کاربر هاست، مشترک بین دستگاه‌ها و اتصال‌های او، بر حسب Mbps؛ 0 بدون این محدودیت است.',
         '主机上的单用户带宽，由该用户所有设备和连接共享；单位 Mbps，0 表示不设置此限制。'
     ],
     totalSpeedLimitMbps: [
-        'Общий предел скорости хоста или тега для всех пользователей. Если указано 100 Мбит/с, этот объём делят одновременно работающие подключения.',
+        'Общий предел скорости хоста или тега для всех пользователей. Если указано 100 Mbps, этот объём делят одновременно работающие подключения.',
         'Total host or tag bandwidth shared by all users. A 100 Mbps limit is shared between concurrent connections.',
         'سقف سرعت کلی هاست یا تگ برای همه کاربران؛ 100 Mbps بین اتصال‌های هم‌زمان تقسیم می‌شود.',
         '所有用户共享的主机或标签总带宽；100 Mbps 上限由同时运行的连接共同使用。'

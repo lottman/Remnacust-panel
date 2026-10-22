@@ -3094,7 +3094,12 @@
         "per-user-host-limits": "For each user on this host",
         "shared-host-limits-and-accounting": "Shared host speed and traffic accounting",
         "per-user-tag-limits": "For each user on tagged hosts",
-        "shared-tag-limits-and-accounting": "Shared group speed and traffic accounting"
+        "shared-tag-limits-and-accounting": "Shared group speed and traffic accounting",
+        "device-speed-limit": "Device speed limit",
+        "device-speed-limit-description": "All connections of one device key share this ceiling on this host, including upload and download. 0 disables this ceiling; user, host and tag limits still apply.",
+        "apply-tag-device-speed": "Apply device speed limit from tags",
+        "tag-device-speed-description": "Each tag applies its device ceiling separately on this host. The strictest enabled limit applies.",
+        "dynamic-device-sharing-description": "Active device keys dynamically share the user speed limit: one device can use available capacity; when others send traffic, they get their share. Idle devices reserve no bandwidth. Copies of the same key count as one device."
     },
     "limitsUnlimited": {
         "grant": "Grant unlimited quota",

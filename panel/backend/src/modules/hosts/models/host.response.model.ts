@@ -32,8 +32,10 @@ export class HostResponseModel {
     public totalSpeedLimitMbps: number | null;
     public trafficMultiplier: number | null;
     public serverSpeedLimitMbps: number | null;
+    deviceSpeedLimitMbps: number | null;
     useTagTrafficLimit: boolean;
     useTagSpeedLimit: boolean;
+    useTagDeviceSpeedLimit: boolean;
     useTagTotalSpeedLimit: boolean;
     public domainRules: import('@libs/contracts/models/hosts.schema').THostDomainRules | null;
     public sniRegeneration:
@@ -99,8 +101,10 @@ export class HostResponseModel {
         this.totalSpeedLimitMbps = data.totalSpeedLimitMbps;
         this.trafficMultiplier = data.trafficMultiplier;
         this.serverSpeedLimitMbps = data.serverSpeedLimitMbps;
+        this.deviceSpeedLimitMbps = data.deviceSpeedLimitMbps ?? null;
         this.useTagTrafficLimit = data.useTagTrafficLimit;
         this.useTagSpeedLimit = data.useTagSpeedLimit;
+        this.useTagDeviceSpeedLimit = data.useTagDeviceSpeedLimit !== false;
         this.useTagTotalSpeedLimit = data.useTagTotalSpeedLimit;
         this.domainRules =
             (data.domainRules as import('@libs/contracts/models/hosts.schema').THostDomainRules) ??

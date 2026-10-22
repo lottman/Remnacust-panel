@@ -5,6 +5,7 @@ export function hasVisibleLimit(scope: Scope): boolean {
     return (
         BigInt(scope.limitBytes) > 0n ||
         (scope.speedLimitMbps ?? 0) > 0 ||
+        (scope.deviceSpeedLimitMbps ?? 0) > 0 ||
         (scope.totalSpeedLimitMbps ?? 0) > 0 ||
         scope.paused
     )

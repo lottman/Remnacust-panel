@@ -121,14 +121,14 @@
       }
     },
     {
-      "name": "XDRIVE",
+      "name": "XDRIVE with required VLESS encryption",
       "config": {
         "inbounds": [
           {
             "port": 4443,
             "protocol": "vless",
             "settings": {
-              "decryption": "none",
+              "decryption": "mlkem768x25519plus.native.600s.UKfUEMDdjlEnycTMBP0a08acky8vRRKSrM1MRnaYk3s",
               "clients": []
             },
             "streamSettings": {
@@ -369,6 +369,74 @@
           }
         ]
       }
+    },
+    {
+      "name": "XDNS DoH from official v26.10.21 with TLS and QUIC settings",
+      "config": {
+        "outbounds": [
+          {
+            "tag": "direct",
+            "protocol": "freedom",
+            "streamSettings": {
+              "finalmask": {
+                "udp": [
+                  {
+                    "type": "xdns",
+                    "settings": {
+                      "domains": [
+                        {
+                          "names": [
+                            "mask.example.test"
+                          ]
+                        }
+                      ],
+                      "resolvers": [
+                        {
+                          "addrs": [
+                            "https://resolver.example.test/dns-query"
+                          ],
+                          "worker": 4,
+                          "tlsConfig": {
+                            "serverName": "front.example.test",
+                            "alpn": [
+                              "h3"
+                            ]
+                          },
+                          "quicConfig": {
+                            "congestion": "bbr",
+                            "bbrProfile": "aggressive"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "MASQUE mux supported by official v26.10.21",
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "masque",
+            "settings": {
+              "address": "example.test",
+              "port": 443
+            },
+            "mux": {
+              "enabled": true
+            },
+            "streamSettings": {
+              "network": "masque",
+              "security": "tls"
+            }
+          }
+        ]
+      }
     }
   ],
   "invalid": [
@@ -400,27 +468,6 @@
             },
             "streamSettings": {
               "network": "masque"
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "MASQUE mux",
-      "config": {
-        "outbounds": [
-          {
-            "protocol": "masque",
-            "settings": {
-              "address": "example.test",
-              "port": 443
-            },
-            "mux": {
-              "enabled": true
-            },
-            "streamSettings": {
-              "network": "masque",
-              "security": "tls"
             }
           }
         ]
@@ -618,7 +665,7 @@
       }
     },
     {
-      "name": "XDNS DoH from post-release development commits is unsupported",
+      "name": "XDNS resolver with unsupported scheme",
       "config": {
         "outbounds": [
           {
@@ -640,7 +687,7 @@
                       "resolvers": [
                         {
                           "addrs": [
-                            "https://resolver.example.test/dns-query"
+                            "ftp://resolver.example.test/dns-query"
                           ],
                           "worker": 4,
                           "tlsConfig": {
@@ -660,6 +707,33 @@
                 ]
               }
             }
+          }
+        ]
+      }
+    },
+    {
+      "name": "XDRIVE requires VLESS encryption since official v26.10.21",
+      "config": {
+        "inbounds": [
+          {
+            "port": 4443,
+            "protocol": "vless",
+            "settings": {
+              "decryption": "none",
+              "clients": []
+            },
+            "streamSettings": {
+              "network": "xdrive",
+              "xdriveSettings": {
+                "service": "local",
+                "remoteFolder": "/tmp/remnacust-smoke"
+              }
+            }
+          }
+        ],
+        "outbounds": [
+          {
+            "protocol": "freedom"
           }
         ]
       }

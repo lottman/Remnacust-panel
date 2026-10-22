@@ -11,6 +11,7 @@ export type PolicyHost = {
     userLimit: string | null;
     trafficMultiplier: number | null;
     userSpeed: number | null;
+    deviceSpeed?: number | null;
     totalSpeed: number | null;
     anchor: Date;
     resetValue: number;
@@ -18,6 +19,7 @@ export type PolicyHost = {
     domains: { mode: 'OFF' | 'ALLOW_ONLY' | 'DENY'; domains: string[] } | null;
     useTagTrafficLimit?: boolean;
     useTagSpeedLimit?: boolean;
+    useTagDeviceSpeedLimit?: boolean;
     useTagTotalSpeedLimit?: boolean;
     issued: boolean;
     managed?: boolean;
@@ -40,6 +42,7 @@ export type PolicyGroup = {
     userLimit: string | null;
     trafficMultiplier: number;
     userSpeed: number | null;
+    deviceSpeed?: number | null;
     totalSpeed: number | null;
     anchor: Date;
     resetValue: number;

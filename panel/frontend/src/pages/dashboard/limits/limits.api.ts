@@ -11,6 +11,7 @@ export type Scope = {
     usedBytes?: string
     viewPosition?: number
     speedLimitMbps: number | null
+    deviceSpeedLimitMbps?: number | null
     totalSpeedLimitMbps: number | null
     trafficMultiplier: number | null
     hostCount: number

@@ -69,6 +69,7 @@ export function documentLimits(document: OpenAPIObject): void {
         usedBytes: z.string(),
         viewPosition: z.number(),
         speedLimitMbps: z.number().nullable(),
+        deviceSpeedLimitMbps: z.number().nullable(),
         totalSpeedLimitMbps: z.number().nullable(),
         trafficMultiplier: z.number().nullable(),
         hostCount: z.number(),

@@ -275,6 +275,13 @@ export function LimitsPage() {
                                                 : '∞'}
                                         </Text>
                                         <Text size="sm">
+                                            {uiText('device-speed-limit')}
+                                            {': '}
+                                            {s.deviceSpeedLimitMbps
+                                                ? `${s.deviceSpeedLimitMbps} Mbps`
+                                                : '∞'}
+                                        </Text>
+                                        <Text size="sm">
                                             {uiText('shared-speed-2012ee5')}
                                             {s.totalSpeedLimitMbps
                                                 ? `${s.totalSpeedLimitMbps} ${uiText('speed-unit-mbps')}`

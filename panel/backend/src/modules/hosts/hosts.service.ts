@@ -714,7 +714,7 @@ export class HostsService {
 
     public async validatePolicyState(
         hosts: HostsEntity[],
-        limits: { tag: string }[],
+        limits: { tag: string; deviceSpeedLimitMbps?: number | null }[],
         checkCapabilities = true,
         affectedHostIds?: ReadonlySet<string>,
     ): Promise<void> {
@@ -759,6 +759,7 @@ export class HostsService {
                     const response = await this.nodeAxios.hostPolicy<{
                         supported: boolean;
                         destinationRulesSupported?: boolean;
+                        deviceSpeedLimitsSupported?: boolean;
                         version?: string;
                     }>(node);
                     if (
@@ -770,6 +771,26 @@ export class HostsService {
                             `Node ${node.name}: не подтверждена поддержка изоляции хостов (host-policy-v2). Нужны совместимые нода и Xray; официальный Latest сам по себе не добавляет эту функцию. Проверьте также доступность ноды.`,
                         );
                     }
+                    const requiresDevices = hosts.some(
+                        (host) =>
+                            ((host.deviceSpeedLimitMbps ?? 0) > 0 ||
+                                (host.useTagDeviceSpeedLimit !== false &&
+                                    limits.some(
+                                        (tag) =>
+                                            host.tags.includes(tag.tag) &&
+                                            (tag.deviceSpeedLimitMbps ?? 0) > 0,
+                                    ))) &&
+                            bindings.some(
+                                (binding) =>
+                                    binding.nodeUuid === node.uuid &&
+                                    binding.configProfileInboundUuid ===
+                                        host.configProfileInboundUuid,
+                            ),
+                    );
+                    if (requiresDevices && !response.response.deviceSpeedLimitsSupported)
+                        throw new ServiceUnavailableException(
+                            `Node ${node.name}: update node and Xray for authenticated device speed limits`,
+                        );
                     const requiresDestinations = hosts.some((host) => {
                         const rules = host.domainRules as {
                             mode: string;
@@ -808,8 +829,10 @@ export class HostsService {
                 nodes: h.nodes.map((n) => n.nodeUuid).sort(),
                 quota: h.userTrafficLimitBytes?.toString() ?? null,
                 speed: h.serverSpeedLimitMbps,
+                deviceSpeed: h.deviceSpeedLimitMbps,
                 useTagTrafficLimit: h.useTagTrafficLimit,
                 useTagSpeedLimit: h.useTagSpeedLimit,
+                useTagDeviceSpeedLimit: h.useTagDeviceSpeedLimit,
                 useTagTotalSpeedLimit: h.useTagTotalSpeedLimit,
                 trafficMultiplier: h.trafficMultiplier,
                 totalSpeed: h.totalSpeedLimitMbps,

@@ -24,6 +24,7 @@ function fixture(usage = [], paused = []) {
         },
     );
     const calls = [];
+    const capabilities = {};
     const missing = new Set();
     const db = { kysely: { transaction: () => ({ execute: (fn) => fn({}) }) } };
     const service = new HostPolicyService(
@@ -31,7 +32,7 @@ function fixture(usage = [], paused = []) {
         {
             hostPolicy: async (node, policy) => {
                 if (policy) calls.push({ node, policy });
-                return { isOk: true, response: { version: 'xera-host-policy-v2', staged: true } };
+                return { isOk: true, response: { version: 'xera-host-policy-v2', staged: true, ...capabilities } };
             },
         },
         require('./host-policy-cache.cjs')((key)=>!missing.has(key.split(':').at(-1))),
@@ -74,7 +75,7 @@ function fixture(usage = [], paused = []) {
         ],
     };
     service.scopes = async () => state;
-    return { service, calls, missing, state, normalizePolicyDomain };
+    return { service, calls, missing, state, normalizePolicyDomain, capabilities };
 }
 test('per-user and aggregate budgets stay inside their host; unknown samples fail closed', async () => {
     const { service, calls, missing, state } = fixture([{ userId: '42', used: '150' }]);
@@ -211,4 +212,32 @@ test('an old node receives a closed host policy instead of silently ignoring IP 
     assert.deepEqual(host.allowedIdentities, {});
     assert.equal(host.domainMode, 'ALLOW_ONLY');
     assert.deepEqual(host.domains, []);
+});
+
+
+test('device limits require native capability and are omitted for unchanged legacy policies', async () => {
+    const old = fixture();
+    await old.service.syncNode({uuid:'a'});
+    assert(!Object.hasOwn(old.calls.at(-1).policy.groups['host:a'],'deviceBytesPerSecond'));
+    old.state.groups[0].deviceSpeed=4;
+    const before=old.calls.length;
+    await assert.rejects(old.service.syncNode({uuid:'a'}), /device speed limits/);
+    assert.equal(old.calls.length,before,'unsupported core must never receive a policy that drops the cap');
+    const next=fixture();next.capabilities.deviceSpeedLimitsSupported=true;
+    next.state.groups[0].deviceSpeed=4;
+    await next.service.syncNode({uuid:'a'});
+    assert.equal(next.calls.at(-1).policy.groups['host:a'].deviceBytesPerSecond,250000);
+});
+
+test('tag device speed is independent per host and its inheritance is independent of user speed', () => {
+    const {state}=fixture();
+    const hosts=state.hosts.map((host,i)=>({...host,tags:['same'],useTagDeviceSpeedLimit:i===0,useTagSpeedLimit:i===1}));
+    const groups=scopes.buildPolicyGroups(hosts,[{tag:'same',userSpeed:8,deviceSpeed:2,totalSpeed:0,userLimit:null}]);
+    const device=groups.filter(group=>group.key.startsWith('tag-device:'));
+    assert.equal(device.length,1);assert.deepEqual(device[0].hostUuids,[hosts[0].uuid]);
+    assert.equal(device[0].deviceSpeed,2);assert.equal(device[0].userSpeed,0);
+    const user=groups.filter(group=>group.key.startsWith('tag-host:'));
+    assert.equal(user.length,1);assert.deepEqual(user[0].hostUuids,[hosts[1].uuid]);
+    assert.equal(user[0].deviceSpeed,0);
+    for(const group of groups.filter(group=>group.key.startsWith('tag:')))assert.equal(group.deviceSpeed,0);
 });

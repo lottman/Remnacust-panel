@@ -8,9 +8,11 @@ export type HostPolicy = {
     onlyWhenInactive: boolean;
     userTrafficLimitBytes: bigint | null;
     serverSpeedLimitMbps: number | null;
+    deviceSpeedLimitMbps?: number | null;
     totalSpeedLimitMbps?: number | null;
     useTagTrafficLimit?: boolean;
     useTagSpeedLimit?: boolean;
+    useTagDeviceSpeedLimit?: boolean;
     useTagTotalSpeedLimit?: boolean;
     domainRules?: unknown;
     managed?: boolean;
@@ -23,10 +25,12 @@ export function requiresHostPolicy(h: HostPolicy, limits: { tag: string }[]): bo
         h.onlyWhenInactive ||
         (h.userTrafficLimitBytes ?? 0n) > 0n ||
         (h.serverSpeedLimitMbps ?? 0) > 0 ||
+        (h.deviceSpeedLimitMbps ?? 0) > 0 ||
         (h.totalSpeedLimitMbps ?? 0) > 0 ||
         (!!domains?.mode && domains.mode !== 'OFF') ||
         ((h.useTagTrafficLimit !== false ||
             h.useTagSpeedLimit !== false ||
+            h.useTagDeviceSpeedLimit !== false ||
             h.useTagTotalSpeedLimit !== false) &&
             limits.some((t) => h.tags.includes(t.tag)))
     );

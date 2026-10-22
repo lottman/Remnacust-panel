@@ -36,8 +36,10 @@ export class HostsEntity implements Hosts {
     totalSpeedLimitMbps: number | null;
     trafficMultiplier: number | null;
     serverSpeedLimitMbps: number | null;
+    deviceSpeedLimitMbps: number | null;
     useTagTrafficLimit: boolean;
     useTagSpeedLimit: boolean;
+    useTagDeviceSpeedLimit: boolean;
     useTagTotalSpeedLimit: boolean;
     domainRules: null | object;
     sniRegeneration: null | object;

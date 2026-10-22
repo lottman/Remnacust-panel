@@ -16,9 +16,9 @@ test('opening an existing host restores every policy field and keeps its port ov
         ts.forEachChild(node, visit);
     }
     visit(source);
-    const host = { uuid: 'host', port: 8443, inbound: { configProfileUuid: 'profile', configProfileInboundUuid: 'original' }, userTrafficLimitBytes: 123456789, serverSpeedLimitMbps: 2, totalSpeedLimitMbps: 20, trafficMultiplier: 2.5, useTagTrafficLimit: false, useTagSpeedLimit: false, useTagTotalSpeedLimit: true, speedLimitMbps: 7, domainRules: { mode: 'ALLOW_ONLY', domains: ['t.me'] }, sniRegeneration: { enabled: true, intervalHours: 24 } };
+    const host = { uuid: 'host', port: 8443, inbound: { configProfileUuid: 'profile', configProfileInboundUuid: 'original' }, userTrafficLimitBytes: 123456789, serverSpeedLimitMbps: 2, deviceSpeedLimitMbps: 3, useTagDeviceSpeedLimit: false, totalSpeedLimitMbps: 20, trafficMultiplier: 2.5, useTagTrafficLimit: false, useTagSpeedLimit: false, useTagTotalSpeedLimit: true, speedLimitMbps: 7, domainRules: { mode: 'ALLOW_ONLY', domains: ['t.me'] }, sniRegeneration: { enabled: true, intervalHours: 24 } };
     const restored = new Function('host', 'stringifyJsonField', `return (${initializer})`)(host, value => value);
-    for (const field of ['port', 'userTrafficLimitBytes', 'serverSpeedLimitMbps', 'totalSpeedLimitMbps', 'trafficMultiplier', 'useTagTrafficLimit', 'useTagSpeedLimit', 'useTagTotalSpeedLimit', 'speedLimitMbps', 'domainRules', 'sniRegeneration']) assert.deepEqual(restored[field], host[field], field);
+    for (const field of ['port', 'userTrafficLimitBytes', 'serverSpeedLimitMbps', 'deviceSpeedLimitMbps', 'useTagDeviceSpeedLimit', 'totalSpeedLimitMbps', 'trafficMultiplier', 'useTagTrafficLimit', 'useTagSpeedLimit', 'useTagTotalSpeedLimit', 'speedLimitMbps', 'domainRules', 'sniRegeneration']) assert.deepEqual(restored[field], host[field], field);
     assert.deepEqual(restored.inbound, host.inbound);
     for (const inbound of [{ configProfileUuid: 'profile', configProfileInboundUuid: null }, { configProfileUuid: null, configProfileInboundUuid: null }]) {
         const detached = new Function('host', 'stringifyJsonField', `return (${initializer})`)({ ...host, inbound }, value => value);

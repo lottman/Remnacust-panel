@@ -10,6 +10,7 @@ export type HostTagLimit = {
     tag: string;
     limitBytes: bigint;
     speedLimitMbps: number | null;
+    deviceSpeedLimitMbps?: number | null;
     totalSpeedLimitMbps: number | null;
     trafficMultiplier: number;
     resetValue: number;
@@ -31,7 +32,7 @@ export class HostTagLimitsRepository {
 
     async list(): Promise<HostTagLimit[]> {
         const result = await this.prisma.tx.$queryRaw<HostTagLimit[]>`
-            SELECT tag, total_speed_limit_mbps AS "totalSpeedLimitMbps",traffic_multiplier AS "trafficMultiplier", user_traffic_limit_bytes AS "limitBytes", speed_limit_mbps AS "speedLimitMbps",
+            SELECT tag, total_speed_limit_mbps AS "totalSpeedLimitMbps",traffic_multiplier AS "trafficMultiplier", user_traffic_limit_bytes AS "limitBytes", speed_limit_mbps AS "speedLimitMbps",device_speed_limit_mbps AS "deviceSpeedLimitMbps",
                 reset_value AS "resetValue", reset_unit AS "resetUnit",
                 reset_anchor_at AS "resetAnchorAt"
             FROM xera_host_tag_limits ORDER BY tag
@@ -47,14 +48,16 @@ export class HostTagLimitsRepository {
         speedLimitMbps: number | null,
         totalSpeedLimitMbps: number | null,
         trafficMultiplier: number,
+        deviceSpeedLimitMbps: number | null = null,
     ): Promise<void> {
         await this.prisma.tx.$executeRaw`
-            INSERT INTO xera_host_tag_limits (tag, user_traffic_limit_bytes, speed_limit_mbps, reset_value, reset_unit, total_speed_limit_mbps,traffic_multiplier,reset_anchor_at)
-            VALUES (${tag}, ${limitBytes}, ${speedLimitMbps}, ${resetValue}, ${resetUnit},${totalSpeedLimitMbps},${trafficMultiplier},
+            INSERT INTO xera_host_tag_limits (tag, user_traffic_limit_bytes, speed_limit_mbps, device_speed_limit_mbps, reset_value, reset_unit, total_speed_limit_mbps,traffic_multiplier,reset_anchor_at)
+            VALUES (${tag}, ${limitBytes}, ${speedLimitMbps}, ${deviceSpeedLimitMbps}, ${resetValue}, ${resetUnit},${totalSpeedLimitMbps},${trafficMultiplier},
                 date_trunc('day', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC')
             ON CONFLICT (tag) DO UPDATE SET
                 user_traffic_limit_bytes = excluded.user_traffic_limit_bytes,
                 speed_limit_mbps = excluded.speed_limit_mbps,
+                device_speed_limit_mbps = excluded.device_speed_limit_mbps,
                 total_speed_limit_mbps=excluded.total_speed_limit_mbps,
                 traffic_multiplier=excluded.traffic_multiplier,
                 reset_value = excluded.reset_value,
@@ -75,7 +78,7 @@ export class HostTagLimitsRepository {
 
     async usageForUser(userId: bigint): Promise<HostTagUsage[]> {
         const result = await sql<HostTagUsage>`
-            SELECT l.total_speed_limit_mbps AS "totalSpeedLimitMbps",l.traffic_multiplier AS "trafficMultiplier",l.tag,q.effective_limit AS "limitBytes",l.speed_limit_mbps AS "speedLimitMbps",
+            SELECT l.total_speed_limit_mbps AS "totalSpeedLimitMbps",l.traffic_multiplier AS "trafficMultiplier",l.tag,q.effective_limit AS "limitBytes",l.speed_limit_mbps AS "speedLimitMbps",l.device_speed_limit_mbps AS "deviceSpeedLimitMbps",
               l.reset_value AS "resetValue",l.reset_unit AS "resetUnit",l.reset_anchor_at AS "resetAnchorAt",
               q.used_bytes AS "usedBytes",q.paused,false AS ambiguous
             FROM xera_host_tag_limits l CROSS JOIN LATERAL xera_limit_state('TAG',l.tag,${userId}) q

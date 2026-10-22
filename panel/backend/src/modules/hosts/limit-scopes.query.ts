@@ -8,6 +8,7 @@ export type LimitScope = {
     usedBytes: string;
     viewPosition: number;
     speedLimitMbps: number | null;
+    deviceSpeedLimitMbps: number | null;
     totalSpeedLimitMbps: number | null;
     trafficMultiplier: number | null;
     hostCount: number;
@@ -38,13 +39,13 @@ export function limitScopesQuery(withUsage = true) {
     return sql<LimitScope>`WITH entries AS (
       SELECT 'HOST'::text AS kind,h.uuid::text AS key,h.remark AS name,
         COALESCE(h.user_traffic_limit_bytes,0)::text AS "limitBytes",h.view_position AS "viewPosition",
-        h.server_speed_limit_mbps AS "speedLimitMbps",h.total_speed_limit_mbps AS "totalSpeedLimitMbps",
+        h.server_speed_limit_mbps AS "speedLimitMbps",h.device_speed_limit_mbps AS "deviceSpeedLimitMbps",h.total_speed_limit_mbps AS "totalSpeedLimitMbps",
         h.traffic_multiplier AS "trafficMultiplier",1 AS "hostCount"
       FROM hosts h
       UNION ALL
       SELECT 'TAG',t.tag,t.tag,COALESCE(l.user_traffic_limit_bytes,0)::text,
         COALESCE((SELECT min(h.view_position) FROM hosts h WHERE t.tag=ANY(h.tags)),2147483647),
-        l.speed_limit_mbps,l.total_speed_limit_mbps,l.traffic_multiplier,
+        l.speed_limit_mbps,l.device_speed_limit_mbps,l.total_speed_limit_mbps,l.traffic_multiplier,
         (SELECT count(*)::integer FROM hosts h WHERE t.tag=ANY(h.tags) AND h.use_tag_traffic_limit)
       FROM (SELECT DISTINCT unnest(tags) AS tag FROM hosts UNION SELECT tag FROM xera_host_tag_limits) t
       LEFT JOIN xera_host_tag_limits l ON l.tag=t.tag

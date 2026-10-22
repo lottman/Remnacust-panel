@@ -13,6 +13,7 @@ test('limits page hides unbounded scopes but keeps quota, speed and blocked scop
     assert.equal(hasVisibleLimit(scope({ usedBytes: '999999999', trafficMultiplier: 2 })), false);
     assert.equal(hasVisibleLimit(scope({ limitBytes: '9007199254740993' })), true);
     assert.equal(hasVisibleLimit(scope({ speedLimitMbps: 10 })), true);
+    assert.equal(hasVisibleLimit(scope({ deviceSpeedLimitMbps: 10 })), true);
     assert.equal(hasVisibleLimit(scope({ totalSpeedLimitMbps: 10 })), true);
     assert.equal(hasVisibleLimit(scope({ paused: true })), true);
 });

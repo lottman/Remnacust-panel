@@ -113,8 +113,10 @@ export type Hosts = {
     totalSpeedLimitMbps: number | null;
     trafficMultiplier: number | null;
     serverSpeedLimitMbps: number | null;
+    deviceSpeedLimitMbps: number | null;
     useTagTrafficLimit: Generated<boolean>;
     useTagSpeedLimit: Generated<boolean>;
+    useTagDeviceSpeedLimit: Generated<boolean>;
     useTagTotalSpeedLimit: Generated<boolean>;
     domainRules: object | null;
     sniRegeneration: object | null;
@@ -313,6 +315,18 @@ export type RemnawaveSettings = {
      */
     backupSettings: object | null;
 };
+export type SessionRecording = {
+    id: string;
+    startedAt: Generated<Timestamp>;
+    endsAt: Timestamp;
+    intervalSeconds: number;
+    status: Generated<string>;
+    snapshot: object;
+    nextPollAt: Generated<Timestamp>;
+    leaseUntil: Timestamp | null;
+    token: string | null;
+    expiresAt: Timestamp;
+};
 export type SharedLists = {
     name: string;
     config: object;
@@ -473,4 +487,5 @@ export type DB = {
     xeraNodeHealthLogs: NodeHealthLogs;
     xeraNodeOptimization: XeraNodeOptimization;
     xeraQuotaUsage: XeraQuotaUsage;
+    xeraSessionRecordings: SessionRecording;
 };

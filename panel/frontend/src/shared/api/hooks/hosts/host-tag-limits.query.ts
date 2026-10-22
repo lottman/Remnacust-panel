@@ -8,6 +8,7 @@ export type HostTagLimit = {
     trafficMultiplier: number
     totalSpeedLimitMbps: number | null
     speedLimitMbps: number | null
+    deviceSpeedLimitMbps?: number | null
     resetValue: number
     resetUnit: 'DAYS' | 'MONTHS'
     resetAnchorAt?: string

@@ -478,6 +478,10 @@ If the panel loses contact with a node, an authorized host remains in the subscr
 
 Select hosts, choose the fields to update and check the recipients. Selecting the tags field and leaving it empty clears tags; leaving the field unselected preserves existing tags. Record order determines subscription order except where shuffling is enabled. After changing an inbound, visibility or squad, refresh the subscription in a client and check that the intended connection is present.
 
+### Dynamic device bandwidth
+
+The user speed in Mbps is a shared ceiling for all their connections on this host. Active device keys share it by bytes served: one device uses available capacity; when another sends traffic, capacity is redistributed. Idle devices reserve nothing. The device speed limit caps all connections of its private key, combining upload and download. With a 20 Mbps user ceiling and a 15 Mbps device ceiling, one active device gets up to 15 Mbps; two continuously demanding devices can share 20 Mbps, roughly 10 Mbps each. These are ceilings, not guaranteed network rates. A configured host or tag shared ceiling is divided first among users, then their devices; opening more flows does not increase the share. Without a configured shared ceiling the core does not know the physical channel capacity.
+
 ### One user’s speed
 
 Under “For each user on this host”, set the quota in GiB and speed in Mbps. These are different limits: quota is a data allowance, speed is the transfer rate. All devices and connections of one user on this host share the speed, including upload and download. With 2 Mbps, two devices together get up to 2 Mbps; another user has a separate allowance. Another host uses its own setting. 0 disables only the host’s own cap; enabled tag restrictions remain. Shared speed for all host users and the accounting multiplier appear below.
@@ -486,6 +490,7 @@ Under “For each user on this host”, set the quota in GiB and speed in Mbps. 
 
 - **User traffic quota**: Combined user usage across all tagged hosts, including multipliers.
 - **User speed limit**: The same cap for each user separately on each host. Their devices share the host cap; bandwidth is not pooled across hosts. 0 disables the tag’s per-user speed cap.
+- **Device speed limit**: Each tag applies its device ceiling separately on this host. The strictest enabled limit applies.
 - **Tag traffic multiplier**: For hosts using the tag multiplier. Recalculates the current period; subscription usage is unchanged.
 - **Shared group speed**: One shared cap across all users and all tagged hosts.
 - **Remark**: Connection name delivered in the subscription. Supported variables resolve when the response is generated.
@@ -495,6 +500,8 @@ Under “For each user on this host”, set the quota in GiB and speed in Mbps. 
 - **Apply tag traffic quota**: Includes this host’s usage in the user’s shared tag quota. The host’s own quota still applies when disabled.
 - **User speed limit**: Per-user host bandwidth shared by that user’s devices and connections. Measured in Mbps; zero removes this restriction.
 - **Apply tag per-user speed**: Applies the tag’s per-user bandwidth limit to this host. Each participating host applies the limit separately.
+- **Device speed limit**: Speed ceiling for one private device key on this host, in Mbps. All connections and both directions share it. Zero removes this cap; the user ceiling still applies. Requires compatible node and core.
+- **Apply device speed limit from tags**: Apply tag device-key speed ceilings to this host independently of other inheritance switches.
 - **Whole-host speed limit**: Total host or tag bandwidth shared by all users. A 100 Mbps limit is shared between concurrent connections.
 - **Apply tag shared speed**: Includes the host in the tag’s total bandwidth limit, shared by participating connections.
 - **Host traffic multiplier**: Usage multiplier: with a value of 2, transferring 1 GiB counts as 2 GiB. An empty host value inherits from tags.
@@ -531,6 +538,8 @@ Rotation uses the configured SNI pool and hourly interval; shortIds rotate when 
 - **Apply tag traffic quota**: Includes this host’s usage in the user’s shared tag quota. The host’s own quota still applies when disabled.
 - **User speed limit**: Per-user host bandwidth shared by that user’s devices and connections. Measured in Mbps; zero removes this restriction.
 - **Apply tag per-user speed**: Applies the tag’s per-user bandwidth limit to this host. Each participating host applies the limit separately.
+- **Device speed limit**: Speed ceiling for one private device key on this host, in Mbps. All connections and both directions share it. Zero removes this cap; the user ceiling still applies. Requires compatible node and core.
+- **Apply device speed limit from tags**: Apply tag device-key speed ceilings to this host independently of other inheritance switches.
 - **Whole-host speed limit**: Total host or tag bandwidth shared by all users. A 100 Mbps limit is shared between concurrent connections.
 - **Apply tag shared speed**: Includes the host in the tag’s total bandwidth limit, shared by participating connections.
 - **Host traffic multiplier**: Usage multiplier: with a value of 2, transferring 1 GiB counts as 2 GiB. An empty host value inherits from tags.
@@ -557,7 +566,11 @@ Tag quota combines a user’s usage across participating hosts. A tag per-user b
 
 ### Persistent settings
 
-Tag settings affect associated hosts with the corresponding quota, user-speed or shared-speed switch enabled. These three switches are independent. Check participating hosts and restrictions before saving. Open “Limits” for recipients and personal exceptions.
+Tag settings affect associated hosts with the corresponding quota, user-speed or shared-speed switch enabled. The device-speed inheritance switch is also independent. Check participating hosts and restrictions before saving. Open “Limits” for recipients and personal exceptions.
+
+### Device speed from tags
+
+A tag device ceiling applies independently on each host with “Apply device speed limit from tags” enabled. It is independent of tag quota, user speed and shared speed. The strictest applicable ceiling wins; 0 disables only the corresponding ceiling. Update node and core to support remnacust-device-speed-v1. An incompatible node cannot confirm the new limit. Across multiple bound nodes, the configured ceiling is conservatively divided so their sum cannot exceed it; spare capacity is not transferred between nodes. HWID enrolls a distinct private key. Copies of one key count as one device; applications without distinct keys cannot identify physical devices separately. Local rules remain active while the panel is unavailable.
 
 ### Speed by tag
 
@@ -567,12 +580,15 @@ A tag’s user speed sets the same cap separately on each participating host. Sh
 
 - **User traffic quota**: Combined user usage across all tagged hosts, including multipliers.
 - **User speed limit**: The same cap for each user separately on each host. Their devices share the host cap; bandwidth is not pooled across hosts. 0 disables the tag’s per-user speed cap.
+- **Device speed limit**: Each tag applies its device ceiling separately on this host. The strictest enabled limit applies.
 - **Tag traffic multiplier**: For hosts using the tag multiplier. Recalculates the current period; subscription usage is unchanged.
 - **Shared group speed**: One shared cap across all users and all tagged hosts.
 - **Traffic limit per user**: Quota per user for this host or tag. The host form accepts GiB and stores bytes. Zero removes this quota.
 - **Apply tag traffic quota**: Includes this host’s usage in the user’s shared tag quota. The host’s own quota still applies when disabled.
 - **User speed limit**: Per-user host bandwidth shared by that user’s devices and connections. Measured in Mbps; zero removes this restriction.
 - **Apply tag per-user speed**: Applies the tag’s per-user bandwidth limit to this host. Each participating host applies the limit separately.
+- **Device speed limit**: Speed ceiling for one private device key on this host, in Mbps. All connections and both directions share it. Zero removes this cap; the user ceiling still applies. Requires compatible node and core.
+- **Apply device speed limit from tags**: Apply tag device-key speed ceilings to this host independently of other inheritance switches.
 - **Whole-host speed limit**: Total host or tag bandwidth shared by all users. A 100 Mbps limit is shared between concurrent connections.
 - **Apply tag shared speed**: Includes the host in the tag’s total bandwidth limit, shared by participating connections.
 - **Host traffic multiplier**: Usage multiplier: with a value of 2, transferring 1 GiB counts as 2 GiB. An empty host value inherits from tags.
@@ -744,6 +760,8 @@ Host/tag reset intervals use days or months; 0 means no automatic reset. The quo
 - **Apply tag traffic quota**: Includes this host’s usage in the user’s shared tag quota. The host’s own quota still applies when disabled.
 - **User speed limit**: Per-user host bandwidth shared by that user’s devices and connections. Measured in Mbps; zero removes this restriction.
 - **Apply tag per-user speed**: Applies the tag’s per-user bandwidth limit to this host. Each participating host applies the limit separately.
+- **Device speed limit**: Speed ceiling for one private device key on this host, in Mbps. All connections and both directions share it. Zero removes this cap; the user ceiling still applies. Requires compatible node and core.
+- **Apply device speed limit from tags**: Apply tag device-key speed ceilings to this host independently of other inheritance switches.
 - **Whole-host speed limit**: Total host or tag bandwidth shared by all users. A 100 Mbps limit is shared between concurrent connections.
 - **Apply tag shared speed**: Includes the host in the tag’s total bandwidth limit, shared by participating connections.
 - **Host traffic multiplier**: Usage multiplier: with a value of 2, transferring 1 GiB counts as 2 GiB. An empty host value inherits from tags.

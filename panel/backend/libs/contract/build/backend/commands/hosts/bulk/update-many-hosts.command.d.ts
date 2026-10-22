@@ -84,8 +84,10 @@ export declare namespace UpdateManyHostsCommand {
         totalSpeedLimitMbps: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodInt>>>;
         trafficMultiplier: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodNumber>>>;
         serverSpeedLimitMbps: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodInt>>>;
+        deviceSpeedLimitMbps: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodInt>>>;
         useTagTrafficLimit: z.ZodOptional<z.ZodOptional<z.ZodBoolean>>;
         useTagSpeedLimit: z.ZodOptional<z.ZodOptional<z.ZodBoolean>>;
+        useTagDeviceSpeedLimit: z.ZodOptional<z.ZodOptional<z.ZodBoolean>>;
         useTagTotalSpeedLimit: z.ZodOptional<z.ZodOptional<z.ZodBoolean>>;
         domainRules: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodObject<{
             mode: z.ZodDefault<z.ZodEnum<{

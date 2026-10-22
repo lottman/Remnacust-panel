@@ -85,6 +85,7 @@ export class HostsController {
                 tag: item.tag,
                 limitBytes: Number(item.limitBytes),
                 speedLimitMbps: item.speedLimitMbps,
+                deviceSpeedLimitMbps: item.deviceSpeedLimitMbps ?? null,
                 totalSpeedLimitMbps: item.totalSpeedLimitMbps,
                 trafficMultiplier: item.trafficMultiplier,
                 resetValue: item.resetValue,
@@ -108,6 +109,7 @@ export class HostsController {
             tag?: unknown;
             limitBytes?: unknown;
             speedLimitMbps?: unknown;
+            deviceSpeedLimitMbps?: unknown;
             totalSpeedLimitMbps?: unknown;
             trafficMultiplier?: unknown;
             resetValue?: unknown;
@@ -132,6 +134,10 @@ export class HostsController {
             body?.speedLimitMbps === undefined
                 ? (existing?.speedLimitMbps ?? null)
                 : body.speedLimitMbps;
+        const deviceSpeedLimitMbps =
+            body?.deviceSpeedLimitMbps === undefined
+                ? (existing?.deviceSpeedLimitMbps ?? null)
+                : body.deviceSpeedLimitMbps;
         const resetValue =
             body?.resetValue === undefined ? (existing?.resetValue ?? 0) : body.resetValue;
         const resetUnit =
@@ -151,6 +157,11 @@ export class HostsController {
                     !Number.isSafeInteger(speedLimitMbps) ||
                     speedLimitMbps < 0 ||
                     speedLimitMbps > 10000)) ||
+            (deviceSpeedLimitMbps !== null &&
+                (typeof deviceSpeedLimitMbps !== 'number' ||
+                    !Number.isSafeInteger(deviceSpeedLimitMbps) ||
+                    deviceSpeedLimitMbps < 0 ||
+                    deviceSpeedLimitMbps > 10000)) ||
             (totalSpeedLimitMbps !== null &&
                 (typeof totalSpeedLimitMbps !== 'number' ||
                     !Number.isSafeInteger(totalSpeedLimitMbps) ||
@@ -175,9 +186,10 @@ export class HostsController {
             hosts,
             [
                 ...(await this.tagLimitsRepository.list()).filter((item) => item.tag !== tag),
-                { tag },
+                { tag, deviceSpeedLimitMbps },
             ],
-            false,
+            (deviceSpeedLimitMbps ?? 0) > 0 &&
+                deviceSpeedLimitMbps !== existing?.deviceSpeedLimitMbps,
             new Set(members.map((host) => host.uuid)),
         );
         await this.tagLimitsRepository.set(
@@ -188,6 +200,7 @@ export class HostsController {
             speedLimitMbps,
             totalSpeedLimitMbps,
             trafficMultiplier,
+            deviceSpeedLimitMbps,
         );
         // The setting is durable even while a node is offline. Synchronize after
         // the transaction commits; the scheduled task retries unavailable nodes.
@@ -199,6 +212,7 @@ export class HostsController {
                 resetValue,
                 resetUnit,
                 speedLimitMbps,
+                deviceSpeedLimitMbps,
                 totalSpeedLimitMbps,
                 trafficMultiplier,
             },

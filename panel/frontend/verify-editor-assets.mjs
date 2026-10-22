@@ -11,11 +11,11 @@ for (const name of ['xray.schema.json', 'xray.schema.cn.json']) {
     const schema = JSON.parse(readFileSync(asset(name), 'utf8'))
     if (schema.definitions.TLSObject.properties.allowInsecure) throw new Error('Stale TLS schema')
     if (
-        schema['x-remnacust-upstream']?.version !== 'v26.10.10' ||
+        schema['x-remnacust-upstream']?.version !== 'v26.10.21' ||
         schema['x-remnacust-upstream']?.commit !==
-            '701af60772cda123492f86e383e1fdba066614a9' ||
+            '1b1647cd9ddf0abc34b981d4611fc03bcac1ca74' ||
         schema['x-remnacust-upstream']?.patchCommit !== null ||
-        schema['x-remnacust-upstream']?.coreVersion !== '1.1.9'
+        schema['x-remnacust-upstream']?.coreVersion !== '1.1.11'
     )
         throw new Error('Stale config schema')
 }
@@ -49,7 +49,7 @@ if (!globalThis.XrayParseConfig('{invalid json')) {
     throw new Error('Xray WASM accepted invalid JSON')
 }
 
-if (globalThis.XrayGetVersion() !== '1.1.9') {
+if (globalThis.XrayGetVersion() !== '1.1.11') {
     throw new Error(`Stale editor core: ${globalThis.XrayGetVersion()}`)
 }
 const fixtures = JSON.parse(
@@ -66,6 +66,6 @@ for (const fixture of fixtures.invalid) {
 }
 
 console.log(
-    `Editor core 1.1.9 (upstream 26.10.10) and ${fixtures.valid.length + fixtures.invalid.length} configuration fixtures verified`
+    `Editor core 1.1.11 (upstream 26.10.21) and ${fixtures.valid.length + fixtures.invalid.length} configuration fixtures verified`
 )
 process.exit(0)

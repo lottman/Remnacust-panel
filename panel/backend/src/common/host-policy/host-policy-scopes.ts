@@ -12,6 +12,7 @@ export function buildPolicyGroups(hosts: PolicyHost[], tags: PolicyTag[]): Polic
         userLimit: host.userLimit,
         trafficMultiplier: host.trafficMultiplier ?? 1,
         userSpeed: host.userSpeed,
+        deviceSpeed: host.deviceSpeed ?? 0,
         totalSpeed: host.totalSpeed,
         anchor: host.anchor,
         resetValue: host.resetValue,
@@ -27,6 +28,7 @@ export function buildPolicyGroups(hosts: PolicyHost[], tags: PolicyTag[]): Polic
             ...tag,
             key: `tag:${tag.tag}`,
             userSpeed: 0,
+            deviceSpeed: 0,
             totalSpeed: 0,
             hostUuids: quotaMembers.map((host) => host.uuid),
             nodeUuids: [...new Set(quotaMembers.flatMap(nodes))],
@@ -36,6 +38,7 @@ export function buildPolicyGroups(hosts: PolicyHost[], tags: PolicyTag[]): Polic
                 ...tag,
                 key: `tag-total:${tag.tag}`,
                 userSpeed: 0,
+                deviceSpeed: 0,
                 userLimit: null,
                 trafficMultiplier: 1,
                 hostUuids: totalSpeedMembers.map((host) => host.uuid),
@@ -50,6 +53,19 @@ export function buildPolicyGroups(hosts: PolicyHost[], tags: PolicyTag[]): Polic
                     hostUuids: [host.uuid],
                     nodeUuids: nodes(host),
                     userLimit: null,
+                    trafficMultiplier: 1,
+                    totalSpeed: 0,
+                    deviceSpeed: 0,
+                });
+        if (tag.deviceSpeed)
+            for (const host of members.filter((h) => h.useTagDeviceSpeedLimit !== false))
+                groups.push({
+                    ...tag,
+                    key: `tag-device:${tag.tag}:${host.uuid}`,
+                    hostUuids: [host.uuid],
+                    nodeUuids: nodes(host),
+                    userLimit: null,
+                    userSpeed: 0,
                     trafficMultiplier: 1,
                     totalSpeed: 0,
                 });

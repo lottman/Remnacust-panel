@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-10-17T12:09:18.269641+00:00",
+  "checkedAt": "2026-10-22T08:00:00Z",
   "components": [
     {
       "component": "backend",
@@ -44,16 +44,16 @@
     {
       "component": "xray",
       "repository": "https://github.com/XTLS/Xray-core",
-      "version": "v26.10.10",
-      "commit": "701af60772cda123492f86e383e1fdba066614a9",
-      "checkedAt": "2026-10-17T12:09:18.269641+00:00",
-      "status": "integrated-and-released",
-      "ref": "refs/tags/v26.10.10",
+      "version": "v26.10.21",
+      "commit": "1b1647cd9ddf0abc34b981d4611fc03bcac1ca74",
+      "checkedAt": "2026-10-22T08:00:00Z",
+      "status": "integrated-for-v1.2.73",
+      "ref": "refs/tags/v26.10.21",
       "prerelease": true,
-      "tagEvidence": "https://api.github.com/repos/XTLS/Xray-core/git/ref/tags/v26.10.10"
+      "tagEvidence": "https://api.github.com/repos/XTLS/Xray-core/git/ref/tags/v26.10.21"
     }
   ],
-  "releaseStatus": "published-v1.2.59",
+  "releaseStatus": "prepared-v1.2.73",
   "updatePolicy": "published-official-releases-only",
   "dependencySecurityUpdates": [
     {

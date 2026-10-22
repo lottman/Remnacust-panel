@@ -39,8 +39,10 @@ export declare namespace RegenerateHostSniCommand {
             totalSpeedLimitMbps: z.ZodDefault<z.ZodNullable<z.ZodInt>>;
             trafficMultiplier: z.ZodDefault<z.ZodNullable<z.ZodNumber>>;
             serverSpeedLimitMbps: z.ZodNullable<z.ZodInt>;
+            deviceSpeedLimitMbps: z.ZodDefault<z.ZodNullable<z.ZodInt>>;
             useTagTrafficLimit: z.ZodDefault<z.ZodBoolean>;
             useTagSpeedLimit: z.ZodDefault<z.ZodBoolean>;
+            useTagDeviceSpeedLimit: z.ZodDefault<z.ZodBoolean>;
             useTagTotalSpeedLimit: z.ZodDefault<z.ZodBoolean>;
             domainRules: z.ZodOptional<z.ZodNullable<z.ZodObject<{
                 mode: z.ZodDefault<z.ZodEnum<{

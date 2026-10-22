@@ -3079,7 +3079,12 @@
         "per-user-host-limits": "此主机的每位用户",
         "shared-host-limits-and-accounting": "主机总速度与流量计费",
         "per-user-tag-limits": "带此标签的主机的每位用户",
-        "shared-tag-limits-and-accounting": "分组总速度与流量计费"
+        "shared-tag-limits-and-accounting": "分组总速度与流量计费",
+        "device-speed-limit": "设备速度限制",
+        "device-speed-limit-description": "同一设备密钥的所有连接在此主机上共享此上限，包括上传和下载。0 表示关闭此上限；用户、主机和标签限制仍然生效。",
+        "apply-tag-device-speed": "应用标签的设备速度限制",
+        "tag-device-speed-description": "每个标签在此主机上独立设置设备上限。启用的限制中最严格的限制生效。",
+        "dynamic-device-sharing-description": "活跃设备密钥动态共享用户速度上限：单个设备可以使用空闲带宽；其他设备传输时会获得自己的份额。空闲设备不预留带宽。同一密钥的副本视为一个设备。"
     },
     "api-token-editor": {
         "retry": "重试",

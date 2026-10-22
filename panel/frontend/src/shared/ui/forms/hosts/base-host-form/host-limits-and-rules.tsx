@@ -37,7 +37,11 @@ function TagLimitSwitch({
     label,
     description
 }: {
-    field: 'useTagTrafficLimit' | 'useTagSpeedLimit' | 'useTagTotalSpeedLimit'
+    field:
+        | 'useTagTrafficLimit'
+        | 'useTagSpeedLimit'
+        | 'useTagDeviceSpeedLimit'
+        | 'useTagTotalSpeedLimit'
     hasTags: boolean
     label: string
     description: string
@@ -99,7 +103,7 @@ export function HostLimitsAndRules() {
                 {uiText('per-user-host-limits')}
             </Text>
             <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md" w="100%">
-                <Stack gap="xs">
+                <Stack gap="xs" style={{ gridColumn: '1 / -1' }}>
                     <HostLimitInput
                         field="userTrafficLimitBytes"
                         label={uiText('traffic-limit-per-user-a5e049d')}
@@ -150,7 +154,31 @@ export function HostLimitsAndRules() {
                         )}
                     />
                 </Stack>
+                <Stack gap="xs">
+                    <HostLimitInput
+                        field="deviceSpeedLimitMbps"
+                        hideControls
+                        label={uiText('device-speed-limit')}
+                        description={uiText('device-speed-limit-description')}
+                        leftSection={<TbGauge size={16} />}
+                        min={0}
+                        max={10000}
+                        allowDecimal={false}
+                        allowNegative={false}
+                        rightSection={uiText('speed-unit-mbps')}
+                        rightSectionWidth={76}
+                    />
+                    <TagLimitSwitch
+                        field="useTagDeviceSpeedLimit"
+                        hasTags={hasTags}
+                        label={uiText('apply-tag-device-speed')}
+                        description={uiText('tag-device-speed-description')}
+                    />
+                </Stack>
             </SimpleGrid>
+            <Text size="sm" c="dimmed">
+                {uiText('dynamic-device-sharing-description')}
+            </Text>
             <Text fw={600} size="sm">
                 {uiText('shared-host-limits-and-accounting')}
             </Text>

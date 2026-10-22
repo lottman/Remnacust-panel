@@ -44,6 +44,7 @@ type HostPolicyCapabilities = {
     version?: string;
     supported?: boolean;
     destinationRulesSupported?: boolean;
+    deviceSpeedLimitsSupported?: boolean;
     policyRevisionsSupported?: boolean;
     policyRevision?: string;
     offlineReserves?: string | null;
@@ -87,8 +88,8 @@ export class HostPolicyService {
             sql<PolicyHost>`SELECT h.uuid,h.tags,h.config_profile_inbound_uuid AS "inboundUuid",i.tag AS "inboundTag",i.profile_uuid AS "profileUuid",
     h.always_available AS "alwaysAvailable",h.only_when_inactive AS "onlyWhenInactive",
     h.user_traffic_limit_bytes::text AS "userLimit",h.traffic_multiplier AS "trafficMultiplier",
-    h.server_speed_limit_mbps AS "userSpeed",h.total_speed_limit_mbps AS "totalSpeed",
-    h.use_tag_traffic_limit AS "useTagTrafficLimit",h.use_tag_speed_limit AS "useTagSpeedLimit",h.use_tag_total_speed_limit AS "useTagTotalSpeedLimit",
+    h.server_speed_limit_mbps AS "userSpeed",h.device_speed_limit_mbps AS "deviceSpeed",h.total_speed_limit_mbps AS "totalSpeed",
+    h.use_tag_traffic_limit AS "useTagTrafficLimit",h.use_tag_speed_limit AS "useTagSpeedLimit",h.use_tag_device_speed_limit AS "useTagDeviceSpeedLimit",h.use_tag_total_speed_limit AS "useTagTotalSpeedLimit",
     h.traffic_limit_reset_anchor_at AS anchor,h.traffic_limit_reset_value AS "resetValue",h.traffic_limit_reset_unit AS "resetUnit",h.domain_rules AS domains,
     COALESCE((SELECT json_agg(n.node_uuid) FROM hosts_to_nodes n WHERE n.host_uuid=h.uuid),'[]') AS nodes,
     COALESCE((SELECT json_agg(n.node_uuid) FROM config_profile_inbounds_to_nodes n WHERE n.config_profile_inbound_uuid=h.config_profile_inbound_uuid),'[]') AS "boundNodes",
@@ -98,7 +99,7 @@ export class HostPolicyService {
                 this.db.kysely,
             ),
             sql<PolicyTag>`
-    SELECT tag,total_speed_limit_mbps AS "totalSpeed",traffic_multiplier AS "trafficMultiplier",user_traffic_limit_bytes::text AS "userLimit",speed_limit_mbps AS "userSpeed",reset_anchor_at AS anchor,
+    SELECT tag,total_speed_limit_mbps AS "totalSpeed",traffic_multiplier AS "trafficMultiplier",user_traffic_limit_bytes::text AS "userLimit",speed_limit_mbps AS "userSpeed",device_speed_limit_mbps AS "deviceSpeed",reset_anchor_at AS anchor,
     reset_value AS "resetValue",reset_unit AS "resetUnit" FROM xera_host_tag_limits`.execute(
                 this.db.kysely,
             ),
@@ -122,10 +123,12 @@ export class HostPolicyService {
                         h.onlyWhenInactive ||
                         BigInt(h.userLimit ?? 0) > 0n ||
                         h.userSpeed ||
+                        h.deviceSpeed ||
                         h.totalSpeed ||
                         (h.domains && h.domains.mode !== 'OFF') ||
                         ((h.useTagTrafficLimit !== false ||
                             h.useTagSpeedLimit !== false ||
+                            h.useTagDeviceSpeedLimit !== false ||
                             h.useTagTotalSpeedLimit !== false) &&
                             tags.rows.some((t) => h.tags.includes(t.tag))),
                 )
@@ -204,6 +207,7 @@ export class HostPolicyService {
                         version: value.version,
                         supported: value.supported,
                         destinationRulesSupported: value.destinationRulesSupported,
+                        deviceSpeedLimitsSupported: value.deviceSpeedLimitsSupported,
                         policyRevisionsSupported: value.policyRevisionsSupported,
                         policyRevision: value.policyRevision,
                         offlineReserves: value.offlineReserves,
@@ -332,6 +336,17 @@ export class HostPolicyService {
                         )
                             return;
                     }
+                    if (
+                        state.groups.some(
+                            (group) =>
+                                group.nodeUuids.includes(node.uuid) && (group.deviceSpeed ?? 0) > 0,
+                        ) &&
+                        !capabilities?.deviceSpeedLimitsSupported
+                    ) {
+                        throw new Error(
+                            `Node ${node.uuid}: update node and core before applying device speed limits`,
+                        );
+                    }
                     const groups: Record<string, unknown> = {};
                     for (const group of state.groups.filter((g) =>
                         g.nodeUuids.includes(node.uuid),
@@ -395,6 +410,9 @@ export class HostPolicyService {
                                 : 0;
                         groups[group.key] = {
                             bytesPerSecond: divide(group.userSpeed),
+                            ...((group.deviceSpeed ?? 0) > 0
+                                ? { deviceBytesPerSecond: divide(group.deviceSpeed ?? null) }
+                                : {}),
                             totalBytesPerSecond: divide(group.totalSpeed),
                             blockAll,
                             blockedOwners,

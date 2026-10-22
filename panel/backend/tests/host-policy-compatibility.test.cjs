@@ -62,3 +62,16 @@ test('IP rule support and unavailable capabilities cannot be bypassed by scoping
     f.available.set('latest',null);
     await assert.rejects(f.service.validatePolicyState(f.hosts,[],true,new Set(['latest'])),e=>e.getStatus()===503);
 });
+
+
+test('own and inherited device caps cannot be saved against an incompatible core', async()=>{
+    const f=fixture();f.hosts[0].deviceSpeedLimitMbps=2;
+    await assert.rejects(f.service.validatePolicyState(f.hosts,[],true,new Set(['latest'])),e=>e.getStatus()===503);
+    f.available.get('latest').deviceSpeedLimitsSupported=true;
+    await f.service.validatePolicyState(f.hosts,[],true,new Set(['latest']));
+    f.hosts[0].deviceSpeedLimitMbps=0;f.hosts[0].tags=['device'];
+    f.available.get('latest').deviceSpeedLimitsSupported=false;
+    await assert.rejects(f.service.validatePolicyState(f.hosts,[{tag:'device',deviceSpeedLimitMbps:2}],true,new Set(['latest'])),e=>e.getStatus()===503);
+    f.hosts[0].useTagDeviceSpeedLimit=false;
+    await f.service.validatePolicyState(f.hosts,[{tag:'device',deviceSpeedLimitMbps:2}],true,new Set(['latest']));
+});

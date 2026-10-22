@@ -6,6 +6,7 @@ import { useHostFormData } from './options/host-form-data.context'
 type Field =
     | 'userTrafficLimitBytes'
     | 'serverSpeedLimitMbps'
+    | 'deviceSpeedLimitMbps'
     | 'totalSpeedLimitMbps'
     | 'trafficMultiplier'
     | 'trafficLimitResetValue'

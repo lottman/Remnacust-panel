@@ -7,7 +7,7 @@
       "version": "3.4.7",
       "commit": "52321390ac4efe04a610811446d87335f1d10a93",
       "checkedAt": "2026-10-22T13:44:15.166915+00:00",
-      "status": "integrated-for-v1.2.74",
+      "status": "integrated-and-released",
       "ref": "refs/tags/3.4.7",
       "tagEvidence": "https://api.github.com/repos/remnawave/backend/git/ref/tags/3.4.7",
       "releaseEvidence": "https://github.com/remnawave/backend/releases/tag/3.4.7"
@@ -18,7 +18,7 @@
       "version": "3.4.7",
       "commit": "dcb1affbfc42793799caecee988fd20ac0a270b7",
       "checkedAt": "2026-10-22T13:44:15.166915+00:00",
-      "status": "integrated-for-v1.2.74",
+      "status": "integrated-and-released",
       "ref": "refs/tags/3.4.7",
       "tagEvidence": "https://api.github.com/repos/remnawave/frontend/git/ref/tags/3.4.7",
       "releaseEvidence": "https://github.com/remnawave/frontend/releases/tag/3.4.7"
@@ -29,7 +29,7 @@
       "version": "3.4.3",
       "commit": "2ad154f8f1016c94c1872f337268af878af61b18",
       "checkedAt": "2026-10-22T13:44:15.166915+00:00",
-      "status": "integrated-for-v1.2.74",
+      "status": "integrated-and-released",
       "ref": "refs/tags/3.4.3",
       "tagEvidence": "https://api.github.com/repos/remnawave/node/git/ref/tags/3.4.3",
       "releaseEvidence": "https://github.com/remnawave/node/releases/tag/3.4.3"
@@ -40,7 +40,7 @@
       "version": "8.0.1",
       "commit": "9045728e6e197a2581c6da40f4f92b170a8bad53",
       "checkedAt": "2026-10-22T13:44:15.166915+00:00",
-      "status": "integrated-for-v1.2.74",
+      "status": "integrated-and-released",
       "ref": "refs/tags/8.0.1",
       "tagEvidence": "https://api.github.com/repos/remnawave/subscription-page/git/ref/tags/8.0.1",
       "publicationEvidence": {
@@ -63,7 +63,7 @@
       "tagEvidence": "https://api.github.com/repos/XTLS/Xray-core/git/ref/tags/v26.10.21"
     }
   ],
-  "releaseStatus": "prepared-v1.2.74",
+  "releaseStatus": "published-v1.2.74",
   "updatePolicy": "published-official-releases-only",
   "dependencySecurityUpdates": [
     {

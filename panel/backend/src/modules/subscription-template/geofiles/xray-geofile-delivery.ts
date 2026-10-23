@@ -107,7 +107,8 @@ export class XrayGeofileDelivery {
         const header =
             `${this.client}://routing/onadd/` +
             Buffer.from(JSON.stringify(profile)).toString('base64');
-        if (Buffer.byteLength(header) > 6000) throw new XrayGeofileFallback('header-size');
+        // Leave room for ordinary response headers in a default 4 KiB reverse-proxy buffer.
+        if (Buffer.byteLength(header) > 3000) throw new XrayGeofileFallback('header-size');
         this.intervalHours = Math.ceil(interval / 3600);
         return header;
     }

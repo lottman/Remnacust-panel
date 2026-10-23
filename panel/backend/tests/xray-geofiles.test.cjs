@@ -281,7 +281,7 @@ test('unused resources do not emit a profile and oversized profiles request a co
                 'geosite',
                 {
                     id: source,
-                    categories: Array.from({ length: 32 }, (_, i) => 'category-' + i),
+                    categories: Array.from({ length: 16 }, (_, i) => 'category-' + i),
                     target: 'DIRECT',
                     clientRefreshIntervalSeconds: 1800,
                 },

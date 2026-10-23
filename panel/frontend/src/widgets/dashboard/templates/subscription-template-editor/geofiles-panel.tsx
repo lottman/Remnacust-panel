@@ -407,6 +407,7 @@ export function GeofilesPanel({
                                             i === index
                                                 ? {
                                                       ...ref,
+                                                      target,
                                                       downloadToClient: event.currentTarget.checked
                                                   }
                                                 : ref

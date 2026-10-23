@@ -1,10 +1,19 @@
 import type { DatRules } from './compile-dat';
 import type { StoredGeofile } from './geofiles.service';
 
+import {
+    datClientFile,
+    DEFAULT_GEOFILE_INTERVAL,
+    geofileInterval,
+    nativePayload,
+} from './geofile-delivery';
+
 export interface GeofileReference {
     id: string;
     categories?: string[];
     target: string;
+    downloadToClient?: boolean;
+    clientRefreshIntervalSeconds?: number;
 }
 type ObjectValue = Record<string, any>;
 
@@ -17,14 +26,21 @@ export function geofileReferences(config: ObjectValue): GeofileReference[] {
             !reference ||
             typeof reference !== 'object' ||
             !/^[a-f0-9]{34}$/.test(reference.id) ||
-            typeof reference.target !== 'string' ||
-            !reference.target.trim() ||
-            reference.target.length > 255 ||
-            /[,\r\n\0]/.test(reference.target)
+            (reference.downloadToClient !== false &&
+                (typeof reference.target !== 'string' ||
+                    !reference.target.trim() ||
+                    reference.target.length > 255 ||
+                    /[,\r\n\0]/.test(reference.target))) ||
+            (reference.downloadToClient !== undefined &&
+                typeof reference.downloadToClient !== 'boolean')
         )
             throw new Error('geofile-reference');
+        if (reference.clientRefreshIntervalSeconds !== undefined)
+            geofileInterval(reference.clientRefreshIntervalSeconds);
     }
-    return references;
+    return references.map((reference) =>
+        reference.downloadToClient === false ? { ...reference, target: 'DIRECT' } : reference,
+    );
 }
 
 export async function materializeGeofiles(
@@ -32,6 +48,10 @@ export async function materializeGeofiles(
     type: string,
     fileById: (id: string) => Promise<StoredGeofile>,
     dat: (file: StoredGeofile, categories: string[]) => Promise<DatRules>,
+    resources?: {
+        read: (file: StoredGeofile) => Promise<Buffer>;
+        datUrl: (file: StoredGeofile, categories: string[], format: string) => string;
+    },
 ): Promise<ObjectValue> {
     const references = geofileReferences(config);
     const root = structuredClone(config);
@@ -45,8 +65,15 @@ export async function materializeGeofiles(
         xray = type === 'XRAY_JSON';
     for (const reference of references) {
         const file = await fileById(reference.id);
+        if (
+            reference.downloadToClient === false &&
+            !['geoip', 'geosite'].includes(file.kind) &&
+            !resources
+        )
+            throw new Error('geofile-resources');
         const tag = `geo_${file.id}`;
-        let target = reference.target;
+        let target = reference.downloadToClient === false ? 'DIRECT' : reference.target;
+        const interval = reference.clientRefreshIntervalSeconds ?? DEFAULT_GEOFILE_INTERVAL;
         let route: ObjectValue;
         if (xray) {
             if (target === 'DIRECT' || target === 'REJECT') {
@@ -104,7 +131,44 @@ export async function materializeGeofiles(
                 throw new Error('geofile-target');
             route = {};
         }
-        if (file.kind === 'geoip' || file.kind === 'geosite') {
+        if (
+            (file.kind === 'geoip' || file.kind === 'geosite') &&
+            reference.downloadToClient === true
+        ) {
+            if (xray) throw new Error('geofile-xray-bootstrap-unsupported');
+            if (!resources) throw new Error('geofile-resources');
+            // Validate selected categories before returning a remotely loaded provider.
+            datClientFile(await dat(file, reference.categories ?? []), type);
+            const url = resources.datUrl(file, reference.categories ?? [], type);
+            if (sing) {
+                root.route ??= {};
+                root.route.rule_set ??= [];
+                if (root.route.rule_set.some((item: ObjectValue) => item.tag === tag))
+                    throw new Error('geofile-name-collision');
+                root.route.rule_set.push({
+                    type: 'remote',
+                    tag,
+                    format: 'source',
+                    url,
+                    update_interval: `${interval}s`,
+                });
+                root.experimental ??= {};
+                root.experimental.cache_file ??= {};
+                root.experimental.cache_file.enabled = true;
+                generated.push({ ...route, rule_set: [tag] });
+            } else {
+                root['rule-providers'] ??= {};
+                if (root['rule-providers'][tag]) throw new Error('geofile-name-collision');
+                root['rule-providers'][tag] = {
+                    type: 'http',
+                    behavior: 'classical',
+                    url,
+                    path: `./rulesets/${tag}.yaml`,
+                    interval,
+                };
+                yamlRules.push(`RULE-SET,${tag},${target}`);
+            }
+        } else if (file.kind === 'geoip' || file.kind === 'geosite') {
             const rules = await dat(file, reference.categories ?? []);
             inlineRecords += rules.ips.length + rules.domains.length;
             inlineBytes +=
@@ -158,11 +222,15 @@ export async function materializeGeofiles(
             if (existing && existing.url !== file.url) throw new Error('geofile-name-collision');
             if (!existing)
                 root.route.rule_set.push({
-                    type: 'remote',
+                    type: reference.downloadToClient === false ? 'inline' : 'remote',
                     tag,
-                    format: file.kind === 'singbox-srs' ? 'binary' : 'source',
-                    url: file.url,
-                    update_interval: '1d',
+                    ...(reference.downloadToClient === false
+                        ? { rules: nativePayload(await resources!.read(file), file.kind) }
+                        : {
+                              format: file.kind === 'singbox-srs' ? 'binary' : 'source',
+                              url: file.url,
+                              update_interval: `${interval}s`,
+                          }),
                 });
             root.experimental ??= {};
             root.experimental.cache_file ??= {};
@@ -176,12 +244,16 @@ export async function materializeGeofiles(
             if (existing && existing.url !== file.url) throw new Error('geofile-name-collision');
             if (!existing)
                 root['rule-providers'][tag] = {
-                    type: 'http',
+                    type: reference.downloadToClient === false ? 'inline' : 'http',
                     behavior: file.kind.split('-').at(-1),
-                    ...(text ? { format: 'text' } : {}),
-                    url: file.url,
-                    path: `./rulesets/${tag}.${text ? 'txt' : 'yaml'}`,
-                    interval: 86400,
+                    ...(reference.downloadToClient === false
+                        ? { payload: nativePayload(await resources!.read(file), file.kind) }
+                        : {
+                              ...(text ? { format: 'text' } : {}),
+                              url: file.url,
+                              path: `./rulesets/${tag}.${text ? 'txt' : 'yaml'}`,
+                              interval,
+                          }),
                 };
             yamlRules.push(`RULE-SET,${tag},${target}`);
         } else throw new Error('geofile-format-client');

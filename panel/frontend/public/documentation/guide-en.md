@@ -647,7 +647,15 @@ Host sources and their strategy share one block. Pools using a shared balancer a
 
 ### When the app downloads geofiles
 
-GeoIP/GeoSite DAT categories become ordinary rules inside the full configuration, so the app makes no separate DAT download. Native sing-box JSON/SRS use remote rule_set; compatible Mihomo/Clash/Stash YAML/text use HTTP rule-providers with a public URL. Each file shows its delivery mode. Use a full JSON/YAML configuration subscription: an individual VLESS link cannot carry these rules. Import and attach a new dataset version, save a valid template and update the subscription.
+By default, GeoIP/GeoSite DAT is embedded in the full configuration as rules. The new switch downloads a converted rule set in supported apps; Xray JSON retains inline rules. Native sing-box JSON/SRS and Mihomo/Clash/Stash YAML/text use the app format. A full JSON/YAML subscription is required; an individual VLESS link cannot carry routing. Client intervals and server auto downloads are configured separately, as explained below.
+
+### Downloading geofiles to the client
+
+New attachments have Download to client off: rules are embedded in the full subscription and selected categories use DIRECT. Turn it on for a remote rule set and choose DIRECT, reject or a group. The server converts DAT to sing-box JSON or Mihomo/Clash/Stash YAML. The client interval is 5 minutes–30 days, default one day, written as update_interval / interval. This is the app schedule; manual retries may bypass it. Embedded rules change after the subscription itself is updated. Legacy attachments without the field retain their behavior. Xray JSON embeds rules: geodata updates existing files and cannot guarantee initial installation of arbitrary DAT. SRS remains a remote binary set; import its source JSON for inline delivery.
+
+### Server auto downloads and update safety
+
+Select a library file and configure its HTTPS source, automatic updates and server interval from 15 minutes to 30 days. Settings save immediately for every template using that file. URL imports retain their source; PC uploads need a source URL. Auto updates default to off. The scheduler checks once a minute; a persisted lease prevents concurrent duplicate downloads. Source failure, panel restart and manual retries do not reset the interval. Addresses, redirects, size, format and categories used by active templates are validated. Errors retain the last working copy; status and next check are shown in the library. Original hashed URLs remain immutable; Updatable links and signed URLs return the active version without immutable caching. Server and client schedules are separate, so changes need not reach clients immediately.
 
 ## Variables {{…}} in names and headers
 

@@ -1,11 +1,14 @@
 import type { Request, Response } from 'express';
 
+import { createHash } from 'node:crypto';
+
 import {
     Body,
     Controller,
     Delete,
     Get,
     Param,
+    Patch,
     Post,
     Query,
     Req,
@@ -76,6 +79,21 @@ export class GeofilesController {
     }
 
     @AdminOnlyEndpoint()
+    @Patch(':id/refresh')
+    async configureRefresh(
+        @Param('id') id: string,
+        @Body() body: { sourceUrl?: unknown; enabled?: unknown; intervalSeconds?: unknown },
+    ) {
+        return { response: await this.files.configureRefresh(id, body ?? {}) };
+    }
+
+    @AdminOnlyEndpoint()
+    @Post(':id/refresh')
+    async refresh(@Param('id') id: string) {
+        return { response: { updated: await this.files.refreshNow(id) } };
+    }
+
+    @AdminOnlyEndpoint()
     @Delete(':id')
     async remove(@Param('id') id: string) {
         await this.files.remove(id);
@@ -94,9 +112,32 @@ export class PublicGeofilesController {
         @Param('filename') filename: string,
         @Res({ passthrough: true }) response: Response,
     ) {
+        const mutable = filename.startsWith('latest.') || filename.startsWith('rules-');
+        const derived = filename.startsWith('rules-')
+            ? await this.files.derived(id, filename)
+            : undefined;
+        if (derived) {
+            response.set({
+                'Cache-Control': 'public, max-age=0, must-revalidate',
+                'X-Content-Type-Options': 'nosniff',
+                'Content-Security-Policy': "default-src 'none'; sandbox",
+                'Cross-Origin-Resource-Policy': 'cross-origin',
+                ETag: `"${createHash('sha256').update(derived).digest('hex')}"`,
+            });
+            return new StreamableFile(derived, {
+                type: 'application/octet-stream',
+                length: derived.length,
+                disposition:
+                    'attachment; filename="ruleset.' +
+                    (filename.endsWith('.json') ? 'json' : 'yaml') +
+                    '"',
+            });
+        }
         const { item, stream } = await this.files.download(id, filename);
         response.set({
-            'Cache-Control': 'public, max-age=31536000, immutable',
+            'Cache-Control': mutable
+                ? 'public, max-age=0, must-revalidate'
+                : 'public, max-age=31536000, immutable',
             'X-Content-Type-Options': 'nosniff',
             'Content-Security-Policy': "default-src 'none'; sandbox",
             'Cross-Origin-Resource-Policy': 'cross-origin',

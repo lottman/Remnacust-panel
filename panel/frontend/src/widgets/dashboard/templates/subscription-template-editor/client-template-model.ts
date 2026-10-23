@@ -35,8 +35,14 @@ export function clientValidationPath(root: JsonObject, format: ClientFormat): st
         for (const [index, reference] of refs.entries()) {
             if (
                 typeof reference?.id !== 'string' ||
-                typeof reference.target !== 'string' ||
-                !reference.target.trim() ||
+                (reference.downloadToClient !== false &&
+                    (typeof reference.target !== 'string' || !reference.target.trim())) ||
+                (reference.downloadToClient !== undefined &&
+                    typeof reference.downloadToClient !== 'boolean') ||
+                (reference.clientRefreshIntervalSeconds !== undefined &&
+                    (!Number.isInteger(reference.clientRefreshIntervalSeconds) ||
+                        reference.clientRefreshIntervalSeconds < 300 ||
+                        reference.clientRefreshIntervalSeconds > 2592000)) ||
                 (reference.categories !== undefined &&
                     (!Array.isArray(reference.categories) || !reference.categories.length))
             )

@@ -17,7 +17,12 @@ export class GeofilesController {
         @Req() request: Request,
         @Res() response: Response,
     ) {
-        if (!/^[0-9a-f]{34}$/.test(id) || !/^[0-9a-f]{64}\.(dat|srs|json|yaml|txt)$/.test(filename))
+        if (
+            !/^[0-9a-f]{34}$/.test(id) ||
+            !/^(?:[0-9a-f]{64}\.(?:dat|srs|json|yaml|txt)|latest\.(?:dat|srs|json|yaml|txt)|rules-[A-Za-z0-9_-]{1,2732}\.[a-f0-9]{64}\.(?:json|yaml))$/.test(
+                filename,
+            )
+        )
             throw new NotFoundException();
         const abort = new AbortController();
         const disconnected = () => {
@@ -47,7 +52,9 @@ export class GeofilesController {
                 'Content-Type': 'application/octet-stream',
                 'Content-Length': String(size),
                 'Content-Disposition': `attachment; filename="${filename}"`,
-                'Cache-Control': 'public, max-age=31536000, immutable',
+                'Cache-Control': /^[a-f0-9]{64}\./.test(filename)
+                    ? 'public, max-age=31536000, immutable'
+                    : 'public, max-age=0, must-revalidate',
                 'X-Content-Type-Options': 'nosniff',
                 'Content-Security-Policy': "default-src 'none'; sandbox",
             });

@@ -4,6 +4,7 @@ import path from 'node:path'
 import { explainAutoselect } from './autoselect-guide.mjs'
 import { explainCurrentWorkflows } from './current-workflows-guide.mjs'
 import { explainEditorWorkflows } from './editor-workflows-guide.mjs'
+import { explainGeofileRefresh } from './geofile-refresh-guide.mjs'
 import './additional-guide.mjs'
 import './remnawave-guide.mjs'
 import fa from './guide-fa.mjs'
@@ -37,6 +38,7 @@ explainRelease1171(articles)
 explainAutoselect(articles)
 explainCurrentWorkflows(articles)
 explainEditorWorkflows(articles)
+explainGeofileRefresh(articles)
 
 const target = path.resolve(import.meta.dirname, '../public/documentation')
 fs.mkdirSync(target, { recursive: true })

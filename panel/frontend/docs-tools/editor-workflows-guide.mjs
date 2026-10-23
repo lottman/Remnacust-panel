@@ -49,19 +49,19 @@ const additions = [
         [
             [
                 'Когда приложение скачивает geofiles',
-                'Категории GeoIP/GeoSite DAT превращаются в обычные правила внутри полной конфигурации: отдельного скачивания DAT в приложении нет. Нативные sing-box JSON/SRS передаются как remote rule_set, а совместимые Mihomo/Clash/Stash YAML/text — как HTTP rule-providers с публичным URL. Способ доставки виден у файла. Нужна подписка полной JSON/YAML-конфигурации: отдельная ссылка VLESS не передаёт эти правила. Новую версию набора импортируйте и прикрепите заново, сохраните корректный шаблон и обновите подписку.'
+                'По умолчанию GeoIP/GeoSite DAT встраивается в полную конфигурацию как правила. Новый переключатель позволяет отдельно загружать преобразованный набор в поддерживаемом приложении; Xray JSON остаётся со встроенными правилами. Нативные sing-box JSON/SRS и Mihomo/Clash/Stash YAML/text используют формат приложения. Нужна полная JSON/YAML-подписка, отдельная ссылка VLESS не передаёт маршрутизацию. Клиентский интервал и серверная автозагрузка настраиваются независимо, подробности ниже.'
             ],
             [
                 'When the app downloads geofiles',
-                'GeoIP/GeoSite DAT categories become ordinary rules inside the full configuration, so the app makes no separate DAT download. Native sing-box JSON/SRS use remote rule_set; compatible Mihomo/Clash/Stash YAML/text use HTTP rule-providers with a public URL. Each file shows its delivery mode. Use a full JSON/YAML configuration subscription: an individual VLESS link cannot carry these rules. Import and attach a new dataset version, save a valid template and update the subscription.'
+                'By default, GeoIP/GeoSite DAT is embedded in the full configuration as rules. The new switch downloads a converted rule set in supported apps; Xray JSON retains inline rules. Native sing-box JSON/SRS and Mihomo/Clash/Stash YAML/text use the app format. A full JSON/YAML subscription is required; an individual VLESS link cannot carry routing. Client intervals and server auto downloads are configured separately, as explained below.'
             ],
             [
                 'زمان دانلود فایل‌های جغرافیایی در برنامه',
-                'دسته‌های GeoIP/GeoSite DAT به قوانین داخل پیکربندی کامل تبدیل می‌شوند؛ دانلود جداگانه DAT وجود ندارد. JSON/SRS بومی sing-box از remote rule_set و YAML/text سازگار Mihomo/Clash/Stash از HTTP rule-providers با نشانی عمومی استفاده می‌کنند. روش تحویل کنار فایل دیده می‌شود. اشتراک کامل JSON/YAML لازم است و پیوند تکی VLESS این قوانین را ندارد. نسخه جدید مجموعه را وارد و متصل، قالب سالم را ذخیره و اشتراک را به‌روزرسانی کنید.'
+                'به‌صورت پیش‌فرض GeoIP/GeoSite DAT به قوانین داخل پیکربندی کامل تبدیل می‌شود. کلید جدید مجموعه تبدیل‌شده را در برنامه پشتیبانی‌شده دانلود می‌کند؛ Xray JSON قوانین داخلی دارد. JSON/SRS بومی sing-box و YAML/text برای Mihomo/Clash/Stash از قالب برنامه استفاده می‌کنند. اشتراک کامل JSON/YAML لازم است؛ پیوند تکی VLESS مسیریابی ندارد. فاصله کلاینت و دانلود خودکار سرور جدا تنظیم می‌شوند؛ جزئیات در ادامه است.'
             ],
             [
                 '应用何时下载地理文件',
-                'GeoIP/GeoSite DAT 分类会转换为完整配置中的普通规则，因此应用不会单独下载 DAT。sing-box 原生 JSON/SRS 使用 remote rule_set，兼容的 Mihomo/Clash/Stash YAML/text 使用带公共 URL 的 HTTP rule-providers。每个文件会显示传递方式。需要完整 JSON/YAML 配置订阅；单独的 VLESS 链接不能携带这些规则。导入并重新附加新版数据集、保存有效模板，然后更新订阅。'
+                '默认将 GeoIP/GeoSite DAT 转换为完整配置中的内嵌规则。新开关可让支持的应用下载转换后的规则集；Xray JSON 保持内嵌规则。sing-box 原生 JSON/SRS 和 Mihomo/Clash/Stash YAML/text 使用应用格式。需要完整 JSON/YAML 订阅；单独的 VLESS 链接无法携带路由。客户端间隔和服务端自动下载分别设置，详见下文。'
             ]
         ]
     ],

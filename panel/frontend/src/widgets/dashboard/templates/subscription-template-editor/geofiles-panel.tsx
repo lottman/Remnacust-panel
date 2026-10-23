@@ -6,6 +6,8 @@ import {
     FileInput,
     Group,
     Loader,
+    NumberInput,
+    Switch,
     TagsInput,
     Progress,
     Select,
@@ -26,6 +28,7 @@ import { type JsonObject } from './autoselect-model'
 import styles from './autoselect-panel.module.css'
 import { editClientTemplate, type ClientFormat } from './client-template-model'
 import { geofilePresets } from './geofile-presets'
+import { GeofileRefreshSettings, type GeofileRefresh } from './geofile-refresh-settings'
 
 interface Geofile {
     id: string
@@ -36,11 +39,14 @@ interface Geofile {
     filename: string
     url: string
     categories?: string[]
+    refresh?: GeofileRefresh
 }
 interface Reference {
     id: string
     categories?: string[]
     target: string
+    downloadToClient?: boolean
+    clientRefreshIntervalSeconds?: number
 }
 const queryKey = ['template-geofiles']
 const kinds = [
@@ -80,7 +86,8 @@ export function GeofilesPanel({
         queryFn: async ({ signal }) =>
             (await instance.get<{ response: Geofile[] }>('/api/geofiles', { signal })).data
                 .response,
-        staleTime: 20_000
+        staleTime: 20_000,
+        refetchInterval: 60_000
     })
     const files = filesQuery.data ?? []
     const [name, setName] = useState('')
@@ -250,7 +257,9 @@ export function GeofilesPanel({
                                         ...(['geoip', 'geosite'].includes(item.kind)
                                             ? { categories: [] }
                                             : {}),
-                                        target: ''
+                                        target: 'DIRECT',
+                                        downloadToClient: item.kind === 'singbox-srs',
+                                        clientRefreshIntervalSeconds: 86400
                                     }
                                 ])
                         }}
@@ -287,9 +296,22 @@ export function GeofilesPanel({
                     )}
                 </Stack>
             </Card>
+            {selected && files.some((item) => item.id === selected) && (
+                <Card p="md" className={styles.card}>
+                    <GeofileRefreshSettings
+                        key={selected}
+                        id={selected}
+                        refresh={files.find((item) => item.id === selected)?.refresh}
+                        onUpdated={() => void client.invalidateQueries({ queryKey })}
+                    />
+                </Card>
+            )}
             {refs.map((reference, index) => {
                 const item = files.find((file) => file.id === reference.id)
                 const categories = reference.categories ?? []
+                const dat = !!item && ['geoip', 'geosite'].includes(item.kind)
+                const download = reference.downloadToClient ?? !dat
+                const supported = format !== 'XRAY_JSON'
                 return (
                     <Card key={index} p="md" className={styles.card}>
                         <Stack gap="md">
@@ -300,9 +322,9 @@ export function GeofilesPanel({
                                     {item && (
                                         <Badge variant="light" color="blue">
                                             {t(
-                                                ['geoip', 'geosite'].includes(item.kind)
-                                                    ? 'geofiles.delivery-inline'
-                                                    : 'geofiles.delivery-download'
+                                                download
+                                                    ? 'geofiles.delivery-download'
+                                                    : 'geofiles.delivery-inline'
                                             )}
                                         </Badge>
                                     )}
@@ -342,8 +364,17 @@ export function GeofilesPanel({
                             <Select
                                 label={t('geofiles.target')}
                                 placeholder={t('geofiles.choose-target')}
-                                error={!reference.target ? t('geofiles.choose-target') : undefined}
-                                value={reference.target || null}
+                                error={
+                                    reference.downloadToClient !== false && !reference.target
+                                        ? t('geofiles.choose-target')
+                                        : undefined
+                                }
+                                value={
+                                    reference.downloadToClient === false
+                                        ? 'DIRECT'
+                                        : reference.target || null
+                                }
+                                disabled={reference.downloadToClient === false}
                                 allowDeselect={false}
                                 searchable
                                 data={[...new Set([...targets, reference.target])]
@@ -366,12 +397,63 @@ export function GeofilesPanel({
                                     )
                                 }
                             />
+                            <Switch
+                                label={t('geofiles.download-to-client')}
+                                description={t('geofiles.download-to-client-help')}
+                                checked={download}
+                                disabled={!supported || item?.kind === 'singbox-srs'}
+                                onChange={(event) =>
+                                    patch(
+                                        refs.map((ref, i) =>
+                                            i === index
+                                                ? {
+                                                      ...ref,
+                                                      downloadToClient: event.currentTarget.checked
+                                                  }
+                                                : ref
+                                        )
+                                    )
+                                }
+                            />
+                            {!supported && (
+                                <Text size="xs" c="dimmed">
+                                    {t('geofiles.xray-download-limit')}
+                                </Text>
+                            )}
+                            {item?.kind === 'singbox-srs' && (
+                                <Text size="xs" c="dimmed">
+                                    {t('geofiles.srs-download-limit')}
+                                </Text>
+                            )}
+                            {download && supported && (
+                                <NumberInput
+                                    hideControls
+                                    label={t('geofiles.client-interval')}
+                                    description={t('geofiles.client-interval-help')}
+                                    min={5}
+                                    max={43200}
+                                    allowDecimal={false}
+                                    value={(reference.clientRefreshIntervalSeconds ?? 86400) / 60}
+                                    onChange={(value) => {
+                                        if (typeof value === 'number')
+                                            patch(
+                                                refs.map((ref, i) =>
+                                                    i === index
+                                                        ? {
+                                                              ...ref,
+                                                              clientRefreshIntervalSeconds:
+                                                                  value * 60
+                                                          }
+                                                        : ref
+                                                )
+                                            )
+                                    }}
+                                />
+                            )}
                             <Text size="xs" c="dimmed">
-                                {item && ['geoip', 'geosite'].includes(item.kind)
-                                    ? t('geofiles.inline-help')
-                                    : t('geofiles.download-help')}
+                                {t(download ? 'geofiles.download-help' : 'geofiles.inline-help')}
                             </Text>
-                            {item && !['geoip', 'geosite'].includes(item.kind) && (
+                            {item && download && !dat && (
                                 <Text size="xs" c="dimmed" dir="ltr" className={styles.path}>
                                     {item.url}
                                 </Text>

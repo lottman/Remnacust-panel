@@ -25,6 +25,7 @@ import { SubscriptionTemplateService } from './subscription-template.service';
         ...QUERIES,
     ],
     exports: [
+        GeofilesService,
         SubscriptionTemplateService,
         RenderTemplatesService,
         ...TEMPLATE_RENDERERS,

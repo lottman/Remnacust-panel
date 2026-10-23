@@ -114,6 +114,8 @@ test('real HTTP binary upload, admin-only roles, public byte stream and in-use d
             ['/upload?name=IP&kind=geoip', 'POST'],
             ['/import', 'POST'],
             ['/invalid', 'DELETE'],
+            ['/invalid/refresh', 'PATCH'],
+            ['/invalid/refresh', 'POST'],
         ]) {
             assert.equal((await fetch(base + '/api/geofiles' + route, { method })).status, 401);
             for (const role of ['API', 'AUDITOR'])
@@ -146,6 +148,46 @@ test('real HTTP binary upload, admin-only roles, public byte stream and in-use d
         assert.equal(proxied.status, 200);
         assert.equal(proxied.headers.get('x-content-type-options'), 'nosniff');
         assert.deepEqual(Buffer.from(await proxied.arrayBuffer()), fixture.geoip);
+        const latest = await fetch(`${proxyBase}/geofiles/${item.id}/latest.dat`);
+        assert.equal(latest.status, 200);
+        assert.doesNotMatch(latest.headers.get('cache-control'), /immutable/);
+        assert.deepEqual(Buffer.from(await latest.arrayBuffer()), fixture.geoip);
+        const prepared = await files.prepare(
+            {
+                remnacust: {
+                    geofiles: [
+                        {
+                            id: item.id,
+                            categories: ['ru'],
+                            target: 'DIRECT',
+                            downloadToClient: true,
+                            clientRefreshIntervalSeconds: 1200,
+                        },
+                    ],
+                },
+            },
+            'SINGBOX',
+        );
+        const derivedPath = new URL(prepared.route.rule_set[0].url).pathname;
+        const derived = await fetch(proxyBase + derivedPath);
+        assert.equal(derived.status, 200);
+        assert.doesNotMatch(derived.headers.get('cache-control'), /immutable/);
+        assert.deepEqual((await derived.json()).rules, [{ ip_cidr: ['203.0.113.0/24'] }]);
+        assert.equal(
+            (await fetch(proxyBase + derivedPath.replace('rules-', 'rules-A'))).status,
+            404,
+        );
+        const configured = await fetch(`${base}/api/geofiles/${item.id}/refresh`, {
+            method: 'PATCH',
+            headers: { 'x-test-role': 'ADMIN', 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                sourceUrl: 'https://example.com/geoip.dat',
+                enabled: false,
+                intervalSeconds: 1800,
+            }),
+        });
+        assert.equal(configured.status, 200);
+        assert.equal((await configured.json()).response.refresh.intervalSeconds, 1800);
         assert.equal((await fetch(`${proxyBase}/geofiles/${item.id}/wrong.dat`)).status, 404);
         assert.equal((await fetch(`${base}/api/sub/geofiles/${item.id}/wrong.dat`)).status, 404);
         const invalid = await fetch(base + '/api/geofiles/upload?name=Test&kind=geoip', {

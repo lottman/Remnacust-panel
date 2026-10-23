@@ -647,7 +647,15 @@ Xray JSON、sing-box、Mihomo、Clash 和 Stash 均提供自动选择。sing-box
 
 ### 应用何时下载地理文件
 
-GeoIP/GeoSite DAT 分类会转换为完整配置中的普通规则，因此应用不会单独下载 DAT。sing-box 原生 JSON/SRS 使用 remote rule_set，兼容的 Mihomo/Clash/Stash YAML/text 使用带公共 URL 的 HTTP rule-providers。每个文件会显示传递方式。需要完整 JSON/YAML 配置订阅；单独的 VLESS 链接不能携带这些规则。导入并重新附加新版数据集、保存有效模板，然后更新订阅。
+默认将 GeoIP/GeoSite DAT 转换为完整配置中的内嵌规则。新开关可让支持的应用下载转换后的规则集；Xray JSON 保持内嵌规则。sing-box 原生 JSON/SRS 和 Mihomo/Clash/Stash YAML/text 使用应用格式。需要完整 JSON/YAML 订阅；单独的 VLESS 链接无法携带路由。客户端间隔和服务端自动下载分别设置，详见下文。
+
+### 将地理文件下载到客户端
+
+新附件默认关闭“下载到客户端”：规则嵌入完整订阅，所选分类直连 DIRECT。开启后使用远程规则集，可选择 DIRECT、拦截或组。服务端将 DAT 转为 sing-box JSON 或 Mihomo/Clash/Stash YAML。客户端间隔为 5 分钟至 30 天，默认一天，写入 update_interval / interval。这是应用的计划，手动重试可能绕过间隔。内嵌规则在订阅本身更新后改变。没有新字段的旧附件保留原有行为。Xray JSON 使用内嵌规则；geodata 更新已有文件，无法保证任意 DAT 的首次安装。SRS 保持为远程二进制集；若要内嵌，请导入源 JSON。
+
+### 服务端自动下载与更新保护
+
+在库中选择文件，设置 HTTPS 来源、自动更新和 15 分钟至 30 天的服务端间隔。设置立即保存，并作用于使用此文件的所有模板。URL 导入会保存来源；电脑上传需另设来源 URL。自动更新默认关闭。调度器每分钟检查一次，持久租约避免同一文件重复并发下载。来源失败、面板重启和手动重试均不重置间隔。会验证地址、重定向、大小、格式以及活动模板使用的分类。出错时保留上一份可用副本；库中显示状态和下次检查时间。原始哈希 URL 保持不变；可更新链接和已签名 URL 返回当前版本，且不使用 immutable 缓存。服务端与客户端计划独立，因此更改不一定立即传入客户端。
 
 ## 名称与请求头中的变量 {{…}}
 

@@ -100,6 +100,7 @@ export class QueryNodesQueueProcessor extends WorkerHost implements OnApplicatio
             }
 
             let nodesCompleted = 0;
+            const failedNodes: { nodeUuid: string; nodeName: string }[] = [];
 
             const mapper = async (node: NodesEntity) => {
                 try {
@@ -112,9 +113,9 @@ export class QueryNodesQueueProcessor extends WorkerHost implements OnApplicatio
                         },
                     );
 
-                    if (!ipsListResponse.isOk || !ipsListResponse.response.ips.length) {
-                        return;
-                    }
+                    if (!ipsListResponse.isOk || !Array.isArray(ipsListResponse.response?.ips))
+                        throw new Error('Node did not return a valid IP list');
+                    if (!ipsListResponse.response.ips.length) return;
 
                     const ips = ipsListResponse.response.ips;
                     let formattedIps: { ip: string; lastSeen: Date }[] = [];
@@ -140,6 +141,7 @@ export class QueryNodesQueueProcessor extends WorkerHost implements OnApplicatio
                         ips: formattedIps,
                     };
                 } catch (error) {
+                    failedNodes.push({ nodeUuid: node.uuid, nodeName: node.name });
                     this.logger.warn(`Failed to fetch IPs from node ${node.uuid}: ${error}`);
                 } finally {
                     nodesCompleted++;
@@ -156,9 +158,10 @@ export class QueryNodesQueueProcessor extends WorkerHost implements OnApplicatio
             const result = mapped.filter((node) => node !== undefined);
 
             return {
-                success: true,
+                success: failedNodes.length < nodes.length,
                 userId: job.data.userId,
                 nodes: result,
+                failedNodes,
             } satisfies IGetIpsListResult['result'];
         } catch (error) {
             this.logger.error(`Failed to fetch IPs list: ${error}`);

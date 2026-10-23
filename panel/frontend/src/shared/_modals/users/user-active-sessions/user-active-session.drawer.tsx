@@ -25,14 +25,24 @@ export const UserActiveSessionDrawer = NiceModal.create((props: IProps) => {
         drawer: true
     })
 
-    const { dropAll, dropIp, dropNode, isCompleted, isFailed, nodes, progress, refresh } =
-        useUserActiveSessions(userId)
+    const {
+        dropAll,
+        dropIp,
+        dropNode,
+        isCompleted,
+        isFailed,
+        nodes,
+        failedNodes,
+        progress,
+        refresh
+    } = useUserActiveSessions(userId)
 
     const renderContent = () => {
         if (isFailed) return <FailedStateWidget onDropAll={dropAll} onRefresh={refresh} />
         if (isCompleted) {
             return (
                 <ResultsWidget
+                    failedNodes={failedNodes}
                     nodes={nodes ?? []}
                     onDropAll={dropAll}
                     onDropIp={dropIp}

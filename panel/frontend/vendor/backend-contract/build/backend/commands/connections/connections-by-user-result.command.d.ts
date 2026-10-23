@@ -18,6 +18,10 @@ export declare namespace ConnectionsByUserResultCommand {
             result: z.ZodNullable<z.ZodObject<{
                 success: z.ZodBoolean;
                 userId: z.ZodNumber;
+                failedNodes: z.ZodOptional<z.ZodArray<z.ZodObject<{
+                    nodeUuid: z.ZodUUID;
+                    nodeName: z.ZodString;
+                }, z.core.$strip>>>;
                 nodes: z.ZodArray<z.ZodObject<{
                     nodeUuid: z.ZodUUID;
                     nodeName: z.ZodString;

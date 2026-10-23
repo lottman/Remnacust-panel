@@ -745,7 +745,8 @@
             "progress": "{{completed}} تا از {{total}} نود تکمیل شده",
             "job-failed-description": "دریافت نشست‌های فعال موفقیت‌آمیز نبود",
             "active-ips-across-nodes": "آدرس‌های آیپی فعال",
-            "distinct-ips": "آیپی‌های مجزا"
+            "distinct-ips": "آیپی‌های مجزا",
+            "partial-results": "نتایج ناقص است. دریافت اطلاعات از این نودها ممکن نشد: {{nodes}}. اسکن را دوباره انجام دهید."
         }
     },
     "detailed-user-info-drawer": {

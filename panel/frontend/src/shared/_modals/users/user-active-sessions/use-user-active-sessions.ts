@@ -138,6 +138,7 @@ export const useUserActiveSessions = (userId: number) => {
         isCompleted,
         isFailed,
         nodes: connectionsByUserResult?.result?.nodes,
+        failedNodes: connectionsByUserResult?.result?.failedNodes ?? [],
         progress: connectionsByUserResult?.progress,
         refresh
     }

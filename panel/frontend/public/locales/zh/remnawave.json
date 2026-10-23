@@ -745,7 +745,8 @@
             "progress": "已完成 {{completed}} 个，共 {{total}} 个",
             "job-failed-description": "无法获取活动会话",
             "active-ips-across-nodes": "活跃的 IP 地址",
-            "distinct-ips": "独立的IP地址"
+            "distinct-ips": "独立的IP地址",
+            "partial-results": "结果不完整。无法查询以下节点：{{nodes}}。请重试扫描。"
         }
     },
     "detailed-user-info-drawer": {

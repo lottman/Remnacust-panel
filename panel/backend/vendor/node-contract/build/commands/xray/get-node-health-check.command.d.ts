@@ -7,6 +7,7 @@ export declare namespace GetNodeHealthCheckCommand {
             xrayInternalStatusCached: z.ZodBoolean;
             xrayVersion: z.ZodNullable<z.ZodString>;
             nodeVersion: z.ZodString;
+            pluginSyncAckSupported: z.ZodOptional<z.ZodBoolean>;
             nativePortPlansSupported: z.ZodOptional<z.ZodBoolean>;
             profileGraphDeliverySupported: z.ZodOptional<z.ZodBoolean>;
             portPlanStateSupported: z.ZodOptional<z.ZodBoolean>;

@@ -12,6 +12,7 @@ var GetNodeHealthCheckCommand;
             xrayInternalStatusCached: zod_1.z.boolean(),
             xrayVersion: zod_1.z.string().nullable(),
             nodeVersion: zod_1.z.string(),
+            pluginSyncAckSupported: zod_1.z.boolean().optional(),
             nativePortPlansSupported: zod_1.z.boolean().optional(),
             profileGraphDeliverySupported: zod_1.z.boolean().optional(),
             portPlanStateSupported: zod_1.z.boolean().optional(),

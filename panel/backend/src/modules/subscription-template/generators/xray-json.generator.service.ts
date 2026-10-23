@@ -262,7 +262,11 @@ export class XrayJsonGeneratorService {
                 if (!outboundConfig) continue;
 
                 const templateOutbounds = [...(baseTemplate.outbounds ?? [])];
-                const routing = this.buildDomainRulesRouting(host, templateOutbounds);
+                const routing = this.buildDomainRulesRouting(
+                    host,
+                    templateOutbounds,
+                    baseTemplate.routing,
+                );
 
                 const { remnawave: _injector, ...clientTemplate } = baseTemplate;
                 append({
@@ -285,6 +289,7 @@ export class XrayJsonGeneratorService {
     private buildDomainRulesRouting(
         host: ResolvedProxyConfig,
         templateOutbounds: Outbound[],
+        templateRouting: XrayJsonConfig['routing'],
     ): object | undefined {
         const rules = host.metadata.domainRules;
         if (
@@ -300,25 +305,33 @@ export class XrayJsonGeneratorService {
         );
         if (domains.length === 0) return undefined;
 
-        const hasOutbound = (tag: string) =>
-            templateOutbounds.some((outbound) => outbound.tag === tag) || tag === 'proxy';
+        let blockTag = 'block';
+        while (
+            templateOutbounds.some(
+                (outbound) => outbound.tag === blockTag && outbound.protocol !== 'blackhole',
+            )
+        )
+            blockTag = `_${blockTag}`;
+        if (!templateOutbounds.some((outbound) => outbound.tag === blockTag))
+            templateOutbounds.push({ tag: blockTag, protocol: 'blackhole' } as Outbound);
         if (rules.mode === 'DENY') {
-            if (!hasOutbound('block')) {
-                templateOutbounds.push({ tag: 'block', protocol: 'blackhole' } as Outbound);
-            }
             return {
                 domainStrategy: 'IPIfNonMatch',
-                rules: [{ domain: domains, outboundTag: 'block' }],
+                ...templateRouting,
+                // Host restrictions take priority; unrelated template/geofile routing remains effective.
+                rules: [
+                    { domain: domains, outboundTag: blockTag },
+                    ...(templateRouting?.rules ?? []),
+                ],
             };
         }
-        if (!hasOutbound('block')) {
-            templateOutbounds.push({ tag: 'block', protocol: 'blackhole' } as Outbound);
-        }
         return {
+            ...templateRouting,
             domainStrategy: 'IPIfNonMatch',
+            // ALLOW_ONLY is a restrictive override; appending manual rules could bypass its deny rule.
             rules: [
                 { domain: domains, outboundTag: 'proxy' },
-                { network: 'tcp,udp', outboundTag: 'block' },
+                { network: 'tcp,udp', outboundTag: blockTag },
             ],
         };
     }

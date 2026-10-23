@@ -5,13 +5,14 @@ import { Logger } from '@nestjs/common';
 import { CommandBus, EventBus, QueryBus } from '@nestjs/cqrs';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 
+import { usageOwner } from '@common/utils/device-identity';
 import { EVENTS } from '@libs/contracts/constants/events/events';
 
 import { TorrentBlockerEvent, UserEvent } from '@integration-modules/notifications/interfaces';
 
+import { DeviceAccessService } from '@modules/hwid-user-devices/device-access.service';
 import { CreateTorrentReportCommand } from '@modules/node-plugins/commands/create-torrent-report';
 import { BaseTorrentBlockerReportEntity } from '@modules/node-plugins/entities';
-import { DeviceAccessService } from '@modules/hwid-user-devices/device-access.service';
 import { AddUserToNodeEvent } from '@modules/nodes/events/add-user-to-node';
 import { RemoveUserFromNodeEvent } from '@modules/nodes/events/remove-user-from-node';
 import { GetNodeByUuidQuery } from '@modules/nodes/queries/get-node-by-uuid';
@@ -89,7 +90,9 @@ export class UserEventsQueueProcessor extends WorkerHost {
                     );
 
                     if (!(await this.deviceAccess.synchronizeUserStatus(user))) {
-                        this.logger.error(`Could not confirm node-side access removal for user ${user.id}`);
+                        this.logger.error(
+                            `Could not confirm node-side access removal for user ${user.id}`,
+                        );
                     }
 
                     break;
@@ -160,9 +163,17 @@ export class UserEventsQueueProcessor extends WorkerHost {
 
     private async handleFireTorrentBlockerEvent(job: Job<IFireTorrentBlockerEventJobData>) {
         try {
-            const { event, nodeUuid, report } = job.data;
-
-            const id = BigInt(job.data.id);
+            const { event, nodeUuid } = job.data;
+            const owner = usageOwner(job.data.id);
+            if (!owner || !/^[1-9][0-9]{0,18}$/.test(owner)) {
+                this.logger.warn('Ignoring torrent report with an unrecognized user identity');
+                return;
+            }
+            const report = {
+                ...job.data.report,
+                actionReport: { ...job.data.report.actionReport, userId: owner },
+            };
+            const id = BigInt(owner);
 
             const getUserResult = await this.queryBus.execute(
                 new GetUserByUniqueFieldQuery(

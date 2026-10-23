@@ -1,7 +1,7 @@
 import { load } from 'js-yaml';
-import { inflateSync } from 'node:zlib';
 
 import { MAX_GEOFILE_BYTES } from './download-geofile';
+import { validateSrs } from './validate-srs';
 
 export const GEOFILE_KINDS = [
     'geoip',
@@ -125,15 +125,7 @@ export function validateGeofile(data: Buffer, kind: GeofileKind): void {
     if (!GEOFILE_KINDS.includes(kind) || !data.length || data.length > MAX_GEOFILE_BYTES)
         throw new Error('geofile-size-or-kind');
     if (kind === 'geoip' || kind === 'geosite') return validateDat(data, kind);
-    if (kind === 'singbox-srs') {
-        if (data.subarray(0, 3).toString() !== 'SRS' || data[3] < 1 || data[3] > 4)
-            throw new Error('geofile-srs');
-        const body = inflateSync(data.subarray(4), { maxOutputLength: 64 * 1024 * 1024 });
-        const count = varint(body, { offset: 0 });
-        if (!Number.isSafeInteger(count) || count < 1 || count > 100_000 || body.length < 3)
-            throw new Error('geofile-srs');
-        return;
-    }
+    if (kind === 'singbox-srs') return validateSrs(data);
     if (data.length > 8 * 1024 * 1024) throw new Error('geofile-text-size');
     const text = utf8(data);
     // eslint-disable-next-line no-control-regex -- Reject control bytes while allowing text whitespace.

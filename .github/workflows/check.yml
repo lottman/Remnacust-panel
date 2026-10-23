@@ -57,7 +57,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: lottman/Remnacust-node
-          ref: 4ea4b163e24a859545b298a1c8584d0e9e9ee048
+          ref: d68477a271298a4ca9883e4eed6eb42bcda49449
           path: node-repository
       - uses: actions/setup-node@v4
         with:
@@ -79,6 +79,16 @@ jobs:
           DIRECT_URL: postgresql://postgres@127.0.0.1:55439/postgres
       - name: Check access policies and limits with PostgreSQL
         run: node tests/hwid-default-database.integration.cjs && node tests/host-policy-database.integration.cjs && node tests/limit-management-database.integration.cjs && node tests/device-reconciliation-database.integration.cjs && node tests/node-health-retention-database.integration.cjs
+      - name: Check concurrent geofile imports across API processes
+        run: |
+          node - <<'NODE'
+          const {PrismaClient}=require('@prisma/client');
+          const database=new PrismaClient({datasourceUrl:'postgresql://postgres@127.0.0.1:55439/postgres'});
+          (async()=>{try{await database.$executeRawUnsafe('CREATE DATABASE remnacust_test_geofiles');}finally{await database.$disconnect();}})().catch(error=>{console.error(error);process.exitCode=1;});
+          NODE
+          node --test tests/geofiles-concurrent-import.integration.cjs
+        env:
+          TEST_GEOFILES_DATABASE_URL: postgresql://postgres@127.0.0.1:55439/remnacust_test_geofiles
       - name: Check hidden host injection with PostgreSQL
         run: node tests/xray-hidden-hosts-database.integration.cjs
         env:

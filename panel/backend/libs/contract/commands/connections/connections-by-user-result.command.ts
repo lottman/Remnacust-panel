@@ -31,6 +31,9 @@ export namespace ConnectionsByUserResultCommand {
                 .object({
                     success: z.boolean(),
                     userId: z.number(),
+                    failedNodes: z
+                        .array(z.object({ nodeUuid: z.uuid(), nodeName: z.string() }))
+                        .optional(),
                     nodes: z.array(
                         z.object({
                             nodeUuid: z.uuid(),

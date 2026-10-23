@@ -1,5 +1,6 @@
-import { Stack } from '@mantine/core'
+import { Alert, Stack } from '@mantine/core'
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { TbRadar } from 'react-icons/tb'
 
 import { EmptyPageLayout } from '@shared/ui/layouts/empty-page'
@@ -10,6 +11,7 @@ import { SummaryCardWidget } from './summary-card.widget'
 import { ActiveSessionNode } from './use-user-active-sessions'
 
 interface IProps {
+    failedNodes?: { nodeUuid: string; nodeName: string }[]
     nodes: ActiveSessionNode[]
     onDropAll: () => void
     onDropIp: (ip: string, nodeUuid: string) => void
@@ -17,7 +19,15 @@ interface IProps {
     onRefresh: () => void
 }
 
-export const ResultsWidget = ({ nodes, onDropAll, onDropIp, onDropNode, onRefresh }: IProps) => {
+export const ResultsWidget = ({
+    nodes,
+    failedNodes = [],
+    onDropAll,
+    onDropIp,
+    onDropNode,
+    onRefresh
+}: IProps) => {
+    const { t } = useTranslation()
     const { distinctIps, totalIps } = useMemo(() => {
         const allIps = nodes.flatMap((node) => node.ips.map((item) => item.ip))
         return { distinctIps: new Set(allIps).size, totalIps: allIps.length }
@@ -27,6 +37,13 @@ export const ResultsWidget = ({ nodes, onDropAll, onDropIp, onDropNode, onRefres
 
     return (
         <Stack gap="md">
+            {failedNodes.length > 0 && (
+                <Alert color="yellow">
+                    {t('active-sessions-drawer.widget.partial-results', {
+                        nodes: failedNodes.map((node) => node.nodeName).join(', ')
+                    })}
+                </Alert>
+            )}
             <SummaryCardWidget
                 distinctIps={distinctIps}
                 ipStats={hasNodes && <IpStatsWidget nodes={nodes} />}

@@ -20,6 +20,7 @@ export class ConnectionsByUserResultResponseModel {
         success: boolean;
         userId: number;
         nodes: IGetIpsListNodeResult[];
+        failedNodes?: { nodeUuid: string; nodeName: string }[];
     } | null;
 
     constructor(data: IGetIpsListResult) {

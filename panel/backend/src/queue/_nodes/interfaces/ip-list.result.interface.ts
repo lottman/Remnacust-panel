@@ -19,6 +19,7 @@ export interface IGetIpsListResult {
         success: boolean;
         userId: number;
         nodes: IGetIpsListNodeResult[];
+        failedNodes?: { nodeUuid: string; nodeName: string }[];
     } | null;
 }
 

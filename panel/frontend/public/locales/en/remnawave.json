@@ -745,7 +745,8 @@
       "progress": "Completed {{completed}} of {{total}} nodes",
       "job-failed-description": "Failed to fetch active sessions.",
       "active-ips-across-nodes": "Active IP addresses",
-      "distinct-ips": "Distinct IPs"
+      "distinct-ips": "Distinct IPs",
+      "partial-results": "Partial results. Could not query these nodes: {{nodes}}. Try again to complete the scan."
     }
   },
   "detailed-user-info-drawer": {

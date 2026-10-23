@@ -25,6 +25,9 @@ var ConnectionsByUserResultCommand;
                 .object({
                 success: zod_1.z.boolean(),
                 userId: zod_1.z.number(),
+                failedNodes: zod_1.z
+                    .array(zod_1.z.object({ nodeUuid: zod_1.z.uuid(), nodeName: zod_1.z.string() }))
+                    .optional(),
                 nodes: zod_1.z.array(zod_1.z.object({
                     nodeUuid: zod_1.z.uuid(),
                     nodeName: zod_1.z.string(),

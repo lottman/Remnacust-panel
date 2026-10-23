@@ -134,7 +134,10 @@ export class AxiosService {
         }
     }
 
-    private readonly nodeVersions = new Map<string, { version: string; expires: number }>();
+    private readonly nodeVersions = new Map<
+        string,
+        { version: string; expires: number; strictPluginAck: boolean }
+    >();
     private readonly versionRequests = new Map<string, Promise<TResult<string>>>();
 
     private connectionKey(opts: INodeConnectionOpts): string {
@@ -145,12 +148,21 @@ export class AxiosService {
         return `remnacust:node-api:inbounds:${createHash('sha256').update(this.connectionKey(opts)).digest('hex')}`;
     }
 
-    private rememberVersion(opts: INodeConnectionOpts, version: string): void {
+    private rememberVersion(
+        opts: INodeConnectionOpts,
+        version: string,
+        strictPluginAck?: boolean,
+    ): void {
         const key = this.connectionKey(opts);
+        const previous = this.nodeVersions.get(key);
         this.nodeVersions.delete(key);
         if (this.nodeVersions.size >= 1000)
             this.nodeVersions.delete(this.nodeVersions.keys().next().value!);
-        this.nodeVersions.set(key, { version, expires: Date.now() + 60_000 });
+        this.nodeVersions.set(key, {
+            version,
+            expires: Date.now() + 60_000,
+            strictPluginAck: strictPluginAck ?? previous?.strictPluginAck ?? false,
+        });
     }
 
     private async getNodeVersion(opts: INodeConnectionOpts): Promise<TResult<string>> {
@@ -729,10 +741,18 @@ export class AxiosService {
         });
     }
 
-    public async getNodeHealth(
-        opts: INodeConnectionOpts,
-    ): Promise<TResult<GetNodeHealthCheckCommand.Response['response'] & { profileGraphDeliverySupported?: boolean }>> {
-        let result = await this.request<{ response: GetNodeHealthCheckCommand.Response['response'] & { profileGraphDeliverySupported?: boolean } }>({
+    public async getNodeHealth(opts: INodeConnectionOpts): Promise<
+        TResult<
+            GetNodeHealthCheckCommand.Response['response'] & {
+                profileGraphDeliverySupported?: boolean;
+            }
+        >
+    > {
+        let result = await this.request<{
+            response: GetNodeHealthCheckCommand.Response['response'] & {
+                profileGraphDeliverySupported?: boolean;
+            };
+        }>({
             label: 'GET NODE HEALTH',
             path: GetNodeHealthCheckCommand.url,
             opts,
@@ -774,7 +794,7 @@ export class AxiosService {
         }
         const version =
             typeof result.response.nodeVersion === 'string' ? result.response.nodeVersion : '';
-        this.rememberVersion(opts, version);
+        this.rememberVersion(opts, version, result.response.pluginSyncAckSupported === true);
         return ok({ ...result.response, nodeVersion: version });
     }
 
@@ -1133,7 +1153,7 @@ export class AxiosService {
                 ),
             );
         }
-        return this.request<SyncCommand.Response>({
+        const result = await this.request<SyncCommand.Response>({
             label: 'SYNC-NODE-PLUGINS',
             path: SyncCommand.url,
             opts,
@@ -1142,6 +1162,21 @@ export class AxiosService {
             logAxiosError: false,
             timeout: 10_000,
         });
+        // Older nodes return false for an already absent plugin. New nodes advertise strict ACKs.
+        if (
+            result.isOk &&
+            result.response.accepted === false &&
+            data.plugin === null &&
+            !this.nodeVersions.get(this.connectionKey(opts))?.strictPluginAck
+        )
+            return ok({ accepted: true });
+        if (result.isOk && result.response.accepted !== true)
+            return fail(
+                ERRORS.NODE_ERROR_WITH_MSG.withMessage(
+                    'Node did not accept the plugin configuration',
+                ),
+            );
+        return result;
     }
 
     public async collectTorrentBlockerReports(

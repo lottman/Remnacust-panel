@@ -745,7 +745,8 @@
             "progress": "Обработано нод: {{completed}} из {{total}}",
             "job-failed-description": "Не удалось собрать активные сессии.",
             "active-ips-across-nodes": "Активные IP-адреса",
-            "distinct-ips": "Уникальных IP"
+            "distinct-ips": "Уникальных IP",
+            "partial-results": "Неполные результаты. Не удалось опросить ноды: {{nodes}}. Повторите обход."
         }
     },
     "detailed-user-info-drawer": {

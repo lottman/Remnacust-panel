@@ -199,50 +199,53 @@ export class GeofilesService {
                 throw new BadRequestException('geofile-invalid-or-unreachable');
             }
             const sha256 = createHash('sha256').update(data).digest('hex');
-            await mkdir(this.root, { recursive: true, mode: 0o700 });
-            const existing = (await this.list()).find(
-                (item) => item.sha256 === sha256 && item.kind === kind,
-            );
-            if (existing) return existing;
-            // Atomic slot reservation bounds storage across API workers: 32 × 64 MiB.
-            for (let slot = 0; slot < MAX_FILES; slot++) {
-                const directory = join(this.root, String(slot).padStart(2, '0'));
-                try {
-                    await mkdir(directory, { mode: 0o700 });
-                } catch (error) {
-                    if ((error as NodeJS.ErrnoException).code === 'EEXIST') continue;
-                    throw error;
+            // Share the existing cross-worker reference lock with deletion and template saves.
+            return await this.withReferenceLock(async () => {
+                await mkdir(this.root, { recursive: true, mode: 0o700 });
+                const existing = (await this.list()).find(
+                    (item) => item.sha256 === sha256 && item.kind === kind,
+                );
+                if (existing) return existing;
+                // Atomic slot reservation bounds storage across API workers: 32 × 64 MiB.
+                for (let slot = 0; slot < MAX_FILES; slot++) {
+                    const directory = join(this.root, String(slot).padStart(2, '0'));
+                    try {
+                        await mkdir(directory, { mode: 0o700 });
+                    } catch (error) {
+                        if ((error as NodeJS.ErrnoException).code === 'EEXIST') continue;
+                        throw error;
+                    }
+                    const id = slot.toString(16).padStart(2, '0') + randomBytes(16).toString('hex');
+                    const filename = `${sha256}.${GEOFILE_EXTENSIONS[kind]}`;
+                    const item: StoredGeofile = {
+                        id,
+                        name: name.trim(),
+                        kind,
+                        size: data.length,
+                        sha256,
+                        filename,
+                        createdAt: new Date().toISOString(),
+                        url: this.base + id + '/' + filename,
+                        ...(['geoip', 'geosite'].includes(kind)
+                            ? { categories: datCategories(data).slice(0, 1000) }
+                            : {}),
+                    };
+                    try {
+                        await writeFile(join(directory, 'data'), data, { flag: 'wx', mode: 0o600 });
+                        await writeFile(join(directory, 'meta.tmp'), JSON.stringify(item), {
+                            flag: 'wx',
+                            mode: 0o600,
+                        });
+                        // Readers see either an uncommitted slot or complete metadata across workers.
+                        await rename(join(directory, 'meta.tmp'), join(directory, 'meta.json'));
+                        return item;
+                    } catch (error) {
+                        await rm(directory, { recursive: true, force: true });
+                        throw error;
+                    }
                 }
-                const id = slot.toString(16).padStart(2, '0') + randomBytes(16).toString('hex');
-                const filename = `${sha256}.${GEOFILE_EXTENSIONS[kind]}`;
-                const item: StoredGeofile = {
-                    id,
-                    name: name.trim(),
-                    kind,
-                    size: data.length,
-                    sha256,
-                    filename,
-                    createdAt: new Date().toISOString(),
-                    url: this.base + id + '/' + filename,
-                    ...(['geoip', 'geosite'].includes(kind)
-                        ? { categories: datCategories(data).slice(0, 1000) }
-                        : {}),
-                };
-                try {
-                    await writeFile(join(directory, 'data'), data, { flag: 'wx', mode: 0o600 });
-                    await writeFile(join(directory, 'meta.tmp'), JSON.stringify(item), {
-                        flag: 'wx',
-                        mode: 0o600,
-                    });
-                    // Readers see either an uncommitted slot or complete metadata across workers.
-                    await rename(join(directory, 'meta.tmp'), join(directory, 'meta.json'));
-                    return item;
-                } catch (error) {
-                    await rm(directory, { recursive: true, force: true });
-                    throw error;
-                }
-            }
-            throw new ConflictException('geofile-storage-full');
+                throw new ConflictException('geofile-storage-full');
+            });
         } finally {
             this.active--;
         }

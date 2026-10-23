@@ -83,12 +83,15 @@ export class NodePluginsProcessor extends WorkerHost {
                     },
                 );
 
-                if (!response.isOk) {
-                    this.logger.error(`Failed to sync node plugins: ${response.message}`);
+                if (!response.isOk || response.response.accepted !== true) {
+                    const message = response.isOk
+                        ? 'Node did not accept plugin removal'
+                        : response.message;
+                    this.logger.error(`Failed to sync node plugins: ${message}`);
                     return {
                         success: false,
                         nodeUuid,
-                        error: response.message,
+                        error: message,
                     };
                 }
 
@@ -121,11 +124,15 @@ export class NodePluginsProcessor extends WorkerHost {
                 },
             );
 
-            if (!syncNodePluginsResponse.isOk) {
-                this.logger.error(
-                    `Failed to sync node plugins: ${syncNodePluginsResponse.message}`,
-                );
-                return;
+            if (
+                !syncNodePluginsResponse.isOk ||
+                syncNodePluginsResponse.response.accepted !== true
+            ) {
+                const message = syncNodePluginsResponse.isOk
+                    ? 'Node did not accept the plugin configuration'
+                    : syncNodePluginsResponse.message;
+                this.logger.error(`Failed to sync node plugins: ${message}`);
+                return { success: false, nodeUuid, error: message };
             }
 
             this.logger.log(`Node plugins synced successfully: ${nodeUuid}`);

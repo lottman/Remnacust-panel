@@ -3942,7 +3942,7 @@
     "preset-private": "Private IP ranges only.",
     "preset-lite": "A smaller selection of common services; fewer categories than the full GeoSite dataset.",
     "delivery-title": "How rules reach the app",
-    "delivery-xray": "Xray JSON receives selected DAT categories as ordinary routing rules inside the full configuration. No separate DAT download is needed. Import or update the full JSON subscription; a plain VLESS link cannot carry these rules.",
+    "delivery-xray": "Without downloads, selected categories are embedded in the full JSON subscription. With downloads, Happ and INCY receive DAT files and a profile for the initial download; other Xray clients receive inline rules. DIRECT, REJECT and groups work in both modes.",
     "delivery-native": "Choose delivery per file. Off: rules are embedded in the full subscription. On: the app downloads a remote rule set; the server converts DAT to the app format. Both modes use the selected action: DIRECT, REJECT or a configured group/proxy. Server and client updates use separate schedules.",
     "delivery-inline": "Embedded in subscription",
     "delivery-download": "Downloaded by app",
@@ -3950,7 +3950,7 @@
     "download-to-client-help": "Off: embed rules in the subscription. On: download a rule set. In both modes, choose DIRECT, REJECT (block) or a configured group/proxy. Changing delivery does not change the action.",
     "client-interval": "Client update interval, minutes",
     "client-interval-help": "From 5 minutes to 30 days, sent as update_interval / interval. The app performs the first download; manual updates may bypass its schedule.",
-    "xray-download-limit": "Xray JSON embeds rules in the subscription. Automatic initial installation of arbitrary DAT files is not supported by every app; geodata updates require an existing file.",
+    "xray-download-limit": "Separate downloads are available in Happ and INCY versions supporting subscription routing profiles. Other Xray apps receive inline rules. Reconnect after refreshing the subscription. Manual routing takes precedence.",
     "srs-download-limit": "Binary SRS uses a remote sing-box rule set. Import the source JSON for a mode without downloads.",
     "server-refresh": "Server file updates",
     "server-refresh-help": "This library setting applies immediately to every template using the file. For a PC upload, supply an HTTPS source. The last working copy is retained on errors.",
@@ -3962,7 +3962,10 @@
     "next-update": "Next allowed check",
     "refresh-failed": "Could not update the file or save settings. The last working copy is retained. Check the HTTPS source and format.",
     "refresh-deferred": "No update performed: the interval is still active, a download is running, or the source failed. Check the time and status above.",
-    "save-refresh": "Save update schedule"
+    "save-refresh": "Save update schedule",
+    "delivery-xray-auto": "Auto download: Happ / INCY",
+    "client-interval-xray-help": "The shared profile uses the longest interval of attached files. INCY receives whole hours rounded up, minimum 1 hour; its local override takes precedence. For Happ, the interval sets a revision stamp on subscription refresh. The app performs downloads and retries.",
+    "xray-download-help": "Multiple DAT files are bundled with separate categories for each source. DIRECT, blocking and groups remain in JSON. If downloads conflict with manual settings or the bundle is too large, the app receives inline rules."
   },
   "template-draft": {
     "warning": "Template warnings",

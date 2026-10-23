@@ -14,6 +14,10 @@ const { materializeGeofiles, geofileReferences } = load(
 );
 const { compileDat } = load(path.join(root, 'compile-dat.ts'), modules);
 const { geofileInterval } = load(path.join(root, 'geofile-delivery.ts'), modules);
+const { XrayGeofileDelivery, datCategory } = load(
+    path.join(root, 'xray-geofile-delivery.ts'),
+    modules,
+);
 
 test('inline DAT keeps DIRECT, REJECT and configured targets in all five formats', async () => {
     const file = { id: '00' + 'a'.repeat(32), kind: 'geosite' };
@@ -149,17 +153,18 @@ test('delivery preserves routing actions and remote mode carries the configured 
             assert.match(remote.rules[0], /,REJECT$/);
         }
     }
-    await assert.rejects(
-        () =>
-            materializeGeofiles(
-                { remnacust: { geofiles: [{ ...ref, downloadToClient: true }] } },
-                'XRAY_JSON',
-                async () => file,
-                dat,
-                { read: async () => fixtures.geosite, datUrl: () => '' },
-            ),
-        /bootstrap/,
+    const fallback = await materializeGeofiles(
+        { remnacust: { geofiles: [{ ...ref, downloadToClient: true }] } },
+        'XRAY_JSON',
+        async () => file,
+        dat,
+        { read: async () => fixtures.geosite, datUrl: () => '' },
     );
+    assert.equal(fallback.outbounds[0].protocol, 'blackhole');
+    assert.deepEqual(fallback.routing.rules[0].domain, [
+        'domain:example.com',
+        'full:ads.example.com',
+    ]);
     for (const value of [0, 299, 2592001, '600', Infinity])
         assert.throws(() => geofileInterval(value));
     assert.equal(geofileInterval(300), 300);
@@ -252,11 +257,50 @@ test('refresh survives restart, keeps immutable bytes, honors cooldown and retai
     let service = create();
     try {
         const file = await service.ingest('Sites', 'geosite', async () => fixtures.geosite);
+        const happ = new XrayGeofileDelivery();
+        const native = await service.prepare(
+            {
+                remnacust: {
+                    geofiles: [
+                        {
+                            id: file.id,
+                            categories: ['example@ads'],
+                            target: 'REJECT',
+                            downloadToClient: true,
+                        },
+                    ],
+                },
+            },
+            'XRAY_JSON',
+            happ,
+        );
+        const header = await happ.header(JSON.stringify([native]), 'refresh-user');
+        const profile = JSON.parse(
+            Buffer.from(header.slice('happ://routing/onadd/'.length), 'base64').toString(),
+        );
+        const bundleUrl = new URL(profile.Geositeurl);
+        const bundleName = bundleUrl.pathname.split('/').at(-1);
+        const bundleSelection = bundleUrl.searchParams.get('selection');
+        const category = datCategory(file.id, 'example@ads');
+        assert.equal(
+            compileDat(await service.bundle(file.id, bundleName, bundleSelection), 'geosite', [
+                category,
+            ]).domains[0].value,
+            'ads.example.com',
+        );
         templates = [
             {
+                templateType: 'XRAY_JSON',
                 templateJson: {
                     remnacust: {
-                        geofiles: [{ id: file.id, categories: ['example'], target: 'DIRECT' }],
+                        geofiles: [
+                            {
+                                id: file.id,
+                                categories: ['example'],
+                                target: 'DIRECT',
+                                downloadToClient: true,
+                            },
+                        ],
                     },
                 },
             },
@@ -283,6 +327,13 @@ test('refresh survives restart, keeps immutable bytes, honors cooldown and retai
             'hex',
         );
         assert.equal(await service.refreshNow(file.id), true);
+        assert.equal(
+            compileDat(await service.bundle(file.id, bundleName, bundleSelection), 'geosite', [
+                category,
+            ]).domains[0].value,
+            'new.example.com',
+            'Bundle cache follows the active source hash',
+        );
         assert.equal(reads, 1);
         assert.deepEqual(
             await read((await service.download(file.id, file.filename)).stream),
@@ -302,6 +353,13 @@ test('refresh survives restart, keeps immutable bytes, honors cooldown and retai
             expected,
         );
         assert.equal((await service.list())[0].refresh.lastError, 'geofile-refresh-failed');
+        assert.equal(
+            compileDat(await service.bundle(file.id, bundleName, bundleSelection), 'geosite', [
+                category,
+            ]).domains[0].value,
+            'new.example.com',
+            'Failed refresh keeps the last usable bundle',
+        );
         assert.equal(reads, 2);
         assert.equal(await service.refreshNow(file.id), false);
         assert.equal(reads, 2);
@@ -317,6 +375,17 @@ test('refresh survives restart, keeps immutable bytes, honors cooldown and retai
             await service.refreshNow(file.id),
             false,
             'Removing a category used by an active template cannot replace the file',
+        );
+        assert.deepEqual(
+            await read((await service.download(file.id, 'latest.dat')).stream),
+            expected,
+        );
+        await due();
+        body = Buffer.concat([fixtures.geosite, fixtures.geosite]);
+        assert.equal(
+            await service.refreshNow(file.id),
+            false,
+            'Ambiguous native categories cannot replace an active Happ dataset',
         );
         assert.deepEqual(
             await read((await service.download(file.id, 'latest.dat')).stream),
@@ -364,6 +433,6 @@ test('refresh survives restart, keeps immutable bytes, honors cooldown and retai
     } finally {
         if (previous === undefined) delete process.env.XERA_BACKUPS_DIR;
         else process.env.XERA_BACKUPS_DIR = previous;
-        await fs.rm(directory, { recursive: true, force: true });
+        await fs.rm(directory, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
     }
 });

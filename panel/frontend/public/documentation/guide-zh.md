@@ -647,11 +647,11 @@ Xray JSON、sing-box、Mihomo、Clash 和 Stash 均提供自动选择。sing-box
 
 ### 应用何时下载地理文件
 
-默认将 GeoIP/GeoSite DAT 转换为完整配置中的内嵌规则。新开关可让支持的应用下载转换后的规则集；Xray JSON 保持内嵌规则。sing-box 原生 JSON/SRS 和 Mihomo/Clash/Stash YAML/text 使用应用格式。需要完整 JSON/YAML 订阅；单独的 VLESS 链接无法携带路由。客户端间隔和服务端自动下载分别设置，详见下文。
+默认将 GeoIP/GeoSite DAT 转换为完整配置中的内嵌规则。新开关可让支持的应用下载转换后的规则集；Xray JSON 为 Happ 和 INCY 提供 DAT 首次下载配置，其他客户端使用内嵌规则。sing-box 原生 JSON/SRS 和 Mihomo/Clash/Stash YAML/text 使用应用格式。需要完整 JSON/YAML 订阅；单独的 VLESS 链接无法携带路由。客户端间隔和服务端自动下载分别设置，详见下文。
 
 ### 将地理文件下载到客户端
 
-新附件默认关闭“下载到客户端”：规则嵌入完整订阅。开启后使用远程规则集。两种模式均可独立选择 DIRECT、REJECT（拦截）、已配置的组或代理。更改传递方式会保留动作；新附件默认使用 DIRECT。服务端将 DAT 转为 sing-box JSON 或 Mihomo/Clash/Stash YAML。客户端间隔为 5 分钟至 30 天，默认一天，写入 update_interval / interval。这是应用的计划，手动重试可能绕过间隔。内嵌规则在订阅本身更新后改变。没有新字段的旧附件保留原有行为。Xray JSON 使用内嵌规则；geodata 更新已有文件，无法保证任意 DAT 的首次安装。SRS 保持为远程二进制集；若要内嵌，请导入源 JSON。
+新附件默认关闭“下载到客户端”：规则嵌入完整订阅。开启后使用远程规则集。两种模式均可独立选择 DIRECT、REJECT（拦截）、已配置的组或代理。更改传递方式会保留动作；新附件默认使用 DIRECT。服务端将 DAT 转为 sing-box JSON 或 Mihomo/Clash/Stash YAML。客户端间隔为 5 分钟至 30 天，默认一天，写入 update_interval / interval。这是应用的计划，手动重试可能绕过间隔。内嵌规则在订阅本身更新后改变。没有新字段的旧附件保留原有行为。对于 Xray JSON，支持订阅路由配置的 Happ 和 INCY 版本接收带签名的 DAT 和 routing 响应头以完成首次下载。文件合并时分类相互隔离；动作保留在 JSON 中。其他 Xray 客户端获得内嵌规则。手动 routing 和现有 geosite/geoip 设置保持不变。配置过大或集合不可用时整体回退为内嵌规则。Happ 间隔控制订阅刷新时的修订标记；实际下载由应用管理。INCY 接收独立的地理文件间隔，向上取整为小时，至少 1 小时；用户本地设置优先。共享配置使用最长文件间隔。SHA-256 避免重复下载未变更的文件。更新后请重新连接。SRS 保持为远程二进制集；若要内嵌，请导入源 JSON。
 
 ### 服务端自动下载与更新保护
 

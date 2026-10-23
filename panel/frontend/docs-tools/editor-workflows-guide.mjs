@@ -49,19 +49,19 @@ const additions = [
         [
             [
                 'Когда приложение скачивает geofiles',
-                'По умолчанию GeoIP/GeoSite DAT встраивается в полную конфигурацию как правила. Новый переключатель позволяет отдельно загружать преобразованный набор в поддерживаемом приложении; Xray JSON остаётся со встроенными правилами. Нативные sing-box JSON/SRS и Mihomo/Clash/Stash YAML/text используют формат приложения. Нужна полная JSON/YAML-подписка, отдельная ссылка VLESS не передаёт маршрутизацию. Клиентский интервал и серверная автозагрузка настраиваются независимо, подробности ниже.'
+                'По умолчанию GeoIP/GeoSite DAT встраивается в полную конфигурацию как правила. Новый переключатель позволяет отдельно загружать преобразованный набор в поддерживаемом приложении; Xray JSON передаёт Happ и INCY профиль первоначальной загрузки DAT, а остальным клиентам — встроенные правила. Нативные sing-box JSON/SRS и Mihomo/Clash/Stash YAML/text используют формат приложения. Нужна полная JSON/YAML-подписка, отдельная ссылка VLESS не передаёт маршрутизацию. Клиентский интервал и серверная автозагрузка настраиваются независимо, подробности ниже.'
             ],
             [
                 'When the app downloads geofiles',
-                'By default, GeoIP/GeoSite DAT is embedded in the full configuration as rules. The new switch downloads a converted rule set in supported apps; Xray JSON retains inline rules. Native sing-box JSON/SRS and Mihomo/Clash/Stash YAML/text use the app format. A full JSON/YAML subscription is required; an individual VLESS link cannot carry routing. Client intervals and server auto downloads are configured separately, as explained below.'
+                'By default, GeoIP/GeoSite DAT is embedded in the full configuration as rules. The new switch downloads a converted rule set in supported apps; Xray JSON delivers a DAT bootstrap profile to Happ/INCY and inline rules to other clients. Native sing-box JSON/SRS and Mihomo/Clash/Stash YAML/text use the app format. A full JSON/YAML subscription is required; an individual VLESS link cannot carry routing. Client intervals and server auto downloads are configured separately, as explained below.'
             ],
             [
                 'زمان دانلود فایل‌های جغرافیایی در برنامه',
-                'به‌صورت پیش‌فرض GeoIP/GeoSite DAT به قوانین داخل پیکربندی کامل تبدیل می‌شود. کلید جدید مجموعه تبدیل‌شده را در برنامه پشتیبانی‌شده دانلود می‌کند؛ Xray JSON قوانین داخلی دارد. JSON/SRS بومی sing-box و YAML/text برای Mihomo/Clash/Stash از قالب برنامه استفاده می‌کنند. اشتراک کامل JSON/YAML لازم است؛ پیوند تکی VLESS مسیریابی ندارد. فاصله کلاینت و دانلود خودکار سرور جدا تنظیم می‌شوند؛ جزئیات در ادامه است.'
+                'به‌صورت پیش‌فرض GeoIP/GeoSite DAT به قوانین داخل پیکربندی کامل تبدیل می‌شود. کلید جدید مجموعه تبدیل‌شده را در برنامه پشتیبانی‌شده دانلود می‌کند؛ Xray JSON نمایه دانلود اولیه DAT را به Happ و INCY و قوانین داخلی را به سایر کلاینت‌ها می‌دهد. JSON/SRS بومی sing-box و YAML/text برای Mihomo/Clash/Stash از قالب برنامه استفاده می‌کنند. اشتراک کامل JSON/YAML لازم است؛ پیوند تکی VLESS مسیریابی ندارد. فاصله کلاینت و دانلود خودکار سرور جدا تنظیم می‌شوند؛ جزئیات در ادامه است.'
             ],
             [
                 '应用何时下载地理文件',
-                '默认将 GeoIP/GeoSite DAT 转换为完整配置中的内嵌规则。新开关可让支持的应用下载转换后的规则集；Xray JSON 保持内嵌规则。sing-box 原生 JSON/SRS 和 Mihomo/Clash/Stash YAML/text 使用应用格式。需要完整 JSON/YAML 订阅；单独的 VLESS 链接无法携带路由。客户端间隔和服务端自动下载分别设置，详见下文。'
+                '默认将 GeoIP/GeoSite DAT 转换为完整配置中的内嵌规则。新开关可让支持的应用下载转换后的规则集；Xray JSON 为 Happ 和 INCY 提供 DAT 首次下载配置，其他客户端使用内嵌规则。sing-box 原生 JSON/SRS 和 Mihomo/Clash/Stash YAML/text 使用应用格式。需要完整 JSON/YAML 订阅；单独的 VLESS 链接无法携带路由。客户端间隔和服务端自动下载分别设置，详见下文。'
             ]
         ]
     ],

@@ -1,3 +1,5 @@
+import type { XrayGeofileDelivery } from './geofiles/xray-geofile-delivery';
+
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { load } from 'js-yaml';
 
@@ -457,6 +459,7 @@ export class SubscriptionTemplateService {
     public async getCachedTemplateByType(
         type: TSubscriptionTemplateType,
         name: string = DEFAULT_TEMPLATE_NAME,
+        happ?: XrayGeofileDelivery,
     ): Promise<object> {
         const cached = await this.rawCacheService.get<object>(
             CACHE_KEYS.SUBSCRIPTION_TEMPLATE(name, type),
@@ -464,7 +467,7 @@ export class SubscriptionTemplateService {
         );
 
         if (cached) {
-            return this.prepareClientTemplate(cached as Record<string, unknown>, type);
+            return this.prepareClientTemplate(cached as Record<string, unknown>, type, happ);
         }
 
         const template =
@@ -511,15 +514,16 @@ export class SubscriptionTemplateService {
             throw new Error('Template content is null');
         }
 
-        return this.prepareClientTemplate(templateContent as Record<string, unknown>, type);
+        return this.prepareClientTemplate(templateContent as Record<string, unknown>, type, happ);
     }
 
     public async prepareClientTemplate(
         config: Record<string, unknown>,
         type: string,
+        happ?: XrayGeofileDelivery,
     ): Promise<object> {
         if (!config?.remnacust) return config;
-        return this.geofiles.prepare(config, type);
+        return this.geofiles.prepare(config, type, happ);
     }
 
     private async removeCachedTemplate(

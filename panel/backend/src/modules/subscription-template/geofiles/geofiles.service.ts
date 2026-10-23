@@ -17,6 +17,7 @@ import { PrismaService } from '@common/database/prisma.service';
 
 import { ClientPoolError } from '../generators/client-pool';
 import { SubscriptionTemplateRepository } from '../repositories/subscription-template.repository';
+import { bundleDat } from './bundle-dat';
 import { compileDat, datCategories, DatRules } from './compile-dat';
 import { downloadGeofile, MAX_GEOFILE_BYTES } from './download-geofile';
 import { datClientFile } from './geofile-delivery';
@@ -28,6 +29,7 @@ import {
     GeofileKind,
     validateGeofile,
 } from './validate-geofile';
+import { DatKind, XrayGeofileDelivery, XrayGeofileFallback } from './xray-geofile-delivery';
 
 const MAX_FILES = 32;
 const ID = /^[0-9a-f]{34}$/;
@@ -53,6 +55,8 @@ export class GeofilesService {
     private active = 0;
     private compiling = 0;
     private readonly compiled = new Map<string, DatRules>();
+    private readonly bundled = new Map<string, Buffer>();
+    private bundling = 0;
     private readonly base: string;
     private readonly secret: string;
     private readonly refreshStore: GeofileRefreshStore;
@@ -71,6 +75,7 @@ export class GeofilesService {
             validate: async (file, data) => {
                 if (!['geoip', 'geosite'].includes(file.kind)) return;
                 const selections = new Set<string>();
+                let nativeXray = false;
                 for (const template of await this.repository.getAllTemplates(true)) {
                     const config =
                         template.templateJson ??
@@ -81,13 +86,19 @@ export class GeofilesService {
                               })
                             : undefined);
                     for (const reference of (config as any)?.remnacust?.geofiles ?? [])
-                        if (reference.id === file.id)
+                        if (reference.id === file.id) {
+                            if (
+                                template.templateType === 'XRAY_JSON' &&
+                                reference.downloadToClient === true
+                            )
+                                nativeXray = true;
                             selections.add(
                                 JSON.stringify({
                                     categories: reference.categories ?? [],
                                     format: template.templateType,
                                 }),
                             );
+                        }
                 }
                 for (const selection of selections) {
                     const { categories, format } = JSON.parse(selection),
@@ -95,6 +106,7 @@ export class GeofilesService {
                     if (['SINGBOX', 'MIHOMO', 'CLASH', 'STASH'].includes(format))
                         datClientFile(rules, format);
                 }
+                if (nativeXray) bundleDat([{ id: file.id, data }]);
             },
         });
     }
@@ -191,6 +203,94 @@ export class GeofilesService {
         return createHmac('sha256', this.secret)
             .update(`remnacust-geofile-v1:${id}:${payload}`)
             .digest('hex');
+    }
+
+    private bundleSignature(id: string, payload: string): string {
+        return createHmac('sha256', this.secret)
+            .update(`remnacust-xray-dat-v1:${id}:${payload}`)
+            .digest('hex');
+    }
+
+    private async bundleContent(kind: DatKind, ids: string[]): Promise<Buffer> {
+        if (
+            !['geoip', 'geosite'].includes(kind) ||
+            !Array.isArray(ids) ||
+            !ids.length ||
+            ids.length > MAX_FILES ||
+            ids.some((id) => typeof id !== 'string' || !ID.test(id)) ||
+            new Set(ids).size !== ids.length
+        )
+            throw new Error('geofile-bundle');
+        const files = [];
+        let bytes = 0;
+        for (const id of ids) {
+            const file = this.activeFile(await this.fileById(id));
+            if (file.kind !== kind || (bytes += file.size) > MAX_GEOFILE_BYTES)
+                throw new Error('geofile-bundle');
+            files.push(file);
+        }
+        const key = files.map((file) => `${file.id}:${file.sha256}`).join(',');
+        const cached = this.bundled.get(key);
+        if (cached) return cached;
+        if (this.bundling >= 2) throw new ServiceUnavailableException('geofile-busy');
+        this.bundling++;
+        try {
+            const sources = [];
+            for (const file of files)
+                sources.push({ id: file.id, data: await this.readActive(file) });
+            const data = bundleDat(sources);
+            if (data.length <= 32 * 1024 * 1024) {
+                while (
+                    this.bundled.size &&
+                    (this.bundled.size >= 2 ||
+                        [...this.bundled.values()].reduce((sum, value) => sum + value.length, 0) +
+                            data.length >
+                            32 * 1024 * 1024)
+                )
+                    this.bundled.delete(this.bundled.keys().next().value!);
+                this.bundled.set(key, data);
+            }
+            return data;
+        } finally {
+            this.bundling--;
+        }
+    }
+
+    private async bundleUrl(kind: DatKind, ids: string[]): Promise<string> {
+        const ordered = [...ids].sort();
+        await this.bundleContent(kind, ordered);
+        const payload = Buffer.from(JSON.stringify({ kind, ids: ordered })).toString('base64url');
+        if (payload.length > 2732) throw new Error('geofile-bundle-size');
+        return `${this.base}${ordered[0]}/bundle-${this.bundleSignature(ordered[0], payload)}.dat?selection=${payload}`;
+    }
+
+    public async bundle(id: string, filename: string, selection: unknown): Promise<Buffer> {
+        try {
+            const match = /^bundle-([a-f0-9]{64})\.dat(?:\.sha256)?$/.exec(filename);
+            if (
+                !ID.test(id) ||
+                !match ||
+                typeof selection !== 'string' ||
+                !/^[A-Za-z0-9_-]{1,2732}$/.test(selection) ||
+                !timingSafeEqual(
+                    Buffer.from(match[1], 'hex'),
+                    Buffer.from(this.bundleSignature(id, selection), 'hex'),
+                )
+            )
+                throw new Error('geofile-bundle');
+            const raw = Buffer.from(selection, 'base64url');
+            if (raw.length > 2048 || raw.toString('base64url') !== selection)
+                throw new Error('geofile-bundle');
+            const { kind, ids } = JSON.parse(raw.toString('utf8'));
+            if (!Array.isArray(ids) || ids[0] !== id) throw new Error('geofile-bundle');
+            const data = await this.bundleContent(kind, ids);
+            return filename.endsWith('.sha256')
+                ? Buffer.from(createHash('sha256').update(data).digest('hex'))
+                : data;
+        } catch (error) {
+            if (error instanceof ServiceUnavailableException) throw error;
+            throw new NotFoundException('Geofile not found');
+        }
     }
 
     private derivedUrl(file: StoredGeofile, categories: string[], format: string): string {
@@ -317,6 +417,7 @@ export class GeofilesService {
     public async prepare(
         config: Record<string, unknown>,
         type: string,
+        happ?: XrayGeofileDelivery,
     ): Promise<Record<string, unknown>> {
         try {
             return await materializeGeofiles(
@@ -327,9 +428,12 @@ export class GeofilesService {
                 {
                     read: (file) => this.readActive(file),
                     datUrl: (file, categories, format) => this.derivedUrl(file, categories, format),
+                    datBundleUrl: (kind, ids) => this.bundleUrl(kind, ids),
                 },
+                happ,
             );
         } catch (error) {
+            if (error instanceof XrayGeofileFallback) throw error;
             throw new ClientPoolError(
                 error instanceof Error ? error.message : 'geofile-configuration',
             );

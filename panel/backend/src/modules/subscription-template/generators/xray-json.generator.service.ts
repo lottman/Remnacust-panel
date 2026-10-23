@@ -213,6 +213,7 @@ export class XrayJsonGeneratorService {
             const templateContent = (await this.subscriptionTemplateService.getCachedTemplateByType(
                 'XRAY_JSON',
                 overrideTemplateName,
+                params.geofileDelivery,
             )) as unknown as XrayJsonConfig;
 
             const configs: string[] = [];
@@ -240,6 +241,7 @@ export class XrayJsonGeneratorService {
                         : ((await this.subscriptionTemplateService.prepareClientTemplate(
                               selectedTemplate as unknown as Record<string, unknown>,
                               'XRAY_JSON',
+                              params.geofileDelivery,
                           )) as unknown as XrayJsonConfig);
 
                 if (

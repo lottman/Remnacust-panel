@@ -319,7 +319,7 @@ export function GeofilesPanel({
                 const download = reference.downloadToClient ?? !dat
                 const target =
                     reference.target ?? (reference.downloadToClient === false ? 'DIRECT' : '')
-                const supported = format !== 'XRAY_JSON'
+                const xray = format === 'XRAY_JSON'
                 return (
                     <Card key={index} p="md" className={styles.card}>
                         <Stack gap="md">
@@ -331,7 +331,9 @@ export function GeofilesPanel({
                                         <Badge variant="light" color="blue">
                                             {t(
                                                 download
-                                                    ? 'geofiles.delivery-download'
+                                                    ? xray
+                                                        ? 'geofiles.delivery-xray-auto'
+                                                        : 'geofiles.delivery-download'
                                                     : 'geofiles.delivery-inline'
                                             )}
                                         </Badge>
@@ -400,7 +402,7 @@ export function GeofilesPanel({
                                 label={t('geofiles.download-to-client')}
                                 description={t('geofiles.download-to-client-help')}
                                 checked={download}
-                                disabled={!supported || item?.kind === 'singbox-srs'}
+                                disabled={item?.kind === 'singbox-srs'}
                                 onChange={(event) =>
                                     patch(
                                         refs.map((ref, i) =>
@@ -415,7 +417,7 @@ export function GeofilesPanel({
                                     )
                                 }
                             />
-                            {!supported && (
+                            {xray && (
                                 <Text size="xs" c="dimmed">
                                     {t('geofiles.xray-download-limit')}
                                 </Text>
@@ -425,11 +427,15 @@ export function GeofilesPanel({
                                     {t('geofiles.srs-download-limit')}
                                 </Text>
                             )}
-                            {download && supported && (
+                            {download && (
                                 <NumberInput
                                     hideControls
                                     label={t('geofiles.client-interval')}
-                                    description={t('geofiles.client-interval-help')}
+                                    description={t(
+                                        xray
+                                            ? 'geofiles.client-interval-xray-help'
+                                            : 'geofiles.client-interval-help'
+                                    )}
                                     min={5}
                                     max={43200}
                                     allowDecimal={false}
@@ -451,7 +457,13 @@ export function GeofilesPanel({
                                 />
                             )}
                             <Text size="xs" c="dimmed">
-                                {t(download ? 'geofiles.download-help' : 'geofiles.inline-help')}
+                                {t(
+                                    download
+                                        ? xray
+                                            ? 'geofiles.xray-download-help'
+                                            : 'geofiles.download-help'
+                                        : 'geofiles.inline-help'
+                                )}
                             </Text>
                             {item && download && !dat && (
                                 <Text size="xs" c="dimmed" dir="ltr" className={styles.path}>

@@ -2,10 +2,10 @@
 
 | Компонент | Remnacust | Официальная основа |
 | --- | --- | --- |
-| Backend и frontend | 1.1.7.49 | Remnawave 3.4.7 |
+| Backend и frontend | 1.1.7.50 | Remnawave 3.4.7 |
 | Агент ноды | 1.1.18-remnacust | Remnawave Node 3.4.3 |
 | Ядро | 1.1.11 | Официальный тег Xray-core v26.10.21 (prerelease) |
-| Страница подписки | 1.1.7.49 | Subscription Page 8.0.1 |
+| Страница подписки | 1.1.7.50 | Subscription Page 8.0.1 |
 
 Панель учитывает метку Remnacust при выборе функций агента. Геопроверка поддерживается с Remnacust Node 1.1.1 и Remnawave Node 3.3.0. Полная таблица старых нод: [NODE-COMPATIBILITY.md](NODE-COMPATIBILITY.md).
 

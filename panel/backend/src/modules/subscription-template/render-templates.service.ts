@@ -6,6 +6,11 @@ import { MihomoGeneratorService } from './generators/mihomo.generator.service';
 import { SingBoxGeneratorService } from './generators/singbox.generator.service';
 import { XrayJsonGeneratorService } from './generators/xray-json.generator.service';
 import { XrayGeneratorService } from './generators/xray.generator.service';
+import {
+    xrayGeofileClient,
+    XrayGeofileDelivery,
+    XrayGeofileFallback,
+} from './geofiles/xray-geofile-delivery';
 import { IGenerateSubscription } from './interfaces';
 import { ResolvedProxyConfig } from './resolve-proxy/interfaces';
 import {
@@ -90,16 +95,56 @@ export class RenderTemplatesService {
                     contentType: SUBSCRIPTION_CONFIG_TYPES['STASH'].CONTENT_TYPE,
                 };
 
-            case 'XRAY_JSON':
-                return {
-                    subscription: await this.xrayJsonGeneratorService.generateConfig({
+            case 'XRAY_JSON': {
+                const configuredHeaders = {
+                    ...srrContext.subscriptionSettings.customResponseHeaders,
+                    ...srrContext.headersToApply,
+                };
+                const hasRouting = Object.keys(configuredHeaders).some(
+                    (key) => key.toLowerCase() === 'routing',
+                );
+                const client = xrayGeofileClient(srrContext.userAgent);
+                const delivery =
+                    client && !hasRouting ? new XrayGeofileDelivery(client) : undefined;
+                const generate = (geofileDelivery?: XrayGeofileDelivery) =>
+                    this.xrayJsonGeneratorService.generateConfig({
                         hosts: formattedHosts,
                         isExtendedClient: srrContext.isExtendedClient,
                         overrideTemplateName: srrContext.overrideTemplateName,
                         ignoreHostXrayJsonTemplate: srrContext.ignoreHostXrayJsonTemplate,
-                    }),
+                        geofileDelivery,
+                    });
+                let subscription: string;
+                try {
+                    subscription = await generate(delivery);
+                    const header =
+                        delivery && subscription
+                            ? await delivery.header(subscription, String(user.id))
+                            : undefined;
+                    if (header)
+                        srrContext.headersToApply = {
+                            ...srrContext.headersToApply,
+                            routing: header,
+                            ...(client === 'incy' &&
+                            !Object.keys(configuredHeaders).some(
+                                (key) => key.toLowerCase() === 'routing-geo-update-interval',
+                            )
+                                ? { 'routing-geo-update-interval': String(delivery!.intervalHours) }
+                                : {}),
+                        };
+                } catch (error) {
+                    if (!(error instanceof XrayGeofileFallback)) throw error;
+                    subscription = await generate();
+                    srrContext.headersToApply = {
+                        ...srrContext.headersToApply,
+                        'x-remnacust-geofiles-delivery': `inline; reason=${error.reason}`,
+                    };
+                }
+                return {
+                    subscription,
                     contentType: SUBSCRIPTION_CONFIG_TYPES['XRAY_JSON'].CONTENT_TYPE,
                 };
+            }
 
             default:
                 return { subscription: '', contentType: '' };

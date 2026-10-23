@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 
 import { pipeline } from 'node:stream/promises';
 
-import { Controller, Get, NotFoundException, Param, Req, Res } from '@nestjs/common';
+import { Controller, Get, NotFoundException, Param, Query, Req, Res } from '@nestjs/common';
 
 import { AxiosService } from '@common/axios/axios.service';
 
@@ -14,14 +14,20 @@ export class GeofilesController {
     async download(
         @Param('id') id: string,
         @Param('filename') filename: string,
+        @Query('selection') selection: unknown,
         @Req() request: Request,
         @Res() response: Response,
     ) {
         if (
             !/^[0-9a-f]{34}$/.test(id) ||
-            !/^(?:[0-9a-f]{64}\.(?:dat|srs|json|yaml|txt)|latest\.(?:dat|srs|json|yaml|txt)|rules-[A-Za-z0-9_-]{1,2732}\.[a-f0-9]{64}\.(?:json|yaml))$/.test(
+            !/^(?:[0-9a-f]{64}\.(?:dat|srs|json|yaml|txt)|latest\.(?:dat|srs|json|yaml|txt)|rules-[A-Za-z0-9_-]{1,2732}\.[a-f0-9]{64}\.(?:json|yaml)|bundle-[a-f0-9]{64}\.dat(?:\.sha256)?)$/.test(
                 filename,
             )
+        )
+            throw new NotFoundException();
+        if (
+            filename.startsWith('bundle-') &&
+            (typeof selection !== 'string' || !/^[A-Za-z0-9_-]{1,2732}$/.test(selection))
         )
             throw new NotFoundException();
         const abort = new AbortController();
@@ -35,6 +41,7 @@ export class GeofilesController {
                 `/api/sub/geofiles/${id}/${filename}`,
                 {
                     responseType: 'stream',
+                    params: filename.startsWith('bundle-') ? { selection } : undefined,
                     maxRedirects: 0,
                     signal: abort.signal,
                     timeout: 30_000,
@@ -49,7 +56,9 @@ export class GeofilesController {
                 throw new NotFoundException();
             }
             response.set({
-                'Content-Type': 'application/octet-stream',
+                'Content-Type': filename.endsWith('.sha256')
+                    ? 'text/plain; charset=utf-8'
+                    : 'application/octet-stream',
                 'Content-Length': String(size),
                 'Content-Disposition': `attachment; filename="${filename}"`,
                 'Cache-Control': /^[a-f0-9]{64}\./.test(filename)

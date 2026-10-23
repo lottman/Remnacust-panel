@@ -3942,7 +3942,7 @@
         "preset-private": "仅包含私有 IP 范围。",
         "preset-lite": "常用服务的精简集，分类少于完整的 GeoSite。",
         "delivery-title": "规则如何传递到应用",
-        "delivery-xray": "Xray JSON 会将所选 DAT 分类转换为完整配置中的普通路由规则，无需单独下载 DAT。请导入或更新完整 JSON 订阅；单独的 VLESS 链接无法携带这些规则。",
+        "delivery-xray": "关闭下载时，所选分类嵌入完整 JSON 订阅。开启后，Happ 和 INCY 接收 DAT 文件及首次下载配置；其他 Xray 客户端接收内嵌规则。两种模式均支持 DIRECT、REJECT 和分组。",
         "delivery-native": "逐文件选择传递方式。关闭：规则嵌入完整订阅。开启：应用下载远程规则集；服务端将 DAT 转换为应用格式。两种模式均使用所选动作：DIRECT、REJECT 或已配置的组/代理。服务端与客户端使用独立的更新计划。",
         "delivery-inline": "嵌入订阅",
         "delivery-download": "由应用下载",
@@ -3950,7 +3950,7 @@
         "download-to-client-help": "关闭：将规则嵌入订阅。开启：下载规则集。两种模式均可选择 DIRECT、REJECT（拦截）或已配置的组/代理。更改传递方式不会改变动作。",
         "client-interval": "客户端更新间隔（分钟）",
         "client-interval-help": "5 分钟至 30 天，通过 update_interval / interval 传递。首次下载由应用执行；手动更新可能绕过应用的计划。",
-        "xray-download-limit": "Xray JSON 将规则嵌入订阅。并非所有应用都支持任意 DAT 的自动首次安装；geodata 更新要求文件已经存在。",
+        "xray-download-limit": "支持订阅路由配置的 Happ 和 INCY 版本可单独下载文件。其他 Xray 应用接收内嵌规则。刷新订阅后请重新连接。手动路由设置优先。",
         "srs-download-limit": "二进制 SRS 使用 sing-box 远程规则集。若要无需下载，请导入该规则集的源 JSON。",
         "server-refresh": "服务端文件更新",
         "server-refresh-help": "此库设置立即应用于使用该文件的所有模板。电脑上传的文件需要指定 HTTPS 来源。发生错误时保留上一份可用副本。",
@@ -3962,7 +3962,10 @@
         "next-update": "下次允许检查",
         "refresh-failed": "无法更新文件或保存设置。已保留上一份可用副本。请检查 HTTPS 来源和格式。",
         "refresh-deferred": "未执行更新：间隔尚未结束、下载正在进行或来源失败。请检查上方时间和状态。",
-        "save-refresh": "保存更新计划"
+        "save-refresh": "保存更新计划",
+        "delivery-xray-auto": "自动下载：Happ / INCY",
+        "client-interval-xray-help": "共享配置使用附件中的最长间隔。INCY 接收向上取整的小时数，至少 1 小时；其本地设置优先。Happ 使用该间隔生成订阅刷新时的修订标记。下载和重试由应用执行。",
+        "xray-download-help": "多个 DAT 合并时，每个来源的分类保持独立。DIRECT、拦截和组仍保留在 JSON 中。若下载与手动设置冲突或集合过大，应用将获得内嵌规则。"
     },
     "template-draft": {
         "warning": "模板警告",

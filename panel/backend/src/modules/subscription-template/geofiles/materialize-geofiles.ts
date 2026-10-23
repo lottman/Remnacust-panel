@@ -1,5 +1,6 @@
 import type { DatRules } from './compile-dat';
 import type { StoredGeofile } from './geofiles.service';
+import type { DatBundleUrl, XrayGeofileDelivery } from './xray-geofile-delivery';
 
 import {
     datClientFile,
@@ -56,7 +57,9 @@ export async function materializeGeofiles(
     resources?: {
         read: (file: StoredGeofile) => Promise<Buffer>;
         datUrl: (file: StoredGeofile, categories: string[], format: string) => string;
+        datBundleUrl?: DatBundleUrl;
     },
+    happ?: XrayGeofileDelivery,
 ): Promise<ObjectValue> {
     const references = geofileReferences(config);
     const root = structuredClone(config);
@@ -140,7 +143,39 @@ export async function materializeGeofiles(
             (file.kind === 'geoip' || file.kind === 'geosite') &&
             reference.downloadToClient === true
         ) {
-            if (xray) throw new Error('geofile-xray-bootstrap-unsupported');
+            if (xray) {
+                const rules = await dat(file, reference.categories ?? []);
+                if (happ && resources?.datBundleUrl) {
+                    generated.push({
+                        ...route,
+                        [file.kind === 'geoip' ? 'ip' : 'domain']: happ.register(
+                            file.kind,
+                            reference,
+                            resources.datBundleUrl,
+                        ),
+                    });
+                } else {
+                    generated.push({
+                        ...route,
+                        ...(file.kind === 'geoip'
+                            ? { ip: rules.ips }
+                            : {
+                                  domain: rules.domains.map(
+                                      (item) =>
+                                          ['', 'regexp:', 'domain:', 'full:'][item.type] +
+                                          item.value,
+                                  ),
+                              }),
+                    });
+                    inlineRecords += rules.ips.length + rules.domains.length;
+                    inlineBytes +=
+                        rules.ips.reduce((sum, value) => sum + value.length, 0) +
+                        rules.domains.reduce((sum, item) => sum + Buffer.byteLength(item.value), 0);
+                    if (inlineRecords > 100_000 || inlineBytes > 4 * 1024 * 1024)
+                        throw new Error('geofile-inline-limit');
+                }
+                continue;
+            }
             if (!resources) throw new Error('geofile-resources');
             // Validate selected categories before returning a remotely loaded provider.
             datClientFile(await dat(file, reference.categories ?? []), type);

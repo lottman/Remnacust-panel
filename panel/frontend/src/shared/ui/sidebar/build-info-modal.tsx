@@ -123,10 +123,20 @@ export function BuildInfoModal({ remnawaveMetadata, isNewVersionAvailable }: Bui
             <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
                 <Paper className={classes.backendCard} p="md" radius="md">
                     <Stack gap="sm">
-                        <Group gap="xs" justify="space-between">
-                            <Group gap="xs">
-                                <TbServer color="var(--mantine-color-teal-5)" size={16} />
-                                <Text c="teal.5" fw={600} size="sm">
+                        <Group gap="xs" justify="space-between" wrap="nowrap">
+                            <Group gap="xs" miw={0} wrap="nowrap">
+                                <TbServer
+                                    color="var(--mantine-color-teal-5)"
+                                    size={16}
+                                    style={{ flexShrink: 0 }}
+                                />
+                                <Text
+                                    c="teal.5"
+                                    fw={600}
+                                    size="sm"
+                                    title={uiText('backend-2fb4019')}
+                                    truncate
+                                >
                                     {uiText('backend-2fb4019')}
                                 </Text>
                             </Group>
@@ -136,6 +146,7 @@ export function BuildInfoModal({ remnawaveMetadata, isNewVersionAvailable }: Bui
                                     component="a"
                                     href={remnawaveMetadata.git.backend.commitUrl}
                                     size="sm"
+                                    style={{ flexShrink: 0 }}
                                     target="_blank"
                                     variant="subtle"
                                 >
@@ -153,10 +164,20 @@ export function BuildInfoModal({ remnawaveMetadata, isNewVersionAvailable }: Bui
 
                 <Paper className={classes.frontendCard} p="md" radius="md">
                     <Stack gap="sm">
-                        <Group gap="xs" justify="space-between">
-                            <Group gap="xs">
-                                <TbWorld color="var(--mantine-color-cyan-5)" size={16} />
-                                <Text c="cyan.5" fw={600} size="sm">
+                        <Group gap="xs" justify="space-between" wrap="nowrap">
+                            <Group gap="xs" miw={0} wrap="nowrap">
+                                <TbWorld
+                                    color="var(--mantine-color-cyan-5)"
+                                    size={16}
+                                    style={{ flexShrink: 0 }}
+                                />
+                                <Text
+                                    c="cyan.5"
+                                    fw={600}
+                                    size="sm"
+                                    title={uiText('frontend-af48bcf')}
+                                    truncate
+                                >
                                     {uiText('frontend-af48bcf')}
                                 </Text>
                             </Group>
@@ -166,6 +187,7 @@ export function BuildInfoModal({ remnawaveMetadata, isNewVersionAvailable }: Bui
                                     component="a"
                                     href={remnawaveMetadata.git.frontend.commitUrl}
                                     size="sm"
+                                    style={{ flexShrink: 0 }}
                                     target="_blank"
                                     variant="subtle"
                                 >

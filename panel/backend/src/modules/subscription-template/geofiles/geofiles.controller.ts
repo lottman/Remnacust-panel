@@ -110,12 +110,18 @@ export class PublicGeofilesController {
     async download(
         @Param('id') id: string,
         @Param('filename') filename: string,
+        @Query('selection') selection: unknown,
         @Res({ passthrough: true }) response: Response,
     ) {
-        const mutable = filename.startsWith('latest.') || filename.startsWith('rules-');
-        const derived = filename.startsWith('rules-')
-            ? await this.files.derived(id, filename)
-            : undefined;
+        const mutable =
+            filename.startsWith('latest.') ||
+            filename.startsWith('rules-') ||
+            filename.startsWith('bundle-');
+        const derived = filename.startsWith('bundle-')
+            ? await this.files.bundle(id, filename, selection)
+            : filename.startsWith('rules-')
+              ? await this.files.derived(id, filename)
+              : undefined;
         if (derived) {
             response.set({
                 'Cache-Control': 'public, max-age=0, must-revalidate',
@@ -125,11 +131,17 @@ export class PublicGeofilesController {
                 ETag: `"${createHash('sha256').update(derived).digest('hex')}"`,
             });
             return new StreamableFile(derived, {
-                type: 'application/octet-stream',
+                type: filename.endsWith('.sha256') ? 'text/plain' : 'application/octet-stream',
                 length: derived.length,
                 disposition:
                     'attachment; filename="ruleset.' +
-                    (filename.endsWith('.json') ? 'json' : 'yaml') +
+                    (filename.endsWith('.sha256')
+                        ? 'dat.sha256'
+                        : filename.endsWith('.dat')
+                          ? 'dat'
+                          : filename.endsWith('.json')
+                            ? 'json'
+                            : 'yaml') +
                     '"',
             });
         }

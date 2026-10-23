@@ -47,6 +47,11 @@ class TestAuthentication {
 }
 mocks['@common/guards/jwt-guards/def-jwt-guard'] = { JwtDefaultGuard: TestAuthentication };
 const { GeofilesService } = load(path.join(root, 'geofiles.service.ts'), mocks);
+const { XrayGeofileDelivery, datCategory } = load(
+    path.join(root, 'xray-geofile-delivery.ts'),
+    mocks,
+);
+const { compileDat } = load(path.join(root, 'compile-dat.ts'), mocks);
 mocks['./geofiles.service'] = { GeofilesService };
 const { GeofilesController, PublicGeofilesController } = load(
     path.join(root, 'geofiles.controller.ts'),
@@ -177,6 +182,81 @@ test('real HTTP binary upload, admin-only roles, public byte stream and in-use d
             (await fetch(proxyBase + derivedPath.replace('rules-', 'rules-A'))).status,
             404,
         );
+        const happ = new XrayGeofileDelivery();
+        const xray = await files.prepare(
+            {
+                remnacust: {
+                    geofiles: [
+                        {
+                            id: item.id,
+                            categories: ['ru'],
+                            target: 'REJECT',
+                            downloadToClient: true,
+                            clientRefreshIntervalSeconds: 1800,
+                        },
+                    ],
+                },
+            },
+            'XRAY_JSON',
+            happ,
+        );
+        const routing = await happ.header(JSON.stringify([xray]), 'http-user');
+        const profile = JSON.parse(
+            Buffer.from(routing.slice('happ://routing/onadd/'.length), 'base64').toString(),
+        );
+        const bundleUrl = new URL(profile.Geoipurl);
+        const bundlePath = bundleUrl.pathname + bundleUrl.search;
+        const directBundle = await fetch(base + '/api/sub' + bundlePath);
+        assert.equal(directBundle.status, 200);
+        assert.match(directBundle.headers.get('content-disposition'), /\.dat"$/);
+        await directBundle.arrayBuffer();
+        const bundled = await fetch(proxyBase + bundlePath);
+        assert.equal(bundled.status, 200);
+        assert.ok(
+            bundleUrl.pathname.split('/').at(-1).length < 128,
+            'Stable short DAT filename for client download managers',
+        );
+        assert.doesNotMatch(bundled.headers.get('cache-control'), /immutable/);
+        assert.match(bundled.headers.get('content-security-policy'), /sandbox/);
+        const bytes = Buffer.from(await bundled.arrayBuffer());
+        const checksumUrl = new URL(proxyBase + bundlePath);
+        checksumUrl.pathname += '.sha256';
+        const checksum = await fetch(checksumUrl);
+        assert.equal(checksum.status, 200);
+        assert.match(checksum.headers.get('content-type'), /^text\/plain/);
+        assert.doesNotMatch(checksum.headers.get('cache-control'), /immutable/);
+        assert.equal(
+            await checksum.text(),
+            require('node:crypto').createHash('sha256').update(bytes).digest('hex'),
+        );
+        const checksumDirect = await fetch(
+            base + '/api/sub' + checksumUrl.pathname + checksumUrl.search,
+        );
+        assert.equal(checksumDirect.status, 200);
+        assert.match(checksumDirect.headers.get('content-disposition'), /\.dat\.sha256"$/);
+        assert.equal(
+            await checksumDirect.text(),
+            require('node:crypto').createHash('sha256').update(bytes).digest('hex'),
+        );
+        assert.equal((await fetch(proxyBase + checksumUrl.pathname)).status, 404);
+        assert.equal(
+            (await fetch(checksumUrl.href.replace('selection=', 'selection=A'))).status,
+            404,
+        );
+        assert.deepEqual(compileDat(bytes, 'geoip', [datCategory(item.id, 'ru')]).ips, [
+            '203.0.113.0/24',
+        ]);
+        assert.deepEqual(xray.routing.rules[0].ip, ['geoip:' + datCategory(item.id, 'ru')]);
+        assert.equal(xray.outbounds[0].protocol, 'blackhole');
+        assert.equal(
+            (await fetch(proxyBase + bundlePath.replace('bundle-', 'bundle-A'))).status,
+            404,
+        );
+        assert.equal(
+            (await fetch(proxyBase + bundlePath.replace('selection=', 'selection=A'))).status,
+            404,
+        );
+        assert.equal((await fetch(proxyBase + bundleUrl.pathname)).status, 404);
         const configured = await fetch(`${base}/api/geofiles/${item.id}/refresh`, {
             method: 'PATCH',
             headers: { 'x-test-role': 'ADMIN', 'Content-Type': 'application/json' },
@@ -220,6 +300,12 @@ test('real HTTP binary upload, admin-only roles, public byte stream and in-use d
             (await fetch(`${base}/api/sub/geofiles/${item.id}/${item.filename}`)).status,
             404,
         );
+        assert.equal(
+            (await fetch(proxyBase + bundlePath)).status,
+            404,
+            'Bundle cache cannot expose deleted library files',
+        );
+        assert.equal((await fetch(checksumUrl)).status, 404, 'Deleted files also revoke checksums');
     } finally {
         await proxy.close();
         await app.close();

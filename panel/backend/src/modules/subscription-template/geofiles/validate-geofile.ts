@@ -38,23 +38,30 @@ function varint(data: Buffer, cursor: { offset: number }): number {
     throw new Error('geofile-protobuf');
 }
 
-export function* geofileFields(data: Buffer): Generator<{ field: number; value: number | Buffer }> {
+export function* geofileFields(
+    data: Buffer,
+    spans = false,
+): Generator<{ field: number; value: number | Buffer; start?: number; end?: number }> {
     const cursor = { offset: 0 };
     let count = 0;
     while (cursor.offset < data.length) {
+        const start = cursor.offset;
         if (++count > 1_000_000) throw new Error('geofile-complexity');
         const tag = varint(data, cursor),
             field = Math.floor(tag / 8),
             wire = tag % 8;
         if (!Number.isSafeInteger(tag) || field < 1 || field > 536870911)
             throw new Error('geofile-protobuf');
-        if (wire === 0) yield { field, value: varint(data, cursor) };
-        else if (wire === 2) {
+        if (wire === 0) {
+            const value = varint(data, cursor);
+            yield { field, value, ...(spans ? { start, end: cursor.offset } : {}) };
+        } else if (wire === 2) {
             const length = varint(data, cursor);
             if (!Number.isSafeInteger(length) || length < 0 || cursor.offset + length > data.length)
                 throw new Error('geofile-protobuf');
-            yield { field, value: data.subarray(cursor.offset, cursor.offset + length) };
+            const value = data.subarray(cursor.offset, cursor.offset + length);
             cursor.offset += length;
+            yield { field, value, ...(spans ? { start, end: cursor.offset } : {}) };
         } else if (wire === 1 || wire === 5) {
             cursor.offset += wire === 1 ? 8 : 4;
             if (cursor.offset > data.length) throw new Error('geofile-protobuf');

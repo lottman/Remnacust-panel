@@ -1,3 +1,4 @@
+import type { XrayGeofileDelivery } from '../../geofiles/xray-geofile-delivery';
 import type { DNSConfig, RoutingConfig } from 'xray-typed';
 
 import type { TRemnawaveInjector } from '@libs/contracts/models';
@@ -72,4 +73,5 @@ export interface IGenerateConfigParams {
     isExtendedClient: boolean;
     overrideTemplateName?: string;
     ignoreHostXrayJsonTemplate?: boolean;
+    geofileDelivery?: XrayGeofileDelivery;
 }

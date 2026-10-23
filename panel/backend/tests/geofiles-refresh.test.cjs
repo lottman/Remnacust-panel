@@ -8,19 +8,110 @@ const { mocks, pool } = require('./client-pool-fixture.cjs');
 const fixtures = require('./geofiles-fixture.cjs');
 const root = path.join(__dirname, '../src/modules/subscription-template/geofiles');
 const modules = { ...mocks, '../generators/client-pool': pool };
-const { materializeGeofiles, geofileReferences } = load(path.join(root, 'materialize-geofiles.ts'), modules);
+const { materializeGeofiles, geofileReferences } = load(
+    path.join(root, 'materialize-geofiles.ts'),
+    modules,
+);
 const { compileDat } = load(path.join(root, 'compile-dat.ts'), modules);
 const { geofileInterval } = load(path.join(root, 'geofile-delivery.ts'), modules);
 
-test('delivery is independent of legacy templates: explicit off means embedded DIRECT and remote mode carries the configured interval', async () => {
+test('inline DAT keeps DIRECT, REJECT and configured targets in all five formats', async () => {
+    const file = { id: '00' + 'a'.repeat(32), kind: 'geosite' };
+    const dat = async () => compileDat(fixtures.geosite, 'geosite', ['example']);
+    for (const format of ['XRAY_JSON', 'SINGBOX', 'MIHOMO', 'CLASH', 'STASH']) {
+        for (const target of ['DIRECT', 'REJECT', 'custom']) {
+            const config = {
+                remnacust: {
+                    geofiles: [
+                        { id: file.id, categories: ['example'], target, downloadToClient: false },
+                    ],
+                },
+                ...(format === 'XRAY_JSON'
+                    ? { routing: { balancers: [{ tag: 'custom', selector: ['p'] }] } }
+                    : format === 'SINGBOX'
+                      ? {
+                            outbounds: [
+                                { tag: 'custom', type: 'selector', outbounds: ['direct'] },
+                                { tag: 'direct', type: 'direct' },
+                            ],
+                        }
+                      : {
+                            'proxy-groups': [
+                                { name: 'custom', type: 'select', proxies: ['DIRECT'] },
+                            ],
+                        }),
+            };
+            const output = await materializeGeofiles(config, format, async () => file, dat);
+            assert.equal(output.remnacust, undefined);
+            assert.equal(config.remnacust.geofiles[0].target, target, 'source is not mutated');
+            if (format === 'XRAY_JSON') {
+                const rule = output.routing.rules[0];
+                if (target === 'custom') assert.equal(rule.balancerTag, target);
+                else
+                    assert.equal(
+                        output.outbounds.find((item) => item.tag === rule.outboundTag).protocol,
+                        target === 'DIRECT' ? 'freedom' : 'blackhole',
+                    );
+            } else if (format === 'SINGBOX') {
+                const rule = output.route.rules[0];
+                assert.equal(rule.action, target === 'REJECT' ? 'reject' : 'route');
+                if (target === 'custom') assert.equal(rule.outbound, target);
+                if (target === 'DIRECT')
+                    assert.equal(
+                        output.outbounds.find((item) => item.tag === rule.outbound).type,
+                        'direct',
+                    );
+                assert.equal(output.route.rule_set, undefined);
+            } else {
+                assert.ok(output.rules.length > 0);
+                assert.ok(output.rules.every((rule) => rule.endsWith(',' + target)));
+                assert.equal(output['rule-providers'], undefined);
+            }
+        }
+        await assert.rejects(
+            () =>
+                materializeGeofiles(
+                    {
+                        remnacust: {
+                            geofiles: [{ id: file.id, target: 'missing', downloadToClient: false }],
+                        },
+                    },
+                    format,
+                    async () => file,
+                    dat,
+                ),
+            /geofile-target/,
+        );
+    }
+    for (const target of ['', ' ', null, {}, 'DIRECT,REJECT', 'DIRECT\nREJECT', 'a'.repeat(256)]) {
+        assert.throws(
+            () =>
+                geofileReferences({
+                    remnacust: { geofiles: [{ id: file.id, target, downloadToClient: false }] },
+                }),
+            /geofile-reference/,
+        );
+    }
+});
+
+test('delivery preserves routing actions and remote mode carries the configured interval', async () => {
     const file = {
         id: '00' + 'a'.repeat(32),
         kind: 'geosite',
         url: 'https://sub.test/geosite.dat',
     };
     const ref = { id: file.id, categories: ['example'], target: 'REJECT' };
-    assert.throws(()=>geofileReferences({remnacust:{geofiles:[{...ref,downloadToClient:false,target:{bad:true}}]}}));
-    assert.equal(geofileReferences({remnacust:{geofiles:[{id:file.id,downloadToClient:false}]}})[0].target,'DIRECT');
+    assert.throws(() =>
+        geofileReferences({
+            remnacust: { geofiles: [{ ...ref, downloadToClient: false, target: { bad: true } }] },
+        }),
+    );
+    assert.equal(
+        geofileReferences({
+            remnacust: { geofiles: [{ id: file.id, downloadToClient: false }] },
+        })[0].target,
+        'DIRECT',
+    );
     const dat = async () => compileDat(fixtures.geosite, 'geosite', ['example']);
     const legacy = await materializeGeofiles(
         { remnacust: { geofiles: [ref] } },
@@ -29,13 +120,13 @@ test('delivery is independent of legacy templates: explicit off means embedded D
         dat,
     );
     assert.equal(legacy.outbounds[0].protocol, 'blackhole');
-    const direct = await materializeGeofiles(
+    const inline = await materializeGeofiles(
         { remnacust: { geofiles: [{ ...ref, downloadToClient: false }] } },
         'XRAY_JSON',
         async () => file,
         dat,
     );
-    assert.equal(direct.outbounds[0].protocol, 'freedom');
+    assert.equal(inline.outbounds[0].protocol, 'blackhole');
     for (const format of ['SINGBOX', 'MIHOMO', 'CLASH', 'STASH']) {
         const remote = await materializeGeofiles(
             {
@@ -90,7 +181,8 @@ test('native JSON and YAML can be embedded without a URL; binary SRS cannot pret
         tag: 'geo_' + id,
         rules: [{ domain_suffix: ['example.com'] }],
     });
-    assert.equal(sing.outbounds[0].type, 'direct');
+    assert.equal(sing.route.rules[0].action, 'reject');
+    assert.equal(sing.outbounds, undefined);
     for (const format of ['MIHOMO', 'CLASH', 'STASH']) {
         const yaml = await materializeGeofiles(
             { remnacust: { geofiles: [ref] } },
@@ -104,7 +196,7 @@ test('native JSON and YAML can be embedded without a URL; binary SRS cannot pret
             behavior: 'domain',
             payload: ['+.example.com'],
         });
-        assert.match(yaml.rules[0], /,DIRECT$/);
+        assert.match(yaml.rules[0], /,REJECT$/);
     }
     await assert.rejects(
         () =>

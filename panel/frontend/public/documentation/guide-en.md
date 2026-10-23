@@ -651,7 +651,7 @@ By default, GeoIP/GeoSite DAT is embedded in the full configuration as rules. Th
 
 ### Downloading geofiles to the client
 
-New attachments have Download to client off: rules are embedded in the full subscription and selected categories use DIRECT. Turn it on for a remote rule set and choose DIRECT, reject or a group. The server converts DAT to sing-box JSON or Mihomo/Clash/Stash YAML. The client interval is 5 minutes–30 days, default one day, written as update_interval / interval. This is the app schedule; manual retries may bypass it. Embedded rules change after the subscription itself is updated. Legacy attachments without the field retain their behavior. Xray JSON embeds rules: geodata updates existing files and cannot guarantee initial installation of arbitrary DAT. SRS remains a remote binary set; import its source JSON for inline delivery.
+New attachments have Download to client off: rules are embedded in the full subscription. Turn it on for a remote rule set. In either mode, choose DIRECT, REJECT (block), a configured group or proxy separately. Changing delivery preserves the action; new attachments default to DIRECT. The server converts DAT to sing-box JSON or Mihomo/Clash/Stash YAML. The client interval is 5 minutes–30 days, default one day, written as update_interval / interval. This is the app schedule; manual retries may bypass it. Embedded rules change after the subscription itself is updated. Legacy attachments without the field retain their behavior. Xray JSON embeds rules: geodata updates existing files and cannot guarantee initial installation of arbitrary DAT. SRS remains a remote binary set; import its source JSON for inline delivery.
 
 ### Server auto downloads and update safety
 

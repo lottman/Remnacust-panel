@@ -61,3 +61,23 @@ test('malformed geofile fields stay editable as code without passing unsafe valu
  }
  assert.equal(m.geofileEditorShapeError({remnacust:{geofiles:[{id:'test',target:'',categories:[]}]}}),null,'Incomplete but structurally valid fields remain usable in GUI');
 });
+
+test('delivery changes in GUI/code preserve the selected inline action in every format', () => {
+    for (const format of ['XRAY_JSON','SINGBOX','MIHOMO','CLASH','STASH']) {
+        for (const target of ['DIRECT','REJECT','custom']) {
+            const ref = {id:'00'+'a'.repeat(32),target,downloadToClient:false};
+            let text = m.editClientTemplate('{}',format,['remnacust','geofiles'],[ref]);
+            assert.equal(m.clientValidationPath(m.readClientTemplate(text,format),format),null);
+            for (const enabled of [true,false]) {
+                text = m.editClientTemplate(text,format,['remnacust','geofiles',0,'downloadToClient'],enabled);
+                const result = m.readClientTemplate(text,format);
+                assert.equal(result.remnacust.geofiles[0].target,target);
+                assert.equal(m.clientValidationPath(result,format),null);
+            }
+        }
+        for (const target of ['',null,{},'DIRECT,REJECT','DIRECT\nREJECT']) {
+            assert.equal(m.clientValidationPath({remnacust:{geofiles:[{id:'test',target,downloadToClient:false}]}},format),'remnacust.geofiles.0');
+        }
+        assert.equal(m.clientValidationPath({remnacust:{geofiles:[{id:'test',downloadToClient:false}]}},format),null);
+    }
+});

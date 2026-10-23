@@ -651,7 +651,7 @@ Xray JSON、sing-box、Mihomo、Clash 和 Stash 均提供自动选择。sing-box
 
 ### 将地理文件下载到客户端
 
-新附件默认关闭“下载到客户端”：规则嵌入完整订阅，所选分类直连 DIRECT。开启后使用远程规则集，可选择 DIRECT、拦截或组。服务端将 DAT 转为 sing-box JSON 或 Mihomo/Clash/Stash YAML。客户端间隔为 5 分钟至 30 天，默认一天，写入 update_interval / interval。这是应用的计划，手动重试可能绕过间隔。内嵌规则在订阅本身更新后改变。没有新字段的旧附件保留原有行为。Xray JSON 使用内嵌规则；geodata 更新已有文件，无法保证任意 DAT 的首次安装。SRS 保持为远程二进制集；若要内嵌，请导入源 JSON。
+新附件默认关闭“下载到客户端”：规则嵌入完整订阅。开启后使用远程规则集。两种模式均可独立选择 DIRECT、REJECT（拦截）、已配置的组或代理。更改传递方式会保留动作；新附件默认使用 DIRECT。服务端将 DAT 转为 sing-box JSON 或 Mihomo/Clash/Stash YAML。客户端间隔为 5 分钟至 30 天，默认一天，写入 update_interval / interval。这是应用的计划，手动重试可能绕过间隔。内嵌规则在订阅本身更新后改变。没有新字段的旧附件保留原有行为。Xray JSON 使用内嵌规则；geodata 更新已有文件，无法保证任意 DAT 的首次安装。SRS 保持为远程二进制集；若要内嵌，请导入源 JSON。
 
 ### 服务端自动下载与更新保护
 

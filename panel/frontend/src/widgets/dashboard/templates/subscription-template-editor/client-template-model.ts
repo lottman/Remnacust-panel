@@ -67,10 +67,16 @@ export function clientValidationPath(root: JsonObject, format: ClientFormat): st
     if (refs !== undefined) {
         if (!Array.isArray(refs) || refs.length > 32) return 'remnacust.geofiles'
         for (const [index, reference] of refs.entries()) {
+            const target =
+                reference?.target === undefined && reference?.downloadToClient === false
+                    ? 'DIRECT'
+                    : reference?.target
             if (
                 typeof reference?.id !== 'string' ||
-                (reference.downloadToClient !== false &&
-                    (typeof reference.target !== 'string' || !reference.target.trim())) ||
+                typeof target !== 'string' ||
+                !target.trim() ||
+                target.length > 255 ||
+                /[,\r\n\0]/.test(target) ||
                 (reference.downloadToClient !== undefined &&
                     typeof reference.downloadToClient !== 'boolean') ||
                 (reference.clientRefreshIntervalSeconds !== undefined &&

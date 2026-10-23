@@ -110,11 +110,17 @@ export function GeofilesPanel({
                 ? [
                       'proxy',
                       ...(config.routing?.balancers ?? []).map((item: JsonObject) => item.tag),
+                      ...(config.remnawave?.injectHosts ?? []).map(
+                          (item: JsonObject) => item.tagPrefix
+                      ),
                       ...(config.outbounds ?? []).map((item: JsonObject) => item.tag)
                   ]
                 : format === 'SINGBOX'
                   ? (config.outbounds ?? []).map((item: JsonObject) => item.tag)
-                  : (config['proxy-groups'] ?? []).map((item: JsonObject) => item.name))
+                  : [
+                        ...(config['proxy-groups'] ?? []).map((item: JsonObject) => item.name),
+                        ...(config.proxies ?? []).map((item: JsonObject) => item.name)
+                    ])
         ])
     ].filter((value): value is string => typeof value === 'string')
     const patch = (value: Reference[]) => {
@@ -311,6 +317,8 @@ export function GeofilesPanel({
                 const categories = reference.categories ?? []
                 const dat = !!item && ['geoip', 'geosite'].includes(item.kind)
                 const download = reference.downloadToClient ?? !dat
+                const target =
+                    reference.target ?? (reference.downloadToClient === false ? 'DIRECT' : '')
                 const supported = format !== 'XRAY_JSON'
                 return (
                     <Card key={index} p="md" className={styles.card}>
@@ -364,17 +372,8 @@ export function GeofilesPanel({
                             <Select
                                 label={t('geofiles.target')}
                                 placeholder={t('geofiles.choose-target')}
-                                error={
-                                    reference.downloadToClient !== false && !reference.target
-                                        ? t('geofiles.choose-target')
-                                        : undefined
-                                }
-                                value={
-                                    reference.downloadToClient === false
-                                        ? 'DIRECT'
-                                        : reference.target || null
-                                }
-                                disabled={reference.downloadToClient === false}
+                                error={!target ? t('geofiles.choose-target') : undefined}
+                                value={target || null}
                                 allowDeselect={false}
                                 searchable
                                 data={[...new Set([...targets, reference.target])]

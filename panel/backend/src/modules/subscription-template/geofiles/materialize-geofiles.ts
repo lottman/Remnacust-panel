@@ -22,16 +22,18 @@ export function geofileReferences(config: ObjectValue): GeofileReference[] {
     if (references === undefined) return [];
     if (!Array.isArray(references) || references.length > 32) throw new Error('geofile-references');
     for (const reference of references) {
+        const target =
+            reference?.target === undefined && reference?.downloadToClient === false
+                ? 'DIRECT'
+                : reference?.target;
         if (
             !reference ||
             typeof reference !== 'object' ||
             !/^[a-f0-9]{34}$/.test(reference.id) ||
-            (reference.target !== undefined && typeof reference.target !== 'string') ||
-            (reference.downloadToClient !== false &&
-                (typeof reference.target !== 'string' ||
-                    !reference.target.trim() ||
-                    reference.target.length > 255 ||
-                    /[,\r\n\0]/.test(reference.target))) ||
+            typeof target !== 'string' ||
+            !target.trim() ||
+            target.length > 255 ||
+            /[,\r\n\0]/.test(target) ||
             (reference.downloadToClient !== undefined &&
                 typeof reference.downloadToClient !== 'boolean')
         )
@@ -40,7 +42,9 @@ export function geofileReferences(config: ObjectValue): GeofileReference[] {
             geofileInterval(reference.clientRefreshIntervalSeconds);
     }
     return references.map((reference) =>
-        reference.downloadToClient === false ? { ...reference, target: 'DIRECT' } : reference,
+        reference.downloadToClient === false && reference.target === undefined
+            ? { ...reference, target: 'DIRECT' }
+            : reference,
     );
 }
 
@@ -73,7 +77,7 @@ export async function materializeGeofiles(
         )
             throw new Error('geofile-resources');
         const tag = `geo_${file.id}`;
-        let target = reference.downloadToClient === false ? 'DIRECT' : reference.target;
+        let target = reference.target;
         const interval = reference.clientRefreshIntervalSeconds ?? DEFAULT_GEOFILE_INTERVAL;
         let route: ObjectValue;
         if (xray) {

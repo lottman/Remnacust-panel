@@ -8,20 +8,70 @@ const { ApiResponseError, parseApiResponse } = load(path.join(frontend, 'api-res
 
 test('opening an existing host restores every policy field and keeps its port override', () => {
     const ts = require('typescript');
-    const file = path.resolve(frontend, '../_modals/hosts/edit-host-modal/edit-host.modal.content.tsx');
-    const source = ts.createSourceFile(file, fs.readFileSync(file, 'utf8'), ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+    const file = path.resolve(
+        frontend,
+        '../_modals/hosts/edit-host-modal/edit-host.modal.content.tsx',
+    );
+    const source = ts.createSourceFile(
+        file,
+        fs.readFileSync(file, 'utf8'),
+        ts.ScriptTarget.Latest,
+        true,
+        ts.ScriptKind.TSX,
+    );
     let initializer;
     function visit(node) {
-        if (ts.isCallExpression(node) && node.expression.getText(source) === 'form.initialize') initializer = node.arguments[0].getText(source);
+        if (ts.isCallExpression(node) && node.expression.getText(source) === 'form.initialize')
+            initializer = node.arguments[0].getText(source);
         ts.forEachChild(node, visit);
     }
     visit(source);
-    const host = { uuid: 'host', port: 8443, inbound: { configProfileUuid: 'profile', configProfileInboundUuid: 'original' }, userTrafficLimitBytes: 123456789, serverSpeedLimitMbps: 2, deviceSpeedLimitMbps: 3, useTagDeviceSpeedLimit: false, totalSpeedLimitMbps: 20, trafficMultiplier: 2.5, useTagTrafficLimit: false, useTagSpeedLimit: false, useTagTotalSpeedLimit: true, speedLimitMbps: 7, domainRules: { mode: 'ALLOW_ONLY', domains: ['t.me'] }, sniRegeneration: { enabled: true, intervalHours: 24 } };
-    const restored = new Function('host', 'stringifyJsonField', `return (${initializer})`)(host, value => value);
-    for (const field of ['port', 'userTrafficLimitBytes', 'serverSpeedLimitMbps', 'deviceSpeedLimitMbps', 'useTagDeviceSpeedLimit', 'totalSpeedLimitMbps', 'trafficMultiplier', 'useTagTrafficLimit', 'useTagSpeedLimit', 'useTagTotalSpeedLimit', 'speedLimitMbps', 'domainRules', 'sniRegeneration']) assert.deepEqual(restored[field], host[field], field);
+    const host = {
+        uuid: 'host',
+        port: 8443,
+        inbound: { configProfileUuid: 'profile', configProfileInboundUuid: 'original' },
+        userTrafficLimitBytes: 123456789,
+        serverSpeedLimitMbps: 2,
+        deviceSpeedLimitMbps: 3,
+        useTagDeviceSpeedLimit: false,
+        totalSpeedLimitMbps: 20,
+        trafficMultiplier: 2.5,
+        useTagTrafficLimit: false,
+        useTagSpeedLimit: false,
+        useTagTotalSpeedLimit: true,
+        speedLimitMbps: 7,
+        domainRules: { mode: 'ALLOW_ONLY', domains: ['t.me'] },
+        sniRegeneration: { enabled: true, intervalHours: 24 },
+    };
+    const restored = new Function('host', 'stringifyJsonField', `return (${initializer})`)(
+        host,
+        (value) => value,
+    );
+    for (const field of [
+        'port',
+        'userTrafficLimitBytes',
+        'serverSpeedLimitMbps',
+        'deviceSpeedLimitMbps',
+        'useTagDeviceSpeedLimit',
+        'totalSpeedLimitMbps',
+        'trafficMultiplier',
+        'useTagTrafficLimit',
+        'useTagSpeedLimit',
+        'useTagTotalSpeedLimit',
+        'speedLimitMbps',
+        'domainRules',
+        'sniRegeneration',
+    ])
+        assert.deepEqual(restored[field], host[field], field);
     assert.deepEqual(restored.inbound, host.inbound);
-    for (const inbound of [{ configProfileUuid: 'profile', configProfileInboundUuid: null }, { configProfileUuid: null, configProfileInboundUuid: null }]) {
-        const detached = new Function('host', 'stringifyJsonField', `return (${initializer})`)({ ...host, inbound }, value => value);
+    for (const inbound of [
+        { configProfileUuid: 'profile', configProfileInboundUuid: null },
+        { configProfileUuid: null, configProfileInboundUuid: null },
+    ]) {
+        const detached = new Function('host', 'stringifyJsonField', `return (${initializer})`)(
+            { ...host, inbound },
+            (value) => value,
+        );
         assert.equal(detached.inbound, undefined);
         assert.equal(detached.port, 8443);
         assert.deepEqual(detached.domainRules, host.domainRules);
@@ -30,7 +80,14 @@ test('opening an existing host restores every policy field and keeps its port ov
 
 test('API parser rejects HTML, truncated JSON and primitive payloads without exposing their contents', () => {
     assert.deepEqual(parseApiResponse('{"response":[]}'), { response: [] });
-    for (const data of ['<html>secret proxy details</html>', '{"response":', 'null', '"text"', null, 42]) {
+    for (const data of [
+        '<html>secret proxy details</html>',
+        '{"response":',
+        'null',
+        '"text"',
+        null,
+        42,
+    ]) {
         assert.throws(() => parseApiResponse(data), ApiResponseError);
     }
 });
@@ -49,13 +106,24 @@ test('only reads retry transient responses; writes, forbidden responses and down
     const axios = require('axios');
     setAuthorizationToken('fixture-active-session');
     let calls = 0;
-    instance.defaults.adapter = async config => {
+    instance.defaults.adapter = async (config) => {
         calls++;
         if (config.url === '/forbidden' || config.url === '/unauthorized') {
             const status = config.url === '/forbidden' ? 403 : 401;
-            throw new axios.AxiosError('Denied', 'ERR_BAD_REQUEST', config, null, { status, data: {} });
+            throw new axios.AxiosError('Denied', 'ERR_BAD_REQUEST', config, null, {
+                status,
+                data: {},
+            });
         }
-        return { config, status: 200, headers: {}, data: config.url === '/recover' && calls > 1 ? { response: [] } : '<html>Unavailable</html>' };
+        return {
+            config,
+            status: 200,
+            headers: {},
+            data:
+                config.url === '/recover' && calls > 1
+                    ? { response: [] }
+                    : '<html>Unavailable</html>',
+        };
     };
     assert.deepEqual((await instance.get('/recover')).data, { response: [] });
     assert.equal(calls, 2);
@@ -69,7 +137,10 @@ test('only reads retry transient responses; writes, forbidden responses and down
     assert.equal(logouts, 0);
     await assert.rejects(instance.get('/unauthorized'));
     assert.equal(logouts, 1);
-    assert.equal((await instance.get('/download', { responseType: 'blob' })).data, '<html>Unavailable</html>');
+    assert.equal(
+        (await instance.get('/download', { responseType: 'blob' })).data,
+        '<html>Unavailable</html>',
+    );
 });
 
 test('host availability changes validate policy without restarting profile nodes', async () => {
@@ -80,14 +151,32 @@ test('host availability changes validate policy without restarting profile nodes
     }
     mocks['@nestjs-cls/transactional'] = { Transactional: () => () => {} };
     const { HostsService } = load(filename, mocks);
-    let restarts = 0, validations = 0, synchronizations = 0;
-    const host = { uuid: 'host', configProfileUuid: 'profile', configProfileInboundUuid: 'inbound', tags: [], nodes: [], internalSquads: [], alwaysAvailable: true };
+    let restarts = 0,
+        validations = 0,
+        synchronizations = 0;
+    const host = {
+        uuid: 'host',
+        configProfileUuid: 'profile',
+        configProfileInboundUuid: 'inbound',
+        tags: [],
+        nodes: [],
+        internalSquads: [],
+        alwaysAvailable: true,
+    };
     const service = new HostsService(
         { findAll: async () => [{ ...host, onlyWhenInactive: true }] },
-        { list: async () => [] }, {},
+        { list: async () => [] },
+        {},
         { findByCriteria: async () => [{ uuid: 'node', activeConfigProfileUuid: 'profile' }] },
-        { startNode: async () => restarts++ }, {}, {},
-        { syncConnected: async () => synchronizations++ },
+        { startNode: async () => restarts++ },
+        {},
+        {},
+        {
+            requestSync: () => synchronizations++,
+            syncConnected: () => {
+                throw new Error('HTTP must not wait for fleet delivery');
+            },
+        },
     );
     service.validatePolicyState = async () => validations++;
     await service.syncExceptionPolicy([host]);

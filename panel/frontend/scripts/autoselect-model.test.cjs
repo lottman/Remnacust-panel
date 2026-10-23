@@ -86,6 +86,21 @@ test('leastLoad edits preserve manual settings and validate expected/tolerance/d
 });
 
 const {injectorCompletionValues}=load(path.join(__dirname,'../src/widgets/dashboard/templates/subscription-template-editor/utils/injector-completions.ts'));
+
+test('host selection and its balancing strategy form one group, including shared prefix selectors', () => {
+ const config={remnawave:{injectHosts:[{tagPrefix:'p-a',selector:{type:'tags',values:['A']}},{tagPrefix:'p-b',selector:{type:'tags',values:['B']}},{tagPrefix:'q',selector:{type:'tags',values:['Q']}}]},outbounds:[{tag:'manual',protocol:'freedom'}],routing:{balancers:[{tag:'shared',selector:['p']},{tag:'dedicated',selector:['q']},{tag:'existing',selector:['manual']}],rules:[{balancerTag:'shared'},{balancerTag:'dedicated'},{balancerTag:'existing'},{outboundTag:'manual'}]}};
+ assert.deepEqual(m.autoselectGroups(config),[{pools:[0,1],balancers:[0]},{pools:[2],balancers:[1]},{pools:[],balancers:[2]}]);
+ const result=m.parseTemplate(m.removeAutoselectGroup(JSON.stringify(config),m.autoselectGroups(config)[0]));
+ assert.deepEqual(result.remnawave.injectHosts.map(pool=>pool.tagPrefix),['q']);
+ assert.deepEqual(result.routing.balancers.map(balance=>balance.tag),['dedicated','existing']);
+ assert.deepEqual(result.routing.rules,[{balancerTag:'dedicated'},{balancerTag:'existing'},{outboundTag:'manual'}]);
+ assert.deepEqual(result.outbounds,config.outbounds);
+});
+
+test('unlinked pools and manual balancers remain visible exactly once in unified autoselect', () => {
+ assert.deepEqual(m.autoselectGroups({}),[]);
+ assert.deepEqual(m.autoselectGroups({remnawave:{injectHosts:[{tagPrefix:'p',selector:{type:'tags',values:[]}}]},routing:{balancers:[{tag:'manual',selector:['x']}]}}),[{pools:[0],balancers:[]},{pools:[],balancers:[0]}]);
+});
 test('partial JSON supplies live host/tag completions and leaves enums to the native schema',()=>{
  const hosts=[{uuid:'10000000-0000-4000-8000-000000000001',remark:'Netherlands',tags:['NL']},{uuid:'10000000-0000-4000-8000-000000000002',remark:'Germany',tags:['DE','NL']}];
  const suggestions=(fragment)=>{const text='{ "remnawave": {"injectHosts": ['+fragment;return injectorCompletionValues(text,text.length,hosts)};

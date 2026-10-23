@@ -22,6 +22,8 @@ export declare namespace GetSubscriptionTemplateCommand {
             }>;
             templateJson: z.ZodNullable<z.ZodUnknown>;
             encodedTemplateYaml: z.ZodNullable<z.ZodString>;
+            draftContent: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+            validationWarnings: z.ZodOptional<z.ZodArray<z.ZodString>>;
         }, z.core.$strip>;
     }, z.core.$strip>;
     type RequestParam = z.infer<typeof RequestParamSchema>;

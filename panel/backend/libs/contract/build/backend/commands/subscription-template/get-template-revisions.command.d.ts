@@ -12,6 +12,7 @@ export declare namespace GetSubscriptionTemplateRevisionsCommand {
             name: z.ZodString;
             templateJson: z.ZodNullable<z.ZodUnknown>;
             encodedTemplateYaml: z.ZodNullable<z.ZodString>;
+            draftContent: z.ZodOptional<z.ZodNullable<z.ZodString>>;
             createdAt: z.ZodISODateTime;
         }, z.core.$strip>>;
     }, z.core.$strip>;

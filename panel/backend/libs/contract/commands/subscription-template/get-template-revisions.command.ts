@@ -20,6 +20,7 @@ export namespace GetSubscriptionTemplateRevisionsCommand {
                 name: z.string(),
                 templateJson: z.unknown().nullable(),
                 encodedTemplateYaml: z.string().nullable(),
+                draftContent: z.string().nullable().optional(),
                 createdAt: z.iso.datetime(),
             }),
         ),

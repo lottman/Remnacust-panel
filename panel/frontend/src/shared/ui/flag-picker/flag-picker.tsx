@@ -20,11 +20,16 @@ import { FieldActionButton } from '@shared/ui/field-action-button/field-action-b
 import { TemplateInfoPopoverShared } from '@shared/ui/popovers/template-info-popover/template-info-popover.shared'
 
 import { COUNTRY_FLAG_CODES } from './country-flag-codes'
+import { countrySearchIndex, normalizeCountrySearch } from './country-search'
 import classes from './flag-picker.module.css'
 
 export function CountryFlagPicker() {
     const { t, i18n } = useTranslation()
     const [search, setSearch] = useState('')
+    const searchIndex = useMemo(
+        () => countrySearchIndex((language) => i18n.getFixedT(language)('flag-picker.sark')),
+        [i18n, t]
+    )
     const countries = useMemo(() => {
         let names: Intl.DisplayNames
         try {
@@ -40,9 +45,11 @@ export function CountryFlagPicker() {
             name: code === 'CQ' ? t('flag-picker.sark') : (names.of(code) ?? code)
         })).sort((a, b) => a.name.localeCompare(b.name, i18n.language))
     }, [i18n.language, t])
-    const query = search.trim().toLocaleLowerCase(i18n.language)
+    const query = normalizeCountrySearch(search)
     const filtered = countries.filter((entry) =>
-        `${entry.name} ${entry.value}`.toLocaleLowerCase(i18n.language).includes(query)
+        normalizeCountrySearch(
+            `${entry.name} ${searchIndex.get(entry.value) ?? entry.value}`
+        ).includes(query)
     )
     return (
         <Stack gap="sm">

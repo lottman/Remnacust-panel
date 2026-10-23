@@ -23,6 +23,7 @@ import { GeofilesService } from './geofiles/geofiles.service';
 import { BaseTemplateResponseModel } from './models/base-template.response.model';
 import { GetSubscriptionTemplatesResponseModel } from './models/get-templates.response.model';
 import { SubscriptionTemplateRepository } from './repositories/subscription-template.repository';
+import { blockingXrayTemplateWarnings, xrayTemplateWarnings } from './template-validation';
 
 const DEFAULT_TEMPLATE_NAME = 'Default';
 
@@ -72,6 +73,7 @@ export class SubscriptionTemplateService {
                     uuid: revision.uuid,
                     name: revision.name,
                     templateJson: revision.templateJson,
+                    draftContent: revision.draftContent ?? null,
                     encodedTemplateYaml:
                         revision.templateYaml === null
                             ? null
@@ -90,6 +92,7 @@ export class SubscriptionTemplateService {
         name: string | undefined,
         templateJson: object | undefined,
         encodedTemplateYaml: string | undefined,
+        draftContent?: string,
     ): Promise<TResult<BaseTemplateResponseModel>> {
         try {
             const template = await this.subscriptionTemplateRepository.findByUUID(uuid);
@@ -102,6 +105,24 @@ export class SubscriptionTemplateService {
                 return fail(ERRORS.RESERVED_TEMPLATE_NAME);
             }
 
+            const saveDraft = async (warnings: string[]) => {
+                if (draftContent === undefined) return fail(ERRORS.INVALID_REMNAWAVE_INJECTOR);
+                const saved = await this.subscriptionTemplateRepository.update({
+                    uuid: template.uuid,
+                    name: name ?? undefined,
+                    draftContent,
+                });
+                if (name && name !== template.name)
+                    await this.removeCachedTemplate(
+                        template.uuid,
+                        template.templateType,
+                        template.name,
+                    );
+                const response = new BaseTemplateResponseModel(saved);
+                response.validationWarnings = warnings.slice(0, 20);
+                return ok(response);
+            };
+
             const isYamlTemplate =
                 template.templateType === 'MIHOMO' ||
                 template.templateType === 'STASH' ||
@@ -109,6 +130,43 @@ export class SubscriptionTemplateService {
 
             const isJsonTemplate =
                 template.templateType === 'XRAY_JSON' || template.templateType === 'SINGBOX';
+            let validationWarnings: string[] = [];
+
+            if (draftContent !== undefined) {
+                if (
+                    templateJson !== undefined ||
+                    encodedTemplateYaml !== undefined ||
+                    Buffer.byteLength(draftContent) > 8 * 1024 * 1024 ||
+                    draftContent.includes('\0')
+                )
+                    return fail(ERRORS.UPDATE_SUBSCRIPTION_TEMPLATE_ERROR);
+                let parsed: unknown;
+                try {
+                    parsed = isYamlTemplate
+                        ? load(draftContent, {
+                              schema: YAML_MERGE_SCHEMA,
+                              maxAliases: 100,
+                              maxTotalMergeKeys: 10000,
+                          })
+                        : JSON.parse(draftContent);
+                } catch {
+                    return await saveDraft([isYamlTemplate ? 'YAML' : 'JSON']);
+                }
+                if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed))
+                    return await saveDraft(['root']);
+                if (template.templateType === 'XRAY_JSON') {
+                    const warnings = xrayTemplateWarnings(parsed as Record<string, unknown>);
+                    if (
+                        blockingXrayTemplateWarnings(parsed as Record<string, unknown>, warnings)
+                            .length
+                    )
+                        return await saveDraft(warnings);
+                    validationWarnings = warnings.slice(0, 20);
+                }
+                if (isYamlTemplate)
+                    encodedTemplateYaml = Buffer.from(draftContent, 'utf8').toString('base64');
+                else templateJson = parsed;
+            }
 
             if (isYamlTemplate && templateJson !== undefined) {
                 return fail(ERRORS.TEMPLATE_JSON_NOT_ALLOWED_FOR_YAML_TEMPLATE);
@@ -130,7 +188,11 @@ export class SubscriptionTemplateService {
             ) {
                 const result = await RemnawaveInjectorSchema.safeParseAsync(templateJson.remnawave);
                 if (!result.success) {
-                    return fail(ERRORS.INVALID_REMNAWAVE_INJECTOR);
+                    return await saveDraft(
+                        result.error.issues
+                            .map((issue) => ['remnawave', ...issue.path].join('.'))
+                            .slice(0, 20),
+                    );
                 }
                 for (const injector of result.data?.injectHosts ?? []) {
                     if (
@@ -144,7 +206,7 @@ export class SubscriptionTemplateService {
                             this.logger.error(
                                 `Invalid regex pattern for injectHosts entry: ${injector.selector.pattern}, ${(error as Error).message}`,
                             );
-                            return fail(ERRORS.INVALID_REMNAWAVE_INJECTOR);
+                            return await saveDraft(['remnawave.injectHosts.selector.pattern']);
                         }
                     }
 
@@ -156,7 +218,7 @@ export class SubscriptionTemplateService {
                         this.logger.error(
                             `At least one of tagPrefix, useHostRemarkAsTag, or useHostTagAsTag must be provided for injectHosts entry: ${JSON.stringify(injector)}`,
                         );
-                        return fail(ERRORS.INVALID_REMNAWAVE_INJECTOR);
+                        return await saveDraft(['remnawave.injectHosts.tagPrefix']);
                     }
                 }
             }
@@ -177,7 +239,7 @@ export class SubscriptionTemplateService {
                         template.templateType,
                     );
                 } catch {
-                    return fail(ERRORS.INVALID_REMNAWAVE_INJECTOR);
+                    return await saveDraft(['remnawave.pool']);
                 }
             }
             const update = () =>
@@ -185,6 +247,10 @@ export class SubscriptionTemplateService {
                     uuid: template.uuid,
                     name: name ?? undefined,
                     templateJson: templateJson ?? undefined,
+                    draftContent:
+                        templateJson !== undefined || encodedTemplateYaml !== undefined
+                            ? null
+                            : undefined,
                     templateYaml: encodedTemplateYaml
                         ? Buffer.from(encodedTemplateYaml, 'base64').toString('utf8')
                         : undefined,
@@ -196,38 +262,49 @@ export class SubscriptionTemplateService {
                 (encodedTemplateYaml !== undefined
                     ? Buffer.from(encodedTemplateYaml, 'base64').toString('utf8')
                     : (template.templateYaml ?? ''));
+            let invalidGeofiles = false;
             const updatedTemplate =
                 oldContent.includes('/geofiles/') ||
                 nextContent.includes('/geofiles/') ||
                 oldContent.includes('"geofiles"') ||
                 nextContent.includes('"geofiles"')
                     ? await this.geofiles.withReferenceLock(async () => {
-                          await this.geofiles.assertReferences(nextContent);
-                          const source = isYamlTemplate
-                              ? load(
-                                    encodedTemplateYaml !== undefined
-                                        ? Buffer.from(encodedTemplateYaml, 'base64').toString(
-                                              'utf8',
-                                          )
-                                        : template.templateYaml!,
-                                    {
-                                        schema: YAML_MERGE_SCHEMA,
-                                        maxAliases: 100,
-                                        maxTotalMergeKeys: 10000,
-                                    },
-                                )
-                              : (templateJson ?? template.templateJson);
-                          await this.prepareClientTemplate(
-                              source as Record<string, unknown>,
-                              template.templateType,
-                          );
+                          try {
+                              await this.geofiles.assertReferences(nextContent);
+                              const source = isYamlTemplate
+                                  ? load(
+                                        encodedTemplateYaml !== undefined
+                                            ? Buffer.from(encodedTemplateYaml, 'base64').toString(
+                                                  'utf8',
+                                              )
+                                            : template.templateYaml!,
+                                        {
+                                            schema: YAML_MERGE_SCHEMA,
+                                            maxAliases: 100,
+                                            maxTotalMergeKeys: 10000,
+                                        },
+                                    )
+                                  : (templateJson ?? template.templateJson);
+                              await this.prepareClientTemplate(
+                                  source as Record<string, unknown>,
+                                  template.templateType,
+                              );
+                          } catch (error) {
+                              if (draftContent === undefined) throw error;
+                              invalidGeofiles = true;
+                              return template;
+                          }
                           return update();
                       })
                     : await update();
 
+            if (invalidGeofiles) return await saveDraft(['remnacust.geofiles']);
+
             await this.removeCachedTemplate(template.uuid, template.templateType, template.name);
 
-            return ok(new BaseTemplateResponseModel(updatedTemplate));
+            const response = new BaseTemplateResponseModel(updatedTemplate);
+            if (validationWarnings.length) response.validationWarnings = validationWarnings;
+            return ok(response);
         } catch (error) {
             this.logger.error(error);
 

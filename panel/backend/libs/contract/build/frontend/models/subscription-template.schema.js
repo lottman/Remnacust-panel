@@ -14,4 +14,6 @@ exports.SubscriptionTemplateSchema = zod_1.default.object({
     templateType: zod_1.default.enum(constants_1.SUBSCRIPTION_TEMPLATE_TYPE),
     templateJson: zod_1.default.nullable(zod_1.default.unknown()),
     encodedTemplateYaml: zod_1.default.nullable(zod_1.default.string()),
+    draftContent: zod_1.default.string().nullable().optional(),
+    validationWarnings: zod_1.default.array(zod_1.default.string()).optional(),
 });

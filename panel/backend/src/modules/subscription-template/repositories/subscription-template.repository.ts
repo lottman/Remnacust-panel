@@ -31,6 +31,7 @@ export class SubscriptionTemplateRepository implements ICrud<SubscriptionTemplat
                     create: {
                         name: entity.name,
                         templateYaml: model.templateYaml,
+                        draftContent: model.draftContent,
                         templateJson:
                             model.templateJson == null
                                 ? Prisma.DbNull
@@ -93,6 +94,7 @@ export class SubscriptionTemplateRepository implements ICrud<SubscriptionTemplat
         name: string;
         templateJson: unknown;
         templateYaml: string | null;
+        draftContent: string | null;
     }) {
         const latest = await this.prisma.tx.subscriptionTemplateRevisions.findFirst({
             where: { templateUuid: template.uuid },
@@ -101,6 +103,7 @@ export class SubscriptionTemplateRepository implements ICrud<SubscriptionTemplat
         if (
             latest?.name === template.name &&
             latest.templateYaml === template.templateYaml &&
+            latest.draftContent === template.draftContent &&
             JSON.stringify(latest.templateJson) === JSON.stringify(template.templateJson)
         )
             return;
@@ -113,6 +116,7 @@ export class SubscriptionTemplateRepository implements ICrud<SubscriptionTemplat
                         ? Prisma.DbNull
                         : (template.templateJson as Prisma.InputJsonValue),
                 templateYaml: template.templateYaml,
+                draftContent: template.draftContent,
             },
         });
         const expired = await this.prisma.tx.subscriptionTemplateRevisions.findMany({

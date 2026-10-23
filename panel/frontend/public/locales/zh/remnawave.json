@@ -1964,7 +1964,8 @@
             "short-id-help": "16 个十六进制字符（8 个随机字节）。REALITY 服务端使用 shortIds，客户端使用 shortId。",
             "server-config": "服务端配置",
             "public-key-help": "在 X25519 中，password 是公钥的另一种名称，两者的值相同。",
-            "all-values": "所有值"
+            "all-values": "所有值",
+            "password-public-key": "密码（公钥）"
         }
     },
     "bulk-all-users-actions": {
@@ -3290,7 +3291,7 @@
     "autoselect": {
         "editing": "编辑",
         "title": "自动选择",
-        "description": "选择发送给客户端的主机。图形界面与代码使用同一草稿。",
+        "description": "在同一区域配置主机选择和负载均衡。图形界面与代码编辑同一份草稿。",
         "pool": "候选池",
         "create": "创建自动选择",
         "add-pool": "添加候选池",
@@ -3376,7 +3377,9 @@
         "least-load-baselines": "延迟阈值（baselines）",
         "least-load-baselines-help": "输入持续时间，例如 50ms、100ms、1s，每项按 Enter 确认。",
         "probes-not-needed": "随机及轮询策略不需要连接探测。手动配置的探测会保留，直到主动删除。",
-        "remove-unused-probes": "删除不需要的探测"
+        "remove-unused-probes": "删除不需要的探测",
+        "remove-selection": "删除自动选择",
+        "least-load-tolerance-help": "允许的探测失败比例，范围为 0 到 1；0.01 表示 1%。此值不是所选节点数量。"
     },
     "template-history": {
         "title": "历史",
@@ -3937,6 +3940,23 @@
         "preset-countries": "按国家分组的 IP 范围，包括私有网络。",
         "preset-domains": "按服务和分类分组的域名列表。",
         "preset-private": "仅包含私有 IP 范围。",
-        "preset-lite": "常用服务的精简集，分类少于完整的 GeoSite。"
+        "preset-lite": "常用服务的精简集，分类少于完整的 GeoSite。",
+        "delivery-title": "规则如何传递到应用",
+        "delivery-xray": "Xray JSON 会将所选 DAT 分类转换为完整配置中的普通路由规则，无需单独下载 DAT。请导入或更新完整 JSON 订阅；单独的 VLESS 链接无法携带这些规则。",
+        "delivery-native": "所选 DAT 分类会嵌入配置。兼容的原生规则集通过下载链接提供：sing-box 使用 remote rule_set，Clash/Mihomo/Stash 使用 HTTP rule-providers。请选择分类与操作、保存模板，然后在应用中更新完整配置订阅。",
+        "delivery-inline": "嵌入订阅",
+        "delivery-download": "由应用下载"
+    },
+    "template-draft": {
+        "warning": "模板警告",
+        "warning-help": "仍可保存。含错误的文本将作为草稿保存在服务器上；在修复错误并再次保存前，订阅继续使用上一份可用版本。",
+        "saved-title": "草稿已保存，存在警告",
+        "saved-help": "文本已保存到服务器和历史记录。订阅仍使用上一份可用版本。修复警告并再次保存后即可应用模板。",
+        "applied-warning-title": "已应用，存在警告",
+        "applied-warning-help": "模板已保存并应用。Xray 会将数值 tolerance 限制在支持的范围内；请查看编辑器中的警告。",
+        "tolerance-help": "tolerance 是 0 到 1 的探测失败比例。Xray 会限制超出范围的有限数值。原始值可在显示警告的情况下保存并应用。"
+    },
+    "host-actions": {
+        "clone-progress": "正在克隆：{{done}} / {{total}}"
     }
 }

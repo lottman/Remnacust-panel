@@ -10,6 +10,7 @@ export class SubscriptionTemplateEntity implements SubscriptionTemplate {
     templateType: TSubscriptionTemplateType;
     templateYaml: string | null;
     templateJson: object | null;
+    draftContent: string | null;
 
     createdAt: Date;
     updatedAt: Date;

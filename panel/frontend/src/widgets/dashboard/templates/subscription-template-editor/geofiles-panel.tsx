@@ -200,6 +200,9 @@ export function GeofilesPanel({
                     {t('geofiles.help')}
                 </Text>
             </Card>
+            <Alert color="blue" title={t('geofiles.delivery-title')}>
+                {t(format === 'XRAY_JSON' ? 'geofiles.delivery-xray' : 'geofiles.delivery-native')}
+            </Alert>
             {(error || filesQuery.isError) && (
                 <Alert color="red" withCloseButton onClose={() => setError(false)}>
                     {t('geofiles.operation-failed')}{' '}
@@ -294,6 +297,15 @@ export function GeofilesPanel({
                                 <Group>
                                     <Title order={4}>{item?.name ?? reference.id}</Title>
                                     {item && <Badge variant="light">{item.kind}</Badge>}
+                                    {item && (
+                                        <Badge variant="light" color="blue">
+                                            {t(
+                                                ['geoip', 'geosite'].includes(item.kind)
+                                                    ? 'geofiles.delivery-inline'
+                                                    : 'geofiles.delivery-download'
+                                            )}
+                                        </Badge>
+                                    )}
                                 </Group>
                                 <Button
                                     color="red"
@@ -359,6 +371,11 @@ export function GeofilesPanel({
                                     ? t('geofiles.inline-help')
                                     : t('geofiles.download-help')}
                             </Text>
+                            {item && !['geoip', 'geosite'].includes(item.kind) && (
+                                <Text size="xs" c="dimmed" dir="ltr" className={styles.path}>
+                                    {item.url}
+                                </Text>
+                            )}
                         </Stack>
                     </Card>
                 )

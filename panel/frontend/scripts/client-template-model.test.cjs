@@ -37,7 +37,7 @@ test('sing-box creates URLTest and keeps route restrictions; deletion removes on
     assert.deepEqual(result.route,source.route); assert.deepEqual(result.outbounds[0].outbounds,['direct']);
 });
 
-test('invalid syntax, duplicate YAML keys, incomplete pools and unconfigured file actions cannot be saved', () => {
+test('invalid syntax, duplicate YAML keys, incomplete pools and unconfigured file actions produce editor warnings', () => {
     assert.throws(()=>m.readClientTemplate('a: 1\na: 2\n','MIHOMO'));
     assert.throws(()=>m.readClientTemplate('[]','SINGBOX'));
     const pool=m.readClientTemplate(m.addClientGroup('{}','SINGBOX'),'SINGBOX');

@@ -30,6 +30,8 @@ export declare namespace CreateSubscriptionTemplateCommand {
             }>;
             templateJson: z.ZodNullable<z.ZodUnknown>;
             encodedTemplateYaml: z.ZodNullable<z.ZodString>;
+            draftContent: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+            validationWarnings: z.ZodOptional<z.ZodArray<z.ZodString>>;
         }, z.core.$strip>;
     }, z.core.$strip>;
     type RequestBody = z.infer<typeof RequestBodySchema>;

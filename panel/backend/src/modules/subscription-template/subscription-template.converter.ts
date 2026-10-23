@@ -19,6 +19,7 @@ const entityToModel = (entity: SubscriptionTemplateEntity): SubscriptionTemplate
         templateType: entity.templateType,
         templateYaml: entity.templateYaml,
         templateJson: entity.templateJson,
+        draftContent: entity.draftContent,
 
         createdAt: entity.createdAt,
         updatedAt: entity.updatedAt,

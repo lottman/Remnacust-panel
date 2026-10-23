@@ -54,13 +54,15 @@ export function SubscriptionTemplateEditorWidget(props: Props) {
     const monacoRef = useRef<Monaco | null>(null)
 
     const baseline = useMemo(() => {
+        if (template.draftContent !== undefined && template.draftContent !== null)
+            return template.draftContent
         if (editorType === 'yaml') {
             return template.encodedTemplateYaml
                 ? new TextDecoder().decode(decode(template.encodedTemplateYaml))
                 : ''
         }
         return JSON.stringify(template.templateJson, null, 2)
-    }, [editorType, template.templateJson, template.encodedTemplateYaml])
+    }, [editorType, template.templateJson, template.encodedTemplateYaml, template.draftContent])
     const [value, setValue] = useState(() => baseline)
     const valueRef = useRef(value)
     const setDraft = (next: string) => {
@@ -77,9 +79,9 @@ export function SubscriptionTemplateEditorWidget(props: Props) {
                     (isXray ? validationPath(config) : null) ?? clientValidationPath(config, format)
             }
         } catch {
-            return { config: null, error: 'JSON' }
+            return { config: null, error: editorType === 'yaml' ? 'YAML' : 'JSON' }
         }
-    }, [value, format, isXray])
+    }, [value, format, isXray, editorType])
     const deferredValue = useDeferredValue(value)
     const changes = useMemo(() => {
         try {
@@ -241,10 +243,19 @@ export function SubscriptionTemplateEditorWidget(props: Props) {
                 </Tabs.Panel>
             </Tabs>
             {draft.error && (
-                <Alert mt="md" color="red" title={t('autoselect.validation')}>
+                <Alert mt="md" color="yellow" title={t('template-draft.warning')}>
                     <span dir="ltr">{draft.error}</span>
                     <br />
-                    {t('autoselect.validation-help')}
+                    {t(
+                        draft.error.endsWith('.tolerance')
+                            ? 'template-draft.tolerance-help'
+                            : 'template-draft.warning-help'
+                    )}
+                </Alert>
+            )}
+            {template.draftContent !== undefined && template.draftContent !== null && (
+                <Alert mt="md" color="yellow" title={t('template-draft.saved-title')}>
+                    {t('template-draft.saved-help')}
                 </Alert>
             )}
 
@@ -264,7 +275,6 @@ export function SubscriptionTemplateEditorWidget(props: Props) {
                         editorType={editorType}
                         template={template}
                         getValue={() => valueRef.current}
-                        canSave={!draft.error && value.trim().length > 0}
                         showEditorTools={activeTab === 'code'}
                     />
                     {activeTab !== 'code' && (

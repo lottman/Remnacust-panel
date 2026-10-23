@@ -362,6 +362,7 @@ export type SubscriptionTemplate = {
     templateType: string;
     templateYaml: string | null;
     templateJson: object | null;
+    draftContent: string | null;
     createdAt: Generated<Timestamp>;
     updatedAt: Generated<Timestamp>;
 };
@@ -372,6 +373,7 @@ export type SubscriptionTemplateRevisions = {
     name: string;
     templateJson: object | null;
     templateYaml: string | null;
+    draftContent: string | null;
     createdAt: Generated<Timestamp>;
 };
 export type TorrentBlockerReports = {

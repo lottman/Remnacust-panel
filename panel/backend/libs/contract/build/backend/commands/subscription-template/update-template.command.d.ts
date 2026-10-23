@@ -8,6 +8,7 @@ export declare namespace UpdateSubscriptionTemplateCommand {
         name: z.ZodOptional<z.ZodString>;
         templateJson: z.ZodOptional<z.ZodObject<{}, z.core.$loose>>;
         encodedTemplateYaml: z.ZodOptional<z.ZodString>;
+        draftContent: z.ZodOptional<z.ZodString>;
     }, z.core.$strip>;
     const ResponseSchema: z.ZodObject<{
         response: z.ZodObject<{
@@ -25,6 +26,8 @@ export declare namespace UpdateSubscriptionTemplateCommand {
             }>;
             templateJson: z.ZodNullable<z.ZodUnknown>;
             encodedTemplateYaml: z.ZodNullable<z.ZodString>;
+            draftContent: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+            validationWarnings: z.ZodOptional<z.ZodArray<z.ZodString>>;
         }, z.core.$strip>;
     }, z.core.$strip>;
     type RequestBody = z.infer<typeof RequestBodySchema>;

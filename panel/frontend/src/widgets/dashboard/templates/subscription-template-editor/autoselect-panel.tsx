@@ -24,6 +24,8 @@ import { TbArrowsShuffle, TbPlus, TbTrash } from 'react-icons/tb'
 import {
     addBalancer,
     addPool,
+    autoselectGroups,
+    removeAutoselectGroup,
     renameBalancer,
     editTemplate,
     observerFor,
@@ -41,6 +43,7 @@ import {
     type Pool
 } from './autoselect-model'
 import styles from './autoselect-panel.module.css'
+import { defaultAutoselectSources } from './autoselect-sources'
 import { TemplateChanges } from './template-changes'
 
 type Host = GetHostsCommand.Response['response'][number]
@@ -60,12 +63,16 @@ function PoolCard({
     index,
     hostOptions,
     tags,
+    showRemove,
+    hasBalancer,
     edit
 }: {
     pool: Pool
     index: number
     hostOptions: Option[]
     tags: Option[]
+    showRemove: boolean
+    hasBalancer: boolean
     edit: Edit
 }) {
     const { t } = useTranslation()
@@ -102,7 +109,7 @@ function PoolCard({
         )
     }
     return (
-        <Card withBorder p="md" className={styles.card}>
+        <Stack gap="md" className={styles.card}>
             <Group justify="space-between" mb="md" gap="sm">
                 <Group gap="sm">
                     <TbArrowsShuffle aria-hidden size={20} />
@@ -111,16 +118,18 @@ function PoolCard({
                     </Title>
                     <Badge variant="light">{t(`autoselect.mode-${mode}`)}</Badge>
                 </Group>
-                <Button
-                    variant="subtle"
-                    color="red"
-                    size="compact-sm"
-                    leftSection={<TbTrash size={16} />}
-                    title={t('client-template.remove-pool-help')}
-                    onClick={() => edit((text) => removePool(text, index))}
-                >
-                    {t('autoselect.remove-pool')}
-                </Button>
+                {showRemove && (
+                    <Button
+                        variant="subtle"
+                        color="red"
+                        size="compact-sm"
+                        leftSection={<TbTrash size={16} />}
+                        title={t('client-template.remove-pool-help')}
+                        onClick={() => edit((text) => removePool(text, index))}
+                    >
+                        {t('autoselect.remove-pool')}
+                    </Button>
+                )}
             </Group>
             <div className={styles.fields}>
                 <Select
@@ -318,19 +327,23 @@ function PoolCard({
                     </Button>
                 </Alert>
             )}
-            <Group mt="md">
-                <Button
-                    variant="light"
-                    leftSection={<TbPlus size={16} />}
-                    disabled={!pool.tagPrefix || pool.useHostRemarkAsTag || pool.useHostTagAsTag}
-                    onClick={() =>
-                        pool.tagPrefix && edit((text) => addBalancer(text, pool.tagPrefix!))
-                    }
-                >
-                    {t('autoselect.add-balancer')}
-                </Button>
-            </Group>
-        </Card>
+            {!hasBalancer && (
+                <Group mt="md">
+                    <Button
+                        variant="light"
+                        leftSection={<TbPlus size={16} />}
+                        disabled={
+                            !pool.tagPrefix || pool.useHostRemarkAsTag || pool.useHostTagAsTag
+                        }
+                        onClick={() =>
+                            pool.tagPrefix && edit((text) => addBalancer(text, pool.tagPrefix!))
+                        }
+                    >
+                        {t('autoselect.add-balancer')}
+                    </Button>
+                </Group>
+            )}
+        </Stack>
     )
 }
 
@@ -338,11 +351,13 @@ function BalancerCard({
     balance,
     index,
     selectors,
+    showRemove,
     edit
 }: {
     balance: JsonObject
     index: number
     selectors: Option[]
+    showRemove: boolean
     edit: Edit
 }) {
     const { t } = useTranslation()
@@ -351,18 +366,20 @@ function BalancerCard({
     const patch = (field: (string | number)[], value: unknown) =>
         edit((text) => editTemplate(text, ['routing', 'balancers', index, ...field], value))
     return (
-        <Card withBorder p="md" className={styles.card}>
+        <Stack gap="md" className={styles.card}>
             <Group justify="space-between" mb="md">
-                <Title order={4}>{balance.tag || t('autoselect.balancer')}</Title>
-                <Button
-                    color="red"
-                    variant="subtle"
-                    size="compact-sm"
-                    leftSection={<TbTrash size={16} />}
-                    onClick={() => edit((text) => removeBalancer(text, index))}
-                >
-                    {t('autoselect.remove-balancer')}
-                </Button>
+                <Title order={4}>{t('autoselect.strategy')}</Title>
+                {showRemove && (
+                    <Button
+                        color="red"
+                        variant="subtle"
+                        size="compact-sm"
+                        leftSection={<TbTrash size={16} />}
+                        onClick={() => edit((text) => removeBalancer(text, index))}
+                    >
+                        {t('autoselect.remove-balancer')}
+                    </Button>
+                )}
             </Group>
             <TextInput
                 mb="md"
@@ -425,6 +442,7 @@ function BalancerCard({
                         />
                         <NumberInput
                             label={t('autoselect.least-load-tolerance')}
+                            description={t('autoselect.least-load-tolerance-help')}
                             min={0}
                             max={1}
                             step={0.05}
@@ -484,7 +502,7 @@ function BalancerCard({
             <Text mt="sm" size="xs" c="dimmed">
                 {t('autoselect.remove-balancer-help')}
             </Text>
-        </Card>
+        </Stack>
     )
 }
 
@@ -522,6 +540,7 @@ export function AutoselectPanel({
     const balancers: JsonObject[] = Array.isArray(config.routing?.balancers)
         ? config.routing.balancers
         : []
+    const groups = autoselectGroups(config)
     const selectorOptions = [
         ...new Set([
             ...pools.map((pool) => pool.tagPrefix),
@@ -561,7 +580,14 @@ export function AutoselectPanel({
                                 {t('autoselect.description')}
                             </Text>
                         </div>
-                        <Button leftSection={<TbPlus size={17} />} onClick={() => edit(addPool)}>
+                        <Button
+                            leftSection={<TbPlus size={17} />}
+                            onClick={() =>
+                                edit((text) =>
+                                    addPool(text, defaultAutoselectSources(hosts, 'XRAY_JSON'))
+                                )
+                            }
+                        >
                             {pools.length ? t('autoselect.add-pool') : t('autoselect.create')}
                         </Button>
                     </Group>
@@ -578,7 +604,7 @@ export function AutoselectPanel({
                         })}
                     </Alert>
                 )}
-                {!pools.length && (
+                {!groups.length && (
                     <Card withBorder p="xl">
                         <Stack align="center" gap="sm">
                             <TbArrowsShuffle size={32} aria-hidden />
@@ -589,15 +615,50 @@ export function AutoselectPanel({
                         </Stack>
                     </Card>
                 )}
-                {pools.map((pool, index) => (
-                    <PoolCard
-                        key={index}
-                        pool={pool}
-                        index={index}
-                        hostOptions={options}
-                        tags={tags}
-                        edit={edit}
-                    />
+                {groups.map((group, groupIndex) => (
+                    <Card key={groupIndex} withBorder p="md" className={styles.card}>
+                        <Group justify="space-between" gap="sm" mb="md">
+                            <Title order={4}>
+                                {t('autoselect.title')} ·{' '}
+                                {balancers[group.balancers[0]]?.tag ??
+                                    pools[group.pools[0]]?.tagPrefix ??
+                                    groupIndex + 1}
+                            </Title>
+                            <Button
+                                color="red"
+                                variant="subtle"
+                                size="compact-sm"
+                                leftSection={<TbTrash size={16} />}
+                                onClick={() => edit((text) => removeAutoselectGroup(text, group))}
+                            >
+                                {t('autoselect.remove-selection')}
+                            </Button>
+                        </Group>
+                        <Stack gap="xl">
+                            {group.pools.map((index) => (
+                                <PoolCard
+                                    key={index}
+                                    pool={pools[index]}
+                                    index={index}
+                                    hostOptions={options}
+                                    tags={tags}
+                                    edit={edit}
+                                    showRemove={group.pools.length > 1}
+                                    hasBalancer={group.balancers.length > 0}
+                                />
+                            ))}
+                            {group.balancers.map((index) => (
+                                <BalancerCard
+                                    key={index}
+                                    balance={balancers[index]}
+                                    index={index}
+                                    selectors={selectorOptions}
+                                    edit={edit}
+                                    showRemove={group.balancers.length > 1}
+                                />
+                            ))}
+                        </Stack>
+                    </Card>
                 ))}
                 {pools.length > 0 && <Alert variant="light">{t('autoselect.access-help')}</Alert>}
                 <Accordion variant="contained">
@@ -652,20 +713,6 @@ export function AutoselectPanel({
                         </Accordion.Panel>
                     </Accordion.Item>
                 </Accordion>
-                {balancers.length > 0 && (
-                    <>
-                        <Title order={3}>{t('autoselect.balancers')}</Title>
-                        {balancers.map((balance, index) => (
-                            <BalancerCard
-                                key={index}
-                                balance={balance}
-                                index={index}
-                                selectors={selectorOptions}
-                                edit={edit}
-                            />
-                        ))}
-                    </>
-                )}
                 {(config.observatory || config.burstObservatory) &&
                     !balancers.some((balance) => needsProbes(balance.strategy?.type)) && (
                         <Alert>

@@ -1,3 +1,5 @@
+import type { GetHostsCommand } from '@remnawave/backend-contract'
+
 import {
     ActionIcon,
     Affix,
@@ -12,6 +14,7 @@ import {
 } from '@mantine/core'
 import { modals } from '@mantine/modals'
 import { notifications } from '@mantine/notifications'
+import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiProhibitDuotone, PiPulseDuotone } from 'react-icons/pi'
@@ -27,7 +30,7 @@ import {
 } from 'react-icons/tb'
 
 import { showModal } from '@shared/_modals/show-modal'
-import { useBulkEnableHosts, useCloneHost, useGetHosts } from '@shared/api/hooks'
+import { hostsQueryKeys, useBulkEnableHosts, useCloneHost } from '@shared/api/hooks'
 import {
     useBulkDeleteHosts,
     useBulkDisableHosts
@@ -45,10 +48,12 @@ export const MultiSelectHostsFeature = (props: IProps) => {
 
     const { t } = useTranslation()
     const [isCloning, setIsCloning] = useState(false)
+    const [cloneProgress, setCloneProgress] = useState(0)
+    const [cloneTotal, setCloneTotal] = useState(0)
+    const queryClient = useQueryClient()
 
     const hasSelection = selectedHosts.length > 0
 
-    const { refetch: refetchHosts } = useGetHosts()
     const activeTag = useHostsActiveTag()
 
     useEffect(() => {
@@ -63,28 +68,46 @@ export const MultiSelectHostsFeature = (props: IProps) => {
         })
     }, [hosts])
 
-    const { mutate: bulkDeleteHosts } = useBulkDeleteHosts({
+    const updateHostCache = (uuids: string[], action: 'enable' | 'disable' | 'delete') => {
+        const selected = new Set(uuids)
+        queryClient.setQueryData<GetHostsCommand.Response['response']>(
+            hostsQueryKeys.getAllHosts.queryKey,
+            (previous) =>
+                previous?.flatMap((host) =>
+                    !selected.has(host.uuid)
+                        ? [host]
+                        : action === 'delete'
+                          ? []
+                          : [{ ...host, isDisabled: action === 'disable' }]
+                )
+        )
+        setSelectedHosts((current) => current.filter((uuid) => !selected.has(uuid)))
+        void queryClient.invalidateQueries({ queryKey: hostsQueryKeys.getAllHosts.queryKey })
+    }
+    const { mutate: bulkDeleteHosts, isPending: isDeleting } = useBulkDeleteHosts({
         mutationFns: {
-            onSuccess: () => {
-                refetchHosts()
-            }
+            onMutate: () =>
+                queryClient.cancelQueries({ queryKey: hostsQueryKeys.getAllHosts.queryKey }),
+            onSuccess: (_data, request) => updateHostCache(request.variables?.uuids ?? [], 'delete')
         }
     })
-    const { mutate: bulkEnableHosts } = useBulkEnableHosts({
+    const { mutate: bulkEnableHosts, isPending: isEnabling } = useBulkEnableHosts({
         mutationFns: {
-            onSuccess: () => {
-                refetchHosts()
-            }
+            onMutate: () =>
+                queryClient.cancelQueries({ queryKey: hostsQueryKeys.getAllHosts.queryKey }),
+            onSuccess: (_data, request) => updateHostCache(request.variables?.uuids ?? [], 'enable')
         }
     })
-    const { mutate: bulkDisableHosts } = useBulkDisableHosts({
+    const { mutate: bulkDisableHosts, isPending: isDisabling } = useBulkDisableHosts({
         mutationFns: {
-            onSuccess: () => {
-                refetchHosts()
-            }
+            onMutate: () =>
+                queryClient.cancelQueries({ queryKey: hostsQueryKeys.getAllHosts.queryKey }),
+            onSuccess: (_data, request) =>
+                updateHostCache(request.variables?.uuids ?? [], 'disable')
         }
     })
     const { mutateAsync: cloneHost } = useCloneHost()
+    const isBusy = isCloning || isDeleting || isEnabling || isDisabling
 
     const selectAllHosts = () => {
         setSelectedHosts(hosts?.map((host) => host.uuid) || [])
@@ -112,24 +135,22 @@ export const MultiSelectHostsFeature = (props: IProps) => {
             },
             onConfirm: () => {
                 bulkDeleteHosts({ variables: { uuids: selectedHosts } })
-                clearSelection()
             }
         })
     }
 
     const enableSelectedHosts = () => {
         bulkEnableHosts({ variables: { uuids: selectedHosts } })
-        clearSelection()
     }
 
     const disableSelectedHosts = () => {
         bulkDisableHosts({ variables: { uuids: selectedHosts } })
-        clearSelection()
     }
 
     const cloneSelectedHosts = async () => {
         if (isCloning) return
-        const selected = (hosts ?? []).filter((host) => selectedHosts.includes(host.uuid))
+        const selectedIds = new Set(selectedHosts)
+        const selected = (hosts ?? []).filter((host) => selectedIds.has(host.uuid))
         const cloneableHosts = selected.filter(
             (host) => host.inbound.configProfileInboundUuid && host.inbound.configProfileUuid
         )
@@ -156,15 +177,29 @@ export const MultiSelectHostsFeature = (props: IProps) => {
         }
 
         setIsCloning(true)
+        setCloneProgress(0)
+        setCloneTotal(cloneableHosts.length)
+        const completed = new Set<string>()
         try {
-            for (const host of cloneableHosts) {
-                await cloneHost({ variables: { cloneFromUuid: host.uuid } })
-            }
-            clearSelection()
-        } catch {
-            // Preserve the selection if the batch stopped early; the hook reports the error.
+            const queue = [...cloneableHosts]
+            await Promise.all(
+                Array.from({ length: Math.min(3, queue.length) }, async () => {
+                    while (queue.length) {
+                        const host = queue.shift()!
+                        try {
+                            await cloneHost({ variables: { cloneFromUuid: host.uuid } })
+                            completed.add(host.uuid)
+                        } catch {
+                            // Failed sources remain selected so retry does not duplicate successful clones.
+                        } finally {
+                            setCloneProgress((count) => count + 1)
+                        }
+                    }
+                })
+            )
+            setSelectedHosts((current) => current.filter((uuid) => !completed.has(uuid)))
         } finally {
-            void refetchHosts()
+            void queryClient.invalidateQueries({ queryKey: hostsQueryKeys.getAllHosts.queryKey })
             setIsCloning(false)
         }
     }
@@ -207,6 +242,7 @@ export const MultiSelectHostsFeature = (props: IProps) => {
                                             <ActionIcon
                                                 color="gray"
                                                 onClick={selectAllHosts}
+                                                disabled={isBusy}
                                                 size="lg"
                                                 variant="subtle"
                                             >
@@ -217,7 +253,10 @@ export const MultiSelectHostsFeature = (props: IProps) => {
                                             label={t('common.action.clear-selection')}
                                             withArrow
                                         >
-                                            <CloseButton onClick={clearSelection} />
+                                            <CloseButton
+                                                onClick={clearSelection}
+                                                disabled={isBusy}
+                                            />
                                         </Tooltip>
                                     </Group>
                                 </Group>
@@ -228,6 +267,7 @@ export const MultiSelectHostsFeature = (props: IProps) => {
                                             <ActionIcon
                                                 color="gray"
                                                 onClick={() => moveSelected('top')}
+                                                disabled={isBusy}
                                                 size="lg"
                                                 style={{ flex: 1 }}
                                                 variant="soft"
@@ -240,6 +280,7 @@ export const MultiSelectHostsFeature = (props: IProps) => {
                                             <ActionIcon
                                                 color="gray"
                                                 onClick={() => moveSelected('up')}
+                                                disabled={isBusy}
                                                 size="lg"
                                                 style={{ flex: 1 }}
                                                 variant="soft"
@@ -252,6 +293,7 @@ export const MultiSelectHostsFeature = (props: IProps) => {
                                             <ActionIcon
                                                 color="gray"
                                                 onClick={() => moveSelected('down')}
+                                                disabled={isBusy}
                                                 size="lg"
                                                 style={{ flex: 1 }}
                                                 variant="soft"
@@ -264,6 +306,7 @@ export const MultiSelectHostsFeature = (props: IProps) => {
                                             <ActionIcon
                                                 color="gray"
                                                 onClick={() => moveSelected('bottom')}
+                                                disabled={isBusy}
                                                 size="lg"
                                                 style={{ flex: 1 }}
                                                 variant="soft"
@@ -279,6 +322,8 @@ export const MultiSelectHostsFeature = (props: IProps) => {
                                         color="green"
                                         leftSection={<PiPulseDuotone />}
                                         onClick={enableSelectedHosts}
+                                        loading={isEnabling}
+                                        disabled={isBusy && !isEnabling}
                                         variant="soft"
                                     >
                                         {t('common.action.enable')}
@@ -287,6 +332,8 @@ export const MultiSelectHostsFeature = (props: IProps) => {
                                         color="gray"
                                         leftSection={<PiProhibitDuotone />}
                                         onClick={disableSelectedHosts}
+                                        loading={isDisabling}
+                                        disabled={isBusy && !isDisabling}
                                         variant="soft"
                                     >
                                         {t('common.action.disable')}
@@ -297,6 +344,7 @@ export const MultiSelectHostsFeature = (props: IProps) => {
                                         color="cyan"
                                         fullWidth
                                         leftSection={<TbCategoryPlus size={18} />}
+                                        disabled={isBusy}
                                         onClick={() =>
                                             showModal('hosts_editManyHostsDrawer', {
                                                 uuids: selectedHosts
@@ -312,10 +360,16 @@ export const MultiSelectHostsFeature = (props: IProps) => {
                                         fullWidth
                                         leftSection={<TbCopy size={18} />}
                                         loading={isCloning}
+                                        disabled={isBusy && !isCloning}
                                         onClick={() => void cloneSelectedHosts()}
                                         variant="soft"
                                     >
-                                        {t('common.action.clone')}
+                                        {isCloning
+                                            ? t('host-actions.clone-progress', {
+                                                  done: cloneProgress,
+                                                  total: cloneTotal
+                                              })
+                                            : t('common.action.clone')}
                                     </Button>
 
                                     <Button
@@ -323,6 +377,8 @@ export const MultiSelectHostsFeature = (props: IProps) => {
                                         fullWidth
                                         leftSection={<TbTrash size={18} />}
                                         onClick={deleteSelectedHosts}
+                                        loading={isDeleting}
+                                        disabled={isBusy && !isDeleting}
                                         variant="soft"
                                     >
                                         {t('common.action.delete')}

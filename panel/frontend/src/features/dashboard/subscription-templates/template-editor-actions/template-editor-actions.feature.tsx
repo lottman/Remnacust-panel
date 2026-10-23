@@ -2,9 +2,7 @@ import type { editor } from 'monaco-editor'
 
 import { ActionIcon, Button, Group, Menu } from '@mantine/core'
 import { useClipboard, useDisclosure } from '@mantine/hooks'
-import { notifications } from '@mantine/notifications'
 import { GetSubscriptionTemplateCommand } from '@remnawave/backend-contract'
-import { encode } from '@stablelib/base64'
 import { RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiCheckSquareOffset, PiFloppyDisk } from 'react-icons/pi'
@@ -29,19 +27,11 @@ interface Props {
     editorType: 'json' | 'yaml'
     template: GetSubscriptionTemplateCommand.Response['response']
     getValue?: () => string
-    canSave?: boolean
     showEditorTools?: boolean
 }
 
 export function TemplateEditorActionsFeature(props: Props) {
-    const {
-        editorRef,
-        editorType,
-        template,
-        getValue,
-        canSave = true,
-        showEditorTools = true
-    } = props
+    const { editorRef, template, getValue, showEditorTools = true } = props
     const { t } = useTranslation()
 
     const isMobile = useIsMobile()
@@ -73,33 +63,8 @@ export function TemplateEditorActionsFeature(props: Props) {
     })
 
     const handleSave = () => {
-        if (!canSave) return
-        const currentValue = getValue?.() ?? editorRef.current?.getValue()
-
-        if (currentValue && currentValue.trim()) {
-            if (editorType === 'yaml') {
-                updateConfig({
-                    variables: {
-                        uuid: template.uuid,
-                        encodedTemplateYaml: encode(new TextEncoder().encode(currentValue))
-                    }
-                })
-            }
-
-            if (editorType === 'json') {
-                try {
-                    updateConfig({
-                        variables: { uuid: template.uuid, templateJson: JSON.parse(currentValue) }
-                    })
-                } catch (error) {
-                    notifications.show({
-                        color: 'red',
-                        message: error instanceof Error ? error.message : 'Unknown error',
-                        title: t('common.message.error')
-                    })
-                }
-            }
-        }
+        const currentValue = getValue?.() ?? editorRef.current?.getValue() ?? ''
+        updateConfig({ variables: { uuid: template.uuid, draftContent: currentValue } })
     }
 
     const handleCopyConfig = () => {
@@ -168,7 +133,6 @@ export function TemplateEditorActionsFeature(props: Props) {
                 color="teal"
                 leftSection={<PiFloppyDisk size={16} />}
                 loading={isUpdating}
-                disabled={!canSave}
                 onClick={handleSave}
                 variant="soft"
             >

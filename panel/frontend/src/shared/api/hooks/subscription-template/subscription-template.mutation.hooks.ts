@@ -1,4 +1,3 @@
-import { translateMutationMessage } from '@shared/utils/translate-mutation-message'
 import { notifications } from '@mantine/notifications'
 import {
     CreateSubscriptionTemplateCommand,
@@ -9,6 +8,8 @@ import {
 } from '@remnawave/backend-contract'
 import i18next from 'i18next'
 
+import { translateMutationMessage } from '@shared/utils/translate-mutation-message'
+
 import { createMutationHook } from '../../tsq-helpers'
 
 export const useUpdateSubscriptionTemplate = createMutationHook({
@@ -17,11 +18,23 @@ export const useUpdateSubscriptionTemplate = createMutationHook({
     responseSchema: UpdateSubscriptionTemplateCommand.ResponseSchema,
     requestMethod: UpdateSubscriptionTemplateCommand.endpointDetails.REQUEST_METHOD,
     rMutationParams: {
-        onSuccess: () => {
+        onSuccess: (data) => {
+            const draft = data.draftContent !== undefined && data.draftContent !== null
+            const warnings = !!data.validationWarnings?.length
             notifications.show({
-                title: i18next.t('common.message.success'),
-                message: translateMutationMessage('Subscription template updated successfully'),
-                color: 'teal'
+                title: i18next.t(
+                    draft
+                        ? 'template-draft.saved-title'
+                        : warnings
+                          ? 'template-draft.applied-warning-title'
+                          : 'common.message.success'
+                ),
+                message: draft
+                    ? i18next.t('template-draft.saved-help')
+                    : warnings
+                      ? i18next.t('template-draft.applied-warning-help')
+                      : translateMutationMessage('Subscription template updated successfully'),
+                color: draft || warnings ? 'yellow' : 'teal'
             })
         },
         onError: (error) => {

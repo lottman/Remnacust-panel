@@ -3,6 +3,7 @@ import path from 'node:path'
 
 import { explainAutoselect } from './autoselect-guide.mjs'
 import { explainCurrentWorkflows } from './current-workflows-guide.mjs'
+import { explainEditorWorkflows } from './editor-workflows-guide.mjs'
 import './additional-guide.mjs'
 import './remnawave-guide.mjs'
 import fa from './guide-fa.mjs'
@@ -35,6 +36,7 @@ explainListInteractions(articles)
 explainRelease1171(articles)
 explainAutoselect(articles)
 explainCurrentWorkflows(articles)
+explainEditorWorkflows(articles)
 
 const target = path.resolve(import.meta.dirname, '../public/documentation')
 fs.mkdirSync(target, { recursive: true })

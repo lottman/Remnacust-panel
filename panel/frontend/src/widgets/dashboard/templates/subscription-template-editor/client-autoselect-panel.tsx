@@ -20,6 +20,7 @@ import { TbPlus, TbTrash } from 'react-icons/tb'
 
 import { type JsonObject } from './autoselect-model'
 import styles from './autoselect-panel.module.css'
+import { defaultAutoselectSources } from './autoselect-sources'
 import {
     addClientGroup,
     editClientTemplate,
@@ -85,7 +86,15 @@ export function ClientAutoselectPanel({
                     </div>
                     <Button
                         leftSection={<TbPlus size={17} />}
-                        onClick={() => edit(() => addClientGroup(text, format))}
+                        onClick={() =>
+                            edit(() =>
+                                addClientGroup(
+                                    text,
+                                    format,
+                                    defaultAutoselectSources(hosts, format)
+                                )
+                            )
+                        }
                     >
                         {t('autoselect.create')}
                     </Button>

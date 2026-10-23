@@ -28,6 +28,10 @@ export namespace UpdateSubscriptionTemplateCommand {
             .optional(),
         templateJson: z.optional(z.looseObject({})),
         encodedTemplateYaml: z.optional(z.string()),
+        draftContent: z
+            .string()
+            .max(8 * 1024 * 1024)
+            .optional(),
     });
 
     export const ResponseSchema = z.object({

@@ -41,11 +41,12 @@ export function TemplateHistory({ uuid, language, draft, baseline, onRestore }: 
                 name: revision.name,
                 createdAt: revision.createdAt,
                 code:
-                    language === 'json'
+                    revision.draftContent ??
+                    (language === 'json'
                         ? JSON.stringify(revision.templateJson, null, 2)
                         : revision.encodedTemplateYaml
                           ? new TextDecoder().decode(decode(revision.encodedTemplateYaml))
-                          : ''
+                          : '')
             }))}
             onRestore={(revision) => onRestore(revision.code)}
         />

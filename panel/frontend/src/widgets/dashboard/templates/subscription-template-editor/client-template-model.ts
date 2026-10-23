@@ -74,7 +74,11 @@ export function nativeGroupPath(format: ClientFormat): string[] {
     return format === 'SINGBOX' ? ['outbounds'] : ['proxy-groups']
 }
 
-export function addClientGroup(text: string, format: ClientFormat): string {
+export function addClientGroup(
+    text: string,
+    format: ClientFormat,
+    hostUuids: readonly string[] = []
+): string {
     const config = readClientTemplate(text, format)
     const key = nativeGroupPath(format)[0]
     const list: JsonObject[] = config[key] ?? []
@@ -94,7 +98,11 @@ export function addClientGroup(text: string, format: ClientFormat): string {
         interval: sing ? '5m' : 300,
         tolerance: 50,
         remnawave: {
-            pool: { mode: 'all', selectFrom: 'NOT_HIDDEN', selector: { type: 'tags', values: [] } }
+            pool: {
+                mode: 'all',
+                selectFrom: 'NOT_HIDDEN',
+                selector: { type: 'uuids', values: [...hostUuids] }
+            }
         }
     }
     let next = editClientTemplate(text, format, [key], [...list, group])

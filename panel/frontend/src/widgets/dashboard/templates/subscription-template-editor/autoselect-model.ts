@@ -110,6 +110,65 @@ export function poolsOf(config: JsonObject): Pool[] {
     return config.remnawave.injectHosts
 }
 
+export type AutoselectGroup = { pools: number[]; balancers: number[] }
+
+export function autoselectGroups(config: JsonObject): AutoselectGroup[] {
+    const pools = poolsOf(config)
+    const balancers: JsonObject[] = config.routing?.balancers ?? []
+    const remainingPools = new Set(pools.map((_, index) => index))
+    const remainingBalancers = new Set(balancers.map((_, index) => index))
+    const result: AutoselectGroup[] = []
+    const linked = (poolIndex: number, balancerIndex: number) => {
+        const prefix = pools[poolIndex].tagPrefix
+        return (
+            !!prefix &&
+            (balancers[balancerIndex].selector ?? []).some((selector: string) =>
+                prefix.startsWith(selector)
+            )
+        )
+    }
+    while (remainingPools.size || remainingBalancers.size) {
+        const group: AutoselectGroup = { pools: [], balancers: [] }
+        const first = remainingPools.values().next().value
+        if (first !== undefined) {
+            remainingPools.delete(first)
+            group.pools.push(first)
+        } else {
+            const balance = remainingBalancers.values().next().value!
+            remainingBalancers.delete(balance)
+            group.balancers.push(balance)
+        }
+        let expanded = true
+        while (expanded) {
+            expanded = false
+            for (const index of remainingBalancers)
+                if (group.pools.some((pool) => linked(pool, index))) {
+                    remainingBalancers.delete(index)
+                    group.balancers.push(index)
+                    expanded = true
+                }
+            for (const index of remainingPools)
+                if (group.balancers.some((balance) => linked(index, balance))) {
+                    remainingPools.delete(index)
+                    group.pools.push(index)
+                    expanded = true
+                }
+        }
+        group.pools.sort((a, b) => a - b)
+        group.balancers.sort((a, b) => a - b)
+        result.push(group)
+    }
+    return result
+}
+
+export function removeAutoselectGroup(text: string, group: AutoselectGroup): string {
+    let next = text
+    for (const index of [...group.balancers].sort((a, b) => b - a))
+        next = removeBalancer(next, index)
+    for (const index of [...group.pools].sort((a, b) => b - a)) next = removePool(next, index)
+    return next
+}
+
 export function editTemplate(text: string, path: (string | number)[], value: unknown): string {
     parseTemplate(text)
     return applyEdits(
@@ -303,12 +362,12 @@ export function addBalancer(text: string, prefix: string, strategy = 'leastPing'
     return observerFor(next, [prefix], strategy)
 }
 
-export function addPool(text: string): string {
+export function addPool(text: string, hostUuids: readonly string[] = []): string {
     const prefix = newPrefix(parseTemplate(text))
     return addBalancer(
         append(text, ['remnawave', 'injectHosts'], {
-            selector: { type: 'uuids', values: [], expected: 3 },
-            mode: 'random',
+            selector: { type: 'uuids', values: [...hostUuids] },
+            mode: 'all',
             selectFrom: 'ALL',
             tagPrefix: prefix
         }),

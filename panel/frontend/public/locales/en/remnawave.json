@@ -1964,7 +1964,8 @@
       "short-id-help": "16 hexadecimal characters (8 random bytes). Use shortIds on the REALITY server and shortId on the client.",
       "server-config": "Server configuration",
       "public-key-help": "For X25519, password is another name for the public key. Both values are identical.",
-      "all-values": "All values"
+      "all-values": "All values",
+      "password-public-key": "Password (public key)"
     }
   },
   "bulk-all-users-actions": {
@@ -3290,7 +3291,7 @@
   "autoselect": {
     "editing": "Editing",
     "title": "Autoselect",
-    "description": "Choose the hosts delivered to clients. The GUI and code share one draft.",
+    "description": "Configure host selection and balancing together. GUI and code edit the same draft.",
     "pool": "Pool",
     "create": "Create autoselect",
     "add-pool": "Add pool",
@@ -3376,7 +3377,9 @@
     "least-load-baselines": "RTT thresholds (baselines)",
     "least-load-baselines-help": "Enter durations, for example 50ms, 100ms, 1s. Press Enter after each value.",
     "probes-not-needed": "Random and round-robin balancing do not need connection probes. Existing manually configured probes remain in the code until you remove them.",
-    "remove-unused-probes": "Remove unused probes"
+    "remove-unused-probes": "Remove unused probes",
+    "remove-selection": "Delete autoselect",
+    "least-load-tolerance-help": "Allowed failed probe fraction, from 0 to 1: 0.01 means 1%. This is not the expected node count."
   },
   "template-history": {
     "title": "History",
@@ -3937,6 +3940,23 @@
     "preset-countries": "IP ranges grouped by country, with private networks.",
     "preset-domains": "Domain lists grouped by service and category.",
     "preset-private": "Private IP ranges only.",
-    "preset-lite": "A smaller selection of common services; fewer categories than the full GeoSite dataset."
+    "preset-lite": "A smaller selection of common services; fewer categories than the full GeoSite dataset.",
+    "delivery-title": "How rules reach the app",
+    "delivery-xray": "Xray JSON receives selected DAT categories as ordinary routing rules inside the full configuration. No separate DAT download is needed. Import or update the full JSON subscription; a plain VLESS link cannot carry these rules.",
+    "delivery-native": "Selected DAT categories are embedded in the configuration. Compatible native rule sets use download URLs: sing-box gets remote rule_set entries, and Clash/Mihomo/Stash get HTTP rule-providers. Choose categories and an action, save, then update the full configuration subscription in the app.",
+    "delivery-inline": "Embedded in subscription",
+    "delivery-download": "Downloaded by app"
+  },
+  "template-draft": {
+    "warning": "Template warnings",
+    "warning-help": "Save remains available. Text with errors is saved on the server as a draft; subscriptions keep using the last working version until the errors are fixed and you save again.",
+    "saved-title": "Draft saved with warnings",
+    "saved-help": "Your text is saved on the server and in history. Subscriptions still use the last working version. Fix the warnings and save again to publish the template.",
+    "applied-warning-title": "Applied with a warning",
+    "applied-warning-help": "The template was saved and applied. Xray normalizes the numeric tolerance to the supported range; review the warning in the editor.",
+    "tolerance-help": "tolerance is a failed probe fraction from 0 to 1. Xray clamps finite numbers outside this range. The original value can be saved and applied with a warning."
+  },
+  "host-actions": {
+    "clone-progress": "Cloning: {{done}} / {{total}}"
   }
 }

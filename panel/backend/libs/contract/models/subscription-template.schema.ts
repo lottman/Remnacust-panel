@@ -10,4 +10,6 @@ export const SubscriptionTemplateSchema = z.object({
     templateType: z.enum(SUBSCRIPTION_TEMPLATE_TYPE),
     templateJson: z.nullable(z.unknown()),
     encodedTemplateYaml: z.nullable(z.string()),
+    draftContent: z.string().nullable().optional(),
+    validationWarnings: z.array(z.string()).optional(),
 });

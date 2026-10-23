@@ -10,6 +10,8 @@ export class BaseTemplateResponseModel {
     public templateType: TSubscriptionTemplateType;
     public templateJson: object | null;
     public encodedTemplateYaml: string | null;
+    public draftContent: string | null;
+    public validationWarnings?: string[];
 
     constructor(entity: SubscriptionTemplateEntity) {
         this.uuid = entity.uuid;
@@ -18,6 +20,7 @@ export class BaseTemplateResponseModel {
         this.tags = entity.tags;
         this.templateType = entity.templateType;
         this.templateJson = entity.templateJson ?? null;
+        this.draftContent = entity.draftContent ?? null;
         this.encodedTemplateYaml = entity.templateYaml
             ? Buffer.from(entity.templateYaml, 'utf8').toString('base64')
             : null;

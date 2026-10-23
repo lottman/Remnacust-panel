@@ -14,5 +14,7 @@ export declare const SubscriptionTemplateSchema: z.ZodObject<{
     }>;
     templateJson: z.ZodNullable<z.ZodUnknown>;
     encodedTemplateYaml: z.ZodNullable<z.ZodString>;
+    draftContent: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    validationWarnings: z.ZodOptional<z.ZodArray<z.ZodString>>;
 }, z.core.$strip>;
 //# sourceMappingURL=subscription-template.schema.d.ts.map

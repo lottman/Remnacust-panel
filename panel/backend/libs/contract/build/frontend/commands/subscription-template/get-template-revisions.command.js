@@ -16,6 +16,7 @@ var GetSubscriptionTemplateRevisionsCommand;
             name: zod_1.z.string(),
             templateJson: zod_1.z.unknown().nullable(),
             encodedTemplateYaml: zod_1.z.string().nullable(),
+            draftContent: zod_1.z.string().nullable().optional(),
             createdAt: zod_1.z.iso.datetime(),
         })),
     });

@@ -334,6 +334,10 @@ A profile contains the complete Xray configuration. Create it with uniquely tagg
 
 Cloning creates a separate profile for experiments; editing the original can affect every assigned node. Server validation is independent of editor validation. Check node health after applying and avoid static accounts in place of panel-managed accounts.
 
+### X25519 password and private key
+
+The generator shows two values: Private key for the server and Password (public key) for the REALITY client. For X25519, password and publicKey identify the same bytes, so no duplicate field is shown. Copy all contains privateKey and password. Do not distribute the private key to clients.
+
 ### Fields and controls
 
 - **Profile relations**: Squads, inbounds, nodes and hosts
@@ -486,6 +490,10 @@ The user speed in Mbps is a shared ceiling for all their connections on this hos
 
 Under “For each user on this host”, set the quota in GiB and speed in Mbps. These are different limits: quota is a data allowance, speed is the transfer rate. All devices and connections of one user on this host share the speed, including upload and download. With 2 Mbps, two devices together get up to 2 Mbps; another user has a separate allowance. Another host uses its own setting. 0 disables only the host’s own cap; enabled tag restrictions remain. Shared speed for all host users and the accounting multiplier appear below.
 
+### Bulk actions and country search
+
+Enable, disable and delete return after the database commit; node policy delivery starts in the background and unavailable nodes are retried. A saved action does not mean a disconnected node already received it. Buttons show progress and the list updates after API acknowledgement. Cloning runs at most three requests at once; successful sources are deselected and failed sources remain for retry. Search flags by country name in RU/EN/FA/ZH or two-letter code independently of the UI language.
+
 ### Fields and controls
 
 - **User traffic quota**: Combined user usage across all tagged hosts, including multipliers.
@@ -607,7 +615,7 @@ Create or select a template for the required format. When renaming it, choose a 
 
 ### Autoselect in code and UI
 
-The Xray JSON Editing and Autoselect tabs share one draft. Editing an existing pool or balancer immediately updates its JSON. A new pool adds injectHosts, a balancer, routing and observation for leastPing or leastLoad. Other outbounds, rules and settings remain intact. The changes panel compares against the last save; on phones it appears below the form. Save applies the entire draft.
+The Xray JSON Editing and Autoselect tabs share one draft. Editing an existing pool or balancer immediately updates its JSON. A new pool adds injectHosts, a balancer, routing and observation for leastPing or leastLoad. Other outbounds, rules and settings remain intact. The changes panel compares against the last save; on phones it appears below the form. Save publishes a valid draft; text with errors is saved on the server with warnings and remains available in history.
 
 ### Host pools and tags
 
@@ -628,6 +636,18 @@ Autoselect is available for Xray JSON, sing-box, Mihomo, Clash and Stash. sing-b
 ### Geofiles library
 
 Ready-made datasets include published V2Fly and MetaCubeX GeoIP/GeoSite. Import uses the same HTTPS and content checks and never enables rules automatically. Use Click to upload for a local file. In Geofiles, upload from your computer or import a direct HTTPS URL, with a name and content format. Select a library item, attach it, select DAT categories and explicitly choose DIRECT, REJECT or a group. Multiple files and reuse across templates are supported. DAT becomes native rules on the server; sing-box JSON/SRS and Mihomo YAML/text use remote rule_set/rule-providers. Clash/Stash support YAML payload. Existing settings remain intact. Save the template and refresh the subscription to apply. File URLs are public: never upload secrets. Up to 32 files of 64 MiB, text up to 8 MiB; local addresses, archives and unrelated content are rejected. Preserve backups/geofiles when migrating: database-only backups exclude binary files. Historical versions may require reattachment after a file is deleted.
+
+### Saving with warnings
+
+Save remains available for invalid JSON/YAML, empty host selections and incomplete geofile actions. Text with errors is saved on the server as a draft and included in history; reopening restores the same text. Subscriptions keep the last working configuration. Fix the warnings and save again: valid content replaces the working version and clears the draft. Network and database failures are not reported as successful saves.
+
+### Host selection and balancing in one card
+
+Host sources and their strategy share one block. Pools using a shared balancer are grouped together; manual balancers remain visible. Deleting the block removes its sources, balancers and linked rules while retaining independent groups and manual outbounds. leastLoad.expected is the selected node count; tolerance is the allowed failed probe fraction from 0 to 1: 0.01 means 1%, and 2 does not mean two nodes. Xray clamps finite numeric values outside the range to 0–1; such templates apply with a warning while retaining the original number. New pools start with enabled hosts supported by the format, selected by UUID. With no eligible hosts, the setup remains a draft until sources are selected.
+
+### When the app downloads geofiles
+
+GeoIP/GeoSite DAT categories become ordinary rules inside the full configuration, so the app makes no separate DAT download. Native sing-box JSON/SRS use remote rule_set; compatible Mihomo/Clash/Stash YAML/text use HTTP rule-providers with a public URL. Each file shows its delivery mode. Use a full JSON/YAML configuration subscription: an individual VLESS link cannot carry these rules. Import and attach a new dataset version, save a valid template and update the subscription.
 
 ## Variables {{…}} in names and headers
 

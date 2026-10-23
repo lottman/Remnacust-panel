@@ -137,6 +137,7 @@ export class SubscriptionTemplateController {
             body.name?.trim() ?? undefined,
             body.templateJson ?? undefined,
             body.encodedTemplateYaml ?? undefined,
+            body.draftContent,
         );
 
         const data = errorHandler(result);

@@ -38,7 +38,11 @@ export const KeypairGeneratorWidget = () => {
                 onChange={(value) => value && setActiveTab(value as TabTypes)}
                 value={activeTab}
             >
-                <Tabs.List grow mb="md" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}>
+                <Tabs.List
+                    grow
+                    mb="md"
+                    style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}
+                >
                     <Tabs.Tab
                         key={TabTypes.X25519}
                         leftSection={<TbKey size={16} />}
@@ -68,17 +72,29 @@ export const KeypairGeneratorWidget = () => {
                 </Tabs.List>
 
                 <Tabs.Panel value={TabTypes.SHORT_ID}>
-                    <Transition duration={200} keepMounted mounted={activeTab === TabTypes.SHORT_ID} transition="fade">
+                    <Transition
+                        duration={200}
+                        keepMounted
+                        mounted={activeTab === TabTypes.SHORT_ID}
+                        transition="fade"
+                    >
                         {(styles) => (
                             <Stack gap="md" style={styles}>
                                 <CopyableFieldShared label="shortId" value={shortId} />
-                                <Text c="dimmed" size="xs">{t('keypair-generator.widget.short-id-help')}</Text>
+                                <Text c="dimmed" size="xs">
+                                    {t('keypair-generator.widget.short-id-help')}
+                                </Text>
                                 <CopyableAreaShared
                                     label={t('keypair-generator.widget.server-config')}
                                     value={`"shortIds": ["${shortId}"]`}
                                 />
                                 <Group justify="flex-end">
-                                    <Button leftSection={<TbFingerprint size={16} />} onClick={() => setShortId(generateShortId())} size="sm" variant="default">
+                                    <Button
+                                        leftSection={<TbFingerprint size={16} />}
+                                        onClick={() => setShortId(generateShortId())}
+                                        size="sm"
+                                        variant="default"
+                                    >
                                         {t('keypair-generator.widget.generate')}
                                     </Button>
                                 </Group>
@@ -99,12 +115,8 @@ export const KeypairGeneratorWidget = () => {
                             <Stack gap="md" style={styles}>
                                 <Stack gap="xs">
                                     <CopyableFieldShared
-                                        label={uiText('password-e7cf3ef')}
+                                        label={t('keypair-generator.widget.password-public-key')}
                                         value={keyPair.password}
-                                    />
-                                    <CopyableFieldShared
-                                        label={uiText('public-key-f569a86')}
-                                        value={keyPair.publicKey}
                                     />
                                     <CopyableFieldShared
                                         label={uiText('private-key-b593dff')}
@@ -123,7 +135,6 @@ export const KeypairGeneratorWidget = () => {
                                         minRows={3}
                                         label={t('keypair-generator.widget.all-values')}
                                         value={`"password": "${keyPair.password}",
-"publicKey": "${keyPair.publicKey}",
 "privateKey": "${keyPair.privateKey}",`}
                                     />
                                 </Stack>

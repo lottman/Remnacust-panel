@@ -862,7 +862,7 @@ export class HostsService {
         // Controllers call this after the transactional service method has committed.
         // The scheduled sync retries unavailable nodes without rolling back saved settings.
         try {
-            await this.hostPolicies.syncConnected();
+            this.hostPolicies.requestSync();
         } catch (error) {
             this.logger.error(
                 `Host settings saved; policy synchronization will retry: ${String(error)}`,

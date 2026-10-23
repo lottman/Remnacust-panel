@@ -8,7 +8,7 @@ const { mocks, pool } = require('./client-pool-fixture.cjs');
 const fixtures = require('./geofiles-fixture.cjs');
 const root = path.join(__dirname, '../src/modules/subscription-template/geofiles');
 const modules = { ...mocks, '../generators/client-pool': pool };
-const { materializeGeofiles } = load(path.join(root, 'materialize-geofiles.ts'), modules);
+const { materializeGeofiles, geofileReferences } = load(path.join(root, 'materialize-geofiles.ts'), modules);
 const { compileDat } = load(path.join(root, 'compile-dat.ts'), modules);
 const { geofileInterval } = load(path.join(root, 'geofile-delivery.ts'), modules);
 
@@ -19,6 +19,8 @@ test('delivery is independent of legacy templates: explicit off means embedded D
         url: 'https://sub.test/geosite.dat',
     };
     const ref = { id: file.id, categories: ['example'], target: 'REJECT' };
+    assert.throws(()=>geofileReferences({remnacust:{geofiles:[{...ref,downloadToClient:false,target:{bad:true}}]}}));
+    assert.equal(geofileReferences({remnacust:{geofiles:[{id:file.id,downloadToClient:false}]}})[0].target,'DIRECT');
     const dat = async () => compileDat(fixtures.geosite, 'geosite', ['example']);
     const legacy = await materializeGeofiles(
         { remnacust: { geofiles: [ref] } },

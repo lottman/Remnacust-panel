@@ -26,6 +26,7 @@ export function geofileReferences(config: ObjectValue): GeofileReference[] {
             !reference ||
             typeof reference !== 'object' ||
             !/^[a-f0-9]{34}$/.test(reference.id) ||
+            (reference.target !== undefined && typeof reference.target !== 'string') ||
             (reference.downloadToClient !== false &&
                 (typeof reference.target !== 'string' ||
                     !reference.target.trim() ||

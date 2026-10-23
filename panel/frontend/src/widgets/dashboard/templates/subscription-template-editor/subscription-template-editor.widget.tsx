@@ -23,6 +23,7 @@ import panelStyles from './autoselect-panel.module.css'
 import { ClientAutoselectPanel } from './client-autoselect-panel'
 import {
     clientValidationPath,
+    geofileEditorShapeError,
     readClientTemplate,
     type ClientFormat
 } from './client-template-model'
@@ -72,6 +73,8 @@ export function SubscriptionTemplateEditorWidget(props: Props) {
     const draft = useMemo(() => {
         try {
             const config = isXray ? parseTemplate(value) : readClientTemplate(value, format)
+            const shapeError = geofileEditorShapeError(config)
+            if (shapeError) return { config: null, error: shapeError }
             if (isXray) poolsOf(config)
             return {
                 config,

@@ -55,3 +55,9 @@ test('YAML merge aliases survive edits; file routing follows group renames and r
     assert.equal(m.clientValidationPath(removed,'MIHOMO'),'remnacust.geofiles.0');
     assert.equal(m.clientValidationPath({remnacust:{geofiles:[{id:'x',target:5}]}},'SINGBOX'),'remnacust.geofiles.0');
 });
+test('malformed geofile fields stay editable as code without passing unsafe values to GUI controls',()=>{
+ for(const settings of [null,'bad',[],{geofiles:{}},{geofiles:[null]},{geofiles:[{id:5}]},{geofiles:[{id:'test',target:{}}]},{geofiles:[{id:'test',categories:[{}]}]},{geofiles:[{id:'test',downloadToClient:'yes'}]}]) {
+  assert.ok(m.geofileEditorShapeError({remnacust:settings}));
+ }
+ assert.equal(m.geofileEditorShapeError({remnacust:{geofiles:[{id:'test',target:'',categories:[]}]}}),null,'Incomplete but structurally valid fields remain usable in GUI');
+});

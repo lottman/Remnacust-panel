@@ -7,6 +7,40 @@ import { type JsonObject } from './autoselect-model'
 export type ClientFormat = 'XRAY_JSON' | 'SINGBOX' | 'MIHOMO' | 'STASH' | 'CLASH'
 export const isYamlFormat = (format: ClientFormat) => ['MIHOMO', 'STASH', 'CLASH'].includes(format)
 
+export function geofileEditorShapeError(root: JsonObject): string | null {
+    const settings = root.remnacust
+    if (settings === undefined) return null
+    if (!settings || typeof settings !== 'object' || Array.isArray(settings)) return 'remnacust'
+    const refs = settings.geofiles
+    if (refs === undefined) return null
+    if (!Array.isArray(refs)) return 'remnacust.geofiles'
+    for (const [index, reference] of refs.entries()) {
+        const path = `remnacust.geofiles.${index}`
+        if (!reference || typeof reference !== 'object' || Array.isArray(reference)) return path
+        if (typeof reference.id !== 'string') return `${path}.id`
+        if (reference.target !== undefined && typeof reference.target !== 'string')
+            return `${path}.target`
+        if (
+            reference.categories !== undefined &&
+            (!Array.isArray(reference.categories) ||
+                reference.categories.some((item: unknown) => typeof item !== 'string'))
+        )
+            return `${path}.categories`
+        if (
+            reference.downloadToClient !== undefined &&
+            typeof reference.downloadToClient !== 'boolean'
+        )
+            return `${path}.downloadToClient`
+        if (
+            reference.clientRefreshIntervalSeconds !== undefined &&
+            (typeof reference.clientRefreshIntervalSeconds !== 'number' ||
+                !Number.isFinite(reference.clientRefreshIntervalSeconds))
+        )
+            return `${path}.clientRefreshIntervalSeconds`
+    }
+    return null
+}
+
 export function readClientTemplate(text: string, format: ClientFormat): JsonObject {
     const doc = isYamlFormat(format) ? parseDocument(text, { uniqueKeys: true, merge: true }) : null
     if (doc?.errors.length) throw new Error('template-syntax')

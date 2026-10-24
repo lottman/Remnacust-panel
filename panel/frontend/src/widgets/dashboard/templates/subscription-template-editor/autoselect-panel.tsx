@@ -2,7 +2,6 @@ import type { GetHostsCommand } from '@remnawave/backend-contract'
 
 import {
     Alert,
-    Accordion,
     TagsInput,
     Badge,
     Button,
@@ -43,7 +42,7 @@ import {
     type Pool
 } from './autoselect-model'
 import styles from './autoselect-panel.module.css'
-import { defaultAutoselectSources } from './autoselect-sources'
+import { defaultAutoselectSources, xrayPoolPreview } from './autoselect-sources'
 import { TemplateChanges } from './template-changes'
 
 type Host = GetHostsCommand.Response['response'][number]
@@ -65,6 +64,7 @@ function PoolCard({
     tags,
     showRemove,
     hasBalancer,
+    possibleHosts,
     edit
 }: {
     pool: Pool
@@ -73,6 +73,7 @@ function PoolCard({
     tags: Option[]
     showRemove: boolean
     hasBalancer: boolean
+    possibleHosts: number | null
     edit: Edit
 }) {
     const { t } = useTranslation()
@@ -200,12 +201,21 @@ function PoolCard({
                 <TextInput
                     label={t('autoselect.prefix')}
                     description={t('autoselect.prefix-help')}
+                    disabled={!!pool.useHostRemarkAsTag || !!pool.useHostTagAsTag}
                     value={pool.tagPrefix ?? ''}
                     onChange={(event) =>
                         edit((text) => renamePoolPrefix(text, index, event.currentTarget.value))
                     }
                 />
             </div>
+            {(pool.useHostRemarkAsTag || pool.useHostTagAsTag) && (
+                <Alert color="blue">{t('autoselect.host-naming-help')}</Alert>
+            )}
+            {possibleHosts !== null && (
+                <Text size="xs" c="dimmed">
+                    {t('autoselect.pool-preview', { count: possibleHosts })}
+                </Text>
+            )}
             {mode === 'random' && (
                 <NumberInput
                     mt="md"
@@ -543,7 +553,10 @@ export function AutoselectPanel({
     const groups = autoselectGroups(config)
     const selectorOptions = [
         ...new Set([
-            ...pools.map((pool) => pool.tagPrefix),
+            ...(config.remnawave?.addVirtualHostAsOutbound ? ['proxy'] : []),
+            ...pools
+                .filter((pool) => !pool.useHostRemarkAsTag && !pool.useHostTagAsTag)
+                .map((pool) => pool.tagPrefix),
             ...(Array.isArray(config.outbounds)
                 ? config.outbounds.map((outbound: JsonObject) => outbound.tag)
                 : [])
@@ -568,7 +581,6 @@ export function AutoselectPanel({
             setError(issue instanceof Error ? issue.message : 'structure')
         }
     }
-    const assignment = config.remnawave?.assignTo ?? {}
     return (
         <div className={styles.layout}>
             <Stack gap="md" className={styles.main}>
@@ -645,6 +657,7 @@ export function AutoselectPanel({
                                     edit={edit}
                                     showRemove={group.pools.length > 1}
                                     hasBalancer={group.balancers.length > 0}
+                                    possibleHosts={xrayPoolPreview(pools[index], hosts)}
                                 />
                             ))}
                             {group.balancers.map((index) => (
@@ -661,58 +674,6 @@ export function AutoselectPanel({
                     </Card>
                 ))}
                 {pools.length > 0 && <Alert variant="light">{t('autoselect.access-help')}</Alert>}
-                <Accordion variant="contained">
-                    <Accordion.Item value="assignment">
-                        <Accordion.Control>
-                            {t('autoselect.assignment')} ·{' '}
-                            {(assignment.hosts?.length ?? 0) + (assignment.tags?.length ?? 0)}
-                        </Accordion.Control>
-                        <Accordion.Panel>
-                            <Text size="sm" c="dimmed" mb="md">
-                                {t('autoselect.assignment-help')}
-                            </Text>
-                            <Stack gap="md">
-                                <MultiSelect
-                                    searchable
-                                    clearable
-                                    limit={50}
-                                    label={t('autoselect.assignment-hosts')}
-                                    data={optionsWithSaved(options, assignment.hosts ?? [])}
-                                    value={assignment.hosts ?? []}
-                                    onChange={(value) =>
-                                        edit((text) =>
-                                            editTemplate(
-                                                text,
-                                                ['remnawave', 'assignTo', 'hosts'],
-                                                value
-                                            )
-                                        )
-                                    }
-                                />
-                                <MultiSelect
-                                    searchable
-                                    clearable
-                                    limit={50}
-                                    label={t('autoselect.assignment-tags')}
-                                    data={optionsWithSaved(tags, assignment.tags ?? [])}
-                                    value={assignment.tags ?? []}
-                                    onChange={(value) =>
-                                        edit((text) =>
-                                            editTemplate(
-                                                text,
-                                                ['remnawave', 'assignTo', 'tags'],
-                                                value
-                                            )
-                                        )
-                                    }
-                                />
-                                <Text size="xs" c="dimmed">
-                                    {t('autoselect.assignment-priority')}
-                                </Text>
-                            </Stack>
-                        </Accordion.Panel>
-                    </Accordion.Item>
-                </Accordion>
                 {(config.observatory || config.burstObservatory) &&
                     !balancers.some((balance) => needsProbes(balance.strategy?.type)) && (
                         <Alert>

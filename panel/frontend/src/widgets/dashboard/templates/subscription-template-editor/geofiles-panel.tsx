@@ -18,6 +18,7 @@ import {
 } from '@mantine/core'
 import { modals } from '@mantine/modals'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { isAxiosError } from 'axios'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbPlus, TbTrash } from 'react-icons/tb'
@@ -26,7 +27,8 @@ import { instance } from '@shared/api'
 
 import { type JsonObject } from './autoselect-model'
 import styles from './autoselect-panel.module.css'
-import { editClientTemplate, type ClientFormat } from './client-template-model'
+import { editClientTemplate, readClientTemplate, type ClientFormat } from './client-template-model'
+import { compatibleGeofile, geofileCatalog } from './geofile-library-model'
 import { geofilePresets } from './geofile-presets'
 import { GeofileRefreshSettings, type GeofileRefresh } from './geofile-refresh-settings'
 
@@ -60,24 +62,19 @@ const kinds = [
     'mihomo-text-domain',
     'mihomo-text-ipcidr'
 ] as const
-const compatible = (kind: string, format: ClientFormat) =>
-    ['geoip', 'geosite'].includes(kind) ||
-    (format === 'SINGBOX'
-        ? kind.startsWith('singbox-')
-        : format === 'XRAY_JSON'
-          ? false
-          : kind.startsWith('mihomo-') && (format === 'MIHOMO' || !kind.startsWith('mihomo-text-')))
 
 export function GeofilesPanel({
     text,
     config,
     format,
-    onChange
+    onChange,
+    getValue
 }: {
     text: string
     config: JsonObject
     format: ClientFormat
     onChange: (value: string) => void
+    getValue: () => string
 }) {
     const { t } = useTranslation()
     const client = useQueryClient()
@@ -95,10 +92,19 @@ export function GeofilesPanel({
     const [url, setUrl] = useState('')
     const [file, setFile] = useState<File | null>(null)
     const [progress, setProgress] = useState<number | null>(null)
-    const [error, setError] = useState(false)
-    const [selected, setSelected] = useState<string | null>(null)
-    const [presetId, setPresetId] = useState<string | null>(geofilePresets[0].id)
-    const preset = geofilePresets.find((item) => item.id === presetId)
+    const [error, setError] = useState<
+        'geofiles.operation-failed' | 'geofiles.delete-in-use' | null
+    >(null)
+    const [selection, setSelection] = useState<string | null>(null)
+    const requestedPreset = geofilePresets.find((item) => selection === `preset:${item.id}`)
+    const selectedFile = files.find(
+        (item) =>
+            selection === `file:${item.id}` ||
+            (!!requestedPreset && item.refresh?.sourceUrl === requestedPreset.url)
+    )
+    const selected = selectedFile?.id ?? null
+    const preset = selectedFile ? undefined : requestedPreset
+    const catalogValue = selected ? `file:${selected}` : preset ? `preset:${preset.id}` : null
     const refs: Reference[] = Array.isArray(config.remnacust?.geofiles)
         ? config.remnacust.geofiles
         : []
@@ -108,11 +114,17 @@ export function GeofilesPanel({
             'REJECT',
             ...(format === 'XRAY_JSON'
                 ? [
-                      'proxy',
+                      ...(!config.remnawave?.injectHosts ||
+                      config.remnawave?.addVirtualHostAsOutbound
+                          ? ['proxy']
+                          : []),
                       ...(config.routing?.balancers ?? []).map((item: JsonObject) => item.tag),
-                      ...(config.remnawave?.injectHosts ?? []).map(
-                          (item: JsonObject) => item.tagPrefix
-                      ),
+                      ...(config.remnawave?.injectHosts ?? [])
+                          .filter(
+                              (item: JsonObject) =>
+                                  !item.useHostRemarkAsTag && !item.useHostTagAsTag
+                          )
+                          .map((item: JsonObject) => item.tagPrefix),
                       ...(config.outbounds ?? []).map((item: JsonObject) => item.tag)
                   ]
                 : format === 'SINGBOX'
@@ -133,9 +145,9 @@ export function GeofilesPanel({
                     value.length ? value : undefined
                 )
             )
-            setError(false)
+            setError(null)
         } catch {
-            setError(true)
+            setError('geofiles.operation-failed')
         }
     }
     const upload = useMutation({
@@ -172,24 +184,49 @@ export function GeofilesPanel({
                 item,
                 ...(previous ?? []).filter((existing) => existing.id !== item.id)
             ])
-            setSelected(item.id)
-            setError(false)
+            setSelection(`file:${item.id}`)
+            setError(null)
             if (source === 'file') setFile(null)
             if (source === 'url') setUrl('')
             setProgress(null)
         },
         onError: () => {
-            setError(true)
+            setError('geofiles.operation-failed')
             setProgress(null)
         }
     })
     const remove = useMutation({
         mutationFn: (id: string) => instance.delete(`/api/geofiles/${id}`),
-        onSuccess: () => {
+        onSuccess: (_, id) => {
+            client.setQueryData<Geofile[]>(queryKey, (previous) =>
+                (previous ?? []).filter((item) => item.id !== id)
+            )
+            setSelection(null)
+            try {
+                const currentText = getValue()
+                const currentRefs: Reference[] =
+                    readClientTemplate(currentText, format).remnacust?.geofiles ?? []
+                if (currentRefs.some((reference) => reference.id === id))
+                    onChange(
+                        editClientTemplate(
+                            currentText,
+                            format,
+                            ['remnacust', 'geofiles'],
+                            currentRefs.filter((reference) => reference.id !== id)
+                        )
+                    )
+                setError(null)
+            } catch {
+                setError('geofiles.operation-failed')
+            }
             void client.invalidateQueries({ queryKey })
-            setError(false)
         },
-        onError: () => setError(true)
+        onError: (failure) =>
+            setError(
+                isAxiosError(failure) && failure.response?.status === 409
+                    ? 'geofiles.delete-in-use'
+                    : 'geofiles.operation-failed'
+            )
     })
     const existingUrls = [
         ...(config.geodata?.assets ?? []).map((asset: JsonObject) => ({
@@ -217,8 +254,8 @@ export function GeofilesPanel({
                 {t(format === 'XRAY_JSON' ? 'geofiles.delivery-xray' : 'geofiles.delivery-native')}
             </Alert>
             {(error || filesQuery.isError) && (
-                <Alert color="red" withCloseButton onClose={() => setError(false)}>
-                    {t('geofiles.operation-failed')}{' '}
+                <Alert color="red" withCloseButton onClose={() => setError(null)}>
+                    {t(error ?? 'geofiles.operation-failed')}{' '}
                     {filesQuery.isError && (
                         <Button variant="subtle" onClick={() => void filesQuery.refetch()}>
                             {t('common.action.refresh')}
@@ -228,7 +265,7 @@ export function GeofilesPanel({
             )}
             <Card p="md" className={styles.card}>
                 <Stack gap="md">
-                    <Title order={4}>{t('geofiles.library')}</Title>
+                    <Title order={4}>{t('geofiles.presets')}</Title>
                     <Text size="sm" c="dimmed">
                         {t('geofiles.library-help')}
                     </Text>
@@ -238,80 +275,119 @@ export function GeofilesPanel({
                         <Select
                             searchable
                             clearable
-                            label={t('geofiles.choose')}
-                            value={selected}
-                            onChange={setSelected}
-                            data={files
-                                .filter((item) => compatible(item.kind, format))
-                                .map((item) => ({
-                                    value: item.id,
-                                    label: `${item.name} · ${item.kind} · ${(item.size / 1048576).toFixed(1)} MiB`
-                                }))}
-                            nothingFoundMessage={t('geofiles.no-compatible')}
+                            label={t('geofiles.choose-preset')}
+                            placeholder={t('geofiles.catalog-placeholder')}
+                            value={catalogValue}
+                            onChange={(value) => {
+                                setSelection(value)
+                                setError(null)
+                            }}
+                            data={geofileCatalog(files).map((group) => ({
+                                ...group,
+                                group:
+                                    group.group === 'uploaded'
+                                        ? t('geofiles.uploaded-group')
+                                        : group.group
+                            }))}
+                            nothingFoundMessage={t('common.message.nothing-found')}
                         />
                     )}
-                    <Button
-                        leftSection={<TbPlus size={16} />}
-                        disabled={!selected || refs.some((ref) => ref.id === selected)}
-                        onClick={() => {
-                            const item = files.find((file) => file.id === selected)
-                            if (item)
-                                patch([
-                                    ...refs,
-                                    {
-                                        id: item.id,
-                                        ...(['geoip', 'geosite'].includes(item.kind)
-                                            ? { categories: [] }
-                                            : {}),
-                                        target: 'DIRECT',
-                                        downloadToClient: item.kind === 'singbox-srs',
-                                        clientRefreshIntervalSeconds: 86400
-                                    }
-                                ])
-                        }}
-                    >
-                        {t('geofiles.attach')}
-                    </Button>
-                    {selected && files.find((item) => item.id === selected) && (
-                        <Group justify="space-between">
-                            <Text size="xs" c="dimmed" style={{ overflowWrap: 'anywhere' }}>
-                                SHA-256: {files.find((item) => item.id === selected)?.sha256}
+                    {preset && (
+                        <>
+                            <Text size="sm">{t(`geofiles.preset-${preset.description}`)}</Text>
+                            <Text size="xs" c="dimmed" dir="ltr" className={styles.path}>
+                                {preset.url}
                             </Text>
+                        </>
+                    )}
+                    {selectedFile && (
+                        <>
+                            <Text size="sm" c="dimmed">
+                                {t('geofiles.available-everywhere')}
+                            </Text>
+                            {!compatibleGeofile(selectedFile.kind, format) && (
+                                <Alert color="yellow">{t('geofiles.incompatible-format')}</Alert>
+                            )}
+                        </>
+                    )}
+                    {(selectedFile || preset) && (
+                        <Group grow>
                             <Button
-                                color="red"
-                                variant="subtle"
-                                leftSection={<TbTrash size={16} />}
-                                loading={remove.isPending}
-                                disabled={refs.some((ref) => ref.id === selected)}
-                                onClick={() =>
-                                    modals.openConfirmModal({
-                                        title: t('geofiles.delete-title'),
-                                        children: <Text>{t('geofiles.delete-help')}</Text>,
-                                        labels: {
-                                            confirm: t('common.action.delete'),
-                                            cancel: t('common.action.cancel')
-                                        },
-                                        confirmProps: { color: 'red' },
-                                        onConfirm: () => selected && remove.mutate(selected)
-                                    })
+                                leftSection={<TbPlus size={16} />}
+                                disabled={
+                                    !!selectedFile &&
+                                    (!compatibleGeofile(selectedFile.kind, format) ||
+                                        refs.some((ref) => ref.id === selected))
                                 }
+                                loading={upload.isPending}
+                                onClick={() => {
+                                    if (preset) upload.mutate(preset)
+                                    else if (
+                                        selectedFile &&
+                                        compatibleGeofile(selectedFile.kind, format)
+                                    )
+                                        patch([
+                                            ...refs,
+                                            {
+                                                id: selectedFile.id,
+                                                ...(['geoip', 'geosite'].includes(selectedFile.kind)
+                                                    ? { categories: [] }
+                                                    : {}),
+                                                target: 'DIRECT',
+                                                downloadToClient:
+                                                    selectedFile.kind === 'singbox-srs',
+                                                clientRefreshIntervalSeconds: 86400
+                                            }
+                                        ])
+                                }}
                             >
-                                {t('common.action.delete')}
+                                {t(
+                                    preset
+                                        ? 'geofiles.import-preset'
+                                        : refs.some((ref) => ref.id === selected)
+                                          ? 'geofiles.already-attached'
+                                          : 'geofiles.attach'
+                                )}
                             </Button>
+                            {selectedFile && (
+                                <Button
+                                    color="red"
+                                    variant="subtle"
+                                    leftSection={<TbTrash size={16} />}
+                                    loading={remove.isPending}
+                                    onClick={() =>
+                                        modals.openConfirmModal({
+                                            title: t('geofiles.delete-title'),
+                                            children: <Text>{t('geofiles.delete-help')}</Text>,
+                                            labels: {
+                                                confirm: t('common.action.delete'),
+                                                cancel: t('common.action.cancel')
+                                            },
+                                            confirmProps: { color: 'red' },
+                                            onConfirm: () => remove.mutate(selectedFile.id)
+                                        })
+                                    }
+                                >
+                                    {t('geofiles.delete-from-library')}
+                                </Button>
+                            )}
                         </Group>
+                    )}
+                    {selectedFile && (
+                        <>
+                            <Text size="xs" c="dimmed" dir="ltr" className={styles.path}>
+                                SHA-256: {selectedFile.sha256}
+                            </Text>
+                            <GeofileRefreshSettings
+                                key={selectedFile.id}
+                                id={selectedFile.id}
+                                refresh={selectedFile.refresh}
+                                onUpdated={() => void client.invalidateQueries({ queryKey })}
+                            />
+                        </>
                     )}
                 </Stack>
             </Card>
-            {selected && files.some((item) => item.id === selected) && (
-                <Card p="md" className={styles.card}>
-                    <GeofileRefreshSettings
-                        key={selected}
-                        id={selected}
-                        refresh={files.find((item) => item.id === selected)?.refresh}
-                        onUpdated={() => void client.invalidateQueries({ queryKey })}
-                    />
-                </Card>
-            )}
             {refs.map((reference, index) => {
                 const item = files.find((file) => file.id === reference.id)
                 const categories = reference.categories ?? []
@@ -422,6 +498,9 @@ export function GeofilesPanel({
                                     {t('geofiles.xray-download-limit')}
                                 </Text>
                             )}
+                            {xray && download && (
+                                <Alert color="blue">{t('geofiles.happ-check-help')}</Alert>
+                            )}
                             {item?.kind === 'singbox-srs' && (
                                 <Text size="xs" c="dimmed">
                                     {t('geofiles.srs-download-limit')}
@@ -474,45 +553,6 @@ export function GeofilesPanel({
                     </Card>
                 )
             })}
-            <Card p="md" className={styles.card}>
-                <Stack gap="md">
-                    <div>
-                        <Title order={4}>{t('geofiles.presets')}</Title>
-                        <Text size="sm" c="dimmed" mt={4}>
-                            {t('geofiles.presets-help')}
-                        </Text>
-                    </div>
-                    <Select
-                        label={t('geofiles.choose-preset')}
-                        value={presetId}
-                        onChange={setPresetId}
-                        allowDeselect={false}
-                        searchable
-                        data={['V2Fly', 'MetaCubeX'].map((provider) => ({
-                            group: provider,
-                            items: geofilePresets
-                                .filter((item) => item.provider === provider)
-                                .map((item) => ({ value: item.id, label: item.name }))
-                        }))}
-                    />
-                    {preset && (
-                        <>
-                            <Text size="sm">{t(`geofiles.preset-${preset.description}`)}</Text>
-                            <Text size="xs" c="dimmed" dir="ltr" className={styles.path}>
-                                {preset.url}
-                            </Text>
-                        </>
-                    )}
-                    <Button
-                        variant="light"
-                        disabled={!preset}
-                        loading={upload.isPending}
-                        onClick={() => preset && upload.mutate(preset)}
-                    >
-                        {t('geofiles.import-preset')}
-                    </Button>
-                </Stack>
-            </Card>
             <Card p="md" className={styles.card}>
                 <Stack gap="md">
                     <Title order={4}>{t('geofiles.add')}</Title>

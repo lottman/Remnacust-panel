@@ -248,6 +248,27 @@ test('real HTTP binary upload, admin-only roles, public byte stream and in-use d
         ]);
         assert.deepEqual(xray.routing.rules[0].ip, ['geoip:' + datCategory(item.id, 'ru')]);
         assert.equal(xray.outbounds[0].protocol, 'blackhole');
+        const legacySelection = Buffer.from(
+            JSON.stringify({ kind: 'geoip', ids: [item.id] }),
+        ).toString('base64url');
+        const legacySignature = require('node:crypto')
+            .createHmac('sha256', 'sub.example.test')
+            .update(`remnacust-xray-dat-v1:${item.id}:${legacySelection}`)
+            .digest('hex');
+        const legacyPath = `/geofiles/${item.id}/bundle-${legacySignature}.dat?selection=${legacySelection}`;
+        const legacy = await fetch(proxyBase + legacyPath);
+        assert.equal(legacy.status, 200, 'Already imported v1 bundle URLs stay usable');
+        const legacyBytes = Buffer.from(await legacy.arrayBuffer());
+        assert.deepEqual(compileDat(legacyBytes, 'geoip', [datCategory(item.id, 'ru', 1)]).ips, [
+            '203.0.113.0/24',
+        ]);
+        assert.notEqual(datCategory(item.id, 'ru'), datCategory(item.id, 'ru', 1));
+        const currentAgain = await fetch(proxyBase + bundlePath);
+        assert.deepEqual(
+            Buffer.from(await currentAgain.arrayBuffer()),
+            bytes,
+            'Namespace caches stay isolated',
+        );
         assert.equal(
             (await fetch(proxyBase + bundlePath.replace('bundle-', 'bundle-A'))).status,
             404,

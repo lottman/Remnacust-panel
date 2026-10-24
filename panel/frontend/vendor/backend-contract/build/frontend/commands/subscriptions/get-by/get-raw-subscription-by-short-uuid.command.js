@@ -17,7 +17,6 @@ var GetRawSubscriptionByShortUuidCommand;
         withDisabledHosts: zod_1.z
             .string()
             .transform((str) => str === 'true')
-            .optional()
             .prefault('false'),
     });
     GetRawSubscriptionByShortUuidCommand.ResponseSchema = zod_1.z.object({

@@ -39,6 +39,30 @@ test('binary DAT validates by content and extracts categories and attribute-filt
     assert.throws(() => validateGeofile(fixtures.geosite, 'geoip'));
 });
 
+test('geofiles cannot target a pool prefix when legacy naming flags replace that prefix', async () => {
+    const id = '00' + 'a'.repeat(32);
+    for (const flag of ['useHostRemarkAsTag', 'useHostTagAsTag']) {
+        await assert.rejects(
+            () =>
+                materializeGeofiles(
+                    {
+                        outbounds: [{ tag: 'direct', protocol: 'freedom' }],
+                        remnawave: { injectHosts: [{ tagPrefix: 'p', [flag]: true }] },
+                        remnacust: {
+                            geofiles: [
+                                { id, categories: ['ru'], target: 'p', downloadToClient: false },
+                            ],
+                        },
+                    },
+                    'XRAY_JSON',
+                    async () => ({ id, kind: 'geoip' }),
+                    async () => compileDat(fixtures.geoip, 'geoip', ['ru']),
+                ),
+            /geofile-target/,
+        );
+    }
+});
+
 test('text rules and SRS containers enforce format, nesting, compression and size boundaries', () => {
     validateGeofile(Buffer.from('payload:\n  - example.com\n'), 'mihomo-domain');
     validateGeofile(
@@ -321,9 +345,13 @@ test('concurrent readers see only fully committed library entries', async () => 
             },
         },
     });
-    const service = new GeofilesService({ getOrThrow: () => 'sub.example.test' }, {}, {
-        $transaction: async operation => operation({ $executeRaw: async () => 1 }),
-    });
+    const service = new GeofilesService(
+        { getOrThrow: () => 'sub.example.test' },
+        {},
+        {
+            $transaction: async (operation) => operation({ $executeRaw: async () => 1 }),
+        },
+    );
     let uploaded;
     try {
         uploaded = service.ingest('atomic', 'geoip', async () => fixtures.geoip);
@@ -346,38 +374,85 @@ test('concurrent readers see only fully committed library entries', async () => 
 });
 
 test('host DENY preserves materialized geofile/manual rules and routing metadata', async () => {
-    const { XrayJsonGeneratorService } = load(path.join(root, '../generators/xray-json.generator.service.ts'), {
-        ...mocks,
-        '@common/utils': { isNonEmptyObject: value => value && Object.keys(value).length > 0 },
-        '../host-mapper': { applyHostMapper: value => value },
-        './client-pool': pool,
-    });
-    const file = { id: '00' + 'a'.repeat(32), kind: 'geosite', url: 'https://example.test/geosite.dat' };
+    const { XrayJsonGeneratorService } = load(
+        path.join(root, '../generators/xray-json.generator.service.ts'),
+        {
+            ...mocks,
+            '@common/utils': {
+                isNonEmptyObject: (value) => value && Object.keys(value).length > 0,
+            },
+            '../host-mapper': { applyHostMapper: (value) => value },
+            './client-pool': pool,
+        },
+    );
+    const file = {
+        id: '00' + 'a'.repeat(32),
+        kind: 'geosite',
+        url: 'https://example.test/geosite.dat',
+    };
     const input = {
-        outbounds: [{ tag: 'manual', protocol: 'freedom' }, { tag: 'block', protocol: 'freedom' }],
-        routing: { domainStrategy: 'AsIs', balancers: [{ tag: 'auto', selector: ['proxy'] }], rules: [{ domain: ['full:manual.test'], outboundTag: 'manual' }] },
+        outbounds: [
+            { tag: 'manual', protocol: 'freedom' },
+            { tag: 'block', protocol: 'freedom' },
+        ],
+        routing: {
+            domainStrategy: 'AsIs',
+            balancers: [{ tag: 'auto', selector: ['proxy'] }],
+            rules: [{ domain: ['full:manual.test'], outboundTag: 'manual' }],
+        },
         remnacust: { geofiles: [{ id: file.id, categories: ['example'], target: 'REJECT' }] },
     };
-    const prepared = await materializeGeofiles(input, 'XRAY_JSON', async () => file, async () => ({ ips: [], domains: [{ type: 3, value: 'ads.test' }] }));
+    const prepared = await materializeGeofiles(
+        input,
+        'XRAY_JSON',
+        async () => file,
+        async () => ({ ips: [], domains: [{ type: 3, value: 'ads.test' }] }),
+    );
     const original = JSON.stringify(prepared);
-    const generator = new XrayJsonGeneratorService({ getCachedTemplateByType: async () => prepared });
+    const generator = new XrayJsonGeneratorService({
+        getCachedTemplateByType: async () => prepared,
+    });
     const host = {
-        protocol: 'vless', address: 'edge.test', port: 443, protocolOptions: { id: '11111111-1111-4111-8111-111111111111', flow: '' },
-        transport: 'tcp', transportOptions: {}, security: 'tls', securityOptions: { serverName: 'edge.test' },
-        streamOverrides: {}, mux: {}, finalRemark: 'test', metadata: { isHidden: false, excludeFromSubscriptionTypes: [], domainRules: { mode: 'DENY', domains: ['full:denied.test'] } },
+        protocol: 'vless',
+        address: 'edge.test',
+        port: 443,
+        protocolOptions: { id: '11111111-1111-4111-8111-111111111111', flow: '' },
+        transport: 'tcp',
+        transportOptions: {},
+        security: 'tls',
+        securityOptions: { serverName: 'edge.test' },
+        streamOverrides: {},
+        mux: {},
+        finalRemark: 'test',
+        metadata: {
+            isHidden: false,
+            excludeFromSubscriptionTypes: [],
+            domainRules: { mode: 'DENY', domains: ['full:denied.test'] },
+        },
         clientOverrides: { mapper: { xrayJson: null } },
     };
-    const [config] = JSON.parse(await generator.generateConfig({ hosts: [host], isExtendedClient: false }));
+    const [config] = JSON.parse(
+        await generator.generateConfig({ hosts: [host], isExtendedClient: false }),
+    );
     assert.equal(config.routing.domainStrategy, 'AsIs');
     assert.deepEqual(config.routing.balancers, input.routing.balancers);
     assert.deepEqual(config.routing.rules.slice(1), prepared.routing.rules);
     const deny = config.routing.rules[0];
     assert.deepEqual(deny.domain, ['full:denied.test']);
-    assert.equal(config.outbounds.find(outbound => outbound.tag === deny.outboundTag).protocol, 'blackhole');
-    assert.notEqual(deny.outboundTag, 'block', 'A manual outbound called block must not become the deny destination');
+    assert.equal(
+        config.outbounds.find((outbound) => outbound.tag === deny.outboundTag).protocol,
+        'blackhole',
+    );
+    assert.notEqual(
+        deny.outboundTag,
+        'block',
+        'A manual outbound called block must not become the deny destination',
+    );
     assert.equal(JSON.stringify(prepared), original, 'Cached shared template must stay unchanged');
     host.metadata.domainRules.mode = 'ALLOW_ONLY';
-    const [restricted] = JSON.parse(await generator.generateConfig({ hosts: [host], isExtendedClient: false }));
+    const [restricted] = JSON.parse(
+        await generator.generateConfig({ hosts: [host], isExtendedClient: false }),
+    );
     assert.equal(restricted.routing.rules.length, 2);
     assert.equal(restricted.routing.rules[1].network, 'tcp,udp');
 });

@@ -97,7 +97,8 @@ export async function materializeGeofiles(
                 (item: ObjectValue) => item.tag === target,
             );
             const dynamic = root.remnawave?.injectHosts?.some(
-                (pool: ObjectValue) => pool.tagPrefix === target,
+                (pool: ObjectValue) =>
+                    pool.tagPrefix === target && !pool.useHostRemarkAsTag && !pool.useHostTagAsTag,
             );
             const standardProxy =
                 target === 'proxy' &&

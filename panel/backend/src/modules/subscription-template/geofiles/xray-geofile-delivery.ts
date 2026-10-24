@@ -6,10 +6,20 @@ import { ClientPoolError } from '../generators/client-pool';
 
 export type DatKind = 'geoip' | 'geosite';
 export type DatBundleUrl = (kind: DatKind, ids: string[]) => Promise<string>;
+export const DAT_NAMESPACE_VERSION = 2;
 
-export function datCategory(id: string, category: string): string {
+export function datCategory(
+    id: string,
+    category: string,
+    namespace: 1 | 2 = DAT_NAMESPACE_VERSION,
+): string {
     const [code, attribute] = category.toLowerCase().split('@');
-    const name = `r${id}_${createHash('sha256').update(code).digest('hex').slice(0, 24)}`;
+    const source =
+        namespace === 1 ? id : createHash('sha256').update(id).digest('hex').slice(0, 12);
+    const name = `r${source}_${createHash('sha256')
+        .update(code)
+        .digest('hex')
+        .slice(0, namespace === 1 ? 24 : 16)}`;
     return name + (attribute ? `@${attribute}` : '');
 }
 
@@ -74,7 +84,8 @@ export class XrayGeofileDelivery {
         if (existingGeodata) throw new XrayGeofileFallback('existing-geodata');
         const selected = [...used].sort();
         const interval = Math.max(...selected.map((key) => this.references.get(key)!.interval));
-        const revision = Math.floor(now / 1000 / interval) * interval;
+        // Force one refresh when migrating from the longer v1 names in the same interval.
+        const revision = Math.floor(now / 1000 / interval) * interval + DAT_NAMESPACE_VERSION - 1;
         const profile: Record<string, unknown> = {
             Name: `Remnacust ${createHash('sha256').update(profileKey).digest('hex').slice(0, 12)}`,
             GlobalProxy: 'true',

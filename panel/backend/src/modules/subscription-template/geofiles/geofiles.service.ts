@@ -211,7 +211,11 @@ export class GeofilesService {
             .digest('hex');
     }
 
-    private async bundleContent(kind: DatKind, ids: string[]): Promise<Buffer> {
+    private async bundleContent(
+        kind: DatKind,
+        ids: string[],
+        namespace: 1 | 2 = 2,
+    ): Promise<Buffer> {
         if (
             !['geoip', 'geosite'].includes(kind) ||
             !Array.isArray(ids) ||
@@ -229,7 +233,7 @@ export class GeofilesService {
                 throw new Error('geofile-bundle');
             files.push(file);
         }
-        const key = files.map((file) => `${file.id}:${file.sha256}`).join(',');
+        const key = namespace + ':' + files.map((file) => `${file.id}:${file.sha256}`).join(',');
         const cached = this.bundled.get(key);
         if (cached) return cached;
         if (this.bundling >= 2) throw new ServiceUnavailableException('geofile-busy');
@@ -238,7 +242,7 @@ export class GeofilesService {
             const sources = [];
             for (const file of files)
                 sources.push({ id: file.id, data: await this.readActive(file) });
-            const data = bundleDat(sources);
+            const data = bundleDat(sources, namespace);
             if (data.length <= 32 * 1024 * 1024) {
                 while (
                     this.bundled.size &&
@@ -259,7 +263,9 @@ export class GeofilesService {
     private async bundleUrl(kind: DatKind, ids: string[]): Promise<string> {
         const ordered = [...ids].sort();
         await this.bundleContent(kind, ordered);
-        const payload = Buffer.from(JSON.stringify({ kind, ids: ordered })).toString('base64url');
+        const payload = Buffer.from(JSON.stringify({ kind, ids: ordered, namespace: 2 })).toString(
+            'base64url',
+        );
         if (payload.length > 2732) throw new Error('geofile-bundle-size');
         return `${this.base}${ordered[0]}/bundle-${this.bundleSignature(ordered[0], payload)}.dat?selection=${payload}`;
     }
@@ -281,9 +287,10 @@ export class GeofilesService {
             const raw = Buffer.from(selection, 'base64url');
             if (raw.length > 2048 || raw.toString('base64url') !== selection)
                 throw new Error('geofile-bundle');
-            const { kind, ids } = JSON.parse(raw.toString('utf8'));
-            if (!Array.isArray(ids) || ids[0] !== id) throw new Error('geofile-bundle');
-            const data = await this.bundleContent(kind, ids);
+            const { kind, ids, namespace = 1 } = JSON.parse(raw.toString('utf8'));
+            if (!Array.isArray(ids) || ids[0] !== id || ![1, 2].includes(namespace))
+                throw new Error('geofile-bundle');
+            const data = await this.bundleContent(kind, ids, namespace);
             return filename.endsWith('.sha256')
                 ? Buffer.from(createHash('sha256').update(data).digest('hex'))
                 : data;

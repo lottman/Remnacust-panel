@@ -21,7 +21,7 @@
   "browser": "build/frontend/index.js",
   "types": "build/backend/index.d.ts",
   "dependencies": {
-    "zod": "4.5.4"
+    "zod": "4.6.7"
   },
   "public": false
 }

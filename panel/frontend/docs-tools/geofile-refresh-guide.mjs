@@ -43,6 +43,51 @@ const sections = [
     ]
 ]
 
+sections.push(
+    [
+        'geofile-shared-catalog',
+        [
+            [
+                'Общий каталог и состав пула',
+                'Готовые наборы — единая библиотека всех шаблонов: загрузки с ПК, по ссылке и опубликованные источники. Импорт выбирает запись, но не меняет шаблон. Добавьте файл, выберите категории и действие, затем сохраните. Неподходящие форматы остаются видимыми. Удаление из библиотеки действует везде; файл с сохранённой привязкой сначала нужно убрать из шаблона и сохранить. Несохранённая привязка текущего редактора удаляется вместе с файлом. Состав пула выбирает подключения; получатели всего шаблона задаются отдельно в свёрнутом разделе под редактором кода. Он необязателен. Счётчик пула исключает отключённые хосты, повторы и исключения XRAY_JSON; доступ пользователя и случайная выборка могут уменьшить результат. Для старого режима имён хостов направляйте правила на балансер, а не на неиспользуемый префикс.'
+            ],
+            [
+                'Shared catalog and pool members',
+                'Ready-made datasets is one library for every template: PC uploads, URL imports and published sources. Import selects the entry without changing the template. Attach the file, choose categories and action, then save. Incompatible formats remain visible. Library deletion applies everywhere; detach files used by saved templates and save first. An unsaved attachment in the current editor is removed with the file. Pool members select connections; recipients of the entire template are separate optional settings below the code editor. The pool count excludes disabled hosts, duplicates and XRAY_JSON exclusions; user access and random selection can reduce the result. With legacy host naming, target the balancer rather than an unused prefix.'
+            ],
+            [
+                'فهرست مشترک و اعضای مخزن',
+                'مجموعه‌های آماده یک کتابخانه برای همه قالب‌هاست: فایل رایانه، واردکردن URL و منابع منتشرشده. واردکردن فقط فایل را انتخاب می‌کند و قالب را تغییر نمی‌دهد. فایل را اضافه کنید، دسته و اقدام را انتخاب و ذخیره کنید. قالب ناسازگار همچنان دیده می‌شود. حذف از کتابخانه سراسری است؛ اتصال قالب ذخیره‌شده را ابتدا بردارید و ذخیره کنید. اتصال ذخیره‌نشده ویرایشگر فعلی همراه فایل حذف می‌شود. اعضای مخزن اتصال‌ها را انتخاب می‌کنند؛ دریافت‌کنندگان کل قالب در بخش اختیاری زیر ویرایشگر کد هستند. شمارنده، میزبان خاموش، تکراری و موارد مستثنای XRAY_JSON را حذف می‌کند؛ دسترسی کاربر و انتخاب تصادفی ممکن است نتیجه را کمتر کند. در نام‌گذاری قدیمی، قانون را به بالانسر هدایت کنید، نه پیشوند استفاده‌نشده.'
+            ],
+            [
+                '共享目录和池成员',
+                '“现成数据集”是所有模板共用的库，包括电脑上传、URL 导入和已发布来源。导入只选择条目，不修改模板。添加文件、选择分类和动作后保存。不兼容格式仍然可见。删除库文件会影响所有模板；已保存的引用必须先移除并保存。当前编辑器中未保存的引用随文件删除。池成员决定连接；整个模板的接收主机在代码编辑器下方的可选设置中配置。池计数排除停用主机、重复项和 XRAY_JSON 排除项，用户权限及随机选择可能进一步减少结果。旧版主机命名模式应将规则指向负载均衡器，而不是无效前缀。'
+            ]
+        ]
+    ],
+    [
+        'geofile-happ-download-check',
+        [
+            [
+                'Если Happ не скачивает файл',
+                'V2Fly DAT поддерживается. Нужна полная JSON-подписка с заголовком routing. Обновите панель и отдельно установленную страницу подписки. В 1.1.7.51 компактные имена категорий уменьшают профиль загрузки; старые подписанные URL сохраняют поддержку. Обновите подписку и переподключитесь. Если загрузка не начинается, проверьте наличие профиля Remnacust, заголовок x-remnacust-geofiles-delivery и журнал приложения. При несовместимости или превышении лимита панель возвращает встроенные правила; это не отдельное скачивание.'
+            ],
+            [
+                'If Happ does not download the file',
+                'V2Fly DAT is supported. A full JSON subscription with a routing header is required. Update the panel and a separately installed subscription page. In 1.1.7.51 compact category names reduce profile size; old signed URLs remain supported. Refresh the subscription and reconnect. If downloading does not start, check the Remnacust profile, x-remnacust-geofiles-delivery header and app logs. Incompatible settings or size limits trigger inline rules instead of a separate download.'
+            ],
+            [
+                'اگر Happ فایل را دانلود نمی‌کند',
+                'V2Fly DAT پشتیبانی می‌شود. اشتراک کامل JSON با سرآیند routing لازم است. پنل و صفحه اشتراک جداگانه را به‌روز کنید. در 1.1.7.51 نام کوتاه دسته‌ها اندازه نمایه را کاهش می‌دهد؛ URL امضاشده قدیمی پشتیبانی می‌شود. اشتراک را تازه و دوباره متصل کنید. در صورت نبود دانلود، نمایه Remnacust، سرآیند x-remnacust-geofiles-delivery و گزارش برنامه را بررسی کنید. تنظیم ناسازگار یا محدودیت اندازه باعث قوانین داخلی به‌جای دانلود جداگانه می‌شود.'
+            ],
+            [
+                'Happ 未下载文件时',
+                '支持 V2Fly DAT。需要包含 routing 响应头的完整 JSON 订阅。请更新面板和独立安装的订阅页面。1.1.7.51 使用较短的分类名称缩小配置，旧签名 URL 仍受支持。刷新订阅后重新连接。若未下载，请检查 Remnacust 路由配置、x-remnacust-geofiles-delivery 响应头和应用日志。设置不兼容或超过大小限制时，面板改为内嵌规则，不会单独下载。'
+            ]
+        ]
+    ]
+)
+
 export function explainGeofileRefresh(articles) {
     const article = articles.find((item) => item.id === 'templates')
     if (!article) throw new Error('Missing templates article')

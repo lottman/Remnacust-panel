@@ -113,8 +113,8 @@ test('Happ receives native references and one stable profile; generic Xray recei
     assert.equal(first, await delivery.header(JSON.stringify([native]), 'same-user', 3_601_000));
     assert.notEqual(first, await delivery.header(JSON.stringify([native]), 'same-user', 5_400_000));
     const profile = decode(first);
-    assert.equal(profile.LastUpdated, '3600');
-    assert.match(profile.Geositeurl, /revision=3600$/);
+    assert.equal(profile.LastUpdated, '3601');
+    assert.match(profile.Geositeurl, /revision=3601$/);
     assert.equal(profile.Geoipurl, undefined);
     assert.deepEqual(profile.BlockSites, native.routing.rules[0].domain);
     const inline = await prepare();
@@ -262,6 +262,51 @@ test('INCY rounds the longest requested interval up to supported whole hours', a
     assert.equal(delivery.intervalHours, 3);
 });
 
+test('a normal combination of GeoSite and GeoIP categories fits a default proxy header budget', async () => {
+    const delivery = new XrayGeofileDelivery();
+    const values = [];
+    for (const [kind, source, count] of [
+        ['geosite', id, 24],
+        ['geoip', other, 4],
+    ]) {
+        values.push(
+            ...delivery.register(
+                kind,
+                {
+                    id: source,
+                    categories: Array.from({ length: count }, (_, i) => 'category-' + i),
+                    target: 'DIRECT',
+                },
+                async (kind, ids) => {
+                    const payload = Buffer.from(
+                        JSON.stringify({ kind, ids, namespace: 2 }),
+                    ).toString('base64url');
+                    return `https://sub.example.test/geofiles/${source}/bundle-${'a'.repeat(64)}.dat?selection=${payload}`;
+                },
+            ),
+        );
+    }
+    const header = await delivery.header(
+        JSON.stringify([
+            {
+                routing: {
+                    rules: [
+                        {
+                            domain: values.filter((v) => v.startsWith('geosite:')),
+                            ip: values.filter((v) => v.startsWith('geoip:')),
+                        },
+                    ],
+                },
+            },
+        ]),
+        'user',
+    );
+    assert.ok(Buffer.byteLength(header) <= 3000);
+    const profile = decode(header);
+    assert.equal(profile.DirectSites.length, 24);
+    assert.equal(profile.DirectIp.length, 4);
+});
+
 test('unused resources do not emit a profile and oversized profiles request a complete inline retry', async () => {
     const empty = new XrayGeofileDelivery();
     assert.equal(
@@ -281,7 +326,7 @@ test('unused resources do not emit a profile and oversized profiles request a co
                 'geosite',
                 {
                     id: source,
-                    categories: Array.from({ length: 16 }, (_, i) => 'category-' + i),
+                    categories: Array.from({ length: 32 }, (_, i) => 'category-' + i),
                     target: 'DIRECT',
                     clientRefreshIntervalSeconds: 1800,
                 },

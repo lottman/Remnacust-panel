@@ -29,6 +29,7 @@ import {
 } from './client-template-model'
 import { GeofilesPanel } from './geofiles-panel'
 import styles from './SubscriptionTemplateEditor.module.css'
+import { TemplateAssignmentPanel } from './template-assignment-panel'
 import { TemplateChanges } from './template-changes'
 import { TemplateHistory } from './template-history'
 import { configureMonaco, getTemplateModelPath } from './utils/setup-template-monaco'
@@ -222,6 +223,7 @@ export function SubscriptionTemplateEditorWidget(props: Props) {
                                         config={draft.config}
                                         format={format}
                                         onChange={setDraft}
+                                        getValue={() => valueRef.current}
                                     />
                                 </div>
                                 <TemplateChanges changes={changes} />
@@ -290,6 +292,14 @@ export function SubscriptionTemplateEditorWidget(props: Props) {
                         </Button>
                     )}
                 </EditorFooter>
+            )}
+            {!isFullscreen && activeTab === 'code' && isXray && draft.config && (
+                <TemplateAssignmentPanel
+                    text={value}
+                    config={draft.config}
+                    hosts={hosts}
+                    onChange={setDraft}
+                />
             )}
         </Box>
     )

@@ -7,7 +7,7 @@ export declare namespace GetRawSubscriptionByShortUuidCommand {
         shortUuid: z.ZodString;
     }, z.core.$strip>;
     const RequestQuerySchema: z.ZodObject<{
-        withDisabledHosts: z.ZodPrefault<z.ZodOptional<z.ZodPipe<z.ZodString, z.ZodTransform<boolean, string>>>>;
+        withDisabledHosts: z.ZodPrefault<z.ZodPipe<z.ZodString, z.ZodTransform<boolean, string>>>;
     }, z.core.$strip>;
     const ResponseSchema: z.ZodObject<{
         response: z.ZodObject<{

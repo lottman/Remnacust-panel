@@ -492,6 +492,12 @@ export class XrayJsonGeneratorService {
     ): Promise<ResolvedProxyConfig[]> {
         const selector = entry.selector;
         const source = selectFrom ?? 'HIDDEN';
+        // A pool must obey the same host restrictions as standalone profiles.
+        allHosts = allHosts.filter(
+            (candidate) =>
+                !candidate.metadata.isDisabled &&
+                !candidate.metadata.excludeFromSubscriptionTypes?.includes('XRAY_JSON'),
+        );
         const recipientUuid = host.metadata.uuid;
         let candidates: ResolvedProxyConfig[] = [];
         switch (source) {

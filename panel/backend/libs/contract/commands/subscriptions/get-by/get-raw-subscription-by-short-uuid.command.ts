@@ -23,7 +23,6 @@ export namespace GetRawSubscriptionByShortUuidCommand {
         withDisabledHosts: z
             .string()
             .transform((str) => str === 'true')
-            .optional()
             .prefault('false'),
     });
 

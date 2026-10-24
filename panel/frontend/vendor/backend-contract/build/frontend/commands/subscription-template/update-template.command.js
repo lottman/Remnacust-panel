@@ -20,7 +20,10 @@ var UpdateSubscriptionTemplateCommand;
             .optional(),
         templateJson: zod_1.z.optional(zod_1.z.looseObject({})),
         encodedTemplateYaml: zod_1.z.optional(zod_1.z.string()),
-        draftContent: zod_1.z.string().max(8 * 1024 * 1024).optional(),
+        draftContent: zod_1.z
+            .string()
+            .max(8 * 1024 * 1024)
+            .optional(),
     });
     UpdateSubscriptionTemplateCommand.ResponseSchema = zod_1.z.object({
         response: models_1.SubscriptionTemplateSchema,

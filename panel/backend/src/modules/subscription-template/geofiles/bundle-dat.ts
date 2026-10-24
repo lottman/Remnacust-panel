@@ -16,7 +16,10 @@ function message(value: Buffer): Buffer {
 }
 
 // Preserve domain attributes, reverse CIDR flags and unknown protobuf fields byte-for-byte.
-export function bundleDat(files: Array<{ id: string; data: Buffer }>): Buffer {
+export function bundleDat(
+    files: Array<{ id: string; data: Buffer }>,
+    namespace: 1 | 2 = 2,
+): Buffer {
     const chunks: Buffer[] = [];
     const seen = new Set<string>();
     let bytes = 0,
@@ -31,7 +34,7 @@ export function bundleDat(files: Array<{ id: string; data: Buffer }>): Buffer {
             const original = names.at(-1)?.value;
             if (!Buffer.isBuffer(original) || ++count > 50_000)
                 throw new Error('geofile-complexity');
-            const name = datCategory(file.id, original.toString('utf8')).toUpperCase();
+            const name = datCategory(file.id, original.toString('utf8'), namespace).toUpperCase();
             if (seen.has(name)) throw new Error('geofile-duplicate-category');
             seen.add(name);
             const replacement = message(Buffer.from(name));

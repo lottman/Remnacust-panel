@@ -61,6 +61,23 @@ function template(sing, selection) {
 }
 
 for (const [file, className] of schemas) {
+    if (file !== 'singbox')
+        test(`${file}: priority fallback preserves explicit pool order after rendering`, async () => {
+            const source = template(false, {
+                mode: 'all',
+                selectFrom: 'ALL',
+                selector: {
+                    type: 'uuids',
+                    values: [hosts[1].metadata.uuid, hosts[0].metadata.uuid],
+                },
+            });
+            source['proxy-groups'][0].type = 'fallback';
+            source['proxy-groups'][0].lazy = false;
+            const config = yaml(await generator(file, className, source).generateConfig(hosts));
+            assert.equal(config['proxy-groups'][0].type, 'fallback');
+            assert.equal(config['proxy-groups'][0].lazy, false);
+            assert.deepEqual(config['proxy-groups'][0].proxies, ['node-2', 'node-1']);
+        });
     test(`${file}: real generator selects authorized hidden members and strips directives`, async () => {
         const sing = file === 'singbox';
         const source = template(sing, {

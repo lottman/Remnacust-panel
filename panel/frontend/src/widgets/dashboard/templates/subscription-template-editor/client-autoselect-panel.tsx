@@ -29,6 +29,7 @@ import {
     renameClientGroup,
     type ClientFormat
 } from './client-template-model'
+import { PriorityOrder } from './priority-order'
 
 export function ClientAutoselectPanel({
     text,
@@ -105,6 +106,11 @@ export function ClientAutoselectPanel({
                     {t('autoselect.structure-error')}
                 </Alert>
             )}
+            {sing && (
+                <Text size="xs" c="dimmed">
+                    {t('autoselect.priority-singbox-help')}
+                </Text>
+            )}
             {!groups.length && (
                 <Card withBorder p="xl">
                     <Text ta="center" c="dimmed">
@@ -173,9 +179,12 @@ export function ClientAutoselectPanel({
                                         : ['url-test', 'fallback', 'load-balance', 'select']
                                     ).map((value) => ({
                                         value,
-                                        label: t(`client-template.strategy-${value}`, {
-                                            defaultValue: value
-                                        })
+                                        label:
+                                            value === 'fallback'
+                                                ? t('autoselect.strategy-priority')
+                                                : t(`client-template.strategy-${value}`, {
+                                                      defaultValue: value
+                                                  })
                                     }))}
                                     onChange={(value) =>
                                         value &&
@@ -201,11 +210,49 @@ export function ClientAutoselectPanel({
                                                               (sing ? '5m' : 300))
                                                             : (group.tolerance ?? 50)
                                                 )
+                                            if (value === 'fallback' && group.lazy === undefined)
+                                                next = editClientTemplate(
+                                                    next,
+                                                    format,
+                                                    [key, index, 'lazy'],
+                                                    false
+                                                )
                                             return next
                                         })
                                     }
                                 />
                             </div>
+                            {group.type === 'fallback' && (
+                                <>
+                                    <Alert color="blue">
+                                        {t('autoselect.priority-native-help')}
+                                    </Alert>
+                                    {Array.isArray(group[field]) && group[field].length > 1 && (
+                                        <PriorityOrder
+                                            values={group[field]}
+                                            options={group[field].map((value: string) => ({
+                                                value,
+                                                label: value
+                                            }))}
+                                            onChange={(value) => patch(index, [field], value)}
+                                        />
+                                    )}
+                                    {pool && selector.type === 'uuids' && mode === 'all' && (
+                                        <PriorityOrder
+                                            values={values}
+                                            options={hostOptions}
+                                            onChange={(value) =>
+                                                poolPatch(['selector', 'values'], value)
+                                            }
+                                        />
+                                    )}
+                                    {pool && (selector.type !== 'uuids' || mode !== 'all') && (
+                                        <Text size="xs" c="dimmed">
+                                            {t('autoselect.priority-pool-help')}
+                                        </Text>
+                                    )}
+                                </>
+                            )}
                             <Switch
                                 label={t('client-template.use-pool')}
                                 description={t('client-template.use-pool-help')}
@@ -469,14 +516,16 @@ export function ClientAutoselectPanel({
                                             }
                                         />
                                     )}
-                                    <NumberInput
-                                        label={t('client-template.tolerance')}
-                                        min={0}
-                                        value={group.tolerance ?? 50}
-                                        onChange={(value) =>
-                                            patch(index, ['tolerance'], Number(value))
-                                        }
-                                    />
+                                    {group.type !== 'fallback' && (
+                                        <NumberInput
+                                            label={t('client-template.tolerance')}
+                                            min={0}
+                                            value={group.tolerance ?? 50}
+                                            onChange={(value) =>
+                                                patch(index, ['tolerance'], Number(value))
+                                            }
+                                        />
+                                    )}
                                 </div>
                             )}
                             <Switch

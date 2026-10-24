@@ -3346,7 +3346,7 @@
     "assignment-tags": "Recipient tags",
     "assignment-priority": "Priority: explicit template in the host card, recipient host assignment, tag assignment, default template. Competing assignments use template list order.",
     "probes": "Connection probes",
-    "probes-help": "Latency and stability strategies need probes. Existing probe settings are preserved; pool prefixes are added to their selectors.",
+    "probes-help": "Latency, stability and priority strategies need probes. Existing settings are preserved; pool prefixes are added to selectors.",
     "probe-url": "Probe URL",
     "probe-interval": "Probe interval",
     "recipient-outbound": "Also add the recipient host as proxy",
@@ -3381,7 +3381,16 @@
     "remove-selection": "Delete autoselect",
     "least-load-tolerance-help": "Allowed failed probe fraction, from 0 to 1: 0.01 means 1%. This is not the expected node count.",
     "pool-preview": "Eligible hosts: {{count}}. Subscriptions include only hosts accessible to the user; the result depends on the selection mode.",
-    "host-naming-help": "Host names are enabled instead of the prefix in the code. The prefix field is not used; target the balancer or disable this naming mode in the code."
+    "host-naming-help": "Host names are enabled instead of the prefix in the code. The prefix field is not used; target the balancer or disable this naming mode in the code.",
+    "strategy-priority": "Priority: first available",
+    "priority-order": "Priority order",
+    "priority-up": "Move {{name}} up",
+    "priority-down": "Move {{name}} down",
+    "priority-help": "The first available server is selected in order. Failover and return to the primary follow health checks and affect new connections. Without probe results or when all servers are unavailable, connections are blocked; an explicitly configured fallback is used last. Up to 128 servers per balancer and 256 per configuration.",
+    "priority-pool-help": "For an exact order, choose Hosts and All selected hosts. Tags and regex use the order of the main host list; random modes select a subset first. Set prefix order in the balancer.",
+    "priority-native-help": "The first available server is selected in proxies order; failures move to the next. Returning to the primary depends on health checks. Explicit members from the code come first, followed by pool hosts. Configure the probe interval below.",
+    "priority-singbox-help": "sing-box supports latency selection and a manual selector. Its configuration has no automatic strict priority failover. Use an Xray JSON or Mihomo/Clash/Stash template for this mode.",
+    "priority-fallback-help": "Leave empty to block connections when all servers are unavailable. This outbound is used after the entire chain."
   },
   "template-history": {
     "title": "History",

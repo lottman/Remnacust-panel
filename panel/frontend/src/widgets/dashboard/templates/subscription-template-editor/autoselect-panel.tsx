@@ -43,6 +43,7 @@ import {
 } from './autoselect-model'
 import styles from './autoselect-panel.module.css'
 import { defaultAutoselectSources, xrayPoolPreview } from './autoselect-sources'
+import { PriorityOrder } from './priority-order'
 import { TemplateChanges } from './template-changes'
 
 type Host = GetHostsCommand.Response['response'][number]
@@ -65,6 +66,7 @@ function PoolCard({
     showRemove,
     hasBalancer,
     possibleHosts,
+    priority,
     edit
 }: {
     pool: Pool
@@ -74,6 +76,7 @@ function PoolCard({
     showRemove: boolean
     hasBalancer: boolean
     possibleHosts: number | null
+    priority: boolean
     edit: Edit
 }) {
     const { t } = useTranslation()
@@ -254,6 +257,18 @@ function PoolCard({
                     onChange={(event) => patch(['selector', 'pattern'], event.currentTarget.value)}
                 />
             )}
+            {priority && type === 'uuids' && mode === 'all' && (
+                <PriorityOrder
+                    values={selector.values ?? []}
+                    options={hostOptions}
+                    onChange={(value) => patch(['selector', 'values'], value)}
+                />
+            )}
+            {priority && (type !== 'uuids' || mode !== 'all') && (
+                <Text size="xs" c="dimmed">
+                    {t('autoselect.priority-pool-help')}
+                </Text>
+            )}
             {mode === 'group' && (
                 <Stack gap="sm" mt="md">
                     <Text size="sm" c="dimmed">
@@ -409,7 +424,14 @@ function BalancerCard({
                         'roundRobin',
                         'leastPing',
                         'leastLoad',
-                        ...(!['random', 'roundRobin', 'leastPing', 'leastLoad'].includes(strategy)
+                        'priority',
+                        ...(![
+                            'random',
+                            'roundRobin',
+                            'leastPing',
+                            'leastLoad',
+                            'priority'
+                        ].includes(strategy)
                             ? [strategy]
                             : [])
                     ].map((value) => ({
@@ -422,13 +444,29 @@ function BalancerCard({
                 />
                 <TextInput
                     label={t('autoselect.fallback')}
-                    description={t('autoselect.fallback-help')}
+                    description={t(
+                        strategy === 'priority'
+                            ? 'autoselect.priority-fallback-help'
+                            : 'autoselect.fallback-help'
+                    )}
                     value={balance.fallbackTag ?? ''}
                     onChange={(event) =>
                         patch(['fallbackTag'], event.currentTarget.value || undefined)
                     }
                 />
             </div>
+            {strategy === 'priority' && (
+                <>
+                    <Alert color="blue">{t('autoselect.priority-help')}</Alert>
+                    {values.length > 1 && (
+                        <PriorityOrder
+                            values={values}
+                            options={selectors}
+                            onChange={(value) => patch(['selector'], value)}
+                        />
+                    )}
+                </>
+            )}
             {strategy === 'leastLoad' && (
                 <Stack gap="md" mt="md">
                     <Text size="xs" c="dimmed">
@@ -658,6 +696,10 @@ export function AutoselectPanel({
                                     showRemove={group.pools.length > 1}
                                     hasBalancer={group.balancers.length > 0}
                                     possibleHosts={xrayPoolPreview(pools[index], hosts)}
+                                    priority={group.balancers.some(
+                                        (balanceIndex) =>
+                                            balancers[balanceIndex]?.strategy?.type === 'priority'
+                                    )}
                                 />
                             ))}
                             {group.balancers.map((index) => (

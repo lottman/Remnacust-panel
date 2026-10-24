@@ -15,6 +15,7 @@ import {
     StreamSettings,
     XrayJsonConfig,
 } from './interfaces/xray-json-config.interface';
+import { materializePriority } from './priority-failover';
 
 type VlessConfig = Extract<ResolvedProxyConfig, { protocol: 'vless' }>;
 type TrojanConfig = Extract<ResolvedProxyConfig, { protocol: 'trojan' }>;
@@ -219,7 +220,7 @@ export class XrayJsonGeneratorService {
             const configs: string[] = [];
             let outputBytes = 2;
             const append = (config: XrayJsonConfig) => {
-                const serialized = JSON.stringify(config);
+                const serialized = JSON.stringify(materializePriority(config));
                 outputBytes += Buffer.byteLength(serialized) + (configs.length ? 1 : 0);
                 if (outputBytes > 16 * 1024 * 1024)
                     throw new ClientPoolError('subscription-size-limit');

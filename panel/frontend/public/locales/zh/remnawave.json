@@ -3346,7 +3346,7 @@
         "assignment-tags": "接收对象标签",
         "assignment-priority": "优先级：主机卡片中的显式模板、此处的主机分配、标签分配、默认模板。多个分配匹配时按模板列表顺序选择。",
         "probes": "连接探测",
-        "probes-help": "延迟和稳定性策略需要探测。保留现有探测设置，仅向选择器加入候选池前缀。",
+        "probes-help": "延迟、稳定性和优先级策略需要健康检查。保留现有设置，并将池前缀加入选择器。",
         "probe-url": "探测地址",
         "probe-interval": "探测间隔",
         "recipient-outbound": "同时将接收主机添加为 proxy",
@@ -3381,7 +3381,16 @@
         "remove-selection": "删除自动选择",
         "least-load-tolerance-help": "允许的探测失败比例，范围为 0 到 1；0.01 表示 1%。此值不是所选节点数量。",
         "pool-preview": "符合条件的主机：{{count}}。订阅仅包含用户有权访问的主机，结果取决于选择模式。",
-        "host-naming-help": "代码中已启用主机名称代替前缀。前缀字段不会生效，请将规则指向负载均衡器，或在代码中关闭此命名模式。"
+        "host-naming-help": "代码中已启用主机名称代替前缀。前缀字段不会生效，请将规则指向负载均衡器，或在代码中关闭此命名模式。",
+        "strategy-priority": "按优先级：首个可用服务器",
+        "priority-order": "优先级顺序",
+        "priority-up": "上移 {{name}}",
+        "priority-down": "下移 {{name}}",
+        "priority-help": "按顺序选择首个可用服务器。故障切换及恢复主服务器取决于健康检查，仅影响新连接。尚无检查结果或全部服务器不可用时阻断连接；显式配置的备用出口最后使用。每个均衡器最多 128 台服务器，每份配置最多 256 台。",
+        "priority-pool-help": "需要精确顺序时，请选择“主机”和“所有选定主机”。标签和正则使用主机总列表顺序；随机模式先选择子集。前缀顺序在均衡器中设置。",
+        "priority-native-help": "按 proxies 顺序选择首个可用服务器，故障后使用下一个。恢复主服务器取决于健康检查。代码中显式指定的成员在前，池主机在后。检查间隔在下方设置。",
+        "priority-singbox-help": "sing-box 支持按延迟选择和手动 selector，其配置不支持严格优先级自动故障切换。此模式请使用 Xray JSON 或 Mihomo/Clash/Stash 模板。",
+        "priority-fallback-help": "留空则在全部服务器不可用时阻断连接。指定出口将在整个链之后使用。"
     },
     "template-history": {
         "title": "历史",

@@ -3,6 +3,19 @@ const assert = require('node:assert/strict');
 const path = require('node:path');
 const load = require('../../backend/tests/load-typescript.cjs');
 const m = load(path.join(__dirname, '../src/widgets/dashboard/templates/subscription-template-editor/autoselect-model.ts'));
+test('priority configures health checks, clears the generated same-pool fallback and preserves custom fallbacks',()=>{
+    const config={outbounds:[],routing:{balancers:[{tag:'auto',selector:['p'],fallbackTag:'p',strategy:{type:'leastLoad',settings:{expected:2}}}]}};
+    let next=m.parseTemplate(m.setBalancerStrategy(JSON.stringify(config),0,'priority'));
+    assert.equal(next.routing.balancers[0].strategy.type,'priority');
+    assert.equal(next.routing.balancers[0].fallbackTag,undefined);
+    assert.ok(next.observatory.subjectSelector.includes('p'));
+    assert.equal(m.validationPath(next),null);
+    assert.deepEqual(next.routing.balancers[0].strategy.settings,{expected:2});
+    config.routing.balancers[0].fallbackTag='custom';
+    next=m.parseTemplate(m.setBalancerStrategy(JSON.stringify(config),0,'priority'));
+    assert.equal(next.routing.balancers[0].fallbackTag,'custom');
+    next.routing.script='manual';assert.equal(m.validationPath(next),'routing.script');
+});
 const existing = { outbounds: [{ tag: 'direct', protocol: 'freedom' }, { tag: 'custom', protocol: 'socks', settings: { servers: [{ address: 'localhost', port: 1234 }] } }], routing: { domainStrategy: 'IPIfNonMatch', balancers: [{ tag: 'existing', selector: ['custom'], strategy: { type: 'roundRobin', settings: { custom: 5 } } }], rules: [{ type: 'field', domain: ['geosite:private'], outboundTag: 'direct' }, { type: 'field', network: 'tcp,udp', outboundTag: 'custom' }] }, observatory: { subjectSelector: ['custom'], probeUrl: 'https://example.test/probe', probeInterval: '15s', enableConcurrency: true }, unknownSetting: { keep: true } };
 test('adding autoselect is non-destructive and inserts balancing after restrictions before broad catch-all', () => {
     const code = m.addPool(JSON.stringify(existing, null, 2)), added = m.parseTemplate(code);

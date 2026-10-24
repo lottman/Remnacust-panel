@@ -68,6 +68,24 @@ export function xrayTemplateWarnings(config: Record<string, any>): string[] {
                 )
                     warnings.push(`${path}.selector`);
                 const settings = balancer.strategy?.settings;
+                if (balancer.strategy?.type === 'priority') {
+                    if (config.routing.script) warnings.push('routing.script');
+                    if (balancer.selector?.some((value: unknown) => value === ''))
+                        warnings.push(`${path}.selector`);
+                    if (
+                        balancer.fallbackTag !== undefined &&
+                        (typeof balancer.fallbackTag !== 'string' || !balancer.fallbackTag)
+                    )
+                        warnings.push(`${path}.fallbackTag`);
+                    for (const key of ['observatory', 'burstObservatory'])
+                        if (
+                            config[key] !== undefined &&
+                            (!object(config[key]) ||
+                                (config[key].subjectSelector !== undefined &&
+                                    !Array.isArray(config[key].subjectSelector)))
+                        )
+                            warnings.push(key);
+                }
                 if (balancer.strategy?.type !== 'leastLoad' || settings === undefined) continue;
                 if (!object(settings)) {
                     warnings.push(`${path}.strategy.settings`);

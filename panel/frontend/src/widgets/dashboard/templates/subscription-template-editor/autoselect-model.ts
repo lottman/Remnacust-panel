@@ -219,7 +219,7 @@ export function newPrefix(config: JsonObject): string {
 }
 
 export function observerFor(text: string, prefixes: string[], strategy: string): string {
-    if (!['leastPing', 'leastLoad'].includes(strategy)) return text
+    if (!needsProbes(strategy)) return text
     const config = parseTemplate(text)
     const key =
         config.observatory !== undefined
@@ -266,12 +266,18 @@ export function observerFor(text: string, prefixes: string[], strategy: string):
     return next
 }
 
-export const needsProbes = (strategy: string) => ['leastPing', 'leastLoad'].includes(strategy)
+export const needsProbes = (strategy: string) =>
+    ['leastPing', 'leastLoad', 'priority'].includes(strategy)
 
 export function setBalancerStrategy(text: string, index: number, strategy: string): string {
     const before = parseTemplate(text)
     const oldSelectors: string[] = before.routing.balancers[index].selector ?? []
     let next = editTemplate(text, ['routing', 'balancers', index, 'strategy', 'type'], strategy)
+    if (
+        strategy === 'priority' &&
+        oldSelectors.includes(before.routing.balancers[index].fallbackTag)
+    )
+        next = editTemplate(next, ['routing', 'balancers', index, 'fallbackTag'], undefined)
     if (needsProbes(strategy)) return observerFor(next, oldSelectors, strategy)
     const after = parseTemplate(next)
     const required: string[] = (after.routing.balancers ?? [])
@@ -325,7 +331,7 @@ export function addBalancer(text: string, prefix: string, strategy = 'leastPing'
     let next = append(text, ['routing', 'balancers'], {
         tag,
         selector: [prefix],
-        fallbackTag: prefix,
+        ...(strategy === 'priority' ? {} : { fallbackTag: prefix }),
         strategy: { type: strategy }
     })
     const rules = config.routing?.rules ?? []
@@ -546,6 +552,11 @@ export function validationPath(config: JsonObject): string | null {
         balanceTags.add(balancer.tag)
         if (!balancer.tag || !Array.isArray(balancer.selector) || !balancer.selector.length)
             return `routing.balancers.${index}`
+        if (balancer.strategy?.type === 'priority') {
+            if (config.routing.script) return 'routing.script'
+            if (balancer.selector.some((value: unknown) => typeof value !== 'string' || !value))
+                return `routing.balancers.${index}.selector`
+        }
         if (balancer.strategy?.type === 'leastLoad' && balancer.strategy.settings !== undefined) {
             const settings = balancer.strategy.settings
             const path = `routing.balancers.${index}.strategy.settings`

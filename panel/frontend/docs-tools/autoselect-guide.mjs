@@ -128,6 +128,28 @@ sections.push(
         ]
     ]
 )
+sections.push([
+    'templates-priority',
+    [
+        [
+            'Приоритет и резервные серверы',
+            'Стратегия «По приоритету: первый доступный» выбирает первый работающий сервер. Для точного порядка выберите Хосты и Все выбранные хосты, затем переставьте их стрелками. Префиксы нескольких пулов также можно упорядочить в балансере. Теги и regex используют порядок общего списка хостов; случайные режимы сначала выбирают подмножество. Переключение и возврат на основной происходят после проверок доступности и затрагивают новые соединения; открытые соединения не переносятся. Xray JSON преобразуется при выдаче в стандартные leastPing-балансеры с одним кандидатом и цепочку Loopback. До первой успешной проверки и при отказе всех серверов соединение блокируется. Явный fallbackTag используется последним. При выборе приоритета GUI убирает автоматически заданный резерв на тот же пул; собственный резерв сохраняет. Параметры проверок сохраняются. Предел — 128 кандидатов на балансер и 256 на конфигурацию. Routing script и конфликтующие общие селекторы других балансеров несовместимы. В Mihomo/Clash/Stash используется native fallback с порядком proxies: явные участники из кода идут до пула. sing-box не поддерживает автоматический строгий приоритет в конфигурации; его selector ручной, URLTest выбирает по задержке. Нужна полная JSON/YAML-подписка.'
+        ],
+        [
+            'Priority and backup servers',
+            'Priority: first available selects the first working server. For an exact order, choose Hosts and All selected hosts, then reorder them with the arrows. Multiple pool prefixes can also be reordered in the balancer. Tags and regex follow the main host list; random modes select a subset first. Failover and return to the primary follow health checks and affect new connections; existing connections are not migrated. Xray JSON is rendered as standard single-candidate leastPing balancers with a Loopback chain. Connections are blocked before the first successful probe and when every server is unavailable. An explicit fallbackTag is used last. Selecting priority in the GUI removes the generated fallback to the same pool and preserves custom fallbacks. Probe settings are preserved. Limits: 128 candidates per balancer and 256 per configuration. Routing scripts and conflicting broad selectors of other balancers are incompatible. Mihomo/Clash/Stash use native fallback in proxies order: explicit code members precede pool members. sing-box has no automatic strict priority mode in its configuration; selector is manual and URLTest uses latency. A full JSON/YAML subscription is required.'
+        ],
+        [
+            'اولویت و سرورهای جایگزین',
+            'حالت اولویت نخستین سرور سالم را انتخاب می‌کند. برای ترتیب دقیق، میزبان‌ها و همه میزبان‌های انتخاب‌شده را انتخاب و با فلش جابه‌جا کنید. پیشوند چند مخزن نیز در بالانسر مرتب می‌شود. تگ و regex از ترتیب فهرست اصلی استفاده می‌کنند؛ حالت تصادفی ابتدا زیرمجموعه را انتخاب می‌کند. تغییر سرور و بازگشت به اصلی پس از بررسی سلامت است و فقط اتصال جدید را تغییر می‌دهد. Xray JSON هنگام تحویل به بالانسرهای استاندارد leastPing تک‌عضوی و زنجیره Loopback تبدیل می‌شود. پیش از بررسی موفق و با قطع همه سرورها اتصال مسدود می‌شود. fallbackTag صریح در پایان استفاده می‌شود. رابط، جایگزین خودکار همان مخزن را حذف و جایگزین سفارشی را حفظ می‌کند. تنظیمات بررسی حفظ می‌شوند. حد: ۱۲۸ عضو در بالانسر و ۲۵۶ در پیکربندی. routing script و انتخابگر گسترده متداخل سایر بالانسرها سازگار نیستند. Mihomo/Clash/Stash از fallback بومی به ترتیب proxies استفاده می‌کنند؛ اعضای صریح کد قبل از مخزن هستند. sing-box اولویت خودکار دقیق ندارد؛ selector دستی و URLTest بر اساس تأخیر است. اشتراک کامل JSON/YAML لازم است.'
+        ],
+        [
+            '优先级和备用服务器',
+            '“按优先级：首个可用服务器”选择第一台健康服务器。需要精确顺序时，选择主机及所有选定主机，再用箭头排序。多个池的前缀也可在均衡器中排序。标签和正则遵循主机总列表顺序，随机模式先选子集。故障切换和恢复主服务器取决于健康检查，仅影响新连接，已有连接不会迁移。Xray JSON 在输出时转换为标准单候选 leastPing 均衡器及 Loopback 链。首次检查成功前或全部服务器不可用时阻断连接，显式 fallbackTag 最后使用。界面会移除指向同一池的自动备用项，保留自定义备用项和检查设置。每个均衡器最多 128 个候选，每份配置最多 256 个。routing script 及其他均衡器冲突的宽泛选择器不兼容。Mihomo/Clash/Stash 使用原生 fallback，遵循 proxies 顺序，代码显式成员在池成员之前。sing-box 配置不支持自动严格优先级，selector 为手动选择，URLTest 按延迟选择。需要完整 JSON/YAML 订阅。'
+        ]
+    ]
+])
+
 export function explainAutoselect(articles) {
     const template = articles.find((article) => article.id === 'templates')
     for (const [id, translations] of sections)

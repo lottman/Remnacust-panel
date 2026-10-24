@@ -30,7 +30,7 @@ function host(uuid, isHidden = true) {
     };
 }
 
-async function generate(hosts, values, selectFrom, extra = {}) {
+async function generate(hosts, values, selectFrom, extra = {}, priority = false) {
     const template = {
         outbounds: [
             { tag: 'direct', protocol: 'freedom' },
@@ -51,8 +51,35 @@ async function generate(hosts, values, selectFrom, extra = {}) {
     const generator = new XrayJsonGeneratorService({
         getCachedTemplateByType: async () => template,
     });
+    if (priority)
+        template.routing = {
+            balancers: [{ tag: 'auto', selector: ['p'], strategy: { type: 'priority' } }],
+            rules: [{ type: 'field', network: 'tcp,udp', balancerTag: 'auto' }],
+        };
     return JSON.parse(await generator.generateConfig({ hosts, isExtendedClient: false }));
 }
+
+test('priority is expanded after authorized host injection and retains explicit UUID order', async () => {
+    const hidden = [host('first'), host('second'), host('excluded')];
+    hidden[2].metadata.excludeFromSubscriptionTypes = ['XRAY_JSON'];
+    const [config] = await generate(
+        [host('recipient', false), ...hidden],
+        ['second', 'excluded', 'first'],
+        'ALL',
+        { mode: 'all' },
+        true,
+    );
+    const aliases = config.outbounds.filter(
+        (outbound) => outbound.tag.startsWith('rc-priority-') && outbound.protocol === 'vless',
+    );
+    assert.deepEqual(
+        aliases.map((outbound) => outbound.settings.vnext[0].address),
+        ['second.example.com', 'first.example.com'],
+    );
+    assert.ok(config.routing.balancers.every((balance) => balance.strategy.type === 'leastPing'));
+    assert.equal(config.routing.balancers[0].tag, 'auto');
+    assert.equal(config.remnawave, undefined);
+});
 
 test('all three hidden XHTTP/TLS hosts are injected in selector order into one visible profile', async () => {
     const configs = await generate(

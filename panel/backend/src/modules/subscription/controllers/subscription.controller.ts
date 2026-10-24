@@ -1,6 +1,14 @@
 import { Response } from 'express';
 
-import { Controller, Get, HttpStatus, Param, Res, UseFilters } from '@nestjs/common';
+import {
+    Controller,
+    Get,
+    HttpStatus,
+    Param,
+    Res,
+    UseFilters,
+    UseInterceptors,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 
 import { Endpoint } from '@common/decorators/base-endpoint';
@@ -8,6 +16,7 @@ import { GetSrrContext } from '@common/decorators/get-srr-context';
 import { HttpExceptionFilter } from '@common/exception/http-exception.filter';
 import { PublicHttpExceptionFilter } from '@common/exception/public-http-exception.filter';
 import { errorHandler } from '@common/helpers/error-handler.helper';
+import { SubscriptionBudgetInterceptor } from '@common/middlewares/subscription-budget.middleware';
 import {
     CONTROLLERS_INFO,
     SUBSCRIPTION_CONTROLLER,
@@ -35,6 +44,7 @@ import { sendSubscriptionBody } from '../utils/send-subscription-body';
 
 @ApiTags(CONTROLLERS_INFO.SUBSCRIPTION.tag)
 @UseFilters(HttpExceptionFilter)
+@UseInterceptors(SubscriptionBudgetInterceptor)
 @Controller(SUBSCRIPTION_CONTROLLER)
 export class SubscriptionController {
     constructor(

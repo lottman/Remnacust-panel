@@ -185,14 +185,17 @@ export function usePanelUpdateMonitor() {
     const setReachable = usePanelUpdateStore((state) => state.setReachable)
     const query = useQuery({
         queryKey: key,
-        queryFn: async () => {
-            const result = await instance.get('/api/system/update/status', { timeout: 5000 })
+        queryFn: async ({ signal }) => {
+            const result = await instance.get('/api/system/update/status', {
+                timeout: 5000,
+                signal
+            })
             return panelUpdateSchema.parse(result.data.response)
         },
         retry: false,
         staleTime: 0,
-        refetchInterval: observed ? 1500 : 5000,
-        refetchIntervalInBackground: true
+        refetchInterval: observed ? 1500 : 30_000,
+        refetchIntervalInBackground: Boolean(observed)
     })
     useEffect(() => {
         if (query.data) accept(query.data)

@@ -173,6 +173,7 @@ export const HostCardWidget = memo(function HostCardWidget(props: IProps) {
                                 />
                                 {!disableReordering && (
                                     <Box
+                                        aria-label={item.remark}
                                         className={classes.mobileDragHandle}
                                         onClick={(e) => e.stopPropagation()}
                                         ref={isDragOverlay ? undefined : handleRef}
@@ -262,9 +263,7 @@ export const HostCardWidget = memo(function HostCardWidget(props: IProps) {
                                     {item.inbound.configProfileInboundUuid && (
                                         <>
                                             <span style={{ margin: '0 6px', opacity: 0.5 }}>›</span>
-                                            <span style={{ opacity: 0.75 }}>
-                                                {inboundTag || 'UNKNOWN'}
-                                            </span>
+                                            <span>{inboundTag || 'UNKNOWN'}</span>
                                         </>
                                     )}
                                 </Badge>
@@ -595,9 +594,7 @@ export const HostCardWidget = memo(function HostCardWidget(props: IProps) {
                                 {item.inbound.configProfileInboundUuid && (
                                     <>
                                         <span style={{ margin: '0 6px', opacity: 0.5 }}>›</span>
-                                        <span style={{ opacity: 0.75 }}>
-                                            {inboundTag || 'UNKNOWN'}
-                                        </span>
+                                        <span>{inboundTag || 'UNKNOWN'}</span>
                                     </>
                                 )}
                             </Badge>

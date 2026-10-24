@@ -6,6 +6,7 @@ import { Injectable, NestMiddleware, Logger } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 
 import { HttpExceptionWithErrorCodeType } from '@common/exception/http-exeception-with-error-code.type';
+import { runSubscriptionWork } from '@common/middlewares/subscription-budget.middleware';
 import { configuredRegex } from '@common/utils/bounded-regex';
 import { extractHwidHeaders } from '@common/utils/extract-hwid-headers/extract-hwid-headers.util';
 import { truncateHeader } from '@common/utils/truncate-header.util';
@@ -30,6 +31,18 @@ export class ResponseRulesMiddleware implements NestMiddleware {
     ) {}
 
     async use(
+        req: { srrContext: ISRRContext; clientIp: string } & Request,
+        res: Response,
+        next: NextFunction,
+    ) {
+        try {
+            await runSubscriptionWork(res, () => this.applyRules(req, res, next));
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    private async applyRules(
         req: { srrContext: ISRRContext; clientIp: string } & Request,
         res: Response,
         next: NextFunction,

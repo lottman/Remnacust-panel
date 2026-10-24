@@ -26,7 +26,12 @@ export const UsersTableTemplatesFeature = (props: IProps) => {
         <Menu position="bottom-end" shadow="md" width={260} withArrow>
             <Menu.Target>
                 <Tooltip label={t('constants.templates')} withArrow>
-                    <ActionIcon color="indigo" size="input-md" variant="soft">
+                    <ActionIcon
+                        aria-label={t('constants.templates')}
+                        color="indigo"
+                        size="input-md"
+                        variant="soft"
+                    >
                         <TbBookmark size="24px" />
                     </ActionIcon>
                 </Tooltip>

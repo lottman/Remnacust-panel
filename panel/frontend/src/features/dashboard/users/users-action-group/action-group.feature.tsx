@@ -87,6 +87,7 @@ export const UserActionGroupFeature = (props: IProps) => {
 
                 <Tooltip label={t('action-group.feature.clear-filters')} withArrow>
                     <ActionIcon
+                        aria-label={t('action-group.feature.clear-filters')}
                         color="gray"
                         loading={isLoading}
                         onClick={handleClearFilters}
@@ -99,6 +100,7 @@ export const UserActionGroupFeature = (props: IProps) => {
 
                 <Tooltip label={t('action-group.feature.reset-table')} withArrow>
                     <ActionIcon
+                        aria-label={t('action-group.feature.reset-table')}
                         color="gray"
                         loading={isLoading}
                         onClick={handleResetTable}
@@ -113,6 +115,7 @@ export const UserActionGroupFeature = (props: IProps) => {
             <ActionIconGroup>
                 <Tooltip label={uiText('export-users-e875475')} withArrow>
                     <ActionIcon
+                        aria-label={uiText('export-users-e875475')}
                         color="indigo"
                         loading={isExporting}
                         onClick={handleExportUsers}
@@ -125,6 +128,7 @@ export const UserActionGroupFeature = (props: IProps) => {
 
                 <Tooltip label={uiText('import-users-f8e8e1b')} withArrow>
                     <ActionIcon
+                        aria-label={uiText('import-users-f8e8e1b')}
                         color="yellow"
                         onClick={() => setImportOpened(true)}
                         size="input-md"
@@ -168,6 +172,7 @@ export const UserActionGroupFeature = (props: IProps) => {
 
                 <Tooltip label={t('common.action.create')} withArrow>
                     <ActionIcon
+                        aria-label={t('common.action.create')}
                         color="teal"
                         onClick={() => showModal('users_createUserModal')}
                         size="input-md"

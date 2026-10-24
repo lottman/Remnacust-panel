@@ -667,7 +667,7 @@ Ready-made datasets is one library for every template: PC uploads, URL imports a
 
 ### If Happ does not download the file
 
-V2Fly DAT is supported. A full JSON subscription with a routing header is required. Update the panel and a separately installed subscription page. In 1.1.7.51 compact category names reduce profile size; old signed URLs remain supported. Refresh the subscription and reconnect. If downloading does not start, check the Remnacust profile, x-remnacust-geofiles-delivery header and app logs. Incompatible settings or size limits trigger inline rules instead of a separate download.
+V2Fly DAT is supported. A full JSON subscription with a routing header is required. For the regular subscription URL, enable “Serve JSON at base subscription” in subscription settings, or use a URL ending in /json. Response rules and external squads can override the format. Save the switch in the template actually used: a template selected in the host card takes priority. The editor shows the global JSON setting and opens settings in a new tab, keeping the draft. After saving, refresh the subscription in the app. Update the panel and a separately installed subscription page. In 1.1.7.51 compact category names reduce profile size; old signed URLs remain supported. Refresh the subscription and reconnect. If downloading does not start, check the Remnacust profile, x-remnacust-geofiles-delivery header and app logs. Incompatible settings or size limits trigger inline rules instead of a separate download.
 
 ## Variables {{…}} in names and headers
 

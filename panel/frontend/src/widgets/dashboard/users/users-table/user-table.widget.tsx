@@ -226,6 +226,7 @@ export function UserTableWidget() {
                 <ActionIconGroup>
                     <Tooltip label={t('common.action.bulk-actions')} withArrow>
                         <ActionIcon
+                            aria-label={t('common.action.bulk-actions')}
                             color="green"
                             onClick={() => showModal('users_bulkAllUsersActionsModal')}
                             size="lg"
@@ -236,6 +237,7 @@ export function UserTableWidget() {
                     </Tooltip>
                     <Tooltip label={t('common.action.bulk-edit')} withArrow>
                         <ActionIcon
+                            aria-label={t('common.action.bulk-edit')}
                             color="red"
                             onClick={() => showModal('users_bulkAllUsersUpdateModal')}
                             size="lg"

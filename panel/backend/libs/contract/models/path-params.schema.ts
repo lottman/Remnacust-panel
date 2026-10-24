@@ -1,3 +1,3 @@
 import { z } from 'zod';
 
-export const numberParamSchema = z.coerce.number().positive();
+export const numberParamSchema = z.coerce.number().int().positive();

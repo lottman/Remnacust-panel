@@ -3983,7 +3983,14 @@
     "already-attached": "Already attached to template",
     "delete-from-library": "Delete from library",
     "delete-in-use": "A saved template uses this file. Detach it from that template and save the changes, then delete it from the library.",
-    "happ-check-help": "Happ downloads require a full JSON subscription with a routing profile in its response. Also update a separately installed subscription page to 1.1.7.50 or newer. V2Fly datasets are supported. If the profile is missing or downloading does not start, check the response format and Happ logs.",
+    "download-to-client-xray-help": "Off: embed rules. On: download DAT in Happ or INCY. A JSON subscription is required: enable “{{setting}}” in subscription settings, or use a URL ending in /json. Save the template and refresh the subscription in the app.",
+    "json-delivery-title": "Geofile downloads require a JSON subscription",
+    "json-setting-loading": "Checking the global JSON delivery setting…",
+    "json-setting-enabled": "The global “{{setting}}” setting is enabled. Response rules and external squad settings can override the format.",
+    "json-setting-disabled": "The global “{{setting}}” setting is disabled. Enable it for the regular subscription URL, or use a URL ending in /json.",
+    "json-setting-unknown": "Could not check JSON delivery. Check “{{setting}}” manually, or use a URL ending in /json.",
+    "open-subscription-settings": "Open subscription settings in a new tab",
+    "happ-check-help": "Save this template and make sure the host or external squad uses it. A template selected in the host card takes priority. Then refresh the subscription in Happ or INCY.",
     "xray-download-help": "Multiple DAT files are bundled with separate categories for each source. DIRECT, blocking and groups remain in JSON. If downloads conflict with manual settings or the bundle is too large, the app receives inline rules."
   },
   "template-draft": {

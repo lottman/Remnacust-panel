@@ -29,7 +29,7 @@ export function DisclosureCard({
             keepMountedMode="display-none"
             mb={mb}
             onChange={(value) => onChange(value === 'content')}
-            order={4}
+            order={3}
             radius="md"
             value={opened ? 'content' : null}
             variant="contained"

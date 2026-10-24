@@ -1,5 +1,6 @@
 import {
     Alert,
+    Anchor,
     Badge,
     Button,
     Card,
@@ -24,6 +25,8 @@ import { useTranslation } from 'react-i18next'
 import { TbPlus, TbTrash } from 'react-icons/tb'
 
 import { instance } from '@shared/api'
+import { useGetSubscriptionSettings } from '@shared/api/hooks/subscription-settings/subscription-settings.query.hooks'
+import { ROUTES } from '@shared/constants/routes'
 
 import { type JsonObject } from './autoselect-model'
 import styles from './autoselect-panel.module.css'
@@ -77,6 +80,7 @@ export function GeofilesPanel({
     getValue: () => string
 }) {
     const { t } = useTranslation()
+    const jsonSettingName = t('subscription-settings.widget.serve-json-at-base-subscription')
     const client = useQueryClient()
     const filesQuery = useQuery({
         queryKey,
@@ -108,6 +112,16 @@ export function GeofilesPanel({
     const refs: Reference[] = Array.isArray(config.remnacust?.geofiles)
         ? config.remnacust.geofiles
         : []
+    const needsJsonDelivery =
+        format === 'XRAY_JSON' && refs.some((reference) => reference.downloadToClient === true)
+    const subscriptionSettings = useGetSubscriptionSettings({
+        rQueryParams: {
+            enabled: needsJsonDelivery,
+            refetchOnMount: 'always',
+            refetchOnWindowFocus: 'always'
+        }
+    })
+    const jsonAtBase = subscriptionSettings.data?.serveJsonAtBaseSubscription
     const targets = [
         ...new Set([
             'DIRECT',
@@ -253,6 +267,48 @@ export function GeofilesPanel({
             <Alert color="blue" title={t('geofiles.delivery-title')}>
                 {t(format === 'XRAY_JSON' ? 'geofiles.delivery-xray' : 'geofiles.delivery-native')}
             </Alert>
+            {needsJsonDelivery && (
+                <Alert
+                    role="status"
+                    aria-live="polite"
+                    color={subscriptionSettings.isError || jsonAtBase === false ? 'yellow' : 'blue'}
+                    title={t('geofiles.json-delivery-title')}
+                >
+                    <Stack gap="xs">
+                        <Text size="sm">
+                            {t(
+                                subscriptionSettings.isError
+                                    ? 'geofiles.json-setting-unknown'
+                                    : subscriptionSettings.isFetching || jsonAtBase === undefined
+                                      ? 'geofiles.json-setting-loading'
+                                      : jsonAtBase
+                                        ? 'geofiles.json-setting-enabled'
+                                        : 'geofiles.json-setting-disabled',
+                                { setting: jsonSettingName }
+                            )}
+                        </Text>
+                        <Anchor
+                            href={ROUTES.DASHBOARD.MANAGEMENT.SUBSCRIPTION_SETTINGS}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            size="sm"
+                        >
+                            {t('geofiles.open-subscription-settings')}
+                        </Anchor>
+                        {subscriptionSettings.isError && (
+                            <Button
+                                variant="subtle"
+                                size="xs"
+                                loading={subscriptionSettings.isFetching}
+                                onClick={() => void subscriptionSettings.refetch()}
+                            >
+                                {t('common.action.refresh')}
+                            </Button>
+                        )}
+                        <Text size="sm">{t('geofiles.happ-check-help')}</Text>
+                    </Stack>
+                </Alert>
+            )}
             {(error || filesQuery.isError) && (
                 <Alert color="red" withCloseButton onClose={() => setError(null)}>
                     {t(error ?? 'geofiles.operation-failed')}{' '}
@@ -476,7 +532,12 @@ export function GeofilesPanel({
                             />
                             <Switch
                                 label={t('geofiles.download-to-client')}
-                                description={t('geofiles.download-to-client-help')}
+                                description={t(
+                                    xray
+                                        ? 'geofiles.download-to-client-xray-help'
+                                        : 'geofiles.download-to-client-help',
+                                    { setting: jsonSettingName }
+                                )}
                                 checked={download}
                                 disabled={item?.kind === 'singbox-srs'}
                                 onChange={(event) =>
@@ -497,9 +558,6 @@ export function GeofilesPanel({
                                 <Text size="xs" c="dimmed">
                                     {t('geofiles.xray-download-limit')}
                                 </Text>
-                            )}
-                            {xray && download && (
-                                <Alert color="blue">{t('geofiles.happ-check-help')}</Alert>
                             )}
                             {item?.kind === 'singbox-srs' && (
                                 <Text size="xs" c="dimmed">

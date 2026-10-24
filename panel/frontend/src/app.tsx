@@ -22,7 +22,7 @@ import { polyfillCountryFlagEmojis } from 'country-flag-emoji-polyfill'
 import dayjs from 'dayjs'
 import customParseFormat from 'dayjs/plugin/customParseFormat'
 import { Suspense, useEffect } from 'react'
-import { I18nextProvider } from 'react-i18next'
+import { I18nextProvider, useTranslation } from 'react-i18next'
 
 import { AuthProvider } from '@shared/hocs/auth-provider'
 // import { StrictMode } from 'react'
@@ -41,6 +41,11 @@ dayjs.extend(customParseFormat)
 polyfillCountryFlagEmojis()
 
 initConnectionWatchdog()
+
+function NavigationLoadingProgress() {
+    const { t } = useTranslation()
+    return <NavigationProgress aria-label={t('common.message.loading')} />
+}
 
 export function App() {
     const isDev = __NODE_ENV__ === 'development'
@@ -71,7 +76,7 @@ export function App() {
                                 <ModalsProvider>
                                     <Notifications position="top-right" />
                                     <ConnectionStatusOverlay />
-                                    <NavigationProgress />
+                                    <NavigationLoadingProgress />
                                     <Suspense
                                         fallback={
                                             <Center h="100%">

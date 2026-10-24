@@ -1,6 +1,6 @@
 {
   "name": "@remnacust/frontend",
-  "version": "1.1.7.52",
+  "version": "1.1.7.53",
   "private": false,
   "homepage": "https://github.com/lottman/Remnacust-panel",
   "bugs": {
@@ -159,7 +159,7 @@
     "terser": "^5.50.0",
     "typesafe-i18n": "^5.27.1",
     "typescript": "^5.9.3",
-    "vite": "8.2.2",
+    "vite": "8.2.4",
     "vite-plugin-remove-console": "^2.2.0",
     "vite-plugin-webfont-dl": "^3.13.1"
   },

@@ -132,5 +132,10 @@ test('connection selection retains every candidate and removes generation-time s
     assert.deepEqual(result.routing,JSON.parse(input).routing);
     const grouped = m.connectionPool({mode:'group',selector:{type:'tags',groups:{first:['a','b'],second:['b','c']}}});
     assert.deepEqual(grouped.selector,{type:'tags',values:['a','b','c']});
-    assert.throws(()=>m.connectionPool({mode:'group',selector:{type:'remarkRegex',groups:{a:ids},pattern:'.*'}}),/connection-group-selector/);
+    for (const type of ['remarkRegex','tagRegex','sameTagAsRecipient']) {
+        const selector = {type,groups:{a:ids},...(type.endsWith('Regex')?{pattern:'^EU'}:{})};
+        const converted = m.connectionPool({mode:'group',selector});
+        assert.equal(converted.mode,'all');
+        assert.deepEqual(converted.selector,selector,'keep the predicate and UUID boundary');
+    }
 });

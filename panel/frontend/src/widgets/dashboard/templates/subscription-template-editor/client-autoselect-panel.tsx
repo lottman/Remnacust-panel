@@ -27,6 +27,7 @@ import {
     nativeGroupPath,
     removeClientGroup,
     renameClientGroup,
+    selectClientOnConnection,
     type ClientFormat
 } from './client-template-model'
 import { PriorityOrder } from './priority-order'
@@ -169,25 +170,9 @@ export function ClientAutoselectPanel({
                                             mt="sm"
                                             variant="light"
                                             onClick={() =>
-                                                edit(() => {
-                                                    let next = editClientTemplate(
-                                                        text,
-                                                        format,
-                                                        [key, index, 'remnawave', 'pool'],
-                                                        connectionPool(pool)
-                                                    )
-                                                    if (
-                                                        group.type === 'selector' ||
-                                                        group.type === 'select'
-                                                    )
-                                                        next = editClientTemplate(
-                                                            next,
-                                                            format,
-                                                            [key, index, 'type'],
-                                                            sing ? 'urltest' : 'url-test'
-                                                        )
-                                                    return next
-                                                })
+                                                edit(() =>
+                                                    selectClientOnConnection(text, format, index)
+                                                )
                                             }
                                         >
                                             {t('autoselect.select-on-connection')}
@@ -366,6 +351,13 @@ export function ClientAutoselectPanel({
                                             onChange={(value) =>
                                                 value &&
                                                 edit(() => {
+                                                    if (value === 'all')
+                                                        return editClientTemplate(
+                                                            text,
+                                                            format,
+                                                            [key, index, 'remnawave', 'pool'],
+                                                            connectionPool(pool)
+                                                        )
                                                     let next = editClientTemplate(
                                                         text,
                                                         format,
@@ -461,8 +453,15 @@ export function ClientAutoselectPanel({
                                             }
                                         />
                                     )}
-                                    {mode === 'group' && (
+                                    {(mode === 'group' ||
+                                        (selector.groups &&
+                                            !['uuids', 'tags'].includes(selector.type))) && (
                                         <Stack gap="sm">
+                                            {mode !== 'group' && (
+                                                <Text size="sm" c="dimmed">
+                                                    {t('autoselect.retained-groups-help')}
+                                                </Text>
+                                            )}
                                             {Object.entries(selector.groups ?? {}).map(
                                                 ([groupName, members], i) => (
                                                     <Group key={groupName} align="end">

@@ -2,6 +2,7 @@ import type { NodeUpgradeRequest } from './ssh/node-upgrade';
 
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
+import { Address6 } from 'ip-address';
 import { lookup } from 'node:dns/promises';
 import { isIP } from 'node:net';
 
@@ -10,6 +11,30 @@ import { QueryBus } from '@nestjs/cqrs';
 
 import { NodePortPlansService } from '@modules/nodes/node-port-plans.service';
 import { GetNodeByUuidQuery } from '@modules/nodes/queries/get-node-by-uuid/get-node-by-uuid.query';
+
+function canonicalAddress(address: string): string {
+    if (isIP(address) !== 6) return address;
+    const value = new Address6(address);
+    return value.isMapped4() ? value.to4().correctForm() : value.correctForm();
+}
+
+async function resolveAddresses(address: string): Promise<string[]> {
+    if (isIP(address)) return [canonicalAddress(address)];
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+        const result = await Promise.race([
+            lookup(address, { all: true, verbatim: true }),
+            new Promise<never>((_, reject) => {
+                timer = setTimeout(() => reject(new Error('Entry DNS timed out')), 5000);
+                timer.unref();
+            }),
+        ]);
+        if (!result.length) throw new Error('Entry DNS unavailable');
+        return result.map((value) => canonicalAddress(value.address));
+    } finally {
+        clearTimeout(timer);
+    }
+}
 
 @Injectable()
 export class StableEntryService {
@@ -46,6 +71,10 @@ export class StableEntryService {
                 : gateway.response.activeInbounds.some((b) => b.port === input.listenPort)
         )
             throw new Error('Entry port is already used by an inbound');
+        const gatewayAddresses = new Set([
+            ...(await resolveAddresses(gateway.response.address)),
+            ...gateway.response.ips.map((ip) => canonicalAddress(ip.ip)),
+        ]);
         const registered = new Set(host.nodes.map((n) => n.nodeUuid));
         const backends: { address: string; port: number }[] = [];
         for (const uuid of input.backendNodeUuids) {
@@ -87,24 +116,10 @@ export class StableEntryService {
             if (!port || port === 22) throw new Error('Backend port is unavailable');
             // Resolve once for the reviewed apply; no user-supplied proxy/DNS strings
             // enter HAProxy syntax. A later backend change requires another apply.
-            const address = isIP(node.address)
-                ? node.address
-                : await Promise.race([
-                      lookup(node.address).then((value) => value.address),
-                      new Promise<never>((_, reject) => {
-                          const timer = setTimeout(
-                              () => reject(new Error('Backend DNS timed out')),
-                              5000,
-                          );
-                          timer.unref();
-                      }),
-                  ]);
+            const addresses = await resolveAddresses(node.address);
+            const address = addresses[0];
             if (!isIP(address)) throw new Error('Backend DNS unavailable');
-            const gatewayAddresses = new Set([
-                gateway.response.address,
-                ...gateway.response.ips.map((ip) => ip.ip),
-            ]);
-            if (gatewayAddresses.has(address))
+            if (addresses.some((candidate) => gatewayAddresses.has(candidate)))
                 throw new Error('A backend cannot point back to the entry');
             backends.push({ address, port });
         }

@@ -86,6 +86,67 @@ test('entry resolves only servers of one host and the applied TCP binding', asyn
     assert.equal((await service.prepare(id(0), input)).backends[0].port, 9443);
     nodes.get(id(2)).address = nodes.get(id(0)).address;
     await assert.rejects(() => service.prepare(id(0), input), /point back/);
+    nodes.get(id(2)).address = '::ffff:c000:201';
+    await assert.rejects(() => service.prepare(id(0), input), /point back/);
+    nodes.get(id(0)).address = '2001:db8::1';
+    nodes.get(id(2)).address = '2001:0db8:0000:0000:0000:0000:0000:0001';
+    await assert.rejects(() => service.prepare(id(0), input), /point back/);
+});
+
+test('entry resolves gateway DNS and rejects a backend alias with any shared address', async () => {
+    const { StableEntryService: Service } = source('modules/node-ssh/stable-entry.service.ts', {
+        'node:dns/promises': {
+            lookup: async (name) =>
+                name === 'gateway.test'
+                    ? [{ address: '192.0.2.1' }, { address: '2001:db8::1' }]
+                    : [{ address: '192.0.2.2' }, { address: '2001:db8::1' }],
+        },
+        '@modules/nodes/queries/get-node-by-uuid/get-node-by-uuid.query': {
+            GetNodeByUuidQuery: class {
+                constructor(uuid) {
+                    this.uuid = uuid;
+                }
+            },
+        },
+    });
+    const node = {
+        port: 2222,
+        ips: [],
+        isConnected: true,
+        activeConfigProfileUuid: id(8),
+        activeInbounds: [{ uuid: id(7), port: 8443, network: 'tcp' }],
+    };
+    const service = new Service(
+        {
+            tx: {
+                hosts: {
+                    findUnique: async () => ({
+                        port: 443,
+                        configProfileUuid: id(8),
+                        configProfileInboundUuid: id(7),
+                        nodes: [{ nodeUuid: id(1) }],
+                    }),
+                },
+            },
+        },
+        {
+            execute: async (q) => ({
+                isOk: true,
+                response: { ...node, address: q.uuid === id(0) ? 'gateway.test' : 'backend.test' },
+            }),
+        },
+        { get: async () => ({ enabled: false, bindings: [] }) },
+    );
+    await assert.rejects(
+        () =>
+            service.prepare(id(0), {
+                hostUuid: id(9),
+                listenPort: 443,
+                strategy: 'priority',
+                backendNodeUuids: [id(1)],
+            }),
+        /point back/,
+    );
 });
 
 test('entry SSH command uses verified installer, cannot become a node upgrade or shell injection', () => {

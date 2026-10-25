@@ -94,6 +94,7 @@ function PoolCard({
         edit((text) => updatePool(text, index, path, value))
     const selectMode = (value: string) =>
         edit((text) => {
+            if (value === 'all') return selectOnConnection(text, index)
             let next = updatePool(text, index, ['mode'], value)
             if (value === 'random' && !selector.expected)
                 next = updatePool(next, index, ['selector', 'expected'], 3)
@@ -288,10 +289,14 @@ function PoolCard({
                     {t('autoselect.priority-pool-help')}
                 </Text>
             )}
-            {mode === 'group' && (
+            {(mode === 'group' || (groups.length > 0 && !['uuids', 'tags'].includes(type))) && (
                 <Stack gap="sm" mt="md">
                     <Text size="sm" c="dimmed">
-                        {t('autoselect.group-help')}
+                        {t(
+                            mode === 'group'
+                                ? 'autoselect.group-help'
+                                : 'autoselect.retained-groups-help'
+                        )}
                     </Text>
                     {groups.map(([name, members], groupIndex) => (
                         <Card key={name} withBorder p="sm">

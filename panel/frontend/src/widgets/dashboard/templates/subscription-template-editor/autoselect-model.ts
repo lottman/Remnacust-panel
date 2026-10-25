@@ -21,10 +21,13 @@ export type Change = {
 export function connectionPool(pool: Pool): Pool {
     const selector = { ...pool.selector }
     if (pool.mode === 'group') {
-        if (!['uuids', 'tags'].includes(selector.type)) throw new Error('connection-group-selector')
-        selector.values = [...new Set(Object.values(selector.groups ?? {}).flat() as string[])]
+        if (['uuids', 'tags'].includes(selector.type)) {
+            selector.values = [...new Set(Object.values(selector.groups ?? {}).flat() as string[])]
+            delete selector.groups
+        }
+        // Regex/recipient selectors still intersect these UUIDs after filtering.
+        // Dropping the groups would widen the pool to unrelated hosts.
     }
-    delete selector.groups
     delete selector.expected
     return { ...pool, mode: 'all', selector }
 }

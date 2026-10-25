@@ -2,7 +2,7 @@ import { RemnawaveInjectorSchema } from '@remnawave/backend-contract'
 import { applyEdits, modify } from 'jsonc-parser'
 import { parseDocument } from 'yaml'
 
-import { type JsonObject } from './autoselect-model'
+import { connectionPool, type JsonObject } from './autoselect-model'
 
 export type ClientFormat = 'XRAY_JSON' | 'SINGBOX' | 'MIHOMO' | 'STASH' | 'CLASH'
 export const isYamlFormat = (format: ClientFormat) => ['MIHOMO', 'STASH', 'CLASH'].includes(format)
@@ -118,6 +118,32 @@ export function editClientTemplate(
 
 export function nativeGroupPath(format: ClientFormat): string[] {
     return format === 'SINGBOX' ? ['outbounds'] : ['proxy-groups']
+}
+
+export function selectClientOnConnection(
+    text: string,
+    format: ClientFormat,
+    index: number
+): string {
+    const key = nativeGroupPath(format)[0]
+    const group = readClientTemplate(text, format)[key]?.[index]
+    if (!group?.remnawave?.pool) throw new Error('pool-missing')
+    let next = editClientTemplate(
+        text,
+        format,
+        [key, index, 'remnawave', 'pool'],
+        connectionPool(group.remnawave.pool)
+    )
+    if (group.type === 'selector' || group.type === 'select') {
+        for (const [property, value] of Object.entries({
+            type: format === 'SINGBOX' ? 'urltest' : 'url-test',
+            url: group.url ?? 'https://www.gstatic.com/generate_204',
+            interval: group.interval || (format === 'SINGBOX' ? '5m' : 300),
+            tolerance: group.tolerance ?? 50
+        }))
+            next = editClientTemplate(next, format, [key, index, property], value)
+    }
+    return next
 }
 
 export function addClientGroup(

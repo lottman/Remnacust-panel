@@ -1,6 +1,28 @@
 const sections = [
     [
         'templates',
+        'templates-pool-boundaries',
+        [
+            [
+                'Состав пула после переключения',
+                'При переключении группового отбора на выбор при подключении UUID и теги объединяются в values. Для regex и тегов получателя groups сохраняет объединённый список UUID: исходный фильтр и доступ пользователя действуют одновременно. Эти списки можно изменить в GUI или коде. Посторонние хосты не добавляются. Переход из ручной клиентской группы в автоматическую также задаёт URL и интервал проверок доступности. Постоянный вход проверяет DNS и нормализованные IP обоих концов, чтобы не направить соединение обратно на себя; одинаковые записи IPv4 и IPv6 не обходят эту проверку.'
+            ],
+            [
+                'Pool membership after switching',
+                'Switching grouped selection to connection-time selection merges UUID and tag groups into values. For regex and recipient-tag selectors, groups retains the combined UUID boundary: the original filter and user access both apply. Edit these lists in the GUI or code; unrelated hosts are excluded. Switching a manual client group to automatic selection also sets its probe URL and interval. A stable entry resolves DNS and compares normalized IPs at both ends to reject loops; alternative IPv4 and IPv6 notation cannot bypass the comparison.'
+            ],
+            [
+                'اعضای مجموعه پس از تغییر حالت',
+                'با تغییر انتخاب گروهی به انتخاب هنگام اتصال، گروه‌های UUID و برچسب در values ادغام می‌شوند. برای عبارت منظم و برچسب گیرنده، groups مرز مشترک UUID را نگه می‌دارد؛ فیلتر اصلی و دسترسی کاربر هم‌زمان اعمال می‌شوند. فهرست‌ها در رابط یا کد قابل ویرایش‌اند و میزبان نامرتبط اضافه نمی‌شود. تغییر گروه دستی به خودکار، نشانی و فاصلهٔ پایش را نیز تنظیم می‌کند. ورودی ثابت DNS و IP نرمال‌شدهٔ هر دو طرف را بررسی می‌کند تا حلقه ایجاد نشود؛ نگارش متفاوت IPv4 و IPv6 این بررسی را دور نمی‌زند.'
+            ],
+            [
+                '切换后的池成员范围',
+                '从分组抽样切换到连接时选择后，UUID 和标签分组会合并到 values。对于正则表达式和接收主机标签选择器，groups 保留合并后的 UUID 范围，并同时应用原有过滤条件和用户权限。这些列表可在界面或代码中编辑，不会加入无关主机。从手动客户端组切换到自动选择时，还会设置探测 URL 和间隔。固定入口会解析两端 DNS 并比较规范化 IP，以防止连接回环；不同的 IPv4 和 IPv6 写法无法绕过检查。'
+            ]
+        ]
+    ],
+    [
+        'templates',
         'templates-connection-selection',
         [
             [

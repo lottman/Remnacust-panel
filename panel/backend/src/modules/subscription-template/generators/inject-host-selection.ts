@@ -48,7 +48,9 @@ export function selectInjectHosts<T extends Candidate>(
     const pool =
         selector.type === 'uuids' || selector.type === 'tags'
             ? selectPool(selector.type, selector.values ?? [], candidates)
-            : uniqueHosts(candidates);
+            : selector.groups
+              ? selectPool('uuids', Object.values(selector.groups).flat(), candidates)
+              : uniqueHosts(candidates);
     if (entry.mode !== 'random') return pool;
     const count = Math.min(selector.expected ?? 0, pool.length);
     for (let index = 0; index < count; index++) {

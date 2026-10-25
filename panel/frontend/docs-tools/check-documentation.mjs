@@ -115,6 +115,28 @@ for (const language of languages) {
     )
     const download = fs.readFileSync(path.join(output, `guide-${language}.md`), 'utf8')
     assert.ok(download.length > 10000)
+    const dictionary = JSON.parse(
+        fs.readFileSync(path.join(root, `public/locales/${language}/remnawave.json`), 'utf8')
+    )
+    const translate = (key) =>
+        key?.split('.').reduce((node, part) => node?.[part], dictionary) ?? ''
+    const clean = (value) => String(value).replace(/<\/?[a-z][^>]*>/gi, '')
+    for (const article of guides[language]) {
+        const heading = `## ${article.title}\n\n`
+        const start = download.indexOf(heading)
+        assert.ok(start >= 0, `${language}/${article.id}: missing download article`)
+        const end = download.indexOf('\n## ', start + heading.length)
+        const section = download.slice(start, end < 0 ? undefined : end)
+        for (const control of controls[article.id]) {
+            const label = translate(control.labelKey) || control.label || ''
+            if (!label.trim()) continue
+            const line = `- **${clean(label)}**: ${clean(control.explanation?.[language] || translate(control.descriptionKey))}`
+            assert.ok(
+                section.includes(line),
+                `${language}/${article.id}: missing download field ${control.field}`
+            )
+        }
+    }
     assert.ok(
         !/\b(?:GET|POST|PUT|PATCH|DELETE) \/api\//.test(download),
         'API methods belong in the API reference'

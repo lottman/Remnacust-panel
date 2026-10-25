@@ -71,6 +71,19 @@ Before saving, check squads and subscription expiry. Then verify the status and 
 
 Select an already registered device, format and User-Agent in the device card and generate a preview. It uses the real generator and response rules without changing the device or connection history or creating access keys in the database. A blocked device receives no working access. The host list shows candidates; the generator performs final protocol and pool filtering. Configuration containing keys is hidden by default and returned only on explicit request, up to 2 MiB. Treat it as private and keep it out of public logs.
 
+### Fields and controls
+
+- **Status**: ACTIVE means active, DISABLED disabled, EXPIRED expired and LIMITED overall quota exhausted. A working connection also requires a valid expiry date and host access.
+- **Expiry date**: Subscription expiry date and time. Choose a future date for a valid subscription and use the time zone shown in the form.
+- **Telegram ID**: Numeric user Telegram ID, distinct from a username or backup-delivery chat ID.
+- **Email**: User contact/search field; it does not grant inbound access.
+- **Description**: An administrator description of the record, such as service terms or a note about its settings.
+- **Traffic limit**: Subscription quota in bytes; 0 means unlimited. The form displays units separately. Host/tag limits remain independent.
+- **Traffic reset strategy**: Overall user quota reset strategy: no reset, day, week, calendar month or rolling month. Host and tag periods are configured in their own settings.
+- **External squad**: External squad with its own subscription delivery settings. Select it when the user needs that group’s template or subscription page.
+- **Internal squads**: Internal squads granting the user access to selected inbounds. Multiple squads can be assigned.
+- **Username**: Account name used to find and manage the user. It must be available when creating an account.
+
 ## User actions and details
 
 ### Status and resets
@@ -95,6 +108,17 @@ Select users, choose an action and check the recipient count before confirming. 
 
 Squad, traffic, expiry, device and status changes affect each recipient. Review selection before deleting. Refresh after completion and inspect an individual account. A network failure does not prove that no operation ran: read the current state before retrying a mutation.
 
+### Fields and controls
+
+- **Status**: ACTIVE means active, DISABLED disabled, EXPIRED expired and LIMITED overall quota exhausted. A working connection also requires a valid expiry date and host access.
+- **Expiry date**: Subscription expiry date and time. Choose a future date for a valid subscription and use the time zone shown in the form.
+- **Telegram ID**: Numeric user Telegram ID, distinct from a username or backup-delivery chat ID.
+- **Email**: User contact/search field; it does not grant inbound access.
+- **Description**: An administrator description of the record, such as service terms or a note about its settings.
+- **Traffic limit**: Subscription quota in bytes; 0 means unlimited. The form displays units separately. Host/tag limits remain independent.
+- **Traffic reset strategy**: Overall user quota reset strategy: no reset, day, week, calendar month or rolling month. Host and tag periods are configured in their own settings.
+- **External squad**: External squad with its own subscription delivery settings. Select it when the user needs that group’s template or subscription page.
+
 ## Importing and exporting users
 
 ### Import format
@@ -104,6 +128,11 @@ Upload an exported JSON file containing a users list with at most 20,000 records
 ### What is transferred
 
 Check the created, skipped and failed counts after import. An existing username or short identifier causes a record to be skipped; other errors appear in the import result. Test a subscription belonging to a newly created user. The export contains access credentials: keep the file private. It is not a database backup and does not transfer profiles, nodes, API tokens or all panel settings.
+
+### Fields and controls
+
+- **Restore internal squads by name**: Restores internal squad membership by names from the file. Squads with those names must exist in the destination panel; missing squads are skipped.
+- **Add everyone to an additional squad**: Additional internal squad for all users created by the import. It is added even when restoring squads from the file; leave empty to add no extra squad.
 
 ## HWID: devices, blocking and registration
 
@@ -118,6 +147,12 @@ Deleting a device removes its registration: the same app can register again if n
 ### Requirements
 
 The application must send supported HWID headers. Removing a registration is not a permanent admission ban. Automation uses separate registration, blocking and unblocking scopes; listing devices does not grant blocking permission.
+
+### Fields and controls
+
+- **Description**: An administrator description of the record, such as service terms or a note about its settings.
+- **Show generated configuration**: Contains private keys/links for this device. Do not share it publicly.
+- **Deny new devices**: Existing devices continue working. Allowing registration keeps the device limit.
 
 ## Internal squads
 
@@ -155,6 +190,21 @@ Name, country, tags and provider describe infrastructure. The profile and inboun
 
 Diagnostics make a real mTLS request to the registered node and check Xray, user synchronization and port apply status. They do not verify the full client network path. Disabled nodes are not probed; manual probes are rate limited. Port edits are reviewed, then confirmed with a review hash and current revision: stale reviews are rejected. Success requires node ACK, not merely enqueueing. Errors allow restoring a previously applied revision without overwriting newer edits. Outages require three observations over at least 20 seconds; recovery requires two over 10 seconds. Never-connected installations do not generate outage alerts. Maintenance and operations suppress alerts; a manual 30-minute pause does not stop health checks. The install wizard uses the verified installer over SSH and confirms connectivity separately; existing directories are not overwritten. NET_ADMIN defaults off. When a main server IP is set, all incoming ports and ping accept only that source except SSH (22 and detected sshd ports). Rules cover Docker forwarding and IPv6, preserve outbound replies and never flush other firewall rules. This blocks external HTTP-01 renewals: use DNS-01 or externally managed certificates. Remove the guard with python3 /etc/remnacust-node-firewall/guard.py remove.
 
+### Fields and controls
+
+- **Limit**: Subscription quota in bytes; 0 means unlimited. The form displays units separately. Host/tag limits remain independent.
+- **Reset day**: Day of the month for resetting the node’s monthly traffic counter. This setting applies to server accounting.
+- **Notification %**: Notification percentage threshold for tracked node usage. It does not increase allowance.
+- **Tags**: Object label array. Host tags also connect enabled policies; saving an empty array clears labels.
+- **Note**: Administrator note about the object, not a routing/access configuration.
+- **Country**: Country code used for display/grouping. The flag does not change server location.
+- **Internal name**: Object display name. UUID remains a separate identifier.
+- **Address**: Reachable IP/domain used by the client or panel in this form’s context; separate from the display name.
+- **Node Port**: Port of the selected service. A host client port and node agent management port can differ.
+- **Plugin**: Plugin configuration assigned to the user. Check that its executor is configured on the required nodes.
+- **Integrations**: Assigned node integration configurations. Creating an integration and assigning it to a node are separate actions.
+- **Proxy URL**: SOCKS proxy for panel control requests to this node, for example socks5://user:pass@proxy.example.com:1080. Leave empty for a direct connection. This does not proxy user traffic; keep embedded credentials private.
+
 ## Node actions
 
 ### Enable, restart and reset
@@ -168,6 +218,18 @@ Selecting multiple nodes shows the changed fields in confirmation. Before switch
 ### Changing an active port
 
 Each port-plan binding selects a port, profile and inbound. Compatible changes are applied through the core while preserving existing connections. A real port, transport or incompatible active-listener change requires a separate port and tag, or an explicit restart that may interrupt connections. A rejection does not trigger a hidden restart. The original technical error is shown verbatim. Updating the container or core binary may interrupt connections.
+
+### Fields and controls
+
+- **Country**: Country code used for display/grouping. The flag does not change server location.
+- **Plugin**: Plugin configuration assigned to the user. Check that its executor is configured on the required nodes.
+- **Integrations**: Assigned node integration configurations. Creating an integration and assigning it to a node are separate actions.
+- **Tags**: Object label array. Host tags also connect enabled policies; saving an empty array clears labels.
+- **Note**: Administrator note about the object, not a routing/access configuration.
+- **Force**: Guarantees that all nodes fully restart Xray Core.
+- **Graceful**: Sends a request to all nodes to restart Xray, but the request may go unfulfilled if the node hash matches the current one. This is the default option.
+- **Force**: Ensures that the node completely restarts Xray Core. This is the recommended option.
+- **Graceful**: Sends a request to this node to restart Xray, but the request may go unfulfilled if the node hash matches the current one.
 
 ## Node resources, health and logs
 
@@ -196,6 +258,19 @@ The terminal connects using separately configured SSH credentials. Its address a
 ### Access
 
 The SSH terminal supports administrative server work. Closing a tab does not guarantee that commands stop. Check the result and status of a long-running operation before starting it again.
+
+### Fields and controls
+
+- **Internal name**: Object display name. UUID remains a separate identifier.
+- **Country**: Country code used for display/grouping. The flag does not change server location.
+- **Domain or IP**: Reachable IP/domain used by the client or panel in this form’s context; separate from the display name.
+- **Node Port**: Port of the selected service. A host client port and node agent management port can differ.
+- **Plugin**: Plugin configuration assigned to the user. Check that its executor is configured on the required nodes.
+- **Tags**: Object label array. Host tags also connect enabled policies; saving an empty array clears labels.
+- **Main server IP (optional)**: When set, every incoming port and ping accepts traffic only from this IP, except SSH. VPN clients must connect through the main server. Existing provider/firewall restrictions still apply.
+- **Default**: The node will use its default outbound route.
+- **IP address**: Pick one of the node IPs or type any address
+- **Interface**: Pick one of the node interfaces or type any name
 
 ## Node server optimization
 
@@ -251,6 +326,14 @@ Create a provider and assign nodes. Set cost and payment date/period using the a
 
 Payment dates help track renewal. Dates use UTC calendar days: more than 7 days is neutral, 2–7 days is yellow, tomorrow is orange, and today or overdue is red. Overdue totals are also red. Text distinguishes due today from overdue and shows the day count. Colors adapt to the theme, and statuses update at day changes and when returning to the tab. On phones, amounts and labels wrap, actions stay separate from long node names, and the last card can scroll clear of the bottom toolbar. Recording payment or editing a date in the panel does not transfer money to the provider. Check linked nodes and accounting history before deleting a provider.
 
+### Fields and controls
+
+- **Limit**: Subscription quota in bytes; 0 means unlimited. The form displays units separately. Host/tag limits remain independent.
+- **Reset day**: Day of the month for resetting the node’s monthly traffic counter. This setting applies to server accounting.
+- **Notification %**: Notification percentage threshold for tracked node usage. It does not increase allowance.
+- **Tags**: Object label array. Host tags also connect enabled policies; saving an empty array clears labels.
+- **Note**: Administrator note about the object, not a routing/access configuration.
+
 ## Configuration profiles
 
 ### Server profile
@@ -264,6 +347,10 @@ Cloning creates a separate profile for experiments; editing the original can aff
 ### X25519 password and private key
 
 The generator shows two values: Private key for the server and Password (public key) for the REALITY client. For X25519, password and publicKey identify the same bytes, so no duplicate field is shown. Copy all contains privateKey and password. Do not distribute the private key to clients.
+
+### Fields and controls
+
+- **Profile relations**: Squads, inbounds, nodes and hosts
 
 ## Xray configuration editor
 
@@ -373,6 +460,10 @@ A snippet stores a named configuration fragment. Create it, use it in profiles a
 
 The interface offers synchronization after deleting a snippet. Check affected profiles and nodes because references may need changes. Validate the resulting JSON before broad application, not only the isolated fragment.
 
+### Fields and controls
+
+- **Snippet name**: Object display name. UUID remains a separate identifier.
+
 ## Generating keys and passwords
 
 ### Key material
@@ -413,6 +504,38 @@ Under “For each user on this host”, set the quota in GiB and speed in Mbps. 
 
 Enable, disable and delete return after the database commit; node policy delivery starts in the background and unavailable nodes are retried. A saved action does not mean a disconnected node already received it. Buttons show progress and the list updates after API acknowledgement. Cloning runs at most three requests at once; successful sources are deselected and failed sources remain for retry. Search flags by country name in RU/EN/FA/ZH or two-letter code independently of the UI language.
 
+### Fields and controls
+
+- **User traffic quota**: Combined user usage across all tagged hosts, including multipliers.
+- **User speed limit**: The same cap for each user separately on each host. Their devices share the host cap; bandwidth is not pooled across hosts. 0 disables the tag’s per-user speed cap.
+- **Device speed limit**: Each tag applies its device ceiling separately on this host. The strictest enabled limit applies.
+- **Tag traffic multiplier**: For hosts using the tag multiplier. Recalculates the current period; subscription usage is unchanged.
+- **Shared group speed**: One shared cap across all users and all tagged hosts.
+- **Remark**: Connection name delivered in the subscription. Supported variables resolve when the response is generated.
+- **Address**: Reachable IP/domain used by the client or panel in this form’s context; separate from the display name.
+- **Port**: Port of the selected service. A host client port and node agent management port can differ.
+- **Traffic limit per user**: Quota per user for this host or tag. The host form accepts GiB and stores bytes. Zero removes this quota.
+- **Apply tag traffic quota**: Includes this host’s usage in the user’s shared tag quota. The host’s own quota still applies when disabled.
+- **User speed limit**: Per-user host bandwidth shared by that user’s devices and connections. Measured in Mbps; zero removes this restriction.
+- **Apply tag per-user speed**: Applies the tag’s per-user bandwidth limit to this host. Each participating host applies the limit separately.
+- **Device speed limit**: Speed ceiling for one private device key on this host, in Mbps. All connections and both directions share it. Zero removes this cap; the user ceiling still applies. Requires compatible node and core.
+- **Apply device speed limit from tags**: Apply tag device-key speed ceilings to this host independently of other inheritance switches.
+- **Whole-host speed limit**: Total host or tag bandwidth shared by all users. A 100 Mbps limit is shared between concurrent connections.
+- **Apply tag shared speed**: Includes the host in the tag’s total bandwidth limit, shared by participating connections.
+- **Host traffic multiplier**: Usage multiplier: with a value of 2, transferring 1 GiB counts as 2 GiB. An empty host value inherits from tags.
+- **Reset traffic every**: Number of days or months between usage resets for this quota. Select the unit beside the value. Zero disables automatic resets.
+- **Automatic SNI and shortId regeneration**: SNI rotates through the pool, shortId is regenerated, nodes restart automatically
+- **Available after subscription expires or is disabled**: Allows this host to be delivered for an expired or disabled subscription. Useful for a fallback connection; the host’s own restrictions are checked separately.
+- **Unavailable during an active subscription**: Delivers the host only for inactive subscriptions. Enable “Always available” first; active subscriptions will not show this host.
+- **Tags**: Object label array. Host tags also connect enabled policies; saving an empty array clears labels.
+- **Internal Squads**: Squads granting user inbound access. On a host this is a separate squad include/exclude restriction.
+- **Override SNI from address**: Uses the host address as SNI in client configuration. The address must suit the connection’s TLS/REALITY settings.
+- **Keep SNI blank**: Keeps SNI empty in the generated client configuration instead of filling it automatically. Use when required by the transport configuration.
+- **Hide host**: Hides the host from subscription output. Use host disabling or a traffic block to stop access using previously issued credentials.
+- **Shuffle host**: Shuffles this host with other hosts that have the same option when generating a subscription.
+- **Mapper**: Mapping/override configuration for the current template format. Inspect generated output after changes.
+- **Mihomo X25519**: Compatible Mihomo REALITY key-scheme option; it does not rotate server keys automatically.
+
 ## Host overrides and rules
 
 ### TLS, transport and client
@@ -426,6 +549,28 @@ OFF disables the additional filter. ALLOW_ONLY permits only listed destinations,
 ### SNI and shortId rotation
 
 Rotation uses the configured SNI pool and hourly interval; shortIds rotate when enabled. Form ranges are 1–8760 hours, 1–10 shortIds and length 4–16. Nodes apply updated settings and clients need a refreshed subscription. Do not enable rotation without a valid pool and compatible server configuration.
+
+### Fields and controls
+
+- **Traffic limit per user**: Quota per user for this host or tag. The host form accepts GiB and stores bytes. Zero removes this quota.
+- **Apply tag traffic quota**: Includes this host’s usage in the user’s shared tag quota. The host’s own quota still applies when disabled.
+- **User speed limit**: Per-user host bandwidth shared by that user’s devices and connections. Measured in Mbps; zero removes this restriction.
+- **Apply tag per-user speed**: Applies the tag’s per-user bandwidth limit to this host. Each participating host applies the limit separately.
+- **Device speed limit**: Speed ceiling for one private device key on this host, in Mbps. All connections and both directions share it. Zero removes this cap; the user ceiling still applies. Requires compatible node and core.
+- **Apply device speed limit from tags**: Apply tag device-key speed ceilings to this host independently of other inheritance switches.
+- **Whole-host speed limit**: Total host or tag bandwidth shared by all users. A 100 Mbps limit is shared between concurrent connections.
+- **Apply tag shared speed**: Includes the host in the tag’s total bandwidth limit, shared by participating connections.
+- **Host traffic multiplier**: Usage multiplier: with a value of 2, transferring 1 GiB counts as 2 GiB. An empty host value inherits from tags.
+- **Reset traffic every**: Number of days or months between usage resets for this quota. Select the unit beside the value. Zero disables automatic resets.
+- **Automatic SNI and shortId regeneration**: SNI rotates through the pool, shortId is regenerated, nodes restart automatically
+- **Tags**: Object label array. Host tags also connect enabled policies; saving an empty array clears labels.
+- **Internal Squads**: Squads granting user inbound access. On a host this is a separate squad include/exclude restriction.
+- **Override SNI from address**: Uses the host address as SNI in client configuration. The address must suit the connection’s TLS/REALITY settings.
+- **Keep SNI blank**: Keeps SNI empty in the generated client configuration instead of filling it automatically. Use when required by the transport configuration.
+- **Hide host**: Hides the host from subscription output. Use host disabling or a traffic block to stop access using previously issued credentials.
+- **Shuffle host**: Shuffles this host with other hosts that have the same option when generating a subscription.
+- **Mapper**: Mapping/override configuration for the current template format. Inspect generated output after changes.
+- **Mihomo X25519**: Compatible Mihomo REALITY key-scheme option; it does not rotate server keys automatically.
 
 ## Host tags and shared settings
 
@@ -448,6 +593,25 @@ A tag device ceiling applies independently on each host with “Apply device spe
 ### Speed by tag
 
 A tag’s user speed sets the same cap separately on each participating host. Shared group speed is a separate pool for all participating traffic. Each host independently enables the tag quota, user speed and shared speed. When several restrictions apply, the stricter cap wins. 0 means no corresponding cap, not blocked traffic. Mbps already means megabits per second; 8 Mbps is approximately 1 MB/s before overhead.
+
+### Fields and controls
+
+- **User traffic quota**: Combined user usage across all tagged hosts, including multipliers.
+- **User speed limit**: The same cap for each user separately on each host. Their devices share the host cap; bandwidth is not pooled across hosts. 0 disables the tag’s per-user speed cap.
+- **Device speed limit**: Each tag applies its device ceiling separately on this host. The strictest enabled limit applies.
+- **Tag traffic multiplier**: For hosts using the tag multiplier. Recalculates the current period; subscription usage is unchanged.
+- **Shared group speed**: One shared cap across all users and all tagged hosts.
+- **Traffic limit per user**: Quota per user for this host or tag. The host form accepts GiB and stores bytes. Zero removes this quota.
+- **Apply tag traffic quota**: Includes this host’s usage in the user’s shared tag quota. The host’s own quota still applies when disabled.
+- **User speed limit**: Per-user host bandwidth shared by that user’s devices and connections. Measured in Mbps; zero removes this restriction.
+- **Apply tag per-user speed**: Applies the tag’s per-user bandwidth limit to this host. Each participating host applies the limit separately.
+- **Device speed limit**: Speed ceiling for one private device key on this host, in Mbps. All connections and both directions share it. Zero removes this cap; the user ceiling still applies. Requires compatible node and core.
+- **Apply device speed limit from tags**: Apply tag device-key speed ceilings to this host independently of other inheritance switches.
+- **Whole-host speed limit**: Total host or tag bandwidth shared by all users. A 100 Mbps limit is shared between concurrent connections.
+- **Apply tag shared speed**: Includes the host in the tag’s total bandwidth limit, shared by participating connections.
+- **Host traffic multiplier**: Usage multiplier: with a value of 2, transferring 1 GiB counts as 2 GiB. An empty host value inherits from tags.
+- **Reset traffic every**: Number of days or months between usage resets for this quota. Select the unit beside the value. Zero disables automatic resets.
+- **Automatic SNI and shortId regeneration**: SNI rotates through the pool, shortId is regenerated, nodes restart automatically
 
 ## Subscription templates and editors
 
@@ -557,6 +721,17 @@ New devices denied is handled separately. If registration is denied for a new de
 
 Traffic quota exhaustion, the maximum device count and missing HWID support have separate messages outside this list. Reordering changes subscription messages; restrictions and access checks still apply. Presentation depends on the client.
 
+### Fields and controls
+
+- **Additional options**: Configure additional subscription options
+- **Serve JSON at base subscription**: Selects JSON output for the base subscription URL. Check it in the application that will import that URL.
+- **Randomize hosts**: Enables random host ordering in subscription output. The order can change on the next refresh.
+- **Show custom remarks**: Shows configured subscription status messages, such as expiry or exhausted quota notices.
+- **HWID settings**: Carefully review the documentation before enabling the HWID feature. Not all client applications support this feature.
+- **Fallback device limit**: Device limit for users without an individual limit. For example, 3 allows up to three registered devices; 0 removes the count limit.
+- **Max devices announce**: Device-count announcement sent to a compatible app with the subscription. An empty value leaves the announcement unset.
+- **Response headers**: Headers that will be sent with the subscription content.
+
 ## Subscription response rules
 
 ### Conditions and order
@@ -576,6 +751,22 @@ A configuration defines subscription page presentation and content, including te
 ### Delivery
 
 After saving, open a test user’s subscription page. Check the chosen variant, language, application links and mobile layout. The subscription link gives access to the user’s data; share it only with its owner.
+
+### Fields and controls
+
+- **Subpage editor**: Edit your subscription page configuration
+- **Meta title**: Subscription page title used in browser tabs and shared link previews.
+- **Meta description**: Short description of the subscription page used in link previews.
+- **Brand title**: Name displayed on the subscription page. Check it in the chosen page configuration.
+- **Logo URL**: Subscription page logo image URL. The user must be able to load the image without signing into the administration panel.
+- **Support URL**: Support link on the subscription page. Enter the working address of the support service for your users.
+- **Subscription info block design**: Display style for subscription details such as expiry, status and usage.
+- **Installation guides design**: Display style for application installation instructions on the subscription page.
+- **Icon key**: Only latin characters, no spaces
+- **Full import**: Replace entire config with imported one
+- **Import SVG library**: Merge {{0}} icons into your collection ({{1}} existing)
+- **Import platforms**: Replaces platforms, locales, translations + merges SVG library
+- **Import base translations**: Replace base translation and locales
 
 ## Limits: scopes and user table
 
@@ -628,6 +819,20 @@ A user quota is data volume. Host per-user bandwidth caps one user, while shared
 ### Period reset
 
 Host/tag reset intervals use days or months; 0 means no automatic reset. The quota window uses the saved configuration anchor date. Changing a multiplier recalculates current scope accounting under policy rules without changing ordinary subscription usage. Inspect current allowance, bonus and usage before changing a period.
+
+### Fields and controls
+
+- **Traffic limit per user**: Quota per user for this host or tag. The host form accepts GiB and stores bytes. Zero removes this quota.
+- **Apply tag traffic quota**: Includes this host’s usage in the user’s shared tag quota. The host’s own quota still applies when disabled.
+- **User speed limit**: Per-user host bandwidth shared by that user’s devices and connections. Measured in Mbps; zero removes this restriction.
+- **Apply tag per-user speed**: Applies the tag’s per-user bandwidth limit to this host. Each participating host applies the limit separately.
+- **Device speed limit**: Speed ceiling for one private device key on this host, in Mbps. All connections and both directions share it. Zero removes this cap; the user ceiling still applies. Requires compatible node and core.
+- **Apply device speed limit from tags**: Apply tag device-key speed ceilings to this host independently of other inheritance switches.
+- **Whole-host speed limit**: Total host or tag bandwidth shared by all users. A 100 Mbps limit is shared between concurrent connections.
+- **Apply tag shared speed**: Includes the host in the tag’s total bandwidth limit, shared by participating connections.
+- **Host traffic multiplier**: Usage multiplier: with a value of 2, transferring 1 GiB counts as 2 GiB. An empty host value inherits from tags.
+- **Reset traffic every**: Number of days or months between usage resets for this quota. Select the unit beside the value. Zero disables automatic resets.
+- **Automatic SNI and shortId regeneration**: SNI rotates through the pool, shortId is regenerated, nodes restart automatically
 
 ## HWID inspector
 
@@ -707,6 +912,18 @@ Enable automatic backups, select a period from 1 to 168 hours and retention from
 
 For automatic delivery, enable it and enter the bot token and chat or group ID. Save the settings and check that a backup arrives. If creation or delivery fails, read the panel’s error message; server configuration is handled by the installation administrator.
 
+### Fields and controls
+
+- **Backups**: Encrypted database backups
+- **Backups**: Password-protected ZIP backups of the panel database. Scheduled copies can be sent to Telegram.
+- **Legacy backups**: Convert to encrypted ZIP
+- **Automation**: Periodic database dumps and Telegram delivery
+- **Interval, hours**: Scheduled backup interval in hours: 1–168; used only when scheduling is enabled.
+- **Keep backups, days (1–7)**: Backup retention in days: 1–7. Age-based cleanup runs even when scheduled creation is off.
+- **Send to Telegram**: Enables scheduled backup delivery to separately configured Telegram, not general panel notifications.
+- **Bot token**: Backup-delivery bot token, a secret distinct from the panel API token.
+- **Chat/Group ID**: Backup recipient chat; the bot must have access.
+
 ## Login, terms and administrator sessions
 
 ### Sign-in methods
@@ -716,6 +933,12 @@ Settings support password, configured OAuth2 providers and passkeys. Enable only
 ### Terms and sign-out
 
 Until panel terms are accepted, navigation to other pages returns to Home. Sign-out ends the current administrator session; revoking an admin session does not disable every subscription user. Do not disable the only working sign-in method without another verified method.
+
+### Fields and controls
+
+- **Authentication methods**: Manage your authentication methods.
+- **Frontend domain**: Passkey relying-party domain without https:// or a path, for example panel.example.com. Configure it together with origin.
+- **Backend domain**: Full HTTPS panel origin for WebAuthn, for example https://panel.example.com. It must match the origin opened in the browser.
 
 ## API tokens and permissions
 
@@ -730,6 +953,11 @@ Grant access only to the required sections and actions. Read access retrieves da
 ### Token handling
 
 Share the token only with a trusted integration. If exposed, delete it and create a replacement. The token name helps identify which service uses the access. Access for individual customers is managed by the integration itself.
+
+### Fields and controls
+
+- **API tokens**: Manage your API access tokens for programmatic access.
+- **Full access**: All available API methods, including future additions. Panel-only operations are excluded.
 
 ## Language and appearance
 

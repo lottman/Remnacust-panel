@@ -172,9 +172,10 @@ const configuration=tag=>({log:{loglevel:'none'},inbounds:[{tag,listen:'0.0.0.0'
     const preview=await editor.preview(N,request);assert.equal(preview.changed,true);assert.equal(preview.bindings.find(b=>b.uuid===S1).port,20006);
     assert(!JSON.stringify(preview).includes('dddddddd-dddd-4ddd-8ddd-dddddddddddd'));assert(!JSON.stringify(preview).includes('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee'));
     assert.equal((await editor.get(N)).revision,current.revision);assert.equal(queued.length,0);
-    rejectPortCommit=true;await assert.rejects(editor.save(N,request),/Injected port-plan commit failure/);
+    await assert.rejects(editor.save(N,{...request,reviewHash:'0'.repeat(64)}),e=>e.code==='STALE_REVIEW');
+    rejectPortCommit=true;await assert.rejects(editor.save(N,{...request,reviewHash:preview.reviewHash}),/Injected port-plan commit failure/);
     assert.equal((await editor.get(N)).revision,current.revision);assert.equal((await editor.history(N)).length,0);assert.equal(queued.length,0);
-    current=await editor.save(N,request);assert.equal(current.queued,true);assert(BigInt(current.revision)>BigInt(request.expectedRevision));
+    current=await editor.save(N,{...request,reviewHash:preview.reviewHash});assert.equal(current.queued,true);assert(BigInt(current.revision)>BigInt(request.expectedRevision));
     assert.equal((await handler.execute(query)).config.inbounds.find(i=>i.tag==='shared').port,20006);assert.equal((await editor.history(N)).length,1);
     assert.equal((await editor.save(N,request)).revision,current.revision,'Lost response repeats the same operation without a second edit');
     await assert.rejects(editor.save(N,{...request,bindings:request.bindings.map(b=>({...b,port:b.port+10}))}),e=>e.code==='REQUEST_REUSED');

@@ -28,6 +28,7 @@ import {
     type ClientFormat
 } from './client-template-model'
 import { GeofilesPanel } from './geofiles-panel'
+import { StableEntryPanel } from './stable-entry-panel'
 import styles from './SubscriptionTemplateEditor.module.css'
 import { TemplateAssignmentPanel } from './template-assignment-panel'
 import { TemplateChanges } from './template-changes'
@@ -184,6 +185,15 @@ export function SubscriptionTemplateEditorWidget(props: Props) {
                     </Paper>
                 </Tabs.Panel>
                 <Tabs.Panel value="autoselect">
+                    {activeTab === 'autoselect' && <StableEntryPanel hosts={hosts} />}
+                    {isXray && draft.config && (
+                        <TemplateAssignmentPanel
+                            text={value}
+                            config={draft.config}
+                            hosts={hosts}
+                            onChange={setDraft}
+                        />
+                    )}
                     {draft.config ? (
                         isXray ? (
                             <AutoselectPanel
@@ -292,14 +302,6 @@ export function SubscriptionTemplateEditorWidget(props: Props) {
                         </Button>
                     )}
                 </EditorFooter>
-            )}
-            {!isFullscreen && activeTab === 'code' && isXray && draft.config && (
-                <TemplateAssignmentPanel
-                    text={value}
-                    config={draft.config}
-                    hosts={hosts}
-                    onChange={setDraft}
-                />
             )}
         </Box>
     )

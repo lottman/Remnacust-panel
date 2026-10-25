@@ -12,7 +12,11 @@ interface IActiveInternalSquads {
 
 export class UserEntity extends BaseUserEntity {
     public xrayUsername?: string;
-    public hostIdentityContext?: {hwid:string|null;parentVlessUuid:string};
+    public hostIdentityContext?: {
+        hwid: string | null;
+        parentVlessUuid: string;
+        preview?: boolean;
+    };
     public readonly activeInternalSquads: Omit<
         InternalSquadEntity,
         'createdAt' | 'tags' | 'updatedAt' | 'viewPosition'

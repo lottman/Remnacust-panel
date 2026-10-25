@@ -5,24 +5,26 @@ import { createHash } from 'node:crypto';
 
 import { Injectable, Logger } from '@nestjs/common';
 
-import { TxKyselyService } from '@common/database';
-import { RawCacheService } from '@common/raw-cache';
 import { nodeBindingTrafficKey, parseProfileTraffic } from '@common/axios/profile-traffic.schema';
+import { TxKyselyService } from '@common/database';
 import { XRayConfig } from '@common/helpers/xray-config/xray-config.validator';
+import { RawCacheService } from '@common/raw-cache';
 
 import { NodePortPlanInput, NodePortPlanInputSchema } from './node-port-plans.schema';
 import { nodeManagementReservation, portListenerNetworks } from './port-listener-networks';
 import { PortPlanDispatchService } from './port-plan-dispatch.service';
 import { compileNodeProfileGraphs } from './profile-graph-plan';
-import {
-    NodePortBinding,
-    PortPlanError,
-    PreparedPortProfile,
-} from './profile-port-plan';
+import { NodePortBinding, PortPlanError, PreparedPortProfile } from './profile-port-plan';
 
 type RequestBody =
-    | Omit<Extract<NodePortPlanInput, { enabled: true }>, 'requestId' | 'expectedRevision'>
-    | Omit<Extract<NodePortPlanInput, { enabled: false }>, 'requestId' | 'expectedRevision'>;
+    | Omit<
+          Extract<NodePortPlanInput, { enabled: true }>,
+          'requestId' | 'expectedRevision' | 'reviewHash'
+      >
+    | Omit<
+          Extract<NodePortPlanInput, { enabled: false }>,
+          'requestId' | 'expectedRevision' | 'reviewHash'
+      >;
 type PlanState = {
     nodeUuid: string;
     name: string;
@@ -42,7 +44,12 @@ type PlanState = {
 };
 export class PortPlanEditError extends Error {
     constructor(
-        readonly code: 'NODE_MISSING' | 'STALE_REVISION' | 'REQUEST_REUSED' | 'HISTORY_MISSING',
+        readonly code:
+            | 'NODE_MISSING'
+            | 'STALE_REVISION'
+            | 'REQUEST_REUSED'
+            | 'HISTORY_MISSING'
+            | 'STALE_REVIEW',
     ) {
         super(code);
     }
@@ -210,8 +217,12 @@ export class NodePortPlansService {
             );
             // Only a preview projection; runtime delivery keeps the graphs apart.
             config = {
-                inbounds: plan.graphs.flatMap(graph => graph.config.inbounds as Record<string, unknown>[]),
-                outbounds: plan.graphs.flatMap(graph => graph.config.outbounds as Record<string, unknown>[]),
+                inbounds: plan.graphs.flatMap(
+                    (graph) => graph.config.inbounds as Record<string, unknown>[],
+                ),
+                outbounds: plan.graphs.flatMap(
+                    (graph) => graph.config.outbounds as Record<string, unknown>[],
+                ),
             };
         } else {
             const legacy = new XRayConfig(profiles[0].config);
@@ -251,6 +262,9 @@ export class NodePortPlansService {
                         (o) => ({ tag: o.tag, protocol: o.protocol }),
                     ),
                     changed: JSON.stringify(body(input)) !== JSON.stringify(stateBody(state)),
+                    reviewHash: createHash('sha256')
+                        .update(JSON.stringify({ body: body(input), prepared }))
+                        .digest('hex'),
                 };
             },
         );
@@ -275,6 +289,14 @@ export class NodePortPlansService {
                     if (current.revision !== input.expectedRevision)
                         throw new PortPlanEditError('STALE_REVISION');
                     const prepared = await this.prepare(input, current);
+                    if (
+                        input.reviewHash &&
+                        input.reviewHash !==
+                            createHash('sha256')
+                                .update(JSON.stringify({ body: body(input), prepared }))
+                                .digest('hex')
+                    )
+                        throw new PortPlanEditError('STALE_REVIEW');
                     if (
                         current.revision !== '0' &&
                         JSON.stringify(stateBody(current)) === JSON.stringify(snapshot)

@@ -23,6 +23,8 @@ import { useUiText } from '@shared/i18n/interface-text'
 import { NodeHealthDetails } from '@shared/ui/node-health/node-health'
 import { RefreshActionIcon } from '@shared/ui/refresh-control'
 
+import { NodeDiagnostics } from './node-diagnostics'
+
 interface HealthEntry {
     id: string
     checkedAt: string
@@ -171,6 +173,7 @@ export function NodeHealthHistory({ node }: { node: GetNodeCommand.Response['res
     return (
         <Stack gap="md" py="md">
             <NodeHealthDetails node={node} />
+            <NodeDiagnostics nodeUuid={node.uuid} />
             <Paper p="md" radius="md" withBorder>
                 <Stack gap="sm">
                     <Group align="end" justify="space-between">

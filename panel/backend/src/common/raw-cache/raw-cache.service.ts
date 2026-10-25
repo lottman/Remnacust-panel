@@ -4,6 +4,7 @@ import Redis, { ChainableCommander, ScanStream } from 'ioredis';
 import { Injectable, Logger } from '@nestjs/common';
 
 import { MemoryCacheService } from './memory-cache.service';
+import { NODE_INCIDENT_SCRIPT, ACK_NODE_INCIDENT_SCRIPT } from './node-incident';
 
 @Injectable()
 export class RawCacheService {
@@ -13,6 +14,45 @@ export class RawCacheService {
         @InjectRedis() private readonly redis: Redis,
         private readonly memoryCacheService: MemoryCacheService,
     ) {}
+
+    async observeNodeIncident(
+        uuid: string,
+        observedAt: number,
+        healthy: boolean,
+        muted: boolean,
+        previouslyConnected: boolean,
+    ): Promise<number> {
+        if (!/^[a-f0-9-]{36}$/i.test(uuid) || !Number.isSafeInteger(observedAt) || observedAt < 0)
+            throw new Error('Invalid node observation');
+        const result = await this.redis.eval(
+            NODE_INCIDENT_SCRIPT,
+            1,
+            `remnacust:node-incident:v1:${uuid}`,
+            observedAt,
+            healthy ? 1 : 0,
+            muted ? 1 : 0,
+            previouslyConnected ? 1 : 0,
+            Date.now(),
+        );
+        if (![0, 1, 2].includes(Number(result))) throw new Error('Invalid incident transition');
+        return Number(result);
+    }
+
+    async acknowledgeNodeIncident(uuid: string, observedAt: number, event: number): Promise<void> {
+        if (
+            !/^[a-f0-9-]{36}$/i.test(uuid) ||
+            !Number.isSafeInteger(observedAt) ||
+            ![1, 2].includes(event)
+        )
+            throw new Error('Invalid incident acknowledgement');
+        await this.redis.eval(
+            ACK_NODE_INCIDENT_SCRIPT,
+            1,
+            `remnacust:node-incident:v1:${uuid}`,
+            observedAt,
+            event,
+        );
+    }
 
     async get<T>(key: string, memCache: boolean = false): Promise<T | null> {
         if (memCache) {

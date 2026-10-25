@@ -23,6 +23,7 @@ import { TbArrowsShuffle, TbPlus, TbTrash } from 'react-icons/tb'
 import {
     addBalancer,
     addPool,
+    selectOnConnection,
     autoselectGroups,
     removeAutoselectGroup,
     renameBalancer,
@@ -211,6 +212,24 @@ function PoolCard({
                     }
                 />
             </div>
+            <Alert color={mode === 'all' ? 'blue' : 'yellow'}>
+                <Text size="sm">
+                    {t(
+                        mode === 'all'
+                            ? 'autoselect.connection-help'
+                            : 'autoselect.subscription-selection-help'
+                    )}
+                </Text>
+                {mode !== 'all' && (
+                    <Button
+                        mt="sm"
+                        variant="light"
+                        onClick={() => edit((text) => selectOnConnection(text, index))}
+                    >
+                        {t('autoselect.select-on-connection')}
+                    </Button>
+                )}
+            </Alert>
             {(pool.useHostRemarkAsTag || pool.useHostTagAsTag) && (
                 <Alert color="blue">{t('autoselect.host-naming-help')}</Alert>
             )}

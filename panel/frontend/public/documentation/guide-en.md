@@ -67,6 +67,10 @@ Set status, expiry, subscription traffic quota, reset strategy, internal squads 
 
 Before saving, check squads and subscription expiry. Then verify the status and date in the detail view. A subscription ends at the specified time; the date indicator’s color does not change the expiry.
 
+### Device subscription preview
+
+Select an already registered device, format and User-Agent in the device card and generate a preview. It uses the real generator and response rules without changing the device or connection history or creating access keys in the database. A blocked device receives no working access. The host list shows candidates; the generator performs final protocol and pool filtering. Configuration containing keys is hidden by default and returned only on explicit request, up to 2 MiB. Treat it as private and keep it out of public logs.
+
 ### Fields and controls
 
 - **Status**: ACTIVE means active, DISABLED disabled, EXPIRED expired and LIMITED overall quota exhausted. A working connection also requires a valid expiry date and host access.
@@ -147,6 +151,7 @@ The application must send supported HWID headers. Removing a registration is not
 ### Fields and controls
 
 - **Description**: An administrator description of the record, such as service terms or a note about its settings.
+- **Show generated configuration**: Contains private keys/links for this device. Do not share it publicly.
 - **Deny new devices**: Existing devices continue working. Allowing registration keeps the device limit.
 
 ## Internal squads
@@ -180,6 +185,10 @@ In card view, nodes can be dragged with a tag selected. Only visible nodes are r
 ### Fields and accounting
 
 Name, country, tags and provider describe infrastructure. The profile and inbound list determine active services. A node consumption multiplier changes user traffic accounting and is not a bandwidth cap. Traffic tracking, monthly threshold, reset day and node notifications concern server usage rather than an individual user quota.
+
+### Diagnostics and safe operations
+
+Diagnostics make a real mTLS request to the registered node and check Xray, user synchronization and port apply status. They do not verify the full client network path. Disabled nodes are not probed; manual probes are rate limited. Port edits are reviewed, then confirmed with a review hash and current revision: stale reviews are rejected. Success requires node ACK, not merely enqueueing. Errors allow restoring a previously applied revision without overwriting newer edits. Outages require three observations over at least 20 seconds; recovery requires two over 10 seconds. Never-connected installations do not generate outage alerts. Maintenance and operations suppress alerts; a manual 30-minute pause does not stop health checks. The install wizard uses the verified installer over SSH and confirms connectivity separately; existing directories are not overwritten. NET_ADMIN defaults off. When a main server IP is set, all incoming ports and ping accept only that source except SSH (22 and detected sshd ports). Rules cover Docker forwarding and IPv6, preserve outbound replies and never flush other firewall rules. This blocks external HTTP-01 renewals: use DNS-01 or externally managed certificates. Remove the guard with python3 /etc/remnacust-node-firewall/guard.py remove.
 
 ### Fields and controls
 
@@ -258,6 +267,7 @@ The SSH terminal supports administrative server work. Closing a tab does not gua
 - **Node Port**: Port of the selected service. A host client port and node agent management port can differ.
 - **Plugin**: Plugin configuration assigned to the user. Check that its executor is configured on the required nodes.
 - **Tags**: Object label array. Host tags also connect enabled policies; saving an empty array clears labels.
+- **Main server IP (optional)**: When set, every incoming port and ping accepts traffic only from this IP, except SSH. VPN clients must connect through the main server. Existing provider/firewall restrictions still apply.
 - **Default**: The node will use its default outbound route.
 - **IP address**: Pick one of the node IPs or type any address
 - **Interface**: Pick one of the node interfaces or type any name
@@ -668,6 +678,10 @@ Ready-made datasets is one library for every template: PC uploads, URL imports a
 ### If Happ does not download the file
 
 V2Fly DAT is supported. A full JSON subscription with a routing header is required. For the regular subscription URL, enable “Serve JSON at base subscription” in subscription settings, or use a URL ending in /json. Response rules and external squads can override the format. Save the switch in the template actually used: a template selected in the host card takes priority. The editor shows the global JSON setting and opens settings in a new tab, keeping the draft. After saving, refresh the subscription in the app. Update the panel and a separately installed subscription page. In 1.1.7.51 compact category names reduce profile size; old signed URLs remain supported. Refresh the subscription and reconnect. If downloading does not start, check the Remnacust profile, x-remnacust-geofiles-delivery header and app logs. Incompatible settings or size limits trigger inline rules instead of a separate download.
+
+### Selection on connection and a stable entry
+
+Autoselect separates template recipients from pool members. Assignment does not grant access to sources. In all mode the client receives the complete eligible pool; the running Xray balancer chooses a destination for every new connection using its strategy and recent probes. random/group sample during subscription generation; Choose on connection switches to all while preserving the strategy. Other formats use native application strategies: a manual selector does not select automatically. New addresses or keys normally require a subscription refresh. A stable TCP entry is an exception: point one host’s stable domain and port at a dedicated entry server and assign backend nodes sharing its inbound and keys. In Autoselect choose the entry, host, ordered nodes and strategy, review and apply over SSH. The panel rechecks membership and applied TCP ports. HAProxy checks TCP every 2 seconds (2 failures/successes); priority uses the first healthy server. Applying again changes backends without refreshing subscriptions or restarting Xray. Open connections are not migrated; graceful reload preserves them until they finish or the one-hour hard limit. UDP transports are unsupported. TCP checks do not verify VPN authorization. TLS terminates on the backend, so the entry needs no certificate. Backends see the entry IP, which affects source-IP policies.
 
 ## Variables {{…}} in names and headers
 

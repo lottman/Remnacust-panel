@@ -1,7 +1,6 @@
 import {
-    Anchor,
+    Alert,
     Button,
-    Code,
     Divider,
     Group,
     NumberInput,
@@ -44,9 +43,18 @@ interface IProps {
     onNext: () => void
     port: number
     secretKey: string | undefined
+    installMode: 'ssh' | 'manual'
+    onInstallModeChange: (mode: 'ssh' | 'manual') => void
 }
 
-export const CreateNodeStep1Connection = ({ form, onNext, secretKey, port }: IProps) => {
+export const CreateNodeStep1Connection = ({
+    form,
+    onNext,
+    secretKey,
+    port,
+    installMode,
+    onInstallModeChange
+}: IProps) => {
     const uiText = useUiText()
 
     const { t, i18n } = useTranslation()
@@ -86,32 +94,32 @@ export const CreateNodeStep1Connection = ({ form, onNext, secretKey, port }: IPr
             }}
         >
             <Stack gap="xs" mih={400}>
-                <Text c="dimmed" size="sm">
-                    {t('create-node-step-1-connection.copy-the')}{' '}
-                    <Code c="white" color="gray.8">
-                        docker-compose.yml
-                    </Code>{' '}
-                    {t('create-node-step-1-connection.content-for-the-remnawave-node-below')}{' '}
-                    <Anchor
-                        fw="700"
-                        href="https://github.com/lottman/Remnacust-node/blob/main/node/README.md"
-                        inherit
-                        rel="noopener noreferrer"
-                        target="_blank"
-                        underline="hover"
-                    >
-                        {t('create-node-step-1-connection.learn-more')}
-                    </Anchor>
-                </Text>
-
+                <Select
+                    label={t('operations.setupMode')}
+                    value={installMode}
+                    onChange={(value) => onInstallModeChange(value === 'manual' ? 'manual' : 'ssh')}
+                    data={[
+                        { value: 'ssh', label: t('operations.setupSsh') },
+                        { value: 'manual', label: t('operations.setupManual') }
+                    ]}
+                />
+                <Alert color="blue">
+                    {t(
+                        installMode === 'ssh'
+                            ? 'operations.setupSshHelp'
+                            : 'operations.setupManualHelp'
+                    )}
+                </Alert>
                 <Divider />
                 <Stack gap="xs">
-                    <CopyableFieldShared
-                        label={uiText('secret-key-secret-key-2f12318')}
-                        leftSection={<TbCertificate size={16} />}
-                        size="sm"
-                        value={secretKey ?? ''}
-                    />
+                    {installMode === 'manual' && (
+                        <CopyableFieldShared
+                            label={uiText('secret-key-secret-key-2f12318')}
+                            leftSection={<TbCertificate size={16} />}
+                            size="sm"
+                            value={secretKey ?? ''}
+                        />
+                    )}
 
                     <FlagTextInput
                         key={form.key('name')}
@@ -280,7 +288,7 @@ export const CreateNodeStep1Connection = ({ form, onNext, secretKey, port }: IPr
                 </Stack>
 
                 <Stack gap="xs" mt="auto">
-                    <CopyDockerComposeWidget port={port} />
+                    {installMode === 'manual' && <CopyDockerComposeWidget port={port} />}
 
                     <Group justify="flex-end" mt="auto">
                         <Button

@@ -7,7 +7,14 @@ export const PortPlanRevisionSchema = z
     .refine(
         (value) => /^(0|[1-9][0-9]{0,18})$/.test(value) && BigInt(value) <= 9223372036854775807n,
     );
-const common = { expectedRevision: PortPlanRevisionSchema, requestId: uuid.optional() };
+const common = {
+    expectedRevision: PortPlanRevisionSchema,
+    requestId: uuid.optional(),
+    reviewHash: z
+        .string()
+        .regex(/^[a-f0-9]{64}$/)
+        .optional(),
+};
 export const NodePortBindingInputSchema = z.strictObject({
     uuid,
     configProfileUuid: uuid,

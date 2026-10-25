@@ -3,6 +3,15 @@ import { z } from 'zod'
 export type NodeUpgradeRequest = {
     id: string
     directory: string
+    operation?: 'upgrade' | 'install' | 'configure-entry'
+    entry?: {
+        hostUuid: string
+        backendNodeUuids: string[]
+        listenPort: number
+        strategy: 'priority' | 'roundRobin' | 'leastConnections'
+    }
+    netAdmin?: boolean
+    panelIp?: string
 }
 export const nodeUpgradeEventSchema = z
     .object({

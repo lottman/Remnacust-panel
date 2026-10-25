@@ -28,6 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       REMNACUST_NODE_SOURCE: ${{ github.workspace }}/node-repository/node
+      NODE_INCIDENT_TEST_REDIS_URL: redis://127.0.0.1:56381/15
     services:
       valkey:
         image: valkey/valkey:9-alpine
@@ -70,7 +71,7 @@ jobs:
       - run: npm run typecheck
       - run: node --test tests/*.test.cjs
       - name: Check private Xray IPC and certificate files on Linux
-        run: sudo --preserve-env=REMNACUST_NODE_SOURCE "$(command -v node)" --test tests/node-api-socket.test.cjs tests/pem-file-security.test.cjs tests/node-upgrade-script.test.cjs
+        run: sudo --preserve-env=REMNACUST_NODE_SOURCE "$(command -v node)" --test tests/node-api-socket.test.cjs tests/pem-file-security.test.cjs tests/node-upgrade-script.test.cjs tests/node-install-script.test.cjs
       - run: npm run build
       - name: Apply migrations to the disposable test database
         run: npm run migrate:deploy

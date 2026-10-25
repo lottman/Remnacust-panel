@@ -22,11 +22,13 @@ import { SSH_TERMINAL_WS_PATH, SSH_TERMINAL_WS_PROTOCOL } from '@libs/contracts/
 import { AdminEntity } from '@modules/admin/entities/admin.entity';
 import { GetAdminByUsernameQuery } from '@modules/admin/queries/get-admin-by-username';
 import type { IJWTAuthPayload } from '@modules/auth/interfaces';
+import { KeygenService } from '@modules/keygen/keygen.service';
 import { NodesEntity } from '@modules/nodes/entities/nodes.entity';
 import { GetNodeByUuidQuery } from '@modules/nodes/queries/get-node-by-uuid/get-node-by-uuid.query';
 
 import { IAdminIdentity, ISshCredentials } from '../interfaces';
 import { NodeSshService } from '../node-ssh.service';
+import { StableEntryService } from '../stable-entry.service';
 import { SshSession } from './ssh-session';
 
 const MAX_CONCURRENT_SESSIONS = 20;
@@ -47,6 +49,8 @@ export class SshTerminalGateway implements OnApplicationBootstrap, OnModuleDestr
         private readonly nodeSshService: NodeSshService,
         private readonly queryBus: QueryBus,
         @InjectRedis() private readonly redis: Redis,
+        private readonly keygen: KeygenService,
+        private readonly stableEntry: StableEntryService,
     ) {}
 
     onApplicationBootstrap(): void {
@@ -212,6 +216,29 @@ export class SshTerminalGateway implements OnApplicationBootstrap, OnModuleDestr
             authorizeNodeUpgrade: async () => {
                 if (!(await this.verifyAdminToken(token)))
                     throw new Error('Administrator session expired');
+            },
+            prepareNodeInstall: async () => {
+                const current = await this.queryBus.execute(new GetNodeByUuidQuery(node.uuid));
+                if (!current.isOk || current.response.isConnected || current.response.isDisabled)
+                    throw new Error('Node is already connected or disabled');
+                const key = await this.keygen.generateKey();
+                if (!key.isOk) throw new Error('Node certificate unavailable');
+                return { port: current.response.port ?? 2222, secret: key.response.payload };
+            },
+            prepareStableEntry: (input) => this.stableEntry.prepare(node.uuid, input),
+            onNodeOperation: async (id, running) => {
+                const key = `remnacust:node-operation:${node.uuid}`;
+                if (running) {
+                    const acquired = await this.redis.set(key, id, 'EX', 2700, 'NX');
+                    if (!acquired) throw new Error('Another node operation is running');
+                } else {
+                    await this.redis.eval(
+                        "if redis.call('GET',KEYS[1])==ARGV[1] then redis.call('DEL',KEYS[1]);return 1 end return 0",
+                        1,
+                        key,
+                        id,
+                    );
+                }
             },
             allowedHosts: [node.address, ...node.ips.map((entry) => entry.ip)],
             nodeAddress: node.address,

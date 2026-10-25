@@ -22,7 +22,7 @@ export function TemplateAssignmentPanel({
     const { t } = useTranslation()
     const assignment = config.remnawave?.assignTo ?? {}
     const hostOptions = useMemo(
-        () => hosts.map((host) => ({ value: host.uuid, label: host.remark })),
+        () => hosts.map((host) => ({ value: host.uuid, label: `${host.remark} · ${host.address}:${host.port}` })),
         [hosts]
     )
     const tagOptions = useMemo(

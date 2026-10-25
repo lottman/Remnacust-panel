@@ -16,6 +16,26 @@ export type Change = {
     after?: unknown
 }
 
+// Keep every eligible member in the delivered profile. The running client chooses
+// a destination for each new connection; generating a subscription never samples it.
+export function connectionPool(pool: Pool): Pool {
+    const selector = { ...pool.selector }
+    if (pool.mode === 'group') {
+        if (!['uuids', 'tags'].includes(selector.type)) throw new Error('connection-group-selector')
+        selector.values = [...new Set(Object.values(selector.groups ?? {}).flat() as string[])]
+    }
+    delete selector.groups
+    delete selector.expected
+    return { ...pool, mode: 'all', selector }
+}
+
+export function selectOnConnection(text: string, index: number): string {
+    const config = parseTemplate(text)
+    const pool = poolsOf(config)[index]
+    if (!pool) throw new Error('pool-missing')
+    return editTemplate(text, ['remnawave', 'injectHosts', index], connectionPool(pool))
+}
+
 export function parseTemplate(text: string): JsonObject {
     const config = JSON.parse(text)
     if (!config || typeof config !== 'object' || Array.isArray(config))

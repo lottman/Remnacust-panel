@@ -27,6 +27,7 @@ import { EmptyPageLayout } from '@shared/ui/layouts/empty-page'
 import { LoaderModalShared } from '@shared/ui/loader-modal'
 import { RefreshActionIcon } from '@shared/ui/refresh-control'
 
+import { DeviceSubscriptionPreview } from './device-subscription-preview'
 import { HwidRegistrationControl } from './hwid-registration-control'
 import { UserHwidDeviceItem } from './user-hwid-device-item'
 import classes from './user-hwid-devices.module.css'
@@ -211,6 +212,9 @@ export const UserHwidDevicesContentModal = (props: IProps) => {
         <Box style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
             <Stack className={classes.drawerContent}>
                 <HwidRegistrationControl userId={userId} />
+                {!!devices?.devices.length && (
+                    <DeviceSubscriptionPreview userId={userId} devices={devices.devices} />
+                )}
                 <Card withBorder>
                     <Stack gap="md">
                         <Group gap="sm" justify="space-between">

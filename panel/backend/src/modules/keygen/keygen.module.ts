@@ -14,5 +14,6 @@ import { KeygenRepository } from './repositories/keygen.repository';
     imports: [CqrsModule, JwtModule.registerAsync(getJWTConfig())],
     controllers: [KeygenController],
     providers: [KeygenRepository, KeygenService, KeygenConverter, ...COMMANDS],
+    exports: [KeygenService],
 })
 export class KeygenModule {}

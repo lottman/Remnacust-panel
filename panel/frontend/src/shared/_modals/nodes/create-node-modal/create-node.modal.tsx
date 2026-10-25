@@ -1,5 +1,5 @@
 import NiceModal, { useModal } from '@ebay/nice-modal-react'
-import { Group, Modal, Progress, Stack, Transition } from '@mantine/core'
+import { Modal, Stepper, Stack, Transition } from '@mantine/core'
 import { useForm, schemaResolver } from '@mantine/form'
 import { CreateNodeCommand } from '@remnawave/backend-contract'
 import { useEffect, useState } from 'react'
@@ -35,6 +35,7 @@ export const CreateNodeModal = NiceModal.create(() => {
     const { data: secretKey } = useGetNodeSecretKey()
 
     const [activeStep, setActiveStep] = useState(0)
+    const [installMode, setInstallMode] = useState<'ssh' | 'manual'>('ssh')
     const [createdNodeUuid, setCreatedNodeUuid] = useState<string>()
     const [selectedPort, setSelectedPort] = useState<number>(2222)
 
@@ -48,8 +49,12 @@ export const CreateNodeModal = NiceModal.create(() => {
         mutationFns: {
             onError: (error) => {
                 if (!(error instanceof RequestError)) return
-                const field = error.errorCode === 'A033' ? 'name'
-                    : error.errorCode === 'A034' ? 'address' : undefined
+                const field =
+                    error.errorCode === 'A033'
+                        ? 'name'
+                        : error.errorCode === 'A034'
+                          ? 'address'
+                          : undefined
                 if (!field) return
                 form.setFieldError(field, error.message)
                 setActiveStep(0)
@@ -110,35 +115,11 @@ export const CreateNodeModal = NiceModal.create(() => {
             }
         >
             <Stack gap="xl">
-                <Group gap="xs" grow>
-                    <Progress
-                        animated
-                        color="teal"
-                        radius="sm"
-                        size="md"
-                        striped
-                        transitionDuration={300}
-                        value={activeStep >= 0 ? 100 : 0}
-                    />
-                    <Progress
-                        animated
-                        color="teal"
-                        radius="sm"
-                        size="md"
-                        striped
-                        transitionDuration={300}
-                        value={activeStep >= 1 ? 100 : 0}
-                    />
-                    <Progress
-                        animated
-                        color="teal"
-                        radius="sm"
-                        size="md"
-                        striped
-                        transitionDuration={300}
-                        value={activeStep >= 2 ? 100 : 0}
-                    />
-                </Group>
+                <Stepper active={activeStep} size="xs" aria-label={t('operations.setupMode')}>
+                    <Stepper.Step label={t('operations.setupServer')} />
+                    <Stepper.Step label={t('operations.setupProfile')} />
+                    <Stepper.Step label={t('operations.setupVerify')} />
+                </Stepper>
 
                 <Transition
                     duration={300}
@@ -151,6 +132,8 @@ export const CreateNodeModal = NiceModal.create(() => {
                         <div style={styles}>
                             <CreateNodeStep1Connection
                                 form={form}
+                                installMode={installMode}
+                                onInstallModeChange={setInstallMode}
                                 onNext={nextStep}
                                 port={selectedPort}
                                 secretKey={secretKey?.secretKey}
@@ -188,7 +171,11 @@ export const CreateNodeModal = NiceModal.create(() => {
                 >
                     {(styles) => (
                         <div style={styles}>
-                            <CreateNodeStep3Status nodeUuid={createdNodeUuid} onClose={hide} />
+                            <CreateNodeStep3Status
+                                nodeUuid={createdNodeUuid}
+                                onClose={hide}
+                                installMode={installMode}
+                            />
                         </div>
                     )}
                 </Transition>

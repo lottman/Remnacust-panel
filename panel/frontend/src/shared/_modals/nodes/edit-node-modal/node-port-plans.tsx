@@ -31,6 +31,7 @@ import {
     portPlanKey,
     previewPortPlan,
     retryPortPlan,
+    restorePortPlan,
     savePortPlan,
     useNodePortPlan
 } from './node-port-plans.api'
@@ -115,7 +116,12 @@ function BindingTraffic({
 function errorKind(error: unknown) {
     const data = (error as { response?: { data?: { errorCode?: string } } })?.response?.data
     const code = data?.errorCode ?? ''
-    if (code.includes('STALE_REVISION') || code.includes('REQUEST_REUSED')) return 'stale'
+    if (
+        code.includes('STALE_REVISION') ||
+        code.includes('REQUEST_REUSED') ||
+        code.includes('STALE_REVIEW')
+    )
+        return 'stale'
     if (code.includes('MISSING')) return 'missing'
     if (code.includes('CONFLICT') || code.includes('RESERVED') || code.includes('DUPLICATE'))
         return 'conflict'
@@ -211,7 +217,7 @@ function NodePortPlanEditor({
     const submit = useRef<{ signature: string; id: string } | null>(null)
     const history = useQuery({
         queryKey: [...portPlanKey(nodeUuid), 'history'],
-        enabled: active && historyOpen,
+        enabled: active && (historyOpen || current.status === 'ERROR'),
         queryFn: ({ signal }) => getPortPlanHistory(nodeUuid, signal),
         retry: false
     })
@@ -280,7 +286,21 @@ function NodePortPlanEditor({
         },
         onError: (error) => setRequestError(errorKind(error))
     })
-    const busy = mutation.isPending || preview.isPending || retry.isPending || reload.isPending
+    const rollbackTarget = history.data?.find((entry) => entry.revision === current.appliedRevision)
+    const rollback = useMutation({
+        mutationFn: () => {
+            if (!rollbackTarget) throw new Error('No applied revision in history')
+            return restorePortPlan(nodeUuid, rollbackTarget.uuid, current.revision)
+        },
+        onSuccess: saved,
+        onError: (error) => setRequestError(errorKind(error))
+    })
+    const busy =
+        mutation.isPending ||
+        preview.isPending ||
+        retry.isPending ||
+        reload.isPending ||
+        rollback.isPending
     useEffect(() => {
         onBusyChange(busy)
         return () => onBusyChange(false)
@@ -298,7 +318,11 @@ function NodePortPlanEditor({
             signature = JSON.stringify(value)
         if (submit.current?.signature !== signature)
             submit.current = { signature, id: crypto.randomUUID() }
-        mutation.mutate({ ...value, requestId: submit.current.id })
+        mutation.mutate({
+            ...value,
+            requestId: submit.current.id,
+            reviewHash: preview.data?.reviewHash
+        })
     }
     const add = () => {
         if (!draft) return
@@ -347,11 +371,13 @@ function NodePortPlanEditor({
             </Group>
             <Text size="sm" c="dimmed">
                 {t('nodePorts.description')}
+                <br />
+                {t('operations.safeApplyHelp')}
             </Text>
             {remote.disabled && <Alert color="blue">{t('nodePorts.disabled')}</Alert>}
             {remote.status === 'PENDING' && (
                 <Text size="sm" aria-live="polite">
-                    {t('nodePorts.waiting')}
+                    {t('operations.applying')}
                 </Text>
             )}
             {remote.errorCode && (
@@ -373,6 +399,17 @@ function NodePortPlanEditor({
                         >
                             {t('nodePorts.retry')}
                         </Button>
+                        {rollbackTarget && (
+                            <Button
+                                variant="light"
+                                color="orange"
+                                loading={rollback.isPending}
+                                disabled={busy || stale}
+                                onClick={() => rollback.mutate()}
+                            >
+                                {t('operations.rollback', { revision: rollbackTarget.revision })}
+                            </Button>
+                        )}
                     </Stack>
                 </Alert>
             )}
@@ -578,6 +615,7 @@ function NodePortPlanEditor({
                     <Text size="xs" c="dimmed">
                         {t('nodePorts.previewHint')}
                     </Text>
+                    {preview.data && <Alert color="blue">{t('operations.reviewHelp')}</Alert>}
                     {preview.data ? (
                         <Code block className={classes.code}>
                             {JSON.stringify(preview.data, null, 2)}
@@ -604,9 +642,9 @@ function NodePortPlanEditor({
                 <Button
                     disabled={busy || !valid || stale}
                     loading={mutation.isPending}
-                    onClick={save}
+                    onClick={() => (preview.data ? save() : preview.mutate(request()))}
                 >
-                    {t('nodePorts.save')}
+                    {t(preview.data ? 'operations.confirmApply' : 'operations.reviewChanges')}
                 </Button>
                 <Button
                     variant="subtle"

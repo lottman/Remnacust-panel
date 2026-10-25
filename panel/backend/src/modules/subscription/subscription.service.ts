@@ -2,7 +2,7 @@ import dayjs from 'dayjs';
 import _ from 'lodash';
 import pMap from 'p-map';
 
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 
@@ -29,6 +29,7 @@ import { CreateWithAdvisoryLockCommand } from '@modules/hwid-user-devices/comman
 import { DeviceAccessService } from '@modules/hwid-user-devices/device-access.service';
 import { HwidUserDeviceEntity } from '@modules/hwid-user-devices/entities/hwid-user-device.entity';
 import { CheckHwidExistsQuery } from '@modules/hwid-user-devices/queries/check-hwid-exists/check-hwid-exists.query';
+import { GetUserDevicesQuery } from '@modules/hwid-user-devices/queries/get-user-devices.query';
 import type { ISRRContext } from '@modules/subscription-response-rules/interfaces';
 import { ResponseRulesMatcherService } from '@modules/subscription-response-rules/services/response-rules-matcher.service';
 import { SubscriptionSettingsEntity } from '@modules/subscription-settings/entities/subscription-settings.entity';
@@ -92,6 +93,17 @@ export class SubscriptionService {
         srrContext: ISRRContext,
         shortUuid: string,
         personalToken?: string,
+        preview?: {
+            hosts?: {
+                uuid: string;
+                remark: string;
+                templateUuid: string | null;
+                included: boolean;
+                reason: string;
+                speedLimitMbps: number | null;
+                deviceSpeedLimitMbps: number | null;
+            }[];
+        },
     ): Promise<
         | SubscriptionNotFoundResponse
         | SubscriptionUnavailableResponse
@@ -184,7 +196,8 @@ export class SubscriptionService {
                 const device = await this.queryBus.execute(
                     new CheckHwidExistsQuery(hwidHeaders.hwid, user.response.id),
                 );
-                if (!device.isOk) return new SubscriptionNotFoundResponse();
+                if (!device.isOk || (preview && !device.response.exists))
+                    return new SubscriptionNotFoundResponse();
                 if (device.response.blocked) {
                     return this.getBlockedHwidSubscription(
                         srrContext,
@@ -210,12 +223,14 @@ export class SubscriptionService {
                 )
                     return new SubscriptionNotFoundResponse();
                 const deviceStatus = hwidHeaders
-                    ? await this.deviceAccess.register(
-                          user.response,
-                          hwidHeaders,
-                          subscriptionSettings.hwidSettings,
-                          srrContext.ip,
-                      )
+                    ? preview
+                        ? 'OK'
+                        : await this.deviceAccess.register(
+                              user.response,
+                              hwidHeaders,
+                              subscriptionSettings.hwidSettings,
+                              srrContext.ip,
+                          )
                     : 'LEGACY';
                 personalCredentialsReady = deviceStatus === 'OK';
                 if (deviceStatus === 'REGISTRATION_BLOCKED')
@@ -259,11 +274,17 @@ export class SubscriptionService {
                               user.response.vlessUuid,
                           ),
                       ) as UserEntity)
-                    : user.response;
+                    : preview
+                      ? (Object.assign(
+                            Object.create(Object.getPrototypeOf(user.response)),
+                            user.response,
+                        ) as UserEntity)
+                      : user.response;
             Object.defineProperty(renderUser, 'hostIdentityContext', {
                 value: {
                     hwid: hwidHeaders?.hwid ?? null,
                     parentVlessUuid: user.response.vlessUuid,
+                    ...(preview ? { preview: true } : {}),
                 },
                 configurable: true,
             });
@@ -293,7 +314,11 @@ export class SubscriptionService {
 
             let hwidCheckup: null | IHwidCheckupResult = null;
 
-            if (subscriptionSettings.hwidSettings.enabled && !srrContext.disableHwidCheck) {
+            if (
+                !preview &&
+                subscriptionSettings.hwidSettings.enabled &&
+                !srrContext.disableHwidCheck
+            ) {
                 const hwidCheckupResult = await this.checkHwidDeviceLimit(
                     user.response,
                     hwidHeaders,
@@ -329,7 +354,7 @@ export class SubscriptionService {
                         hwidCheckup,
                     );
                 }
-            } else {
+            } else if (!preview) {
                 void this.checkAndUpsertHwidUserDevice(user.response, hwidHeaders, srrContext.ip);
             }
 
@@ -366,13 +391,14 @@ export class SubscriptionService {
                 subscriptionEnded ? host.alwaysAvailable : !host.onlyWhenInactive,
             );
 
-            void this.updateAndReportSubscriptionRequest({
-                userId: user.response.id,
-                userAgent: userAgent,
-                requestIp: srrContext.ip,
-                matchedRuleName: srrContext.matchedRuleName,
-                matchedResponseType: srrContext.matchedResponseType,
-            });
+            if (!preview)
+                void this.updateAndReportSubscriptionRequest({
+                    userId: user.response.id,
+                    userAgent: userAgent,
+                    requestIp: srrContext.ip,
+                    matchedRuleName: srrContext.matchedRuleName,
+                    matchedResponseType: srrContext.matchedResponseType,
+                });
 
             const limitedHostUuids = new Set(
                 presentationHosts.filter(isHostTrafficLimited).map((host) => host.uuid),
@@ -380,6 +406,31 @@ export class SubscriptionService {
             const availableHosts = presentationHosts.filter(
                 (host) => !limitedHostUuids.has(host.uuid),
             );
+            if (preview)
+                preview.hosts = hosts.response.map((host) => {
+                    const reason = !presentationHosts.includes(host)
+                        ? 'subscriptionStatus'
+                        : limitedHostUuids.has(host.uuid)
+                          ? 'trafficLimit'
+                          : host.excludeFromSubscriptionTypes.includes(
+                                  srrContext.matchedResponseType as TSubscriptionTemplateType,
+                              )
+                            ? 'formatExcluded'
+                            : host.tags.some((tag) => srrContext.excludeHostsByTags?.has(tag))
+                              ? 'ruleExcluded'
+                              : 'candidate';
+                    return {
+                        uuid: host.uuid,
+                        remark: host.remark,
+                        templateUuid: srrContext.ignoreHostXrayJsonTemplate
+                            ? null
+                            : host.xrayJsonTemplateUuid,
+                        included: reason === 'candidate',
+                        reason,
+                        speedLimitMbps: host.speedLimitMbps,
+                        deviceSpeedLimitMbps: host.deviceSpeedLimitMbps,
+                    };
+                });
             const subscription = await this.renderTemplatesService.generateSubscription({
                 srrContext,
                 user: renderUser,
@@ -451,6 +502,138 @@ export class SubscriptionService {
             this.logger.error(error);
             return new SubscriptionUnavailableResponse();
         }
+    }
+
+    public async previewDevice(
+        userId: bigint,
+        hwid: string,
+        path: 'base' | 'json' | 'mihomo' | 'clash' | 'singbox' | 'stash',
+        userAgent?: string,
+        includeConfig = false,
+    ) {
+        const result = await this.queryBus.execute(
+            new GetUserByUniqueFieldQuery({ id: userId }, { activeInternalSquads: false }),
+        );
+        if (!result.isOk) throw new NotFoundException('User not found');
+        const devices = await this.queryBus.execute(new GetUserDevicesQuery(userId));
+        const device = devices.find((item) => item.hwid === hwid);
+        if (!device) throw new NotFoundException('Registered device not found');
+        const settings = await this.queryBus.execute(new GetCachedSubscriptionSettingsQuery());
+        if (!settings?.responseRules)
+            throw new BadRequestException('Subscription settings unavailable');
+        const agent = userAgent || device.userAgent;
+        if (!agent) throw new BadRequestException('Select the client User-Agent');
+        const match = await this.srrMatcher.matchRules(
+            settings.responseRules,
+            {
+                'user-agent': agent,
+                'x-hwid': hwid,
+                'x-device-id': hwid,
+                'x-device-os': device.platform ?? undefined,
+                'x-ver-os': device.osVersion ?? undefined,
+                'x-device-model': device.deviceModel ?? undefined,
+                'x-remnawave-injected-short-uuid': result.response.shortUuid,
+            },
+            path === 'base' ? undefined : path,
+        );
+        if (
+            !match.matched ||
+            !match.responseType ||
+            !['XRAY_JSON', 'XRAY_BASE64', 'MIHOMO', 'CLASH', 'SINGBOX', 'STASH'].includes(
+                match.responseType,
+            )
+        )
+            return {
+                allowed: false,
+                reason: 'responseRule',
+                format: match.responseType ?? 'BLOCK',
+                rule: match.matchedRule?.name ?? null,
+                hosts: [],
+            };
+        const mods = match.matchedRule?.responseModifications;
+        const context: ISRRContext = {
+            userAgent: agent,
+            ip: device.requestIp ?? '',
+            hwidHeaders: {
+                hwid,
+                platform: device.platform ?? undefined,
+                osVersion: device.osVersion ?? undefined,
+                deviceModel: device.deviceModel ?? undefined,
+                userAgent: agent,
+            },
+            isExtendedClient: false,
+            matchedResponseType: match.responseType,
+            matchedRuleName: match.matchedRule?.name,
+            subscriptionSettings: settings,
+            overrideTemplateName: mods?.subscriptionTemplate,
+            ignoreHostXrayJsonTemplate: mods?.ignoreHostXrayJsonTemplate,
+            ignoreServeJsonAtBaseSubscription: mods?.ignoreServeJsonAtBaseSubscription,
+            disableHwidCheck: mods?.disableHwidCheck,
+            encryption: mods?.encryption,
+            excludeHostsByTags: mods?.excludeHostsByTags
+                ? new Set(mods.excludeHostsByTags)
+                : undefined,
+            respondWithRemarks: mods?.respondWithRemarks,
+            headersToApply: mods?.headers
+                ? Object.fromEntries(mods.headers.map((h) => [h.key, h.value]))
+                : undefined,
+        };
+        const { isExtendedClient } = await import('@modules/subscription-template/constants');
+        context.isExtendedClient = isExtendedClient(agent);
+        if (!context.isExtendedClient && mods?.additionalExtendedClientsRegex?.length) {
+            const { configuredRegex } = await import('@common/utils/bounded-regex');
+            const deadline = Date.now() + 1000;
+            for (const pattern of mods.additionalExtendedClientsRegex)
+                if (await configuredRegex.test(pattern, agent, '', deadline)) {
+                    context.isExtendedClient = true;
+                    break;
+                }
+        }
+        const trace: NonNullable<Parameters<SubscriptionService['getSubscriptionByShortUuid']>[3]> =
+            {};
+        const response = await this.getSubscriptionByShortUuid(
+            context,
+            result.response.shortUuid,
+            undefined,
+            trace,
+        );
+        if (!(response instanceof SubscriptionWithConfigResponse))
+            return {
+                allowed: false,
+                reason: 'generationUnavailable',
+                format: context.matchedResponseType,
+                hosts: trace.hosts ?? [],
+            };
+        const headers = {
+            ...context.subscriptionSettings.customResponseHeaders,
+            ...response.headers,
+            ...context.headersToApply,
+        };
+        const routing = Object.entries(headers).find(
+            ([key]) => key.toLowerCase() === 'routing',
+        )?.[1];
+        const inlineFallback = Object.keys(headers).some(
+            (key) => key.toLowerCase() === 'x-remnacust-geofiles-delivery',
+        );
+        const bytes = Buffer.byteLength(response.body);
+        return {
+            allowed: !device.blocked,
+            reason: device.blocked ? 'deviceBlocked' : null,
+            checkedAt: new Date().toISOString(),
+            format: context.matchedResponseType,
+            rule: context.matchedRuleName ?? null,
+            template: context.overrideTemplateName ?? null,
+            hosts: trace.hosts ?? [],
+            bytes,
+            contentType: response.contentType,
+            geofileDelivery: routing
+                ? 'downloadProfile'
+                : inlineFallback
+                  ? 'inlineFallback'
+                  : 'inlineOrNative',
+            config: includeConfig && bytes <= 2 * 1024 * 1024 ? response.body : null,
+            configTooLarge: includeConfig && bytes > 2 * 1024 * 1024,
+        };
     }
 
     public async getRawSubscriptionByShortUuid(

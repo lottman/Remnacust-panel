@@ -1,11 +1,35 @@
 import type { Client, ClientChannel } from 'ssh2';
 
+import { isIP } from 'node:net';
 import { z } from 'zod';
 
 export const nodeUpgradeSchema = z
     .object({
         t: z.literal('node-upgrade'),
         id: z.uuid(),
+        operation: z.enum(['upgrade', 'install', 'configure-entry']).optional(),
+        entry: z
+            .strictObject({
+                hostUuid: z.uuid(),
+                backendNodeUuids: z
+                    .array(z.uuid())
+                    .min(1)
+                    .max(128)
+                    .refine((values) => new Set(values).size === values.length),
+                listenPort: z
+                    .int()
+                    .min(1)
+                    .max(65535)
+                    .refine((value) => value !== 22),
+                strategy: z.enum(['priority', 'roundRobin', 'leastConnections']),
+            })
+            .optional(),
+        netAdmin: z.boolean().optional(),
+        panelIp: z
+            .string()
+            .max(45)
+            .refine((value) => isIP(value) !== 0)
+            .optional(),
         directory: z
             .string()
             .min(2)
@@ -27,10 +51,21 @@ export type NodeUpgradeEvent = {
     phase: 'preparing' | 'downloading' | 'updating' | 'finished';
 };
 
-export function nodeUpgradeScript(request: NodeUpgradeRequest) {
+export type NodeInstallContext = { port: number; secret: string };
+export type StableEntryContext = {
+    listenPort: number;
+    strategy: string;
+    backends: { address: string; port: number }[];
+};
+
+export function nodeUpgradeScript(
+    request: NodeUpgradeRequest,
+    installation?: NodeInstallContext,
+    entry?: StableEntryContext,
+) {
     nodeUpgradeSchema.parse(request);
     const directory = Buffer.from(request.directory).toString('base64');
-    return (
+    const script =
         `set +x\nset -euo pipefail\numask 077\ndirectory=$(printf '%s' '${directory}' | base64 -d)\n` +
         String.raw`
 [[ $EUID -eq 0 ]] || exit 1
@@ -79,8 +114,44 @@ printf '\nREMNACUST_NODE_UPGRADE_PHASE:updating\n'
 # Its recovery and cleanup are identical to the command-line update path.
 version=$(printf '%s' "$tag" | cut -c2-)
 bash "$work/installer.sh" upgrade-node --directory "$directory" --version "$version" --yes
-`
-    );
+`;
+    if (request.operation === 'configure-entry') {
+        if (!entry || !request.entry) throw new Error('Entry context is required');
+        const encoded = Buffer.from(JSON.stringify(entry)).toString('base64');
+        return script
+            .replace('[[ -d "$directory" ]] || exit 1', 'true')
+            .replace(
+                'directory=$(realpath -- "$directory")',
+                'directory=$(realpath -m -- "$directory")',
+            )
+            .replace('command -v docker >/dev/null', 'command -v apt-get >/dev/null')
+            .replace(
+                'bash "$work/installer.sh" upgrade-node --directory "$directory" --version "$version" --yes',
+                `printf '%s' '${encoded}' | base64 -d > "$work/entry.json"\nbash "$work/installer.sh" configure-entry-node --entry-config "$work/entry.json" --yes`,
+            );
+    }
+    if (request.operation !== 'install') return script;
+    if (
+        !installation ||
+        !Number.isInteger(installation.port) ||
+        installation.port < 1 ||
+        installation.port > 65535 ||
+        installation.port === 22 ||
+        !/^[A-Za-z0-9+/=_-]{64,32768}$/.test(installation.secret)
+    )
+        throw new Error('Invalid installation context');
+    const secret = Buffer.from(installation.secret).toString('base64');
+    return script
+        .replace('[[ -d "$directory" ]] || exit 1', '[[ ! -e "$directory" ]] || exit 1')
+        .replace(
+            'directory=$(realpath -- "$directory")',
+            'directory=$(realpath -m -- "$directory")',
+        )
+        .replace('command -v docker >/dev/null', 'command -v apt-get >/dev/null')
+        .replace(
+            'bash "$work/installer.sh" upgrade-node --directory "$directory" --version "$version" --yes',
+            `export REMNACUST_NODE_SECRET="$(printf '%s' '${secret}' | base64 -d)"\nbash "$work/installer.sh" install-node --directory "$directory" --port ${installation.port} --version "$version" ${request.netAdmin ? '--net-admin' : '--no-net-admin'} ${request.panelIp ? `--panel-ip '${request.panelIp}'` : ''} --yes\nunset REMNACUST_NODE_SECRET`,
+        );
 }
 
 // A separate exec channel has no terminal echo or shell history. Remote output is
@@ -89,8 +160,10 @@ export function runNodeUpgrade(
     client: Client,
     request: NodeUpgradeRequest,
     emit: (event: NodeUpgradeEvent) => void,
+    installation?: NodeInstallContext,
+    entry?: StableEntryContext,
 ): Promise<void> {
-    const script = nodeUpgradeScript(request);
+    const script = nodeUpgradeScript(request, installation, entry);
     return new Promise((resolve) => {
         let channel: ClientChannel | undefined;
         let settled = false;

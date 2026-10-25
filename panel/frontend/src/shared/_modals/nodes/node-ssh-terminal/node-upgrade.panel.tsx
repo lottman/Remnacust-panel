@@ -3,6 +3,7 @@ import type { NodeUpgradeRequest } from './node-upgrade.types'
 import { Alert, Group, Loader, Text } from '@mantine/core'
 import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { nodesQueryKeys } from '@shared/api/hooks/nodes/nodes.query.hooks'
 import { useUiText } from '@shared/i18n/interface-text'
@@ -19,6 +20,7 @@ export function NodeUpgradePanel({
     enabled: boolean
 }) {
     const uiText = useUiText()
+    const { t } = useTranslation()
 
     const statuses = useSshStatuses()
     const actions = useSshTabsActions()
@@ -66,7 +68,11 @@ export function NodeUpgradePanel({
                               'update-not-confirmed-check-ssh-directory-token-and-node-state--2d230c4'
                           )
                         : update
-                          ? labels[update.phase]
+                          ? request.operation === 'configure-entry'
+                              ? t(`operations.entry_${update.phase}`)
+                              : request.operation === 'install'
+                                ? t(`operations.install_${update.phase}`)
+                                : labels[update.phase]
                           : uiText('waiting-for-ssh-connection-309d2b4')}
                 </Text>
             </Group>

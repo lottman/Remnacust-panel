@@ -1,5 +1,16 @@
-import { Alert, Badge, Button, Code, Group, Paper, Stack, Text } from '@mantine/core'
-import { useMemo } from 'react'
+import {
+    Alert,
+    Badge,
+    Button,
+    Code,
+    Group,
+    Paper,
+    Stack,
+    Text,
+    Switch,
+    TextInput
+} from '@mantine/core'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbAlertCircle, TbCheck, TbLink, TbX } from 'react-icons/tb'
 
@@ -11,9 +22,12 @@ import { LottieCheckmarkShared } from '@shared/ui/lotties/checkmark'
 import { LottieStopShared } from '@shared/ui/lotties/stop'
 import { getNodeErrorMessage } from '@shared/utils/node-error-message'
 
+import { NodeDiagnostics } from '../../edit-node-modal/node-diagnostics'
+
 interface IProps {
     nodeUuid?: string
     onClose: () => void
+    installMode: 'ssh' | 'manual'
 }
 
 enum STATUS {
@@ -22,10 +36,13 @@ enum STATUS {
     ERROR = 'error'
 }
 
-export const CreateNodeStep3Status = ({ nodeUuid, onClose }: IProps) => {
+export const CreateNodeStep3Status = ({ nodeUuid, onClose, installMode }: IProps) => {
     const uiText = useUiText()
 
     const { t } = useTranslation()
+    const [netAdmin, setNetAdmin] = useState(false)
+    const [panelIp, setPanelIp] = useState('')
+    const [installStarted, setInstallStarted] = useState(false)
 
     const { data: node, isLoading } = useGetNode({
         route: {
@@ -70,64 +87,107 @@ export const CreateNodeStep3Status = ({ nodeUuid, onClose }: IProps) => {
 
     return (
         <Stack gap="lg" mih={400}>
-            <Paper
-                p="xl"
-                shadow="sm"
-                style={{
-                    background:
-                        'linear-gradient(to top, var(--mantine-color-dark-6) 0%, var(--mantine-color-dark-7) 100%)'
-                }}
-                withBorder
-            >
-                <Stack align="center" gap="xl">
-                    <div style={{ height: 120, display: 'flex', alignItems: 'center' }}>
-                        {status === STATUS.CONNECTING && <LottieLinkShared />}
-                        {status === STATUS.CONNECTED && <LottieCheckmarkShared />}
-                        {status === STATUS.ERROR && <LottieStopShared />}
-                    </div>
-
-                    <Stack align="center" gap="xs">
-                        {status === STATUS.CONNECTING && (
-                            <>
-                                <Badge color="blue" size="lg" variant="light">
-                                    {uiText('connecting-5f04ae9')}
-                                </Badge>
-
-                                <Text c="dimmed" fw={600} size="sm" ta="center">
-                                    {t('create-node-step-3-status.establishing-mtls-connection')}
-                                </Text>
-                            </>
-                        )}
-
-                        {status === STATUS.CONNECTED && (
-                            <>
-                                <Badge color="teal" size="lg" variant="light">
-                                    {t('create-node-modal.widget.connection-successful')}
-                                </Badge>
-                                <Text c="dimmed" fw={600} size="sm" ta="center">
-                                    {t('create-node-step-3-status.xray-core-is-up-and-running')}
-                                </Text>
-                            </>
-                        )}
-
-                        {status === STATUS.ERROR && (
-                            <>
-                                <Badge color="red" size="lg" variant="light">
-                                    {t('create-node-modal.widget.connection-failed')}
-                                </Badge>
-
-                                <Text c="dimmed" fw={600} size="sm" ta="center">
-                                    {t(
-                                        'create-node-step-3-status.remnawave-will-try-to-reconnect-shortly'
-                                    )}
-                                </Text>
-                            </>
-                        )}
+            {installMode === 'ssh' && status !== STATUS.CONNECTED && (
+                <Alert color="blue" title={t('operations.installNode')}>
+                    <Stack gap="sm">
+                        <Text size="sm">{t('operations.installHelp')}</Text>
+                        <Switch
+                            label="NET_ADMIN"
+                            description={t('operations.netAdminHelp')}
+                            checked={netAdmin}
+                            onChange={(e) => setNetAdmin(e.currentTarget.checked)}
+                        />
+                        <TextInput
+                            label={t('operations.panelSourceIp')}
+                            description={t('operations.panelSourceIpHelp')}
+                            value={panelIp}
+                            onChange={(e) => setPanelIp(e.currentTarget.value.trim())}
+                        />
+                        <Button
+                            disabled={!node}
+                            onClick={() => {
+                                if (!node) return
+                                setInstallStarted(true)
+                                showModal('nodes_nodeSshTerminal', {
+                                    node,
+                                    nodeUpgrade: {
+                                        id: crypto.randomUUID(),
+                                        directory: '/opt/remnacust/node',
+                                        operation: 'install',
+                                        netAdmin,
+                                        panelIp: panelIp || undefined
+                                    }
+                                })
+                            }}
+                        >
+                            {t('operations.connectAndInstall')}
+                        </Button>
                     </Stack>
-                </Stack>
-            </Paper>
+                </Alert>
+            )}
+            {nodeUuid && <NodeDiagnostics nodeUuid={nodeUuid} />}
+            {(installMode !== 'ssh' || installStarted || status === STATUS.CONNECTED) && (
+                <Paper
+                    p="xl"
+                    shadow="sm"
+                    style={{
+                        background:
+                            'linear-gradient(to top, var(--mantine-color-dark-6) 0%, var(--mantine-color-dark-7) 100%)'
+                    }}
+                    withBorder
+                >
+                    <Stack align="center" gap="xl">
+                        <div style={{ height: 120, display: 'flex', alignItems: 'center' }}>
+                            {status === STATUS.CONNECTING && <LottieLinkShared />}
+                            {status === STATUS.CONNECTED && <LottieCheckmarkShared />}
+                            {status === STATUS.ERROR && <LottieStopShared />}
+                        </div>
 
-            {!errorMessage && (
+                        <Stack align="center" gap="xs">
+                            {status === STATUS.CONNECTING && (
+                                <>
+                                    <Badge color="blue" size="lg" variant="light">
+                                        {uiText('connecting-5f04ae9')}
+                                    </Badge>
+
+                                    <Text c="dimmed" fw={600} size="sm" ta="center">
+                                        {t(
+                                            'create-node-step-3-status.establishing-mtls-connection'
+                                        )}
+                                    </Text>
+                                </>
+                            )}
+
+                            {status === STATUS.CONNECTED && (
+                                <>
+                                    <Badge color="teal" size="lg" variant="light">
+                                        {t('create-node-modal.widget.connection-successful')}
+                                    </Badge>
+                                    <Text c="dimmed" fw={600} size="sm" ta="center">
+                                        {t('create-node-step-3-status.xray-core-is-up-and-running')}
+                                    </Text>
+                                </>
+                            )}
+
+                            {status === STATUS.ERROR && (
+                                <>
+                                    <Badge color="red" size="lg" variant="light">
+                                        {t('create-node-modal.widget.connection-failed')}
+                                    </Badge>
+
+                                    <Text c="dimmed" fw={600} size="sm" ta="center">
+                                        {t(
+                                            'create-node-step-3-status.remnawave-will-try-to-reconnect-shortly'
+                                        )}
+                                    </Text>
+                                </>
+                            )}
+                        </Stack>
+                    </Stack>
+                </Paper>
+            )}
+
+            {!errorMessage && status === STATUS.CONNECTED && (
                 <Alert
                     color="teal"
                     icon={<TbCheck size={20} />}
@@ -136,7 +196,7 @@ export const CreateNodeStep3Status = ({ nodeUuid, onClose }: IProps) => {
                 />
             )}
 
-            {errorMessage && (
+            {errorMessage && (installMode !== 'ssh' || installStarted) && (
                 <Alert
                     color="red"
                     icon={<TbAlertCircle size={20} />}

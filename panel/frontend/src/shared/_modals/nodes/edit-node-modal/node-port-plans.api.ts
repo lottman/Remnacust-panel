@@ -9,7 +9,11 @@ export type PortBinding = {
     listenAddress: string
     port: number
 }
-export type PortPlanRequest = { expectedRevision: string; requestId?: string } & (
+export type PortPlanRequest = {
+    expectedRevision: string
+    requestId?: string
+    reviewHash?: string
+} & (
     | { enabled: true; bindings: PortBinding[] }
     | { enabled: false; profileUuid: string; activeInbounds: string[] }
 )
@@ -48,6 +52,7 @@ export type PortPlanHistory = {
         | { enabled: false; profileUuid: string; activeInbounds: string[] }
 }
 export type PortPlanPreview = {
+    reviewHash: string
     revision: string
     enabled: boolean
     changed: boolean
@@ -80,7 +85,7 @@ export const previewPortPlan = async (uuid: string, request: PortPlanRequest) =>
     ).data.response
 export const savePortPlan = async (uuid: string, request: PortPlanRequest) =>
     (
-        await instance.post<{ response: PortPlanView }>(`/api/nodes/${uuid}/ports`, request, {
+        await instance.post<{ response: PortPlanView }>(`/api/nodes/${uuid}/ports/apply`, request, {
             timeout: 35000
         })
     ).data.response
@@ -97,4 +102,17 @@ export const getPortPlanHistory = async (uuid: string, signal?: AbortSignal) =>
         await instance.get<{ response: PortPlanHistory[] }>(`/api/nodes/${uuid}/ports/history`, {
             signal
         })
+    ).data.response
+
+export const restorePortPlan = async (
+    uuid: string,
+    historyUuid: string,
+    expectedRevision: string
+) =>
+    (
+        await instance.post<{ response: PortPlanView }>(
+            `/api/nodes/${uuid}/ports/history/${historyUuid}/restore`,
+            { expectedRevision, requestId: crypto.randomUUID() },
+            { timeout: 35000 }
+        )
     ).data.response

@@ -122,3 +122,15 @@ test('partial JSON supplies live host/tag completions and leaves enums to the na
  assert.equal(suggestions('{"selector":{"type":"uuids","values":["')[0].detail,'Netherlands');
  assert.deepEqual(injectorCompletionValues('{"unrelated":"',14,hosts),[]);
 });
+
+test('connection selection retains every candidate and removes generation-time sampling', () => {
+    const ids = ['10000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000002'];
+    const input = JSON.stringify({remnawave:{injectHosts:[{mode:'random',tagPrefix:'pool',selector:{type:'uuids',values:ids,expected:1}}]},routing:{balancers:[{tag:'auto',selector:['pool'],strategy:{type:'random'}}]}});
+    const result = m.parseTemplate(m.selectOnConnection(input,0));
+    assert.equal(result.remnawave.injectHosts[0].mode,'all');
+    assert.deepEqual(result.remnawave.injectHosts[0].selector,{type:'uuids',values:ids});
+    assert.deepEqual(result.routing,JSON.parse(input).routing);
+    const grouped = m.connectionPool({mode:'group',selector:{type:'tags',groups:{first:['a','b'],second:['b','c']}}});
+    assert.deepEqual(grouped.selector,{type:'tags',values:['a','b','c']});
+    assert.throws(()=>m.connectionPool({mode:'group',selector:{type:'remarkRegex',groups:{a:ids},pattern:'.*'}}),/connection-group-selector/);
+});

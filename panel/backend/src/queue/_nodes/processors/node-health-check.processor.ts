@@ -2,7 +2,7 @@ import { Job } from 'bullmq';
 
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
-import { CommandBus } from '@nestjs/cqrs';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 
 import { AxiosService, INodeConnectionOpts } from '@common/axios';
@@ -16,6 +16,7 @@ import { NodeEvent } from '@integration-modules/notifications/interfaces';
 
 import { UpdateNodeCommand } from '@modules/nodes/commands/update-node';
 import { NodeHealthLogService } from '@modules/nodes/node-health-log.service';
+import { GetNodeByUuidQuery } from '@modules/nodes/queries/get-node-by-uuid';
 
 import { NodesQueuesService } from '@queue/_nodes';
 import { QUEUES_NAMES } from '@queue/queue.enum';
@@ -36,12 +37,14 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
         private readonly nodesQueuesService: NodesQueuesService,
         private readonly rawCacheService: RawCacheService,
         private readonly healthLog: NodeHealthLogService,
+        private readonly queryBus: QueryBus,
     ) {
         super();
     }
     async process(job: Job<INodeHealthCheckPayload>) {
         try {
             const { nodeUuid, isConnected, connectionOpts } = job.data;
+            const observedAt = job.timestamp ?? Date.now();
 
             const attemptsLimit = 2;
             let attempts = 0;
@@ -58,6 +61,7 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
                             nodeUuid,
                             isConnected,
                             statResult.response,
+                            observedAt,
                         );
                     case false:
                         message = statResult.message ?? 'Unknown error';
@@ -85,7 +89,7 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
                 }
             }
 
-            return await this.handleDisconnectedNode(nodeUuid, isConnected, message);
+            return await this.handleDisconnectedNode(nodeUuid, isConnected, message, observedAt);
         } catch (error) {
             await this.healthLog.record({
                 nodeUuid: job.data.nodeUuid,
@@ -104,8 +108,10 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
         nodeUuid: string,
         isConnected: boolean,
         stats: INodeSystemStatsResponse,
+        observedAt: number,
     ) {
         if (stats.xrayInfo === null) {
+            await this.reportIncident(nodeUuid, false, isConnected, observedAt);
             await this.rawCacheService.delMany([
                 CACHE_KEYS.NODE_SYSTEM_STATS(nodeUuid),
                 CACHE_KEYS.NODE_XRAY_UPTIME(nodeUuid),
@@ -175,7 +181,8 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
         }
 
         const retryAt = await this.rawCacheService.get<number>(hostPolicyRetryKey(nodeUuid));
-        const retryDue = typeof retryAt !== 'number' || !Number.isFinite(retryAt) || retryAt <= Date.now();
+        const retryDue =
+            typeof retryAt !== 'number' || !Number.isFinite(retryAt) || retryAt <= Date.now();
 
         if (!isConnected) {
             const nodeUpdatedResponse = await this.commandBus.execute(
@@ -192,25 +199,62 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
             if (retryDue) {
                 await this.nodesQueuesService.startNode({ nodeUuid });
             }
-
-            this.eventEmitter.emit(
-                EVENTS.NODE.CONNECTION_RESTORED,
-                new NodeEvent(nodeUpdatedResponse.response, EVENTS.NODE.CONNECTION_RESTORED),
-            );
         } else {
-            if ((typeof retryAt === 'number' && Number.isFinite(retryAt) && retryAt <= Date.now()) ||
-                (stats.userStateSynchronized === false && retryDue)) {
+            if (
+                (typeof retryAt === 'number' &&
+                    Number.isFinite(retryAt) &&
+                    retryAt <= Date.now()) ||
+                (stats.userStateSynchronized === false && retryDue)
+            ) {
                 await this.nodesQueuesService.startNode({ nodeUuid });
             }
         }
 
+        await this.reportIncident(nodeUuid, true, isConnected, observedAt);
         return;
+    }
+
+    private async reportIncident(
+        uuid: string,
+        healthy: boolean,
+        previouslyConnected: boolean,
+        observedAt: number,
+    ) {
+        try {
+            const node = await this.queryBus.execute(new GetNodeByUuidQuery(uuid));
+            if (!node.isOk || node.response.isDisabled) return;
+            const [retryAt, maintenance, operation] = await Promise.all([
+                this.rawCacheService.get<number>(hostPolicyRetryKey(uuid)),
+                this.rawCacheService.get<number>(`remnacust:node-alert-mute:${uuid}`),
+                this.rawCacheService.getString(`remnacust:node-operation:${uuid}`),
+            ]);
+            const muted =
+                !!operation ||
+                (typeof retryAt === 'number' && retryAt > Date.now()) ||
+                (typeof maintenance === 'number' && maintenance > Date.now());
+            const transition = await this.rawCacheService.observeNodeIncident(
+                uuid,
+                observedAt,
+                healthy,
+                muted,
+                previouslyConnected,
+            );
+            if (!transition) return;
+            const event =
+                transition === 1 ? EVENTS.NODE.CONNECTION_LOST : EVENTS.NODE.CONNECTION_RESTORED;
+            await this.eventEmitter.emitAsync(event, new NodeEvent(node.response, event));
+            await this.rawCacheService.acknowledgeNodeIncident(uuid, observedAt, transition);
+        } catch {
+            // A notification transport/cache failure must not change node health.
+            this.logger.warn(`Could not confirm notification state for node ${uuid}`);
+        }
     }
 
     private async handleDisconnectedNode(
         nodeUuid: string,
         isConnected: boolean,
         message: string | undefined,
+        observedAt: number,
     ) {
         await this.healthLog.record({ nodeUuid, status: 'unreachable', attempt: 2, message });
         await this.rawCacheService.delMany([
@@ -240,12 +284,7 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
             await this.nodesQueuesService.startNode({ nodeUuid });
         }
 
-        if (isConnected) {
-            this.eventEmitter.emit(
-                EVENTS.NODE.CONNECTION_LOST,
-                new NodeEvent(newNodeEntity.response, EVENTS.NODE.CONNECTION_LOST),
-            );
-        }
+        await this.reportIncident(nodeUuid, false, isConnected, observedAt);
 
         this.logger.warn(
             `Lost connection to Node ${nodeUuid}, ${newNodeEntity.response.address}:${newNodeEntity.response.port}, message: ${message}`,

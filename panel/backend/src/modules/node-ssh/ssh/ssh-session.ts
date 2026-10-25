@@ -267,16 +267,39 @@ export class SshSession {
         }
         this.upgradeIds.add(request.id);
         this.upgradingNode = true;
+        let operationStarted = false;
         try {
             await this.options.authorizeNodeUpgrade();
+            const installation =
+                request.operation === 'install'
+                    ? await this.options.prepareNodeInstall?.()
+                    : undefined;
+            if (request.operation === 'install' && !installation)
+                throw new Error('Installation is unavailable');
+            const entry =
+                request.operation === 'configure-entry' && request.entry
+                    ? await this.options.prepareStableEntry?.(request.entry)
+                    : undefined;
+            if (request.operation === 'configure-entry' && !entry)
+                throw new Error('Entry configuration is unavailable');
+            await this.options.onNodeOperation?.(request.id, true);
+            operationStarted = true;
             if (this.closed || !this.client) return;
-            await runNodeUpgrade(this.client, request, (event) => {
-                this.touch();
-                this.send(event);
-            });
+            await runNodeUpgrade(
+                this.client,
+                request,
+                (event) => {
+                    this.touch();
+                    this.send(event);
+                },
+                installation,
+                entry,
+            );
         } catch {
             this.send({ t: 'node-upgrade', id: request.id, status: 'failed', phase: 'finished' });
         } finally {
+            if (operationStarted)
+                await this.options.onNodeOperation?.(request.id, false).catch(() => undefined);
             this.upgradingNode = false;
         }
     }

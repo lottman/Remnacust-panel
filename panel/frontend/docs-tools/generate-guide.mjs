@@ -5,12 +5,13 @@ import { explainAutoselect } from './autoselect-guide.mjs'
 import { explainCurrentWorkflows } from './current-workflows-guide.mjs'
 import { explainEditorWorkflows } from './editor-workflows-guide.mjs'
 import { explainGeofileRefresh } from './geofile-refresh-guide.mjs'
+import fa from './guide-fa.mjs'
 import './additional-guide.mjs'
 import './remnawave-guide.mjs'
-import fa from './guide-fa.mjs'
 import { articles as sourceArticles, categories } from './guide-source.mjs'
 import zh from './guide-zh.mjs'
 import { explainListInteractions } from './list-guide.mjs'
+import { explainOperations } from './operations-guide.mjs'
 import { explainOperatorWorkflows, supportGuide } from './operator-guide.mjs'
 import { productionArticles } from './production-guide.mjs'
 import { explainRelease1171 } from './release-1171-guide.mjs'
@@ -39,6 +40,7 @@ explainAutoselect(articles)
 explainCurrentWorkflows(articles)
 explainEditorWorkflows(articles)
 explainGeofileRefresh(articles)
+explainOperations(articles)
 
 const target = path.resolve(import.meta.dirname, '../public/documentation')
 fs.mkdirSync(target, { recursive: true })

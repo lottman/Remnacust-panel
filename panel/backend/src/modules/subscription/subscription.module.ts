@@ -4,18 +4,24 @@ import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/c
 import { CqrsModule } from '@nestjs/cqrs';
 
 import { SUBSCRIPTION_CONTROLLER, SUBSCRIPTION_ROUTES } from '@libs/contracts/api';
-import { HwidUserDevicesModule } from '@modules/hwid-user-devices/hwid-user-devices.module';
 
+import { HwidUserDevicesModule } from '@modules/hwid-user-devices/hwid-user-devices.module';
 import { ResponseRulesMiddleware } from '@modules/subscription-response-rules/middleware/response-rules.middleware';
 import { SubscriptionResponseRulesModule } from '@modules/subscription-response-rules/subscription-response-rules.module';
 import { SubscriptionTemplateModule } from '@modules/subscription-template/subscription-template.module';
 
 import { SubscriptionController, SubscriptionsController } from './controllers';
+import { SubscriptionPreviewController } from './controllers/subscription-preview.controller';
 import { SubscriptionService } from './subscription.service';
 
 @Module({
-    imports: [CqrsModule, SubscriptionTemplateModule, SubscriptionResponseRulesModule, HwidUserDevicesModule],
-    controllers: [SubscriptionController, SubscriptionsController],
+    imports: [
+        CqrsModule,
+        SubscriptionTemplateModule,
+        SubscriptionResponseRulesModule,
+        HwidUserDevicesModule,
+    ],
+    controllers: [SubscriptionController, SubscriptionsController, SubscriptionPreviewController],
     providers: [SubscriptionService],
     exports: [],
 })

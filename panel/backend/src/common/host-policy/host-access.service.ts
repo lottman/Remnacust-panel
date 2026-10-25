@@ -10,9 +10,9 @@ import {
     getSsPassword,
     isSS2022Method,
 } from '@common/helpers/xray-config/ss-cipher';
+import { BoundedWorkQueue } from '@common/utils/bounded-work-queue';
 import { getVlessFlow } from '@common/utils/flow';
 import { settleConcurrent } from '@common/utils/settle-concurrent';
-import { BoundedWorkQueue } from '@common/utils/bounded-work-queue';
 
 import { UserEntity } from '@modules/users/entities/user.entity';
 
@@ -57,6 +57,30 @@ export class HostAccessService {
         );
         const hostIds = requestedIds.filter((id) => permitted.has(id));
         if (!hostIds.length) return result;
+        if (context.preview) {
+            // Preview derives the same keys without persisting identities or
+            // synchronizing users/policies to a live node.
+            const current = await this.checkAccess(
+                user.id,
+                hostIds,
+                context.hwid,
+                context.parentVlessUuid,
+            );
+            for (const id of hostIds) {
+                if (!current.has(id)) continue;
+                const keys = this.policies.keys({
+                    userId: user.id.toString(),
+                    hostUuid: id,
+                    hwid: context.hwid,
+                    parent: context.parentVlessUuid,
+                });
+                result.set(
+                    id,
+                    Object.assign(Object.create(Object.getPrototypeOf(user)), user, keys),
+                );
+            }
+            return result;
+        }
         const records = hostIds.map(
             (id) =>
                 sql`(${user.id},${id}::uuid,${context.hwid ?? ''},${context.hwid},${context.parentVlessUuid}::uuid)`,
@@ -102,7 +126,8 @@ export class HostAccessService {
                         return { allSynchronized: false, readyHosts: new Set<string>() };
                     })
                     .finally(() => {
-                        if (this.preparing.get(flightKey) === flight) this.preparing.delete(flightKey);
+                        if (this.preparing.get(flightKey) === flight)
+                            this.preparing.delete(flightKey);
                     });
                 this.preparing.set(flightKey, flight);
             } else if (Date.now() - this.lastQueueWarning > 60000) {

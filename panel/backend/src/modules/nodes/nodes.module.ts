@@ -5,6 +5,8 @@ import { AxiosModule } from '@common/axios/axios.module';
 
 import { COMMANDS } from './commands';
 import { EVENTS } from './events';
+import { NodeDiagnosticsController } from './node-diagnostics.controller';
+import { NodeDiagnosticsService } from './node-diagnostics.service';
 import { NodeHealthLogService } from './node-health-log.service';
 import { NodePortPlansController } from './node-port-plans.controller';
 import { NodePortPlansService } from './node-port-plans.service';
@@ -23,9 +25,15 @@ import { NodesRepository } from './repositories/nodes.repository';
 
 @Module({
     imports: [CqrsModule, AxiosModule],
-    controllers: [NodesController, NodeReconciliationController, NodePortPlansController],
+    controllers: [
+        NodesController,
+        NodeReconciliationController,
+        NodePortPlansController,
+        NodeDiagnosticsController,
+    ],
     providers: [
         NodesRepository,
+        NodeDiagnosticsService,
         NodePortPlansService,
         PortPlanDispatchService,
         NodesConverter,
@@ -38,6 +46,6 @@ import { NodesRepository } from './repositories/nodes.repository';
         ...QUERIES,
         ...COMMANDS,
     ],
-    exports: [NodesRepository, PortPlanDispatchService],
+    exports: [NodesRepository, PortPlanDispatchService, NodePortPlansService],
 })
 export class NodesModule {}

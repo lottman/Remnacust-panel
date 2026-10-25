@@ -21,7 +21,7 @@ import { JwtDefaultGuard } from '@common/guards/jwt-guards/def-jwt-guard';
 import { RolesGuard } from '@common/guards/roles/roles.guard';
 import { ScopesGuard } from '@common/guards/scopes';
 
-import { PortPlanRevisionSchema } from './node-port-plans.schema';
+import { NodePortPlanInputSchema, PortPlanRevisionSchema } from './node-port-plans.schema';
 import { NodePortPlansService, PortPlanEditError } from './node-port-plans.service';
 import { PortPlanError } from './profile-port-plan';
 
@@ -67,6 +67,21 @@ export class NodePortPlansController {
     @Get()
     get(@Param('uuid', new ParseUUIDPipe()) uuid: string) {
         return this.handle(() => this.plans.get(uuid));
+    }
+    @AdminOnlyEndpoint()
+    @Post('apply')
+    @HttpCode(200)
+    apply(@Param('uuid', new ParseUUIDPipe()) uuid: string, @Body() body: unknown) {
+        return this.handle(() => {
+            const input = NodePortPlanInputSchema.parse(body);
+            if (!input.reviewHash)
+                throw new HttpExceptionWithErrorCodeType(
+                    'Review is required',
+                    'PORT_PLAN_REVIEW_REQUIRED',
+                    409,
+                );
+            return this.plans.save(uuid, input);
+        });
     }
     @AdminOnlyEndpoint()
     @Post('preview')

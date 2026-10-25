@@ -18,7 +18,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbPlus, TbTrash } from 'react-icons/tb'
 
-import { type JsonObject } from './autoselect-model'
+import { connectionPool, type JsonObject } from './autoselect-model'
 import styles from './autoselect-panel.module.css'
 import { defaultAutoselectSources } from './autoselect-sources'
 import {
@@ -153,6 +153,47 @@ export function ClientAutoselectPanel({
                                     {t('client-template.remove-group')}
                                 </Button>
                             </Group>
+                            <Alert color={mode === 'all' ? 'blue' : 'yellow'}>
+                                <Text size="sm">
+                                    {t(
+                                        mode === 'all'
+                                            ? 'autoselect.native-connection-help'
+                                            : 'autoselect.subscription-selection-help'
+                                    )}
+                                </Text>
+                                {pool &&
+                                    (mode !== 'all' ||
+                                        group.type === 'selector' ||
+                                        group.type === 'select') && (
+                                        <Button
+                                            mt="sm"
+                                            variant="light"
+                                            onClick={() =>
+                                                edit(() => {
+                                                    let next = editClientTemplate(
+                                                        text,
+                                                        format,
+                                                        [key, index, 'remnawave', 'pool'],
+                                                        connectionPool(pool)
+                                                    )
+                                                    if (
+                                                        group.type === 'selector' ||
+                                                        group.type === 'select'
+                                                    )
+                                                        next = editClientTemplate(
+                                                            next,
+                                                            format,
+                                                            [key, index, 'type'],
+                                                            sing ? 'urltest' : 'url-test'
+                                                        )
+                                                    return next
+                                                })
+                                            }
+                                        >
+                                            {t('autoselect.select-on-connection')}
+                                        </Button>
+                                    )}
+                            </Alert>
                             <div className={styles.fields}>
                                 <TextInput
                                     label={t('client-template.group-name')}

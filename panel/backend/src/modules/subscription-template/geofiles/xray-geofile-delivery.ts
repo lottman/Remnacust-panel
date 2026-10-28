@@ -121,7 +121,11 @@ export class XrayGeofileDelivery {
         const profile: Record<string, unknown> = {
             Name: `Remnacust ${createHash('sha256').update(profileKey).digest('hex').slice(0, 12)}`,
             GlobalProxy: 'true',
-            LastUpdated: String(revision),
+            // INCY compares this with the saved profile, including an inline
+            // replacement. A window-rounded value could move backwards after
+            // downloads are re-enabled. Stable URLs and SHA-256 prevent an
+            // unchanged DAT from being downloaded again.
+            LastUpdated: String(this.client === 'incy' ? Math.floor(now / 1000) : revision),
         };
         for (const kind of ['geoip', 'geosite'] as const) {
             const values = selected.filter((key) => this.references.get(key)!.kind === kind);

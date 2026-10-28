@@ -1,0 +1,21 @@
+# Release verification — 1.1.7.59 / installer 1.2.94
+
+## Scope and results
+
+- Frozen lifetime: expired status and elapsed dates are rejected by the user API; the PostgreSQL trigger also protects bulk updates and imports. Existing frozen clocks retain their remainder. Real PostgreSQL tests cover new rejection, repeated freeze, resume, extension and quota exhaustion in a non-UTC session.
+- UI: a frozen user's date picker is replaced by a blue saved remainder. Saving unrelated fields does not submit an expiry. Active expiry warnings use an exact three-day boundary. Four locales, light/dark themes and 320/1280px widths passed 32 browser checks without page errors, horizontal overflow or an editable frozen date. Browser checks used the actual components with isolated fixtures.
+- Geofiles: real HTTP tests validate authenticated upload, signed DAT delivery, byte-exact SHA-256 through both the panel and subscription-page proxy, tamper rejection and old URL compatibility. INCY URLs have no query or periodic URL churn. The installed INCY 3.7.2 checksum concatenation was inspected; no VPN tunnel was started. Native-client import/download completion is not claimed by these server-side tests. Reference protocol: https://docs.incy.cc/routing/.
+- Page administration: both endpoints require the panel administrator and reject API-token roles. Strict input accepts only registered IDs, a fixed operation enum and a UUID; the browser cannot submit shell commands, images, tokens or filesystem paths. The root side revalidates registration, paths and service names. IPC uses the existing authenticated private Unix socket. Operations are detached, serialized and bounded; private command output is never returned in public state.
+- Deployment: real disposable Docker fixtures passed independent install, loopback HTTP, private environment permissions, list/start/stop, updating a stopped page, failed-readiness rollback and credential preservation. Unit cases also cover restoring registry metadata after a late failure and loading the exact isolated Python CLI used by the installer.
+- Documentation and translations: generated help and reference checks passed; locale keys match in EN/RU/FA/ZH. A full frontend test run passed 247 tests. The final backend run completed 700 tests: 694 passed and six platform-dependent skips, with no failures. Backend and frontend type checks and the production frontend build passed.
+- The full installer suite, including existing migration and new standalone-page Docker integration, passed. The local source cohort was rechecked after the final helper changes; root service and page-helper regression tests passed.
+
+## Limits
+
+This verifies the changed paths and their existing regression suites; it is not a claim that every external client, provider firewall or production node was exhaustively exercised. No new dependency versions, node runtime or core runtime are introduced. Previously recorded dependency advisories remain documented in `RELEASE-AUDIT-20261028.md`.
+
+## Additional verified cases
+
+Canonical relocation passed real PostgreSQL bind-data and named-volume checks, injected-readiness rollback, unchanged credentials, stopped-service retention and archival of unused old folders. Switch geometry and smooth intermediate frames passed all five sizes in LTR and RTL. Sticky save buttons remained visible at 320 and 1280px; the modified diff pane displayed an actual 80px code minimap. The downloaded OpenAPI JSON is formatted without changing its data. Native INCY automation was stopped by the user with Escape; subsequent verification uses server-side protocol and regression tests, not a claimed native import.
+
+A deterministic regression also verifies strictly increasing INCY timestamps when downloads are disabled and re-enabled within the same scheduled refresh window, with unchanged provider identity and DAT URL. INCY documents LastUpdated as a newer-than comparison; stable SHA-256 prevents unchanged DAT downloads. Source: https://docs.incy.cc/routing/.

@@ -40,15 +40,17 @@ const decode = (header) =>
     JSON.parse(Buffer.from(header.slice('happ://routing/onadd/'.length), 'base64').toString());
 
 test('turning INCY downloads off embeds rules and clears URLs on the same provider profile', async () => {
+    const clock = 1793204000000;
     const previous = new XrayGeofileDelivery('incy');
     const refs = previous.register('geosite', { id, categories: ['example'], target: 'DIRECT', downloadToClient: true }, async () => 'https://sub.test/geosite.dat');
-    const remote = JSON.parse(Buffer.from((await previous.header(JSON.stringify([{routing:{rules:[{domain:refs}]}}]), 'user')).split('/onadd/')[1], 'base64'));
+    const remote = JSON.parse(Buffer.from((await previous.header(JSON.stringify([{routing:{rules:[{domain:refs}]}}]), 'user', clock)).split('/onadd/')[1], 'base64'));
     const delivery = new XrayGeofileDelivery('incy');
     const native = await materializeGeofiles({ remnacust: { geofiles: [{id, categories:['example'], target:'DIRECT', downloadToClient:false}] }, outbounds: [] }, 'XRAY_JSON', async()=>({id,kind:'geosite'}), async(_, categories)=>compileDat(fixture.geosite,'geosite',categories), undefined, delivery);
     const body = JSON.stringify([native]);
-    const header = await delivery.header(body, 'user');
+    const header = await delivery.header(body, 'user', clock + 1000);
     const inline = JSON.parse(Buffer.from(header.split('/onadd/')[1], 'base64'));
     assert.equal(inline.Name, remote.Name);
+    assert.ok(Number(inline.LastUpdated) > Number(remote.LastUpdated));
     assert.equal(inline.Geositeurl, '');
     assert.equal(inline.Geoipurl, '');
     assert.equal(delivery.intervalHours, 0);
@@ -58,7 +60,11 @@ test('turning INCY downloads off embeds rules and clears URLs on the same provid
     assert.equal(await new XrayGeofileDelivery('incy').header(body, 'other-user'), undefined, 'Unrelated configurations do not override client profiles');
     assert.equal(await delivery.header(JSON.stringify([{geodata:{custom:true}}]), 'user'), undefined, 'Manual geodata stays under operator control');
     const active = delivery.register('geosite', {id,categories:['example'],target:'DIRECT',downloadToClient:true}, async()=> 'https://sub.test/geosite.dat');
-    await delivery.header(JSON.stringify([{routing:{rules:[{domain:active}]}}]), 'user');
+    const enabledHeader = await delivery.header(JSON.stringify([{routing:{rules:[{domain:active}]}}]), 'user', clock + 2000);
+    const enabled = JSON.parse(Buffer.from(enabledHeader.split('/onadd/')[1], 'base64'));
+    assert.equal(enabled.Name, inline.Name);
+    assert.ok(Number(enabled.LastUpdated) > Number(inline.LastUpdated), 'INCY accepts the re-enabled profile in the same refresh window');
+    assert.equal(enabled.Geositeurl, remote.Geositeurl, 'Checksum URL stays stable across mode changes');
     assert.equal(delivery.inlineOnly, false, 'Re-enabling delivery resets inline mode');
     assert.ok(delivery.intervalHours > 0);
 });

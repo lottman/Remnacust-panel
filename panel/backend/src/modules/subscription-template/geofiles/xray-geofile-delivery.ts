@@ -32,6 +32,12 @@ export class XrayGeofileFallback extends ClientPoolError {
 // One collector belongs to one subscription response, never to a cached template.
 export class XrayGeofileDelivery {
     public intervalHours?: number;
+    public inlineOnly = false;
+    private containsInline = false;
+
+    public registerInline(): void {
+        this.containsInline = true;
+    }
 
     constructor(public readonly client: 'happ' | 'incy' = 'happ') {}
     private readonly references = new Map<
@@ -55,12 +61,37 @@ export class XrayGeofileDelivery {
         });
     }
 
+    private inlineHeader(profileKey: string, now: number): string | undefined {
+        if (this.client !== 'incy' || !this.containsInline) return undefined;
+        // Absence of a routing header leaves the previous provider profile on
+        // the device. Replace that profile's old URLs instead of disabling
+        // the client's routing feature or deleting unrelated profiles.
+        this.inlineOnly = true;
+        this.intervalHours = 0;
+        const profile = {
+            Name: `Remnacust ${createHash('sha256').update(profileKey).digest('hex').slice(0, 12)}`,
+            GlobalProxy: 'true',
+            Geoipurl: '',
+            Geositeurl: '',
+            DirectIp: [],
+            DirectSites: [],
+            BlockIp: [],
+            BlockSites: [],
+            ProxyIp: [],
+            ProxySites: [],
+            LastUpdated: String(Math.floor(now / 1000)),
+        };
+        return 'incy://routing/onadd/' + Buffer.from(JSON.stringify(profile)).toString('base64');
+    }
+
     public async header(
         subscription: string,
         profileKey: string,
         now = Date.now(),
     ): Promise<string | undefined> {
-        if (!this.references.size || !this.bundleUrl) return undefined;
+        this.inlineOnly = false;
+        this.intervalHours = undefined;
+        if ((!this.references.size || !this.bundleUrl) && !this.containsInline) return undefined;
         const used = new Set<string>();
         const configs = JSON.parse(subscription);
         if (!Array.isArray(configs)) throw new XrayGeofileFallback('configuration');
@@ -80,8 +111,9 @@ export class XrayGeofileDelivery {
                 for (const item of Object.values(value)) stack.push(item);
             }
         }
-        if (!used.size) return undefined;
+        if (!used.size) return existingGeodata ? undefined : this.inlineHeader(profileKey, now);
         if (existingGeodata) throw new XrayGeofileFallback('existing-geodata');
+        if (!this.bundleUrl) throw new XrayGeofileFallback('bundle');
         const selected = [...used].sort();
         const interval = Math.max(...selected.map((key) => this.references.get(key)!.interval));
         // Force one refresh when migrating from the longer v1 names in the same interval.

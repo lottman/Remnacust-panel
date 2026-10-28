@@ -56,7 +56,7 @@ fs.writeFileSync(
         }))
     )
 )
-fs.writeFileSync(path.join(output, 'openapi.json'), JSON.stringify(spec))
+fs.writeFileSync(path.join(output, 'openapi.json'), JSON.stringify(spec, null, 2) + '\n')
 const variableSource = fs.readFileSync(
     path.join(backend, 'src/common/utils/templates/template-variables.ts'),
     'utf8'

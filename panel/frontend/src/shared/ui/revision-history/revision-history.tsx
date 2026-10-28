@@ -11,12 +11,22 @@ import {
     Text,
     useMantineColorScheme
 } from '@mantine/core'
+import { useMediaQuery } from '@mantine/hooks'
 import { DiffEditor } from '@monaco-editor/react'
 import { useLayoutEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbArrowBackUp, TbRefresh } from 'react-icons/tb'
 
 import classes from './revision-history.module.css'
+
+const diffOptions: editor.IStandaloneDiffEditorConstructionOptions = {
+    readOnly: true,
+    originalEditable: false,
+    renderSideBySide: true,
+    useInlineViewWhenSpaceIsLimited: true,
+    automaticLayout: true,
+    renderOverviewRuler: false
+}
 
 export interface CodeRevision {
     uuid: string
@@ -52,6 +62,7 @@ export function RevisionHistory(props: Props) {
     } = props
     const { t, i18n } = useTranslation()
     const { colorScheme } = useMantineColorScheme()
+    const narrowEditor = useMediaQuery('(max-width: 48em)')
     const [selected, setSelected] = useState<string | null>(null)
     const [confirmation, setConfirmation] = useState<{
         uuid: string
@@ -60,6 +71,19 @@ export function RevisionHistory(props: Props) {
     } | null>(null)
     const revision = revisions.find((item) => item.uuid === selected) ?? revisions[0]
     const diffRef = useRef<editor.IStandaloneDiffEditor | null>(null)
+    useLayoutEffect(() => {
+        const frame = requestAnimationFrame(() =>
+            diffRef.current?.getModifiedEditor().updateOptions({
+                minimap: {
+                    enabled: !narrowEditor,
+                    renderCharacters: true,
+                    size: 'fit',
+                    maxColumn: 80
+                }
+            })
+        )
+        return () => cancelAnimationFrame(frame)
+    }, [narrowEditor])
     const comparisonVisible = !!revision && !isPending && !isError
     useLayoutEffect(
         () => () => {
@@ -137,15 +161,18 @@ export function RevisionHistory(props: Props) {
                             keepCurrentModifiedModel
                             onMount={(instance) => {
                                 diffRef.current = instance
+                                // Monaco deliberately disables minimaps while constructing
+                                // diff panes. Enable it on the actual modified editor.
+                                instance.getModifiedEditor().updateOptions({
+                                    minimap: {
+                                        enabled: !narrowEditor,
+                                        renderCharacters: true,
+                                        size: 'fit',
+                                        maxColumn: 80
+                                    }
+                                })
                             }}
-                            options={{
-                                readOnly: true,
-                                originalEditable: false,
-                                renderSideBySide: true,
-                                useInlineViewWhenSpaceIsLimited: true,
-                                automaticLayout: true,
-                                minimap: { enabled: false }
-                            }}
+                            options={diffOptions}
                         />
                     </Card>
                     {confirmed && (

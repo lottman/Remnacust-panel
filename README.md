@@ -1,5 +1,28 @@
 # Remnacust Panel
 
+## Где редактировать .env и Docker
+
+Один рабочий каталог на компонент, без дат и номеров:
+
+| Компонент | Окружение | Docker Compose |
+| --- | --- | --- |
+| Панель | `/opt/remnacust/panel/.env` | `/opt/remnacust/panel/docker-compose.yml` |
+| Нода | `/opt/remnacust/node/.env` | `/opt/remnacust/node/docker-compose.yml` |
+| Отдельная страница подписки | `/opt/remnacust/subscription-page/.env` | `/opt/remnacust/subscription-page/docker-compose.yml` |
+
+Для старой установки сначала выполните `cat /opt/remnacust/FILES.txt`: там указан активный каталог. Обновление переносит собственные старые каталоги с датами в постоянные пути. Отдельный перенос: `sudo remnacust normalize-layout --component panel` или `--component node`. Данные, секреты и тома сохраняются; контейнеры один раз пересоздаются с новыми путями. Неиспользуемые старые папки перемещаются в `backups/retired-layout`. Внешние каталоги, явно выбранные оператором, не переносятся автоматически.
+
+Пример для панели:
+
+```bash
+cd /opt/remnacust/panel
+nano .env
+docker compose config --quiet
+docker compose up -d --no-build --pull never
+```
+
+`restart` не перечитывает окружение. Для ноды и страницы сначала перейдите в их каталог. Не меняйте произвольно `APP_SECRET`, `SECRET_KEY` и учётные данные существующей БД. `.env` скрыт — используйте `ls -la`. `backups/`, `logs/`, `registry/` и `control/` — служебные данные, а не дополнительные рабочие копии.
+
 [Автовыбор при подключении и безопасные операции](docs/OPERATIONS.md).
 
 Панель управления пользователями, подписками и нодами Xray на основе Remnawave. Backend хранит данные в PostgreSQL, frontend предоставляет интерфейс и встроенное руководство. В этом репозитории также находится отдельная страница подписки.

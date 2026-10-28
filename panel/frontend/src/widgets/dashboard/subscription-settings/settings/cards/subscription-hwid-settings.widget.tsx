@@ -116,7 +116,7 @@ export const SubscriptionHwidSettingsWidget = (props: IProps) => {
                     </Stack>
                 </SettingsCardShared.Content>
 
-                <SettingsCardShared.Bottom>
+                <SettingsCardShared.Bottom sticky>
                     <Group justify="flex-end">
                         <Button
                             color="grape"

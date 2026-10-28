@@ -629,10 +629,10 @@ export class SubscriptionService {
             hosts: trace.hosts ?? [],
             bytes,
             contentType: response.contentType,
-            geofileDelivery: routing
-                ? 'downloadProfile'
-                : inlineFallback
-                  ? 'inlineFallback'
+            geofileDelivery: inlineFallback
+                ? 'inlineFallback'
+                : routing
+                  ? 'downloadProfile'
                   : 'inlineOrNative',
             config: includeConfig && bytes <= 2 * 1024 * 1024 ? response.body : null,
             configTooLarge: includeConfig && bytes > 2 * 1024 * 1024,

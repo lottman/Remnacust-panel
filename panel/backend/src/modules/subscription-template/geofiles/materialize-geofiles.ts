@@ -210,6 +210,7 @@ export async function materializeGeofiles(
                 yamlRules.push(`RULE-SET,${tag},${target}`);
             }
         } else if (file.kind === 'geoip' || file.kind === 'geosite') {
+            if (reference.downloadToClient === false) happ?.registerInline();
             const rules = await dat(file, reference.categories ?? []);
             inlineRecords += rules.ips.length + rules.domains.length;
             inlineBytes +=

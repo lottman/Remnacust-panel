@@ -726,9 +726,29 @@ html.panel-themed .mantine-Input-input:focus-within:not([data-error]) {
 }
 html.panel-themed .mantine-Switch-thumb {
     transition:
-        inset-inline-start var(--panel-motion-medium) var(--panel-motion-ease),
-        background-color var(--panel-motion-medium) ease,
-        border-color var(--panel-motion-medium) ease;
+        inset-inline-start 150ms ease,
+        background-color 150ms ease,
+        border-color 150ms ease;
+}
+/* Unlabelled tracks have fixed width: move the thumb without relaying out the form. */
+html.panel-themed .mantine-Switch-track[data-without-labels] {
+    --panel-switch-direction: 1;
+}
+html.panel-themed .mantine-Switch-track[data-without-labels]:dir(rtl) {
+    --panel-switch-direction: -1;
+}
+html.panel-themed .mantine-Switch-track[data-without-labels] > .mantine-Switch-thumb {
+    inset-inline-start: var(--switch-track-label-padding);
+    translate: 0 0;
+    transition: translate 150ms ease, background-color 150ms ease, border-color 150ms ease;
+}
+html.panel-themed .mantine-Switch-input:checked + .mantine-Switch-track[data-without-labels] > .mantine-Switch-thumb {
+    translate: calc(var(--panel-switch-direction) * (var(--switch-width) - var(--switch-thumb-size) - 2 * var(--switch-track-label-padding))) 0;
+}
+@media (prefers-reduced-motion: reduce) {
+    html.panel-themed :is(.mantine-Switch-thumb, .mantine-Switch-track) {
+        transition: none !important;
+    }
 }
 html.panel-themed :is(.mantine-Switch-track, .mantine-Checkbox-input) {
     transition:

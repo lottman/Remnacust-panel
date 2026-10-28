@@ -125,6 +125,9 @@ export class RenderTemplatesService {
                         srrContext.headersToApply = {
                             ...srrContext.headersToApply,
                             routing: header,
+                            ...(delivery?.inlineOnly
+                                ? { 'x-remnacust-geofiles-delivery': 'inline' }
+                                : {}),
                             ...(client === 'incy' &&
                             !Object.keys(configuredHeaders).some(
                                 (key) => key.toLowerCase() === 'routing-geo-update-interval',

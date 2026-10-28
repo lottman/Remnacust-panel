@@ -1,3 +1,20 @@
 .container {
     background: var(--panel-surface);
+    overflow: clip;
+}
+.footer {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    margin-top: var(--mantine-spacing-lg);
+    padding-block: var(--mantine-spacing-sm);
+    padding-bottom: max(var(--mantine-spacing-sm), env(safe-area-inset-bottom, 0px));
+    background: var(--panel-surface, var(--mantine-color-body));
+    border-top: 1px solid var(--panel-border, var(--mantine-color-default-border));
+    box-shadow: 0 -6px 12px color-mix(in srgb, var(--mantine-color-body) 65%, transparent);
+}
+@media (max-width: 40em) {
+    .footer button {
+        min-height: 44px;
+    }
 }

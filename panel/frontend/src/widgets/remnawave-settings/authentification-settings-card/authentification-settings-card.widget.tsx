@@ -523,7 +523,7 @@ export const AuthentificationSettingsCardWidget = (props: IProps) => {
                     </Accordion>
                 </SettingsCardShared.Content>
 
-                <SettingsCardShared.Bottom>
+                <SettingsCardShared.Bottom sticky>
                     <Group justify="flex-end">
                         <Button
                             color="teal"

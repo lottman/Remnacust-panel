@@ -194,7 +194,7 @@ export function SubscriptionTemplateEditorWidget(props: Props) {
                                 }
                             }}
                             path={`${getTemplateModelPath(template.templateType)}/${template.uuid}`}
-                            value={value}
+                            value={activeTab === 'code' ? value : deferredValue}
                             onChange={(next) => setDraft(next ?? '')}
                         />
                     </Paper>

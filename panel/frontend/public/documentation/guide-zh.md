@@ -1,5 +1,23 @@
 # Remnacust
 
+## .env、Docker 和数据的位置
+
+### 固定工作目录
+
+面板：/opt/remnacust/panel/.env 和 /opt/remnacust/panel/docker-compose.yml。节点：/opt/remnacust/node/.env 和 /opt/remnacust/node/docker-compose.yml。独立订阅页面：/opt/remnacust/subscription-page/.env 及同目录的 docker-compose.yml。不要在 /opt/remnacust 根目录另建 .env。每项服务只有一个不带日期后缀的工作目录。其他页面可选择明确的固定目录。用 ls -la 查看隐藏的 .env 文件。
+
+### 编辑并应用更改
+
+面板先运行 cd /opt/remnacust/panel，再运行 nano .env 或 nano docker-compose.yml。保存后用 docker compose config --quiet 验证，再用 docker compose up -d --no-build --pull never 应用。节点或页面应先进入各自目录。docker compose restart 不会重新读取环境变量；up -d 会重建受影响的容器，可能造成短暂连接中断。不要随意替换 APP_SECRET、SECRET_KEY 或现有数据库凭据，它们与已保存的数据及访问权限相关。
+
+### 旧版带日期目录
+
+先运行 cat /opt/remnacust/FILES.txt 查找活动目录及 Compose 文件。更新会把安装程序管理的旧 panel-<日期>-<编号>、node-<日期>-<编号> 移至固定的 panel、node 目录，并更新环境文件及绑定挂载路径。密钥、Docker 卷及停止状态保持不变，验证失败时回滚。可单独运行 remnacust normalize-layout --component panel 或 --component node。未使用的旧目录移至 backups/retired-layout。被其他容器使用的路径或明确选择的外部安装不会盲目迁移，其实际位置保留在 FILES.txt。
+
+### 其他文件和数据
+
+backups/ 保存备份及回滚历史，logs/ 保存操作日志，registry/ 保存活动安装记录，control/ 是面板更新的本地通道；它们不是额外的面板工作副本。PostgreSQL、缓存及备份数据可能位于 Docker 卷中。移动工作目录不会新建数据库或替换现有卷。根目录及服务目录中的 FILES.txt 列出实际使用的文件。迁移后数据和已保存的密钥保持不变。
+
 ## 入门
 
 ### 主要部分
@@ -690,7 +708,7 @@ Xray JSON、sing-box、Mihomo、Clash 和 Stash 均提供自动选择。sing-box
 
 ### INCY 地理文件校验
 
-INCY 获得不含查询参数的稳定 DAT URL。经过签名的文件选择位于路径中，在完整 URL 后添加 .sha256 即返回同一文件包的校验和。未更改的文件无需重新下载。routing-geo-update-interval 的单位为小时。独立部署的订阅页面应与面板一同更新。旧 URL 仍受支持。调度和网络错误重试取决于客户端版本；服务器不会开启隧道。官方协议：https://docs.incy.cc/routing/
+INCY 获得不含查询参数的稳定 DAT URL。经过签名的文件选择位于路径中，在完整 URL 后添加 .sha256 即返回同一文件包的校验和。未更改的文件无需重新下载。routing-geo-update-interval 的单位为小时。独立部署的订阅页面应与面板一同更新。关闭下载后，原有配置的地理文件 URL 将被清空，定期检查也会停用；内嵌规则仍保留在 JSON 中。旧 URL 仍受支持。调度和网络错误重试取决于客户端版本；服务器不会开启隧道。官方协议：https://docs.incy.cc/routing/
 
 ### 切换后的池成员范围
 

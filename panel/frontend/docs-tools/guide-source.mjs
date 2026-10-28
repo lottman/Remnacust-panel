@@ -46,7 +46,8 @@ export const categories = [
         zh: '设置与维护'
     }
 ]
-export const articles = []
+import { installationFilesGuide } from './installation-files-guide.mjs'
+export const articles = [installationFilesGuide]
 export const add = (id, category, ru, en, sources, route, resources, sections) =>
     articles.push({
         id,

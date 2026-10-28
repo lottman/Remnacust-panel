@@ -1,6 +1,7 @@
 // Public help covers operator workflows. Deployment notes and developer/API
 // implementation details must not reappear when the source catalogue grows.
 export const panelArticleIds = [
+    'installation-files',
     'architecture',
     'first-connection',
     'navigation',

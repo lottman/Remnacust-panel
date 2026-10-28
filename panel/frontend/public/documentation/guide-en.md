@@ -1,5 +1,23 @@
 # Remnacust
 
+## Where .env, Docker and data live
+
+### Permanent working directories
+
+Panel: /opt/remnacust/panel/.env and /opt/remnacust/panel/docker-compose.yml. Node: /opt/remnacust/node/.env and /opt/remnacust/node/docker-compose.yml. Standalone subscription page: /opt/remnacust/subscription-page/.env with docker-compose.yml beside it. Do not create another .env in /opt/remnacust itself. Each service has one working directory without a date suffix. Additional pages can use explicitly selected permanent directories. .env is hidden; use ls -la to list it.
+
+### Edit and apply changes
+
+For the panel, run cd /opt/remnacust/panel, then nano .env or nano docker-compose.yml. Save, validate with docker compose config --quiet, then apply with docker compose up -d --no-build --pull never. For a node or page, enter its directory first. docker compose restart does not reload environment variables; up -d recreates affected containers. Recreation may briefly interrupt connections. Do not arbitrarily replace APP_SECRET, SECRET_KEY or existing database credentials: they are tied to saved data and access.
+
+### Older date-suffixed installations
+
+Start with cat /opt/remnacust/FILES.txt to locate the active deployment and Compose file. Updates move owned legacy panel-<date>-<number> and node-<date>-<number> directories to permanent panel and node paths. Environment-file and bind-mount paths move with them; secrets, Docker volumes and stopped-service state are preserved. Failed verification rolls the move back. To relocate separately, run remnacust normalize-layout --component panel or --component node. Unused old directories go to backups/retired-layout. Paths used by another container and explicitly selected external deployments are not moved blindly; FILES.txt records their actual paths.
+
+### Other files and data
+
+backups/ holds backups and rollback history, logs/ operation logs, registry/ active deployment records, and control/ the local panel-update channel. These are not additional working panel copies. PostgreSQL, cache and backup data may live in Docker volumes. Moving the working directory does not create a new database or replace existing volumes. Root and service FILES.txt maps list the files actually in use. Data and saved secrets remain unchanged after relocation.
+
 ## Getting started
 
 ### Main sections
@@ -690,7 +708,7 @@ V2Fly DAT is supported. A full JSON subscription with a routing header is requir
 
 ### INCY geofile checks
 
-INCY receives stable DAT URLs without query parameters. The signed file selection is in the path, so appending .sha256 to the complete URL returns the checksum for the same bundle. Unchanged files can be checked without downloading them again. routing-geo-update-interval uses hours. Update a separately deployed subscription page together with the panel. Previously issued URLs remain supported. Scheduling and network-error retries depend on the client version; the server does not start the tunnel. Official protocol: https://docs.incy.cc/routing/
+INCY receives stable DAT URLs without query parameters. The signed file selection is in the path, so appending .sha256 to the complete URL returns the checksum for the same bundle. Unchanged files can be checked without downloading them again. routing-geo-update-interval uses hours. Update a separately deployed subscription page together with the panel. Turning downloads off replaces the old provider profile with empty geofile URLs and disables periodic checks; the JSON keeps the embedded rules. Previously issued URLs remain supported. Scheduling and network-error retries depend on the client version; the server does not start the tunnel. Official protocol: https://docs.incy.cc/routing/
 
 ### Pool membership after switching
 

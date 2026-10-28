@@ -4012,7 +4012,7 @@
         "already-attached": "已添加到模板",
         "delete-from-library": "从文件库删除",
         "delete-in-use": "已保存的模板正在使用此文件。请先从该模板移除引用并保存更改，然后从文件库删除。",
-        "download-to-client-xray-help": "关闭：内嵌规则。开启：在 Happ 或 INCY 中下载 DAT。必须使用 JSON 订阅：在订阅设置中开启“{{setting}}”，或使用以 /json 结尾的链接。保存模板后在应用中刷新订阅。",
+        "download-to-client-xray-help": "关闭：内嵌规则。开启：在 Happ 或 INCY 中下载 DAT。必须使用 JSON 订阅：在订阅设置中开启“{{setting}}”，或使用以 /json 结尾的链接。保存模板后在应用中刷新订阅。 关闭下载后，INCY 会更新同一 Remnacust 配置，清空地理文件 URL 并关闭定期检查，规则仍内嵌在 JSON 中。请保存模板并在应用中刷新订阅。",
         "json-delivery-title": "下载地理文件需要 JSON 订阅",
         "json-setting-loading": "正在检查全局 JSON 订阅设置…",
         "json-setting-enabled": "全局“{{setting}}”设置已开启。响应规则和外部组设置可能覆盖响应格式。",

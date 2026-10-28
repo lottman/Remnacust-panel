@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-28T14:44:37.664Z",
+  "generatedAt": "2026-10-28T15:54:51.223Z",
   "backendVersion": "1.1.7.58",
   "coreVersion": "1.1.11",
   "nodeVersion": "1.1.19",
@@ -54,7 +54,7 @@
   "upstreamCoreVersion": "26.10.21",
   "upstreamCoreCommit": "1b1647cd9ddf0abc34b981d4611fc03bcac1ca74",
   "upstreamCorePrerelease": true,
-  "articles": 56,
+  "articles": 57,
   "endpoints": 238,
   "apiTokenEndpoints": 211,
   "controls": 226,

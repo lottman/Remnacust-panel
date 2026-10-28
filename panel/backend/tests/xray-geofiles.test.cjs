@@ -39,6 +39,30 @@ const id = '00' + 'a'.repeat(32),
 const decode = (header) =>
     JSON.parse(Buffer.from(header.slice('happ://routing/onadd/'.length), 'base64').toString());
 
+test('turning INCY downloads off embeds rules and clears URLs on the same provider profile', async () => {
+    const previous = new XrayGeofileDelivery('incy');
+    const refs = previous.register('geosite', { id, categories: ['example'], target: 'DIRECT', downloadToClient: true }, async () => 'https://sub.test/geosite.dat');
+    const remote = JSON.parse(Buffer.from((await previous.header(JSON.stringify([{routing:{rules:[{domain:refs}]}}]), 'user')).split('/onadd/')[1], 'base64'));
+    const delivery = new XrayGeofileDelivery('incy');
+    const native = await materializeGeofiles({ remnacust: { geofiles: [{id, categories:['example'], target:'DIRECT', downloadToClient:false}] }, outbounds: [] }, 'XRAY_JSON', async()=>({id,kind:'geosite'}), async(_, categories)=>compileDat(fixture.geosite,'geosite',categories), undefined, delivery);
+    const body = JSON.stringify([native]);
+    const header = await delivery.header(body, 'user');
+    const inline = JSON.parse(Buffer.from(header.split('/onadd/')[1], 'base64'));
+    assert.equal(inline.Name, remote.Name);
+    assert.equal(inline.Geositeurl, '');
+    assert.equal(inline.Geoipurl, '');
+    assert.equal(delivery.intervalHours, 0);
+    assert.equal(delivery.inlineOnly, true);
+    assert.match(body, /example\.com/);
+    assert.doesNotMatch(body, /https:\/\/.*\.dat|geosite:r[a-f0-9]/);
+    assert.equal(await new XrayGeofileDelivery('incy').header(body, 'other-user'), undefined, 'Unrelated configurations do not override client profiles');
+    assert.equal(await delivery.header(JSON.stringify([{geodata:{custom:true}}]), 'user'), undefined, 'Manual geodata stays under operator control');
+    const active = delivery.register('geosite', {id,categories:['example'],target:'DIRECT',downloadToClient:true}, async()=> 'https://sub.test/geosite.dat');
+    await delivery.header(JSON.stringify([{routing:{rules:[{domain:active}]}}]), 'user');
+    assert.equal(delivery.inlineOnly, false, 'Re-enabling delivery resets inline mode');
+    assert.ok(delivery.intervalHours > 0);
+});
+
 test('DAT bundles namespace overlapping categories and preserve attributes, IPv6 and reverse-CIDR flags', () => {
     const second = fixture.bytes(
         1,

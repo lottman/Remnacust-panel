@@ -3419,7 +3419,20 @@
         "prefix-conflict-help": "请检查前缀是否唯一；相同名称会生成相同的出站标签。请为第二个池使用其他名称，例如 g-ru-secondary。上方显示池编号，代码路径索引从 0 开始。可以将配置保存为草稿。",
         "mode-help": "all 包含所有可用主机，由客户端策略在连接时选择。random 和 group 会在更新订阅时缩小池成员范围。",
         "pool-settings": "源设置：模式、可见性、前缀",
-        "balancer-settings": "策略设置：备用出站与池选择器"
+        "balancer-settings": "策略设置：备用出站与池选择器",
+        "recipients-title": "此自动选择的显示位置",
+        "recipients-help": "在此处选择的订阅主机上使用“{{name}}”。客户端可选择的服务器在上方配置。",
+        "recipient-host-placeholder": "选择订阅主机",
+        "recipient-tag-placeholder": "或选择主机标签",
+        "recipients-empty-help": "留空时不创建显式分配，使用模板的常规设置。",
+        "legacy-assignment-title": "关联现有分配",
+        "legacy-assignment-row": "主机和标签：{{count}}",
+        "servers-title": "可选服务器",
+        "behavior-title": "如何选择服务器",
+        "load-settings": "负载评估设置",
+        "pool-count": "符合当前筛选：{{count}}",
+        "pool-hosts-help": "客户端可选择的服务器。",
+        "priority-summary": "客户端按顺序选择首个可用服务器。切换仅影响新连接。"
     },
     "template-history": {
         "title": "历史",
@@ -4021,7 +4034,20 @@
         "open-subscription-settings": "在新标签页打开订阅设置",
         "happ-check-help": "保存此模板，并确认主机或外部组实际使用它。主机卡片中选择的模板优先。然后在 Happ 或 INCY 中刷新订阅。",
         "xray-download-help": "多个 DAT 合并时，每个来源的分类保持独立。DIRECT、拦截和组仍保留在 JSON 中。若下载与手动设置冲突或集合过大，应用将获得内嵌规则。",
-        "attached-count": "已关联文件：{{count}}"
+        "attached-count": "已关联文件：{{count}}",
+        "library-source": "文件库",
+        "library-settings": "文件和服务器更新",
+        "library-settings-help": "这些设置对使用此文件的所有模板生效。下方的分类、动作和客户端交付仅属于当前模板。",
+        "empty-title": "此模板尚无地理文件",
+        "empty-help": "从文件库选择规则集或上传文件。设置分类和动作后保存模板。",
+        "delivery-choice-xray": "关闭：将规则内嵌至 JSON。开启：向 Happ 和 INCY 提供 DAT，需要 JSON 订阅。",
+        "delivery-choice-help": "关闭：内嵌规则。开启：客户端通过链接下载规则集。",
+        "delivery-details": "兼容性和交付详情",
+        "upload-and-attach": "上传并关联",
+        "import-and-attach": "导入并关联",
+        "library-only-upload": "此文件格式不适用于当前模板。文件将保存至共享文件库，供兼容的模板使用。",
+        "attach-failed": "无法将文件关联至草稿。文件已保存在文件库中，请检查模板代码后重新关联。",
+        "configure-attached": "在此模板中配置"
     },
     "template-draft": {
         "warning": "模板警告",
@@ -4143,19 +4169,19 @@
         "resumeBlocked": "访问未启用：订阅已过期或流量额度已耗尽。"
     },
     "subscription-pages": {
-    "title": "订阅页面",
-    "loading": "正在加载页面",
-    "help": "管理此服务器上已注册的页面。更新保留设置，已停止的页面不会自动启动。",
-    "refresh": "刷新列表",
-    "unavailable": "管理功能需要同一服务器上的最新版安装程序及其本地控制服务。",
-    "failed": "操作未完成，请检查服务器上的页面私有日志。",
-    "empty": "没有已注册的页面。请使用 remnacust install-subscription-page 安装。",
-    "running": "运行中",
-    "stopped": "已停止",
-    "working": "正在执行操作…",
-    "start": "启动",
-    "stop": "停止",
-    "restart": "重启",
-    "upgrade": "更新"
-}
+        "title": "订阅页面",
+        "loading": "正在加载页面",
+        "help": "管理此服务器上已注册的页面。更新保留设置，已停止的页面不会自动启动。",
+        "refresh": "刷新列表",
+        "unavailable": "管理功能需要同一服务器上的最新版安装程序及其本地控制服务。",
+        "failed": "操作未完成，请检查服务器上的页面私有日志。",
+        "empty": "没有已注册的页面。请使用 remnacust install-subscription-page 安装。",
+        "running": "运行中",
+        "stopped": "已停止",
+        "working": "正在执行操作…",
+        "start": "启动",
+        "stop": "停止",
+        "restart": "重启",
+        "upgrade": "更新"
+    }
 }

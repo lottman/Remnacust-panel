@@ -4,8 +4,22 @@ const path = require('node:path')
 const load = require('../../backend/tests/load-typescript.cjs')
 const root = path.join(__dirname, '../src/widgets/dashboard/templates/subscription-template-editor')
 const { geofilePresets } = load(path.join(root, 'geofile-presets.ts'))
-const { geofileCatalog, compatibleGeofile } = load(path.join(root, 'geofile-library-model.ts'), {
+const { geofileCatalog, compatibleGeofile, attachLibraryGeofile } = load(path.join(root, 'geofile-library-model.ts'), {
     './geofile-presets': { geofilePresets }
+})
+
+test('completed uploads attach once to the latest draft and preserve current rules and edits', () => {
+    const file = { id: 'new', name: 'Sites', kind: 'geosite', size: 512 }
+    const current = { custom: 'edited while uploading', routing: { rules: [{ domain: ['domain:keep.test'], outboundTag: 'direct' }] }, remnacust: { geofiles: [{ id: 'old', categories: ['ru'], target: 'REJECT' }] } }
+    const text = attachLibraryGeofile(JSON.stringify(current), 'XRAY_JSON', file)
+    const next = JSON.parse(text)
+    assert.equal(next.custom, current.custom)
+    assert.deepEqual(next.routing, current.routing)
+    assert.deepEqual(next.remnacust.geofiles[0], current.remnacust.geofiles[0])
+    assert.deepEqual(next.remnacust.geofiles[1], { id: 'new', categories: [], target: 'DIRECT', downloadToClient: false, clientRefreshIntervalSeconds: 86400 })
+    assert.equal(attachLibraryGeofile(text, 'XRAY_JSON', file), text)
+    assert.throws(() => attachLibraryGeofile('{broken', 'XRAY_JSON', file))
+    assert.throws(() => attachLibraryGeofile('{}', 'XRAY_JSON', { ...file, kind: 'singbox-srs' }), /incompatible-geofile/)
 })
 
 test('one catalog exposes every uploaded file alongside built-in datasets', () => {

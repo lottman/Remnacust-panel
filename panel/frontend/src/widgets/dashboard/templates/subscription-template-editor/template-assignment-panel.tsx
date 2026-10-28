@@ -1,78 +1,126 @@
 import type { GetHostsCommand } from '@remnawave/backend-contract'
 
-import { ActionIcon, Alert, Button, Card, Group, MultiSelect, Select, Stack, Text, Title } from '@mantine/core'
-import { useMemo } from 'react'
+import { Alert, MultiSelect, Select, Stack, Text } from '@mantine/core'
 import { useTranslation } from 'react-i18next'
-import { TbPlus, TbTrash } from 'react-icons/tb'
 
-import { editTemplate, type JsonObject } from './autoselect-model'
+import { type JsonObject } from './autoselect-model'
 import styles from './autoselect-panel.module.css'
+import {
+    assignmentFor,
+    bindLegacyAssignment,
+    setAssignment,
+    templateAssignments
+} from './template-assignment-model'
 
 type Host = GetHostsCommand.Response['response'][number]
-type Assignment = { hosts?: string[]; tags?: string[]; balancerTag?: string }
+type Props = { text: string; config: JsonObject; hosts: Host[]; onChange: (value: string) => void }
+const withSaved = (options: Array<{ value: string; label: string }>, values: string[]) => [
+    ...options,
+    ...[...new Set(values)]
+        .filter((value) => !options.some((item) => item.value === value))
+        .map((value) => ({ value, label: value }))
+]
 
-export function TemplateAssignmentPanel({ text, config, hosts, onChange }: {
-    text: string
-    config: JsonObject
-    hosts: Host[]
-    onChange: (value: string) => void
-}) {
+export function TemplateAssignmentPanel({
+    text,
+    config,
+    hosts,
+    onChange,
+    balancerTag
+}: Props & { balancerTag: string }) {
     const { t } = useTranslation()
-    const assignments: Assignment[] = [
-        ...(config.remnawave?.assignments ?? []),
-        ...(config.remnawave?.assignTo ? [config.remnawave.assignTo] : [])
-    ]
-    const balancers = (config.routing?.balancers ?? []).map((item: JsonObject) => ({ value: item.tag, label: item.tag }))
-    const hostOptions = useMemo(() => hosts.map((host) => ({ value: host.uuid, label: `${host.remark} · ${host.address}:${host.port}` })), [hosts])
-    const tagOptions = useMemo(() => [...new Set(hosts.flatMap((host) => host.tags))].map((value) => ({ value, label: value })), [hosts])
-    const withSaved = (options: Array<{ value: string; label: string }>, values: string[]) => [
-        ...options,
-        ...values.filter((value) => !options.some((item) => item.value === value)).map((value) => ({ value, label: value }))
-    ]
-    const save = (next: Assignment[]) => {
-        let updated = editTemplate(text, ['remnawave', 'assignTo'], undefined)
-        updated = editTemplate(updated, ['remnawave', 'assignments'], next.length ? next : undefined)
-        onChange(updated)
-    }
-    const patch = (index: number, changes: Partial<Assignment>) => save(assignments.map((item, itemIndex) => itemIndex === index ? { ...item, ...changes } : item))
-    const available = balancers.filter((item: { value: string }) => !assignments.some((assignment) => assignment.balancerTag === item.value))
+    const assignment = assignmentFor(config, balancerTag)
+    const hostOptions = hosts.map((host) => ({
+        value: host.uuid,
+        label: `${host.remark} · ${host.address}:${host.port}`
+    }))
+    const tags = [...new Set(hosts.flatMap((host) => host.tags))].map((value) => ({
+        value,
+        label: value
+    }))
     return (
-        <Card withBorder p="md">
-            <Group justify="space-between" mb="md">
-                <div className={styles.sectionHeader}>
-                    <Title order={4}>{t('autoselect.assignments-title')}</Title>
-                    <Text size="sm" c="dimmed" mt={4}>{t('autoselect.assignments-help')}</Text>
-                </div>
-                <Button variant="light" leftSection={<TbPlus size={16} />} disabled={!available.length} onClick={() => save([...assignments, { balancerTag: available[0].value, hosts: [], tags: [] }])}>
-                    {t('autoselect.assign-hosts')}
-                </Button>
-            </Group>
-            <Stack gap="md">
-                {!assignments.length && <Text size="sm" c="dimmed">{t('autoselect.assignments-empty')}</Text>}
-                {assignments.map((assignment, index) => (
-                    <Stack key={index} gap="sm" className={styles.assignment}>
-                        <Group align="flex-end" wrap="nowrap">
+        <Stack gap="sm" className={styles.section}>
+            <div>
+                <Text fw={600}>{t('autoselect.recipients-title')}</Text>
+                <Text size="sm" c="dimmed" mt={4}>
+                    {t('autoselect.recipients-help', { name: balancerTag })}
+                </Text>
+            </div>
+            <div className={styles.fields}>
+                <MultiSelect
+                    searchable
+                    clearable
+                    limit={50}
+                    label={t('autoselect.assignment-hosts')}
+                    placeholder={t('autoselect.recipient-host-placeholder')}
+                    data={withSaved(hostOptions, assignment?.hosts ?? [])}
+                    value={assignment?.hosts ?? []}
+                    onChange={(value) => onChange(setAssignment(text, balancerTag, 'hosts', value))}
+                />
+                <MultiSelect
+                    searchable
+                    clearable
+                    limit={50}
+                    label={t('autoselect.assignment-tags')}
+                    placeholder={t('autoselect.recipient-tag-placeholder')}
+                    data={withSaved(tags, assignment?.tags ?? [])}
+                    value={assignment?.tags ?? []}
+                    onChange={(value) => onChange(setAssignment(text, balancerTag, 'tags', value))}
+                />
+            </div>
+            <Text size="xs" c="dimmed">
+                {t('autoselect.recipients-empty-help')}
+            </Text>
+        </Stack>
+    )
+}
+
+export function LegacyAssignments({ text, config, hosts, onChange }: Props) {
+    const { t } = useTranslation()
+    const rows = templateAssignments(config)
+    const available: JsonObject[] = (config.routing?.balancers ?? []).filter(
+        (balance: JsonObject) => typeof balance.tag === 'string' && balance.tag.length > 0
+    )
+    const unbound = (row: (typeof rows)[number]) =>
+        !available.some((balance: JsonObject) => balance.tag === row.balancerTag)
+    if (
+        !available.length ||
+        !rows.some(unbound) ||
+        (available.length === 1 && rows.length === 1 && !rows[0].balancerTag)
+    )
+        return null
+    return (
+        <Alert color="yellow" title={t('autoselect.legacy-assignment-title')}>
+            <Stack gap="sm">
+                <Text size="sm">{t('autoselect.legacy-assignment')}</Text>
+                {rows.map(
+                    (row, index) =>
+                        unbound(row) && (
                             <Select
-                                flex={1}
-                                label={t('autoselect.assigned-selection')}
+                                key={index}
+                                label={t('autoselect.legacy-assignment-row', {
+                                    count: (row.hosts?.length ?? 0) + (row.tags?.length ?? 0)
+                                })}
+                                description={[
+                                    ...(row.hosts ?? []).map(
+                                        (uuid) =>
+                                            hosts.find((host) => host.uuid === uuid)?.remark ?? uuid
+                                    ),
+                                    ...(row.tags ?? []).map((tag) => `#${tag}`)
+                                ].join(', ')}
                                 placeholder={t('autoselect.choose-selection')}
+                                value={null}
                                 searchable
-                                allowDeselect={false}
-                                data={withSaved(balancers.filter((item: { value: string }) => item.value === assignment.balancerTag || !assignments.some((other) => other.balancerTag === item.value)), assignment.balancerTag ? [assignment.balancerTag] : [])}
-                                value={assignment.balancerTag ?? null}
-                                onChange={(value) => value && patch(index, { balancerTag: value })}
+                                data={[
+                                    ...new Set(available.map((balance) => balance.tag as string))
+                                ].map((value) => ({ value, label: value }))}
+                                onChange={(value) =>
+                                    value && onChange(bindLegacyAssignment(text, index, value))
+                                }
                             />
-                            <ActionIcon variant="subtle" color="red" size="lg" aria-label={t('autoselect.remove-assignment')} onClick={() => save(assignments.filter((_, itemIndex) => itemIndex !== index))}><TbTrash size={18} /></ActionIcon>
-                        </Group>
-                        {!assignment.balancerTag && <Alert color="yellow">{t('autoselect.legacy-assignment')}</Alert>}
-                        <div className={styles.fields}>
-                            <MultiSelect searchable clearable limit={50} label={t('autoselect.assignment-hosts')} data={withSaved(hostOptions, assignment.hosts ?? [])} value={assignment.hosts ?? []} onChange={(value) => patch(index, { hosts: value })} />
-                            <MultiSelect searchable clearable limit={50} label={t('autoselect.assignment-tags')} data={withSaved(tagOptions, assignment.tags ?? [])} value={assignment.tags ?? []} onChange={(value) => patch(index, { tags: value })} />
-                        </div>
-                    </Stack>
-                ))}
-                {!!assignments.length && <Text size="xs" c="dimmed">{t('autoselect.assignment-priority')}</Text>}
+                        )
+                )}
             </Stack>
-        </Card>
+        </Alert>
     )
 }

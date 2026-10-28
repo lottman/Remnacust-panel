@@ -3419,7 +3419,20 @@
     "prefix-conflict-help": "Check that the prefix is unique: identical names produce identical outbound tags. Use another name for the second pool, such as g-ru-secondary. The pool number is shown above; code path indices start at 0. You can save the configuration as a draft.",
     "mode-help": "all includes every eligible host; the client strategy selects at connection time. random and group reduce membership when the subscription refreshes.",
     "pool-settings": "Source settings: mode, visibility, prefix",
-    "balancer-settings": "Strategy settings: fallback and pool selectors"
+    "balancer-settings": "Strategy settings: fallback and pool selectors",
+    "recipients-title": "Where this selection appears",
+    "recipients-help": "Use “{{name}}” on the subscription hosts selected here. The servers the client chooses between are configured above.",
+    "recipient-host-placeholder": "Choose subscription hosts",
+    "recipient-tag-placeholder": "Or choose host tags",
+    "recipients-empty-help": "Empty fields create no explicit assignment; normal template settings apply.",
+    "legacy-assignment-title": "Link an existing assignment",
+    "legacy-assignment-row": "Hosts and tags: {{count}}",
+    "servers-title": "Available servers",
+    "behavior-title": "How to choose a server",
+    "load-settings": "Load evaluation settings",
+    "pool-count": "Matching configured filters: {{count}}",
+    "pool-hosts-help": "Servers the client will choose between.",
+    "priority-summary": "The client uses the first available server in order. Switching affects new connections."
   },
   "template-history": {
     "title": "History",
@@ -4021,7 +4034,20 @@
     "open-subscription-settings": "Open subscription settings in a new tab",
     "happ-check-help": "Save this template and make sure the host or external squad uses it. A template selected in the host card takes priority. Then refresh the subscription in Happ or INCY.",
     "xray-download-help": "Multiple DAT files are bundled with separate categories for each source. DIRECT, blocking and groups remain in JSON. If downloads conflict with manual settings or the bundle is too large, the app receives inline rules.",
-    "attached-count": "Attached files: {{count}}"
+    "attached-count": "Attached files: {{count}}",
+    "library-source": "Library",
+    "library-settings": "File and server updates",
+    "library-settings-help": "These settings apply to every template using this file. Categories, action and client delivery below belong to this template.",
+    "empty-title": "No geofiles in this template yet",
+    "empty-help": "Choose a dataset from the library or upload a file. Configure its categories and action, then save the template.",
+    "delivery-choice-xray": "Off: rules embedded in JSON. On: DAT for Happ and INCY; requires a JSON subscription.",
+    "delivery-choice-help": "Off: embed rules. On: the client downloads the dataset from its URL.",
+    "delivery-details": "Compatibility and delivery details",
+    "upload-and-attach": "Upload and attach",
+    "import-and-attach": "Import and attach",
+    "library-only-upload": "This format does not match the current template. The file will be stored in the shared library for a compatible template.",
+    "attach-failed": "Could not attach the file to the draft. It is saved in the library; check the template code and attach it again.",
+    "configure-attached": "Configure in this template"
   },
   "template-draft": {
     "warning": "Template warnings",
@@ -4142,7 +4168,7 @@
     "help": "The lifetime and access are paused. The saved remainder resumes on activation. The date cannot be edited while frozen.",
     "resumeBlocked": "Access remains unavailable: the subscription expired or its traffic quota is exhausted."
   },
-    "subscription-pages": {
+  "subscription-pages": {
     "title": "Subscription pages",
     "loading": "Loading pages",
     "help": "Manage registered pages on this server. Updates preserve settings and stopped pages remain stopped.",
@@ -4157,5 +4183,5 @@
     "stop": "Stop",
     "restart": "Restart",
     "upgrade": "Update"
-}
+  }
 }

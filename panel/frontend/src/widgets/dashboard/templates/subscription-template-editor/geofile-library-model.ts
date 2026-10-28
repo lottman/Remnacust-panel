@@ -1,5 +1,4 @@
-import type { ClientFormat } from './client-template-model'
-
+import { editClientTemplate, readClientTemplate, type ClientFormat } from './client-template-model'
 import { geofilePresets } from './geofile-presets'
 
 export interface LibraryGeofile {
@@ -18,6 +17,34 @@ export function compatibleGeofile(kind: string, format: ClientFormat): boolean {
             : format !== 'XRAY_JSON' &&
               kind.startsWith('mihomo-') &&
               (format === 'MIHOMO' || !kind.startsWith('mihomo-text-')))
+    )
+}
+
+// Uploads finish asynchronously: attach to the current draft, not the draft
+// captured before the request, and preserve unrelated edits and references.
+export function attachLibraryGeofile(
+    text: string,
+    format: ClientFormat,
+    file: LibraryGeofile
+): string {
+    if (!compatibleGeofile(file.kind, format)) throw new Error('incompatible-geofile')
+    const current = readClientTemplate(text, format)
+    const refs = current.remnacust?.geofiles ?? []
+    if (refs.some((ref: { id: string }) => ref.id === file.id)) return text
+    return editClientTemplate(
+        text,
+        format,
+        ['remnacust', 'geofiles'],
+        [
+            ...refs,
+            {
+                id: file.id,
+                ...(['geoip', 'geosite'].includes(file.kind) ? { categories: [] } : {}),
+                target: 'DIRECT',
+                downloadToClient: file.kind === 'singbox-srs',
+                clientRefreshIntervalSeconds: 86400
+            }
+        ]
     )
 }
 

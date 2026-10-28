@@ -10,10 +10,7 @@
     box-shadow: 0 -6px 14px color-mix(in srgb, var(--mantine-color-body) 85%, transparent);
 }
 .tabsList {
-    position: sticky;
-    top: var(--app-shell-header-height, 60px);
-    z-index: 61;
-    background: var(--mantine-color-body);
+    position: static;
 }
 
 @media (max-width: 639px) {

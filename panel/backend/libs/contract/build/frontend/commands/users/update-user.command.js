@@ -14,7 +14,7 @@ var UpdateUserCommand;
         .object({
         username: zod_1.z.optional(zod_1.z.string().describe('Username of the user')),
         id: zod_1.z.optional(zod_1.z.number().describe('ID of the user')),
-        status: zod_1.z.enum([constants_1.USERS_STATUS.ACTIVE, constants_1.USERS_STATUS.DISABLED]).optional(),
+        status: zod_1.z.enum([constants_1.USERS_STATUS.ACTIVE, constants_1.USERS_STATUS.DISABLED, constants_1.USERS_STATUS.FROZEN]).optional(),
         trafficLimitBytes: zod_1.z
             .number()
             .min(0)

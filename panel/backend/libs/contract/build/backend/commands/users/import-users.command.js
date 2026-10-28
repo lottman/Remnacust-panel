@@ -17,6 +17,8 @@ var ImportUsersCommand;
             trafficLimitBytes: create_user_command_1.CreateUserCommand.RequestBodySchema.shape.trafficLimitBytes.nullish(),
             trafficLimitStrategy: create_user_command_1.CreateUserCommand.RequestBodySchema.shape.trafficLimitStrategy.nullish(),
             expireAt: zod_1.z.iso.datetime({ offset: true, local: true }).nullable(),
+            frozenRemainingMs: zod_1.z.number().int().min(0).max(253402300799000).nullish()
+                .describe('Remaining subscription lifetime for FROZEN exports; restored relative to import time.'),
             createdAt: zod_1.z.iso.datetime({ offset: true, local: true }).nullish(),
             hwidDeviceLimit: create_user_command_1.CreateUserCommand.RequestBodySchema.shape.hwidDeviceLimit.nullish(),
             tag: create_user_command_1.CreateUserCommand.RequestBodySchema.shape.tag.nullish(),

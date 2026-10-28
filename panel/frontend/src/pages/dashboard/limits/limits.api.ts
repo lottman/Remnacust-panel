@@ -45,6 +45,7 @@ export type LimitUser = {
     status: TUsersStatus
     onlineAt: string | null
     expireAt: string
+    frozenRemainingMs: number | null
     tag: string | null
     lastConnectedNode: { name: string; countryCode: string } | null
     usedBytes: string

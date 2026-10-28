@@ -2,27 +2,23 @@
 
 Autoselect separates two independent selections: **recipients** get a template; **pool members** are possible destinations. Neither selection grants a user access to another host. The Xray `all` pool delivers all eligible members, and its running balancer chooses destinations for new connections. `random` and `group` are legacy subscription-generation sampling modes. The connection-selection action converts them to `all` without changing the routing strategy. Native application formats use their own group behavior; a manual selector is not automatic.
 
-## Stable TCP entry
+## Assigning a specific autoselect
 
-In the template's Autoselect tab, expand **Stable entry**, select a gateway node, one subscription host and the ordered backend nodes assigned to that host. Set the same public port as the host, select priority / round robin / least connections, review the requirements and apply through the existing SSH terminal. Admin authentication, host-key verification and browser-held SSH credentials remain required.
+The Autoselect tab groups each selection with its source pools and strategy. **Where to use autoselect** binds recipient hosts or tags to a specific balancer using `remnawave.assignments: [{ balancerTag, hosts, tags }]`. Direct host matches take precedence over tag matches. The host card's explicit template retains priority, and its matching assignment selects the default balancer within that template. Domain rules, DIRECT and REJECT remain in place. Existing `remnawave.assignTo` remains readable; the UI asks which selection it belongs to when editing it.
 
-Before applying, point the host's stable DNS name at the gateway. Every backend must serve that **same host**, inbound and credentials. The server rechecks membership, active/applied ports and gateway port conflicts at apply time. Backend node DNS is resolved to an IP when applying; repeat the operation after node-address changes. The frontend does not change DNS records or save the template draft as a side effect.
+Pool errors identify the pool and a zero-based JSON path; clicking the path reveals the field in the code editor. Distinct prefixes such as `g` and `g-ru` are allowed. Identical prefixes and collisions with generated tags such as `g-2` must be corrected. Invalid code remains saveable as a draft and does not replace the active subscription.
 
-The verified installer creates only `/etc/remnacust-entry/haproxy.cfg` and the dedicated `remnacust-entry.service`. It parses the candidate before replacing the live file and restores the previous configuration if apply fails. Subsequent applies reload HAProxy; they do not restart Xray. A source IP guard on the backend must allow the gateway's actual egress IP.
+Xray leastLoad `tolerance` is a failed-probe fraction: 0.01 means 1%, and 1 means 100%. It is not the number of servers. Finite values outside that range follow Xray's clamp behavior and are saved with a warning.
 
-The client keeps the same host, address, port and keys. TCP health checks run every two seconds with two failures/successes to change health. Priority selects the first healthy backend; backup order follows the form. Existing connections are not migrated; graceful reload retains them until completion or the one-hour hard-stop limit. A reachable TCP port is not proof of successful VPN authentication. TLS/Reality terminates on the backend, so its certificate and keys must remain compatible with the public host. Backends see the gateway's IP; IP-based limits and source routing must account for that. UDP transports are not supported by this TCP entry.
+Source membership is refreshed with the subscription; the client chooses among delivered members for each new connection. The separate HAProxy stable-entry workflow and installer command have been removed. Existing user-managed infrastructure is not stopped by a source update.
 
-The standalone installer equivalent is:
+## Template copies and editing
 
-```sh
-bash installer.sh configure-entry-node --entry-config entry.json --yes
-```
+Every editable subscription format has **Duplicate template** in its card menu. Creation copies the active content, draft, tags and shared geofile references in one database operation. Recipient assignments are cleared in the copy. API callers need both create and read access to copy an existing template.
 
-```json
-{"listenPort":443,"strategy":"priority","backends":[{"address":"192.0.2.11","port":8443},{"address":"192.0.2.12","port":8443}]}
-```
+Changes are collapsed into one review panel. Autoselects open individually; connection probes and additional settings are grouped below them. Geofiles use a shared library and a separate upload section with computer/link sources. Save actions stay visible while scrolling.
 
-Reference: [HAProxy 2.8 configuration manual](https://docs.haproxy.org/2.8/configuration.html).
+The system update journal follows new events, including when the retained event window is full. Scrolling up pauses following until the reader returns to the bottom. A new update starts following again.
 
 ## Node source guard
 
@@ -48,11 +44,31 @@ The device preview accepts only an existing registered device and executes produ
 
 ## Validation
 
+### Backup inspection and template warnings
+
+Panel backup ZIP files use AES password protection. After extraction, `database.dump` is a compressed PostgreSQL custom-format dump (`pg_dump --format=custom`), without another encryption layer. To inspect SQL without restoring a database, use PostgreSQL tools of the same major version as the dump producer or newer:
+
+```sh
+pg_restore --list database.dump
+pg_restore --file=database.sql database.dump
+```
+
+The template editor preserves a finite numeric `leastLoad` tolerance in the saved template and subscription JSON. Xray clamps it internally when building the router settings; it does not rewrite the JSON. `0.01` means a 1% failed-probe threshold, `1` means 100%, and `0` disables this check. A saved value of `2` therefore remains `2` in the JSON while the core uses `1`. The editor warning explains that distinction.
+
+Snippet hover previews show the complete snippet JSON, including its array boundaries. Monaco's hover copy action copies that JSON without the introductory documentation or reference name. Ordinary schema documentation continues through the JSON language worker.
+
 Network tests run in isolated Linux network namespaces, without altering the host or production firewall:
 
 ```sh
 sudo python3 ../Remnacust-installer/tests/test_node_firewall.py --network
-sudo python3 ../Remnacust-installer/tests/test_stable_entry.py --network
 ```
 
-They exercise real nftables input/forward filtering, preserved SSH and outbound replies, and actual HAProxy connection selection, priority failover and graceful reload. Backend tests cover host membership, current TCP plans, source/port validation, shell injection, reviewed apply and read-only subscription preview. Redis tests cover leases, retries and stale ACKs.
+They exercise real nftables input/forward filtering, preserved SSH and outbound replies, and quota boundary transitions. Backend tests cover host membership, explicit balancer assignments, template copies, source/port validation, shell injection, reviewed apply and read-only subscription preview. Redis tests cover leases, retries and stale ACKs.
+
+# Frozen subscriptions
+
+Freeze a user to pause normal access and retain the exact remaining subscription lifetime. Activation resumes the saved remainder; an exhausted quota or zero remaining lifetime does not grant access. Extending a frozen subscription adds time, and editing its expiry sets the remainder from the time of that edit. Scheduled traffic resets still run. Bulk status changes synchronize device access through the per-user queue. The API reports `frozenAt`, `frozenRemainingMs`, and a projected `expireAt` for frozen users; export/import preserves the remaining duration. A periodic database rewrite is not required.
+
+## Quota tables
+
+The `xera_quota_*` tables hold quota budgets and reservations, node state, usage deliveries, and recovery evidence and decisions. Some are accessed by database functions rather than directly by application code. Do not remove them based only on the object list or an empty current row count: backups, reconciliation and an interrupted recovery may still need them. Consolidation requires a versioned migration, compatibility checks and a tested rollback. Freezing a subscription adds a column to `users`; it does not add another quota table.

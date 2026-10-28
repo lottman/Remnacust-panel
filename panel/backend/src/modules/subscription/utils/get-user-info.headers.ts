@@ -1,6 +1,7 @@
 import dayjs from 'dayjs';
 
 import { getNextTrafficResetAt } from '@common/utils';
+import { effectiveUserExpiry } from '@common/utils/frozen-user-lifetime';
 
 import { UserEntity } from '@modules/users/entities';
 
@@ -17,7 +18,7 @@ export function getSubscriptionUserInfo(user: UserEntity): SubscriptionUserInfo 
         download: Number(user.userTraffic.usedTrafficBytes),
         total: Number(user.trafficLimitBytes),
         // TODO: remove after XTLS Standards published
-        expire: user.expireAt.getFullYear() !== 2099 ? dayjs(user.expireAt).unix() : 0,
+        expire: user.expireAt.getFullYear() !== 2099 ? dayjs(effectiveUserExpiry(user)).unix() : 0,
     };
 }
 

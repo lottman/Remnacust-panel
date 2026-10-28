@@ -1,6 +1,7 @@
 import type { GetHostsCommand } from '@remnawave/backend-contract'
 
 import {
+    Accordion,
     Alert,
     TagsInput,
     Badge,
@@ -46,6 +47,7 @@ import styles from './autoselect-panel.module.css'
 import { defaultAutoselectSources, xrayPoolPreview } from './autoselect-sources'
 import { PriorityOrder } from './priority-order'
 import { TemplateChanges } from './template-changes'
+import { TemplateAssignmentPanel } from './template-assignment-panel'
 
 type Host = GetHostsCommand.Response['response'][number]
 type Option = { value: string; label: string }
@@ -137,7 +139,7 @@ function PoolCard({
                     </Button>
                 )}
             </Group>
-            <div className={styles.fields}>
+            <div>
                 <Select
                     label={t('autoselect.source')}
                     value={type}
@@ -183,54 +185,7 @@ function PoolCard({
                         })
                     }
                 />
-                <Select
-                    label={t('autoselect.mode')}
-                    value={mode}
-                    allowDeselect={false}
-                    data={(['all', 'random', 'group'] as const).map((value) => ({
-                        value,
-                        label: t(`autoselect.mode-${value}`)
-                    }))}
-                    onChange={(value) => value && selectMode(value)}
-                />
-                <Select
-                    label={t('autoselect.visibility')}
-                    value={pool.selectFrom ?? 'HIDDEN'}
-                    allowDeselect={false}
-                    data={(['ALL', 'HIDDEN', 'NOT_HIDDEN'] as const).map((value) => ({
-                        value,
-                        label: t(`autoselect.visibility-${value}`)
-                    }))}
-                    onChange={(value) => value && patch(['selectFrom'], value)}
-                />
-                <TextInput
-                    label={t('autoselect.prefix')}
-                    description={t('autoselect.prefix-help')}
-                    disabled={!!pool.useHostRemarkAsTag || !!pool.useHostTagAsTag}
-                    value={pool.tagPrefix ?? ''}
-                    onChange={(event) =>
-                        edit((text) => renamePoolPrefix(text, index, event.currentTarget.value))
-                    }
-                />
             </div>
-            <Alert color={mode === 'all' ? 'blue' : 'yellow'}>
-                <Text size="sm">
-                    {t(
-                        mode === 'all'
-                            ? 'autoselect.connection-help'
-                            : 'autoselect.subscription-selection-help'
-                    )}
-                </Text>
-                {mode !== 'all' && (
-                    <Button
-                        mt="sm"
-                        variant="light"
-                        onClick={() => edit((text) => selectOnConnection(text, index))}
-                    >
-                        {t('autoselect.select-on-connection')}
-                    </Button>
-                )}
-            </Alert>
             {(pool.useHostRemarkAsTag || pool.useHostTagAsTag) && (
                 <Alert color="blue">{t('autoselect.host-naming-help')}</Alert>
             )}
@@ -376,6 +331,59 @@ function PoolCard({
                     </Button>
                 </Alert>
             )}
+            <Accordion variant="contained"><Accordion.Item value="pool-settings">
+                <Accordion.Control>{t('autoselect.pool-settings')}</Accordion.Control>
+                <Accordion.Panel><Stack gap="md"><div className={styles.fields}>
+                <Select
+                    label={t('autoselect.mode')}
+                    value={mode}
+                    allowDeselect={false}
+                    data={(['all', 'random', 'group'] as const).map((value) => ({
+                        value,
+                        label: t(`autoselect.mode-${value}`)
+                    }))}
+                    onChange={(value) => value && selectMode(value)}
+                />
+                <Select
+                    label={t('autoselect.visibility')}
+                    value={pool.selectFrom ?? 'HIDDEN'}
+                    allowDeselect={false}
+                    data={(['ALL', 'HIDDEN', 'NOT_HIDDEN'] as const).map((value) => ({
+                        value,
+                        label: t(`autoselect.visibility-${value}`)
+                    }))}
+                    onChange={(value) => value && patch(['selectFrom'], value)}
+                />
+                <TextInput
+                    label={t('autoselect.prefix')}
+                    description={t('autoselect.prefix-help')}
+                    disabled={!!pool.useHostRemarkAsTag || !!pool.useHostTagAsTag}
+                    value={pool.tagPrefix ?? ''}
+                    onChange={(event) =>
+                        edit((text) => renamePoolPrefix(text, index, event.currentTarget.value))
+                    }
+                />
+                </div>
+            <Alert color={mode === 'all' ? 'blue' : 'yellow'}>
+                <Text size="sm">
+                    {t(
+                        mode === 'all'
+                            ? 'autoselect.connection-help'
+                            : 'autoselect.subscription-selection-help'
+                    )}
+                </Text>
+                {mode !== 'all' && (
+                    <Button
+                        mt="sm"
+                        variant="light"
+                        onClick={() => edit((text) => selectOnConnection(text, index))}
+                    >
+                        {t('autoselect.select-on-connection')}
+                    </Button>
+                )}
+            </Alert>
+                </Stack></Accordion.Panel>
+            </Accordion.Item></Accordion>
             {!hasBalancer && (
                 <Group mt="md">
                     <Button
@@ -430,15 +438,13 @@ function BalancerCard({
                     </Button>
                 )}
             </Group>
-            <TextInput
-                mb="md"
+            <div className={styles.fields}><TextInput
                 label={t('autoselect.balancer-name')}
                 value={balance.tag ?? ''}
                 onChange={(event) =>
                     edit((text) => renameBalancer(text, index, event.currentTarget.value))
                 }
             />
-            <div className={styles.fields}>
                 <Select
                     label={t('autoselect.strategy')}
                     value={strategy}
@@ -464,18 +470,6 @@ function BalancerCard({
                     }))}
                     onChange={(value) =>
                         value && edit((text) => setBalancerStrategy(text, index, value))
-                    }
-                />
-                <TextInput
-                    label={t('autoselect.fallback')}
-                    description={t(
-                        strategy === 'priority'
-                            ? 'autoselect.priority-fallback-help'
-                            : 'autoselect.fallback-help'
-                    )}
-                    value={balance.fallbackTag ?? ''}
-                    onChange={(event) =>
-                        patch(['fallbackTag'], event.currentTarget.value || undefined)
                     }
                 />
             </div>
@@ -554,6 +548,21 @@ function BalancerCard({
                     />
                 </Stack>
             )}
+            <Accordion variant="contained"><Accordion.Item value="balancer-settings">
+                <Accordion.Control>{t('autoselect.balancer-settings')}</Accordion.Control>
+                <Accordion.Panel><Stack gap="md">
+                <TextInput
+                    label={t('autoselect.fallback')}
+                    description={t(
+                        strategy === 'priority'
+                            ? 'autoselect.priority-fallback-help'
+                            : 'autoselect.fallback-help'
+                    )}
+                    value={balance.fallbackTag ?? ''}
+                    onChange={(event) =>
+                        patch(['fallbackTag'], event.currentTarget.value || undefined)
+                    }
+                />
             <MultiSelect
                 mt="md"
                 searchable
@@ -574,6 +583,8 @@ function BalancerCard({
             <Text mt="sm" size="xs" c="dimmed">
                 {t('autoselect.remove-balancer-help')}
             </Text>
+                </Stack></Accordion.Panel>
+            </Accordion.Item></Accordion>
         </Stack>
     )
 }
@@ -626,6 +637,7 @@ export function AutoselectPanel({
     ]
         .filter((value): value is string => typeof value === 'string')
         .map((value) => ({ value, label: value }))
+    const [openedGroups, setOpenedGroups] = useState<string[]>(['selection-0'])
     const deferredText = useDeferredValue(text)
     const changes = useMemo(() => {
         try {
@@ -658,7 +670,11 @@ export function AutoselectPanel({
                             leftSection={<TbPlus size={17} />}
                             onClick={() =>
                                 edit((text) =>
-                                    addPool(text, defaultAutoselectSources(hosts, 'XRAY_JSON'))
+                                    (() => {
+                                        const next = addPool(text, defaultAutoselectSources(hosts, 'XRAY_JSON'))
+                                        setOpenedGroups((opened) => [...opened, `selection-${groups.length}`])
+                                        return next
+                                    })()
                                 )
                             }
                         >
@@ -689,15 +705,17 @@ export function AutoselectPanel({
                         </Stack>
                     </Card>
                 )}
+                <Accordion multiple value={openedGroups} onChange={setOpenedGroups} variant="contained">
                 {groups.map((group, groupIndex) => (
-                    <Card key={groupIndex} withBorder p="md" className={styles.card}>
-                        <Group justify="space-between" gap="sm" mb="md">
-                            <Title order={4}>
-                                {t('autoselect.title')} ·{' '}
-                                {balancers[group.balancers[0]]?.tag ??
-                                    pools[group.pools[0]]?.tagPrefix ??
-                                    groupIndex + 1}
-                            </Title>
+                    <Accordion.Item key={groupIndex} value={`selection-${groupIndex}`}>
+                        <Accordion.Control>
+                            <Group justify="space-between" gap="sm" wrap="wrap">
+                                <Text fw={600}>{balancers[group.balancers[0]]?.tag ?? pools[group.pools[0]]?.tagPrefix ?? `${t('autoselect.pool')} ${groupIndex + 1}`}</Text>
+                                <Badge variant="light">{t('autoselect.source-pools', { count: group.pools.length })}</Badge>
+                            </Group>
+                        </Accordion.Control>
+                        <Accordion.Panel>
+                        <Group justify="flex-end" gap="sm" mb="md">
                             <Button
                                 color="red"
                                 variant="subtle"
@@ -737,9 +755,13 @@ export function AutoselectPanel({
                                 />
                             ))}
                         </Stack>
-                    </Card>
+                        </Accordion.Panel>
+                    </Accordion.Item>
                 ))}
+                </Accordion>
+                {groups.length > 0 && <TemplateAssignmentPanel text={text} config={config} hosts={hosts} onChange={onChange} />}
                 {pools.length > 0 && <Alert variant="light">{t('autoselect.access-help')}</Alert>}
+                <Accordion variant="contained"><Accordion.Item value="advanced"><Accordion.Control>{t('autoselect.advanced')}</Accordion.Control><Accordion.Panel><Stack gap="md">
                 {(config.observatory || config.burstObservatory) &&
                     !balancers.some((balance) => needsProbes(balance.strategy?.type)) && (
                         <Alert>
@@ -825,6 +847,7 @@ export function AutoselectPanel({
                         }
                     />
                 </Card>
+                </Stack></Accordion.Panel></Accordion.Item></Accordion>
             </Stack>
             <TemplateChanges changes={changes} />
         </div>

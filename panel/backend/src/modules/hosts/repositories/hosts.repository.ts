@@ -320,12 +320,19 @@ export class HostsRepository implements ICrud<HostsEntity> {
             .execute();
     }
 
-    public async getAssignedXrayTemplates(): Promise<Array<{ uuid: string; templateJson: object | null }>> {
-        const result = await this.qb.kysely.selectFrom('subscriptionTemplates')
+    public async getAssignedXrayTemplates(): Promise<
+        Array<{ uuid: string; templateJson: object | null }>
+    > {
+        const result = await this.qb.kysely
+            .selectFrom('subscriptionTemplates')
             .select(['uuid', 'templateJson'])
             .where('templateType', '=', 'XRAY_JSON')
-            .where(sql<boolean>`template_json->'remnawave'->'assignTo' IS NOT NULL`)
-            .orderBy('viewPosition', 'asc').orderBy('uuid', 'asc').execute();
+            .where(
+                sql<boolean>`(template_json->'remnawave'->'assignTo' IS NOT NULL OR template_json->'remnawave'->'assignments' IS NOT NULL)`,
+            )
+            .orderBy('viewPosition', 'asc')
+            .orderBy('uuid', 'asc')
+            .execute();
         return result as Array<{ uuid: string; templateJson: object | null }>;
     }
 

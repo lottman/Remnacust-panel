@@ -144,6 +144,11 @@ export declare const ERRORS: {
         readonly message: "User already disabled";
         readonly httpCode: 400;
     };
+    readonly USER_FROZEN_NEEDS_RESUME: {
+        readonly code: "A901";
+        readonly message: "Resume the frozen user before disabling";
+        readonly httpCode: 409;
+    };
     readonly USER_ALREADY_ENABLED: {
         readonly code: "A030";
         readonly message: "User already enabled";

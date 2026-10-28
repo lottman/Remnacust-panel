@@ -2,6 +2,7 @@ import { Badge, BadgeProps } from '@mantine/core'
 import { TUsersStatus, USERS_STATUS } from '@remnawave/backend-contract'
 import { useTranslation } from 'react-i18next'
 import { PiClockCountdown, PiClockUser, PiProhibit, PiPulse } from 'react-icons/pi'
+import { TbSnowflake } from 'react-icons/tb'
 
 interface IProps extends Omit<BadgeProps, 'children' | 'color'> {
     status: TUsersStatus
@@ -13,11 +14,16 @@ export function UserStatusBadge({ status, ...props }: IProps) {
         ACTIVE: t('user-status.active'),
         DISABLED: t('user-status.disabled'),
         EXPIRED: t('user-status.expired'),
-        LIMITED: t('user-status.limited')
+        LIMITED: t('user-status.limited'),
+        FROZEN: t('user-status.frozen')
     }
     let icon: React.ReactNode
     let color: BadgeProps['color'] = 'gray'
     switch (status) {
+        case USERS_STATUS.FROZEN:
+            icon = <TbSnowflake size={18} />
+            color = 'blue'
+            break
         case USERS_STATUS.ACTIVE:
             icon = <PiPulse size={18} />
             color = 'teal'

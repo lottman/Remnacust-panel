@@ -9,6 +9,7 @@ export declare namespace UpdateUserCommand {
         status: z.ZodOptional<z.ZodEnum<{
             DISABLED: "DISABLED";
             ACTIVE: "ACTIVE";
+            FROZEN: "FROZEN";
         }>>;
         trafficLimitBytes: z.ZodOptional<z.ZodNumber>;
         trafficLimitStrategy: z.ZodOptional<z.ZodEnum<{
@@ -35,6 +36,7 @@ export declare namespace UpdateUserCommand {
             status: z.ZodEnum<{
                 readonly ACTIVE: "ACTIVE";
                 readonly DISABLED: "DISABLED";
+                readonly FROZEN: "FROZEN";
                 readonly LIMITED: "LIMITED";
                 readonly EXPIRED: "EXPIRED";
             }>;
@@ -47,6 +49,8 @@ export declare namespace UpdateUserCommand {
                 readonly MONTH_ROLLING: "MONTH_ROLLING";
             }>;
             expireAt: z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>;
+            frozenAt: z.ZodOptional<z.ZodNullable<z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>>>;
+            frozenRemainingMs: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
             telegramId: z.ZodNullable<z.ZodNumber>;
             email: z.ZodNullable<z.ZodEmail>;
             description: z.ZodNullable<z.ZodString>;

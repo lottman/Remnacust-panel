@@ -5,7 +5,7 @@ const { z } = require('zod');
 const load = require('./load-typescript.cjs');
 const root = path.join(__dirname, '..');
 const constants = {
-    USERS_STATUS: { ACTIVE: 'ACTIVE', DISABLED: 'DISABLED', EXPIRED: 'EXPIRED', LIMITED: 'LIMITED' },
+    USERS_STATUS: { ACTIVE: 'ACTIVE', DISABLED: 'DISABLED', EXPIRED: 'EXPIRED', LIMITED: 'LIMITED', FROZEN: 'FROZEN' },
     RESET_PERIODS: { NO_RESET: 'NO_RESET', DAY: 'DAY', WEEK: 'WEEK', MONTH: 'MONTH', MONTH_ROLLING: 'MONTH_ROLLING' },
     getEndpointDetails: () => ({}),
     ERRORS: { INTERNAL_SERVER_ERROR: {}, USER_USERNAME_ALREADY_EXISTS: { code: 'duplicate' }, USER_SHORT_UUID_ALREADY_EXISTS: { code: 'short-duplicate' } },
@@ -26,6 +26,7 @@ const { BaseUserEntity } = load(path.join(root, 'src/modules/users/entities/base
 });
 constants.EVENTS = { USER: { MODIFIED: 'user.modified' } };
 const mocks = {
+    '@common/utils/frozen-user-lifetime': load(path.join(root, 'src/common/utils/frozen-user-lifetime.ts')),
     '@common/config/app-config': {}, '@common/utils/xera-crypto': crypto,
     '@common/types': { ok: value => ({ isOk: true, response: value }), fail: error => ({ isOk: false, error }) },
     '@common/utils': {
@@ -34,7 +35,7 @@ const mocks = {
     }, '@libs/contracts/constants': constants,
     '@integration-modules/notifications/interfaces': { UserEvent: class { constructor(value) { Object.assign(this, value); } } },
     '@modules/nodes/events/add-user-to-node': {}, '@modules/nodes/events/add-users-to-node': {},
-    '@modules/nodes/events/remove-user-from-node': {}, '@modules/nodes/events/remove-users-from-node': {},
+    '@modules/nodes/events/remove-user-from-node': { RemoveUserFromNodeEvent: class {} }, '@modules/nodes/events/remove-users-from-node': {},
     '@modules/hwid-user-devices/device-access.service': {},
     '@modules/hwid-user-devices/queries/get-user-devices.query': {},
     '@modules/user-subscription-request-history/queries/get-user-subscription-request-history': {},
@@ -55,6 +56,19 @@ const record = {
     expireAt: new Date('2030-01-01T00:00:00Z'), createdAt: new Date('2026-01-01T00:00:00Z'),
     hwidDeviceLimit: null, tag: null, description: null, email: null, telegramId: null,
 };
+
+test('repeated explicit freeze retries failed device access synchronization', async () => {
+    const service = makeService();
+    const frozen = { ...record, status: 'FROZEN', frozenAt: new Date(), activeInternalSquads: [] };
+    service.userRepository = { findUniqueByCriteria: async () => frozen, update: async () => frozen };
+    service.eventBus = { publish() {} };
+    service.eventEmitter = { emit() {} };
+    let attempts = 0;
+    service.deviceAccess = { synchronizeUserStatus: async () => ++attempts > 1 };
+    assert.equal((await service.updateUser({ id: 1, status: 'FROZEN' })).isOk, false);
+    assert.equal((await service.updateUser({ id: 1, status: 'FROZEN' })).isOk, true);
+    assert.equal(attempts, 2);
+});
 
 test('updating client credentials writes a valid UUID and upstream-compatible passwords', async () => {
     const service = makeService();

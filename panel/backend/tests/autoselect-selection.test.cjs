@@ -5,7 +5,7 @@ const load = require('./load-typescript.cjs');
 const path = require('node:path');
 const { selectInjectHosts } = source('modules/subscription-template/generators/inject-host-selection.ts');
 const { InjectHostsEntrySchema, RemnawaveInjectorSchema } = load(path.join(__dirname, '../libs/contract/models/xray-json-advanced/remnawave-injector.schema.ts'));
-const { indexXrayTemplateAssignments, assignedXrayTemplate } = source('modules/hosts/utils/xray-template-assignments.ts');
+const { indexXrayTemplateAssignments, assignedXrayTemplate, recipientXrayTemplate } = source('modules/hosts/utils/xray-template-assignments.ts');
 const { XrayJsonGeneratorService } = source('modules/subscription-template/generators/xray-json.generator.service.ts', {
     './inject-host-selection': { selectInjectHosts }, '../host-mapper': { applyHostMapper: value => value },
     '@common/utils/bounded-regex': { configuredRegex: { test: async (pattern,value) => new RegExp(pattern).test(value) } },
@@ -17,6 +17,29 @@ const host = (n, tags = ['LTE']) => ({ protocol: 'vless', address: `${n}.example
     streamOverrides: {}, mux: {}, finalRemark: String(n), metadata: { uuid: id(n), tags, isHidden: n !== 0, excludeFromSubscriptionTypes: [] }, clientOverrides: { mapper: { xrayJson: null } } });
 const candidates = [host(1, ['LTE', 'VK']), host(2, ['LTE', 'YC']), host(3, ['LTE2']), host(4, ['LTE'])];
 const pool = { selector: { type: 'uuids', values: candidates.map(h => h.metadata.uuid), expected: 2 }, mode: 'random', tagPrefix: 'g' };
+test('host recipients bind to a specific balancer in automatic and explicit-template assignment', async () => {
+    const template = { outbounds: [{tag:'direct',protocol:'freedom'}],
+        remnawave: { injectHosts: [{...pool,mode:'all'}], assignments: [
+            { balancerTag:'fast',tags:['LTE'] }, {balancerTag:'reserve',hosts:[id(2)]}
+        ] },
+        routing: { balancers: [{tag:'fast',selector:['g'],strategy:{type:'random'}},{tag:'reserve',selector:['g'],strategy:{type:'roundRobin'}}],
+            rules: [{type:'field',domain:['geosite:private'],outboundTag:'direct'},{type:'field',network:'tcp,udp',balancerTag:'fast'}] }
+    };
+    const original = structuredClone(template);
+    const index = indexXrayTemplateAssignments([{uuid:id(9),templateJson:template}]);
+    for (const recipient of [{uuid:id(1),tags:['LTE']},{uuid:id(2),tags:['LTE']}]) {
+        const selected = assignedXrayTemplate(recipient,index);
+        assert.deepEqual(recipientXrayTemplate(recipient,template),selected);
+        assert.equal(selected.routing.rules[0].outboundTag,'direct');
+        assert.equal(selected.routing.rules[1].balancerTag,recipient.uuid===id(2)?'reserve':'fast');
+        const generator = new XrayJsonGeneratorService({getCachedTemplateByType:async()=>selected});
+        const [generated] = JSON.parse(await generator.generateConfig({hosts:[host(0),...candidates],isExtendedClient:false}));
+        assert.equal(generated.routing.rules[1].balancerTag,selected.routing.rules[1].balancerTag);
+        assert.equal(generated.remnawave,undefined);
+    }
+    assert.deepEqual(template,original);
+    assert.equal(assignedXrayTemplate({uuid:id(10),tags:[]},index),null);
+});
 test('legacy default, exact tag expansion and random sampling preserve unique eligible hosts', () => {
     assert.equal(InjectHostsEntrySchema.safeParse({ selector: { type: 'uuids', values: [id(1)] }, tagPrefix: 'g' }).success, true);
     const tagged = { ...pool, selector: { type: 'tags', values: ['LTE', 'VK'], expected: 2 } };

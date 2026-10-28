@@ -6,6 +6,7 @@ import { formatDate } from '@shared/utils/config-parser'
 import { useTranslation } from '@shared/hooks'
 
 import classes from './subscription-info-cards.module.css'
+import { frozenSubscription } from './frozen-subscription'
 
 type ColorVariant = 'blue' | 'cyan' | 'green' | 'orange' | 'red' | 'teal' | 'violet' | 'yellow'
 
@@ -70,9 +71,10 @@ export const SubscriptionInfoCardsWidget = ({ isMobile: _ }: IProps) => {
     const subscription = useSubscription()
 
     const { user } = subscription
+    const frozen = frozenSubscription(user, currentLang)
 
     const isActive = user.userStatus === 'ACTIVE'
-    const statusText = isActive ? t(baseTranslations.active) : t(baseTranslations.inactive)
+    const statusText = frozen?.status ?? (isActive ? t(baseTranslations.active) : t(baseTranslations.inactive))
 
     const bandwidthValue =
         user.trafficLimit === '0'
@@ -99,7 +101,7 @@ export const SubscriptionInfoCardsWidget = ({ isMobile: _ }: IProps) => {
                 color="orange"
                 icon={<IconCalendar size={18} />}
                 label={t(baseTranslations.expires)}
-                value={formatDate(user.expiresAt, currentLang, baseTranslations)}
+                value={frozen?.remaining ?? formatDate(user.expiresAt, currentLang, baseTranslations)}
             />
 
             <CardItem

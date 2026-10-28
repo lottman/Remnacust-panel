@@ -15,6 +15,7 @@ export declare namespace ImportUsersCommand {
             status: z.ZodOptional<z.ZodNullable<z.ZodOptional<z.ZodDefault<z.ZodEnum<{
                 readonly ACTIVE: "ACTIVE";
                 readonly DISABLED: "DISABLED";
+                readonly FROZEN: "FROZEN";
                 readonly LIMITED: "LIMITED";
                 readonly EXPIRED: "EXPIRED";
             }>>>>>;
@@ -27,6 +28,7 @@ export declare namespace ImportUsersCommand {
                 readonly MONTH_ROLLING: "MONTH_ROLLING";
             }>>>>>;
             expireAt: z.ZodNullable<z.ZodISODateTime>;
+            frozenRemainingMs: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
             createdAt: z.ZodOptional<z.ZodNullable<z.ZodISODateTime>>;
             hwidDeviceLimit: z.ZodOptional<z.ZodNullable<z.ZodOptional<z.ZodInt>>>;
             tag: z.ZodOptional<z.ZodNullable<z.ZodOptional<z.ZodNullable<z.ZodString>>>>;

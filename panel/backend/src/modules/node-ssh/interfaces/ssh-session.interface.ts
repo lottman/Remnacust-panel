@@ -1,7 +1,4 @@
 export interface ISshSessionOptions {
-    prepareStableEntry?: (
-        input: NonNullable<import('../ssh/node-upgrade').NodeUpgradeRequest['entry']>,
-    ) => Promise<import('../ssh/node-upgrade').StableEntryContext>;
     prepareNodeInstall?: () => Promise<import('../ssh/node-upgrade').NodeInstallContext>;
     onNodeOperation?: (id: string, running: boolean) => Promise<void>;
     authorizeNodeUpgrade?: () => Promise<void>;

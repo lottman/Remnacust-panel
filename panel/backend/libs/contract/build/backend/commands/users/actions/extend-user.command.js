@@ -10,7 +10,7 @@ var ExtendUserCommand;
 (function (ExtendUserCommand) {
     ExtendUserCommand.url = api_1.REST_API.USERS.ACTIONS.EXTEND_EXPIRATION_DATE;
     ExtendUserCommand.TSQ_url = ExtendUserCommand.url(':userId');
-    ExtendUserCommand.endpointDetails = (0, constants_1.getEndpointDetails)(api_1.USERS_ROUTES.ACTIONS.EXTEND_EXPIRATION_DATE(':userId'), 'post', 'Extend user expiration date', { scope: 'extend', kind: 'write' }, 'If user status is EXPIRED, the new expiration date is calculated from the current date and the user becomes ACTIVE. If user status is ACTIVE, the given number of days is added to the existing expiration date. DISABLED and LIMITED users will be extended, but their status will not change.');
+    ExtendUserCommand.endpointDetails = (0, constants_1.getEndpointDetails)(api_1.USERS_ROUTES.ACTIONS.EXTEND_EXPIRATION_DATE(':userId'), 'post', 'Extend user expiration date', { scope: 'extend', kind: 'write' }, 'EXPIRED users are extended from the current date and become ACTIVE. FROZEN users retain their paused status and the added days increase their remaining lifetime. ACTIVE, DISABLED and LIMITED users are extended without changing status.');
     ExtendUserCommand.RequestParamSchema = zod_1.z.object({
         userId: models_1.numberParamSchema,
     });

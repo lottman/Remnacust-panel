@@ -1,7 +1,16 @@
 import { CONTROLLERS_INFO, SUBSCRIPTION_TEMPLATE_CONTROLLER } from '@contract/api';
 import { ROLE } from '@contract/constants';
 
-import { Body, Controller, HttpStatus, Param, UseFilters, UseGuards } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    ForbiddenException,
+    HttpStatus,
+    Param,
+    Req,
+    UseFilters,
+    UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 import { Endpoint } from '@common/decorators/base-endpoint';
@@ -25,6 +34,13 @@ import {
     GetSubscriptionTemplatesTagsCommand,
     SetSubscriptionTemplateTagsCommand,
 } from '@libs/contracts/commands';
+import {
+    buildActionScope,
+    buildEndpointScope,
+    buildResourceScope,
+} from '@libs/contracts/constants';
+
+import type { IJWTAuthPayload } from '@modules/auth/interfaces';
 
 import {
     GetSubscriptionTemplatesTagsResponseDto,
@@ -164,10 +180,29 @@ export class SubscriptionTemplateController {
     })
     async createTemplate(
         @Body() body: CreateSubscriptionTemplateBodyDto,
+        @Req() request: { user: IJWTAuthPayload },
     ): Promise<CreateSubscriptionTemplateResponseDto> {
+        if (body.sourceUuid && request.user.role === ROLE.API) {
+            const resource = CONTROLLERS_INFO.SUBSCRIPTION_TEMPLATE.resource;
+            if (
+                !request.user.scopes?.some((scope) =>
+                    [
+                        '*',
+                        buildResourceScope(resource),
+                        buildActionScope(resource, 'read'),
+                        buildEndpointScope(
+                            resource,
+                            GetSubscriptionTemplateCommand.endpointDetails.SCOPE!,
+                        ),
+                    ].includes(scope),
+                )
+            )
+                throw new ForbiddenException();
+        }
         const result = await this.subscriptionTemplateService.createTemplate(
             body.name,
             body.templateType,
+            body.sourceUuid,
         );
 
         const data = errorHandler(result);

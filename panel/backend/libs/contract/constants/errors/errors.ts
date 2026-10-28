@@ -121,6 +121,11 @@ export const ERRORS = {
         message: 'User already disabled',
         httpCode: 400,
     },
+    USER_FROZEN_NEEDS_RESUME: {
+        code: 'A901',
+        message: 'Resume the frozen user before disabling',
+        httpCode: 409,
+    },
     USER_ALREADY_ENABLED: {
         code: 'A030',
         message: 'User already enabled',

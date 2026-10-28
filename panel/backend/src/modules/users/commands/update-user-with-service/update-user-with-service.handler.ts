@@ -13,14 +13,15 @@ export class UpdateUserWithServiceHandler implements ICommandHandler<UpdateUserW
 
     async execute(command: UpdateUserWithServiceCommand) {
         try {
-            await this.usersService.updateUser({
+            const result = await this.usersService.updateUser({
                 ...command.dto,
             });
+            if (!result.isOk) throw new Error('User update or access synchronization failed');
 
             return;
         } catch (error: unknown) {
             this.logger.error(error);
-            return;
+            throw error;
         }
     }
 }

@@ -74,6 +74,7 @@ export class UsersModifyManyQueueProcessor extends WorkerHost {
                 new UpdateUserWithServiceCommand({
                     id: userId,
                     ...fields,
+                    expireAt: fields.expireAt ? new Date(fields.expireAt) : undefined,
                     trafficLimitBytes:
                         fields.trafficLimitBytes !== undefined
                             ? Number(fields.trafficLimitBytes)
@@ -95,6 +96,7 @@ export class UsersModifyManyQueueProcessor extends WorkerHost {
             this.logger.error(
                 `Error handling "${USERS_JOB_NAMES.UPDATE_MANY_USERS}" job: ${error}`,
             );
+            throw error;
         }
     }
 }

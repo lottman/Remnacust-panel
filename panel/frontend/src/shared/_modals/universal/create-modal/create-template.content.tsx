@@ -1,4 +1,4 @@
-import { Stack, TextInput, Group, Button } from '@mantine/core'
+import { Stack, Text, TextInput, Group, Button } from '@mantine/core'
 import { useField } from '@mantine/form'
 import {
     CreateSubscriptionTemplateCommand,
@@ -17,12 +17,13 @@ interface IProps {
     templateType: TSubscriptionTemplateType
     onClose: () => void
     navigate: NavigateFunction
+    sourceTemplate?: { uuid: string; name: string }
 }
 
 export const CreateTemplateContent = (props: IProps) => {
     const uiText = useUiText()
 
-    const { templateType, onClose, navigate } = props
+    const { templateType, onClose, navigate, sourceTemplate } = props
 
     const handleUpdate = async () => {
         await queryClient.refetchQueries({
@@ -31,7 +32,7 @@ export const CreateTemplateContent = (props: IProps) => {
     }
 
     const nameField = useField<CreateSubscriptionTemplateCommand.RequestBody['name']>({
-        initialValue: '',
+        initialValue: sourceTemplate ? `${sourceTemplate.name.slice(0, 240)} copy` : '',
         validateOnChange: true,
         validate: (value) => {
             const result = CreateSubscriptionTemplateCommand.RequestBodySchema.omit({
@@ -63,12 +64,14 @@ export const CreateTemplateContent = (props: IProps) => {
                 createTemplate({
                     variables: {
                         name: nameField.getValue(),
-                        templateType
+                        templateType,
+                        sourceUuid: sourceTemplate?.uuid
                     }
                 })
             }}
         >
             <Stack gap="md">
+                {sourceTemplate && <Text size="sm" c="dimmed">{t('template-copy.help')}</Text>}
                 <TextInput
                     data-autofocus
                     label={t('header-action-buttons.feature.template-name')}
@@ -81,8 +84,8 @@ export const CreateTemplateContent = (props: IProps) => {
                         {t('common.action.cancel')}
                     </Button>
 
-                    <Button color="teal" loading={isPending} type="submit">
-                        {t('common.action.create')}
+                    <Button color="teal" loading={isPending} disabled={!!nameField.error || nameField.getValue().trim().length < 2} type="submit">
+                        {t(sourceTemplate ? 'template-copy.action' : 'common.action.create')}
                     </Button>
                 </Group>
             </Stack>

@@ -1,23 +1,42 @@
 const sections = [
     [
+        'nodes', 'nodes-ssh-install-http01',
+        [
+            ['Установка и сертификат', 'Для установки по SSH нужен root или sudo без пароля; существующий пустой каталог допустим. Ошибка показывает этап, а подробный журнал сохраняется на сервере. При ограничении по IP панели и HTTP-01 TCP 80 временно открывается для проверки сертификата и автоматически закрывается после неё; при сбое окно истекает не позднее чем через 15 минут. Так же работает продление. Внешний firewall и ограничения провайдера нужно настроить отдельно. Для постоянно закрытого порта 80 используйте DNS-01 или готовый сертификат.'],
+            ['Installation and certificates', 'SSH installation requires root or passwordless sudo; an existing empty directory is allowed. Failures show the stage and detailed logs remain on the server. With a panel-IP restriction and HTTP-01, TCP 80 opens temporarily for certificate validation and closes afterwards; a failed process cannot keep it open longer than 15 minutes. Renewal uses the same rule. External and provider firewalls need their own configuration. Use DNS-01 or an existing certificate to keep port 80 closed.'],
+            ['نصب و گواهی', 'نصب از طریق SSH به root یا sudo بدون گذرواژه نیاز دارد؛ پوشه خالی موجود پذیرفته می‌شود. مرحله خطا نمایش داده می‌شود و گزارش کامل روی سرور می‌ماند. با محدودیت IP پنل و HTTP-01، پورت 80 فقط برای تأیید گواهی موقتاً باز و سپس بسته می‌شود؛ در صورت خطا حداکثر پس از ۱۵ دقیقه بسته می‌شود. تمدید نیز همین روش را دارد. دیوار آتش خارجی و ارائه‌دهنده باید جداگانه تنظیم شوند. برای بسته ماندن دائمی پورت 80 از DNS-01 یا گواهی موجود استفاده کنید.'],
+            ['安装和证书', 'SSH 安装需要 root 或免密码 sudo；允许使用已有空目录。错误会显示失败阶段，详细日志保存在服务器上。启用面板 IP 限制并使用 HTTP-01 时，TCP 80 仅在证书验证期间临时开放，随后关闭；进程异常时最多 15 分钟后自动关闭。续期采用相同方式。外部及服务商防火墙需单独配置。若要始终关闭 80 端口，请使用 DNS-01 或现有证书。']
+        ]
+    ],
+    [
+        'users',
+        'users-frozen-lifetime',
+        [
+            ['Заморозка подписки', 'В меню пользователя выберите «Заморозить»: обычный доступ отключается, а оставшийся срок сохраняется. Например, два оставшихся дня останутся двумя днями до активации. При возобновлении новый срок рассчитывается из остатка; повторная заморозка его не меняет. Если остаток равен нулю или квота исчерпана, доступ автоматически не включится. Продление увеличивает остаток. Выбранная при заморозке дата задаёт новый остаток относительно текущего времени. Существующий трафик не сбрасывается самой заморозкой; настроенные периодические сбросы продолжают работать. Состояние сохраняется при перезапуске и экспорте с импортом. При массовой заморозке доступ устройств обновляется для каждого пользователя; обработка выполняется в очереди.'],
+            ['Freeze a subscription', 'Choose Freeze in the user menu: ordinary access is paused and the remaining lifetime is retained. Two days remaining stay two days until activation. Resuming sets the new expiry from that remainder; repeating Freeze does not change it. Zero remaining time or an exhausted quota does not grant access. Extending adds to the remainder. Editing the date while frozen sets a new remainder relative to the current time. Freezing itself does not reset usage; scheduled traffic resets continue. The state survives restarts and export/import. Bulk freezes synchronize each user’s device access through the queue.'],
+            ['توقف اشتراک', 'در منوی کاربر، توقف اشتراک را انتخاب کنید. دسترسی معمول قطع و زمان باقی‌مانده حفظ می‌شود؛ مثلاً دو روز تا زمان فعال‌سازی دو روز می‌ماند. با فعال‌سازی، تاریخ انقضا از باقی‌مانده محاسبه می‌شود و تکرار توقف آن را تغییر نمی‌دهد. زمان صفر یا سهمیه تمام‌شده موجب فعال شدن دسترسی نمی‌شود. تمدید به زمان باقی‌مانده اضافه می‌شود و انتخاب تاریخ، باقی‌مانده جدید را نسبت به زمان فعلی تعیین می‌کند. توقف، ترافیک را بازنشانی نمی‌کند؛ بازنشانی زمان‌بندی‌شده ادامه دارد. وضعیت پس از راه‌اندازی مجدد و انتقال فایل حفظ می‌شود. دسترسی دستگاه‌ها در عملیات گروهی از طریق صف همگام می‌شود.'],
+            ['冻结订阅', '在用户菜单选择冻结：普通访问暂停，剩余有效期被保存。例如剩余两天会一直保持两天，直到重新激活。恢复时根据剩余时长计算新到期时间；重复冻结不会改变时长。剩余时间为零或流量额度耗尽时不会自动开放访问。续期增加剩余时间；冻结期间选择日期会按当前时间设置新的剩余时长。冻结本身不会清空流量，计划流量重置仍会执行。重启及导出导入后状态仍会保留。批量冻结通过队列逐个同步设备访问。']
+        ]
+    ],
+    [
         'templates',
         'templates-pool-boundaries',
         [
             [
                 'Состав пула после переключения',
-                'При переключении группового отбора на выбор при подключении UUID и теги объединяются в values. Для regex и тегов получателя groups сохраняет объединённый список UUID: исходный фильтр и доступ пользователя действуют одновременно. Эти списки можно изменить в GUI или коде. Посторонние хосты не добавляются. Переход из ручной клиентской группы в автоматическую также задаёт URL и интервал проверок доступности. Постоянный вход проверяет DNS и нормализованные IP обоих концов, чтобы не направить соединение обратно на себя; одинаковые записи IPv4 и IPv6 не обходят эту проверку.'
+                'При переключении группового отбора на выбор при подключении UUID и теги объединяются в values. Для regex и тегов получателя groups сохраняет список UUID: исходный фильтр и доступ пользователя действуют одновременно. Списки редактируются в GUI или коде; посторонние хосты не добавляются. Переход из ручной клиентской группы в автоматическую задаёт URL и интервал проверок.'
             ],
             [
                 'Pool membership after switching',
-                'Switching grouped selection to connection-time selection merges UUID and tag groups into values. For regex and recipient-tag selectors, groups retains the combined UUID boundary: the original filter and user access both apply. Edit these lists in the GUI or code; unrelated hosts are excluded. Switching a manual client group to automatic selection also sets its probe URL and interval. A stable entry resolves DNS and compares normalized IPs at both ends to reject loops; alternative IPv4 and IPv6 notation cannot bypass the comparison.'
+                'Switching grouped selection to connection-time selection merges UUID and tag groups into values. Regex and recipient-tag selectors retain their UUID boundary in groups: the original filter and user access both apply. Edit these lists in the GUI or code; unrelated hosts are excluded. Switching a manual client group to automatic selection sets its probe URL and interval.'
             ],
             [
                 'اعضای مجموعه پس از تغییر حالت',
-                'با تغییر انتخاب گروهی به انتخاب هنگام اتصال، گروه‌های UUID و برچسب در values ادغام می‌شوند. برای عبارت منظم و برچسب گیرنده، groups مرز مشترک UUID را نگه می‌دارد؛ فیلتر اصلی و دسترسی کاربر هم‌زمان اعمال می‌شوند. فهرست‌ها در رابط یا کد قابل ویرایش‌اند و میزبان نامرتبط اضافه نمی‌شود. تغییر گروه دستی به خودکار، نشانی و فاصلهٔ پایش را نیز تنظیم می‌کند. ورودی ثابت DNS و IP نرمال‌شدهٔ هر دو طرف را بررسی می‌کند تا حلقه ایجاد نشود؛ نگارش متفاوت IPv4 و IPv6 این بررسی را دور نمی‌زند.'
+                'با تغییر انتخاب گروهی به انتخاب هنگام اتصال، گروه‌های UUID و برچسب در values ادغام می‌شوند. برای عبارت منظم و برچسب گیرنده، groups مرز UUID را حفظ می‌کند؛ فیلتر اصلی و دسترسی کاربر هم‌زمان اعمال می‌شوند. فهرست‌ها در رابط و کد قابل ویرایش‌اند. تغییر گروه دستی به خودکار، نشانی و فاصله پایش را نیز تنظیم می‌کند.'
             ],
             [
                 '切换后的池成员范围',
-                '从分组抽样切换到连接时选择后，UUID 和标签分组会合并到 values。对于正则表达式和接收主机标签选择器，groups 保留合并后的 UUID 范围，并同时应用原有过滤条件和用户权限。这些列表可在界面或代码中编辑，不会加入无关主机。从手动客户端组切换到自动选择时，还会设置探测 URL 和间隔。固定入口会解析两端 DNS 并比较规范化 IP，以防止连接回环；不同的 IPv4 和 IPv6 写法无法绕过检查。'
+                '从分组抽样切换到连接时选择后，UUID 和标签分组合并到 values。正则表达式和接收主机标签选择器在 groups 中保留 UUID 范围，原始筛选条件和用户权限同时生效。列表可通过界面或代码编辑；不会增加无关主机。手动组切换为自动组时会设置探测 URL 和间隔。'
             ]
         ]
     ],
@@ -26,20 +45,20 @@ const sections = [
         'templates-connection-selection',
         [
             [
-                'Выбор при подключении и постоянный вход',
-                'Вкладка Автовыбор разделяет получателей шаблона и состав пула. Получатели не получают дополнительных прав на источники. В режиме all клиент получает весь доступный пул; работающий балансировщик Xray выбирает направление для каждого нового соединения по стратегии и последним проверкам. random/group заранее выбирают часть источников при формировании подписки; кнопка «Выбирать при подключении» переводит пул в all и сохраняет стратегию. В других форматах действуют родные стратегии приложения: ручной selector не выбирает сервер автоматически. Новые адреса и ключи требуют обновления подписки. Исключение — постоянный TCP-вход: заранее направьте стабильный домен и порт одного хоста на отдельный входной сервер, назначьте этому хосту конечные ноды с одинаковым inbound и ключами. В Автовыборе выберите вход, этот хост, порядок нод и стратегию, проверьте настройки и примените через SSH. Панель повторно проверяет принадлежность нод хосту и применённые TCP-порты. HAProxy проверяет TCP каждые 2 секунды (2 неудачи/успеха), в приоритетном режиме использует первый доступный сервер. Повторное применение меняет серверы без обновления клиентской подписки и без рестарта Xray. Открытые соединения не мигрируют; при корректной перезагрузке входа сохраняются до завершения или предельного часа. UDP-транспорты не поддерживаются. TCP-проверка не подтверждает VPN-авторизацию. TLS завершается на конечной ноде; входу не нужен сертификат. Конечная нода видит IP входа, что влияет на правила по исходному IP.'
+                'Выбор при подключении',
+                'Пулы источников и получатели — разные настройки. Для каждого назначения выберите конкретный balancerTag и хосты или теги получателей в remnawave.assignments. Назначение хосту приоритетнее назначения по тегу. Явный шаблон в карточке хоста сохраняет приоритет; внутри него выбирается назначенный этому хосту автовыбор. Правила DIRECT, REJECT и доменные ограничения сохраняются. all передаёт клиенту все разрешённые источники, а стратегия выбирает сервер при новом соединении. random/group сокращают состав при обновлении подписки. Изменение состава источников приходит при обновлении подписки. Отдельный TCP-вход для смены серверов больше не создаётся.'
             ],
             [
-                'Selection on connection and a stable entry',
-                'Autoselect separates template recipients from pool members. Assignment does not grant access to sources. In all mode the client receives the complete eligible pool; the running Xray balancer chooses a destination for every new connection using its strategy and recent probes. random/group sample during subscription generation; Choose on connection switches to all while preserving the strategy. Other formats use native application strategies: a manual selector does not select automatically. New addresses or keys normally require a subscription refresh. A stable TCP entry is an exception: point one host’s stable domain and port at a dedicated entry server and assign backend nodes sharing its inbound and keys. In Autoselect choose the entry, host, ordered nodes and strategy, review and apply over SSH. The panel rechecks membership and applied TCP ports. HAProxy checks TCP every 2 seconds (2 failures/successes); priority uses the first healthy server. Applying again changes backends without refreshing subscriptions or restarting Xray. Open connections are not migrated; graceful reload preserves them until they finish or the one-hour hard limit. UDP transports are unsupported. TCP checks do not verify VPN authorization. TLS terminates on the backend, so the entry needs no certificate. Backends see the entry IP, which affects source-IP policies.'
+                'Selection at connection time',
+                'Source pools and recipients are separate settings. Each remnawave.assignments entry binds a specific balancerTag to recipient hosts or tags. A direct host assignment takes precedence over a tag assignment. An explicit template in the host card remains highest priority; that template uses the balancer assigned to this recipient. DIRECT, REJECT and domain restrictions are preserved. all delivers every authorized source; the client strategy chooses a server for each new connection. random/group reduce membership when subscriptions refresh. Membership changes arrive on subscription refresh. A separate TCP entry for server changes is no longer created.'
             ],
             [
-                'انتخاب هنگام اتصال و ورودی ثابت',
-                'در انتخاب خودکار، دریافت‌کنندگان قالب از اعضای مجموعه جدا هستند و تخصیص قالب دسترسی جدید نمی‌دهد. حالت all همهٔ اعضای مجاز را به کلاینت می‌دهد؛ متعادل‌کنندهٔ فعال Xray برای هر اتصال جدید طبق راهبرد و آخرین پایش انتخاب می‌کند. random/group هنگام ساخت اشتراک نمونه‌برداری می‌کنند؛ دکمهٔ انتخاب هنگام اتصال حالت را به all تغییر می‌دهد و راهبرد را حفظ می‌کند. قالب‌های دیگر از راهبرد بومی برنامه استفاده می‌کنند؛ selector دستی خودکار نیست. نشانی یا کلید جدید معمولاً به تازه‌سازی اشتراک نیاز دارد. برای ورودی TCP ثابت، دامنه و پورت ثابت یک میزبان را به سرور ورودی جداگانه هدایت و سرورهای دارای ورودی و کلید مشترک را به میزبان اختصاص دهید. در رابط، ورودی، میزبان، ترتیب سرورها و راهبرد را انتخاب و با SSH اعمال کنید. پنل عضویت و پورت TCP اعمال‌شده را دوباره بررسی می‌کند. HAProxy هر ۲ ثانیه TCP را با آستانهٔ ۲ شکست یا موفقیت بررسی می‌کند؛ اولویت نخستین سرور سالم را به کار می‌برد. اعمال مجدد بدون تازه‌سازی اشتراک یا راه‌اندازی مجدد Xray سرورها را تغییر می‌دهد. اتصال باز منتقل نمی‌شود؛ بارگذاری مجدد آرام آن را تا پایان یا سقف یک ساعت نگه می‌دارد. انتقال UDP پشتیبانی نمی‌شود. بررسی TCP مجوز VPN را تأیید نمی‌کند. TLS در سرور مقصد خاتمه می‌یابد و ورودی گواهی نمی‌خواهد. سرور مقصد IP ورودی را می‌بیند که روی سیاست IP مبدأ اثر دارد.'
+                'انتخاب هنگام اتصال',
+                'مجموعه‌های منبع و گیرندگان تنظیمات جداگانه دارند. هر ورودی remnawave.assignments یک balancerTag مشخص را به میزبان‌ها یا برچسب‌های گیرنده پیوند می‌دهد. انتساب مستقیم میزبان بر برچسب اولویت دارد. الگوی صریح کارت میزبان همچنان اولویت اول است و درون آن انتخاب خودکار تعیین‌شده برای همان گیرنده استفاده می‌شود. قوانین DIRECT و REJECT و محدودیت دامنه حفظ می‌شوند. all تمام منابع مجاز را به کلاینت می‌فرستد و راهبرد برای اتصال جدید انتخاب می‌کند. random/group هنگام به‌روزرسانی اشتراک اعضا را کاهش می‌دهند. تغییر اعضا با به‌روزرسانی اشتراک دریافت می‌شود. ورودی TCP جداگانه دیگر ایجاد نمی‌شود.'
             ],
             [
-                '连接时选择与固定入口',
-                '自动选择将模板接收者与池成员分开；分配模板不会授予源服务器访问权限。all 模式向客户端发送全部有权访问的成员；运行中的 Xray 均衡器根据策略和最新探测为每个新连接选择出口。random/group 在生成订阅时抽样；“连接时选择”切换到 all 并保留策略。其他格式使用应用原生策略；手动 selector 不会自动选择。新增地址或密钥通常需要刷新订阅。固定 TCP 入口是例外：将同一主机的固定域名和端口指向独立入口服务器，并将使用相同入站和密钥的后端节点分配给该主机。在界面中选择入口、主机、节点顺序及策略，通过 SSH 应用。面板重新检查成员资格和已应用的 TCP 端口。HAProxy 每 2 秒检查 TCP，以连续 2 次失败或成功确认状态；优先模式使用首个健康服务器。再次应用可更改后端，无需刷新订阅或重启 Xray。现有连接不会迁移；平滑重载保留连接直到结束或达到一小时上限。不支持 UDP 传输。TCP 检查不验证 VPN 授权。TLS 在后端终止，入口无需证书。后端看到入口 IP，因此会影响源 IP 策略。'
+                '连接时选择',
+                '源池与接收主机是两种设置。remnawave.assignments 的每条记录将指定 balancerTag 绑定到接收主机或标签。主机直接分配优先于标签分配。主机卡片中的显式模板保持最高优先级，并在模板内使用分配给此接收主机的均衡器。DIRECT、REJECT 和域名限制保持有效。all 下发全部已授权源，由客户端策略为新连接选择服务器。random/group 在订阅更新时缩小成员范围。源成员变更通过更新订阅获取。不再创建用于切换服务器的独立 TCP 入口。'
             ]
         ]
     ],

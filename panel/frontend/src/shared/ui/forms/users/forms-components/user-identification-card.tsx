@@ -44,6 +44,7 @@ interface IProps {
 
 const statusIconColorMap = {
     [USERS_STATUS.ACTIVE]: 'teal',
+    [USERS_STATUS.FROZEN]: 'blue',
     [USERS_STATUS.DISABLED]: 'gray',
     [USERS_STATUS.EXPIRED]: 'red',
     [USERS_STATUS.LIMITED]: 'yellow'
@@ -70,11 +71,15 @@ export const UserIdentificationCard = memo((props: IProps) => {
 
     const statusIconColor = statusIconColorMap[user.status] ?? 'gray'
 
-    const expirationState = getUserExpirationState(user.expireAt)
+    const expiry = user.status === USERS_STATUS.FROZEN && user.frozenRemainingMs != null
+        ? new Date(Date.now() + user.frozenRemainingMs) : user.expireAt
+    const expirationState = getUserExpirationState(expiry)
     const expirationFormattedDate =
-        expirationState === 'unknown'
+        user.status === USERS_STATUS.FROZEN
+            ? t('frozen-user.remaining', { duration: dayjs(expiry).fromNow(true) })
+            : expirationState === 'unknown'
             ? t('get-expiration-text.util.unknown')
-            : dayjs(user.expireAt).locale(i18n.language).format('D MMM YYYY, HH:mm')
+            : dayjs(expiry).locale(i18n.language).format('D MMM YYYY, HH:mm')
 
     return (
         <MotionWrapper variants={cardVariants}>
@@ -311,7 +316,7 @@ export const UserIdentificationCard = memo((props: IProps) => {
                     <Box className={classes.details}>
                         <Paper
                             className={classes.detailTile}
-                            data-expiration={expirationState}
+                            data-expiration={user.status === 'FROZEN' ? 'frozen' : expirationState}
                             bd="1px solid color-mix(in srgb, var(--detail-color) 24%, var(--panel-border))"
                             bg="color-mix(in srgb, var(--detail-color) 8%, var(--panel-surface))"
                         >

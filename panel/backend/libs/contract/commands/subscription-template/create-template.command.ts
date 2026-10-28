@@ -25,6 +25,7 @@ export namespace CreateSubscriptionTemplateCommand {
                 'Name can only contain letters, numbers, underscores, dashes and spaces',
             ),
         templateType: z.enum(SUBSCRIPTION_TEMPLATE_TYPE),
+        sourceUuid: z.uuid().optional(),
     });
 
     export const ResponseSchema = z.object({

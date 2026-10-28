@@ -20,7 +20,7 @@ import { HostsRepository } from './repositories/hosts.repository';
 export type LimitKind = 'HOST' | 'TAG';
 export type LimitUsersOptions = {
     pageSize?: number;
-    status?: 'ALL' | 'ACTIVE' | 'DISABLED' | 'LIMITED' | 'EXPIRED';
+    status?: 'ALL' | 'ACTIVE' | 'DISABLED' | 'LIMITED' | 'EXPIRED' | 'FROZEN';
     state?: 'ALL' | 'PAUSED' | 'EXHAUSTED' | 'AVAILABLE' | 'UNAVAILABLE';
     sort?:
         | 'username'
@@ -194,6 +194,7 @@ export class LimitsService {
             telegramId: string | null;
             status: string;
             expireAt: string;
+            frozenRemainingMs: number | null;
             tag: string | null;
             onlineAt: string | null;
             lastConnectedNode: { name: string; countryCode: string } | null;
@@ -216,7 +217,8 @@ export class LimitsService {
             }>`
             WITH matched AS MATERIALIZED (
                 SELECT u.id::text AS id,u.short_uuid AS "shortUuid",u.username,u.email,u.telegram_id::text AS "telegramId",u.status,
-                to_char(u.expire_at,'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS "expireAt",u.tag,
+                to_char(CASE WHEN u.status='FROZEN' THEN (statement_timestamp() AT TIME ZONE 'UTC') + greatest(u.expire_at-u.frozen_at, interval '0 seconds') ELSE u.expire_at END,'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS "expireAt",
+                CASE WHEN u.status='FROZEN' THEN (extract(epoch FROM greatest(u.expire_at-u.frozen_at, interval '0 seconds'))*1000)::bigint ELSE NULL END AS "frozenRemainingMs",u.tag,
                 q.used_bytes::text AS "usedBytes",q.base_limit::text AS "baseLimitBytes",q.bonus_bytes::text AS "bonusBytes",q.effective_limit::text AS "limitBytes",q.paused,
                 COALESCE((SELECT a.unlimited FROM xera_limit_user_adjustments a WHERE a.kind=${kind} AND a.key=${key} AND a.user_id=u.id),false) AS unlimited,
                 EXISTS(SELECT 1 FROM hosts h WHERE ((${kind}='HOST' AND h.uuid::text=${key}) OR (${kind}='TAG' AND ${key}=ANY(h.tags) AND h.use_tag_traffic_limit)) AND xera_host_user_allowed(u.id,h.uuid)) AS "accessNow"

@@ -7,6 +7,7 @@ export declare namespace BulkDeleteUsersByStatusCommand {
         status: z.ZodEnum<{
             readonly ACTIVE: "ACTIVE";
             readonly DISABLED: "DISABLED";
+            readonly FROZEN: "FROZEN";
             readonly LIMITED: "LIMITED";
             readonly EXPIRED: "EXPIRED";
         }>;

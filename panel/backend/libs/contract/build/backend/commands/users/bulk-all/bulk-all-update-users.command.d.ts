@@ -7,6 +7,7 @@ export declare namespace BulkAllUpdateUsersCommand {
         status: z.ZodOptional<z.ZodEnum<{
             readonly ACTIVE: "ACTIVE";
             readonly DISABLED: "DISABLED";
+            readonly FROZEN: "FROZEN";
             readonly LIMITED: "LIMITED";
             readonly EXPIRED: "EXPIRED";
         }>>;

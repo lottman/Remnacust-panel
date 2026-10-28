@@ -96,6 +96,7 @@ export function LimitsUsersTable(props: Props) {
                     data={[
                         { value: 'ACTIVE', label: t('user-status.active') },
                         { value: 'DISABLED', label: t('user-status.disabled') },
+                        { value: 'FROZEN', label: t('user-status.frozen') },
                         { value: 'LIMITED', label: t('user-status.limited') },
                         { value: 'EXPIRED', label: t('user-status.expired') }
                     ]}

@@ -67,6 +67,10 @@ Set status, expiry, subscription traffic quota, reset strategy, internal squads 
 
 Before saving, check squads and subscription expiry. Then verify the status and date in the detail view. A subscription ends at the specified time; the date indicator’s color does not change the expiry.
 
+### Freeze a subscription
+
+Choose Freeze in the user menu: ordinary access is paused and the remaining lifetime is retained. Two days remaining stay two days until activation. Resuming sets the new expiry from that remainder; repeating Freeze does not change it. Zero remaining time or an exhausted quota does not grant access. Extending adds to the remainder. Editing the date while frozen sets a new remainder relative to the current time. Freezing itself does not reset usage; scheduled traffic resets continue. The state survives restarts and export/import. Bulk freezes synchronize each user’s device access through the queue.
+
 ### Device subscription preview
 
 Select an already registered device, format and User-Agent in the device card and generate a preview. It uses the real generator and response rules without changing the device or connection history or creating access keys in the database. A blocked device receives no working access. The host list shows candidates; the generator performs final protocol and pool filtering. Configuration containing keys is hidden by default and returned only on explicit request, up to 2 MiB. Treat it as private and keep it out of public logs.
@@ -186,6 +190,10 @@ In card view, nodes can be dragged with a tag selected. Only visible nodes are r
 
 Name, country, tags and provider describe infrastructure. The profile and inbound list determine active services. A node consumption multiplier changes user traffic accounting and is not a bandwidth cap. Traffic tracking, monthly threshold, reset day and node notifications concern server usage rather than an individual user quota.
 
+### Installation and certificates
+
+SSH installation requires root or passwordless sudo; an existing empty directory is allowed. Failures show the stage and detailed logs remain on the server. With a panel-IP restriction and HTTP-01, TCP 80 opens temporarily for certificate validation and closes afterwards; a failed process cannot keep it open longer than 15 minutes. Renewal uses the same rule. External and provider firewalls need their own configuration. Use DNS-01 or an existing certificate to keep port 80 closed.
+
 ### Diagnostics and safe operations
 
 Diagnostics make a real mTLS request to the registered node and check Xray, user synchronization and port apply status. They do not verify the full client network path. Disabled nodes are not probed; manual probes are rate limited. Port edits are reviewed, then confirmed with a review hash and current revision: stale reviews are rejected. Success requires node ACK, not merely enqueueing. Errors allow restoring a previously applied revision without overwriting newer edits. Outages require three observations over at least 20 seconds; recovery requires two over 10 seconds. Never-connected installations do not generate outage alerts. Maintenance and operations suppress alerts; a manual 30-minute pause does not stop health checks. The install wizard uses the verified installer over SSH and confirms connectivity separately; existing directories are not overwritten. NET_ADMIN defaults off. When a main server IP is set, all incoming ports and ping accept only that source except SSH (22 and detected sshd ports). Rules cover Docker forwarding and IPv6, preserve outbound replies and never flush other firewall rules. This blocks external HTTP-01 renewals: use DNS-01 or externally managed certificates. Remove the guard with python3 /etc/remnacust-node-firewall/guard.py remove.
@@ -267,7 +275,7 @@ The SSH terminal supports administrative server work. Closing a tab does not gua
 - **Node Port**: Port of the selected service. A host client port and node agent management port can differ.
 - **Plugin**: Plugin configuration assigned to the user. Check that its executor is configured on the required nodes.
 - **Tags**: Object label array. Host tags also connect enabled policies; saving an empty array clears labels.
-- **Main server IP (optional)**: When set, every incoming port and ping accepts traffic only from this IP, except SSH. VPN clients must connect through the main server. Existing provider/firewall restrictions still apply.
+- **Main server IP (optional)**: Only this IP can reach ports and ping; SSH remains public. Clients connect through the main server.
 - **Default**: The node will use its default outbound route.
 - **IP address**: Pick one of the node IPs or type any address
 - **Interface**: Pick one of the node interfaces or type any name
@@ -633,7 +641,7 @@ selector.type supports uuids, exact tags, tagRegex, remarkRegex and sameTagAsRec
 
 ### Assignment and balancing
 
-remnawave.assignTo.hosts assigns the template to recipient hosts; assignTo.tags also covers future recipients with those tags. Priority is the host card’s explicit template, then template UUID assignment, then tag assignment. Conflicts use the first template in list order. Assignments never expand user access. The client balancer uses already selected outbounds: random, roundRobin, leastPing or leastLoad. The last two need observation; random and roundRobin do not. The leastLoad GUI edits current expected, tolerance, baselines and maxRTT without replacing other fields. fallbackTag specifies a fallback outbound.
+In Where to use autoselect, choose a specific selection and its recipients. remnawave.assignments contains balancerTag, hosts and tags. Direct host assignment beats a tag match; an explicit template in the host card beats another template. Source pools remain limited by user access. Renaming or deleting a balancer updates its assignments. Legacy assignTo remains readable; choose its selection when editing. The card menu can duplicate any supported template format: settings, draft, tags and geofile references are preserved, while recipient assignments are cleared. Save remains available with code errors; invalid content stays a draft. Error paths identify the pool and reveal its field in code. The failed-probe fraction tolerance is between 0 and 1: 0.01 means 1%. Zero disables this check. A numeric value outside 0–1 is preserved in JSON; Xray clamps it internally when reading the configuration (for example, 2 becomes 1).
 
 ### History and recovery
 
@@ -681,11 +689,11 @@ V2Fly DAT is supported. A full JSON subscription with a routing header is requir
 
 ### Pool membership after switching
 
-Switching grouped selection to connection-time selection merges UUID and tag groups into values. For regex and recipient-tag selectors, groups retains the combined UUID boundary: the original filter and user access both apply. Edit these lists in the GUI or code; unrelated hosts are excluded. Switching a manual client group to automatic selection also sets its probe URL and interval. A stable entry resolves DNS and compares normalized IPs at both ends to reject loops; alternative IPv4 and IPv6 notation cannot bypass the comparison.
+Switching grouped selection to connection-time selection merges UUID and tag groups into values. Regex and recipient-tag selectors retain their UUID boundary in groups: the original filter and user access both apply. Edit these lists in the GUI or code; unrelated hosts are excluded. Switching a manual client group to automatic selection sets its probe URL and interval.
 
-### Selection on connection and a stable entry
+### Selection at connection time
 
-Autoselect separates template recipients from pool members. Assignment does not grant access to sources. In all mode the client receives the complete eligible pool; the running Xray balancer chooses a destination for every new connection using its strategy and recent probes. random/group sample during subscription generation; Choose on connection switches to all while preserving the strategy. Other formats use native application strategies: a manual selector does not select automatically. New addresses or keys normally require a subscription refresh. A stable TCP entry is an exception: point one host’s stable domain and port at a dedicated entry server and assign backend nodes sharing its inbound and keys. In Autoselect choose the entry, host, ordered nodes and strategy, review and apply over SSH. The panel rechecks membership and applied TCP ports. HAProxy checks TCP every 2 seconds (2 failures/successes); priority uses the first healthy server. Applying again changes backends without refreshing subscriptions or restarting Xray. Open connections are not migrated; graceful reload preserves them until they finish or the one-hour hard limit. UDP transports are unsupported. TCP checks do not verify VPN authorization. TLS terminates on the backend, so the entry needs no certificate. Backends see the entry IP, which affects source-IP policies.
+Source pools and recipients are separate settings. Each remnawave.assignments entry binds a specific balancerTag to recipient hosts or tags. A direct host assignment takes precedence over a tag assignment. An explicit template in the host card remains highest priority; that template uses the balancer assigned to this recipient. DIRECT, REJECT and domain restrictions are preserved. all delivers every authorized source; the client strategy chooses a server for each new connection. random/group reduce membership when subscriptions refresh. Membership changes arrive on subscription refresh. A separate TCP entry for server changes is no longer created.
 
 ## Variables {{…}} in names and headers
 
@@ -902,7 +910,7 @@ The diagram is built from panel configuration rather than tracing each packet. A
 
 ### Access and files
 
-A fresh panel installation asks for a backup password; Enter generates one automatically. The installer shows it when installation finishes and saves it in `backup-password.txt` in the panel directory, accessible only to root. Keep a copy away from the server. Administrators unlock this section with that password. Click “Create ZIP backup” and wait for the file to appear. The encrypted archive contains a database dump and requires its password to open. Download it to separate storage. Sending transfers the selected file to Telegram, deleting removes it from the server, and “Lock access” locks the section again. The database backup excludes the server’s .env, certificates and node files. There is no restore button in the panel; restoration is performed by the server administrator.
+A fresh panel installation asks for a backup password; Enter generates one automatically. The installer shows it when installation finishes and saves it in `backup-password.txt` in the panel directory, accessible only to root. Keep a copy away from the server. Administrators unlock this section with that password. Click “Create ZIP backup” and wait for the file to appear. The encrypted archive contains a database dump and requires its password to open. Download it to separate storage. Sending transfers the selected file to Telegram, deleting removes it from the server, and “Lock access” locks the section again. The database backup excludes the server’s .env, certificates and node files. There is no restore button in the panel; restoration is performed by the server administrator. The ZIP uses AES. After extraction, database.dump is still a compressed PostgreSQL custom dump, without additional encryption. It is not readable in a text editor. Convert to SQL without restoring a database: `pg_restore --file=database.sql database.dump`. Use PostgreSQL tools of the same major version as pg_dump or newer.
 
 ### Automatic creation
 
@@ -957,7 +965,6 @@ Share the token only with a trusted integration. If exposed, delete it and creat
 ### Fields and controls
 
 - **API tokens**: Manage your API access tokens for programmatic access.
-- **Full access**: All available API methods, including future additions. Panel-only operations are excluded.
 
 ## Language and appearance
 

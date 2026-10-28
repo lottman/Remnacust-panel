@@ -1,5 +1,6 @@
 import { SimpleGrid } from '@mantine/core'
 import { useTranslation } from 'react-i18next'
+import { TbSnowflake } from 'react-icons/tb'
 import {
     PiClockCountdownDuotone,
     PiClockUserDuotone,
@@ -48,6 +49,13 @@ export function UsersMetrics() {
             iconVariant: 'soft'
         },
         {
+            IconComponent: TbSnowflake,
+            iconColor: 'blue',
+            title: t('user-status.frozen'),
+            value: users?.statusCounts.FROZEN ?? 0,
+            iconVariant: 'soft'
+        },
+        {
             IconComponent: PiProhibitDuotone,
             iconColor: 'gray',
             title: t('dashboard-ui.disabled'),
@@ -56,7 +64,7 @@ export function UsersMetrics() {
         }
     ]
     return (
-        <SimpleGrid cols={{ base: 2, xl: 5 }} spacing="sm">
+        <SimpleGrid cols={{ base: 2, xl: 6 }} spacing="sm">
             {cards.map((card) => (
                 <div key={card.title}>
                     <MetricCardShared

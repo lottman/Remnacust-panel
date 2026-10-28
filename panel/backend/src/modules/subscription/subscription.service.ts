@@ -11,6 +11,7 @@ import { fail, ok, TResult } from '@common/types';
 import { prettyBytesUtil } from '@common/utils/bytes/pretty-bytes.util';
 import { hasContent } from '@common/utils/convert-type';
 import { HwidHeaders } from '@common/utils/extract-hwid-headers';
+import { effectiveUserExpiry, frozenRemainingMs } from '@common/utils/frozen-user-lifetime';
 import { isTextRemark } from '@common/utils/templates/is-text-remark';
 import { renderSubscriptionAction } from '@common/utils/templates/render-subscription-action';
 import { TemplateEngine } from '@common/utils/templates/replace-templates-values';
@@ -188,6 +189,7 @@ export class SubscriptionService {
             const subscriptionSettings = srrContext.subscriptionSettings;
 
             const subscriptionInactive =
+                user.response.status === USERS_STATUS.FROZEN ||
                 user.response.status === USERS_STATUS.DISABLED ||
                 user.response.status === USERS_STATUS.EXPIRED ||
                 user.response.expireAt <= new Date();
@@ -383,6 +385,7 @@ export class SubscriptionService {
             }
 
             const subscriptionEnded =
+                user.response.status === USERS_STATUS.FROZEN ||
                 user.response.status === USERS_STATUS.EXPIRED ||
                 user.response.status === USERS_STATUS.DISABLED ||
                 (user.response.status === USERS_STATUS.ACTIVE &&
@@ -856,7 +859,7 @@ export class SubscriptionService {
                         this.subPublicDomain,
                     ),
                     convertedUserInfo: {
-                        daysLeft: dayjs(user.expireAt).diff(dayjs(), 'day'),
+                        daysLeft: dayjs(effectiveUserExpiry(user)).diff(dayjs(), 'day'),
                         trafficUsed: prettyBytesUtil(user.userTraffic.usedTrafficBytes),
                         trafficLimit: prettyBytesUtil(user.trafficLimitBytes),
                         lifetimeTrafficUsed: prettyBytesUtil(
@@ -973,7 +976,8 @@ export class SubscriptionService {
             isFound: true,
             user: {
                 shortUuid: user.shortUuid,
-                daysLeft: dayjs(user.expireAt).diff(dayjs(), 'day'),
+                daysLeft: dayjs(effectiveUserExpiry(user)).diff(dayjs(), 'day'),
+                frozenRemainingMs: frozenRemainingMs(user),
                 trafficUsed: prettyBytesUtil(user.userTraffic.usedTrafficBytes),
                 trafficLimit: prettyBytesUtil(user.trafficLimitBytes),
                 lifetimeTrafficUsed: prettyBytesUtil(user.userTraffic.lifetimeUsedTrafficBytes),
@@ -981,7 +985,7 @@ export class SubscriptionService {
                 trafficLimitBytes: user.trafficLimitBytes.toString(),
                 trafficUsedBytes: user.userTraffic.usedTrafficBytes.toString(),
                 username: user.username,
-                expiresAt: user.expireAt,
+                expiresAt: effectiveUserExpiry(user),
                 isActive: user.status === USERS_STATUS.ACTIVE,
                 userStatus: user.status,
                 trafficLimitStrategy: user.trafficLimitStrategy,
@@ -1163,6 +1167,7 @@ export class SubscriptionService {
         user: UserEntity,
         settings: SubscriptionSettingsEntity,
     ): string[] {
+        if (user.status === USERS_STATUS.FROZEN) return ['Subscription frozen'];
         const hwidRemarks = (settings.customRemarks.HWIDBlocked ?? []).filter((remark) => {
             const value = remark.trim();
             return isTextRemark(value);
@@ -1257,6 +1262,7 @@ export class SubscriptionService {
                         EXPIRED: settings.customRemarks.expiredUsers,
                         LIMITED: settings.customRemarks.limitedUsers,
                         DISABLED: settings.customRemarks.disabledUsers,
+                        FROZEN: ['Subscription frozen'],
                     } as Record<string, string[]>
                 )[user.status];
             if (source || extraRemarks.some((remark) => remark.trim())) {

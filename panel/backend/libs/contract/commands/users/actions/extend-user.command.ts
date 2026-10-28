@@ -14,7 +14,7 @@ export namespace ExtendUserCommand {
         'post',
         'Extend user expiration date',
         { scope: 'extend', kind: 'write' },
-        'If user status is EXPIRED, the new expiration date is calculated from the current date and the user becomes ACTIVE. If user status is ACTIVE, the given number of days is added to the existing expiration date. DISABLED and LIMITED users will be extended, but their status will not change.',
+        'EXPIRED users are extended from the current date and become ACTIVE. FROZEN users retain their paused status and the added days increase their remaining lifetime. ACTIVE, DISABLED and LIMITED users are extended without changing status.',
     );
 
     export const RequestParamSchema = z.object({

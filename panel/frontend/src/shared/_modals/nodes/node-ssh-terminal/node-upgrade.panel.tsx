@@ -64,13 +64,11 @@ export function NodeUpgradePanel({
                 {!failed && update?.status !== 'succeeded' && <Loader size="xs" />}
                 <Text size="sm">
                     {failed
-                        ? uiText(
+                        ? update?.reason ? t(`operations.node_failure_${update.reason}`) : uiText(
                               'update-not-confirmed-check-ssh-directory-token-and-node-state--2d230c4'
                           )
                         : update
-                          ? request.operation === 'configure-entry'
-                              ? t(`operations.entry_${update.phase}`)
-                              : request.operation === 'install'
+                          ? request.operation === 'install'
                                 ? t(`operations.install_${update.phase}`)
                                 : labels[update.phase]
                           : uiText('waiting-for-ssh-connection-309d2b4')}

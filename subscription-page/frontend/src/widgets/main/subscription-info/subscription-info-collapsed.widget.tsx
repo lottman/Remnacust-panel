@@ -28,6 +28,7 @@ import { InfoBlockShared } from '@shared/ui/info-block/info-block.shared'
 import { useSubscription } from '@entities/subscription-info-store'
 import { vibrate } from '@shared/utils/vibrate'
 import { useTranslation } from '@shared/hooks'
+import { frozenSubscription } from './frozen-subscription'
 
 interface IProps {
     isMobile: boolean
@@ -39,8 +40,10 @@ export const SubscriptionInfoCollapsedWidget = ({ isMobile }: IProps) => {
     const [isExpanded, setIsExpanded] = useState(false)
 
     const { user } = subscription
+    const frozen = frozenSubscription(user, currentLang)
 
     const getStatusConfig = () => {
+        if (frozen) return { color: 'blue', icon: <IconAlertCircle size={14} /> }
         if (user.userStatus === 'ACTIVE' && user.daysLeft > 3) {
             return { color: 'teal', icon: <IconCheck size={14} /> }
         }
@@ -94,7 +97,7 @@ export const SubscriptionInfoCollapsedWidget = ({ isMobile }: IProps) => {
                                 {user.username}
                             </Text>
                             <Text c="dimmed" size="xs" style={{ whiteSpace: 'nowrap' }}>
-                                {getExpirationTextUtil(
+                                {frozen?.remaining ?? getExpirationTextUtil(
                                     user.expiresAt,
                                     currentLang,
                                     baseTranslations
@@ -137,9 +140,9 @@ export const SubscriptionInfoCollapsedWidget = ({ isMobile }: IProps) => {
                             }
                             title={t(baseTranslations.status)}
                             value={
-                                user.userStatus === 'ACTIVE'
+                                frozen?.status ?? (user.userStatus === 'ACTIVE'
                                     ? t(baseTranslations.active)
-                                    : t(baseTranslations.inactive)
+                                    : t(baseTranslations.inactive))
                             }
                         />
 
@@ -147,7 +150,7 @@ export const SubscriptionInfoCollapsedWidget = ({ isMobile }: IProps) => {
                             color="red"
                             icon={<IconCalendar size={16} />}
                             title={t(baseTranslations.expires)}
-                            value={formatDate(user.expiresAt, currentLang, baseTranslations)}
+                            value={frozen?.remaining ?? formatDate(user.expiresAt, currentLang, baseTranslations)}
                         />
 
                         <InfoBlockShared

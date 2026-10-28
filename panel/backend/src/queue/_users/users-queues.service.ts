@@ -106,6 +106,7 @@ export class UsersQueuesService implements OnApplicationBootstrap {
         return this.modifyManyUsersQueue.addBulk(
             dto.userIds.map((userId) => ({
                 name: USERS_JOB_NAMES.UPDATE_MANY_USERS,
+                opts: { attempts: 3, backoff: { type: 'exponential', delay: 1000 } },
                 data: {
                     userId,
                     fields: {
@@ -272,9 +273,13 @@ export class UsersQueuesService implements OnApplicationBootstrap {
     }
 
     public async bulkUpdateAllUsers(payload: BulkAllUpdateUsersBodyDto) {
-        return this.serialUsersOperationsQueue.add(USERS_JOB_NAMES.BULK_UPDATE_ALL_USERS, {
-            dto: payload,
-        });
+        return this.serialUsersOperationsQueue.add(
+            USERS_JOB_NAMES.BULK_UPDATE_ALL_USERS,
+            {
+                dto: payload,
+            },
+            { attempts: 3, backoff: { type: 'exponential', delay: 1000 } },
+        );
     }
 
     public async resetAllUserTraffic() {

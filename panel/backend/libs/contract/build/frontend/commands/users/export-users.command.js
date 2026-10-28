@@ -22,6 +22,7 @@ var ExportUsersCommand;
         trafficLimitBytes: zod_1.z.number().nullable(),
         trafficLimitStrategy: zod_1.z.string().nullable(),
         expireAt: zod_1.z.string().nullable(),
+        frozenRemainingMs: zod_1.z.number().int().min(0).nullable().optional(),
         createdAt: zod_1.z.string().nullable(),
         hwidDeviceLimit: zod_1.z.number().nullable(),
         tag: zod_1.z.string().nullable(),

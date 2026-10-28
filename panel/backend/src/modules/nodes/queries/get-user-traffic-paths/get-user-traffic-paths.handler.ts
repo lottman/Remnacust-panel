@@ -5,6 +5,7 @@ import { Logger } from '@nestjs/common';
 import { IQueryHandler, QueryBus, QueryHandler } from '@nestjs/cqrs';
 
 import { fail, ok } from '@common/types';
+import { effectiveUserExpiry } from '@common/utils/frozen-user-lifetime';
 import { ERRORS } from '@libs/contracts/constants';
 
 import { GetHostsForUserQuery } from '@modules/hosts/queries/get-hosts-for-user';
@@ -280,7 +281,7 @@ export class GetUserTrafficPathsHandler implements IQueryHandler<GetUserTrafficP
                               (squad) => squad.uuid,
                           ),
                           status: user.status as string,
-                          expireAt: user.expireAt ? user.expireAt.toISOString() : null,
+                          expireAt: user.expireAt ? effectiveUserExpiry(user).toISOString() : null,
                           trafficLimitBytes:
                               user.trafficLimitBytes == null
                                   ? null

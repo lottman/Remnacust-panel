@@ -236,6 +236,7 @@ export const ViewUserModalContent = (props: IProps) => {
                         motionWrapper={MotionWrapper}
                     />
                     <AccessSettingsCard
+                        isFrozen={user.status === 'FROZEN'}
                         cardVariants={cardVariants}
                         externalSquads={externalSquads}
                         form={form}

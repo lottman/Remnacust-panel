@@ -1,4 +1,8 @@
-import { RemnawaveInjectorSchema } from '@libs/contracts/models';
+import {
+    injectedPrefixesCollide,
+    injectedTagMatches,
+    RemnawaveInjectorSchema,
+} from '@libs/contracts/models';
 
 const object = (value: unknown): value is Record<string, any> =>
     value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -13,25 +17,25 @@ export function xrayTemplateWarnings(config: Record<string, any>): string[] {
             );
         if (result.success) {
             const pools = result.data.injectHosts ?? [];
-            const prefixes = pools
-                .map((pool) => pool.tagPrefix)
-                .filter((value): value is string => !!value);
             const staticTags = Array.isArray(config.outbounds)
                 ? config.outbounds.filter(object).map((outbound) => outbound.tag)
                 : [];
-            if (
-                prefixes.some(
-                    (prefix, index) =>
-                        staticTags.includes(prefix) ||
-                        prefixes.some(
+            for (const [index, pool] of pools.entries()) {
+                const prefix = pool.tagPrefix;
+                if (
+                    prefix &&
+                    (staticTags.some(
+                        (tag: unknown) =>
+                            typeof tag === 'string' && injectedTagMatches(prefix, tag),
+                    ) ||
+                        pools.some(
                             (other, otherIndex) =>
                                 index !== otherIndex &&
-                                (prefix.startsWith(other) || other.startsWith(prefix)),
-                        ),
+                                other.tagPrefix &&
+                                injectedPrefixesCollide(prefix, other.tagPrefix),
+                        ))
                 )
-            )
-                warnings.push('remnawave.injectHosts.tagPrefix');
-            for (const [index, pool] of pools.entries()) {
+                    warnings.push(`remnawave.injectHosts.${index}.tagPrefix`);
                 if (!pool.tagPrefix && !pool.useHostRemarkAsTag && !pool.useHostTagAsTag)
                     warnings.push(`remnawave.injectHosts.${index}.tagPrefix`);
                 if ('pattern' in pool.selector) {
@@ -40,6 +44,23 @@ export function xrayTemplateWarnings(config: Record<string, any>): string[] {
                     } catch {
                         warnings.push(`remnawave.injectHosts.${index}.selector.pattern`);
                     }
+                }
+            }
+            const assignedHosts = new Set<string>();
+            const assignedBalancers = new Set<string>();
+            for (const [index, assignment] of (result.data.assignments ?? []).entries()) {
+                if (
+                    assignedBalancers.has(assignment.balancerTag) ||
+                    !config.routing?.balancers?.some(
+                        (item: Record<string, unknown>) => item.tag === assignment.balancerTag,
+                    )
+                )
+                    warnings.push(`remnawave.assignments.${index}.balancerTag`);
+                assignedBalancers.add(assignment.balancerTag);
+                for (const host of assignment.hosts ?? []) {
+                    if (assignedHosts.has(host))
+                        warnings.push(`remnawave.assignments.${index}.hosts`);
+                    assignedHosts.add(host);
                 }
             }
         }

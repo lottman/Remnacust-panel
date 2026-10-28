@@ -1,5 +1,6 @@
 // JSON Schema conditionals use the literal then keyword; these are not Promise methods.
 /* oxlint-disable unicorn/no-thenable */
+import i18next from 'i18next'
 export function injectorJsonSchema(hostUuids: string[], descriptions: string[], tags: string[]) {
     const host = {
         type: 'string',
@@ -42,6 +43,7 @@ export function injectorJsonSchema(hostUuids: string[], descriptions: string[], 
                     assignTo: {
                         type: 'object',
                         properties: {
+                            balancerTag: { type: 'string', minLength: 1, description: i18next.t('autoselect.assigned-selection') },
                             hosts: {
                                 type: 'array',
                                 maxItems: 10000,
@@ -59,18 +61,30 @@ export function injectorJsonSchema(hostUuids: string[], descriptions: string[], 
                         },
                         additionalProperties: false
                     },
+                    assignments: {
+                        type: 'array', maxItems: 1000,
+                        description: i18next.t('autoselect.assignments-help'),
+                        items: {
+                            type: 'object', required: ['balancerTag'], additionalProperties: false,
+                            properties: {
+                                balancerTag: { type: 'string', minLength: 1, maxLength: 255 },
+                                hosts: { type: 'array', maxItems: 10000, items: { ...host, examples: hostUuids } },
+                                tags: { type: 'array', maxItems: 10000, items: { ...tag, examples: tags } }
+                            }
+                        }
+                    },
                     addVirtualHostAsOutbound: { type: 'boolean' },
                     injectHosts: {
                         type: 'array',
                         items: {
                             type: 'object',
                             properties: {
-                                mode: { enum: ['all', 'random', 'group'], default: 'all' },
+                                mode: { enum: ['all', 'random', 'group'], default: 'all', description: i18next.t('autoselect.mode-help') },
                                 selectFrom: {
                                     enum: ['ALL', 'HIDDEN', 'NOT_HIDDEN'],
                                     default: 'HIDDEN'
                                 },
-                                tagPrefix: { type: 'string', minLength: 1 },
+                                tagPrefix: { type: 'string', minLength: 1, description: i18next.t('autoselect.prefix-help') },
                                 useHostRemarkAsTag: { type: 'boolean' },
                                 useHostTagAsTag: { type: 'boolean' },
                                 selector: {

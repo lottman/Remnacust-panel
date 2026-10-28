@@ -1,5 +1,5 @@
 import { Alert, Badge, Button, Group, Progress, ScrollArea, Stack, Text } from '@mantine/core'
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import type { PanelUpdateStatus } from '@entities/dashboard/panel-update/panel-update'
@@ -30,6 +30,18 @@ export function PanelUpdateProgress({
         return () => window.clearInterval(timer)
     }, [failed])
     const progress = status?.progress
+    const journalRef = useRef<HTMLDivElement>(null)
+    const followJournal = useRef(true)
+    const journalJob = useRef(status?.jobId)
+    const eventsKey = JSON.stringify(progress?.events ?? [])
+    useLayoutEffect(() => {
+        if (journalJob.current !== status?.jobId) {
+            journalJob.current = status?.jobId
+            followJournal.current = true
+        }
+        const viewport = journalRef.current
+        if (viewport && followJournal.current) viewport.scrollTop = viewport.scrollHeight
+    }, [eventsKey, status?.jobId])
     const extra = !failed && status?.active ? Math.max(0, (now - receivedAt) / 1000) : 0
     const estimated = progress?.estimatedRemainingSeconds
     const remaining = estimated == null ? null : Math.max(0, estimated - extra)
@@ -118,7 +130,18 @@ export function PanelUpdateProgress({
                             {t('panelUpdate.downloadJournal')}
                         </Button>
                     </Group>
-                    <ScrollArea.Autosize mah={220} type="auto" offsetScrollbars>
+                    <ScrollArea.Autosize
+                        mah={220}
+                        type="auto"
+                        offsetScrollbars
+                        viewportRef={journalRef}
+                        onScrollPositionChange={({ y }) => {
+                            const viewport = journalRef.current
+                            if (viewport)
+                                followJournal.current =
+                                    viewport.scrollHeight - viewport.clientHeight - y < 32
+                        }}
+                    >
                         <Stack gap="xs">
                             {progress.events.map((event, index) => (
                                 <Group

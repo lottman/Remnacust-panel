@@ -1,6 +1,7 @@
 export const USERS_STATUS = {
     ACTIVE: 'ACTIVE',
     DISABLED: 'DISABLED',
+    FROZEN: 'FROZEN',
     LIMITED: 'LIMITED',
     EXPIRED: 'EXPIRED',
 } as const;

@@ -83,6 +83,7 @@ export function documentLimits(document: OpenAPIObject): void {
         telegramId: z.string().nullable(),
         status: z.string(),
         expireAt: z.iso.datetime(),
+        frozenRemainingMs: z.number().int().min(0).nullable(),
         tag: z.string().nullable(),
         onlineAt: z.iso.datetime().nullable(),
         lastConnectedNode: z.object({ name: z.string(), countryCode: z.string() }).nullable(),

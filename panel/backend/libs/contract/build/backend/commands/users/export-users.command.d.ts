@@ -16,6 +16,7 @@ export declare namespace ExportUsersCommand {
         trafficLimitBytes: z.ZodNullable<z.ZodNumber>;
         trafficLimitStrategy: z.ZodNullable<z.ZodString>;
         expireAt: z.ZodNullable<z.ZodString>;
+        frozenRemainingMs: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
         createdAt: z.ZodNullable<z.ZodString>;
         hwidDeviceLimit: z.ZodNullable<z.ZodNumber>;
         tag: z.ZodNullable<z.ZodString>;
@@ -36,6 +37,7 @@ export declare namespace ExportUsersCommand {
                 trafficLimitBytes: z.ZodNullable<z.ZodNumber>;
                 trafficLimitStrategy: z.ZodNullable<z.ZodString>;
                 expireAt: z.ZodNullable<z.ZodString>;
+                frozenRemainingMs: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
                 createdAt: z.ZodNullable<z.ZodString>;
                 hwidDeviceLimit: z.ZodNullable<z.ZodNumber>;
                 tag: z.ZodNullable<z.ZodString>;

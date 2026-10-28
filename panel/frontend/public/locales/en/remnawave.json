@@ -1,7 +1,9 @@
 {
   "backups": {
     "delivery-success": "Backup sent to Telegram",
-    "delivery-failed": "Could not send backup. Check the bot token, chat ID and Telegram connectivity."
+    "delivery-failed": "Could not send backup. Check the bot token, chat ID and Telegram connectivity.",
+    "format-title": "Archive format",
+    "format-help": "The ZIP is password-protected with AES. After extraction, database.dump is a compressed PostgreSQL custom-format dump, not text and not another encrypted layer. Use pg_restore to restore it or convert it to SQL with the command below (PostgreSQL tools must be the same major version as pg_dump or newer). This command only writes a local SQL file; it does not restore a database."
   },
   "auth-localization": {
     "login-title": "Login",
@@ -2194,7 +2196,8 @@
       "A033": "A node with this name already exists. Choose another name or edit the existing node.",
       "A034": "A node with this address already exists. Edit the existing node or enter another address.",
       "A113": "An inbound with this tag already exists. Inbound tags must be unique across all profiles. Change the inbound tag in the configuration; renaming the profile is not enough.",
-      "A114": "A configuration profile with this name already exists. Choose another profile name."
+      "A114": "A configuration profile with this name already exists. Choose another profile name.",
+      "A901": "Resume the frozen subscription before disabling the user."
     }
   },
   "limitsTrafficAction": {
@@ -2599,7 +2602,7 @@
     "use-the-tag-multiplier-e071b5e": "Use the tag multiplier",
     "the-host-s-own-quota-uses-1-218665d": "The host’s own quota uses 1×.",
     "reset-traffic-every-587e56d": "Reset traffic every",
-    "0-means-never-the-period-starts-on-the-day-the-setting-is-save-fc881dd": "0 means never. The period starts on the day the setting is saved (UTC).",
+    "0-means-never-the-period-starts-on-the-day-the-setting-is-save-fc881dd": "0 means never. Resets occur at 00:00 UTC; periods start on the day reset settings are saved. Changing only speed does not shift the schedule.",
     "period-unit-f65d821": "Period unit",
     "days-e08c0aa": "Days",
     "months-09ca755": "Months",
@@ -3101,7 +3104,8 @@
     "device-speed-limit-description": "All connections of one device key share this ceiling on this host, including upload and download. 0 disables this ceiling; user, host and tag limits still apply.",
     "apply-tag-device-speed": "Apply device speed limit from tags",
     "tag-device-speed-description": "Each tag applies its device ceiling separately on this host. The strictest enabled limit applies.",
-    "dynamic-device-sharing-description": "Active device keys dynamically share the user speed limit: one device can use available capacity; when others send traffic, they get their share. Idle devices reserve no bandwidth. Copies of the same key count as one device."
+    "dynamic-device-sharing-description": "Active device keys dynamically share the user speed limit: one device can use available capacity; when others send traffic, they get their share. Idle devices reserve no bandwidth. Copies of the same key count as one device.",
+    "frozen-user-status": "Frozen"
   },
   "limitsUnlimited": {
     "grant": "Grant unlimited quota",
@@ -3161,7 +3165,8 @@
     "active": "Active",
     "disabled": "Disabled",
     "expired": "Expired",
-    "limited": "Limit reached"
+    "limited": "Limit reached",
+    "frozen": "Frozen"
   },
   "documentation": {
     "title": "Documentation",
@@ -3372,14 +3377,14 @@
     "balancer-name": "Balancer name",
     "least-load-help": "Existing values come from this JSON. Empty fields keep Xray defaults; editing changes only the selected setting.",
     "least-load-expected": "Expected candidates (expected)",
-    "least-load-tolerance": "Allowed failure rate (tolerance, 0–1)",
+    "least-load-tolerance": "Allowed failed probe fraction",
     "least-load-max-rtt": "Maximum RTT (maxRTT)",
     "least-load-baselines": "RTT thresholds (baselines)",
     "least-load-baselines-help": "Enter durations, for example 50ms, 100ms, 1s. Press Enter after each value.",
     "probes-not-needed": "Random and round-robin balancing do not need connection probes. Existing manually configured probes remain in the code until you remove them.",
     "remove-unused-probes": "Remove unused probes",
     "remove-selection": "Delete autoselect",
-    "least-load-tolerance-help": "Allowed failed probe fraction, from 0 to 1: 0.01 means 1%. This is not the expected node count.",
+    "least-load-tolerance-help": "Failed-probe fraction: 0.01 = 1%, 0.1 = 10%, 1 = 100%. 0 disables this check. This is not a server count.",
     "pool-preview": "Eligible hosts: {{count}}. Subscriptions include only hosts accessible to the user; the result depends on the selection mode.",
     "host-naming-help": "Host names are enabled instead of the prefix in the code. The prefix field is not used; target the balancer or disable this naming mode in the code.",
     "strategy-priority": "Priority: first available",
@@ -3395,7 +3400,25 @@
     "select-on-connection": "Choose on connection",
     "connection-help": "The complete eligible pool is included in the profile. The running Xray balancer selects a server for each new connection using its strategy and current probe results. Existing connections remain on their server.",
     "subscription-selection-help": "This mode samples servers when the subscription is generated. To select at connection time, include the complete pool and use the client balancer.",
-    "native-connection-help": "The complete pool lets the running application select a server using its native group strategy and health checks. A manual selector still requires a choice. New servers or changed keys require a subscription refresh unless a stable server-side entry is used."
+    "native-connection-help": "The complete pool lets the running application select a server using its native group strategy and health checks. A manual selector still requires a choice. New servers or changed keys require a subscription refresh unless a stable server-side entry is used.",
+    "assignments-title": "Where to use autoselect",
+    "assignments-help": "Choose a specific autoselect and the subscription hosts that should use it. The servers the client chooses between are configured in the source pools above.",
+    "assignments-empty": "No assignments yet. Assign hosts here or select this template in a host card.",
+    "assign-hosts": "Assign hosts",
+    "assigned-selection": "Autoselect",
+    "choose-selection": "Choose an autoselect",
+    "remove-assignment": "Remove assignment",
+    "legacy-assignment": "This is a legacy assignment of the entire template. Choose a specific autoselect for these hosts.",
+    "source-pools": "Pools: {{count}}",
+    "advanced": "Connection probes and additional settings",
+    "issue-pool": "Pool #{{number}}",
+    "issue-balancer": "Autoselect #{{number}}",
+    "issue-assignment": "Assignment #{{number}}",
+    "reveal-issue": "Go to this field in code",
+    "prefix-conflict-help": "Check that the prefix is unique: identical names produce identical outbound tags. Use another name for the second pool, such as g-ru-secondary. The pool number is shown above; code path indices start at 0. You can save the configuration as a draft.",
+    "mode-help": "all includes every eligible host; the client strategy selects at connection time. random and group reduce membership when the subscription refreshes.",
+    "pool-settings": "Source settings: mode, visibility, prefix",
+    "balancer-settings": "Strategy settings: fallback and pool selectors"
   },
   "template-history": {
     "title": "History",
@@ -3996,7 +4019,8 @@
     "json-setting-unknown": "Could not check JSON delivery. Check “{{setting}}” manually, or use a URL ending in /json.",
     "open-subscription-settings": "Open subscription settings in a new tab",
     "happ-check-help": "Save this template and make sure the host or external squad uses it. A template selected in the host card takes priority. Then refresh the subscription in Happ or INCY.",
-    "xray-download-help": "Multiple DAT files are bundled with separate categories for each source. DIRECT, blocking and groups remain in JSON. If downloads conflict with manual settings or the bundle is too large, the app receives inline rules."
+    "xray-download-help": "Multiple DAT files are bundled with separate categories for each source. DIRECT, blocking and groups remain in JSON. If downloads conflict with manual settings or the bundle is too large, the app receives inline rules.",
+    "attached-count": "Attached files: {{count}}"
   },
   "template-draft": {
     "warning": "Template warnings",
@@ -4004,8 +4028,8 @@
     "saved-title": "Draft saved with warnings",
     "saved-help": "Your text is saved on the server and in history. Subscriptions still use the last working version. Fix the warnings and save again to publish the template.",
     "applied-warning-title": "Applied with a warning",
-    "applied-warning-help": "The template was saved and applied. Xray normalizes the numeric tolerance to the supported range; review the warning in the editor.",
-    "tolerance-help": "tolerance is a failed probe fraction from 0 to 1. Xray clamps finite numbers outside this range. The original value can be saved and applied with a warning."
+    "applied-warning-help": "Saved and applied. The original numeric tolerance is preserved in the template and subscription JSON. When reading the configuration, Xray clamps values below 0 to 0 and above 1 to 1; it does not rewrite the JSON.",
+    "tolerance-help": "tolerance is a failed-probe fraction: 0.01 = 1%, 1 = 100%; 0 disables this check. Finite values outside 0–1 can be saved with a warning. The JSON keeps your value; Xray clamps it internally when reading the configuration."
   },
   "host-actions": {
     "clone-progress": "Cloning: {{done}} / {{total}}"
@@ -4085,31 +4109,36 @@
     "setupProfile": "Profile",
     "setupVerify": "Install and verify",
     "installNode": "Install node",
-    "installHelp": "Connect using the SSH vault and confirm the server fingerprint. Requires root or passwordless sudo and a supported Ubuntu server. The verified stable installer checks the system, disk and existing installation; an existing directory is not overwritten. SSH settings are preserved.",
-    "netAdminHelp": "Additional container permission for connection control and firewall features. Disabled by default.",
+    "installHelp": "Connect via SSH and verify the server key. Root or passwordless sudo is required.",
+    "netAdminHelp": "Container permissions for limits and connection management.",
     "connectAndInstall": "Connect over SSH and install",
     "install_preparing": "Checking installation and access",
     "install_downloading": "Downloading and verifying the stable installer",
     "install_updating": "Installing the node and checking readiness",
     "install_finished": "Installation command completed. Confirm the live node diagnostics.",
     "panelSourceIp": "Main server IP (optional)",
-    "panelSourceIpHelp": "When set, every incoming port and ping accepts traffic only from this IP, except SSH. VPN clients must connect through the main server. Existing provider/firewall restrictions still apply.",
-    "entryTitle": "Stable entry: change servers without refreshing subscriptions",
-    "entryHelp": "A dedicated TCP entry forwards encrypted streams to servers of one host. HAProxy selects a healthy server for each new connection and continuously checks its TCP port. Apply again over SSH to change membership or order.",
-    "entryRequirements": "First point the host’s stable domain at the entry server and set the same port on the host. All servers must share the inbound, keys and certificates. UDP transports are unsupported. Open connections are not migrated. TCP checks do not verify VPN authorization.",
-    "entryGateway": "Entry server",
-    "entryHost": "Shared subscription host",
-    "entryPort": "Stable entry port",
-    "entryBackends": "Servers assigned to this host",
-    "entryStrategy_priority": "Priority: first healthy",
-    "entryStrategy_roundRobin": "Round robin",
-    "entryStrategy_leastConnections": "Fewest active TCP connections",
-    "entryConfirm": "I checked the domain, port, shared keys and connectivity from the entry to host servers",
-    "entryApply": "Connect over SSH and apply",
-    "entryIndependent": "Applying changes a dedicated entry service on the selected server; save the template draft separately. Xray is not restarted. TLS terminates on the backend, which needs the certificate.",
-    "entry_preparing": "Checking entry server access",
-    "entry_downloading": "Downloading and verifying the installer",
-    "entry_updating": "Validating and applying the stable entry",
-    "entry_finished": "Stable entry applied"
+    "panelSourceIpHelp": "Only this IP can reach ports and ping; SSH remains public. Clients connect through the main server.",
+    "nodeDiagnostics": "Diagnostics",
+    "node_failure_root": "Root or passwordless sudo is required.",
+    "node_failure_directory": "The directory is inaccessible or not empty. Use an empty directory or upgrade the existing node.",
+    "node_failure_dependencies": "curl, Python or required system tools are missing on the server.",
+    "node_failure_download": "Could not download or verify the installer. Check GitHub access.",
+    "node_failure_installer": "The installer failed. Check the private server log before retrying.",
+    "node_failure_ssh": "The SSH channel was interrupted. Check node state and server logs before retrying.",
+    "node_failure_authorization": "The administrator session expired or access was denied. Sign in again.",
+    "node_failure_node": "The node is connected or disabled, or its installation key could not be prepared.",
+    "node_failure_busy": "Another node operation is running or the SSH session is unavailable.",
+    "invalidPanelIp": "Enter a valid IPv4 or IPv6 address."
+  },
+  "template-copy": {
+    "action": "Duplicate template",
+    "help": "Copies settings, the draft, tags and geofile references. Configure host assignments separately in the new copy."
+  },
+  "frozen-user": {
+    "freeze": "Freeze",
+    "resume": "Resume",
+    "remaining": "Remaining: {{duration}}",
+    "help": "The subscription clock and access are paused. Activation resumes the saved remaining time. Selecting a date sets a new remainder.",
+    "resumeBlocked": "Access remains unavailable: the subscription expired or its traffic quota is exhausted."
   }
 }

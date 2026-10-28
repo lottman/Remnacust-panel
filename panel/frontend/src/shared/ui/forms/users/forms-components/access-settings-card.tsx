@@ -24,6 +24,7 @@ interface IProps<T extends CreateUserCommand.RequestBody | UpdateUserCommand.Req
     cardVariants: Variants
     externalSquads: GetExternalSquadsCommand.Response['response'] | undefined
     form: UseFormReturnType<T>
+    isFrozen?: boolean
     internalSquads: GetInternalSquadsCommand.Response['response'] | undefined
     motionWrapper: ForwardRefComponent<HTMLDivElement, HTMLMotionProps<'div'>>
 }
@@ -115,7 +116,8 @@ export const AccessSettingsCard = <
                             }}
                             valueFormat="D MMM YYYY, HH:mm"
                             {...form.getInputProps('expireAt')}
-                            description={t('create-user-modal.widget.expire-at-description')}
+                            description={props.isFrozen || form.values.status === 'FROZEN'
+                                ? t('frozen-user.help') : t('create-user-modal.widget.expire-at-description')}
                             leftSection={<PiCalendarDuotone size="16px" />}
                             onChange={(date) => {
                                 const formInputProps = form.getInputProps('expireAt')

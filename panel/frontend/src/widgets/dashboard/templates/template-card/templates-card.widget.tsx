@@ -60,6 +60,22 @@ export function TemplatesCardWidget(props: IProps) {
 
                 <EntityCardShared.Actions>
                     <EntityCardShared.Menu>
+                        <Menu.Item
+                            leftSection={<PiCopy size={18} />}
+                            onClick={(event) => {
+                                event.stopPropagation()
+                                showModal('createModal', {
+                                    createFrom: 'template',
+                                    contentOptions: {
+                                        navigate,
+                                        templateType: template.templateType,
+                                        sourceTemplate: { uuid: template.uuid, name: template.name }
+                                    }
+                                })
+                            }}
+                        >
+                            {t('template-copy.action')}
+                        </Menu.Item>
                         <CopyButton timeout={2000} value={template.uuid}>
                             {({ copied, copy }) => (
                                 <Menu.Item

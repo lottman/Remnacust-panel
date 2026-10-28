@@ -3,6 +3,19 @@ const assert = require('node:assert/strict');
 const path = require('node:path');
 const load = require('../../backend/tests/load-typescript.cjs');
 const m = load(path.join(__dirname, '../src/widgets/dashboard/templates/subscription-template-editor/autoselect-model.ts'));
+test('prefix warnings identify the exact pool and allow distinct non-colliding names',()=>{
+ const config=(names)=>({remnawave:{injectHosts:names.map(tagPrefix=>({tagPrefix,selector:{type:'tags',values:['RU']}}))}});
+ assert.equal(m.validationPath(config(['g','g-ru','g-eu'])),null);
+ assert.equal(m.validationPath(config(['one','g-ru','g-ru'])),'remnawave.injectHosts.1.tagPrefix');
+ assert.equal(m.validationPath(config(['g','g-2'])),'remnawave.injectHosts.0.tagPrefix');
+ const manual=config(['g']);manual.outbounds=[{tag:'g-3'}];assert.equal(m.validationPath(manual),'remnawave.injectHosts.0.tagPrefix');
+});
+test('renaming and deleting a balancer updates its recipient assignments without touching another group',()=>{
+ const config={routing:{balancers:[{tag:'one',selector:['g']},{tag:'two',selector:['h']}],rules:[]},remnawave:{assignments:[{balancerTag:'one',hosts:[]},{balancerTag:'two',tags:['NL']}]}};
+ const renamed=m.parseTemplate(m.renameBalancer(JSON.stringify(config),0,'new'));
+ assert.equal(renamed.remnawave.assignments[0].balancerTag,'new');
+ assert.deepEqual(m.parseTemplate(m.removeBalancer(JSON.stringify(renamed),0)).remnawave.assignments,[{balancerTag:'two',tags:['NL']}]);
+});
 test('priority configures health checks, clears the generated same-pool fallback and preserves custom fallbacks',()=>{
     const config={outbounds:[],routing:{balancers:[{tag:'auto',selector:['p'],fallbackTag:'p',strategy:{type:'leastLoad',settings:{expected:2}}}]}};
     let next=m.parseTemplate(m.setBalancerStrategy(JSON.stringify(config),0,'priority'));
@@ -114,10 +127,10 @@ test('unlinked pools and manual balancers remain visible exactly once in unified
  assert.deepEqual(m.autoselectGroups({}),[]);
  assert.deepEqual(m.autoselectGroups({remnawave:{injectHosts:[{tagPrefix:'p',selector:{type:'tags',values:[]}}]},routing:{balancers:[{tag:'manual',selector:['x']}]}}),[{pools:[0],balancers:[]},{pools:[],balancers:[0]}]);
 });
-test('partial JSON supplies live host/tag completions and leaves enums to the native schema',()=>{
+test('partial JSON supplies live host/tag values and mode completions before the selector is valid',()=>{
  const hosts=[{uuid:'10000000-0000-4000-8000-000000000001',remark:'Netherlands',tags:['NL']},{uuid:'10000000-0000-4000-8000-000000000002',remark:'Germany',tags:['DE','NL']}];
  const suggestions=(fragment)=>{const text='{ "remnawave": {"injectHosts": ['+fragment;return injectorCompletionValues(text,text.length,hosts)};
- assert.deepEqual(suggestions('{"mode":"'),[]); // Native schema supplies enums without duplicates.
+ assert.deepEqual(suggestions('{"mode":"').map(x=>x.value),['all','random','group']);
  assert.deepEqual(suggestions('{"mode":"random","selector":{"type":"tags","values":["').map(x=>x.value),['DE','NL']);
  assert.equal(suggestions('{"selector":{"type":"uuids","values":["')[0].detail,'Netherlands');
  assert.deepEqual(injectorCompletionValues('{"unrelated":"',14,hosts),[]);

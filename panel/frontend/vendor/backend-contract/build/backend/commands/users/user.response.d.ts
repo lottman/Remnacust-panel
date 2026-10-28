@@ -7,6 +7,7 @@ export declare const UserResponseSchema: z.ZodObject<{
         status: z.ZodEnum<{
             readonly ACTIVE: "ACTIVE";
             readonly DISABLED: "DISABLED";
+            readonly FROZEN: "FROZEN";
             readonly LIMITED: "LIMITED";
             readonly EXPIRED: "EXPIRED";
         }>;
@@ -19,6 +20,8 @@ export declare const UserResponseSchema: z.ZodObject<{
             readonly MONTH_ROLLING: "MONTH_ROLLING";
         }>;
         expireAt: z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>;
+        frozenAt: z.ZodOptional<z.ZodNullable<z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>>>;
+        frozenRemainingMs: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
         telegramId: z.ZodNullable<z.ZodNumber>;
         email: z.ZodNullable<z.ZodEmail>;
         description: z.ZodNullable<z.ZodString>;

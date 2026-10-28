@@ -21,6 +21,7 @@ test('upgrade only accepts a fixed operation and safe absolute directory', () =>
         { directory: '/a\0b' },
         { tokenSource: 'shell' },
         { command: 'id' },
+        { operation: 'configure-entry', entry: {} },
     ])
         assert.equal(nodeUpgradeSchema.safeParse({ ...request, ...patch }).success, false);
     const script = nodeUpgradeScript({ ...request, directory: '/opt/нода $(id); file' });
@@ -102,6 +103,28 @@ test('failed or interrupted remote command cannot report success', async () => {
         (e) => thrown.push(e),
     );
     assert.equal(thrown.at(-1).status, 'failed');
+});
+
+test('install allows an empty existing directory and rejects nonempty or symlink targets', () => {
+    const install = nodeUpgradeScript({ ...request, operation: 'install' }, { port: 2222, secret: 'a'.repeat(64) });
+    assert.match(install, /! -L "\$directory"/);
+    assert.match(install, /find "\$directory" -mindepth 1 -maxdepth 1 -print -quit/);
+    assert.match(install, /install-node --directory/);
+});
+
+test('only recognized failure codes leave the private SSH channel', async () => {
+    const events = [];
+    const stream = new EventEmitter();
+    stream.stderr = new EventEmitter();
+    stream.destroy = () => {};
+    stream.end = () => queueMicrotask(() => {
+        stream.emit('data', Buffer.from('REMNACUST_NODE_UPGRADE_ERROR:directory\n'));
+        stream.emit('data', Buffer.from('REMNACUST_NODE_UPGRADE_ERROR:' + token + '\n'));
+        stream.emit('close', 1);
+    });
+    await runNodeUpgrade({ exec: (_, cb) => cb(null, stream) }, request, event => events.push(event));
+    assert.equal(events.at(-1).reason, 'directory');
+    assert.ok(!JSON.stringify(events).includes(token));
 });
 
 test('SSH session rejects overlapping updates and replays before reauthorizing again', async () => {

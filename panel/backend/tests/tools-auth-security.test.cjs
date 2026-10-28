@@ -10,14 +10,15 @@ const constants = {
     ERRORS: { FORBIDDEN: { message: 'Forbidden', code: 'forbidden', httpCode: 403 } },
     ROLE: { ADMIN: 'ADMIN' },
 };
-const { toolsAuthMiddleware } = load(path.join(__dirname, '../src/common/middlewares/tools-auth.middleware.ts'), {
+const middlewareMocks = {
     '@common/utils/startup-app': { isDevelopment: () => false },
     '@common/exception/http-exeception-with-error-code.type': { HttpExceptionWithErrorCodeType: Error },
     '@libs/contracts/api': { ROOT: '/api', BACKEND_TOOLS_ROOT: '/tools' },
     '@libs/contracts/constants': constants,
     '@common/utils/admin-session': session,
     '@modules/admin/queries/get-admin-by-username': { GetAdminByUsernameQuery: class {} },
-});
+};
+const { toolsAuthMiddleware } = load(path.join(__dirname, '../src/common/middlewares/tools-auth.middleware.ts'), middlewareMocks);
 const secret = 'only-an-isolated-test-secret';
 const frontEndOrigin = 'https://panel.example.test';
 const admin = { uuid: 'test-admin', username: 'admin', passwordHash: 'test-password-hash' };
@@ -56,6 +57,26 @@ test('a one-time tools token permits exactly one concurrent redemption across wo
     assert.equal(unavailable.status, 503);
     assert.equal(unavailable.cookies.length, 0);
     assertSecurityHeaders(unavailable);
+});
+
+test('signing across a clock boundary never extends the parent expiry or cookie lifetime', async () => {
+    const { toolsAuthMiddleware: delayedSigner } = load(path.join(__dirname,
+        '../src/common/middlewares/tools-auth.middleware.ts'), {
+        ...middlewareMocks,
+        jsonwebtoken: { ...jwt, sign(...args) {
+            const original = Date.now;
+            Date.now = () => original() + 2000;
+            try { return jwt.sign(...args); } finally { Date.now = original; }
+        } },
+    });
+    const token = jwt.sign({ scope: 'ott', parent }, secret, { issuer: 'tools-test', expiresIn: '30s' });
+    const res = response();
+    await delayedSigner(secret, { exists: async () => true, incrementWithTtl: async () => 1 }, queryBus, frontEndOrigin)(
+        {method:'GET', originalUrl:`/api/tools?ott=${token}`,headers:{},path:'/api/tools'}, res, () => assert.fail());
+    assert.equal(res.status, 302);
+    const decoded = jwt.verify(res.cookies[0][1], secret);
+    assert(decoded.exp <= parent.exp);
+    assert.equal(res.cookies[0][2].maxAge, (decoded.exp - decoded.iat) * 1000);
 });
 
 test('tools cookies and unredeemed OTTs are denied after parent logout, credential change or expiry', async () => {

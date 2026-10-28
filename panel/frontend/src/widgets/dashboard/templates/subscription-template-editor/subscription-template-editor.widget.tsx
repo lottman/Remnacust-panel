@@ -7,6 +7,7 @@ import 'monaco-yaml/yaml.worker.js'
 import { GetHostsCommand, GetSubscriptionTemplateCommand } from '@remnawave/backend-contract'
 import { decode } from '@stablelib/base64'
 import clsx from 'clsx'
+import { findNodeAtLocation, parseTree } from 'jsonc-parser'
 import { useDeferredValue, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbArrowsShuffle, TbCode, TbDatabaseImport, TbHistory } from 'react-icons/tb'
@@ -28,9 +29,7 @@ import {
     type ClientFormat
 } from './client-template-model'
 import { GeofilesPanel } from './geofiles-panel'
-import { StableEntryPanel } from './stable-entry-panel'
 import styles from './SubscriptionTemplateEditor.module.css'
-import { TemplateAssignmentPanel } from './template-assignment-panel'
 import { TemplateChanges } from './template-changes'
 import { TemplateHistory } from './template-history'
 import { configureMonaco, getTemplateModelPath } from './utils/setup-template-monaco'
@@ -119,6 +118,22 @@ export function SubscriptionTemplateEditorWidget(props: Props) {
         }
     }, [])
 
+    const revealIssue = () => {
+        setActiveTab('code')
+        requestAnimationFrame(() => {
+            const model = editorRef.current?.getModel()
+            if (!model) return
+            const path = (draft.error ?? '').split('.').map((part) => /^\d+$/.test(part) ? Number(part) : part)
+            const tree = parseTree(value)
+            const node = tree ? findNodeAtLocation(tree, path) : undefined
+            const position = model.getPositionAt(node?.offset ?? 0)
+            editorRef.current?.setPosition(position)
+            editorRef.current?.revealPositionInCenter(position)
+            editorRef.current?.focus()
+        })
+    }
+    const issueLocation = /^(remnawave\.injectHosts|routing\.balancers|remnawave\.assignments)\.(\d+)/.exec(draft.error ?? '')
+
     return (
         <Box className={clsx(styles.container, isFullscreen && fullscreenClasses.overlay)}>
             <Tabs
@@ -185,15 +200,6 @@ export function SubscriptionTemplateEditorWidget(props: Props) {
                     </Paper>
                 </Tabs.Panel>
                 <Tabs.Panel value="autoselect">
-                    {activeTab === 'autoselect' && <StableEntryPanel hosts={hosts} />}
-                    {isXray && draft.config && (
-                        <TemplateAssignmentPanel
-                            text={value}
-                            config={draft.config}
-                            hosts={hosts}
-                            onChange={setDraft}
-                        />
-                    )}
                     {draft.config ? (
                         isXray ? (
                             <AutoselectPanel
@@ -259,12 +265,19 @@ export function SubscriptionTemplateEditorWidget(props: Props) {
             </Tabs>
             {draft.error && (
                 <Alert mt="md" color="yellow" title={t('template-draft.warning')}>
-                    <span dir="ltr">{draft.error}</span>
+                    {issueLocation && (
+                        <Box fw={600} mb={4}>{t(
+                            issueLocation[1] === 'remnawave.injectHosts' ? 'autoselect.issue-pool' :
+                            issueLocation[1] === 'routing.balancers' ? 'autoselect.issue-balancer' : 'autoselect.issue-assignment',
+                            { number: Number(issueLocation[2]) + 1 }
+                        )}</Box>
+                    )}
+                    <Button variant="subtle" size="compact-sm" onClick={revealIssue} title={t('autoselect.reveal-issue')}><span dir="ltr">{draft.error}</span></Button>
                     <br />
                     {t(
                         draft.error.endsWith('.tolerance')
                             ? 'template-draft.tolerance-help'
-                            : 'template-draft.warning-help'
+                            : draft.error.endsWith('.tagPrefix') ? 'autoselect.prefix-conflict-help' : 'template-draft.warning-help'
                     )}
                 </Alert>
             )}
@@ -275,7 +288,7 @@ export function SubscriptionTemplateEditorWidget(props: Props) {
             )}
 
             {!isFullscreen && (
-                <EditorFooter ref={footerRef} attached={activeTab === 'code'}>
+                <EditorFooter className={styles.footer} ref={footerRef} attached={activeTab === 'code'}>
                     {activeTab === 'code' && (
                         <FullscreenToggleButton
                             floating={false}

@@ -1,4 +1,6 @@
 import z from 'zod';
+export declare function injectedTagMatches(prefix: string, tag: string): boolean;
+export declare function injectedPrefixesCollide(left: string, right: string): boolean;
 declare const HostSelectorSchema: z.ZodDiscriminatedUnion<[z.ZodObject<{
     type: z.ZodLiteral<"uuids">;
     values: z.ZodOptional<z.ZodArray<z.ZodUUID>>;
@@ -109,7 +111,13 @@ export declare const RemnawaveInjectorSchema: z.ZodObject<{
     assignTo: z.ZodOptional<z.ZodObject<{
         hosts: z.ZodOptional<z.ZodArray<z.ZodUUID>>;
         tags: z.ZodOptional<z.ZodArray<z.ZodString>>;
+        balancerTag: z.ZodOptional<z.ZodString>;
     }, z.core.$strip>>;
+    assignments: z.ZodOptional<z.ZodArray<z.ZodObject<{
+        hosts: z.ZodOptional<z.ZodArray<z.ZodUUID>>;
+        tags: z.ZodOptional<z.ZodArray<z.ZodString>>;
+        balancerTag: z.ZodString;
+    }, z.core.$strip>>>;
 }, z.core.$strip>;
 export type TRemnawaveInjector = z.infer<typeof RemnawaveInjectorSchema>;
 export type TRemnawaveInjectorSelector = z.infer<typeof HostSelectorSchema>;

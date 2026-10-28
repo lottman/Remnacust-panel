@@ -19,6 +19,7 @@ exports.SubscriptionInfoSchema = zod_1.z.object({
             .transform((str) => new Date(str)),
         isActive: zod_1.z.boolean(),
         userStatus: zod_1.z.enum(constants_1.USERS_STATUS),
+        frozenRemainingMs: zod_1.z.number().int().min(0).nullable().optional(),
         trafficLimitStrategy: zod_1.z.enum(constants_1.RESET_PERIODS),
     }),
     links: zod_1.z.array(zod_1.z.string()),

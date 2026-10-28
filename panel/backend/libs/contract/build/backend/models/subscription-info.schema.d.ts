@@ -16,9 +16,11 @@ export declare const SubscriptionInfoSchema: z.ZodObject<{
         userStatus: z.ZodEnum<{
             readonly ACTIVE: "ACTIVE";
             readonly DISABLED: "DISABLED";
+            readonly FROZEN: "FROZEN";
             readonly LIMITED: "LIMITED";
             readonly EXPIRED: "EXPIRED";
         }>;
+        frozenRemainingMs: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
         trafficLimitStrategy: z.ZodEnum<{
             readonly NO_RESET: "NO_RESET";
             readonly DAY: "DAY";

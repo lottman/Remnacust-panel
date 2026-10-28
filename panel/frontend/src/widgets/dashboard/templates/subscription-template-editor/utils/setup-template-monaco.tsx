@@ -131,7 +131,7 @@ export const configureMonaco = async (
         if (language === 'json') {
             injectorCompletion?.dispose()
             injectorCompletion = monaco.languages.registerCompletionItemProvider('json', {
-                triggerCharacters: ['"'],
+                triggerCharacters: ['"', ':'],
                 provideCompletionItems(model: editor.ITextModel, position: IPosition) {
                     if (!model.uri.toString().startsWith('subscription-template://'))
                         return { suggestions: [] }

@@ -24,6 +24,7 @@ export declare const RemnawaveWebhookUserEvents: z.ZodObject<{
         status: z.ZodEnum<{
             readonly ACTIVE: "ACTIVE";
             readonly DISABLED: "DISABLED";
+            readonly FROZEN: "FROZEN";
             readonly LIMITED: "LIMITED";
             readonly EXPIRED: "EXPIRED";
         }>;
@@ -36,6 +37,8 @@ export declare const RemnawaveWebhookUserEvents: z.ZodObject<{
             readonly MONTH_ROLLING: "MONTH_ROLLING";
         }>;
         expireAt: z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>;
+        frozenAt: z.ZodOptional<z.ZodNullable<z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>>>;
+        frozenRemainingMs: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
         telegramId: z.ZodNullable<z.ZodNumber>;
         email: z.ZodNullable<z.ZodEmail>;
         description: z.ZodNullable<z.ZodString>;
@@ -83,6 +86,7 @@ export declare const RemnawaveWebhookUserHwidDevicesEvents: z.ZodObject<{
             status: z.ZodEnum<{
                 readonly ACTIVE: "ACTIVE";
                 readonly DISABLED: "DISABLED";
+                readonly FROZEN: "FROZEN";
                 readonly LIMITED: "LIMITED";
                 readonly EXPIRED: "EXPIRED";
             }>;
@@ -95,6 +99,8 @@ export declare const RemnawaveWebhookUserHwidDevicesEvents: z.ZodObject<{
                 readonly MONTH_ROLLING: "MONTH_ROLLING";
             }>;
             expireAt: z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>;
+            frozenAt: z.ZodOptional<z.ZodNullable<z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>>>;
+            frozenRemainingMs: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
             telegramId: z.ZodNullable<z.ZodNumber>;
             email: z.ZodNullable<z.ZodEmail>;
             description: z.ZodNullable<z.ZodString>;
@@ -425,6 +431,7 @@ export declare const RemnawaveWebhookTorrentBlockerEvents: z.ZodObject<{
             status: z.ZodEnum<{
                 readonly ACTIVE: "ACTIVE";
                 readonly DISABLED: "DISABLED";
+                readonly FROZEN: "FROZEN";
                 readonly LIMITED: "LIMITED";
                 readonly EXPIRED: "EXPIRED";
             }>;
@@ -437,6 +444,8 @@ export declare const RemnawaveWebhookTorrentBlockerEvents: z.ZodObject<{
                 readonly MONTH_ROLLING: "MONTH_ROLLING";
             }>;
             expireAt: z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>;
+            frozenAt: z.ZodOptional<z.ZodNullable<z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>>>;
+            frozenRemainingMs: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
             telegramId: z.ZodNullable<z.ZodNumber>;
             email: z.ZodNullable<z.ZodEmail>;
             description: z.ZodNullable<z.ZodString>;
@@ -516,6 +525,7 @@ export declare const RemnawaveWebhookEventSchema: z.ZodDiscriminatedUnion<[z.Zod
         status: z.ZodEnum<{
             readonly ACTIVE: "ACTIVE";
             readonly DISABLED: "DISABLED";
+            readonly FROZEN: "FROZEN";
             readonly LIMITED: "LIMITED";
             readonly EXPIRED: "EXPIRED";
         }>;
@@ -528,6 +538,8 @@ export declare const RemnawaveWebhookEventSchema: z.ZodDiscriminatedUnion<[z.Zod
             readonly MONTH_ROLLING: "MONTH_ROLLING";
         }>;
         expireAt: z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>;
+        frozenAt: z.ZodOptional<z.ZodNullable<z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>>>;
+        frozenRemainingMs: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
         telegramId: z.ZodNullable<z.ZodNumber>;
         email: z.ZodNullable<z.ZodEmail>;
         description: z.ZodNullable<z.ZodString>;
@@ -574,6 +586,7 @@ export declare const RemnawaveWebhookEventSchema: z.ZodDiscriminatedUnion<[z.Zod
             status: z.ZodEnum<{
                 readonly ACTIVE: "ACTIVE";
                 readonly DISABLED: "DISABLED";
+                readonly FROZEN: "FROZEN";
                 readonly LIMITED: "LIMITED";
                 readonly EXPIRED: "EXPIRED";
             }>;
@@ -586,6 +599,8 @@ export declare const RemnawaveWebhookEventSchema: z.ZodDiscriminatedUnion<[z.Zod
                 readonly MONTH_ROLLING: "MONTH_ROLLING";
             }>;
             expireAt: z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>;
+            frozenAt: z.ZodOptional<z.ZodNullable<z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>>>;
+            frozenRemainingMs: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
             telegramId: z.ZodNullable<z.ZodNumber>;
             email: z.ZodNullable<z.ZodEmail>;
             description: z.ZodNullable<z.ZodString>;
@@ -911,6 +926,7 @@ export declare const RemnawaveWebhookEventSchema: z.ZodDiscriminatedUnion<[z.Zod
             status: z.ZodEnum<{
                 readonly ACTIVE: "ACTIVE";
                 readonly DISABLED: "DISABLED";
+                readonly FROZEN: "FROZEN";
                 readonly LIMITED: "LIMITED";
                 readonly EXPIRED: "EXPIRED";
             }>;
@@ -923,6 +939,8 @@ export declare const RemnawaveWebhookEventSchema: z.ZodDiscriminatedUnion<[z.Zod
                 readonly MONTH_ROLLING: "MONTH_ROLLING";
             }>;
             expireAt: z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>;
+            frozenAt: z.ZodOptional<z.ZodNullable<z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>>>;
+            frozenRemainingMs: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
             telegramId: z.ZodNullable<z.ZodNumber>;
             email: z.ZodNullable<z.ZodEmail>;
             description: z.ZodNullable<z.ZodString>;

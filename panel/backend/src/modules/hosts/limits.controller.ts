@@ -57,7 +57,9 @@ export const listUsersSchema = scope
             .number()
             .pipe(z.union([z.literal(25), z.literal(50), z.literal(100)]))
             .default(50),
-        status: z.enum(['ALL', 'ACTIVE', 'DISABLED', 'LIMITED', 'EXPIRED']).default('ALL'),
+        status: z
+            .enum(['ALL', 'ACTIVE', 'DISABLED', 'LIMITED', 'EXPIRED', 'FROZEN'])
+            .default('ALL'),
         state: z.enum(['ALL', 'PAUSED', 'EXHAUSTED', 'AVAILABLE', 'UNAVAILABLE']).default('ALL'),
         sort: z
             .enum([

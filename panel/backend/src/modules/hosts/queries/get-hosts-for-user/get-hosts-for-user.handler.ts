@@ -12,6 +12,7 @@ import { HostsRepository } from '../../repositories/hosts.repository';
 import {
     assignedXrayTemplate,
     indexXrayTemplateAssignments,
+    recipientXrayTemplate,
 } from '../../utils/xray-template-assignments';
 import { GetHostsForUserQuery } from './get-hosts-for-user.query';
 
@@ -78,7 +79,10 @@ export class GetHostsForUserHandler implements IQueryHandler<GetHostsForUserQuer
                         rawInbound: inbound.rawInbound,
                         inboundTag: inbound.tag,
                         xrayJsonTemplate: h.xrayJsonTemplateUuid
-                            ? (templates.get(h.xrayJsonTemplateUuid) ?? null)
+                            ? recipientXrayTemplate(
+                                  h,
+                                  templates.get(h.xrayJsonTemplateUuid) ?? null,
+                              )
                             : assignedXrayTemplate(h, assignments),
                     });
                     result.tagTrafficLimits = limits.map((item) => ({

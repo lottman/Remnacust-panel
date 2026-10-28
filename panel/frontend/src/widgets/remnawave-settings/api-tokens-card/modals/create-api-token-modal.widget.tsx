@@ -9,7 +9,6 @@ import {
     Group,
     NumberInput,
     Stack,
-    Switch,
     Text,
     TextInput,
     Tooltip
@@ -343,7 +342,7 @@ export const CreateApiTokenContentWidget = ({ isMobile, token }: IProps) => {
                     disabled={!scopesData || isError || !initialized}
                     onClick={presetFull}
                     size="xs"
-                    variant="default"
+                    variant={fullAccess ? 'light' : 'default'}
                 >
                     {t('api-tokens-card.widget.full-access')}
                 </Button>
@@ -358,21 +357,9 @@ export const CreateApiTokenContentWidget = ({ isMobile, token }: IProps) => {
                 </Button>
             </Group>
 
-            <Switch
-                checked={fullAccess}
-                disabled={!scopesData || isError || !initialized}
-                label={t('api-tokens-card.widget.full-access')}
-                description={t('api-token-editor.full-description')}
-                onChange={(event) => {
-                    if (event.currentTarget.checked) presetFull()
-                    else setFullAccess(false)
-                }}
-            />
-            {!fullAccess && (
-                <Text c="dimmed" size="xs">
-                    {t('api-token-editor.exact-description')}
-                </Text>
-            )}
+            <Text c="dimmed" size="xs">
+                {t(fullAccess ? 'api-token-editor.full-description' : 'api-token-editor.exact-description')}
+            </Text>
             {isLoading && <Text role="status">{t('api-token-editor.loading')}</Text>}
             {isError && (
                 <Alert color="red" title={t('api-token-editor.catalog-error')}>

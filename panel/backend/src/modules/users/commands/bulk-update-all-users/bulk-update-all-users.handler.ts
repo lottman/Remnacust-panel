@@ -19,7 +19,7 @@ export class BulkUpdateAllUsersHandler implements ICommandHandler<BulkUpdateAllU
             return;
         } catch (error: unknown) {
             this.logger.error(error);
-            return;
+            throw error;
         }
     }
 }

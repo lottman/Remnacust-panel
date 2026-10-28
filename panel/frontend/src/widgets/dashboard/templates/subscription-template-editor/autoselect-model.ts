@@ -1,4 +1,4 @@
-import { RemnawaveInjectorSchema } from '@remnawave/backend-contract'
+import { injectedPrefixesCollide, injectedTagMatches, RemnawaveInjectorSchema } from '@remnawave/backend-contract'
 import { applyEdits, modify } from 'jsonc-parser'
 
 // The editor preserves arbitrary legacy Xray fields; known containers are checked in parseTemplate.
@@ -60,11 +60,18 @@ export function parseTemplate(text: string): JsonObject {
     for (const key of ['rules', 'balancers'])
         if (config.routing?.[key] !== undefined && !Array.isArray(config.routing[key]))
             throw new Error('routing-array')
-    if (config.remnawave?.assignTo !== undefined) {
-        const assignment = config.remnawave.assignTo
+    const assignments = config.remnawave?.assignments
+    if (assignments !== undefined && (!Array.isArray(assignments) || assignments.length > 1000))
+        throw new Error('assignment-object')
+    for (const assignment of [
+        ...(assignments ?? []),
+        ...(config.remnawave?.assignTo !== undefined ? [config.remnawave.assignTo] : [])
+    ]) {
         if (
             !assignment ||
             typeof assignment !== 'object' ||
+            Array.isArray(assignment) ||
+            (assignment.balancerTag !== undefined && typeof assignment.balancerTag !== 'string') ||
             ['hosts', 'tags'].some(
                 (key) =>
                     assignment[key] !== undefined &&
@@ -451,6 +458,11 @@ export function renameBalancer(text: string, index: number, name: string): strin
     for (const [ruleIndex, rule] of (config.routing.rules ?? []).entries())
         if (rule.balancerTag === old)
             next = editTemplate(next, ['routing', 'rules', ruleIndex, 'balancerTag'], name)
+    for (const [assignmentIndex, assignment] of (config.remnawave?.assignments ?? []).entries())
+        if (assignment.balancerTag === old)
+            next = editTemplate(next, ['remnawave', 'assignments', assignmentIndex, 'balancerTag'], name)
+    if (config.remnawave?.assignTo?.balancerTag === old)
+        next = editTemplate(next, ['remnawave', 'assignTo', 'balancerTag'], name)
     return remapGeofileTargets(next, old, name)
 }
 
@@ -461,6 +473,10 @@ export function removeBalancer(text: string, index: number): string {
     for (let rule = (config.routing?.rules?.length ?? 0) - 1; rule >= 0; rule--)
         if (config.routing.rules[rule].balancerTag === tag)
             next = editTemplate(next, ['routing', 'rules', rule], undefined)
+    if (config.remnawave?.assignments)
+        next = editTemplate(next, ['remnawave', 'assignments'], config.remnawave.assignments.filter((assignment: JsonObject) => assignment.balancerTag !== tag))
+    if (config.remnawave?.assignTo?.balancerTag === tag)
+        next = editTemplate(next, ['remnawave', 'assignTo'], undefined)
     return remapGeofileTargets(next, tag, '')
 }
 
@@ -538,9 +554,6 @@ export function validationPath(config: JsonObject): string | null {
         const result = RemnawaveInjectorSchema.safeParse(config.remnawave)
         if (!result.success) return ['remnawave', ...result.error.issues[0].path].join('.')
     }
-    const prefixes = poolsOf(config)
-        .map((pool) => pool.tagPrefix)
-        .filter(Boolean) as string[]
     for (const [index, pool] of poolsOf(config).entries()) {
         if (!pool.tagPrefix && !pool.useHostRemarkAsTag && !pool.useHostTagAsTag)
             return `remnawave.injectHosts.${index}.tagPrefix`
@@ -548,18 +561,25 @@ export function validationPath(config: JsonObject): string | null {
     const staticTags = (config.outbounds ?? [])
         .map((outbound: JsonObject) => outbound.tag)
         .filter(Boolean)
-    if (
-        prefixes.some(
-            (prefix, index) =>
-                staticTags.includes(prefix) ||
-                prefixes.some(
-                    (other, otherIndex) =>
-                        index !== otherIndex &&
-                        (prefix === other || prefix.startsWith(other) || other.startsWith(prefix))
-                )
-        )
-    )
-        return 'remnawave.injectHosts.tagPrefix'
+    for (const [index, pool] of poolsOf(config).entries()) {
+        const prefix = pool.tagPrefix
+        if (prefix && (staticTags.some((tag: unknown) => typeof tag === 'string' && injectedTagMatches(prefix, tag)) || poolsOf(config).some((other, otherIndex) =>
+            index !== otherIndex && other.tagPrefix &&
+            injectedPrefixesCollide(prefix, other.tagPrefix))))
+            return `remnawave.injectHosts.${index}.tagPrefix`
+    }
+    const assignedHosts = new Set<string>()
+    const assignedBalancers = new Set<string>()
+    for (const [index, assignment] of (config.remnawave?.assignments ?? []).entries()) {
+        if (assignedBalancers.has(assignment.balancerTag) ||
+            !config.routing?.balancers?.some((item: JsonObject) => item.tag === assignment.balancerTag))
+            return `remnawave.assignments.${index}.balancerTag`
+        assignedBalancers.add(assignment.balancerTag)
+        for (const host of assignment.hosts ?? []) {
+            if (assignedHosts.has(host)) return `remnawave.assignments.${index}.hosts`
+            assignedHosts.add(host)
+        }
+    }
     for (const [index, pool] of poolsOf(config).entries()) {
         if (['tagRegex', 'remarkRegex'].includes(pool.selector.type)) {
             try {

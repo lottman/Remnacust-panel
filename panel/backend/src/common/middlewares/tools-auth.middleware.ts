@@ -1,18 +1,15 @@
 import { NextFunction, Request, Response } from 'express';
 import * as jwt from 'jsonwebtoken';
-import { getQuery } from 'ufo';
 import { createHash } from 'node:crypto';
-import type { RawCacheService } from '@common/raw-cache';
+import { getQuery } from 'ufo';
 
 import { Logger } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
-import { isAdminSessionCurrent } from '@common/utils/admin-session';
-import { GetAdminByUsernameQuery } from '@modules/admin/queries/get-admin-by-username';
-import type { IJWTAuthPayload } from '@modules/auth/interfaces';
-import type { AdminEntity } from '@modules/admin/entities/admin.entity';
-import type { TResult } from '@common/types';
 
 import { HttpExceptionWithErrorCodeType } from '@common/exception/http-exeception-with-error-code.type';
+import type { RawCacheService } from '@common/raw-cache';
+import type { TResult } from '@common/types';
+import { isAdminSessionCurrent } from '@common/utils/admin-session';
 import { isDevelopment } from '@common/utils/startup-app';
 import { BACKEND_TOOLS_ROOT, ROOT } from '@libs/contracts/api';
 import {
@@ -25,18 +22,31 @@ import {
     TBackendToolsJwtScope,
 } from '@libs/contracts/constants';
 
+import type { AdminEntity } from '@modules/admin/entities/admin.entity';
+import { GetAdminByUsernameQuery } from '@modules/admin/queries/get-admin-by-username';
+import type { IJWTAuthPayload } from '@modules/auth/interfaces';
+
 const logger = new Logger('ToolsAuth');
 
 type ToolsPayload = jwt.JwtPayload & { parent?: IJWTAuthPayload };
 
-export function toolsAuthMiddleware(appSecret: string, cache: RawCacheService, queryBus: QueryBus, frontEndOrigin: string, panelDomain?: string) {
+export function toolsAuthMiddleware(
+    appSecret: string,
+    cache: RawCacheService,
+    queryBus: QueryBus,
+    frontEndOrigin: string,
+    panelDomain?: string,
+) {
     let allowedOrigin: string | null = null;
     try {
         const configured = frontEndOrigin !== '*' ? frontEndOrigin : panelDomain;
         if (configured) {
             const url = new URL(configured.includes('://') ? configured : `https://${configured}`);
-            if (!url.username && !url.password &&
-                (url.protocol === 'https:' || (isDevelopment() && url.protocol === 'http:'))) {
+            if (
+                !url.username &&
+                !url.password &&
+                (url.protocol === 'https:' || (isDevelopment() && url.protocol === 'http:'))
+            ) {
                 allowedOrigin = url.origin;
             }
         }
@@ -49,15 +59,20 @@ export function toolsAuthMiddleware(appSecret: string, cache: RawCacheService, q
         const admin = await queryBus.execute<GetAdminByUsernameQuery, TResult<AdminEntity>>(
             new GetAdminByUsernameQuery(parent.username, ROLE.ADMIN),
         );
-        return admin.isOk && isAdminSessionCurrent(parent, admin.response, appSecret, key => cache.exists(key));
+        return (
+            admin.isOk &&
+            isAdminSessionCurrent(parent, admin.response, appSecret, (key) => cache.exists(key))
+        );
     };
     return async (req: Request, res: Response, next: NextFunction) => {
         res.setHeader('Cache-Control', 'no-store');
         res.setHeader('Referrer-Policy', 'no-referrer');
         res.setHeader('X-Frame-Options', 'DENY');
 
-        if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method) &&
-            (!allowedOrigin || req.headers.origin !== allowedOrigin)) {
+        if (
+            !['GET', 'HEAD', 'OPTIONS'].includes(req.method) &&
+            (!allowedOrigin || req.headers.origin !== allowedOrigin)
+        ) {
             res.sendStatus(403);
             return;
         }
@@ -74,7 +89,7 @@ export function toolsAuthMiddleware(appSecret: string, cache: RawCacheService, q
                         res.sendStatus(403);
                         return;
                     }
-                    if (await cache.incrementWithTtl(`tools:ott:used:${digest}`, 60) !== 1) {
+                    if ((await cache.incrementWithTtl(`tools:ott:used:${digest}`, 60)) !== 1) {
                         res.sendStatus(403);
                         return;
                     }
@@ -82,14 +97,18 @@ export function toolsAuthMiddleware(appSecret: string, cache: RawCacheService, q
                     res.sendStatus(503);
                     return;
                 }
-                const token = signJwt(appSecret, payload.parent!);
+                const signed = signJwt(appSecret, payload.parent!);
+                if (!signed) {
+                    res.sendStatus(403);
+                    return;
+                }
 
-                res.cookie(BACKEND_TOOLS_AUTH_COOKIE_NAME, token, {
+                res.cookie(BACKEND_TOOLS_AUTH_COOKIE_NAME, signed.token, {
                     httpOnly: true,
                     secure: !isDevelopment(),
                     sameSite: 'lax',
                     path: `${ROOT}${BACKEND_TOOLS_ROOT}`,
-                    maxAge: BACKEND_TOOLS_JWT_LIFETIME_HOURS * 3_600_000,
+                    maxAge: signed.maxAge,
                 });
 
                 logger.warn(
@@ -113,7 +132,9 @@ export function toolsAuthMiddleware(appSecret: string, cache: RawCacheService, q
         let valid = false;
         try {
             const token = getCookie(req, BACKEND_TOOLS_AUTH_COOKIE_NAME);
-            valid = await parentIsCurrent(token ? verifyJwt(token, appSecret, BACKEND_TOOLS_JWT_SCOPES.ACCESS) : null);
+            valid = await parentIsCurrent(
+                token ? verifyJwt(token, appSecret, BACKEND_TOOLS_JWT_SCOPES.ACCESS) : null,
+            );
         } catch {
             res.sendStatus(503);
             return;
@@ -153,13 +174,27 @@ function getCookie(req: Request, name: string): string | null {
 }
 
 function signJwt(appSecret: string, parent: IJWTAuthPayload) {
-    return jwt.sign({ scope: BACKEND_TOOLS_JWT_SCOPES.ACCESS, parent }, appSecret, {
-        expiresIn: Math.max(1, Math.min(BACKEND_TOOLS_JWT_LIFETIME_HOURS * 3600, parent.exp! - Math.floor(Date.now() / 1000))),
-        issuer: BACKEND_TOOLS_JWT_ISSUER,
-    });
+    const issuedAt = Math.floor(Date.now() / 1000);
+    const expiresAt = Math.min(parent.exp ?? 0, issuedAt + BACKEND_TOOLS_JWT_LIFETIME_HOURS * 3600);
+    if (!Number.isFinite(expiresAt) || expiresAt <= issuedAt) return null;
+    // Absolute claims avoid a second clock read inside the signer extending the parent lifetime.
+    return {
+        token: jwt.sign(
+            { scope: BACKEND_TOOLS_JWT_SCOPES.ACCESS, parent, iat: issuedAt, exp: expiresAt },
+            appSecret,
+            {
+                issuer: BACKEND_TOOLS_JWT_ISSUER,
+            },
+        ),
+        maxAge: (expiresAt - issuedAt) * 1000,
+    };
 }
 
-function verifyJwt(token: string, appSecret: string, scope: TBackendToolsJwtScope): ToolsPayload | null {
+function verifyJwt(
+    token: string,
+    appSecret: string,
+    scope: TBackendToolsJwtScope,
+): ToolsPayload | null {
     try {
         const decoded = jwt.verify(token, appSecret, {
             algorithms: ['HS256'],
@@ -167,7 +202,9 @@ function verifyJwt(token: string, appSecret: string, scope: TBackendToolsJwtScop
             ignoreExpiration: false,
         });
 
-        return typeof decoded === 'object' && decoded.scope === scope ? decoded as ToolsPayload : null;
+        return typeof decoded === 'object' && decoded.scope === scope
+            ? (decoded as ToolsPayload)
+            : null;
     } catch {
         return null;
     }

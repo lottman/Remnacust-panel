@@ -42,6 +42,9 @@
 .detailTile[data-expiration='valid'] {
     --detail-color: light-dark(var(--mantine-color-teal-8), var(--mantine-color-teal-4));
 }
+.detailTile[data-expiration='frozen'] {
+    --detail-color: light-dark(var(--mantine-color-blue-8), var(--mantine-color-blue-4));
+}
 .detailTile[data-expiration='soon'] {
     --detail-color: light-dark(var(--mantine-color-orange-8), var(--mantine-color-yellow-4));
 }

@@ -119,6 +119,20 @@ test('incomplete host selections save drafts with their exact warning paths', as
     }
 });
 
+test('duplicate prefixes from code save an editable draft with indexed pool warnings, while distinct prefixes publish', async () => {
+    const f = fixture();
+    const config = { remnawave: { injectHosts: ['g', 'g-ru', 'g-ru'].map(tagPrefix => ({tagPrefix,selector:{type:'tags',values:['RU']}})) } };
+    const before = f.current().templateJson;
+    const result = await f.save(JSON.stringify(config));
+    assert.equal(result.isOk, true);
+    assert.deepEqual(result.response.validationWarnings, ['remnawave.injectHosts.1.tagPrefix', 'remnawave.injectHosts.2.tagPrefix']);
+    assert.deepEqual(f.current().templateJson, before);
+    config.remnawave.injectHosts[2].tagPrefix = 'g-eu';
+    assert.equal((await f.save(JSON.stringify(config))).isOk, true);
+    assert.equal(f.current().draftContent, null);
+    assert.deepEqual(f.current().templateJson.remnawave.injectHosts, config.remnawave.injectHosts);
+});
+
 function leastLoad(tolerance) {
     return {
         outbounds: [{ tag: 'direct', protocol: 'freedom' }],

@@ -102,6 +102,7 @@ export class ResolveProxyConfigService {
         }
 
         const subscriptionEnded =
+            user.status === USERS_STATUS.FROZEN ||
             user.status === USERS_STATUS.EXPIRED ||
             user.status === USERS_STATUS.DISABLED ||
             (user.status === USERS_STATUS.ACTIVE && user.expireAt <= new Date());
@@ -219,6 +220,7 @@ export class ResolveProxyConfigService {
         fallbackOptions: IResolveProxyConfigOptions['fallbackOptions'],
         hostCount: number,
     ): string[] | null {
+        if (user.status === USERS_STATUS.FROZEN) return ['Subscription frozen'];
         if (fallbackOptions?.showHwidRegistrationBlockedRemarks) {
             return registrationBlockedRemarks(user, settings);
         }

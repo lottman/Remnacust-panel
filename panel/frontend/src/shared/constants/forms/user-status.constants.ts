@@ -22,6 +22,12 @@ export const userStatusValues = [
         }
     },
     {
+        value: USERS_STATUS.FROZEN,
+        get label() {
+            return uiText('frozen-user-status')
+        }
+    },
+    {
         value: USERS_STATUS.EXPIRED,
         get label() {
             return uiText('expired-424a255')

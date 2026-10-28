@@ -7,23 +7,7 @@ export const nodeUpgradeSchema = z
     .object({
         t: z.literal('node-upgrade'),
         id: z.uuid(),
-        operation: z.enum(['upgrade', 'install', 'configure-entry']).optional(),
-        entry: z
-            .strictObject({
-                hostUuid: z.uuid(),
-                backendNodeUuids: z
-                    .array(z.uuid())
-                    .min(1)
-                    .max(128)
-                    .refine((values) => new Set(values).size === values.length),
-                listenPort: z
-                    .int()
-                    .min(1)
-                    .max(65535)
-                    .refine((value) => value !== 22),
-                strategy: z.enum(['priority', 'roundRobin', 'leastConnections']),
-            })
-            .optional(),
+        operation: z.enum(['upgrade', 'install']).optional(),
         netAdmin: z.boolean().optional(),
         panelIp: z
             .string()
@@ -49,33 +33,36 @@ export type NodeUpgradeEvent = {
     id: string;
     status: 'running' | 'succeeded' | 'failed';
     phase: 'preparing' | 'downloading' | 'updating' | 'finished';
+    reason?:
+        | 'root'
+        | 'directory'
+        | 'dependencies'
+        | 'download'
+        | 'installer'
+        | 'ssh'
+        | 'authorization'
+        | 'node'
+        | 'busy';
 };
 
 export type NodeInstallContext = { port: number; secret: string };
-export type StableEntryContext = {
-    listenPort: number;
-    strategy: string;
-    backends: { address: string; port: number }[];
-};
 
-export function nodeUpgradeScript(
-    request: NodeUpgradeRequest,
-    installation?: NodeInstallContext,
-    entry?: StableEntryContext,
-) {
+export function nodeUpgradeScript(request: NodeUpgradeRequest, installation?: NodeInstallContext) {
     nodeUpgradeSchema.parse(request);
     const directory = Buffer.from(request.directory).toString('base64');
     const script =
         `set +x\nset -euo pipefail\numask 077\ndirectory=$(printf '%s' '${directory}' | base64 -d)\n` +
         String.raw`
-[[ $EUID -eq 0 ]] || exit 1
-[[ -d "$directory" ]] || exit 1
+fail() { printf 'REMNACUST_NODE_UPGRADE_ERROR:%s\n' "$1"; exit 1; }
+[[ $EUID -eq 0 ]] || fail root
+[[ -d "$directory" && ! -L "$directory" ]] || fail directory
 directory=$(realpath -- "$directory")
-command -v curl >/dev/null
-command -v python3 >/dev/null
-command -v docker >/dev/null
+command -v curl >/dev/null || fail dependencies
+command -v python3 >/dev/null || fail dependencies
+command -v docker >/dev/null || fail dependencies
 work=$(mktemp -d -t remnacust-node-upgrade.XXXXXXXX)
-trap 'rm -rf -- "$work"' EXIT
+failure=download
+trap 'rc=$?; if ((rc)); then printf "REMNACUST_NODE_UPGRADE_ERROR:%s\n" "$failure"; fi; rm -rf -- "$work"' EXIT
 printf '\nREMNACUST_NODE_UPGRADE_PHASE:downloading\n'
 download() { curl -fsSL --proto '=https' --proto-redir '=https' --connect-timeout 15 --max-time 900 --retry 2 "$1" -o "$2"; }
 download https://api.github.com/repos/lottman/Remnacust-installer/releases/latest "$work/release.json"
@@ -110,26 +97,12 @@ if asset.get('digest') and asset['digest']!='sha256:'+hashlib.sha256(script).hex
 PY
 bash -n "$work/installer.sh"
 printf '\nREMNACUST_NODE_UPGRADE_PHASE:updating\n'
+failure=installer
 # Shared installer updates Compose and verifies version, environment and readiness.
 # Its recovery and cleanup are identical to the command-line update path.
 version=$(printf '%s' "$tag" | cut -c2-)
 bash "$work/installer.sh" upgrade-node --directory "$directory" --version "$version" --yes
 `;
-    if (request.operation === 'configure-entry') {
-        if (!entry || !request.entry) throw new Error('Entry context is required');
-        const encoded = Buffer.from(JSON.stringify(entry)).toString('base64');
-        return script
-            .replace('[[ -d "$directory" ]] || exit 1', 'true')
-            .replace(
-                'directory=$(realpath -- "$directory")',
-                'directory=$(realpath -m -- "$directory")',
-            )
-            .replace('command -v docker >/dev/null', 'command -v apt-get >/dev/null')
-            .replace(
-                'bash "$work/installer.sh" upgrade-node --directory "$directory" --version "$version" --yes',
-                `printf '%s' '${encoded}' | base64 -d > "$work/entry.json"\nbash "$work/installer.sh" configure-entry-node --entry-config "$work/entry.json" --yes`,
-            );
-    }
     if (request.operation !== 'install') return script;
     if (
         !installation ||
@@ -142,12 +115,18 @@ bash "$work/installer.sh" upgrade-node --directory "$directory" --version "$vers
         throw new Error('Invalid installation context');
     const secret = Buffer.from(installation.secret).toString('base64');
     return script
-        .replace('[[ -d "$directory" ]] || exit 1', '[[ ! -e "$directory" ]] || exit 1')
+        .replace(
+            '[[ -d "$directory" && ! -L "$directory" ]] || fail directory',
+            '[[ ! -L "$directory" ]] || fail directory\nif [[ -e "$directory" ]]; then [[ -d "$directory" && -z $(find "$directory" -mindepth 1 -maxdepth 1 -print -quit) ]] || fail directory; fi',
+        )
         .replace(
             'directory=$(realpath -- "$directory")',
             'directory=$(realpath -m -- "$directory")',
         )
-        .replace('command -v docker >/dev/null', 'command -v apt-get >/dev/null')
+        .replace(
+            'command -v docker >/dev/null || fail dependencies',
+            'command -v apt-get >/dev/null || fail dependencies',
+        )
         .replace(
             'bash "$work/installer.sh" upgrade-node --directory "$directory" --version "$version" --yes',
             `export REMNACUST_NODE_SECRET="$(printf '%s' '${secret}' | base64 -d)"\nbash "$work/installer.sh" install-node --directory "$directory" --port ${installation.port} --version "$version" ${request.netAdmin ? '--net-admin' : '--no-net-admin'} ${request.panelIp ? `--panel-ip '${request.panelIp}'` : ''} --yes\nunset REMNACUST_NODE_SECRET`,
@@ -161,13 +140,13 @@ export function runNodeUpgrade(
     request: NodeUpgradeRequest,
     emit: (event: NodeUpgradeEvent) => void,
     installation?: NodeInstallContext,
-    entry?: StableEntryContext,
 ): Promise<void> {
-    const script = nodeUpgradeScript(request, installation, entry);
+    const script = nodeUpgradeScript(request, installation);
     return new Promise((resolve) => {
         let channel: ClientChannel | undefined;
         let settled = false;
         let buffer = '';
+        let reason: NodeUpgradeEvent['reason'] = 'ssh';
         const finish = (success: boolean) => {
             if (settled) return;
             settled = true;
@@ -178,6 +157,7 @@ export function runNodeUpgrade(
                 id: request.id,
                 status: success ? 'succeeded' : 'failed',
                 phase: 'finished',
+                ...(!success && reason ? { reason } : {}),
             });
             resolve();
         };
@@ -201,17 +181,23 @@ export function runNodeUpgrade(
                         const lines = buffer.split('\n');
                         buffer = lines.pop() ?? '';
                         for (const line of lines) {
+                            const failure = line.match(
+                                /^REMNACUST_NODE_UPGRADE_ERROR:(root|directory|dependencies|download|installer)\s*$/,
+                            );
+                            if (failure) reason = failure[1] as NodeUpgradeEvent['reason'];
                             const phase = line.replace(/^REMNACUST_NODE_UPGRADE_PHASE:/, '').trim();
                             if (
                                 line.startsWith('REMNACUST_NODE_UPGRADE_PHASE:') &&
                                 ['downloading', 'updating'].includes(phase)
-                            )
+                            ) {
+                                reason = phase === 'downloading' ? 'download' : 'installer';
                                 emit({
                                     t: 'node-upgrade',
                                     id: request.id,
                                     status: 'running',
                                     phase: phase as 'downloading' | 'updating',
                                 });
+                            }
                         }
                     });
                     stream.stderr.on('data', () => undefined);

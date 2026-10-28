@@ -4,6 +4,7 @@ exports.USERS_STATUS_VALUES = exports.USERS_STATUS = void 0;
 exports.USERS_STATUS = {
     ACTIVE: 'ACTIVE',
     DISABLED: 'DISABLED',
+    FROZEN: 'FROZEN',
     LIMITED: 'LIMITED',
     EXPIRED: 'EXPIRED',
 };

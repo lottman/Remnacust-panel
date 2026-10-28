@@ -2,6 +2,7 @@ import NiceModal, { useModal } from '@ebay/nice-modal-react'
 import { DataList, Drawer, Group, Stack } from '@mantine/core'
 import { UserStatusBadge } from '@widgets/dashboard/users/user-status-badge'
 import { useTranslation } from 'react-i18next'
+import dayjs from 'dayjs'
 import {
     PiArrowsDownUpDuotone,
     PiCalendarDotDuotone,
@@ -178,7 +179,9 @@ export const DetailedUserInfoDrawer = NiceModal.create((props: IProps) => {
                                 />
                                 <CopyableDataListItem
                                     label={t('detailed-user-info-drawer.widget.expires-at')}
-                                    value={formatTimeUtil({
+                                    value={user.status === 'FROZEN' && user.frozenRemainingMs != null
+                                        ? t('frozen-user.remaining', { duration: dayjs(Date.now() + user.frozenRemainingMs).locale(i18n.language).fromNow(true) })
+                                        : formatTimeUtil({
                                         time: user.expireAt,
                                         template: 'TIME_FIRST_DATETIME',
                                         language: i18n.language

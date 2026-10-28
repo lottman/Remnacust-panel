@@ -392,15 +392,16 @@ export type Users = {
     shortUuid: string;
     username: string;
     /**
-     * @kyselyType('ACTIVE' | 'DISABLED' | 'LIMITED' | 'EXPIRED')
+     * @kyselyType('ACTIVE' | 'DISABLED' | 'LIMITED' | 'EXPIRED' | 'FROZEN')
      */
-    status: Generated<'ACTIVE' | 'DISABLED' | 'LIMITED' | 'EXPIRED'>;
+    status: Generated<'ACTIVE' | 'DISABLED' | 'LIMITED' | 'EXPIRED' | 'FROZEN'>;
     trafficLimitBytes: Generated<bigint>;
     /**
      * @kyselyType('NO_RESET' | 'DAY' | 'WEEK' | 'MONTH' | 'MONTH_ROLLING')
      */
     trafficLimitStrategy: Generated<'NO_RESET' | 'DAY' | 'WEEK' | 'MONTH' | 'MONTH_ROLLING'>;
     expireAt: Timestamp;
+    frozenAt: Timestamp | null;
     lastTrafficResetAt: Timestamp | null;
     subRevokedAt: Timestamp | null;
     trojanPassword: string;

@@ -1,5 +1,14 @@
 import z from 'zod';
 
+// The first outbound uses the prefix itself; later ones use prefix-2, prefix-3, ….
+export function injectedTagMatches(prefix: string, tag: string): boolean {
+    return tag === prefix || (tag.startsWith(prefix + '-') && /^(?:[2-9]|[1-9]\d+)$/.test(tag.slice(prefix.length + 1)));
+}
+
+export function injectedPrefixesCollide(left: string, right: string): boolean {
+    return injectedTagMatches(left, right) || injectedTagMatches(right, left);
+}
+
 const groups = (item: z.ZodType<string>) =>
     z.union([
         z.array(z.array(item).min(1).max(10000)).min(1).max(1000),
@@ -80,15 +89,17 @@ export const InjectHostsEntrySchema = z
             });
     });
 
+const AssignmentSchema = z.object({
+    hosts: z.array(z.uuid()).max(10000).optional(),
+    tags: z.array(z.string().min(1).max(255)).max(10000).optional(),
+    balancerTag: z.string().min(1).max(255).optional(),
+});
+
 export const RemnawaveInjectorSchema = z.object({
     injectHosts: z.array(InjectHostsEntrySchema).optional(),
     addVirtualHostAsOutbound: z.boolean().optional(),
-    assignTo: z
-        .object({
-            hosts: z.array(z.uuid()).max(10000).optional(),
-            tags: z.array(z.string().min(1).max(255)).max(10000).optional(),
-        })
-        .optional(),
+    assignTo: AssignmentSchema.optional(),
+    assignments: z.array(AssignmentSchema.extend({ balancerTag: z.string().min(1).max(255) })).max(1000).optional(),
 });
 
 export type TRemnawaveInjector = z.infer<typeof RemnawaveInjectorSchema>;

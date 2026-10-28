@@ -352,6 +352,7 @@ export class SubscriptionTemplateService {
     public async createTemplate(
         name: string,
         templateType: TSubscriptionTemplateType,
+        sourceUuid?: string,
     ): Promise<TResult<BaseTemplateResponseModel>> {
         try {
             if (name === DEFAULT_TEMPLATE_NAME) {
@@ -388,6 +389,37 @@ export class SubscriptionTemplateService {
                 templateJson,
                 templateYaml,
             });
+
+            if (sourceUuid) {
+                const source = await this.subscriptionTemplateRepository.findByUUID(sourceUuid);
+                if (!source) return fail(ERRORS.SUBSCRIPTION_TEMPLATE_NOT_FOUND);
+                if (source.templateType !== templateType)
+                    return fail(ERRORS.TEMPLATE_TYPE_NOT_ALLOWED);
+                // Copies share library assets, but must not take over host assignments.
+                const unassign = (value: object | null) => {
+                    const copy = structuredClone(value) as Record<string, any> | null;
+                    if (copy?.remnawave) {
+                        delete copy.remnawave.assignTo;
+                        delete copy.remnawave.assignments;
+                    }
+                    return copy;
+                };
+                templateEntity.templateJson = unassign(source.templateJson);
+                templateEntity.templateYaml = source.templateYaml;
+                templateEntity.tags = [...source.tags];
+                templateEntity.draftContent = source.draftContent;
+                if (source.draftContent && templateType === 'XRAY_JSON') {
+                    try {
+                        templateEntity.draftContent = JSON.stringify(
+                            unassign(JSON.parse(source.draftContent)),
+                            null,
+                            2,
+                        );
+                    } catch {
+                        /* Invalid drafts stay editable and never replace the active config. */
+                    }
+                }
+            }
 
             const template = await this.subscriptionTemplateRepository.create(templateEntity);
 

@@ -16,6 +16,7 @@ import { BulkSyncUsersCommand } from '@modules/users/commands/bulk-sync-users';
 import { BulkUpdateAllUsersCommand } from '@modules/users/commands/bulk-update-all-users';
 import { BulkAllUpdateUsersBodyDto } from '@modules/users/dtos/bulk/bulk-operations.dto';
 import { GetUsersByExpireAtQuery } from '@modules/users/queries/get-users-by-expire-at/get-users-by-expire-at.query';
+import { GetUsersWithPaginationQuery } from '@modules/users/queries/get-users-with-pagination/get-users-with-pagination.query';
 
 import { NodesQueuesService } from '@queue/_nodes/nodes-queues.service';
 import { QUEUES_NAMES } from '@queue/queue.enum';
@@ -180,9 +181,35 @@ export class SerialUsersOperationsQueueProcessor extends WorkerHost {
         try {
             const { dto } = job.data;
 
+            // Status changes must also revoke/reinstall per-device credentials and host policies.
+            if (dto.status === USERS_STATUS.FROZEN || dto.status === USERS_STATUS.ACTIVE) {
+                let beforeId: bigint | undefined;
+                while (true) {
+                    const page = await this.queryBus.execute(
+                        new GetUsersWithPaginationQuery(0, 500, beforeId),
+                    );
+                    if (!page.isOk)
+                        throw new Error('Could not enumerate users for status synchronization');
+                    const users = page.response.users;
+                    if (!users.length) break;
+                    await this.usersQueuesService.updateUsersBulk({
+                        userIds: users.map((user: { id: bigint }) => Number(user.id)),
+                        fields: dto,
+                    });
+                    // A descending cursor cannot skip users when earlier rows are deleted.
+                    beforeId = BigInt(users[users.length - 1].id);
+                    if (users.length < 500) break;
+                }
+                return;
+            }
+
             await this.commandBus.execute(
                 new BulkUpdateAllUsersCommand({
                     ...dto,
+                    // BullMQ serializes dates; Prisma and Kysely need a Date after dequeueing.
+                    expireAt: dto.expireAt
+                        ? new Date(dto.expireAt as unknown as string)
+                        : undefined,
                     lastTriggeredThreshold: dto.trafficLimitBytes !== undefined ? 0 : undefined,
                     trafficLimitBytes: wrapBigInt(dto.trafficLimitBytes),
                     telegramId: wrapBigIntNullable(dto.telegramId),
@@ -205,6 +232,7 @@ export class SerialUsersOperationsQueueProcessor extends WorkerHost {
             this.logger.error(
                 `Error handling "${USERS_JOB_NAMES.BULK_UPDATE_ALL_USERS}" job: ${error}`,
             );
+            throw error;
         }
     }
 

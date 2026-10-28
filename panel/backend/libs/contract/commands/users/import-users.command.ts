@@ -22,6 +22,8 @@ export namespace ImportUsersCommand {
                 trafficLimitBytes: CreateUserCommand.RequestBodySchema.shape.trafficLimitBytes.nullish(),
                 trafficLimitStrategy: CreateUserCommand.RequestBodySchema.shape.trafficLimitStrategy.nullish(),
                 expireAt: z.iso.datetime({ offset: true, local: true }).nullable(),
+                frozenRemainingMs: z.number().int().min(0).max(253402300799000).nullish()
+                    .describe('Remaining subscription lifetime for FROZEN exports; restored relative to import time.'),
                 createdAt: z.iso.datetime({ offset: true, local: true }).nullish(),
                 hwidDeviceLimit: CreateUserCommand.RequestBodySchema.shape.hwidDeviceLimit.nullish(),
                 tag: CreateUserCommand.RequestBodySchema.shape.tag.nullish(),

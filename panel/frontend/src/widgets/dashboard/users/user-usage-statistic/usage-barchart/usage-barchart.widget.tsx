@@ -227,6 +227,8 @@ export const UserUsageBarchartWidget = (props: IProps) => {
                     },
                     tooltip: {
                         shared: false,
+                        fixed: false,
+                        followPointer: true,
                         backgroundColor: 'var(--mantine-color-body)',
                         borderColor: 'var(--mantine-color-gray-4)',
                         style: { color: 'var(--mantine-color-text)' },

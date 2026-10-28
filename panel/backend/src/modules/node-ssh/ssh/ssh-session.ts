@@ -262,26 +262,29 @@ export class SshSession {
             !this.options.authorizeNodeUpgrade ||
             this.upgradeIds.size >= 100
         ) {
-            this.send({ t: 'node-upgrade', id: request.id, status: 'failed', phase: 'finished' });
+            this.send({
+                t: 'node-upgrade',
+                id: request.id,
+                status: 'failed',
+                phase: 'finished',
+                reason: 'busy',
+            });
             return;
         }
         this.upgradeIds.add(request.id);
         this.upgradingNode = true;
         let operationStarted = false;
+        let reason: 'authorization' | 'node' | 'busy' = 'authorization';
         try {
             await this.options.authorizeNodeUpgrade();
+            reason = 'node';
             const installation =
                 request.operation === 'install'
                     ? await this.options.prepareNodeInstall?.()
                     : undefined;
             if (request.operation === 'install' && !installation)
                 throw new Error('Installation is unavailable');
-            const entry =
-                request.operation === 'configure-entry' && request.entry
-                    ? await this.options.prepareStableEntry?.(request.entry)
-                    : undefined;
-            if (request.operation === 'configure-entry' && !entry)
-                throw new Error('Entry configuration is unavailable');
+            reason = 'busy';
             await this.options.onNodeOperation?.(request.id, true);
             operationStarted = true;
             if (this.closed || !this.client) return;
@@ -293,10 +296,15 @@ export class SshSession {
                     this.send(event);
                 },
                 installation,
-                entry,
             );
         } catch {
-            this.send({ t: 'node-upgrade', id: request.id, status: 'failed', phase: 'finished' });
+            this.send({
+                t: 'node-upgrade',
+                id: request.id,
+                status: 'failed',
+                phase: 'finished',
+                reason,
+            });
         } finally {
             if (operationStarted)
                 await this.options.onNodeOperation?.(request.id, false).catch(() => undefined);

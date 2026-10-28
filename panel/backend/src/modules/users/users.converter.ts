@@ -21,6 +21,7 @@ const entityToModel = (entity: BaseUserEntity): Users => {
         trafficLimitStrategy: entity.trafficLimitStrategy,
 
         expireAt: entity.expireAt,
+        frozenAt: entity.frozenAt,
         subRevokedAt: entity.subRevokedAt,
 
         trojanPassword: entity.trojanPassword,

@@ -28,7 +28,6 @@ import { GetNodeByUuidQuery } from '@modules/nodes/queries/get-node-by-uuid/get-
 
 import { IAdminIdentity, ISshCredentials } from '../interfaces';
 import { NodeSshService } from '../node-ssh.service';
-import { StableEntryService } from '../stable-entry.service';
 import { SshSession } from './ssh-session';
 
 const MAX_CONCURRENT_SESSIONS = 20;
@@ -50,7 +49,6 @@ export class SshTerminalGateway implements OnApplicationBootstrap, OnModuleDestr
         private readonly queryBus: QueryBus,
         @InjectRedis() private readonly redis: Redis,
         private readonly keygen: KeygenService,
-        private readonly stableEntry: StableEntryService,
     ) {}
 
     onApplicationBootstrap(): void {
@@ -225,7 +223,6 @@ export class SshTerminalGateway implements OnApplicationBootstrap, OnModuleDestr
                 if (!key.isOk) throw new Error('Node certificate unavailable');
                 return { port: current.response.port ?? 2222, secret: key.response.payload };
             },
-            prepareStableEntry: (input) => this.stableEntry.prepare(node.uuid, input),
             onNodeOperation: async (id, running) => {
                 const key = `remnacust:node-operation:${node.uuid}`;
                 if (running) {

@@ -4,7 +4,16 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RemnawaveInjectorSchema = exports.InjectHostsEntrySchema = void 0;
+exports.injectedTagMatches = injectedTagMatches;
+exports.injectedPrefixesCollide = injectedPrefixesCollide;
 const zod_1 = __importDefault(require("zod"));
+// The first outbound uses the prefix itself; later ones use prefix-2, prefix-3, ….
+function injectedTagMatches(prefix, tag) {
+    return tag === prefix || (tag.startsWith(prefix + '-') && /^(?:[2-9]|[1-9]\d+)$/.test(tag.slice(prefix.length + 1)));
+}
+function injectedPrefixesCollide(left, right) {
+    return injectedTagMatches(left, right) || injectedTagMatches(right, left);
+}
 const groups = (item) => zod_1.default.union([
     zod_1.default.array(zod_1.default.array(item).min(1).max(10000)).min(1).max(1000),
     zod_1.default
@@ -80,13 +89,14 @@ exports.InjectHostsEntrySchema = zod_1.default
             message: 'Random mode requires an expected count',
         });
 });
+const AssignmentSchema = zod_1.default.object({
+    hosts: zod_1.default.array(zod_1.default.uuid()).max(10000).optional(),
+    tags: zod_1.default.array(zod_1.default.string().min(1).max(255)).max(10000).optional(),
+    balancerTag: zod_1.default.string().min(1).max(255).optional(),
+});
 exports.RemnawaveInjectorSchema = zod_1.default.object({
     injectHosts: zod_1.default.array(exports.InjectHostsEntrySchema).optional(),
     addVirtualHostAsOutbound: zod_1.default.boolean().optional(),
-    assignTo: zod_1.default
-        .object({
-        hosts: zod_1.default.array(zod_1.default.uuid()).max(10000).optional(),
-        tags: zod_1.default.array(zod_1.default.string().min(1).max(255)).max(10000).optional(),
-    })
-        .optional(),
+    assignTo: AssignmentSchema.optional(),
+    assignments: zod_1.default.array(AssignmentSchema.extend({ balancerTag: zod_1.default.string().min(1).max(255) })).max(1000).optional(),
 });

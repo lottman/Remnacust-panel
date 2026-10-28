@@ -22,6 +22,7 @@ import { useDebouncedValue, useLocalStorage } from '@mantine/hooks'
 import { useQueryClient } from '@tanstack/react-query'
 import { UserStatusBadge } from '@widgets/dashboard/users/user-status-badge'
 import { isAxiosError } from 'axios'
+import dayjs from 'dayjs'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiClockCountdown, PiPause, PiProhibit, PiPulse } from 'react-icons/pi'
@@ -657,6 +658,7 @@ function ScopeUsers({ scope: initial, back }: { scope: Scope; back: () => void }
                                 { value: 'ALL', label: uiText('all-a52ace4') },
                                 { value: 'ACTIVE', label: uiText('active-9234069') },
                                 { value: 'DISABLED', label: uiText('disabled-75081b5') },
+                                { value: 'FROZEN', label: uiText('frozen-user-status') },
                                 { value: 'LIMITED', label: uiText('limited-e5125d9') },
                                 { value: 'EXPIRED', label: uiText('expired-424a255') }
                             ]}
@@ -749,7 +751,9 @@ function ScopeUsers({ scope: initial, back }: { scope: Scope; back: () => void }
                         ),
                         expireAt: (u) => (
                             <Text c="dimmed" size="xs">
-                                {getExpirationTextUtil(u.expireAt, t, i18n)}
+                                {u.status === 'FROZEN' && u.frozenRemainingMs != null
+                                    ? t('frozen-user.remaining', { duration: dayjs(Date.now() + u.frozenRemainingMs).locale(i18n.language).fromNow(true) })
+                                    : getExpirationTextUtil(u.expireAt, t, i18n)}
                             </Text>
                         ),
                         tag: (u) => (

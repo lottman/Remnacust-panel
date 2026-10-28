@@ -8,7 +8,6 @@ import { EventBus, QueryBus } from '@nestjs/cqrs';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 
 import { TypedConfigService } from '@common/config/app-config';
-import { decryptSecret } from '@common/utils/xera-crypto';
 import { fail, ok, TResult } from '@common/types';
 import {
     compileShortUuidPattern,
@@ -17,13 +16,15 @@ import {
     wrapBigInt,
     wrapBigIntNullable,
 } from '@common/utils';
+import { effectiveUserExpiry, frozenRemainingMs } from '@common/utils/frozen-user-lifetime';
+import { decryptSecret } from '@common/utils/xera-crypto';
 import { ERRORS, USERS_STATUS, EVENTS } from '@libs/contracts/constants';
 
 import { UserEvent } from '@integration-modules/notifications/interfaces';
 
-import { AddUserToNodeEvent } from '@modules/nodes/events/add-user-to-node';
 import { DeviceAccessService } from '@modules/hwid-user-devices/device-access.service';
 import { GetUserDevicesQuery } from '@modules/hwid-user-devices/queries/get-user-devices.query';
+import { AddUserToNodeEvent } from '@modules/nodes/events/add-user-to-node';
 import { AddUsersToNodeEvent } from '@modules/nodes/events/add-users-to-node';
 import { RemoveUserFromNodeEvent } from '@modules/nodes/events/remove-user-from-node';
 import { RemoveUsersFromNodeEvent } from '@modules/nodes/events/remove-users-from-node';
@@ -73,15 +74,12 @@ export class UsersService {
         this.generateShortUuid = this.createShortUuidGenerator();
     }
 
-
     public async exportUsers(squadUuid?: string): Promise<TResult<Record<string, unknown>[]>> {
         try {
             const { users, squadNamesByUserId, squadUuidsByUserId } =
                 await this.userRepository.exportUsersWithSquadNames();
 
-            const membersOfSquad = new Set(
-                squadUuidsByUserId.get(squadUuid ?? '') ?? [],
-            )
+            const membersOfSquad = new Set(squadUuidsByUserId.get(squadUuid ?? '') ?? []);
 
             const result = users
                 .filter((user) => !squadUuid || membersOfSquad.has(String(user.id)))
@@ -94,12 +92,16 @@ export class UsersService {
                         ssPassword: decryptSecret(user.ssPassword as string),
                         status: (user.status as string) ?? null,
                         trafficLimitBytes:
-                            user.trafficLimitBytes == null
-                                ? null
-                                : Number(user.trafficLimitBytes),
+                            user.trafficLimitBytes == null ? null : Number(user.trafficLimitBytes),
                         trafficLimitStrategy: (user.trafficLimitStrategy as string) ?? null,
                         expireAt:
-                            user.expireAt instanceof Date ? user.expireAt.toISOString() : null,
+                            user.expireAt instanceof Date
+                                ? effectiveUserExpiry(user as unknown as UserEntity).toISOString()
+                                : null,
+                        frozenRemainingMs:
+                            user.expireAt instanceof Date
+                                ? frozenRemainingMs(user as unknown as UserEntity)
+                                : null,
                         createdAt:
                             user.createdAt instanceof Date ? user.createdAt.toISOString() : null,
                         hwidDeviceLimit: (user.hwidDeviceLimit as number) ?? null,
@@ -118,9 +120,7 @@ export class UsersService {
         }
     }
 
-    public async importUsers(
-        dto: ImportUsersBodyDto,
-    ): Promise<
+    public async importUsers(dto: ImportUsersBodyDto): Promise<
         TResult<{
             created: number;
             skipped: number;
@@ -157,7 +157,7 @@ export class UsersService {
                     if (dto.defaultInternalSquadUuid) squads.add(dto.defaultInternalSquadUuid);
 
                     const validStrategies = ['NO_RESET', 'DAY', 'WEEK', 'MONTH', 'MONTH_ROLLING'];
-                    const validStatuses = ['ACTIVE', 'DISABLED', 'LIMITED', 'EXPIRED'];
+                    const validStatuses = ['ACTIVE', 'DISABLED', 'LIMITED', 'EXPIRED', 'FROZEN'];
                     const result = await this.createUser({
                         username: user.username,
                         shortUuid: user.shortUuid,
@@ -166,15 +166,23 @@ export class UsersService {
                         ssPassword: user.ssPassword,
                         status:
                             user.status && validStatuses.includes(user.status)
-                                ? (user.status as 'ACTIVE' | 'DISABLED' | 'LIMITED' | 'EXPIRED')
+                                ? (user.status as UserEntity['status'])
                                 : undefined,
-                        expireAt: new Date(user.expireAt),
+                        expireAt:
+                            user.status === 'FROZEN' && user.frozenRemainingMs != null
+                                ? new Date(Date.now() + user.frozenRemainingMs)
+                                : new Date(user.expireAt),
                         createdAt: user.createdAt ? new Date(user.createdAt) : undefined,
                         trafficLimitBytes: user.trafficLimitBytes ?? 0,
                         trafficLimitStrategy:
                             user.trafficLimitStrategy &&
                             validStrategies.includes(user.trafficLimitStrategy)
-                                ? (user.trafficLimitStrategy as 'NO_RESET' | 'DAY' | 'WEEK' | 'MONTH' | 'MONTH_ROLLING')
+                                ? (user.trafficLimitStrategy as
+                                      | 'NO_RESET'
+                                      | 'DAY'
+                                      | 'WEEK'
+                                      | 'MONTH'
+                                      | 'MONTH_ROLLING')
                                 : undefined,
                         hwidDeviceLimit: user.hwidDeviceLimit ?? undefined,
                         tag: user.tag ?? undefined,
@@ -305,6 +313,10 @@ export class UsersService {
 
             if (!user) return fail(ERRORS.USER_NOT_FOUND);
 
+            if (user.status === USERS_STATUS.FROZEN && status === USERS_STATUS.DISABLED) {
+                return fail(ERRORS.USER_FROZEN_NEEDS_RESUME);
+            }
+
             const newUserEntity = new BaseUserEntity({
                 ...rest,
                 id: user.id,
@@ -321,13 +333,13 @@ export class UsersService {
                 newUserEntity.status = 'ACTIVE';
             }
 
-            if (user.status === 'ACTIVE' && status === 'DISABLED') {
+            if (status === USERS_STATUS.DISABLED || status === USERS_STATUS.FROZEN) {
                 removeFromNode = true;
-                newUserEntity.status = 'DISABLED';
+                newUserEntity.status = status;
             }
 
             if (trafficLimitBytes !== undefined) {
-                if (user.status === 'LIMITED' && trafficLimitBytes >= 0) {
+                if (user.status === 'LIMITED' && !status && trafficLimitBytes >= 0) {
                     if (
                         BigInt(trafficLimitBytes) > user.trafficLimitBytes ||
                         trafficLimitBytes === 0
@@ -383,7 +395,7 @@ export class UsersService {
                 }
             }
 
-            const updatedUser = await this.userRepository.update(updateDto);
+            const updatedUser = await this.userRepository.update(updateDto, true);
 
             if (!updatedUser) {
                 return fail(ERRORS.UPDATE_USER_ERROR);
@@ -405,7 +417,10 @@ export class UsersService {
                 );
             }
 
-            if (statusChanged && !(await this.deviceAccess.synchronizeUserStatus(updatedUser))) {
+            if (
+                (statusChanged || status !== undefined) &&
+                !(await this.deviceAccess.synchronizeUserStatus(updatedUser))
+            ) {
                 return fail(ERRORS.UPDATE_USER_ERROR);
             }
 
@@ -515,7 +530,12 @@ export class UsersService {
                 this.eventBus.publish(new AddUserToNodeEvent(updatedUser.id, user.vlessUuid));
             }
 
-            if (!(await this.deviceAccess.synchronizeCredentialRotation(updatedUser, user.vlessUuid))) {
+            if (
+                !(await this.deviceAccess.synchronizeCredentialRotation(
+                    updatedUser,
+                    user.vlessUuid,
+                ))
+            ) {
                 return fail(ERRORS.REVOKE_USER_SUBSCRIPTION_ERROR);
             }
 
@@ -545,12 +565,17 @@ export class UsersService {
 
             if (!user) return fail(ERRORS.USER_NOT_FOUND);
 
-            const deviceHwids = process.env.XERA_PERSONAL_SUBSCRIPTIONS === 'true'
-                ? (await this.queryBus.execute(new GetUserDevicesQuery(user.id))).map((device) => device.hwid)
-                : undefined;
+            const deviceHwids =
+                process.env.XERA_PERSONAL_SUBSCRIPTIONS === 'true'
+                    ? (await this.queryBus.execute(new GetUserDevicesQuery(user.id))).map(
+                          (device) => device.hwid,
+                      )
+                    : undefined;
             await this.userRepository.deleteById(user.id);
 
-            this.eventBus.publish(new RemoveUserFromNodeEvent(user.id, user.vlessUuid, deviceHwids));
+            this.eventBus.publish(
+                new RemoveUserFromNodeEvent(user.id, user.vlessUuid, deviceHwids),
+            );
 
             this.eventEmitter.emit(
                 EVENTS.USER.DELETED,
@@ -575,6 +600,7 @@ export class UsersService {
 
             if (!user) return fail(ERRORS.USER_NOT_FOUND);
 
+            if (user.status === USERS_STATUS.FROZEN) return fail(ERRORS.USER_FROZEN_NEEDS_RESUME);
             if (user.status === USERS_STATUS.DISABLED) {
                 return fail(ERRORS.USER_ALREADY_DISABLED);
             }
@@ -625,16 +651,23 @@ export class UsersService {
 
             if (!updatedUser) return fail(ERRORS.USER_NOT_FOUND);
 
-            this.eventBus.publish(new AddUserToNodeEvent(user.id));
+            if (updatedUser.status === USERS_STATUS.ACTIVE) {
+                this.eventBus.publish(new AddUserToNodeEvent(user.id));
+            }
             if (!(await this.deviceAccess.synchronizeUserStatus(updatedUser))) {
                 return fail(ERRORS.ENABLE_USER_ERROR);
             }
 
             this.eventEmitter.emit(
-                EVENTS.USER.ENABLED,
+                updatedUser.status === USERS_STATUS.ACTIVE
+                    ? EVENTS.USER.ENABLED
+                    : EVENTS.USER.MODIFIED,
                 new UserEvent({
                     user: updatedUser,
-                    event: EVENTS.USER.ENABLED,
+                    event:
+                        updatedUser.status === USERS_STATUS.ACTIVE
+                            ? EVENTS.USER.ENABLED
+                            : EVENTS.USER.MODIFIED,
                 }),
             );
 
@@ -659,7 +692,10 @@ export class UsersService {
 
             const now = dayjs.utc();
             const currentExpire = dayjs.utc(user.expireAt);
-            const base = currentExpire.isAfter(now) ? currentExpire : now;
+            const base =
+                user.status === USERS_STATUS.FROZEN || currentExpire.isAfter(now)
+                    ? currentExpire
+                    : now;
             const newExpireDate = base.add(days, 'day').toDate();
 
             const newStatus =
@@ -772,16 +808,26 @@ export class UsersService {
 
             const users = await this.userRepository.getUsersByUserIds(userIds);
 
-            const deviceHwids = process.env.XERA_PERSONAL_SUBSCRIPTIONS === 'true'
-                ? await Promise.all(users.map(async (user) =>
-                    (await this.queryBus.execute(new GetUserDevicesQuery(user.id))).map((device) => device.hwid)))
-                : [];
+            const deviceHwids =
+                process.env.XERA_PERSONAL_SUBSCRIPTIONS === 'true'
+                    ? await Promise.all(
+                          users.map(async (user) =>
+                              (await this.queryBus.execute(new GetUserDevicesQuery(user.id))).map(
+                                  (device) => device.hwid,
+                              ),
+                          ),
+                      )
+                    : [];
 
             await this.userRepository.deleteManyByUserIds(users.map((user) => user.id));
 
             await this.eventBus.publish(
                 new RemoveUsersFromNodeEvent(
-                    users.map((user, index) => ({ id: user.id, vlessUuid: user.vlessUuid, deviceHwids: deviceHwids[index] })),
+                    users.map((user, index) => ({
+                        id: user.id,
+                        vlessUuid: user.vlessUuid,
+                        deviceHwids: deviceHwids[index],
+                    })),
                 ),
             );
 

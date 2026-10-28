@@ -5,6 +5,7 @@ export class SubscriptionRawResponse {
     public user: {
         daysLeft: number;
         expiresAt: Date;
+        frozenRemainingMs?: number | null;
         isActive: boolean;
         shortUuid: string;
         trafficLimit: string;

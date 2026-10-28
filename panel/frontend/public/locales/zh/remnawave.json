@@ -1,7 +1,9 @@
 {
     "backups": {
         "delivery-success": "备份已发送到 Telegram",
-        "delivery-failed": "无法发送备份。请检查机器人令牌、聊天 ID 和 Telegram 连接。"
+        "delivery-failed": "无法发送备份。请检查机器人令牌、聊天 ID 和 Telegram 连接。",
+        "format-title": "压缩包格式",
+        "format-help": "ZIP 使用密码和 AES 加密。解压后的 database.dump 是 PostgreSQL custom 格式的压缩转储，并非文本，也没有第二层加密。使用 pg_restore 恢复，或通过以下命令转换为 SQL（PostgreSQL 工具的主版本须与 pg_dump 相同或更新）。此命令仅生成本地 SQL 文件，不会恢复数据库。"
     },
     "auth-localization": {
         "login-title": "登录",
@@ -2179,7 +2181,8 @@
             "A033": "已存在同名节点。请使用其他名称或编辑现有节点。",
             "A034": "已存在使用此地址的节点。请编辑现有节点或输入其他地址。",
             "A113": "此标签的入站已存在。所有配置文件中的入站标签必须唯一。请修改配置中的入站标签，仅重命名配置文件是不够的。",
-            "A114": "此名称的配置文件已存在。请选择其他名称。"
+            "A114": "此名称的配置文件已存在。请选择其他名称。",
+            "A901": "停用用户前，请先恢复已冻结的订阅。"
         }
     },
     "limitsTrafficAction": {
@@ -2584,7 +2587,7 @@
         "use-the-tag-multiplier-e071b5e": "使用标签倍率",
         "the-host-s-own-quota-uses-1-218665d": "主机自身配额按 1× 计算。",
         "reset-traffic-every-587e56d": "流量重置间隔",
-        "0-means-never-the-period-starts-on-the-day-the-setting-is-save-fc881dd": "0 表示永不重置。周期从保存设置当天（UTC）开始。",
+        "0-means-never-the-period-starts-on-the-day-the-setting-is-save-fc881dd": "0 表示永不重置。在 UTC 00:00 重置，周期从保存重置设置的当天开始。仅修改速度不会改变重置计划。",
         "period-unit-f65d821": "周期单位",
         "days-e08c0aa": "天",
         "months-09ca755": "月",
@@ -3086,7 +3089,8 @@
         "device-speed-limit-description": "同一设备密钥的所有连接在此主机上共享此上限，包括上传和下载。0 表示关闭此上限；用户、主机和标签限制仍然生效。",
         "apply-tag-device-speed": "应用标签的设备速度限制",
         "tag-device-speed-description": "每个标签在此主机上独立设置设备上限。启用的限制中最严格的限制生效。",
-        "dynamic-device-sharing-description": "活跃设备密钥动态共享用户速度上限：单个设备可以使用空闲带宽；其他设备传输时会获得自己的份额。空闲设备不预留带宽。同一密钥的副本视为一个设备。"
+        "dynamic-device-sharing-description": "活跃设备密钥动态共享用户速度上限：单个设备可以使用空闲带宽；其他设备传输时会获得自己的份额。空闲设备不预留带宽。同一密钥的副本视为一个设备。",
+        "frozen-user-status": "已冻结"
     },
     "api-token-editor": {
         "retry": "重试",
@@ -3161,7 +3165,8 @@
         "active": "正常",
         "disabled": "已禁用",
         "expired": "已到期",
-        "limited": "流量已用尽"
+        "limited": "流量已用尽",
+        "frozen": "已冻结"
     },
     "documentation": {
         "title": "文档",
@@ -3372,14 +3377,14 @@
         "balancer-name": "均衡器名称",
         "least-load-help": "显示现有 JSON 中的值。留空使用 Xray 默认值；编辑只更改当前参数。",
         "least-load-expected": "候选数量（expected）",
-        "least-load-tolerance": "允许的失败比例（tolerance，0–1）",
+        "least-load-tolerance": "允许的探测失败比例",
         "least-load-max-rtt": "最大延迟（maxRTT）",
         "least-load-baselines": "延迟阈值（baselines）",
         "least-load-baselines-help": "输入持续时间，例如 50ms、100ms、1s，每项按 Enter 确认。",
         "probes-not-needed": "随机及轮询策略不需要连接探测。手动配置的探测会保留，直到主动删除。",
         "remove-unused-probes": "删除不需要的探测",
         "remove-selection": "删除自动选择",
-        "least-load-tolerance-help": "允许的探测失败比例，范围为 0 到 1；0.01 表示 1%。此值不是所选节点数量。",
+        "least-load-tolerance-help": "探测失败比例：0.01 = 1%，0.1 = 10%，1 = 100%。0 关闭此检查。这不是服务器数量。",
         "pool-preview": "符合条件的主机：{{count}}。订阅仅包含用户有权访问的主机，结果取决于选择模式。",
         "host-naming-help": "代码中已启用主机名称代替前缀。前缀字段不会生效，请将规则指向负载均衡器，或在代码中关闭此命名模式。",
         "strategy-priority": "按优先级：首个可用服务器",
@@ -3392,10 +3397,28 @@
         "priority-singbox-help": "sing-box 支持按延迟选择和手动 selector，其配置不支持严格优先级自动故障切换。此模式请使用 Xray JSON 或 Mihomo/Clash/Stash 模板。",
         "priority-fallback-help": "留空则在全部服务器不可用时阻断连接。指定出口将在整个链之后使用。",
         "retained-groups-help": "配置包含这些列表中所有有权限的主机。正则表达式或接收主机标签过滤仍然生效。列表外的主机会被排除；更新订阅时不再随机抽取组。",
-    "select-on-connection": "连接时选择",
+        "select-on-connection": "连接时选择",
         "connection-help": "配置包含所有有权访问的池成员。运行中的 Xray 均衡器根据策略和最新探测结果为每个新连接选择服务器。现有连接保留在原服务器。",
         "subscription-selection-help": "此模式在生成订阅时抽取部分服务器。若需在连接时选择，请包含完整池并使用客户端均衡器。",
-        "native-connection-help": "完整池让应用根据原生组策略和健康检查选择服务器。手动选择器仍需用户选择。未使用固定服务端入口时，新增服务器或更换密钥需要刷新订阅。"
+        "native-connection-help": "完整池让应用根据原生组策略和健康检查选择服务器。手动选择器仍需用户选择。未使用固定服务端入口时，新增服务器或更换密钥需要刷新订阅。",
+        "assignments-title": "自动选择的使用位置",
+        "assignments-help": "选择具体的自动选择配置及使用它的订阅主机。客户端可选择的服务器在上方的源池成员中配置。",
+        "assignments-empty": "暂无分配。可在此分配主机，或在主机卡片中选择此模板。",
+        "assign-hosts": "分配主机",
+        "assigned-selection": "自动选择",
+        "choose-selection": "选择自动选择配置",
+        "remove-assignment": "删除分配",
+        "legacy-assignment": "这是整个模板的旧版分配。请为这些主机选择具体的自动选择配置。",
+        "source-pools": "池数量：{{count}}",
+        "advanced": "连接探测和其他设置",
+        "issue-pool": "池 #{{number}}",
+        "issue-balancer": "自动选择 #{{number}}",
+        "issue-assignment": "分配 #{{number}}",
+        "reveal-issue": "跳转到代码中的字段",
+        "prefix-conflict-help": "请检查前缀是否唯一；相同名称会生成相同的出站标签。请为第二个池使用其他名称，例如 g-ru-secondary。上方显示池编号，代码路径索引从 0 开始。可以将配置保存为草稿。",
+        "mode-help": "all 包含所有可用主机，由客户端策略在连接时选择。random 和 group 会在更新订阅时缩小池成员范围。",
+        "pool-settings": "源设置：模式、可见性、前缀",
+        "balancer-settings": "策略设置：备用出站与池选择器"
     },
     "template-history": {
         "title": "历史",
@@ -3996,7 +4019,8 @@
         "json-setting-unknown": "无法检查 JSON 订阅设置。请手动检查“{{setting}}”，或使用以 /json 结尾的链接。",
         "open-subscription-settings": "在新标签页打开订阅设置",
         "happ-check-help": "保存此模板，并确认主机或外部组实际使用它。主机卡片中选择的模板优先。然后在 Happ 或 INCY 中刷新订阅。",
-        "xray-download-help": "多个 DAT 合并时，每个来源的分类保持独立。DIRECT、拦截和组仍保留在 JSON 中。若下载与手动设置冲突或集合过大，应用将获得内嵌规则。"
+        "xray-download-help": "多个 DAT 合并时，每个来源的分类保持独立。DIRECT、拦截和组仍保留在 JSON 中。若下载与手动设置冲突或集合过大，应用将获得内嵌规则。",
+        "attached-count": "已关联文件：{{count}}"
     },
     "template-draft": {
         "warning": "模板警告",
@@ -4004,8 +4028,8 @@
         "saved-title": "草稿已保存，存在警告",
         "saved-help": "文本已保存到服务器和历史记录。订阅仍使用上一份可用版本。修复警告并再次保存后即可应用模板。",
         "applied-warning-title": "已应用，存在警告",
-        "applied-warning-help": "模板已保存并应用。Xray 会将数值 tolerance 限制在支持的范围内；请查看编辑器中的警告。",
-        "tolerance-help": "tolerance 是 0 到 1 的探测失败比例。Xray 会限制超出范围的有限数值。原始值可在显示警告的情况下保存并应用。"
+        "applied-warning-help": "已保存并应用。原始数值 tolerance 保留在模板与订阅 JSON 中。Xray 读取配置时将小于 0 的值限制为 0、大于 1 的值限制为 1，不会改写 JSON。",
+        "tolerance-help": "tolerance 是探测失败比例：0.01 表示 1%，1 表示 100%；0 关闭此检查。0–1 之外的有限数值可带警告保存。JSON 保留原值，Xray 读取配置时在内核中限制该值。"
     },
     "host-actions": {
         "clone-progress": "正在克隆：{{done}} / {{total}}"
@@ -4085,31 +4109,36 @@
         "setupProfile": "配置文件",
         "setupVerify": "安装与验证",
         "installNode": "安装节点",
-        "installHelp": "使用 SSH 保险库连接并确认服务器指纹。需要 root 或免密 sudo，以及受支持的 Ubuntu。已验证的稳定安装程序会检查系统、磁盘和现有安装，不覆盖现有目录，并保留 SSH 设置。",
-        "netAdminHelp": "用于连接控制和防火墙功能的额外容器权限，默认关闭。",
+        "installHelp": "通过 SSH 连接并验证服务器密钥。需要 root 或免密码 sudo。",
+        "netAdminHelp": "容器的限制和连接管理权限。",
         "connectAndInstall": "通过 SSH 连接并安装",
         "install_preparing": "检查安装与访问权限",
         "install_downloading": "下载并验证稳定安装程序",
         "install_updating": "安装节点并检查就绪状态",
         "install_finished": "安装命令已完成，请通过在线节点诊断确认结果。",
         "panelSourceIp": "主服务器 IP（可选）",
-        "panelSourceIpHelp": "设置后，除 SSH 外，所有入站端口和 ping 仅接受该 IP。VPN 客户端必须经过主服务器连接。提供商和其他防火墙的限制仍然有效。",
-        "entryTitle": "固定入口：无需刷新订阅即可更换服务器",
-        "entryHelp": "独立 TCP 入口将加密流转发给同一主机的服务器。HAProxy 为每个新连接选择健康服务器，并持续检查 TCP 端口。再次通过 SSH 应用可修改成员和顺序。",
-        "entryRequirements": "请先将主机的固定域名指向入口服务器，并在主机中设置相同端口。所有服务器必须使用相同入站、密钥和证书。不支持 UDP 传输。现有连接不会迁移。TCP 检查不验证 VPN 授权。",
-        "entryGateway": "入口服务器",
-        "entryHost": "共享订阅主机",
-        "entryPort": "固定入口端口",
-        "entryBackends": "分配给此主机的服务器",
-        "entryStrategy_priority": "优先级：首个健康服务器",
-        "entryStrategy_roundRobin": "轮询",
-        "entryStrategy_leastConnections": "最少活动 TCP 连接",
-        "entryConfirm": "我已检查域名、端口、共享密钥及入口到主机服务器的连通性",
-        "entryApply": "通过 SSH 连接并应用",
-        "entryIndependent": "应用会修改所选服务器的独立入口服务；模板草稿需单独保存。不会重启 Xray。TLS 在后端终止，因此证书必须配置在后端。",
-        "entry_preparing": "检查入口服务器访问权限",
-        "entry_downloading": "下载并验证安装程序",
-        "entry_updating": "验证并应用固定入口",
-        "entry_finished": "固定入口已应用"
+        "panelSourceIpHelp": "仅此 IP 可访问端口和 ping；SSH 仍可公开访问。客户端通过主服务器连接。",
+        "nodeDiagnostics": "诊断",
+        "node_failure_root": "需要 root 或免密码 sudo。",
+        "node_failure_directory": "目录不可访问或非空。请选择空目录或更新现有节点。",
+        "node_failure_dependencies": "服务器缺少 curl、Python 或所需系统工具。",
+        "node_failure_download": "无法下载或验证安装程序，请检查 GitHub 连接。",
+        "node_failure_installer": "安装程序失败，请在重试前检查服务器上的私有日志。",
+        "node_failure_ssh": "SSH 通道已中断。重试前请检查节点状态和服务器日志。",
+        "node_failure_authorization": "管理员会话已过期或访问被拒绝，请重新登录。",
+        "node_failure_node": "节点已连接、已禁用或无法准备安装密钥。",
+        "node_failure_busy": "其他节点操作正在运行，或 SSH 会话不可用。",
+        "invalidPanelIp": "请输入有效的 IPv4 或 IPv6 地址。"
+    },
+    "template-copy": {
+        "action": "复制模板",
+        "help": "复制设置、草稿、标签和地理文件引用。请在新副本中单独配置主机分配。"
+    },
+    "frozen-user": {
+        "freeze": "冻结",
+        "resume": "恢复",
+        "remaining": "剩余：{{duration}}",
+        "help": "订阅时间和访问已暂停。激活后从保存的剩余时间继续。选择日期会设置新的剩余时间。",
+        "resumeBlocked": "访问未启用：订阅已过期或流量额度已耗尽。"
     }
 }

@@ -1,3 +1,4 @@
+import { effectiveUserExpiry, frozenRemainingMs } from '@common/utils/frozen-user-lifetime';
 import { TResetPeriods, TUsersStatus } from '@libs/contracts/constants';
 
 import { InternalSquadEntity } from '@modules/internal-squads/entities';
@@ -15,6 +16,8 @@ export class GetFullUserResponseModel {
     public readonly trafficLimitStrategy: TResetPeriods;
 
     public readonly expireAt: Date;
+    public readonly frozenAt: Date | null;
+    public readonly frozenRemainingMs: number | null;
 
     public readonly telegramId: number | null;
     public readonly email: string | null;
@@ -58,7 +61,9 @@ export class GetFullUserResponseModel {
         this.trafficLimitBytes = Number(entity.trafficLimitBytes);
         this.trafficLimitStrategy = entity.trafficLimitStrategy;
 
-        this.expireAt = entity.expireAt;
+        this.expireAt = effectiveUserExpiry(entity);
+        this.frozenAt = entity.frozenAt ?? null;
+        this.frozenRemainingMs = frozenRemainingMs(entity);
 
         this.telegramId = entity.telegramId ? Number(entity.telegramId) : null;
         this.email = entity.email;

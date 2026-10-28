@@ -17,6 +17,7 @@ var CreateSubscriptionTemplateCommand;
             .max(255)
             .regex(/^[A-Za-z0-9_\s-]+$/, 'Name can only contain letters, numbers, underscores, dashes and spaces'),
         templateType: zod_1.z.enum(constants_1.SUBSCRIPTION_TEMPLATE_TYPE),
+        sourceUuid: zod_1.z.uuid().optional(),
     });
     CreateSubscriptionTemplateCommand.ResponseSchema = zod_1.z.object({
         response: models_1.SubscriptionTemplateSchema,

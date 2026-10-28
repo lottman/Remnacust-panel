@@ -4,6 +4,7 @@ import {
     Badge,
     Button,
     Card,
+    Code,
     Group,
     Loader,
     NumberInput,
@@ -52,7 +53,7 @@ export const BackupsPageComponent = (props: IProps) => {
     const uiText = useUiText()
 
     const { backups, settings } = props
-    const { i18n } = useTranslation()
+    const { t, i18n } = useTranslation()
     const queryClient = useQueryClient()
     const [isCreating, setIsCreating] = useState(false)
     const createPending = useRef(false)
@@ -175,8 +176,10 @@ export const BackupsPageComponent = (props: IProps) => {
             telegramChatId: settings.telegramChatId ?? ''
         },
         validate: {
-            intervalHours: (value) => Number.isInteger(value) && value >= 1 && value <= 168 ? null : '1–168',
-            retentionDays: (value) => Number.isInteger(value) && value >= 1 && value <= 7 ? null : '1–7'
+            intervalHours: (value) =>
+                Number.isInteger(value) && value >= 1 && value <= 168 ? null : '1–168',
+            retentionDays: (value) =>
+                Number.isInteger(value) && value >= 1 && value <= 7 ? null : '1–7'
         }
     })
 
@@ -237,6 +240,13 @@ export const BackupsPageComponent = (props: IProps) => {
                     </Group>
                 }
             />
+
+            <Alert color="blue" title={t('backups.format-title')}>
+                <Text size="sm">{t('backups.format-help')}</Text>
+                <Code block mt="xs" dir="ltr">
+                    pg_restore --file=database.sql database.dump
+                </Code>
+            </Alert>
 
             {isCreating && (
                 <Alert color="cyan" role="status" icon={<Loader size={18} />}>
@@ -337,7 +347,8 @@ export const BackupsPageComponent = (props: IProps) => {
                                 disabled={isUpdatingSchedule || isUpdating}
                                 label={uiText('automatic-backups-20260929')}
                                 onChange={(event) => {
-                                    if (event.currentTarget.checked && form.validate().hasErrors) return
+                                    if (event.currentTarget.checked && form.validate().hasErrors)
+                                        return
                                     updateSchedule({
                                         variables: {
                                             autoMode: event.currentTarget.checked ? 'DAILY' : 'OFF',

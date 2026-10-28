@@ -18,6 +18,7 @@ const parser = load(path.join(directory, 'template-parser.ts'), { './template-va
 const bytes = load(path.join(directory, '../bytes/pretty-bytes.util.ts'));
 const locationReset = load(path.join(directory, 'get-next-location-reset-at.ts'));
 const { TemplateEngine } = load(path.join(directory, 'replace-templates-values.ts'), {
+    '@common/utils/frozen-user-lifetime': load(path.join(directory, '../frozen-user-lifetime.ts')),
     '@libs/contracts/constants': constants,
     '../bytes': bytes,
     '../get-next-traffic-reset-at.util': load(path.join(directory, '../get-next-traffic-reset-at.util.ts'), { '@libs/contracts/constants': constants }),

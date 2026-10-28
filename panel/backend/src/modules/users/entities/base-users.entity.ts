@@ -1,7 +1,7 @@
 import { TResetPeriods, TUsersStatus } from '@contract/constants';
+import { Users } from '@prisma/client';
 
 import { decryptSecret } from '@common/utils/xera-crypto';
-import { Users } from '@prisma/client';
 
 export class BaseUserEntity implements Users {
     public id: bigint;
@@ -13,6 +13,7 @@ export class BaseUserEntity implements Users {
     public trafficLimitStrategy: TResetPeriods;
 
     public expireAt: Date;
+    public frozenAt: Date | null;
     public subRevokedAt: Date | null;
     public lastTrafficResetAt: Date | null;
     public lastTriggeredThreshold: number;

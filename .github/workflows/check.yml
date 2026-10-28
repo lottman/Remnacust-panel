@@ -78,6 +78,13 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres@127.0.0.1:55439/postgres
           DIRECT_URL: postgresql://postgres@127.0.0.1:55439/postgres
+      - name: Verify frozen lifetime database transitions and generated remote installer
+        run: |
+          node tests/frozen-user-lifetime.database.integration.cjs
+          sudo env NODE_INSTALL_TEST_LINUX=1 "$(command -v node)" tests/node-upgrade-script.integration.cjs
+        env:
+          FROZEN_TEST_DATABASE_URL: postgresql://postgres@127.0.0.1:55439/postgres
+          NODE_INSTALL_TEST_LINUX: '1'
       - name: Check access policies and limits with PostgreSQL
         run: node tests/hwid-default-database.integration.cjs && node tests/host-policy-database.integration.cjs && node tests/limit-management-database.integration.cjs && node tests/device-reconciliation-database.integration.cjs && node tests/node-health-retention-database.integration.cjs
       - name: Check concurrent geofile imports across API processes

@@ -171,7 +171,7 @@ export const HomePage = (props: IProps) => {
                     <Title className={classes.title} m="xs" ml={0} order={4}>
                         {t('user-table.widget.table-title')}
                     </Title>
-                    <SimpleGrid cols={{ base: 2, xl: 5 }} spacing="xs">
+                    <SimpleGrid cols={{ base: 2, xl: 6 }} spacing="xs">
                         {usersMetrics.map((metric, index) => (
                             <AnimatedCard index={index} key={metric.title}>
                                 <MetricCardShared

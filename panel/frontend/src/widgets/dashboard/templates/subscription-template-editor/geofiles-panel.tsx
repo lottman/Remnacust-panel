@@ -1,4 +1,5 @@
 import {
+    Accordion,
     Alert,
     Anchor,
     Badge,
@@ -12,6 +13,7 @@ import {
     TagsInput,
     Progress,
     Select,
+    SegmentedControl,
     Stack,
     Text,
     TextInput,
@@ -91,6 +93,8 @@ export function GeofilesPanel({
         refetchInterval: 60_000
     })
     const files = filesQuery.data ?? []
+    const [uploadSource, setUploadSource] = useState('file')
+    const [uploadOpen, setUploadOpen] = useState<string | null>(null)
     const [name, setName] = useState('')
     const [kind, setKind] = useState<string | null>('geoip')
     const [url, setUrl] = useState('')
@@ -444,6 +448,87 @@ export function GeofilesPanel({
                     )}
                 </Stack>
             </Card>
+            <Accordion variant="contained" value={uploadOpen} onChange={setUploadOpen}>
+                <Accordion.Item value="upload"><Accordion.Control>{t('geofiles.add')}</Accordion.Control><Accordion.Panel>
+                <Stack gap="md">
+                    <SegmentedControl fullWidth value={uploadSource} onChange={setUploadSource} data={[{ value: 'file', label: t('geofiles.from-computer') }, { value: 'url', label: t('geofiles.from-url') }]} />
+                    <div className={styles.fields}>
+                        <TextInput
+                            label={t('geofiles.name')}
+                            maxLength={128}
+                            value={name}
+                            onChange={(event) => setName(event.currentTarget.value)}
+                        />
+                        <Select
+                            label={t('geofiles.format')}
+                            value={kind}
+                            onChange={setKind}
+                            allowDeselect={false}
+                            data={kinds.map((value) => ({
+                                value,
+                                label: t(`geofiles.kind-${value}`)
+                            }))}
+                        />
+                    </div>
+                    {uploadSource === 'file' && <><FileInput
+                        label={t('geofiles.from-computer')}
+                        placeholder={t('geofiles.click-to-upload')}
+                        accept=".dat,.srs,.json,.yaml,.yml,.txt"
+                        value={file}
+                        onChange={(value) => {
+                            setFile(value)
+                            if (value && !name) setName(value.name)
+                            if (value) {
+                                const filename = value.name.toLowerCase()
+                                if (filename.endsWith('.srs')) setKind('singbox-srs')
+                                else if (filename.endsWith('.json')) setKind('singbox-json')
+                                else if (filename.endsWith('.dat') && filename.includes('geosite'))
+                                    setKind('geosite')
+                                else if (filename.endsWith('.dat') && filename.includes('geoip'))
+                                    setKind('geoip')
+                            }
+                        }}
+                        clearable
+                        error={
+                            file && file.size > 64 * 1024 * 1024
+                                ? t('geofiles.size-limit')
+                                : undefined
+                        }
+                    />
+                    <Button
+                        disabled={!file || !kind || file.size > 64 * 1024 * 1024}
+                        loading={upload.isPending}
+                        onClick={() => upload.mutate('file')}
+                    >
+                        {t('geofiles.upload')}
+                    </Button>
+                    </>}
+                    {progress !== null && (
+                        <Progress value={progress} aria-label={t('geofiles.upload')} />
+                    )}
+                    {uploadSource === 'url' && <><TextInput
+                        label={t('geofiles.from-url')}
+                        dir="ltr"
+                        type="url"
+                        placeholder="https://example.com/geosite.dat"
+                        value={url}
+                        onChange={(event) => setUrl(event.currentTarget.value)}
+                    />
+                    <Button
+                        variant="light"
+                        disabled={!url.trim() || !name.trim() || !kind}
+                        loading={upload.isPending}
+                        onClick={() => upload.mutate('url')}
+                    >
+                        {t('geofiles.import')}
+                    </Button></>}
+                    <Text size="xs" c="dimmed">
+                        {t('geofiles.security-help')}
+                    </Text>
+                </Stack>
+                </Accordion.Panel></Accordion.Item>
+            </Accordion>
+            {!!refs.length && <Title order={4}>{t('geofiles.attached-count', { count: refs.length })}</Title>}
             {refs.map((reference, index) => {
                 const item = files.find((file) => file.id === reference.id)
                 const categories = reference.categories ?? []
@@ -611,83 +696,6 @@ export function GeofilesPanel({
                     </Card>
                 )
             })}
-            <Card p="md" className={styles.card}>
-                <Stack gap="md">
-                    <Title order={4}>{t('geofiles.add')}</Title>
-                    <div className={styles.fields}>
-                        <TextInput
-                            label={t('geofiles.name')}
-                            maxLength={128}
-                            value={name}
-                            onChange={(event) => setName(event.currentTarget.value)}
-                        />
-                        <Select
-                            label={t('geofiles.format')}
-                            value={kind}
-                            onChange={setKind}
-                            allowDeselect={false}
-                            data={kinds.map((value) => ({
-                                value,
-                                label: t(`geofiles.kind-${value}`)
-                            }))}
-                        />
-                    </div>
-                    <FileInput
-                        label={t('geofiles.from-computer')}
-                        placeholder={t('geofiles.click-to-upload')}
-                        accept=".dat,.srs,.json,.yaml,.yml,.txt"
-                        value={file}
-                        onChange={(value) => {
-                            setFile(value)
-                            if (value && !name) setName(value.name)
-                            if (value) {
-                                const filename = value.name.toLowerCase()
-                                if (filename.endsWith('.srs')) setKind('singbox-srs')
-                                else if (filename.endsWith('.json')) setKind('singbox-json')
-                                else if (filename.endsWith('.dat') && filename.includes('geosite'))
-                                    setKind('geosite')
-                                else if (filename.endsWith('.dat') && filename.includes('geoip'))
-                                    setKind('geoip')
-                            }
-                        }}
-                        clearable
-                        error={
-                            file && file.size > 64 * 1024 * 1024
-                                ? t('geofiles.size-limit')
-                                : undefined
-                        }
-                    />
-                    <Button
-                        disabled={!file || !kind || file.size > 64 * 1024 * 1024}
-                        loading={upload.isPending}
-                        onClick={() => upload.mutate('file')}
-                    >
-                        {t('geofiles.upload')}
-                    </Button>
-                    {progress !== null && (
-                        <Progress value={progress} aria-label={t('geofiles.upload')} />
-                    )}
-                    <TextInput
-                        label={t('geofiles.from-url')}
-                        dir="ltr"
-                        type="url"
-                        placeholder="https://example.com/geosite.dat"
-                        value={url}
-                        onChange={(event) => setUrl(event.currentTarget.value)}
-                    />
-                    <Button
-                        variant="light"
-                        disabled={!url.trim() || !name.trim() || !kind}
-                        loading={upload.isPending}
-                        onClick={() => upload.mutate('url')}
-                    >
-                        {t('geofiles.import')}
-                    </Button>
-                    <Text size="xs" c="dimmed">
-                        {t('geofiles.security-help')}
-                    </Text>
-                </Stack>
-            </Card>
             {existingUrls.length > 0 && (
                 <Card p="md" className={styles.card}>
                     <Stack gap="sm">
@@ -703,6 +711,8 @@ export function GeofilesPanel({
                                 <Button
                                     variant="subtle"
                                     onClick={() => {
+                                        setUploadSource('url')
+                                        setUploadOpen('upload')
                                         setUrl(item.url)
                                         setName(String(item.name))
                                     }}

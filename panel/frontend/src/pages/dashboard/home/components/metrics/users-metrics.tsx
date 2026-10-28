@@ -1,5 +1,6 @@
 import { GetStatsCommand } from '@remnawave/backend-contract'
 import { TFunction } from 'i18next'
+import { TbSnowflake } from 'react-icons/tb'
 import {
     PiClockCountdownDuotone,
     PiClockUserDuotone,
@@ -43,6 +44,13 @@ export const getUsersMetrics = (
             title: t('dashboard-ui.limited'),
             iconVariant: 'soft',
             iconColor: 'orange'
+        },
+        {
+            value: formatInt(users.statusCounts.FROZEN) ?? 0,
+            IconComponent: TbSnowflake,
+            title: t('user-status.frozen'),
+            iconVariant: 'soft',
+            iconColor: 'blue'
         },
         {
             value: formatInt(users.statusCounts.DISABLED) ?? 0,

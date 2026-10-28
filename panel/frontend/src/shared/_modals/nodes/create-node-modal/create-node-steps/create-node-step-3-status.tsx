@@ -1,4 +1,5 @@
 import {
+    Accordion,
     Alert,
     Badge,
     Button,
@@ -13,6 +14,7 @@ import {
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbAlertCircle, TbCheck, TbLink, TbX } from 'react-icons/tb'
+import { z } from 'zod'
 
 import { showModal } from '@shared/_modals/show-modal'
 import { useGetNode } from '@shared/api/hooks'
@@ -42,6 +44,7 @@ export const CreateNodeStep3Status = ({ nodeUuid, onClose, installMode }: IProps
     const { t } = useTranslation()
     const [netAdmin, setNetAdmin] = useState(false)
     const [panelIp, setPanelIp] = useState('')
+    const validPanelIp = !panelIp || z.union([z.ipv4(), z.ipv6()]).safeParse(panelIp).success
     const [installStarted, setInstallStarted] = useState(false)
 
     const { data: node, isLoading } = useGetNode({
@@ -101,10 +104,11 @@ export const CreateNodeStep3Status = ({ nodeUuid, onClose, installMode }: IProps
                             label={t('operations.panelSourceIp')}
                             description={t('operations.panelSourceIpHelp')}
                             value={panelIp}
+                            error={validPanelIp ? undefined : t('operations.invalidPanelIp')}
                             onChange={(e) => setPanelIp(e.currentTarget.value.trim())}
                         />
                         <Button
-                            disabled={!node}
+                            disabled={!node || !validPanelIp}
                             onClick={() => {
                                 if (!node) return
                                 setInstallStarted(true)
@@ -125,7 +129,14 @@ export const CreateNodeStep3Status = ({ nodeUuid, onClose, installMode }: IProps
                     </Stack>
                 </Alert>
             )}
-            {nodeUuid && <NodeDiagnostics nodeUuid={nodeUuid} />}
+            {nodeUuid && (installStarted || status === STATUS.CONNECTED || installMode === 'manual') && (
+                <Accordion variant="contained">
+                    <Accordion.Item value="diagnostics">
+                        <Accordion.Control>{t('operations.nodeDiagnostics')}</Accordion.Control>
+                        <Accordion.Panel><NodeDiagnostics nodeUuid={nodeUuid} /></Accordion.Panel>
+                    </Accordion.Item>
+                </Accordion>
+            )}
             {(installMode !== 'ssh' || installStarted || status === STATUS.CONNECTED) && (
                 <Paper
                     p="xl"

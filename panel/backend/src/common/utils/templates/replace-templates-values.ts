@@ -1,6 +1,7 @@
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 
+import { effectiveUserExpiry } from '@common/utils/frozen-user-lifetime';
 import { TUsersStatus, USERS_STATUS_VALUES } from '@libs/contracts/constants';
 
 import { HostWithRawInbound } from '@modules/hosts/entities/host-with-inbound-tag.entity';
@@ -75,17 +76,18 @@ export class TemplateEngine {
                             resetUnit: host.trafficLimitResetUnit as 'DAYS' | 'MONTHS',
                             resetAnchorAt: host.trafficLimitResetAnchorAt,
                         };
-                        const groups = useTag && tagQuotas.length
-                            ? tagQuotas.map((item) => ({
-                                key: `tag:${item.tag}`,
-                                label: item.tag,
-                                used: item.usedBytes,
-                                limit: item.limitBytes,
-                                resetValue: item.resetValue,
-                                resetUnit: item.resetUnit,
-                                resetAnchorAt: item.resetAnchorAt,
-                            }))
-                            : [hostQuota];
+                        const groups =
+                            useTag && tagQuotas.length
+                                ? tagQuotas.map((item) => ({
+                                      key: `tag:${item.tag}`,
+                                      label: item.tag,
+                                      used: item.usedBytes,
+                                      limit: item.limitBytes,
+                                      resetValue: item.resetValue,
+                                      resetUnit: item.resetUnit,
+                                      resetAnchorAt: item.resetAnchorAt,
+                                  }))
+                                : [hostQuota];
                         return groups
                             .filter((group) => {
                                 if (seen.has(group.key)) return false;
@@ -161,8 +163,8 @@ export class TemplateEngine {
             date ? dayjs(date).format(args.format || DEFAULT_DATE_FORMAT) : '';
 
         const status =
-            user.status === 'DISABLED'
-                ? 'DISABLED'
+            user.status === 'DISABLED' || user.status === 'FROZEN'
+                ? user.status
                 : user.expireAt <= new Date()
                   ? 'EXPIRED'
                   : user.status;
@@ -195,7 +197,7 @@ export class TemplateEngine {
                                   `${host.remark.replace(/\{\{[^}]*\}\}/g, '').trim() || host.uuid}: ${hostSpeed(host)}`,
                           )
                           .join('; ') || '0 Mbps',
-            DAYS_LEFT: () => Math.max(0, dayjs(user.expireAt).diff(dayjs(), 'day')),
+            DAYS_LEFT: () => Math.max(0, dayjs(effectiveUserExpiry(user)).diff(dayjs(), 'day')),
             TRAFFIC_USED: () => prettyBytesUtil(user.userTraffic.usedTrafficBytes, true, 3),
             TRAFFIC_LEFT: () => prettyBytesUtil(trafficLeft(), true, 3),
             TRAFFICLOCATIONUSE: () => locationValue('used'),
@@ -213,7 +215,7 @@ export class TemplateEngine {
             TELEGRAM_ID: () => user.telegramId?.toString() || '',
             SUBSCRIPTION_URL: () => `https://${subPublicDomain}/${user.shortUuid}`,
             TAG: () => user.tag || '',
-            EXPIRE_UNIX: () => dayjs(user.expireAt).unix(),
+            EXPIRE_UNIX: () => dayjs(effectiveUserExpiry(user)).unix(),
             SHORT_UUID: () => user.shortUuid,
             ID: () => user.id.toString(),
             TRAFFIC_USED_BYTES: () => user.userTraffic.usedTrafficBytes.toString(),

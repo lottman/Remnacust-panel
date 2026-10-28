@@ -8,6 +8,7 @@ export declare namespace CreateUserCommand {
         status: z.ZodOptional<z.ZodDefault<z.ZodEnum<{
             readonly ACTIVE: "ACTIVE";
             readonly DISABLED: "DISABLED";
+            readonly FROZEN: "FROZEN";
             readonly LIMITED: "LIMITED";
             readonly EXPIRED: "EXPIRED";
         }>>>;
@@ -42,6 +43,7 @@ export declare namespace CreateUserCommand {
             status: z.ZodEnum<{
                 readonly ACTIVE: "ACTIVE";
                 readonly DISABLED: "DISABLED";
+                readonly FROZEN: "FROZEN";
                 readonly LIMITED: "LIMITED";
                 readonly EXPIRED: "EXPIRED";
             }>;
@@ -54,6 +56,8 @@ export declare namespace CreateUserCommand {
                 readonly MONTH_ROLLING: "MONTH_ROLLING";
             }>;
             expireAt: z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>;
+            frozenAt: z.ZodOptional<z.ZodNullable<z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>>>;
+            frozenRemainingMs: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
             telegramId: z.ZodNullable<z.ZodNumber>;
             email: z.ZodNullable<z.ZodEmail>;
             description: z.ZodNullable<z.ZodString>;

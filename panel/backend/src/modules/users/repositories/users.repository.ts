@@ -9,6 +9,7 @@ import type {
 import { TResetPeriods, TUsersStatus, USERS_STATUS } from '@contract/constants';
 import { Transactional, TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
+import { Prisma } from '@prisma/client';
 import dayjs from 'dayjs';
 import { SelectExpression, sql, ExpressionBuilder } from 'kysely';
 import { jsonArrayFrom } from 'kysely/helpers/postgres';
@@ -18,6 +19,7 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import { TxKyselyService } from '@common/database/tx-kysely.service';
 import { getKyselyUuid, paginateQuery } from '@common/helpers/kysely';
+import { frozenDateEdit } from '@common/utils/frozen-user-lifetime';
 import { formatExecutionTime, getTime } from '@common/utils/get-elapsed-time';
 
 import { ConfigProfileInboundEntity } from '@modules/config-profiles/entities';
@@ -37,7 +39,7 @@ import { UserConverter } from '../users.converter';
 const USERS_FILTER_COLUMN_MAP = {
     id: sql.ref('users.id'),
     createdAt: sql.ref('users.created_at'),
-    expireAt: sql.ref('users.expire_at'),
+    expireAt: sql`CASE WHEN users.status = 'FROZEN' THEN (statement_timestamp() AT TIME ZONE 'UTC') + greatest(users.expire_at - users.frozen_at, interval '0 seconds') ELSE users.expire_at END`,
     lastTrafficResetAt: sql.ref('users.last_traffic_reset_at'),
     subRevokedAt: sql.ref('users.sub_revoked_at'),
     telegramId: sql.ref('users.telegram_id'),
@@ -162,6 +164,7 @@ export class UsersRepository {
             .select('id')
             .where('expireAt', '>=', start)
             .where('expireAt', '<=', end)
+            .where('status', '!=', USERS_STATUS.FROZEN)
             .execute();
         return result.map((value) => ({ id: value.id }));
     }
@@ -429,9 +432,11 @@ export class UsersRepository {
     public async getUsersWithPagination({
         start,
         size,
+        beforeId,
     }: {
         start: number;
         size: number;
+        beforeId?: bigint;
     }): Promise<[UserEntity[], number]> {
         const [users, total] = await Promise.all([
             this.qb.kysely
@@ -439,6 +444,7 @@ export class UsersRepository {
                 .innerJoin('userTraffic', 'userTraffic.id', 'users.id')
                 .selectAll()
                 .select((eb) => this.includeActiveInternalSquads(eb))
+                .$if(beforeId !== undefined, (qb) => qb.where('users.id', '<', beforeId!))
                 .offset(start)
                 .limit(size)
                 .orderBy('users.id', 'desc')
@@ -455,8 +461,26 @@ export class UsersRepository {
     }
 
     @Transactional()
-    public async update(dto: IUpdateUserDto): Promise<UserEntity | null> {
+    public async update(dto: IUpdateUserDto, wallClockExpiry = false): Promise<UserEntity | null> {
         const { id, activeInternalSquads, ...data } = dto;
+
+        // Read the pause clock under the same row lock as the update.
+        if (
+            wallClockExpiry &&
+            data.expireAt &&
+            (!data.status || data.status === USERS_STATUS.FROZEN)
+        ) {
+            const [clock] = await this.prisma.tx.$queryRaw<
+                Array<{
+                    status: string;
+                    expireAt: Date;
+                    frozenAt: Date | null;
+                }>
+            >(
+                Prisma.sql`SELECT status, expire_at AS "expireAt", frozen_at AS "frozenAt" FROM users WHERE id = ${id} FOR UPDATE`,
+            );
+            if (clock) data.expireAt = frozenDateEdit(clock, data.expireAt);
+        }
 
         await this.prisma.tx.users.update({
             select: {
@@ -914,11 +938,17 @@ export class UsersRepository {
 
         let totalUpdated = 0;
         for (const range of ranges) {
-            const result = await this.prisma.tx.users.updateMany({
-                where: { id: { gte: range.min, lte: range.max } },
-                data: { ...fields, lastTriggeredThreshold: 0 },
-            });
-            totalUpdated += result.count ?? 0;
+            const expireAt =
+                fields.expireAt && fields.status !== USERS_STATUS.ACTIVE
+                    ? sql<Date>`CASE WHEN status = 'FROZEN' THEN frozen_at + greatest(${fields.expireAt.toISOString()}::timestamptz - statement_timestamp(), interval '0 seconds') ELSE ${fields.expireAt.toISOString()}::timestamptz AT TIME ZONE 'UTC' END`
+                    : fields.expireAt;
+            const result = await this.qb.kysely
+                .updateTable('users')
+                .set({ ...fields, expireAt, lastTriggeredThreshold: 0 })
+                .where('id', '>=', range.min)
+                .where('id', '<=', range.max)
+                .executeTakeFirstOrThrow();
+            totalUpdated += Number(result.numUpdatedRows);
         }
 
         return totalUpdated;
@@ -1431,11 +1461,7 @@ export class UsersRepository {
                 'internalSquads.uuid',
                 'internalSquadMembers.internalSquadUuid',
             )
-            .select([
-                'internalSquadMembers.userId',
-                'internalSquads.name',
-                'internalSquads.uuid',
-            ])
+            .select(['internalSquadMembers.userId', 'internalSquads.name', 'internalSquads.uuid'])
             .execute();
 
         const squadNamesByUserId = new Map<string, string[]>();

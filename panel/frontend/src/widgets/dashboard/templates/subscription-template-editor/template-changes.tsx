@@ -1,6 +1,6 @@
 import type { Change } from './autoselect-model'
 
-import { Badge, Button, Code, Group, Card, Stack, Text, Title } from '@mantine/core'
+import { Accordion, Badge, Button, Code, Group, Stack, Text } from '@mantine/core'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbCode } from 'react-icons/tb'
@@ -12,14 +12,15 @@ export function TemplateChanges({ changes }: { changes: Change[] }) {
     const [all, setAll] = useState(false)
     return (
         <aside className={styles.preview} aria-label={t('autoselect.changes')}>
-            <Card withBorder p="md">
-                <Group justify="space-between" mb="sm">
+            <Accordion variant="contained"><Accordion.Item value="changes"><Accordion.Control>
+                <Group justify="space-between">
                     <Group gap="xs">
                         <TbCode aria-hidden size={18} />
-                        <Title order={4}>{t('autoselect.changes')}</Title>
+                        <Text fw={600}>{t('autoselect.changes')}</Text>
                     </Group>
                     <Badge variant="light">{changes.length}</Badge>
                 </Group>
+                </Accordion.Control><Accordion.Panel>
                 <Text size="sm" c="dimmed" mb="md">
                     {t('autoselect.changes-help')}
                 </Text>
@@ -69,7 +70,7 @@ export function TemplateChanges({ changes }: { changes: Change[] }) {
                         {t(all ? 'autoselect.less-changes' : 'autoselect.all-changes')}
                     </Button>
                 )}
-            </Card>
+            </Accordion.Panel></Accordion.Item></Accordion>
         </aside>
     )
 }

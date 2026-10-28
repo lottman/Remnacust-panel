@@ -118,7 +118,7 @@ export function UserTableWidget() {
             }
             if (columnId === 'status') {
                 return new Map<string, number>(
-                    ['ACTIVE', 'DISABLED', 'LIMITED', 'EXPIRED'].map((status) => [status, 0]) ?? []
+                    ['ACTIVE', 'DISABLED', 'LIMITED', 'EXPIRED', 'FROZEN'].map((status) => [status, 0]) ?? []
                 )
             }
             return new Map<string, number>()

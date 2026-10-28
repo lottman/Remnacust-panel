@@ -28,6 +28,7 @@ interface IProps {
     contentOptions: {
         navigate?: NavigateFunction
         templateType?: TSubscriptionTemplateType
+        sourceTemplate?: { uuid: string; name: string }
     }
 }
 
@@ -46,7 +47,7 @@ export const CreateModal = NiceModal.create((props: IProps) => {
                     iconColor="teal"
                     IconComponent={TbNewSection}
                     iconVariant="soft"
-                    title={t('common.field.creation')}
+                    title={t(contentOptions.sourceTemplate ? 'template-copy.action' : 'common.field.creation')}
                 />
             }
         >
@@ -55,6 +56,7 @@ export const CreateModal = NiceModal.create((props: IProps) => {
                     templateType={contentOptions.templateType}
                     onClose={hide}
                     navigate={contentOptions.navigate!}
+                    sourceTemplate={contentOptions.sourceTemplate}
                 />
             )}
             {createFrom === 'internalSquad' && <CreateInternalSquadContent onClose={hide} />}

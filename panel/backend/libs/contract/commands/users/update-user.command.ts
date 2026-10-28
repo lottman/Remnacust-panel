@@ -19,7 +19,7 @@ export namespace UpdateUserCommand {
         .object({
             username: z.optional(z.string().describe('Username of the user')),
             id: z.optional(z.number().describe('ID of the user')),
-            status: z.enum([USERS_STATUS.ACTIVE, USERS_STATUS.DISABLED]).optional(),
+            status: z.enum([USERS_STATUS.ACTIVE, USERS_STATUS.DISABLED, USERS_STATUS.FROZEN]).optional(),
             trafficLimitBytes: z
                 .number()
                 .min(0)

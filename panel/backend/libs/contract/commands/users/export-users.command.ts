@@ -28,6 +28,7 @@ export namespace ExportUsersCommand {
         trafficLimitBytes: z.number().nullable(),
         trafficLimitStrategy: z.string().nullable(),
         expireAt: z.string().nullable(),
+        frozenRemainingMs: z.number().int().min(0).nullable().optional(),
         createdAt: z.string().nullable(),
         hwidDeviceLimit: z.number().nullable(),
         tag: z.string().nullable(),

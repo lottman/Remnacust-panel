@@ -1,6 +1,7 @@
 import { Stack, Text } from '@mantine/core'
 import { UserStatusBadge } from '@widgets/dashboard/users/user-status-badge'
 import { useTranslation } from 'react-i18next'
+import dayjs from 'dayjs'
 
 import { getExpirationTextUtil } from '@shared/utils/time-utils'
 
@@ -11,7 +12,9 @@ export function StatusColumnEntity(props: IProps) {
 
     const { user, need } = props
 
-    const expirationText = getExpirationTextUtil(user.expireAt, t, i18n)
+    const expirationText = user.status === 'FROZEN' && user.frozenRemainingMs != null
+        ? t('frozen-user.remaining', { duration: dayjs(Date.now() + user.frozenRemainingMs).locale(i18n.language).fromNow(true) })
+        : getExpirationTextUtil(user.expireAt, t, i18n)
 
     if (need === 'badge') {
         return <UserStatusBadge miw="13ch" status={user.status} />

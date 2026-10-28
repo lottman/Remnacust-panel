@@ -136,11 +136,13 @@ export const useEnableUser = createMutationHook({
     routeParamsSchema: EnableUserCommand.RequestParamSchema,
     requestMethod: EnableUserCommand.endpointDetails.REQUEST_METHOD,
     rMutationParams: {
-        onSuccess: () => {
+        onSuccess: (data) => {
             notifications.show({
-                title: i18next.t('common.message.success'),
-                message: translateMutationMessage('User enabled successfully'),
-                color: 'teal'
+                title: i18next.t(data.status === 'ACTIVE' ? 'common.message.success' : 'common.message.error'),
+                message: data.status === 'ACTIVE'
+                    ? translateMutationMessage('User enabled successfully')
+                    : i18next.t('frozen-user.resumeBlocked'),
+                color: data.status === 'ACTIVE' ? 'teal' : 'orange'
             })
         },
         onError: (error) => {

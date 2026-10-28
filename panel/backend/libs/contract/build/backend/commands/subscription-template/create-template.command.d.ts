@@ -13,6 +13,7 @@ export declare namespace CreateSubscriptionTemplateCommand {
             readonly CLASH: "CLASH";
             readonly SINGBOX: "SINGBOX";
         }>;
+        sourceUuid: z.ZodOptional<z.ZodUUID>;
     }, z.core.$strip>;
     const ResponseSchema: z.ZodObject<{
         response: z.ZodObject<{

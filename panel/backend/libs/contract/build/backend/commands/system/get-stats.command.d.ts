@@ -22,6 +22,7 @@ export declare namespace GetStatsCommand {
                 statusCounts: z.ZodRecord<z.ZodEnum<{
                     readonly ACTIVE: "ACTIVE";
                     readonly DISABLED: "DISABLED";
+                    readonly FROZEN: "FROZEN";
                     readonly LIMITED: "LIMITED";
                     readonly EXPIRED: "EXPIRED";
                 }>, z.ZodNumber>;

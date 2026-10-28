@@ -12,6 +12,7 @@ import { app } from 'src/config'
 import { translateUiText as uiText } from '@shared/i18n/interface-text'
 import { registerJsonSchema } from '@shared/utils/monaco/json-schema-registry'
 import { loadEditorSchema } from '@shared/utils/monaco/schema-cache'
+import { setSnippetHoverData } from '@shared/utils/monaco/snippet-hover'
 
 interface ISchemaNode {
     allOf?: ISchemaNode[]
@@ -194,6 +195,7 @@ export const MonacoSetupFeature = {
         snippets: GetSnippetsCommand.Response['response']['snippets']
     ) => {
         try {
+            setSnippetHoverData(snippets)
             const snippetNames = snippets.map((s) => s.name)
 
             let { jsonSchemaUrl } = app.configEditor
@@ -210,7 +212,7 @@ export const MonacoSetupFeature = {
             const snippetDescriptions = snippets.map((snippet) => {
                 const snippetJson = JSON.stringify(snippet.snippet, null, 1)
 
-                return ['', '```json', snippetJson.slice(2, -2), '```', '', '---', ''].join('\n')
+                return ['', '```json', snippetJson, '```'].join('\n')
             })
 
             const snippetSchema = {

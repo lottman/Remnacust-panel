@@ -1,0 +1,3290 @@
+{
+  "date": "2026-10-28",
+  "scope": "local source and isolated test environment",
+  "apiOperations": [
+    {
+      "method": "GET",
+      "path": "/api/passkeys/registration/options",
+      "operationId": "PasskeyController_passkeyRegistrationOptions",
+      "access": "admin",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/passkeys/registration/verify",
+      "operationId": "PasskeyController_passkeyRegistrationVerify",
+      "access": "admin",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/passkeys",
+      "operationId": "PasskeyController_getActivePasskeys",
+      "access": "admin",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/passkeys",
+      "operationId": "PasskeyController_deletePasskey",
+      "access": "admin",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/passkeys",
+      "operationId": "PasskeyController_updatePasskey",
+      "access": "admin",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/login",
+      "operationId": "AuthController_login",
+      "access": "public",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/register",
+      "operationId": "AuthController_register",
+      "access": "public",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/auth/status",
+      "operationId": "AuthController_getStatus",
+      "access": "public",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/oauth2/authorize",
+      "operationId": "AuthController_oauth2Authorize",
+      "access": "public",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/oauth2/callback",
+      "operationId": "AuthController_oauth2Callback",
+      "access": "public",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/auth/passkey/authentication/options",
+      "operationId": "AuthController_passkeyAuthenticationOptions",
+      "access": "public",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/passkey/authentication/verify",
+      "operationId": "AuthController_passkeyAuthenticationVerify",
+      "access": "public",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/subscription-page-configs/tags",
+      "operationId": "SubscriptionPageConfigController_getTags",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/subscription-page-configs/tags",
+      "operationId": "SubscriptionPageConfigController_setTags",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/subscription-page-configs",
+      "operationId": "SubscriptionPageConfigController_getAllConfigs",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/subscription-page-configs",
+      "operationId": "SubscriptionPageConfigController_updateConfig",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/subscription-page-configs",
+      "operationId": "SubscriptionPageConfigController_createConfig",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/subscription-page-configs/{uuid}",
+      "operationId": "SubscriptionPageConfigController_getConfigByUuid",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/subscription-page-configs/{uuid}",
+      "operationId": "SubscriptionPageConfigController_deleteConfig",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/subscription-page-configs/actions/reorder",
+      "operationId": "SubscriptionPageConfigController_reorderSubscriptionPageConfigs",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/subscription-page-configs/actions/clone",
+      "operationId": "SubscriptionPageConfigController_cloneSubscriptionPageConfig",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/users",
+      "operationId": "UsersController_createUser",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/users",
+      "operationId": "UsersController_updateUser",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/users",
+      "operationId": "UsersController_getUsers",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/users/{userId}",
+      "operationId": "UsersController_deleteUser",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/users/{userId}",
+      "operationId": "UsersController_getUserById",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/users/stream",
+      "operationId": "UsersController_getUsersStream",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/users/tags",
+      "operationId": "UsersController_getUsersTags",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/users/{userId}/accessible-nodes",
+      "operationId": "UsersController_getUserAccessibleNodes",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/users/{userId}/subscription-request-history",
+      "operationId": "UsersController_getUserSubscriptionRequestHistory",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/users/by-short-uuid/{shortUuid}",
+      "operationId": "UsersController_getUserByShortUuid",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/users/by-username/{username}",
+      "operationId": "UsersController_getUserByUsername",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/users/{userId}/actions/revoke",
+      "operationId": "UsersController_revokeUserSubscription",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/users/{userId}/actions/disable",
+      "operationId": "UsersController_disableUser",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/users/{userId}/actions/enable",
+      "operationId": "UsersController_enableUser",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/users/{userId}/actions/reset-traffic",
+      "operationId": "UsersController_resetUserTraffic",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/users/{userId}/actions/extend",
+      "operationId": "UsersController_extendUserExpirationDate",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/users/resolve",
+      "operationId": "UsersController_resolveUser",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/users/bulk/delete-by-status",
+      "operationId": "UsersBulkActionsController_bulkDeleteUsersByStatus",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/users/bulk/delete",
+      "operationId": "UsersBulkActionsController_bulkDeleteUsers",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/users/bulk/revoke-subscription",
+      "operationId": "UsersBulkActionsController_bulkRevokeUsersSubscription",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/users/bulk/reset-traffic",
+      "operationId": "UsersBulkActionsController_bulkResetUserTraffic",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/users/bulk/update",
+      "operationId": "UsersBulkActionsController_bulkUpdateUsers",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/users/bulk/update-squads",
+      "operationId": "UsersBulkActionsController_bulkUpdateUsersInternalSquads",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/users/bulk/extend-expiration-date",
+      "operationId": "UsersBulkActionsController_bulkExtendExpirationDate",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/users/bulk/all/update",
+      "operationId": "UsersBulkActionsController_bulkUpdateAllUsers",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/users/bulk/all/reset-traffic",
+      "operationId": "UsersBulkActionsController_bulkAllResetUserTraffic",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/users/bulk/all/extend-expiration-date",
+      "operationId": "UsersBulkActionsController_bulkAllExtendExpirationDate",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/hwid/devices/registration/{userId}",
+      "operationId": "HwidUserDevicesController_getRegistration",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/hwid/devices/registration/{userId}",
+      "operationId": "HwidUserDevicesController_updateRegistration",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/hwid/devices",
+      "operationId": "HwidUserDevicesController_getAllUsers",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/hwid/devices",
+      "operationId": "HwidUserDevicesController_createUserHwidDevice",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/hwid/devices/delete",
+      "operationId": "HwidUserDevicesController_deleteUserHwidDevice",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/hwid/devices/delete-all",
+      "operationId": "HwidUserDevicesController_deleteAllUserHwidDevices",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/hwid/devices/block",
+      "operationId": "HwidUserDevicesController_blockUserHwidDevice",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/hwid/devices/unblock",
+      "operationId": "HwidUserDevicesController_unblockUserHwidDevice",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/hwid/devices/stats",
+      "operationId": "HwidUserDevicesController_getHwidDevicesStats",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/hwid/devices/top-users",
+      "operationId": "HwidUserDevicesController_getTopUsersByHwidDevices",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/hwid/devices/{userId}",
+      "operationId": "HwidUserDevicesController_getUserHwidDevices",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/nodes/{uuid}/runtime",
+      "operationId": "NodesController_getRuntime",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/nodes/health/{uuid}/xray-logs",
+      "operationId": "NodesController_getNodeXrayLogs",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/nodes/health/{uuid}",
+      "operationId": "NodesController_getHealthLog",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/nodes/tags",
+      "operationId": "NodesController_getNodesTags",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/nodes",
+      "operationId": "NodesController_createNode",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/nodes",
+      "operationId": "NodesController_getNodes",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/nodes",
+      "operationId": "NodesController_updateNode",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/nodes/{uuid}",
+      "operationId": "NodesController_getNode",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/nodes/{uuid}",
+      "operationId": "NodesController_deleteNode",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/nodes/{uuid}/actions/enable",
+      "operationId": "NodesController_enableNode",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/nodes/{uuid}/actions/disable",
+      "operationId": "NodesController_disableNode",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/nodes/{uuid}/actions/restart",
+      "operationId": "NodesController_restartNode",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/nodes/{uuid}/actions/reset-traffic",
+      "operationId": "NodesController_resetNodeTraffic",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/nodes/actions/restart-all",
+      "operationId": "NodesController_restartAllNodes",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/nodes/actions/reorder",
+      "operationId": "NodesController_reorderNodes",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/nodes/bulk-actions/profile-modification",
+      "operationId": "NodesController_profileModification",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/nodes/bulk-actions",
+      "operationId": "NodesController_bulkNodesActions",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/nodes/bulk-actions/update",
+      "operationId": "NodesController_bulkNodesUpdate",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/sub/{shortUuid}/info",
+      "operationId": "SubscriptionController_getSubscriptionInfoByShortUuid",
+      "access": "public",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/sub/{shortUuid}",
+      "operationId": "SubscriptionController_getSubscription",
+      "access": "public",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/sub/{shortUuid}/{clientType}",
+      "operationId": "SubscriptionController_getSubscriptionByClientType",
+      "access": "public",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/sub/{shortUuid}/device/{token}",
+      "operationId": "SubscriptionController_getPersonalSubscription",
+      "access": "public",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/subscriptions",
+      "operationId": "SubscriptionsController_getAllSubscriptions",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/subscriptions/by-username/{username}",
+      "operationId": "SubscriptionsController_getSubscriptionByUsername",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/subscriptions/by-short-uuid/{shortUuid}",
+      "operationId": "SubscriptionsController_getSubscriptionByShortUuidProtected",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/subscriptions/by-id/{userId}",
+      "operationId": "SubscriptionsController_getSubscriptionByUuid",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/subscriptions/by-short-uuid/{shortUuid}/raw",
+      "operationId": "SubscriptionsController_getRawSubscriptionByShortUuid",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/subscriptions/subpage-config/{shortUuid}",
+      "operationId": "SubscriptionsController_getSubpageConfigByShortUuid",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/subscriptions/connection-keys/{userId}",
+      "operationId": "SubscriptionsController_getConnectionKeysByUserId",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/subscription-templates/tags",
+      "operationId": "SubscriptionTemplateController_getTags",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/subscription-templates/tags",
+      "operationId": "SubscriptionTemplateController_setTags",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/subscription-templates",
+      "operationId": "SubscriptionTemplateController_getAllTemplates",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/subscription-templates",
+      "operationId": "SubscriptionTemplateController_updateTemplate",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/subscription-templates",
+      "operationId": "SubscriptionTemplateController_createTemplate",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/subscription-templates/{uuid}/revisions",
+      "operationId": "SubscriptionTemplateController_getRevisions",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/subscription-templates/{uuid}",
+      "operationId": "SubscriptionTemplateController_getTemplateByUuid",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/subscription-templates/{uuid}",
+      "operationId": "SubscriptionTemplateController_deleteTemplate",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/subscription-templates/actions/reorder",
+      "operationId": "SubscriptionTemplateController_reorderSubscriptionTemplates",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/tokens/{uuid}",
+      "operationId": "ApiTokensController_updateApiToken",
+      "access": "admin",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/tokens/{uuid}",
+      "operationId": "ApiTokensController_deleteApiToken",
+      "access": "admin",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/tokens",
+      "operationId": "ApiTokensController_createApiToken",
+      "access": "admin",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/tokens",
+      "operationId": "ApiTokensController_getApiTokens",
+      "access": "admin",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/tokens/scopes",
+      "operationId": "ApiTokensController_getScopes",
+      "access": "admin",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/config-profiles/tags",
+      "operationId": "ConfigProfileController_getTags",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/config-profiles/tags",
+      "operationId": "ConfigProfileController_setTags",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/config-profiles",
+      "operationId": "ConfigProfileController_getConfigProfiles",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/config-profiles",
+      "operationId": "ConfigProfileController_createConfigProfile",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/config-profiles",
+      "operationId": "ConfigProfileController_updateConfigProfile",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/config-profiles/inbounds",
+      "operationId": "ConfigProfileController_getAllInbounds",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/config-profiles/{uuid}/inbounds",
+      "operationId": "ConfigProfileController_getInboundsByProfileUuid",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/config-profiles/{uuid}",
+      "operationId": "ConfigProfileController_getConfigProfileByUuid",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/config-profiles/{uuid}",
+      "operationId": "ConfigProfileController_deleteConfigProfileByUuid",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/config-profiles/{uuid}/computed-config",
+      "operationId": "ConfigProfileController_getComputedConfigProfileByUuid",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/config-profiles/actions/reorder",
+      "operationId": "ConfigProfileController_reorderConfigProfiles",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/snippets",
+      "operationId": "SnippetsController_getSnippets",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/snippets",
+      "operationId": "SnippetsController_deleteSnippetByName",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/snippets",
+      "operationId": "SnippetsController_createSnippet",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/snippets",
+      "operationId": "SnippetsController_updateSnippet",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/snippets/actions/sync",
+      "operationId": "SnippetsController_syncSnippet",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/internal-squads/tags",
+      "operationId": "InternalSquadController_getTags",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/internal-squads/tags",
+      "operationId": "InternalSquadController_setTags",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/internal-squads",
+      "operationId": "InternalSquadController_getInternalSquads",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/internal-squads",
+      "operationId": "InternalSquadController_createInternalSquad",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/internal-squads",
+      "operationId": "InternalSquadController_updateInternalSquad",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/internal-squads/{uuid}",
+      "operationId": "InternalSquadController_getInternalSquadByUuid",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/internal-squads/{uuid}",
+      "operationId": "InternalSquadController_deleteInternalSquad",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/internal-squads/{uuid}/accessible-nodes",
+      "operationId": "InternalSquadController_getInternalSquadAccessibleNodes",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/internal-squads/{uuid}/usage",
+      "operationId": "InternalSquadController_getInternalSquadUsage",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/internal-squads/{uuid}/bulk-actions/add-users",
+      "operationId": "InternalSquadController_addUsersToInternalSquad",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/internal-squads/{uuid}/bulk-actions/remove-users",
+      "operationId": "InternalSquadController_removeUsersFromInternalSquad",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/internal-squads/actions/reorder",
+      "operationId": "InternalSquadController_reorderInternalSquads",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/internal-squads/{uuid}/bulk-actions/add-many-users",
+      "operationId": "InternalSquadController_addManyUsersToInternalSquad",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/internal-squads/{uuid}/bulk-actions/remove-many-users",
+      "operationId": "InternalSquadController_removeManyUsersFromInternalSquad",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/bandwidth-stats/internal-squads/{uuid}/usage",
+      "operationId": "InternalSquadStatsController_getInternalSquadUsage",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/bandwidth-stats/internal-squads/{squadUuid}/users/{userId}/usage",
+      "operationId": "InternalSquadStatsController_getInternalSquadUserUsage",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/external-squads/tags",
+      "operationId": "ExternalSquadController_getTags",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/external-squads/tags",
+      "operationId": "ExternalSquadController_setTags",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/external-squads",
+      "operationId": "ExternalSquadController_getExternalSquads",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/external-squads",
+      "operationId": "ExternalSquadController_createExternalSquad",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/external-squads",
+      "operationId": "ExternalSquadController_updateExternalSquad",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/external-squads/{uuid}",
+      "operationId": "ExternalSquadController_getExternalSquadByUuid",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/external-squads/{uuid}",
+      "operationId": "ExternalSquadController_deleteExternalSquad",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/external-squads/{uuid}/bulk-actions/add-users",
+      "operationId": "ExternalSquadController_addUsersToExternalSquad",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/external-squads/{uuid}/bulk-actions/remove-users",
+      "operationId": "ExternalSquadController_removeUsersFromExternalSquad",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/external-squads/actions/reorder",
+      "operationId": "ExternalSquadController_reorderExternalSquads",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/keygen",
+      "operationId": "KeygenController_generateKey",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/node-plugins/torrent-blocker",
+      "operationId": "TorrentBlockerReportsController_getTorrentBlockerReports",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/node-plugins/torrent-blocker/stats",
+      "operationId": "TorrentBlockerReportsController_getTorrentBlockerReportsStats",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/node-plugins/torrent-blocker/truncate",
+      "operationId": "TorrentBlockerReportsController_truncateTorrentBlockerReports",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/node-plugins/tags",
+      "operationId": "NodePluginController_getTags",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/node-plugins/tags",
+      "operationId": "NodePluginController_setTags",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/node-plugins/shared-lists",
+      "operationId": "NodePluginController_getAllSharedLists",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/node-plugins/shared-lists",
+      "operationId": "NodePluginController_createSharedList",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/node-plugins/shared-lists",
+      "operationId": "NodePluginController_updateSharedList",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/node-plugins/shared-lists",
+      "operationId": "NodePluginController_deleteSharedList",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/node-plugins/shared-lists/by-name",
+      "operationId": "NodePluginController_getSharedListByName",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/node-plugins/shared-lists/actions/sync",
+      "operationId": "NodePluginController_syncSharedList",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/node-plugins",
+      "operationId": "NodePluginController_getAllConfigs",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/node-plugins",
+      "operationId": "NodePluginController_updateConfig",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/node-plugins",
+      "operationId": "NodePluginController_createConfig",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/node-plugins/{uuid}",
+      "operationId": "NodePluginController_getConfigByUuid",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/node-plugins/{uuid}",
+      "operationId": "NodePluginController_deleteConfig",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/node-plugins/actions/reorder",
+      "operationId": "NodePluginController_reorderNodePlugins",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/node-plugins/actions/clone",
+      "operationId": "NodePluginController_cloneNodePlugin",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/node-plugins/actions/sync",
+      "operationId": "NodePluginController_syncNodePlugin",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/node-plugins/executor",
+      "operationId": "NodePluginController_pluginExecutor",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/node-integrations",
+      "operationId": "NodeIntegrationController_getAllIntegrations",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/node-integrations",
+      "operationId": "NodeIntegrationController_createIntegration",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/node-integrations",
+      "operationId": "NodeIntegrationController_updateIntegration",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/node-integrations/{uuid}",
+      "operationId": "NodeIntegrationController_getIntegrationByUuid",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/node-integrations/{uuid}",
+      "operationId": "NodeIntegrationController_deleteIntegration",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/limits",
+      "operationId": "LimitsController_list",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/limits/targets",
+      "operationId": "LimitsController_targets",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/limits/users",
+      "operationId": "LimitsController_users",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/limits/selection-state",
+      "operationId": "LimitsController_selectionState",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/limits/actions",
+      "operationId": "LimitsController_action",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/limits/unlimited",
+      "operationId": "LimitsController_unlimited",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/hosts/tags",
+      "operationId": "HostsController_getHostsTags",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/hosts",
+      "operationId": "HostsController_createHost",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/hosts",
+      "operationId": "HostsController_updateHost",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/hosts",
+      "operationId": "HostsController_getHosts",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/hosts/{uuid}",
+      "operationId": "HostsController_getOneHost",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/hosts/{uuid}",
+      "operationId": "HostsController_deleteHost",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/hosts/actions/clone",
+      "operationId": "HostsController_cloneHost",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/hosts/actions/reorder",
+      "operationId": "HostsController_reorderHosts",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/hosts/bulk/delete",
+      "operationId": "HostsBulkActionsController_deleteHosts",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/hosts/bulk/disable",
+      "operationId": "HostsBulkActionsController_disableHosts",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/hosts/bulk/enable",
+      "operationId": "HostsBulkActionsController_enableHosts",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/hosts/bulk/update",
+      "operationId": "HostsBulkActionsController_setPortToHosts",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/bandwidth-stats/nodes/usage",
+      "operationId": "BandwidthStatsNodesController_getNodeUsage",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/bandwidth-stats/nodes/{uuid}/users",
+      "operationId": "BandwidthStatsNodesController_getStatsNodeUsersUsage",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/bandwidth-stats/nodes/users",
+      "operationId": "BandwidthStatsNodesController_getStatsNodesUsersUsage",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/bandwidth-stats/users/{userId}",
+      "operationId": "BandwidthStatsUsersController_getStatsNodesUsage",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/bandwidth-stats/nodes",
+      "operationId": "NodesUsageHistoryController_getStatsNodesUsage",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/infra-billing/providers",
+      "operationId": "InfraBillingController_getInfraProviders",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/infra-billing/providers",
+      "operationId": "InfraBillingController_createInfraProvider",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/infra-billing/providers",
+      "operationId": "InfraBillingController_updateInfraProvider",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/infra-billing/providers/{uuid}",
+      "operationId": "InfraBillingController_getInfraProvider",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/infra-billing/providers/{uuid}",
+      "operationId": "InfraBillingController_delteInfraProvider",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/infra-billing/history",
+      "operationId": "InfraBillingController_createInfraBillingRecord",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/infra-billing/history",
+      "operationId": "InfraBillingController_getInfraBillingRecords",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/infra-billing/history/{uuid}",
+      "operationId": "InfraBillingController_deleteInfraBillingRecord",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/infra-billing/nodes",
+      "operationId": "InfraBillingController_getBillingNodes",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/infra-billing/nodes",
+      "operationId": "InfraBillingController_updateInfraBillingNode",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/infra-billing/nodes",
+      "operationId": "InfraBillingController_createInfraBillingNode",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/infra-billing/nodes/{uuid}",
+      "operationId": "InfraBillingController_deleteInfraBillingNode",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/subscription-request-history",
+      "operationId": "UserSubscriptionRequestHistoryController_getSubscriptionRequestHistory",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/subscription-request-history/stats",
+      "operationId": "UserSubscriptionRequestHistoryController_getSubscriptionRequestHistoryStats",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/system/metadata",
+      "operationId": "SystemController_getMetadata",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/system/configuration",
+      "operationId": "SystemController_getConfiguration",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/system/stats",
+      "operationId": "SystemController_getStats",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/system/stats/bandwidth",
+      "operationId": "SystemController_getBandwidthStats",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/system/stats/nodes",
+      "operationId": "SystemController_getNodesStatistics",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/system/health",
+      "operationId": "SystemController_getRemnawaveHealth",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/system/nodes/metrics",
+      "operationId": "SystemController_getNodesMetrics",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/system/tools/x25519/generate",
+      "operationId": "SystemController_getX25519Keypairs",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/system/testers/srr-matcher",
+      "operationId": "SystemController_debugSrrMatcher",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/system/stats/recap",
+      "operationId": "SystemController_getRecap",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/system/stats/digest",
+      "operationId": "SystemController_getStatsDigest",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/system/stats/http",
+      "operationId": "SystemController_getHttpStats",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/subscription-settings",
+      "operationId": "SubscriptionSettingsController_getSettings",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/subscription-settings",
+      "operationId": "SubscriptionSettingsController_updateSettings",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/connections/by-user/{userId}",
+      "operationId": "ConnectionsController_connectionsByUser",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/connections/by-user/{jobId}",
+      "operationId": "ConnectionsController_connectionsByUserResult",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/connections/drop",
+      "operationId": "ConnectionsController_dropConnections",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/connections/by-node/{nodeUuid}",
+      "operationId": "ConnectionsController_connectionsByNode",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/connections/by-node/{jobId}",
+      "operationId": "ConnectionsController_connectionsByNodeResult",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/connections/geocheck/{nodeUuid}",
+      "operationId": "ConnectionsController_geocheckByNode",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/connections/geocheck/{jobId}",
+      "operationId": "ConnectionsController_geocheckByNodeResult",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/connections/recordings",
+      "operationId": "SessionRecordingController_list",
+      "access": "admin",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/connections/recordings",
+      "operationId": "SessionRecordingController_start",
+      "access": "admin",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/connections/recordings/users",
+      "operationId": "SessionRecordingController_users",
+      "access": "admin",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "POST",
+      "path": "/api/connections/recordings/{id}/stop",
+      "operationId": "SessionRecordingController_stop",
+      "access": "admin",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/connections/recordings/{id}",
+      "operationId": "SessionRecordingController_remove",
+      "access": "admin",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/connections/recordings/{id}/export",
+      "operationId": "SessionRecordingController__export",
+      "access": "special",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/metadata/user/{userId}",
+      "operationId": "MetadataController_getUserMetadata",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/metadata/user/{userId}",
+      "operationId": "MetadataController_upsertUserMetadata",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "GET",
+      "path": "/api/metadata/node/{uuid}",
+      "operationId": "MetadataController_getNodeMetadata",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/metadata/node/{uuid}",
+      "operationId": "MetadataController_upsertNodeMetadata",
+      "access": "api-token",
+      "accessMetadata": "PASSED",
+      "fullEndpointExecution": "PARTIAL",
+      "evidence": "OpenAPI and access-policy regression; not every operation executed over HTTP"
+    }
+  ],
+  "controllers": [
+    {
+      "source": "panel/backend/src/integration-modules/health/health.controller.ts",
+      "swaggerHidden": false,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/integration-modules/prometheus-reporter/prometheus-reporter.controller.ts",
+      "swaggerHidden": false,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/admin/controllers/passkey.controller.ts",
+      "swaggerHidden": false,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/auth/auth-session.controller.ts",
+      "swaggerHidden": true,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/auth/auth.controller.ts",
+      "swaggerHidden": false,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/backups/backups.controller.ts",
+      "swaggerHidden": false,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/config-profiles/config-profile.controller.ts",
+      "swaggerHidden": false,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/config-profiles/snippets.controller.ts",
+      "swaggerHidden": false,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/connections/connections.controller.ts",
+      "swaggerHidden": false,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/connections/session-recording.controller.ts",
+      "swaggerHidden": false,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/core-management/core-management.controller.ts",
+      "swaggerHidden": false,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/external-squads/external-squads.controller.ts",
+      "swaggerHidden": false,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/hosts/controllers/hosts-bulk-actions.controller.ts",
+      "swaggerHidden": false,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/hosts/controllers/hosts.controller.ts",
+      "swaggerHidden": false,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/hosts/legacy-quota-recovery.controller.ts",
+      "swaggerHidden": false,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/hosts/limits.controller.ts",
+      "swaggerHidden": false,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/hosts/native-quota-recovery.controller.ts",
+      "swaggerHidden": false,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/hosts/quota-bank-recovery.controller.ts",
+      "swaggerHidden": false,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/hosts/quota-exposure-closure.controller.ts",
+      "swaggerHidden": false,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/hosts/quota-receipt-recovery.controller.ts",
+      "swaggerHidden": false,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/hosts/quota-recovery-policy.controller.ts",
+      "swaggerHidden": false,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/hosts/quota-recovery-receipt.controller.ts",
+      "swaggerHidden": false,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/hosts/quota-recovery-release.controller.ts",
+      "swaggerHidden": false,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/hosts/quota-recovery-settlement.controller.ts",
+      "swaggerHidden": false,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/hosts/quota-recovery-tail.controller.ts",
+      "swaggerHidden": false,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/hosts/quota-recovery.controller.ts",
+      "swaggerHidden": false,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/hwid-user-devices/hwid-user-devices.controller.ts",
+      "swaggerHidden": false,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/infra-billing/infra-billing.controller.ts",
+      "swaggerHidden": false,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/internal-squads/internal-squad-stats.controller.ts",
+      "swaggerHidden": false,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/internal-squads/internal-squad.controller.ts",
+      "swaggerHidden": false,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/keygen/keygen.controller.ts",
+      "swaggerHidden": false,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/metadata/metadata.controller.ts",
+      "swaggerHidden": false,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/node-integrations/node-integrations.controller.ts",
+      "swaggerHidden": false,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/node-plugins/node-plugins.controller.ts",
+      "swaggerHidden": false,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/node-plugins/torrent-blocker-reports.controller.ts",
+      "swaggerHidden": false,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/node-ssh/node-ssh.controller.ts",
+      "swaggerHidden": true,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/nodes/node-diagnostics.controller.ts",
+      "swaggerHidden": false,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/nodes/node-port-plans.controller.ts",
+      "swaggerHidden": false,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/nodes/node-reconciliation.controller.ts",
+      "swaggerHidden": true,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/nodes/nodes.controller.ts",
+      "swaggerHidden": false,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/nodes-usage-history/nodes-usage-history.controller.ts",
+      "swaggerHidden": false,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/nodes-user-usage-history/bandwidth-stats-nodes.controller.ts",
+      "swaggerHidden": false,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/nodes-user-usage-history/bandwidth-stats-users.controller.ts",
+      "swaggerHidden": false,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/remnawave-settings/remnawave-settings.controller.ts",
+      "swaggerHidden": false,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/subscription/controllers/subscription-preview.controller.ts",
+      "swaggerHidden": false,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/subscription/controllers/subscription.controller.ts",
+      "swaggerHidden": false,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/subscription/controllers/subscriptions.controller.ts",
+      "swaggerHidden": false,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/subscription-page-configs/subpage-configs.controller.ts",
+      "swaggerHidden": false,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/subscription-settings/subscription-settings.controller.ts",
+      "swaggerHidden": false,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/subscription-template/geofiles/geofiles.controller.ts",
+      "swaggerHidden": true,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/subscription-template/subscription-template.controller.ts",
+      "swaggerHidden": false,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/system/panel-update.controller.ts",
+      "swaggerHidden": true,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/system/system.controller.ts",
+      "swaggerHidden": false,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/user-subscription-request-history/user-subscription-request-history.controller.ts",
+      "swaggerHidden": false,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/users/controllers/users-bulk-actions.controller.ts",
+      "swaggerHidden": false,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    },
+    {
+      "source": "panel/backend/src/modules/users/controllers/users.controller.ts",
+      "swaggerHidden": false,
+      "status": "PARTIAL",
+      "evidence": "Controller inventory and guard regression; not a claim of exhaustive manual review"
+    }
+  ],
+  "pageSmokeChecks": [
+    {
+      "path": "/dashboard/home",
+      "width": 1440,
+      "status": "PASSED",
+      "check": "authenticated loopback rendering/navigation and overflow smoke check; destructive operations excluded"
+    },
+    {
+      "path": "/dashboard/management/users",
+      "width": 1440,
+      "status": "PASSED",
+      "check": "authenticated loopback rendering/navigation and overflow smoke check; destructive operations excluded"
+    },
+    {
+      "path": "/dashboard/management/limits",
+      "width": 1440,
+      "status": "PASSED",
+      "check": "authenticated loopback rendering/navigation and overflow smoke check; destructive operations excluded"
+    },
+    {
+      "path": "/dashboard/management/hosts",
+      "width": 1440,
+      "status": "PASSED",
+      "check": "authenticated loopback rendering/navigation and overflow smoke check; destructive operations excluded"
+    },
+    {
+      "path": "/dashboard/management/nodes",
+      "width": 1440,
+      "status": "PASSED",
+      "check": "authenticated loopback rendering/navigation and overflow smoke check; destructive operations excluded"
+    },
+    {
+      "path": "/dashboard/management/stats/nodes",
+      "width": 1440,
+      "status": "PASSED",
+      "check": "authenticated loopback rendering/navigation and overflow smoke check; destructive operations excluded"
+    },
+    {
+      "path": "/dashboard/management/metrics/nodes",
+      "width": 1440,
+      "status": "PASSED",
+      "check": "authenticated loopback rendering/navigation and overflow smoke check; destructive operations excluded"
+    },
+    {
+      "path": "/dashboard/management/subscription-settings",
+      "width": 1440,
+      "status": "PASSED",
+      "check": "authenticated loopback rendering/navigation and overflow smoke check; destructive operations excluded"
+    },
+    {
+      "path": "/dashboard/management/response-rules",
+      "width": 1440,
+      "status": "PASSED",
+      "check": "authenticated loopback rendering/navigation and overflow smoke check; destructive operations excluded"
+    },
+    {
+      "path": "/dashboard/management/backups",
+      "width": 1440,
+      "status": "PASSED",
+      "check": "authenticated loopback rendering/navigation and overflow smoke check; destructive operations excluded"
+    },
+    {
+      "path": "/dashboard/management/config-profiles",
+      "width": 1440,
+      "status": "PASSED",
+      "check": "authenticated loopback rendering/navigation and overflow smoke check; destructive operations excluded"
+    },
+    {
+      "path": "/dashboard/management/canvases",
+      "width": 1440,
+      "status": "PASSED",
+      "check": "authenticated loopback rendering/navigation and overflow smoke check; destructive operations excluded"
+    },
+    {
+      "path": "/dashboard/management/internal-squads",
+      "width": 1440,
+      "status": "PASSED",
+      "check": "authenticated loopback rendering/navigation and overflow smoke check; destructive operations excluded"
+    },
+    {
+      "path": "/dashboard/management/external-squads",
+      "width": 1440,
+      "status": "PASSED",
+      "check": "authenticated loopback rendering/navigation and overflow smoke check; destructive operations excluded"
+    },
+    {
+      "path": "/dashboard/management/settings",
+      "width": 1440,
+      "status": "PASSED",
+      "check": "authenticated loopback rendering/navigation and overflow smoke check; destructive operations excluded"
+    },
+    {
+      "path": "/dashboard/management/plugins",
+      "width": 1440,
+      "status": "PASSED",
+      "check": "authenticated loopback rendering/navigation and overflow smoke check; destructive operations excluded"
+    },
+    {
+      "path": "/dashboard/tools/hwid-inspector",
+      "width": 1440,
+      "status": "PASSED",
+      "check": "authenticated loopback rendering/navigation and overflow smoke check; destructive operations excluded"
+    },
+    {
+      "path": "/dashboard/tools/srh-inspector",
+      "width": 1440,
+      "status": "PASSED",
+      "check": "authenticated loopback rendering/navigation and overflow smoke check; destructive operations excluded"
+    },
+    {
+      "path": "/dashboard/tools/torrent-blocker-reports",
+      "width": 1440,
+      "status": "PASSED",
+      "check": "authenticated loopback rendering/navigation and overflow smoke check; destructive operations excluded"
+    },
+    {
+      "path": "/dashboard/tools/sessions-explorer",
+      "width": 1440,
+      "status": "PASSED",
+      "check": "authenticated loopback rendering/navigation and overflow smoke check; destructive operations excluded"
+    },
+    {
+      "path": "/dashboard/tools/http-stats",
+      "width": 1440,
+      "status": "PASSED",
+      "check": "authenticated loopback rendering/navigation and overflow smoke check; destructive operations excluded"
+    },
+    {
+      "path": "/dashboard/tools/quick-open",
+      "width": 1440,
+      "status": "PASSED",
+      "check": "authenticated loopback rendering/navigation and overflow smoke check; destructive operations excluded"
+    },
+    {
+      "path": "/dashboard/templates/XRAY_JSON",
+      "width": 1440,
+      "status": "PASSED",
+      "check": "authenticated loopback rendering/navigation and overflow smoke check; destructive operations excluded"
+    },
+    {
+      "path": "/dashboard/templates/SINGBOX",
+      "width": 1440,
+      "status": "PASSED",
+      "check": "authenticated loopback rendering/navigation and overflow smoke check; destructive operations excluded"
+    },
+    {
+      "path": "/dashboard/templates/MIHOMO",
+      "width": 1440,
+      "status": "PASSED",
+      "check": "authenticated loopback rendering/navigation and overflow smoke check; destructive operations excluded"
+    },
+    {
+      "path": "/dashboard/templates/CLASH",
+      "width": 1440,
+      "status": "PASSED",
+      "check": "authenticated loopback rendering/navigation and overflow smoke check; destructive operations excluded"
+    },
+    {
+      "path": "/dashboard/templates/STASH",
+      "width": 1440,
+      "status": "PASSED",
+      "check": "authenticated loopback rendering/navigation and overflow smoke check; destructive operations excluded"
+    },
+    {
+      "path": "/dashboard/subpage",
+      "width": 1440,
+      "status": "PASSED",
+      "check": "authenticated loopback rendering/navigation and overflow smoke check; destructive operations excluded"
+    },
+    {
+      "path": "/dashboard/crm/infra-billing",
+      "width": 1440,
+      "status": "PASSED",
+      "check": "authenticated loopback rendering/navigation and overflow smoke check; destructive operations excluded"
+    },
+    {
+      "path": "/dashboard/documentation/panel",
+      "width": 1440,
+      "status": "PASSED",
+      "check": "authenticated loopback rendering/navigation and overflow smoke check; destructive operations excluded"
+    },
+    {
+      "path": "/dashboard/documentation/api",
+      "width": 1440,
+      "status": "PASSED",
+      "check": "authenticated loopback rendering/navigation and overflow smoke check; destructive operations excluded"
+    },
+    {
+      "path": "/dashboard/documentation/versions",
+      "width": 1440,
+      "status": "PASSED",
+      "check": "authenticated loopback rendering/navigation and overflow smoke check; destructive operations excluded"
+    },
+    {
+      "path": "/dashboard/support",
+      "width": 1440,
+      "status": "PASSED",
+      "check": "authenticated loopback rendering/navigation and overflow smoke check; destructive operations excluded"
+    },
+    {
+      "path": "/dashboard/management/users",
+      "width": 320,
+      "status": "PASSED",
+      "check": "authenticated loopback rendering/navigation and overflow smoke check; destructive operations excluded"
+    },
+    {
+      "path": "/dashboard/management/limits",
+      "width": 320,
+      "status": "PASSED",
+      "check": "authenticated loopback rendering/navigation and overflow smoke check; destructive operations excluded"
+    },
+    {
+      "path": "/dashboard/management/hosts",
+      "width": 320,
+      "status": "PASSED",
+      "check": "authenticated loopback rendering/navigation and overflow smoke check; destructive operations excluded"
+    },
+    {
+      "path": "/dashboard/management/nodes",
+      "width": 320,
+      "status": "PASSED",
+      "check": "authenticated loopback rendering/navigation and overflow smoke check; destructive operations excluded"
+    },
+    {
+      "path": "/dashboard/management/stats/nodes",
+      "width": 320,
+      "status": "PASSED",
+      "check": "authenticated loopback rendering/navigation and overflow smoke check; destructive operations excluded"
+    },
+    {
+      "path": "/dashboard/management/metrics/nodes",
+      "width": 320,
+      "status": "PASSED",
+      "check": "authenticated loopback rendering/navigation and overflow smoke check; destructive operations excluded"
+    },
+    {
+      "path": "/dashboard/management/subscription-settings",
+      "width": 320,
+      "status": "PASSED",
+      "check": "authenticated loopback rendering/navigation and overflow smoke check; destructive operations excluded"
+    },
+    {
+      "path": "/dashboard/management/backups",
+      "width": 320,
+      "status": "PASSED",
+      "check": "authenticated loopback rendering/navigation and overflow smoke check; destructive operations excluded"
+    },
+    {
+      "path": "/dashboard/management/settings",
+      "width": 320,
+      "status": "PASSED",
+      "check": "authenticated loopback rendering/navigation and overflow smoke check; destructive operations excluded"
+    },
+    {
+      "path": "/dashboard/templates/XRAY_JSON",
+      "width": 320,
+      "status": "PASSED",
+      "check": "authenticated loopback rendering/navigation and overflow smoke check; destructive operations excluded"
+    },
+    {
+      "path": "/dashboard/crm/infra-billing",
+      "width": 320,
+      "status": "PASSED",
+      "check": "authenticated loopback rendering/navigation and overflow smoke check; destructive operations excluded"
+    }
+  ],
+  "documentationPages": [
+    {
+      "id": "architecture",
+      "route": "/dashboard/home",
+      "sources": [
+        "src/pages/dashboard/home/"
+      ],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "first-connection",
+      "route": "/dashboard/management/nodes",
+      "sources": [],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "navigation",
+      "route": "/dashboard/tools/quick-open",
+      "sources": [
+        "src/shared/ui/quick-launcher/",
+        "src/app/layouts/"
+      ],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "overview",
+      "route": "/dashboard/home",
+      "sources": [
+        "src/pages/dashboard/home/",
+        "src/widgets/dashboard/recap/"
+      ],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "users",
+      "route": "/dashboard/management/users",
+      "sources": [
+        "src/shared/ui/forms/users/",
+        "src/features/dashboard/users/"
+      ],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "user-actions",
+      "route": "/dashboard/management/users",
+      "sources": [
+        "src/features/ui/dashboard/users/",
+        "src/shared/ui/forms/users/forms-components/user-identification-card.tsx"
+      ],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "user-bulk",
+      "route": "/dashboard/management/users",
+      "sources": [
+        "src/shared/ui/forms/users/bulk-",
+        "src/features/dashboard/users/"
+      ],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "user-import",
+      "route": "/dashboard/management/users",
+      "sources": [
+        "src/widgets/dashboard/users/users-import/"
+      ],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "devices",
+      "route": "/dashboard/management/users",
+      "sources": [
+        "src/shared/ui/forms/users/forms-components/device-tag-settings-card.tsx",
+        "src/shared/_modals/users/user-hwid-devices-modal/",
+        "src/features/dashboard/hwid"
+      ],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "internal-squads",
+      "route": "/dashboard/management/internal-squads",
+      "sources": [
+        "src/pages/dashboard/internal-squads/",
+        "src/widgets/dashboard/internal-squads/",
+        "src/features/ui/dashboard/internal-squads/"
+      ],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "external-squads",
+      "route": "/dashboard/management/external-squads",
+      "sources": [
+        "src/pages/dashboard/external-squads/",
+        "src/shared/_modals/external-squads/",
+        "src/widgets/dashboard/external-squads/"
+      ],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "nodes",
+      "route": "/dashboard/management/nodes",
+      "sources": [
+        "src/shared/ui/forms/nodes/",
+        "src/pages/dashboard/nodes/"
+      ],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "node-actions",
+      "route": "/dashboard/management/nodes",
+      "sources": [
+        "src/features/ui/dashboard/nodes/",
+        "src/features/dashboard/nodes/multi-select-nodes/"
+      ],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "node-health",
+      "route": "/dashboard/management/nodes",
+      "sources": [
+        "src/shared/ui/forms/nodes/base-node-form/node-vitals.card.tsx",
+        "src/widgets/dashboard/nodes/"
+      ],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "node-ssh",
+      "route": "/dashboard/management/nodes",
+      "sources": [
+        "src/features/ui/dashboard/nodes/open-node-ssh/",
+        "src/shared/_modals/nodes/"
+      ],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "node-optimization",
+      "route": "/dashboard/management/nodes",
+      "sources": [
+        "src/shared/ui/forms/nodes/base-node-form/node-optimization.card.tsx"
+      ],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "core-management",
+      "route": "/dashboard/management/nodes",
+      "sources": [
+        "src/features/dashboard/nodes/core-management/"
+      ],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "node-plugins",
+      "route": "/dashboard/management/plugins",
+      "sources": [
+        "src/pages/dashboard/node-plugins/",
+        "src/widgets/dashboard/node-plugins/",
+        "src/features/dashboard/node-plugins/"
+      ],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "node-statistics",
+      "route": "/dashboard/management/stats/nodes",
+      "sources": [
+        "src/pages/dashboard/statistic-nodes/",
+        "src/pages/dashboard/nodes-metrics/",
+        "src/widgets/dashboard/nodes-statistic/"
+      ],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "billing",
+      "route": "/dashboard/crm/infra-billing",
+      "sources": [
+        "src/pages/dashboard/crm/infra-billing/",
+        "src/widgets/dashboard/infra-billing/",
+        "src/shared/ui/forms/nodes/base-node-form/node-tracking-and-billing.card.tsx"
+      ],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "profiles",
+      "route": "/dashboard/management/config-profiles",
+      "sources": [
+        "src/pages/dashboard/config-profiles/",
+        "src/widgets/dashboard/config-profiles/config-profile-card/",
+        "src/widgets/dashboard/config-profiles/config-profiles-grid/"
+      ],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "xray-editor",
+      "route": "/dashboard/management/config-profiles",
+      "sources": [
+        "src/widgets/dashboard/config-profiles/config-editor/",
+        "src/features/dashboard/config-profiles/monaco-setup/"
+      ],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "xera-transport",
+      "route": "/dashboard/management/config-profiles",
+      "sources": [
+        "src/widgets/dashboard/config-profiles/config-editor/",
+        "src/shared/ui/forms/hosts/base-host-form/"
+      ],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "canvases",
+      "route": "/dashboard/management/canvases",
+      "sources": [
+        "src/pages/dashboard/config-profiles/components/profile-canvas",
+        "src/pages/dashboard/config-profiles/connectors/profile-canvases"
+      ],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "snippets",
+      "route": "/dashboard/management/config-profiles",
+      "sources": [
+        "src/widgets/dashboard/config-profiles/snippets/"
+      ],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "keygen",
+      "route": "/dashboard/management/config-profiles",
+      "sources": [
+        "src/widgets/dashboard/config-profiles/keypair-generator/"
+      ],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "hosts",
+      "route": "/dashboard/management/hosts",
+      "sources": [
+        "src/pages/dashboard/hosts/",
+        "src/shared/ui/forms/hosts/"
+      ],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "host-overrides",
+      "route": "/dashboard/management/hosts",
+      "sources": [
+        "src/shared/ui/forms/hosts/base-host-form/options/",
+        "src/shared/ui/forms/hosts/base-host-form/host-limits-and-rules.tsx"
+      ],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "host-tags",
+      "route": "/dashboard/management/hosts",
+      "sources": [
+        "src/pages/dashboard/hosts/ui/components/host-tag-limits.card.tsx",
+        "src/shared/ui/forms/hosts/base-host-form/host-limits-and-rules.tsx"
+      ],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "templates",
+      "route": "/dashboard/templates",
+      "sources": [
+        "src/pages/dashboard/templates/",
+        "src/widgets/dashboard/templates/",
+        "src/features/dashboard/subscription-templates/"
+      ],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "placeholders",
+      "route": "/dashboard/management/subscription-settings",
+      "sources": [
+        "src/widgets/dashboard/subscription-settings/settings/cards/subscription-response-headers-card.widget.tsx"
+      ],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "subscription-settings",
+      "route": "/dashboard/management/subscription-settings",
+      "sources": [
+        "src/pages/dashboard/subscription-settings/",
+        "src/widgets/dashboard/subscription-settings/"
+      ],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "response-rules",
+      "route": "/dashboard/management/response-rules",
+      "sources": [
+        "src/pages/dashboard/response-rules/",
+        "src/widgets/dashboard/response-rules/"
+      ],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "subscription-page",
+      "route": "/dashboard/subpage",
+      "sources": [
+        "src/pages/dashboard/subpage-config/",
+        "src/widgets/dashboard/subpage-configs/",
+        "src/features/ui/dashboard/subpage-configs/"
+      ],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "limits",
+      "route": "/dashboard/management/limits",
+      "sources": [
+        "src/pages/dashboard/limits/"
+      ],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "limit-actions",
+      "route": "/dashboard/management/limits",
+      "sources": [
+        "src/pages/dashboard/limits/traffic-block-action.ts"
+      ],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "unlimited",
+      "route": "/dashboard/management/limits",
+      "sources": [],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "quota-periods",
+      "route": "/dashboard/management/hosts",
+      "sources": [
+        "src/shared/ui/forms/hosts/base-host-form/host-limits-and-rules.tsx"
+      ],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "hwid-inspector",
+      "route": "/dashboard/tools/hwid-inspector",
+      "sources": [
+        "src/pages/dashboard/hwid-inspector/",
+        "src/widgets/dashboard/hwid-inspector/"
+      ],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "request-history",
+      "route": "/dashboard/tools/srh-inspector",
+      "sources": [
+        "src/pages/dashboard/srh-inspector/",
+        "src/widgets/dashboard/srh-inspector/"
+      ],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "sessions",
+      "route": "/dashboard/tools/sessions-explorer",
+      "sources": [
+        "src/pages/dashboard/sessions-explorer/",
+        "src/widgets/dashboard/sessions-explorer/"
+      ],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "http-stats",
+      "route": "/dashboard/tools/http-stats",
+      "sources": [
+        "src/pages/dashboard/http-stats/",
+        "src/widgets/dashboard/http-stats/"
+      ],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "torrent-reports",
+      "route": "/dashboard/tools/torrent-blocker-reports",
+      "sources": [
+        "src/pages/dashboard/torrent-blocker-reports/",
+        "src/widgets/dashboard/torrent-blocker-reports/"
+      ],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "traffic-paths",
+      "route": "/dashboard/management/nodes",
+      "sources": [
+        "src/widgets/dashboard/nodes/traffic-paths/"
+      ],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "backups",
+      "route": "/dashboard/management/backups",
+      "sources": [
+        "src/pages/dashboard/backups/"
+      ],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "authentication",
+      "route": "/dashboard/management/settings",
+      "sources": [
+        "src/pages/auth/",
+        "src/widgets/remnawave-settings/authentification-settings-card/"
+      ],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "api-tokens",
+      "route": "/dashboard/management/settings",
+      "sources": [
+        "src/widgets/remnawave-settings/api-tokens-card/"
+      ],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "appearance",
+      "route": "/dashboard/home",
+      "sources": [
+        "src/shared/ui/appearance/"
+      ],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "notifications",
+      "route": "/dashboard/management/settings",
+      "sources": [],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "troubleshooting",
+      "route": "/dashboard/home",
+      "sources": [],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "variable-syntax",
+      "route": "/dashboard/management/subscription-settings",
+      "sources": [],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "online-counts",
+      "route": "/dashboard/home",
+      "sources": [
+        "src/pages/dashboard/home/"
+      ],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "auth-methods",
+      "route": "/dashboard/management/settings",
+      "sources": [
+        "src/shared/_modals/remnawave-settings/passkeys-drawer/",
+        "src/features/auth/"
+      ],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "subscription-request-path",
+      "route": "/dashboard/management/subscription-settings",
+      "sources": [
+        "src/pages/dashboard/subpage-config/"
+      ],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "client-families",
+      "route": "/dashboard/templates",
+      "sources": [
+        "src/pages/dashboard/templates/"
+      ],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    },
+    {
+      "id": "support",
+      "route": "/dashboard/support",
+      "sources": [
+        "src/pages/dashboard/support/support.page.tsx"
+      ],
+      "status": "PASSED",
+      "check": "documentation structure/reference consistency only"
+    }
+  ]
+}

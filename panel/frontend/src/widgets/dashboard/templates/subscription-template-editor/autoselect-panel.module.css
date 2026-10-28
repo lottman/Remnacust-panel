@@ -112,8 +112,10 @@
         justify-content: center;
         font-size: 12px;
     }
-    .layout button,
-    .panel button {
+    .layout :global(.mantine-Button-root),
+    .layout :global(.mantine-ActionIcon-root),
+    .panel :global(.mantine-Button-root),
+    .panel :global(.mantine-ActionIcon-root) {
         min-height: 44px;
     }
     .snippet {

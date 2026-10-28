@@ -465,7 +465,7 @@ export function GeofilesPanel({
                             )}
                             {selectedFile && (
                                 <>
-                                    <Accordion variant="contained">
+                                    <Accordion variant="separated">
                                         <Accordion.Item value="metadata">
                                             <Accordion.Control>
                                                 {t('geofiles.library-settings')}
@@ -627,7 +627,7 @@ export function GeofilesPanel({
                 multiple
                 value={openedFiles}
                 onChange={setOpenedFiles}
-                variant="contained"
+                variant="separated"
                 className={styles.selections}
             >
                 {refs.map((reference, index) => {
@@ -805,7 +805,7 @@ export function GeofilesPanel({
                                             )}
                                         </Stack>
                                     </div>
-                                    <Accordion variant="contained">
+                                    <Accordion variant="separated">
                                         <Accordion.Item value="delivery-help">
                                             <Accordion.Control>
                                                 {t('geofiles.delivery-details')}
@@ -881,7 +881,7 @@ export function GeofilesPanel({
                     )
                 })}
             </Accordion>
-            <Accordion variant="contained">
+            <Accordion variant="separated">
                 <Accordion.Item value="delivery-guide">
                     <Accordion.Control>{t('geofiles.delivery-title')}</Accordion.Control>
                     <Accordion.Panel>

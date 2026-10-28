@@ -1,0 +1,42 @@
+.root > .item {
+    --item-border-color: var(--panel-border, var(--mantine-color-default-border));
+    --item-filled-color: var(--panel-surface, var(--mantine-color-body));
+}
+
+/* Opening a section must not turn a panel card into a different surface. */
+.root[data-variant='contained'] > .item,
+.root[data-variant='separated'] > .item {
+    background: var(--panel-surface, var(--mantine-color-body));
+    border-color: var(--panel-border, var(--mantine-color-default-border));
+    color: var(--mantine-color-text);
+}
+
+.root .control {
+    color: var(--mantine-color-text);
+    border-radius: var(--accordion-radius);
+}
+
+@media (hover: hover) {
+    .root .control:not(:disabled, [data-disabled]):hover {
+        background: var(--panel-subtle, var(--mantine-color-default-hover));
+    }
+}
+
+@media (hover: none) {
+    .root .control:not(:disabled, [data-disabled]):active {
+        background: var(--panel-subtle, var(--mantine-color-default-hover));
+    }
+}
+
+.root .control:focus-visible {
+    outline: 2px solid var(--panel-accent, var(--mantine-primary-color-filled));
+    outline-offset: -2px;
+}
+
+.label {
+    font-weight: 500;
+}
+
+.panel {
+    color: var(--mantine-color-text);
+}

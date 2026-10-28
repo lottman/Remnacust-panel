@@ -135,7 +135,7 @@ export function ClientAutoselectPanel({
                 multiple
                 value={opened}
                 onChange={setOpened}
-                variant="contained"
+                variant="separated"
                 className={styles.selections}
             >
                 {groups.map(({ group, index }) => {

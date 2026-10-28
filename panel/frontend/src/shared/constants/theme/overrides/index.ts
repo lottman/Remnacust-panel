@@ -1,3 +1,4 @@
+import accordion from './accordion'
 import badge from './badge'
 import breadcrumbs from './breadcrumbs'
 import buttons from './buttons'
@@ -18,6 +19,7 @@ import tabs from './tabs'
 import tooltip from './tooltip'
 
 export default {
+    ...accordion,
     ...fieldset,
     ...card,
     ...drawer,

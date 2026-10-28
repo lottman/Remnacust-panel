@@ -332,7 +332,7 @@ function PoolCard({
                     </Button>
                 </Alert>
             )}
-            <Accordion variant="contained">
+            <Accordion variant="separated">
                 <Accordion.Item value="pool-settings">
                     <Accordion.Control>{t('autoselect.pool-settings')}</Accordion.Control>
                     <Accordion.Panel>
@@ -501,7 +501,7 @@ function BalancerCard({
                 </>
             )}
             {strategy === 'leastLoad' && (
-                <Accordion variant="contained">
+                <Accordion variant="separated">
                     <Accordion.Item value="least-load">
                         <Accordion.Control>{t('autoselect.load-settings')}</Accordion.Control>
                         <Accordion.Panel>
@@ -570,7 +570,7 @@ function BalancerCard({
                     </Accordion.Item>
                 </Accordion>
             )}
-            <Accordion variant="contained">
+            <Accordion variant="separated">
                 <Accordion.Item value="balancer-settings">
                     <Accordion.Control>{t('autoselect.balancer-settings')}</Accordion.Control>
                     <Accordion.Panel>
@@ -751,7 +751,7 @@ export function AutoselectPanel({
                     multiple
                     value={openedGroups}
                     onChange={setOpenedGroups}
-                    variant="contained"
+                    variant="separated"
                     className={styles.selections}
                 >
                     {groups.map((group, groupIndex) => (
@@ -857,7 +857,7 @@ export function AutoselectPanel({
                         </Accordion.Item>
                     ))}
                 </Accordion>
-                <Accordion variant="contained">
+                <Accordion variant="separated">
                     <Accordion.Item value="advanced">
                         <Accordion.Control>{t('autoselect.advanced')}</Accordion.Control>
                         <Accordion.Panel>

@@ -14,13 +14,14 @@ function harness(overrides = {}) {
     const source = fs.readFileSync(path.join(__dirname, '../src/shared/ui/revision-history/revision-history.tsx'), 'utf8')
     vm.runInNewContext(ts.transpileModule(source, {
         compilerOptions: { jsx: ts.JsxEmit.ReactJSX, module: ts.ModuleKind.CommonJS }
-    }).outputText, { exports, queueMicrotask, require(name) {
+    }).outputText, { exports, queueMicrotask, requestAnimationFrame: callback => { callback(); return 1 }, cancelAnimationFrame() {}, require(name) {
         if (name === 'react') return { useRef: () => diffRef, useLayoutEffect: effect => { cleanup = effect() }, useState(initial) {
             const index = cursor++
             if (!(index in state)) state[index] = initial
             return [state[index], value => { state[index] = value }]
         } }
         if (name === '@mantine/core') return { ...Object.fromEntries(['Alert', 'Badge', 'Button', 'Group', 'Card', 'Select', 'Stack', 'Text'].map(key => [key, key])), useMantineColorScheme: () => ({ colorScheme: 'dark' }) }
+        if (name === '@mantine/hooks') return { useMediaQuery: () => false }
         if (name === 'react-i18next') return { useTranslation: () => ({ t: key => key, i18n: { language: 'en' } }) }
         if (name === '@monaco-editor/react') return { DiffEditor: 'diff' }
         if (name.endsWith('.css')) return { default: {} }
@@ -95,13 +96,17 @@ test('closing history detaches the diff before releasing both models', () => {
     assert.equal(props.keepCurrentOriginalModel, true)
     assert.equal(props.keepCurrentModifiedModel, true)
     const disposed = []
+    const options = []
     props.onMount({
+        getModifiedEditor: () => ({ updateOptions: value => options.push(value) }),
         getModel: () => ({
             original: { dispose: () => disposed.push('original') },
             modified: { dispose: () => disposed.push('modified') }
         }),
         setModel: value => { assert.equal(value, null); disposed.push('detached') }
     })
+    assert.equal(options[0].minimap.enabled, true)
+    assert.equal(options[0].minimap.renderCharacters, true)
     assert.deepEqual(disposed, [])
     h.cleanup()
     assert.deepEqual(disposed, ['detached', 'original', 'modified'])

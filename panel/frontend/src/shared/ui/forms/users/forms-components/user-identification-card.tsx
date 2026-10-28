@@ -30,7 +30,12 @@ import { CopyableFieldShared } from '@shared/ui/copyable-field/copyable-field'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SectionCard } from '@shared/ui/section-card'
 import { resolveCountryCode } from '@shared/utils/misc/resolve-country-code'
-import { formatRelativeDateUtil, formatTimeUtil, getTimeAgoUtil } from '@shared/utils/time-utils'
+import {
+    formatRelativeDateUtil,
+    formatRemainingDurationUtil,
+    formatTimeUtil,
+    getTimeAgoUtil
+} from '@shared/utils/time-utils'
 
 import { getUserExpirationState } from './user-expiration'
 import classes from './user-identification-card.module.css'
@@ -71,15 +76,16 @@ export const UserIdentificationCard = memo((props: IProps) => {
 
     const statusIconColor = statusIconColorMap[user.status] ?? 'gray'
 
-    const expiry = user.status === USERS_STATUS.FROZEN && user.frozenRemainingMs != null
-        ? new Date(Date.now() + user.frozenRemainingMs) : user.expireAt
+    const expiry = user.expireAt
     const expirationState = getUserExpirationState(expiry)
     const expirationFormattedDate =
         user.status === USERS_STATUS.FROZEN
-            ? t('frozen-user.remaining', { duration: dayjs(expiry).fromNow(true) })
+            ? t('frozen-user.remaining', {
+                  duration: formatRemainingDurationUtil(user.frozenRemainingMs ?? 0, i18n.language)
+              })
             : expirationState === 'unknown'
-            ? t('get-expiration-text.util.unknown')
-            : dayjs(expiry).locale(i18n.language).format('D MMM YYYY, HH:mm')
+              ? t('get-expiration-text.util.unknown')
+              : dayjs(expiry).locale(i18n.language).format('D MMM YYYY, HH:mm')
 
     return (
         <MotionWrapper variants={cardVariants}>

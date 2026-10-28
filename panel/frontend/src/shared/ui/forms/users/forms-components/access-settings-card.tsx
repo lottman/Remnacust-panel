@@ -19,6 +19,7 @@ import { TbShield, TbWebhook } from 'react-icons/tb'
 import { useUiText } from '@shared/i18n/interface-text'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SectionCard } from '@shared/ui/section-card'
+import { formatRemainingDurationUtil } from '@shared/utils/time-utils'
 
 interface IProps<T extends CreateUserCommand.RequestBody | UpdateUserCommand.RequestBody> {
     cardVariants: Variants
@@ -85,9 +86,10 @@ export const AccessSettingsCard = <
                             >
                                 <Text c="blue" fw={600} py="xs" role="status">
                                     {t('frozen-user.remaining', {
-                                        duration: dayjs(Date.now() + remaining)
-                                            .locale(i18n.language)
-                                            .fromNow(true)
+                                        duration: formatRemainingDurationUtil(
+                                            remaining,
+                                            i18n.language
+                                        )
                                     })}
                                 </Text>
                             </Input.Wrapper>

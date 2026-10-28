@@ -1,5 +1,6 @@
 import { Loader, Menu } from '@mantine/core'
 import { GetUserByIdCommand, USERS_STATUS } from '@remnawave/backend-contract'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiCellSignalFullDuotone, PiCellSignalSlashDuotone, PiTrashDuotone } from 'react-icons/pi'
 import { TbSnowflake } from 'react-icons/tb'
@@ -22,6 +23,17 @@ export function ToggleUserStatusButtonFeature(props: IProps) {
 
     const { user } = props
     const { id } = user
+    const [now, setNow] = useState(Date.now)
+    useEffect(() => {
+        const expiresAt = new Date(user.expireAt).getTime()
+        if (!Number.isFinite(expiresAt) || expiresAt <= now || user.status === USERS_STATUS.FROZEN)
+            return
+        const timer = window.setTimeout(
+            () => setNow(Date.now()),
+            Math.min(2_147_483_647, Math.max(0, expiresAt - Date.now() + 1))
+        )
+        return () => window.clearTimeout(timer)
+    }, [user.expireAt, user.status, now])
     const sync = (data: GetUserByIdCommand.Response['response']) => {
         queryClient.setQueryData(usersQueryKeys.getUserById({ userId: id }).queryKey, data)
         void queryClient.invalidateQueries({ queryKey: usersQueryKeys.getAllUsers._def })
@@ -76,7 +88,7 @@ export function ToggleUserStatusButtonFeature(props: IProps) {
                     color="blue"
                     disabled={
                         isFreezePending ||
-                        new Date(user.expireAt).getTime() <= Date.now() ||
+                        new Date(user.expireAt).getTime() <= now ||
                         user.status === USERS_STATUS.EXPIRED
                     }
                     leftSection={

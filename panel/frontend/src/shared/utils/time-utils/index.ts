@@ -13,6 +13,7 @@ dayjs.extend(duration)
 dayjs.extend(timezone)
 
 export * from './format-time.util'
+export * from './format-remaining-duration.util'
 export * from './get-connection-status-color/get-connection-status-color.util'
 export * from './get-default-date-range/get-default-date-range.util'
 export * from './get-expiration-text/get-expiration-text.util'

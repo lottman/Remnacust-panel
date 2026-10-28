@@ -100,12 +100,18 @@ pathlib.Path(a[a.index('-o')+1]).write_bytes((pathlib.Path(os.environ['QA_ROOT']
             assert.equal(fs.existsSync(path.join(root, 'PWNED')), false);
             fs.unlinkSync(marker);
             fs.mkdirSync(directory);
+            assert.equal(run().status, 0, 'an existing empty directory can be used for installation');
+            assert.equal(fs.existsSync(marker), true);
+            fs.unlinkSync(marker);
+            fs.writeFileSync(path.join(directory, 'existing-configuration'), 'retain this file');
             assert.notEqual(run().status, 0);
             assert.equal(
                 fs.existsSync(marker),
                 false,
-                'existing directory is never passed to install',
+                'an occupied directory is never passed to install',
             );
+            assert.equal(fs.readFileSync(path.join(directory, 'existing-configuration'), 'utf8'), 'retain this file');
+            fs.unlinkSync(path.join(directory, 'existing-configuration'));
             fs.rmdirSync(directory);
             fs.writeFileSync(path.join(root, 'SHA256SUMS'), '0'.repeat(64) + '  installer.sh\n');
             assert.notEqual(run().status, 0);

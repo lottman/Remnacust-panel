@@ -156,7 +156,7 @@ export const ViewUserModalContent = (props: IProps) => {
                     ? values.trafficLimitBytes
                     : undefined,
                 // @ts-expect-error - TODO: fix ZOD schema
-                expireAt: touchedFields.expireAt ? dayjs(values.expireAt).toISOString() : undefined,
+                expireAt: user.status !== 'FROZEN' && touchedFields.expireAt ? dayjs(values.expireAt).toISOString() : undefined,
                 activeInternalSquads: touchedFields.activeInternalSquads
                     ? values.activeInternalSquads
                     : undefined,
@@ -237,6 +237,7 @@ export const ViewUserModalContent = (props: IProps) => {
                     />
                     <AccessSettingsCard
                         isFrozen={user.status === 'FROZEN'}
+                        frozenRemainingMs={user.frozenRemainingMs}
                         cardVariants={cardVariants}
                         externalSquads={externalSquads}
                         form={form}

@@ -2197,7 +2197,8 @@
       "A034": "A node with this address already exists. Edit the existing node or enter another address.",
       "A113": "An inbound with this tag already exists. Inbound tags must be unique across all profiles. Change the inbound tag in the configuration; renaming the profile is not enough.",
       "A114": "A configuration profile with this name already exists. Choose another profile name.",
-      "A901": "Resume the frozen subscription before disabling the user."
+      "A901": "Resume the frozen subscription before disabling the user.",
+      "A902": "An expired subscription cannot be frozen. Renew it first."
     }
   },
   "limitsTrafficAction": {
@@ -4138,7 +4139,23 @@
     "freeze": "Freeze",
     "resume": "Resume",
     "remaining": "Remaining: {{duration}}",
-    "help": "The subscription clock and access are paused. Activation resumes the saved remaining time. Selecting a date sets a new remainder.",
+    "help": "The lifetime and access are paused. The saved remainder resumes on activation. The date cannot be edited while frozen.",
     "resumeBlocked": "Access remains unavailable: the subscription expired or its traffic quota is exhausted."
-  }
+  },
+    "subscription-pages": {
+    "title": "Subscription pages",
+    "loading": "Loading pages",
+    "help": "Manage registered pages on this server. Updates preserve settings and stopped pages remain stopped.",
+    "refresh": "Refresh",
+    "unavailable": "Page management requires the current installer and its local control service on the same server.",
+    "failed": "The operation failed. Check the private page log on the server.",
+    "empty": "No registered pages. Install one with remnacust install-subscription-page.",
+    "running": "Running",
+    "stopped": "Stopped",
+    "working": "Operation in progress…",
+    "start": "Start",
+    "stop": "Stop",
+    "restart": "Restart",
+    "upgrade": "Update"
+}
 }

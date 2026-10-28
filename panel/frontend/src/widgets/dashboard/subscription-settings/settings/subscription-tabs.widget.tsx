@@ -10,6 +10,7 @@ import { SubscriptionAdditionalOptionsWidget } from './cards/subscription-additi
 import { SubscriptionHwidSettingsWidget } from './cards/subscription-hwid-settings.widget'
 import { SubscriptionResponseHeadersCardWidget } from './cards/subscription-response-headers-card.widget'
 import { SubscriptionUserRemarksCardWidget } from './cards/subscription-user-remarks-card.widget'
+import { SubscriptionPagesWidget } from './subscription-pages.widget'
 
 interface SubscriptionTabsProps {
     subscriptionSettings: UpdateSubscriptionSettingsCommand.Response['response']
@@ -17,6 +18,7 @@ interface SubscriptionTabsProps {
 
 const TABS = {
     general: 'general',
+    pages: 'pages',
     remarks: 'remarks',
     additionalResponseHeaders: 'additionalResponseHeaders'
 } as const
@@ -41,6 +43,7 @@ export const SubscriptionSettingsTabsWidget = ({ subscriptionSettings }: Subscri
             value={activeTab}
         >
             <Tabs.List>
+                <Tabs.Tab value={TABS.pages}>{t('subscription-pages.title')}</Tabs.Tab>
                 <Tabs.Tab leftSection={<PiInfo size={px('1.2rem')} />} value={TABS.general}>
                     {t('subscription-settings.widget.main-settings')}
                 </Tabs.Tab>
@@ -54,6 +57,10 @@ export const SubscriptionSettingsTabsWidget = ({ subscriptionSettings }: Subscri
                     {t('subscription-tabs.widget.additional-response-headers')}
                 </Tabs.Tab>
             </Tabs.List>
+
+            <Tabs.Panel pt="xl" value={TABS.pages}>
+                {activeTab === TABS.pages && <SubscriptionPagesWidget />}
+            </Tabs.Panel>
 
             <Tabs.Panel pt="xl" value={TABS.general}>
                 <Masonry columns={{ 300: 1, 1400: 2, 2000: 3, 3000: 4 }} gap={16}>

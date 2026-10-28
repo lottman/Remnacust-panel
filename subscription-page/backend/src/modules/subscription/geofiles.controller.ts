@@ -10,6 +10,18 @@ import { AxiosService } from '@common/axios/axios.service';
 export class GeofilesController {
     constructor(private readonly axios: AxiosService) {}
 
+    @Get(':id/bundles/:selection/:filename')
+    async bundleDownload(
+        @Param('id') id: string,
+        @Param('filename') filename: string,
+        @Param('selection') selection: string,
+        @Req() request: Request,
+        @Res() response: Response,
+    ) {
+        if (!filename.startsWith('bundle-')) throw new NotFoundException();
+        return this.download(id, filename, selection, request, response);
+    }
+
     @Get(':id/:filename')
     async download(
         @Param('id') id: string,

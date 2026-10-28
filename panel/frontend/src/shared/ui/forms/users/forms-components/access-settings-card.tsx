@@ -1,4 +1,4 @@
-import { Select, Stack } from '@mantine/core'
+import { Select, Stack, Input, Text } from '@mantine/core'
 import { DateTimePicker, getTimeRange } from '@mantine/dates'
 import { UseFormReturnType } from '@mantine/form'
 import { notifications } from '@mantine/notifications'
@@ -25,6 +25,7 @@ interface IProps<T extends CreateUserCommand.RequestBody | UpdateUserCommand.Req
     externalSquads: GetExternalSquadsCommand.Response['response'] | undefined
     form: UseFormReturnType<T>
     isFrozen?: boolean
+    frozenRemainingMs?: number | null
     internalSquads: GetInternalSquadsCommand.Response['response'] | undefined
     motionWrapper: ForwardRefComponent<HTMLDivElement, HTMLMotionProps<'div'>>
 }
@@ -44,6 +45,8 @@ export const AccessSettingsCard = <
     const [localExpireAt, setLocalExpireAt] = useState<Date | undefined>(undefined)
 
     const MotionWrapper = motionWrapper
+    const isFrozen = props.isFrozen || form.values.status === 'FROZEN'
+    const remaining = Math.max(0, props.frozenRemainingMs ?? 0)
 
     const filteredInternalSquads = useMemo(() => {
         const allInternalSquads = internalSquads?.internalSquads || []
@@ -75,97 +78,115 @@ export const AccessSettingsCard = <
 
                 <SectionCard.Section>
                     <Stack gap="md">
-                        <DateTimePicker
-                            dropdownType="modal"
-                            headerControlsOrder={['previous', 'next', 'level']}
-                            highlightToday
-                            key={form.key('expireAt')}
-                            label={t('create-user-modal.widget.expiry-date')}
-                            locale={i18n.language}
-                            minDate={new Date()}
-                            modalProps={{
-                                centered: true
-                            }}
-                            styles={{
-                                calendarHeaderLevel: {
-                                    justifyContent: 'flex-start',
-                                    paddingInlineStart: 8
-                                },
-                                label: { fontWeight: 500 }
-                            }}
-                            submitButtonProps={{
-                                style: {
-                                    borderRadius: 'var(--mantine-radius-md)',
-                                    width: '20%'
-                                }
-                            }}
-                            timePickerProps={{
-                                withDropdown: true,
-                                scrollAreaProps: {
-                                    styles: {
-                                        content: {
-                                            minWidth: 'fit-content' // TODO: MantineUI bug
-                                        }
+                        {isFrozen ? (
+                            <Input.Wrapper
+                                label={t('create-user-modal.widget.expiry-date')}
+                                description={t('frozen-user.help')}
+                            >
+                                <Text c="blue" fw={600} py="xs" role="status">
+                                    {t('frozen-user.remaining', {
+                                        duration: dayjs(Date.now() + remaining)
+                                            .locale(i18n.language)
+                                            .fromNow(true)
+                                    })}
+                                </Text>
+                            </Input.Wrapper>
+                        ) : (
+                            <DateTimePicker
+                                dropdownType="modal"
+                                headerControlsOrder={['previous', 'next', 'level']}
+                                highlightToday
+                                key={form.key('expireAt')}
+                                label={t('create-user-modal.widget.expiry-date')}
+                                locale={i18n.language}
+                                minDate={new Date()}
+                                modalProps={{
+                                    centered: true
+                                }}
+                                styles={{
+                                    calendarHeaderLevel: {
+                                        justifyContent: 'flex-start',
+                                        paddingInlineStart: 8
+                                    },
+                                    label: { fontWeight: 500 }
+                                }}
+                                submitButtonProps={{
+                                    style: {
+                                        borderRadius: 'var(--mantine-radius-md)',
+                                        width: '20%'
                                     }
-                                },
-                                presets: getTimeRange({
-                                    startTime: '06:00:00',
-                                    endTime: '18:00:00',
-                                    interval: '01:30:00'
-                                })
-                            }}
-                            valueFormat="D MMM YYYY, HH:mm"
-                            {...form.getInputProps('expireAt')}
-                            description={props.isFrozen || form.values.status === 'FROZEN'
-                                ? t('frozen-user.help') : t('create-user-modal.widget.expire-at-description')}
-                            leftSection={<PiCalendarDuotone size="16px" />}
-                            onChange={(date) => {
-                                const formInputProps = form.getInputProps('expireAt')
-                                if (formInputProps.onChange) {
-                                    formInputProps.onChange(date)
-                                }
-
-                                if (date === 'Invalid Date') {
-                                    notifications.show({
-                                        title: uiText('invalid-date-cd63c7d'),
-                                        message: uiText(
-                                            'please-select-a-valid-date-defaulting-to-1-month-from-now-f05123b'
-                                        ),
-                                        color: 'red'
+                                }}
+                                timePickerProps={{
+                                    withDropdown: true,
+                                    scrollAreaProps: {
+                                        styles: {
+                                            content: {
+                                                minWidth: 'fit-content' // TODO: MantineUI bug
+                                            }
+                                        }
+                                    },
+                                    presets: getTimeRange({
+                                        startTime: '06:00:00',
+                                        endTime: '18:00:00',
+                                        interval: '01:30:00'
                                     })
+                                }}
+                                valueFormat="D MMM YYYY, HH:mm"
+                                {...form.getInputProps('expireAt')}
+                                description={
+                                    props.isFrozen || form.values.status === 'FROZEN'
+                                        ? t('frozen-user.help')
+                                        : t('create-user-modal.widget.expire-at-description')
+                                }
+                                leftSection={<PiCalendarDuotone size="16px" />}
+                                onChange={(date) => {
+                                    const formInputProps = form.getInputProps('expireAt')
+                                    if (formInputProps.onChange) {
+                                        formInputProps.onChange(date)
+                                    }
 
-                                    const currentDate = form.values.expireAt || new Date()
-                                    const newDate = new Date(currentDate)
-                                    newDate.setMonth(newDate.getMonth() + 1)
-                                    // @ts-expect-error - TODO: fix ZOD schema
-                                    form.setFieldValue('expireAt', newDate)
-                                }
-                            }}
-                            presets={[
-                                {
-                                    value: dayjs(localExpireAt)
-                                        .add(1, 'month')
-                                        .format('YYYY-MM-DD HH:mm:ss'),
-                                    label: t('create-user-modal.widget.1-month')
-                                },
-                                {
-                                    value: dayjs(localExpireAt)
-                                        .add(3, 'months')
-                                        .format('YYYY-MM-DD HH:mm:ss'),
-                                    label: t('create-user-modal.widget.3-months')
-                                },
-                                {
-                                    value: dayjs(localExpireAt)
-                                        .add(1, 'year')
-                                        .format('YYYY-MM-DD HH:mm:ss'),
-                                    label: t('create-user-modal.widget.1-year')
-                                },
-                                {
-                                    value: dayjs().year(2099).format('YYYY-MM-DD HH:mm:ss'),
-                                    label: t('create-user-modal.widget.2099-year')
-                                }
-                            ]}
-                        />
+                                    if (date === 'Invalid Date') {
+                                        notifications.show({
+                                            title: uiText('invalid-date-cd63c7d'),
+                                            message: uiText(
+                                                'please-select-a-valid-date-defaulting-to-1-month-from-now-f05123b'
+                                            ),
+                                            color: 'red'
+                                        })
+
+                                        const currentDate = form.values.expireAt || new Date()
+                                        const newDate = new Date(currentDate)
+                                        newDate.setMonth(newDate.getMonth() + 1)
+                                        // @ts-expect-error - TODO: fix ZOD schema
+                                        form.setFieldValue('expireAt', newDate)
+                                    }
+                                }}
+                                presets={[
+                                    {
+                                        value: dayjs(localExpireAt)
+                                            .add(1, 'month')
+                                            .format('YYYY-MM-DD HH:mm:ss'),
+                                        label: t('create-user-modal.widget.1-month')
+                                    },
+                                    {
+                                        value: dayjs(localExpireAt)
+                                            .add(3, 'months')
+                                            .format('YYYY-MM-DD HH:mm:ss'),
+                                        label: t('create-user-modal.widget.3-months')
+                                    },
+                                    {
+                                        value: dayjs(localExpireAt)
+                                            .add(1, 'year')
+                                            .format('YYYY-MM-DD HH:mm:ss'),
+                                        label: t('create-user-modal.widget.1-year')
+                                    },
+                                    {
+                                        value: dayjs().year(2099).format('YYYY-MM-DD HH:mm:ss'),
+                                        label: t('create-user-modal.widget.2099-year')
+                                    }
+                                ]}
+                            />
+                        )}
 
                         <InternalSquadsListWidget
                             description={t('create-user-modal.widget.internal-squads-description')}

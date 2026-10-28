@@ -69,7 +69,7 @@ Before saving, check squads and subscription expiry. Then verify the status and 
 
 ### Freeze a subscription
 
-Choose Freeze in the user menu: ordinary access is paused and the remaining lifetime is retained. Two days remaining stay two days until activation. Resuming sets the new expiry from that remainder; repeating Freeze does not change it. Zero remaining time or an exhausted quota does not grant access. Extending adds to the remainder. Editing the date while frozen sets a new remainder relative to the current time. Freezing itself does not reset usage; scheduled traffic resets continue. The state survives restarts and export/import. Bulk freezes synchronize each user’s device access through the queue.
+Choose Freeze in the user menu: ordinary access is paused and the remaining lifetime is retained. Two days remaining stay two days until activation. Resuming sets the new expiry from that remainder; repeating Freeze does not change it. Zero remaining time or an exhausted quota does not grant access. Extending adds to the remainder. Expired subscriptions cannot be frozen. A blue saved remainder replaces the date editor. Active expiry warnings turn yellow at three days and red on expiry. Freezing itself does not reset usage; scheduled traffic resets continue. The state survives restarts and export/import. Bulk freezes synchronize each user’s device access through the queue.
 
 ### Device subscription preview
 
@@ -85,6 +85,7 @@ Select an already registered device, format and User-Agent in the device card an
 - **Traffic limit**: Subscription quota in bytes; 0 means unlimited. The form displays units separately. Host/tag limits remain independent.
 - **Traffic reset strategy**: Overall user quota reset strategy: no reset, day, week, calendar month or rolling month. Host and tag periods are configured in their own settings.
 - **External squad**: External squad with its own subscription delivery settings. Select it when the user needs that group’s template or subscription page.
+- **Expiry date**: The lifetime and access are paused. The saved remainder resumes on activation. The date cannot be edited while frozen.
 - **Internal squads**: Internal squads granting the user access to selected inbounds. Multiple squads can be assigned.
 - **Username**: Account name used to find and manage the user. It must be available when creating an account.
 
@@ -687,6 +688,10 @@ Ready-made datasets is one library for every template: PC uploads, URL imports a
 
 V2Fly DAT is supported. A full JSON subscription with a routing header is required. For the regular subscription URL, enable “Serve JSON at base subscription” in subscription settings, or use a URL ending in /json. Response rules and external squads can override the format. Save the switch in the template actually used: a template selected in the host card takes priority. The editor shows the global JSON setting and opens settings in a new tab, keeping the draft. After saving, refresh the subscription in the app. Update the panel and a separately installed subscription page. In 1.1.7.51 compact category names reduce profile size; old signed URLs remain supported. Refresh the subscription and reconnect. If downloading does not start, check the Remnacust profile, x-remnacust-geofiles-delivery header and app logs. Incompatible settings or size limits trigger inline rules instead of a separate download.
 
+### INCY geofile checks
+
+INCY receives stable DAT URLs without query parameters. The signed file selection is in the path, so appending .sha256 to the complete URL returns the checksum for the same bundle. Unchanged files can be checked without downloading them again. routing-geo-update-interval uses hours. Update a separately deployed subscription page together with the panel. Previously issued URLs remain supported. Scheduling and network-error retries depend on the client version; the server does not start the tunnel. Official protocol: https://docs.incy.cc/routing/
+
 ### Pool membership after switching
 
 Switching grouped selection to connection-time selection merges UUID and tag groups into values. Regex and recipient-tag selectors retain their UUID boundary in groups: the original filter and user access both apply. Edit these lists in the GUI or code; unrelated hosts are excluded. Switching a manual client group to automatic selection sets its probe URL and interval.
@@ -728,6 +733,10 @@ When combining subscription status and HWID is enabled, an expired or disabled s
 New devices denied is handled separately. If registration is denied for a new device and its subscription is also expired or disabled, the reason placed higher in the list is shown. Moving registration denial above expiry therefore shows the registration message. These two reasons are not combined. An already registered, allowed device keeps access when the other access conditions are met.
 
 Traffic quota exhaustion, the maximum device count and missing HWID support have separate messages outside this list. Reordering changes subscription messages; restrictions and access checks still apply. Presentation depends on the client.
+
+### Pages on this server
+
+The Subscription pages tab manages registered instances on the panel server: start, stop, restart and independent update. Installer 1.2.93 and its local control service are required. CLI commands: install-subscription-page, upgrade-subscription-page --page-id ID, and manage-subscription-page; the list shows IDs. A local panel uses a separate restricted token and Docker network. A remote panel requires HTTPS and a subscription-page API token. Page ports bind to loopback; use a separate Caddy on free HTTPS ports or your existing proxy. Updates preserve settings and stopped state; failed readiness rolls Compose back. Private operation logs: /opt/remnacust/logs/page-<id>.log. Browser requests cannot supply arbitrary commands, paths or images.
 
 ### Fields and controls
 

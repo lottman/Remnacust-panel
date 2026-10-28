@@ -238,9 +238,9 @@ test('real HTTP binary upload, admin-only roles, public byte stream and in-use d
             await checksumDirect.text(),
             require('node:crypto').createHash('sha256').update(bytes).digest('hex'),
         );
-        assert.equal((await fetch(proxyBase + checksumUrl.pathname)).status, 404);
+        assert.equal((await fetch(proxyBase + checksumUrl.pathname)).status, 200);
         assert.equal(
-            (await fetch(checksumUrl.href.replace('selection=', 'selection=A'))).status,
+            (await fetch(checksumUrl.href.replace('/bundles/', '/bundles/A'))).status,
             404,
         );
         assert.deepEqual(compileDat(bytes, 'geoip', [datCategory(item.id, 'ru')]).ips, [
@@ -274,10 +274,13 @@ test('real HTTP binary upload, admin-only roles, public byte stream and in-use d
             404,
         );
         assert.equal(
-            (await fetch(proxyBase + bundlePath.replace('selection=', 'selection=A'))).status,
+            (await fetch(proxyBase + bundlePath.replace('/bundles/', '/bundles/A'))).status,
             404,
         );
-        assert.equal((await fetch(proxyBase + bundleUrl.pathname)).status, 404);
+        assert.equal((await fetch(proxyBase + bundleUrl.pathname)).status, 200);
+        const incyChecksum = await fetch(proxyBase + bundleUrl.pathname + '.sha256');
+        assert.equal(incyChecksum.status, 200, 'INCY appends the checksum suffix to the complete URL');
+        assert.equal(await incyChecksum.text(), require('node:crypto').createHash('sha256').update(bytes).digest('hex'));
         const configured = await fetch(`${base}/api/geofiles/${item.id}/refresh`, {
             method: 'PATCH',
             headers: { 'x-test-role': 'ADMIN', 'Content-Type': 'application/json' },

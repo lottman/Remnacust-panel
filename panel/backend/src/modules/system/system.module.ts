@@ -11,10 +11,11 @@ import { PanelUpdateService } from './panel-update.service';
 import { RouteCounterService } from './route-counter.service';
 import { SystemController } from './system.controller';
 import { SystemService } from './system.service';
+import { SubscriptionPagesController } from './subscription-pages.controller';
 
 @Module({
     imports: [CqrsModule, SubscriptionResponseRulesModule],
-    controllers: [SystemController, PanelUpdateController],
+    controllers: [SystemController, PanelUpdateController, SubscriptionPagesController],
     providers: [
         SystemService,
         RouteCounterService,

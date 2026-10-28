@@ -7,6 +7,7 @@ import {
     Controller,
     Delete,
     Get,
+    NotFoundException,
     Param,
     Patch,
     Post,
@@ -105,6 +106,17 @@ export class GeofilesController {
 @Controller('sub/geofiles')
 export class PublicGeofilesController {
     constructor(private readonly files: GeofilesService) {}
+
+    @Get(':id/bundles/:selection/:filename')
+    async bundleDownload(
+        @Param('id') id: string,
+        @Param('filename') filename: string,
+        @Param('selection') selection: string,
+        @Res({ passthrough: true }) response: Response,
+    ) {
+        if (!filename.startsWith('bundle-')) throw new NotFoundException('Geofile not found');
+        return this.download(id, filename, selection, response);
+    }
 
     @Get(':id/:filename')
     async download(

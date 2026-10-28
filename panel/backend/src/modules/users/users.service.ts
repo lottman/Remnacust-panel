@@ -313,6 +313,14 @@ export class UsersService {
 
             if (!user) return fail(ERRORS.USER_NOT_FOUND);
 
+            if (
+                status === USERS_STATUS.FROZEN &&
+                user.status !== USERS_STATUS.FROZEN &&
+                (user.status === USERS_STATUS.EXPIRED || user.expireAt.getTime() <= Date.now())
+            ) {
+                return fail(ERRORS.USER_FREEZE_EXPIRED);
+            }
+
             if (user.status === USERS_STATUS.FROZEN && status === USERS_STATUS.DISABLED) {
                 return fail(ERRORS.USER_FROZEN_NEEDS_RESUME);
             }

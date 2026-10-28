@@ -280,7 +280,7 @@ test('refresh survives restart, keeps immutable bytes, honors cooldown and retai
         );
         const bundleUrl = new URL(profile.Geositeurl);
         const bundleName = bundleUrl.pathname.split('/').at(-1);
-        const bundleSelection = bundleUrl.searchParams.get('selection');
+        const bundleSelection = bundleUrl.pathname.split('/').at(-2);
         const category = datCategory(file.id, 'example@ads');
         assert.equal(
             compileDat(await service.bundle(file.id, bundleName, bundleSelection), 'geosite', [

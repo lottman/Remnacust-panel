@@ -8,7 +8,7 @@ const constants = {
     USERS_STATUS: { ACTIVE: 'ACTIVE', DISABLED: 'DISABLED', EXPIRED: 'EXPIRED', LIMITED: 'LIMITED', FROZEN: 'FROZEN' },
     RESET_PERIODS: { NO_RESET: 'NO_RESET', DAY: 'DAY', WEEK: 'WEEK', MONTH: 'MONTH', MONTH_ROLLING: 'MONTH_ROLLING' },
     getEndpointDetails: () => ({}),
-    ERRORS: { INTERNAL_SERVER_ERROR: {}, USER_USERNAME_ALREADY_EXISTS: { code: 'duplicate' }, USER_SHORT_UUID_ALREADY_EXISTS: { code: 'short-duplicate' } },
+    ERRORS: { USER_FREEZE_EXPIRED: { code: 'A902' }, INTERNAL_SERVER_ERROR: {}, USER_USERNAME_ALREADY_EXISTS: { code: 'duplicate' }, USER_SHORT_UUID_ALREADY_EXISTS: { code: 'short-duplicate' } },
 };
 const api = { REST_API: { USERS: { CREATE: '/api/users', IMPORT: '/api/users/import' } }, USERS_ROUTES: {} };
 const { CreateUserCommand } = load(path.join(root, 'libs/contract/commands/users/create-user.command.ts'), {
@@ -147,4 +147,17 @@ test('a missing expiry is reported for that record without discarding valid user
     assert.equal(result.response.created, 1);
     assert.equal(result.response.failed, 1);
     assert.equal(result.response.errors[0].username, 'alice');
+});
+
+test('expired subscriptions cannot be frozen through the user API, including a renewal in the same request', async () => {
+    for (const status of ['ACTIVE', 'EXPIRED', 'DISABLED']) {
+        const service = makeService();
+        service.userRepository = {
+            findUniqueByCriteria: async () => ({ ...record, status, expireAt: new Date(0) }),
+            update: async () => { throw new Error('must not write'); },
+        };
+        const result = await service.updateUser({ id: 1, status: 'FROZEN', expireAt: new Date('2099-01-01') });
+        assert.equal(result.isOk, false);
+        assert.equal(result.error.code, 'A902');
+    }
 });

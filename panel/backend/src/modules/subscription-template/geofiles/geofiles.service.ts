@@ -267,7 +267,9 @@ export class GeofilesService {
             'base64url',
         );
         if (payload.length > 2732) throw new Error('geofile-bundle-size');
-        return `${this.base}${ordered[0]}/bundle-${this.bundleSignature(ordered[0], payload)}.dat?selection=${payload}`;
+        // Some clients append .sha256 to the entire URL, including its query.
+        // Put the authenticated selection in the path so both requests stay valid.
+        return `${this.base}${ordered[0]}/bundles/${payload}/bundle-${this.bundleSignature(ordered[0], payload)}.dat`;
     }
 
     public async bundle(id: string, filename: string, selection: unknown): Promise<Buffer> {

@@ -7,5 +7,5 @@ export function getUserExpirationState(
     if (!Number.isFinite(expiresAt)) return 'unknown'
     const remaining = expiresAt - now
     if (remaining <= 0) return 'expired'
-    return remaining <= 7 * 24 * 60 * 60 * 1000 ? 'soon' : 'valid'
+    return remaining <= 3 * 24 * 60 * 60 * 1000 ? 'soon' : 'valid'
 }

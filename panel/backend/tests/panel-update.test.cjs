@@ -173,6 +173,36 @@ test('the update service authenticates on its private socket and does not cache 
     assert.equal(await service.isActive(), true);
 });
 
+test('subscription page administration rejects API tokens, commands, paths and unknown fields', async () => {
+    const roles = load(path.join(base, 'common/decorators/roles/roles.ts'), { '@libs/contracts/constants': constants });
+    const adminOnly = load(path.join(base, 'common/decorators/admin-only-endpoint.ts'), {
+        '@common/decorators/roles/roles': roles, '@common/decorators/scopes': { SCOPE_ENDPOINT: 'scope' }, '@libs/contracts/constants': constants,
+    });
+    const { SubscriptionPagesController } = load(path.join(base, 'modules/system/subscription-pages.controller.ts'), {
+        '@common/decorators/admin-only-endpoint': adminOnly, '@common/decorators/roles/roles': roles,
+        '@common/guards/jwt-guards/def-jwt-guard': { JwtDefaultGuard: class {} }, '@common/guards/roles': { RolesGuard: class {} },
+        '@libs/contracts/constants': constants, './panel-update.service': {},
+    });
+    const { RolesGuard } = load(path.join(base, 'common/guards/roles/roles.guard.ts'), {
+        '@common/decorators/admin-only-endpoint': adminOnly, '@common/exception/http-exeception-with-error-code.type': exception,
+        '@libs/contracts/constants': { ...constants, ERRORS: { FORBIDDEN_ROLE_ERROR: { message: 'Forbidden', code: 'E403', httpCode: 403 } } },
+    });
+    const guard = new RolesGuard(new Reflector());
+    for (const method of ['list', 'manage']) {
+        const request = role => ({ ...context(role, '/api/system/subscription-pages'), getHandler: () => SubscriptionPagesController.prototype[method], getClass: () => SubscriptionPagesController });
+        assert.equal(guard.canActivate(request(ROLE.ADMIN)), true);
+        assert.throws(() => guard.canActivate(request(ROLE.API)));
+        assert.throws(() => guard.canActivate(request(null)));
+    }
+    let starts = 0;
+    const controller = new SubscriptionPagesController({ subscriptionPageAction: async () => { starts++; return { pages: [] }; } });
+    const valid = { pageId: 'a'.repeat(24), operation: 'upgrade', requestId: '55632671-6aa0-45db-aacb-92be57ce7e73' };
+    for (const body of [{}, { ...valid, pageId: '../panel' }, { ...valid, operation: 'exec' }, { ...valid, image: 'attacker/image' }, { ...valid, requestId: 'invalid' }]) await assert.rejects(controller.manage(body));
+    assert.equal(starts, 0);
+    await controller.manage(valid);
+    assert.equal(starts, 1);
+});
+
 test('host service failure preserves a maintenance lock from the mounted state file', async () => {
     const locked = {
         active: true,

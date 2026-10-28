@@ -12,9 +12,9 @@ test('only the actual expiry instant or an earlier date is expired', () => {
     assert.equal(getUserExpirationState(new Date(now), now), 'expired')
     assert.equal(getUserExpirationState(new Date(now - 1), now), 'expired')
 })
-test('the seven-day warning uses full elapsed time, including timezone offsets', () => {
-    assert.equal(getUserExpirationState('2026-10-08T15:00:00+03:00', now), 'soon')
-    assert.equal(getUserExpirationState('2026-10-08T15:00:01+03:00', now), 'valid')
+test('the three-day warning uses full elapsed time, including timezone offsets', () => {
+    assert.equal(getUserExpirationState('2026-10-04T15:00:00+03:00', now), 'soon')
+    assert.equal(getUserExpirationState('2026-10-04T15:00:01+03:00', now), 'valid')
 })
 test('missing and malformed dates never masquerade as valid dates', () => {
     for (const date of [null, undefined, '', 'invalid', new Date(NaN)]) {

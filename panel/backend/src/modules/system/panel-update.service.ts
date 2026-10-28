@@ -7,6 +7,30 @@ import { Injectable, ServiceUnavailableException, ConflictException } from '@nes
 
 import { TypedConfigService } from '@common/config/app-config';
 
+export const subscriptionPagesSchema = z.object({
+    pages: z
+        .array(
+            z.object({
+                id: z.string().regex(/^[a-f0-9]{24}$/),
+                name: z.string().max(128),
+                domain: z.string().max(512),
+                status: z.string().max(32),
+                running: z.boolean(),
+                image: z.string().max(256),
+                companion: z.boolean(),
+                job: z
+                    .object({
+                        requestId: z.string().uuid(),
+                        operation: z.enum(['start', 'stop', 'restart', 'upgrade']),
+                        phase: z.enum(['queued', 'running', 'completed', 'failed']),
+                        error: z.string().max(64).nullable(),
+                    })
+                    .nullable(),
+            }),
+        )
+        .max(32),
+});
+
 const updateProgressSchema = z.object({
     stage: z.enum([
         'checking',
@@ -16,7 +40,7 @@ const updateProgressSchema = z.object({
         'applying',
         'readiness',
         'verifying',
-        'cleanup'
+        'cleanup',
     ]),
     stageIndex: z.number().int().min(1).max(8),
     stageCount: z.literal(8),
@@ -31,10 +55,10 @@ const updateProgressSchema = z.object({
             z.object({
                 at: z.number().nonnegative(),
                 label: z.string().max(120),
-                event: z.enum(['running', 'done', 'failed'])
-            })
+                event: z.enum(['running', 'done', 'failed']),
+            }),
         )
-        .max(24)
+        .max(24),
 });
 
 export const panelUpdateStateSchema = z.object({
@@ -116,6 +140,22 @@ export class PanelUpdateService {
     }
 
     private call(path: string, data?: unknown): Promise<PanelUpdateState> {
+        return this.control(path, data, panelUpdateStateSchema);
+    }
+
+    async subscriptionPages() {
+        return this.control('/pages', undefined, subscriptionPagesSchema);
+    }
+
+    async subscriptionPageAction(data: {
+        pageId: string;
+        operation: 'start' | 'stop' | 'restart' | 'upgrade';
+        requestId: string;
+    }) {
+        return this.control('/pages/action', data, subscriptionPagesSchema);
+    }
+
+    private control<T>(path: string, data: unknown, schema: z.ZodType<T>): Promise<T> {
         const token = createHmac('sha256', this.config.getOrThrow('APP_SECRET'))
             .update('remnacust-panel-update-v1')
             .digest('hex');
@@ -141,7 +181,8 @@ export class PanelUpdateService {
                     const chunks: Buffer[] = [];
                     res.on('data', (chunk: Buffer) => {
                         bytes += chunk.length;
-                        if (bytes > 16384) req.destroy(new Error('Response too large'));
+                        if (bytes > (path.startsWith('/pages') ? 65536 : 16384))
+                            req.destroy(new Error('Response too large'));
                         else chunks.push(chunk);
                     });
                     res.on('error', reject);
@@ -156,9 +197,7 @@ export class PanelUpdateService {
                         }
                         try {
                             resolve(
-                                panelUpdateStateSchema.parse(
-                                    JSON.parse(Buffer.concat(chunks).toString('utf8')),
-                                ),
+                                schema.parse(JSON.parse(Buffer.concat(chunks).toString('utf8'))),
                             );
                         } catch {
                             reject(new ServiceUnavailableException('UPDATE_UNAVAILABLE'));

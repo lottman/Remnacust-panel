@@ -98,7 +98,9 @@ export class XrayGeofileDelivery {
             try {
                 const url = await this.bundleUrl(kind, ids);
                 profile[kind === 'geoip' ? 'Geoipurl' : 'Geositeurl'] =
-                    url + `${url.includes('?') ? '&' : '?'}revision=${revision}`;
+                    this.client === 'incy'
+                        ? url
+                        : url + `${url.includes('?') ? '&' : '?'}revision=${revision}`;
             } catch {
                 throw new XrayGeofileFallback('bundle');
             }

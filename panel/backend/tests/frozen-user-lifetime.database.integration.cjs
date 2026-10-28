@@ -47,6 +47,22 @@ BEGIN
  UPDATE users SET status='ACTIVE' WHERE id=3;
  IF (SELECT status FROM users WHERE id=3) <> 'LIMITED' THEN RAISE EXCEPTION 'quota bypass'; END IF;
 END $test$;
+${fs.readFileSync(path.join(__dirname, '../prisma/migrations/20261028190000_reject_expired_freeze/migration.sql'), 'utf8')}
+DO $test$
+DECLARE at_time timestamp := statement_timestamp() AT TIME ZONE 'UTC';
+BEGIN
+ INSERT INTO users VALUES (4,'ACTIVE',at_time-interval '1 second',0,NULL);
+ INSERT INTO users VALUES (5,'ACTIVE',at_time+interval '2 days',0,NULL);
+ INSERT INTO users VALUES (6,'EXPIRED',at_time+interval '2 days',0,NULL);
+ UPDATE users SET status='FROZEN' WHERE id IN (4,5,6);
+ IF (SELECT status FROM users WHERE id=4) <> 'EXPIRED' OR (SELECT frozen_at FROM users WHERE id=4) IS NOT NULL THEN RAISE EXCEPTION 'expired freeze accepted'; END IF;
+ IF (SELECT status FROM users WHERE id=5) <> 'FROZEN' THEN RAISE EXCEPTION 'valid bulk freeze rejected'; END IF;
+ IF (SELECT status FROM users WHERE id=6) <> 'EXPIRED' THEN RAISE EXCEPTION 'expired status freeze accepted'; END IF;
+ INSERT INTO users VALUES (7,'FROZEN',at_time,0,NULL);
+ IF (SELECT status FROM users WHERE id=7) <> 'EXPIRED' THEN RAISE EXCEPTION 'expired import freeze accepted'; END IF;
+ UPDATE users SET status='FROZEN' WHERE id=5;
+ IF (SELECT expire_at-frozen_at FROM users WHERE id=5) <> interval '2 days' THEN RAISE EXCEPTION 'repeated freeze changed lifetime'; END IF;
+END $test$;
 ROLLBACK;
 `;
 const result = databaseUrl

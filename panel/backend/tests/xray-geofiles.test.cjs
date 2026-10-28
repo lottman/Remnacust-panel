@@ -188,7 +188,7 @@ test('request-local renderer delivers Happ and INCY profiles, preserves manual h
     const incyProfile = JSON.parse(
         Buffer.from(incy.headersToApply.routing.slice('incy://routing/onadd/'.length), 'base64'),
     );
-    assert.match(incyProfile.Geositeurl, /^https:\/\/sub.test\/rules.dat\?revision=\d+$/);
+    assert.equal(incyProfile.Geositeurl, 'https://sub.test/rules.dat');
     assert.equal(incyProfile.useChunkFiles, undefined, 'Full JSON uses original geofiles');
     for (const where of ['customResponseHeaders', 'headersToApply']) {
         const manualInterval = context('INCY/2.4.0');

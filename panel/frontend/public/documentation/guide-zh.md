@@ -762,7 +762,7 @@ INCY 获得不含查询参数的稳定 DAT URL。经过签名的文件选择位�
 
 ### 此服务器上的页面
 
-“订阅页面”标签只管理面板服务器上已注册的实例，可启动、停止、重启或单独更新。需要安装程序 1.2.97 及本地控制服务。CLI：install-subscription-page、upgrade-subscription-page --page-id ID、manage-subscription-page；列表显示 ID。本地面板使用独立受限令牌和 Docker 网络，远程面板需要 HTTPS 及订阅页面 API 令牌。页面端口仅绑定 loopback；HTTPS 可使用空闲端口上的独立 Caddy 或现有代理。更新保留设置和停止状态，未通过就绪检查时回滚 Compose。私有日志位于 /opt/remnacust/logs/page-<id>.log。浏览器不能提交任意命令、路径或镜像。
+“订阅页面”标签只管理面板服务器上已注册的实例，可启动、停止、重启或单独更新。需要安装程序 1.2.98 及本地控制服务。CLI：install-subscription-page、upgrade-subscription-page --page-id ID、manage-subscription-page；列表显示 ID。本地面板使用独立受限令牌和 Docker 网络，远程面板需要 HTTPS 及订阅页面 API 令牌。页面端口仅绑定 loopback；HTTPS 可使用空闲端口上的独立 Caddy 或现有代理。更新保留设置和停止状态，未通过就绪检查时回滚 Compose。私有日志位于 /opt/remnacust/logs/page-<id>.log。浏览器不能提交任意命令、路径或镜像。
 
 ### 字段与控件
 

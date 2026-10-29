@@ -678,6 +678,10 @@ Xray JSON、sing-box、Mihomo、Clash 和 Stash 均提供自动选择。sing-box
 
 “按优先级：首个可用服务器”选择第一台健康服务器。需要精确顺序时，选择主机及所有选定主机，再用箭头排序。多个池的前缀也可在均衡器中排序。标签和正则遵循主机总列表顺序，随机模式先选子集。故障切换和恢复主服务器取决于健康检查，仅影响新连接，已有连接不会迁移。Xray JSON 在输出时转换为标准单候选 leastPing 均衡器及 Loopback 链。首次检查成功前或全部服务器不可用时阻断连接，显式 fallbackTag 最后使用。界面会移除指向同一池的自动备用项，保留自定义备用项和检查设置。每个均衡器最多 128 个候选，每份配置最多 256 个。routing script 及其他均衡器冲突的宽泛选择器不兼容。Mihomo/Clash/Stash 使用原生 fallback，遵循 proxies 顺序，代码显式成员在池成员之前。sing-box 配置不支持自动严格优先级，selector 为手动选择，URLTest 按延迟选择。需要完整 JSON/YAML 订阅。
 
+### 何时将接收主机添加为 proxy
+
+“同时将接收主机添加为 proxy”对应 remnawave.addVirtualHostAsOutbound。启用后，生成器根据接收主机的地址、端口、传输和安全设置额外创建一个标签为 proxy 的独立出站。自动选择不要求启用此开关，开关也不会自动启用 TLS。对于仅代表均衡器的“自动”占位主机，请保持关闭；真实的 injectHosts 池成员和均衡器仍会保留。仅当它是客户端支持的额外真实连接时启用。内核可能拒绝未使用 TLS/REALITY 或 VLESS encryption 的公网 VLESS；Happ iOS 的“通过代理”检测可能报告 failed to build outbound config with tag proxy / vless without TLS。普通检测通过或其他设备可用，并不能验证这个额外出站。占位主机应关闭开关，真实主机应修正传输与安全设置，然后保存模板并在应用中更新订阅。此开关不会配置服务器或安装证书。
+
 ### 带警告保存
 
 即使 JSON/YAML 无效、未选择主机或地理文件操作未填写，仍可保存。含错误的文本会作为草稿保存在服务器和历史记录中，重新打开时恢复相同文本。订阅继续使用上一份可用配置。修复警告并再次保存后，有效内容会替换工作版本并清除草稿。网络或数据库错误不会被报告为保存成功。
@@ -758,7 +762,7 @@ INCY 获得不含查询参数的稳定 DAT URL。经过签名的文件选择位�
 
 ### 此服务器上的页面
 
-“订阅页面”标签只管理面板服务器上已注册的实例，可启动、停止、重启或单独更新。需要安装程序 1.2.96 及本地控制服务。CLI：install-subscription-page、upgrade-subscription-page --page-id ID、manage-subscription-page；列表显示 ID。本地面板使用独立受限令牌和 Docker 网络，远程面板需要 HTTPS 及订阅页面 API 令牌。页面端口仅绑定 loopback；HTTPS 可使用空闲端口上的独立 Caddy 或现有代理。更新保留设置和停止状态，未通过就绪检查时回滚 Compose。私有日志位于 /opt/remnacust/logs/page-<id>.log。浏览器不能提交任意命令、路径或镜像。
+“订阅页面”标签只管理面板服务器上已注册的实例，可启动、停止、重启或单独更新。需要安装程序 1.2.97 及本地控制服务。CLI：install-subscription-page、upgrade-subscription-page --page-id ID、manage-subscription-page；列表显示 ID。本地面板使用独立受限令牌和 Docker 网络，远程面板需要 HTTPS 及订阅页面 API 令牌。页面端口仅绑定 loopback；HTTPS 可使用空闲端口上的独立 Caddy 或现有代理。更新保留设置和停止状态，未通过就绪检查时回滚 Compose。私有日志位于 /opt/remnacust/logs/page-<id>.log。浏览器不能提交任意命令、路径或镜像。
 
 ### 字段与控件
 

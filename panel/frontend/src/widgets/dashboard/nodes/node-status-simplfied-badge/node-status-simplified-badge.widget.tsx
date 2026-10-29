@@ -47,8 +47,8 @@ export const NodeStatusSimplfiedBadgeWidget = memo(
                 disabled={!upgradeRequired}
                 label={t('xera-node-health.upgrade-required-message')}
                 multiline
-                w={300}
-                maw="calc(100vw - 24px)"
+                w="max-content"
+                maw="min(300px, calc(100vw - 24px))"
                 withArrow
             >
                 <ThemeIcon

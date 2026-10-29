@@ -18,7 +18,10 @@ export const NodeStatusBadgeWidget = memo(
         const { t } = useTranslation()
 
         const nodeData = fetchedNode || node
-        const upgradeRequired = !nodeData.isDisabled && nodeData.isConnected && nodeNeedsCustomUpgrade(nodeData.lastStatusMessage)
+        const upgradeRequired =
+            !nodeData.isDisabled &&
+            nodeData.isConnected &&
+            nodeNeedsCustomUpgrade(nodeData.lastStatusMessage)
 
         const health = getNodeHealth(nodeData)
         const needsAttention =
@@ -39,7 +42,9 @@ export const NodeStatusBadgeWidget = memo(
                 color = 'gray'
                 status = t('node-status-badge.widget.disabled')
             } else if (upgradeRequired) {
-                icon = <PiPulseDuotone size={18} style={{ color: 'var(--mantine-color-violet-6)' }} />
+                icon = (
+                    <PiPulseDuotone size={18} style={{ color: 'var(--mantine-color-violet-6)' }} />
+                )
                 color = 'violet'
                 status = t('xera-node-health.upgrade-required-title')
             } else if (needsAttention) {
@@ -73,10 +78,16 @@ export const NodeStatusBadgeWidget = memo(
         if (!withText) {
             return (
                 <Tooltip
-                    label={upgradeRequired ? t('xera-node-health.upgrade-required-message') : needsAttention && healthReason ? healthReason : status}
+                    label={
+                        upgradeRequired
+                            ? t('xera-node-health.upgrade-required-message')
+                            : needsAttention && healthReason
+                              ? healthReason
+                              : status
+                    }
                     multiline
-                    w={300}
-                    maw="calc(100vw - 24px)"
+                    w="max-content"
+                    maw="min(300px, calc(100vw - 24px))"
                     withArrow
                 >
                     <ActionIcon aria-label={status} color={color} radius="md" size={26} {...rest}>
@@ -87,10 +98,17 @@ export const NodeStatusBadgeWidget = memo(
         }
 
         return (
-            <Tooltip disabled={!upgradeRequired} label={t('xera-node-health.upgrade-required-message')} multiline w={300} maw="calc(100vw - 24px)" withArrow>
-            <Badge color={color} leftSection={icon} maw="20ch" miw="20ch" size="lg" {...rest}>
-                {status}
-            </Badge>
+            <Tooltip
+                disabled={!upgradeRequired}
+                label={t('xera-node-health.upgrade-required-message')}
+                multiline
+                w="max-content"
+                maw="min(300px, calc(100vw - 24px))"
+                withArrow
+            >
+                <Badge color={color} leftSection={icon} maw="20ch" miw="20ch" size="lg" {...rest}>
+                    {status}
+                </Badge>
             </Tooltip>
         )
     }

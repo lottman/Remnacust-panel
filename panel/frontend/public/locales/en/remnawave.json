@@ -3356,7 +3356,7 @@
     "probe-url": "Probe URL",
     "probe-interval": "Probe interval",
     "recipient-outbound": "Also add the recipient host as proxy",
-    "recipient-help": "Enable only for a real connection host, not a decorative placeholder.",
+    "recipient-help": "When enabled, a separate outbound named “proxy” is also built from the recipient host’s address and connection settings. Enable only for a real working connection with valid TLS/REALITY or VLESS encryption. Leave it off for an “Automatic” placeholder: pool servers and autoselect remain available. Unprotected VLESS may cause Happ iOS to report “failed to build outbound config with tag proxy” / “vless without TLS”. Save the template and refresh the subscription after changing it.",
     "changes": "Code changes",
     "changes-help": "Compared with the saved template. Review before saving. Adding a pool keeps existing configuration.",
     "no-changes": "No unsaved changes",

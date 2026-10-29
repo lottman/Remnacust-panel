@@ -5,6 +5,7 @@ import {
     Badge,
     Button,
     Card,
+    Collapse,
     FileInput,
     Group,
     Loader,
@@ -29,6 +30,7 @@ import { TbPlus, TbTrash } from 'react-icons/tb'
 import { instance } from '@shared/api'
 import { useGetSubscriptionSettings } from '@shared/api/hooks/subscription-settings/subscription-settings.query.hooks'
 import { ROUTES } from '@shared/constants/routes'
+import { usePanelReducedMotion } from '@shared/ui/appearance/appearance'
 
 import { type JsonObject } from './autoselect-model'
 import styles from './autoselect-panel.module.css'
@@ -82,6 +84,7 @@ export function GeofilesPanel({
     getValue: () => string
 }) {
     const { t } = useTranslation()
+    const reducedMotion = usePanelReducedMotion()
     const jsonSettingName = t('subscription-settings.widget.serve-json-at-base-subscription')
     const client = useQueryClient()
     const filesQuery = useQuery({
@@ -744,7 +747,7 @@ export function GeofilesPanel({
                                                 )
                                             }
                                         />
-                                        <Stack gap="md">
+                                        <Stack gap={0}>
                                             <Switch
                                                 label={t('geofiles.download-to-client')}
                                                 description={t(
@@ -771,8 +774,12 @@ export function GeofilesPanel({
                                                     )
                                                 }
                                             />
-                                            {download && (
+                                            <Collapse
+                                                expanded={download}
+                                                transitionDuration={reducedMotion ? 0 : 180}
+                                            >
                                                 <NumberInput
+                                                    mt="md"
                                                     hideControls
                                                     label={t('geofiles.client-interval')}
                                                     description={t(
@@ -802,7 +809,7 @@ export function GeofilesPanel({
                                                             )
                                                     }}
                                                 />
-                                            )}
+                                            </Collapse>
                                         </Stack>
                                     </div>
                                     <Accordion variant="separated">

@@ -739,11 +739,24 @@ html.panel-themed .mantine-Switch-track[data-without-labels]:dir(rtl) {
 }
 html.panel-themed .mantine-Switch-track[data-without-labels] > .mantine-Switch-thumb {
     inset-inline-start: var(--switch-track-label-padding);
-    translate: 0 0;
-    transition: translate 150ms ease, background-color 150ms ease, border-color 150ms ease;
+    transform: translateX(0);
+    will-change: transform;
+    transition:
+        transform 180ms ease,
+        background-color 150ms ease,
+        border-color 150ms ease;
 }
-html.panel-themed .mantine-Switch-input:checked + .mantine-Switch-track[data-without-labels] > .mantine-Switch-thumb {
-    translate: calc(var(--panel-switch-direction) * (var(--switch-width) - var(--switch-thumb-size) - 2 * var(--switch-track-label-padding))) 0;
+html.panel-themed
+    .mantine-Switch-input:checked
+    + .mantine-Switch-track[data-without-labels]
+    > .mantine-Switch-thumb {
+    transform: translateX(
+        calc(
+            var(--panel-switch-direction) *
+                (var(--switch-width) - var(--switch-thumb-size) - 2 *
+                    var(--switch-track-label-padding))
+        )
+    );
 }
 @media (prefers-reduced-motion: reduce) {
     html.panel-themed :is(.mantine-Switch-thumb, .mantine-Switch-track) {

@@ -3356,7 +3356,7 @@
         "probe-url": "探测地址",
         "probe-interval": "探测间隔",
         "recipient-outbound": "同时将接收主机添加为 proxy",
-        "recipient-help": "仅对真实连接主机启用，不用于装饰性占位主机。",
+        "recipient-help": "启用后，会根据接收主机的地址和连接设置额外创建一个名为“proxy”的出站。仅在该主机是可用的真实连接，并已正确配置 TLS/REALITY 或 VLESS encryption 时启用。对于“自动”占位主机，请保持关闭；池内服务器和自动选择仍会保留。未加密的 VLESS 可能使 Happ iOS 报告“failed to build outbound config with tag proxy”或“vless without TLS”。修改后请保存模板并更新订阅。",
         "changes": "代码变更",
         "changes-help": "与已保存模板比较。保存前请检查。添加候选池会保留现有配置。",
         "no-changes": "没有未保存的变更",

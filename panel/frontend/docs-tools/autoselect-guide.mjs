@@ -150,6 +150,28 @@ sections.push([
     ]
 ])
 
+sections.push([
+    'templates-recipient-outbound',
+    [
+        [
+            'Когда добавлять хост-получатель как proxy',
+            'Переключатель «Также добавить хост-получатель как proxy» соответствует remnawave.addVirtualHostAsOutbound. При включении генератор дополнительно строит самостоятельный outbound с тегом proxy из адреса, порта, транспорта и параметров защиты хоста-получателя. Это не обязательное условие автовыбора и не автоматическое включение TLS. Для служебного хоста «Автоматический», представляющего только балансер, оставьте переключатель выключенным. Реальные серверы injectHosts и балансер остаются в конфигурации. Включать нужно лишь для полноценного дополнительного подключения, совместимого с клиентом. Публичный VLESS без TLS/REALITY или VLESS encryption может быть отклонён ядром; Happ iOS при проверке «через прокси» сообщает failed to build outbound config with tag proxy / vless without TLS. Обычная проверка или работа на другом устройстве не доказывает, что этот дополнительный outbound корректен. Если хост служебный — выключите переключатель; если он реальный — исправьте его транспорт и защиту. Сохраните шаблон и обновите подписку в приложении. Сам переключатель не меняет настройки серверов и не устанавливает сертификаты.'
+        ],
+        [
+            'When to add the recipient host as proxy',
+            'Also add the recipient host as proxy maps to remnawave.addVirtualHostAsOutbound. When enabled, the generator additionally builds a separate outbound tagged proxy from the recipient host’s address, port, transport and security settings. Autoselect does not require this switch; it does not enable TLS automatically. Leave it off for an Automatic placeholder representing a balancer. Real injectHosts pool members and the balancer remain in the configuration. Enable it only for a real additional connection supported by the client. A core may reject public VLESS without TLS/REALITY or VLESS encryption; Happ iOS proxy-based checks can report failed to build outbound config with tag proxy / vless without TLS. A successful ordinary test or another device does not validate this extra outbound. Disable the switch for a placeholder, or correct transport and security for a real host. Save the template and update the subscription in the app. The switch does not reconfigure servers or install certificates.'
+        ],
+        [
+            'چه زمانی میزبان گیرنده را به‌عنوان proxy اضافه کنیم',
+            'کلید افزودن میزبان گیرنده به‌عنوان proxy برابر remnawave.addVirtualHostAsOutbound است. با فعال‌سازی، خروجی مستقلی با تگ proxy از نشانی، درگاه، انتقال و تنظیمات امنیتی میزبان گیرنده ساخته می‌شود. انتخاب خودکار به این کلید نیاز ندارد و TLS خودکار فعال نمی‌شود. برای میزبان نمایشی «خودکار» که تنها نشان‌دهنده متعادل‌کننده است خاموش بماند؛ اعضای واقعی injectHosts و متعادل‌کننده حفظ می‌شوند. فقط برای اتصال اضافی واقعی و سازگار با برنامه فعال کنید. هسته ممکن است VLESS عمومی بدون TLS/REALITY یا VLESS encryption را رد کند؛ آزمون از طریق پروکسی در Happ iOS می‌تواند خطای failed to build outbound config with tag proxy / vless without TLS بدهد. موفقیت آزمون عادی یا دستگاه دیگر درستی این خروجی اضافی را ثابت نمی‌کند. برای میزبان نمایشی کلید را خاموش کنید؛ برای میزبان واقعی انتقال و امنیت را اصلاح کنید. الگو را ذخیره و اشتراک را در برنامه به‌روز کنید. این کلید سرورها را تنظیم و گواهی نصب نمی‌کند.'
+        ],
+        [
+            '何时将接收主机添加为 proxy',
+            '“同时将接收主机添加为 proxy”对应 remnawave.addVirtualHostAsOutbound。启用后，生成器根据接收主机的地址、端口、传输和安全设置额外创建一个标签为 proxy 的独立出站。自动选择不要求启用此开关，开关也不会自动启用 TLS。对于仅代表均衡器的“自动”占位主机，请保持关闭；真实的 injectHosts 池成员和均衡器仍会保留。仅当它是客户端支持的额外真实连接时启用。内核可能拒绝未使用 TLS/REALITY 或 VLESS encryption 的公网 VLESS；Happ iOS 的“通过代理”检测可能报告 failed to build outbound config with tag proxy / vless without TLS。普通检测通过或其他设备可用，并不能验证这个额外出站。占位主机应关闭开关，真实主机应修正传输与安全设置，然后保存模板并在应用中更新订阅。此开关不会配置服务器或安装证书。'
+        ]
+    ]
+])
+
 export function explainAutoselect(articles) {
     const template = articles.find((article) => article.id === 'templates')
     for (const [id, translations] of sections)

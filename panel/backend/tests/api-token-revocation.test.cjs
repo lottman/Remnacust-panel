@@ -39,3 +39,23 @@ test('current database expiry and scopes take precedence over token payload', as
     token.response.expireAt = new Date(0);
     assert.equal(await guard.canActivate(context), false);
 });
+
+test('permanent tokens stay revocable and require explicit permanent database state', async () => {
+    let token = {isOk:true, response:{scopes:['users:update'], expireAt:null}};
+    const guard = new JwtDefaultGuard({execute:async()=>token});
+    const request = {user:{role:'API',uuid:'token',permanent:true}};
+    const context = {switchToHttp:()=>({getRequest:()=>request})};
+    assert.equal(await guard.canActivate(context),true);
+    assert.deepEqual(request.user.scopes,['users:update']);
+    token.response.scopes=[];
+    assert.equal(await guard.canActivate(context),true);
+    assert.deepEqual(request.user.scopes,[]);
+    token.response.expireAt=new Date(Date.now()+60000);
+    assert.equal(await guard.canActivate(context),false);
+    for (const expiry of [undefined, new Date(NaN), 'tomorrow']) {
+        token.response.expireAt=expiry;
+        assert.equal(await guard.canActivate(context),false);
+    }
+    token={isOk:false};
+    assert.equal(await guard.canActivate(context),false);
+});

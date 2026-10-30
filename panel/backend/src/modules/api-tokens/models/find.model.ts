@@ -4,7 +4,7 @@ export class FindAllApiTokensResponseModel {
     public tokens: {
         uuid: string;
         name: string;
-        expireAt: Date;
+        expireAt: Date | null;
         scopes: string[];
 
         createdAt: Date;

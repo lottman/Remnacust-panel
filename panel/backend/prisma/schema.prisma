@@ -130,7 +130,7 @@ model UserTraffic {
 model ApiTokens {
   uuid     String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name     String   @map("name")
-  expireAt DateTime @map("expire_at")
+  expireAt DateTime? @map("expire_at")
   scopes   String[] @default(["*"]) @map("scopes")
 
   createdAt DateTime @default(now()) @map("created_at")

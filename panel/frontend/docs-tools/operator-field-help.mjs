@@ -31,10 +31,10 @@ export const operatorFieldHelp = {
         '供管理员查看的记录说明，可填写服务条件或配置备注。'
     ],
     status: [
-        'ACTIVE — активен, DISABLED — отключён, EXPIRED — срок истёк, LIMITED — общая квота исчерпана. Для рабочего подключения также нужны действующий срок и доступ к хосту.',
-        'ACTIVE means active, DISABLED disabled, EXPIRED expired and LIMITED overall quota exhausted. A working connection also requires a valid expiry date and host access.',
-        'ACTIVE فعال، DISABLED غیرفعال، EXPIRED منقضی و LIMITED پایان سهمیه کلی است. اتصال به تاریخ معتبر و دسترسی هاست هم نیاز دارد.',
-        'ACTIVE 为启用，DISABLED 为停用，EXPIRED 为过期，LIMITED 为总配额耗尽。连接还需要有效期限和主机访问权限。'
+        'ACTIVE — активен, DISABLED — отключён, EXPIRED — срок истёк, LIMITED — общая квота исчерпана, FROZEN — доступ приостановлен с сохранением остатка срока до активации. Истёкший аккаунт заморозить нельзя. Для подключения нужны действующий срок, трафик и доступ к хосту.',
+        'ACTIVE means active, DISABLED disabled, EXPIRED expired, LIMITED quota exhausted, and FROZEN pauses access while retaining the remaining subscription lifetime until resumption. Expired accounts cannot be frozen. Connecting requires valid lifetime, traffic and host access.',
+        'ACTIVE فعال، DISABLED غیرفعال، EXPIRED منقضی، LIMITED پایان سهمیه و FROZEN توقف دسترسی با حفظ زمان باقی‌مانده تا فعال‌سازی است. حساب منقضی قابل تعلیق نیست. اتصال به زمان معتبر، ترافیک و دسترسی میزبان نیاز دارد.',
+        'ACTIVE 为启用，DISABLED 为停用，EXPIRED 为过期，LIMITED 为配额耗尽，FROZEN 为暂停访问并保留剩余订阅时长，直到恢复。已过期账户不能冻结。连接需要有效时长、流量和主机访问权限。'
     ],
     expireAt: [
         'Дата и время окончания подписки. Укажите будущую дату для действующей подписки и учитывайте часовой пояс, показанный в форме.',

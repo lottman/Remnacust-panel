@@ -128,6 +128,11 @@ exports.ERRORS = {
         message: 'Resume the frozen user before disabling',
         httpCode: 409,
     },
+    USER_FREEZE_EXPIRED: {
+        code: 'A902',
+        message: 'An expired subscription cannot be frozen',
+        httpCode: 409,
+    },
     USER_ALREADY_ENABLED: {
         code: 'A030',
         message: 'User already enabled',

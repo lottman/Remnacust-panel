@@ -7,5 +7,6 @@ export interface IJWTAuthPayload {
     scopes?: string[];
     jti?: string;
     exp?: number;
+    permanent?: boolean;
     authVersion?: string;
 }

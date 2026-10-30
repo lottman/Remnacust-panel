@@ -11,9 +11,10 @@ var CreateApiTokenCommand;
     CreateApiTokenCommand.TSQ_url = CreateApiTokenCommand.url;
     CreateApiTokenCommand.endpointDetails = (0, constants_1.getEndpointDetails)(api_1.API_TOKENS_ROUTES.CREATE, 'post', 'Create a new API token', { scope: 'create', kind: 'write' }, 'This endpoint is forbidden to use via "API-key". It can only be used with an admin JWT-token.');
     CreateApiTokenCommand.RequestBodySchema = zod_1.z.object({
-        name: zod_1.z.string().min(2).max(30).describe('Name of the API token'),
-        expiresInDays: zod_1.z.number().min(1).describe('Expiration days of the API token'),
-        scopes: zod_1.z.array(zod_1.z.string()).optional().default(['*']).describe('Scopes of the API token'),
+        name: zod_1.z.string().trim().min(2).max(30).describe('Name of the API token'),
+        expiresInDays: zod_1.z.number().int().min(1).max(365000).nullable()
+            .describe('Expiration in whole days; null explicitly creates a token without expiration'),
+        scopes: zod_1.z.array(zod_1.z.string().min(1).max(120)).max(512).optional().default([]).describe('Explicit scopes of the API token; omitted scopes grant no access'),
     });
     CreateApiTokenCommand.ResponseSchema = zod_1.z.object({
         response: api_tokens_schema_1.ApiTokensSchema.extend({

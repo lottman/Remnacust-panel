@@ -35,7 +35,7 @@ export const ApiTokenItem = ({ apiToken }: IProps) => {
 
     const isFull = apiToken.scopes.includes('*')
     const hasScopes = isFull || apiToken.scopes.length > 0
-    const isExpired = dayjs(apiToken.expireAt).isBefore(dayjs())
+    const isExpired = apiToken.expireAt !== null && dayjs(apiToken.expireAt).isBefore(dayjs())
 
     const getDotColor = () => {
         if (isFull) return 'var(--mantine-color-teal-5)'
@@ -72,7 +72,9 @@ export const ApiTokenItem = ({ apiToken }: IProps) => {
                 visibleFrom="sm"
                 fw={isExpired ? 600 : 400}
             >
-                {isExpired
+                {apiToken.expireAt === null
+                    ? t('api-token-editor.no-expiry')
+                    : isExpired
                     ? t('api-tokens-card.widget.expired')
                     : formatTimeUtil({
                           time: apiToken.expireAt,

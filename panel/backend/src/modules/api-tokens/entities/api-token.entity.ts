@@ -3,7 +3,7 @@ import { ApiTokens } from '@prisma/client';
 export class ApiTokenEntity implements ApiTokens {
     public uuid: string;
     public name: string;
-    public expireAt: Date;
+    public expireAt: Date | null;
     public scopes: string[];
 
     public createdAt: Date;

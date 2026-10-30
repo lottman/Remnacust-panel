@@ -134,7 +134,7 @@ test('password reset invalidates admin access through both guards', async () => 
     assert.equal(request.authenticatedFromBrowser, false);
 });
 
-test('real Passport strategy rejects alternate algorithms, tampering, expired and non-expiring JWTs', async () => {
+test('real Passport strategy rejects tampering and accepts non-expiring JWTs only for explicit permanent API tokens', async () => {
     const { JwtStrategy } = load(path.join(root, 'src/modules/auth/strategies/jwt.strategy.ts'), {
         '@common/config/app-config': {},
     });
@@ -147,8 +147,11 @@ test('real Passport strategy rejects alternate algorithms, tampering, expired an
     });
     const payload = { uuid: admin.uuid, role: 'API', username: null };
     assert.ok(await authenticate(jwt.sign(payload, secret, { expiresIn: '1h' })));
+    assert.ok(await authenticate(jwt.sign({...payload,permanent:true},secret)));
     for (const token of [
         jwt.sign(payload, secret),
+        jwt.sign({...payload,role:'ADMIN',permanent:true},secret),
+        jwt.sign({...payload,permanent:'true'},secret),
         jwt.sign(payload, secret, { expiresIn: -1 }),
         jwt.sign(payload, 'wrong-secret', { expiresIn: '1h' }),
         jwt.sign(payload, secret, { expiresIn: '1h', algorithm: 'HS384' }),

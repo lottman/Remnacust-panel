@@ -2149,7 +2149,11 @@
     "catalog-error": "Could not load permissions. Saving is disabled.",
     "retry": "Retry",
     "obsolete-scopes": "These permissions are no longer available and will be removed when saving:",
-    "search": "Search method, URL, scope or description"
+    "search": "Search method, URL, scope or description",
+    "no-expiry": "No expiration",
+    "no-expiry-description": "Valid until deleted. Permission changes take effect immediately.",
+    "users-preset": "Users",
+    "users-preset-description": "Users preset: create, update, freeze and resume users, manage traffic, subscription keys and HWID devices. Squad lists are read-only."
   },
   "layoutActions": {
     "oneCardPerRow": "One card per row",

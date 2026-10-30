@@ -15,7 +15,7 @@ export interface IServiceEvent {
     apiToken?: {
         name: string;
         uuid: string;
-        expireAt: Date;
+        expireAt: Date | null;
         scopes: string[];
     };
 }

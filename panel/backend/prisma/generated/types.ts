@@ -15,7 +15,7 @@ export type Admin = {
 export type ApiTokens = {
     uuid: Generated<string>;
     name: string;
-    expireAt: Timestamp;
+    expireAt: Timestamp | null;
     scopes: Generated<string[]>;
     createdAt: Generated<Timestamp>;
     updatedAt: Generated<Timestamp>;

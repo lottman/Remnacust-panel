@@ -37,7 +37,7 @@ export const ViewApiTokenContentWidget = ({ isMobile, token }: IProps) => {
     const { data: scopesData } = useGetScopes()
     const resources = scopesData?.resources ?? []
 
-    const isExpired = dayjs(token.expireAt).isBefore(dayjs())
+    const isExpired = token.expireAt !== null && dayjs(token.expireAt).isBefore(dayjs())
 
     const [expanded, setExpanded] = useState<Set<string>>(new Set())
 
@@ -80,7 +80,7 @@ export const ViewApiTokenContentWidget = ({ isMobile, token }: IProps) => {
                             {t('api-tokens-card.widget.col-expires')}
                         </Text>
                         <Text c={isExpired ? 'red.5' : 'gray.2'} className={classes.metaValue}>
-                            {formatTimeUtil({
+                            {token.expireAt === null ? t('api-token-editor.no-expiry') : formatTimeUtil({
                                 time: token.expireAt,
                                 template: 'TIME_FIRST_DATETIME',
                                 language: i18n.language

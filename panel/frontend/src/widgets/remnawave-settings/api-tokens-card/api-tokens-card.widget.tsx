@@ -109,6 +109,7 @@ export const ApiTokensCardWidget = (props: IProps) => {
 
                     <Tooltip label={t('common.action.create')}>
                         <ActionIcon
+                            aria-label={t('api-tokens-card.widget.create-api-token')}
                             onClick={() => {
                                 modals.open({
                                     title: (

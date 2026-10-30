@@ -17,9 +17,10 @@ export namespace CreateApiTokenCommand {
     );
 
     export const RequestBodySchema = z.object({
-        name: z.string().min(2).max(30).describe('Name of the API token'),
-        expiresInDays: z.number().min(1).describe('Expiration days of the API token'),
-        scopes: z.array(z.string()).optional().default(['*']).describe('Scopes of the API token'),
+        name: z.string().trim().min(2).max(30).describe('Name of the API token'),
+        expiresInDays: z.number().int().min(1).max(365000).nullable()
+            .describe('Expiration in whole days; null explicitly creates a token without expiration'),
+        scopes: z.array(z.string().min(1).max(120)).max(512).optional().default([]).describe('Explicit scopes of the API token; omitted scopes grant no access'),
     });
 
     export const ResponseSchema = z.object({

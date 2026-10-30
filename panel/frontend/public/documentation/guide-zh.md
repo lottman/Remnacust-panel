@@ -95,7 +95,7 @@ backups/ 保存备份及回滚历史，logs/ 保存操作日志，registry/ 保�
 
 ### 字段与控件
 
-- **状态**: ACTIVE 为启用，DISABLED 为停用，EXPIRED 为过期，LIMITED 为总配额耗尽。连接还需要有效期限和主机访问权限。
+- **状态**: ACTIVE 为启用，DISABLED 为停用，EXPIRED 为过期，LIMITED 为配额耗尽，FROZEN 为暂停访问并保留剩余订阅时长，直到恢复。已过期账户不能冻结。连接需要有效时长、流量和主机访问权限。
 - **到期时间**: 订阅到期日期和时间。有效订阅应选择未来日期，并注意表单显示的时区。
 - **Telegram 用户 ID**: 用户的数字 Telegram ID，不是用户名或备份聊天 ID。
 - **电子邮件**: 用户联系方式和搜索字段，不授予入站权限。
@@ -133,7 +133,7 @@ ACTIVE 表示其他条件满足时允许访问；DISABLED 表示已禁用；EXPI
 
 ### 字段与控件
 
-- **状态**: ACTIVE 为启用，DISABLED 为停用，EXPIRED 为过期，LIMITED 为总配额耗尽。连接还需要有效期限和主机访问权限。
+- **状态**: ACTIVE 为启用，DISABLED 为停用，EXPIRED 为过期，LIMITED 为配额耗尽，FROZEN 为暂停访问并保留剩余订阅时长，直到恢复。已过期账户不能冻结。连接需要有效时长、流量和主机访问权限。
 - **到期时间**: 订阅到期日期和时间。有效订阅应选择未来日期，并注意表单显示的时区。
 - **Telegram 用户 ID**: 用户的数字 Telegram ID，不是用户名或备份聊天 ID。
 - **电子邮件**: 用户联系方式和搜索字段，不授予入站权限。
@@ -1001,9 +1001,14 @@ INCY 获得不含查询参数的稳定 DAT URL。经过签名的文件选择位�
 
 只向可信集成提供令牌。泄露后删除并创建替代令牌。名称帮助确定使用它的服务，各客户访问控制由集成本身管理。
 
+### 用户管理令牌与永久访问
+
+“用户”预设允许创建、修改、冻结/恢复用户、重置流量、读取订阅密钥及管理 HWID 设备；内部及外部分组列表仅可读取。不包含面板设置、服务器、备份或令牌管理。冻结使用 用户 API 和 {"id":123,"status":"FROZEN"}，恢复使用 ACTIVE。需要 users:update、users:write 或 users:*。已过期账户不能冻结。创建时选择“永不过期”：expiresInDays: null 保存为 expireAt: null，并签发带显式 permanent 标记且没有 exp 的 JWT，不使用虚假的遥远日期。每次请求均检查数据库中的撤销状态和当前权限。编辑名称及权限不会改变令牌值和期限；更改期限请创建替代令牌后删除旧令牌。订阅页面最小权限仅为 system:metadata、subscriptions:subpage-config、subscription-page-configs:get、subscription-page-configs:list。仅在启用 Marzban 旧链接兼容时另加 users:by-username。
+
 ### 字段与控件
 
 - **API Tokens**: 管理您的 API Token用于程序访问。
+- **永不过期**: 删除前一直有效。权限变更立即生效。
 
 ## 语言与外观
 

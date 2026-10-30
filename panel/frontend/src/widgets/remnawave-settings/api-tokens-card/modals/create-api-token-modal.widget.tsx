@@ -4,6 +4,7 @@ import {
     Alert,
     Box,
     Button,
+    Checkbox,
     CopyButton,
     Flex,
     Group,
@@ -44,6 +45,7 @@ import { sleep } from '@shared/utils/misc'
 
 import classes from '../api-token-card.module.css'
 import { ScopeResourceRow } from './scope-resource-row'
+import { getUserManagementKeys, SUBSCRIPTION_PAGE_SCOPES } from './api-token-presets'
 import {
     buildScopes,
     expandScopesToKeys,
@@ -55,14 +57,6 @@ import {
 import { ViewApiTokenContentWidget } from './view-api-token-modal.widget'
 
 const DEFAULT_EXPIRES_IN_DAYS = 30
-
-const SUBPAGE_PRESET_KEYS = [
-    'subscription-page-configs:list',
-    'subscription-page-configs:get',
-    'subscriptions:subpage-config',
-    'system:metadata',
-    'users:by-username'
-]
 
 interface IProps {
     isMobile: boolean
@@ -91,6 +85,7 @@ export const CreateApiTokenContentWidget = ({ isMobile, token }: IProps) => {
     const [selectedEndpoints, setSelectedEndpoints] = useState<Set<string>>(new Set())
     const [expanded, setExpanded] = useState<Set<string>>(new Set())
     const [expiresInDays, setExpiresInDays] = useState<number | string>(DEFAULT_EXPIRES_IN_DAYS)
+    const [permanent, setPermanent] = useState(false)
     const [fullAccess, setFullAccess] = useState(token?.scopes.includes('*') ?? false)
     const [initialized, setInitialized] = useState(!token)
     const [search, setSearch] = useState('')
@@ -211,7 +206,12 @@ export const CreateApiTokenContentWidget = ({ isMobile, token }: IProps) => {
 
     const presetSubpage = () => {
         setFullAccess(false)
-        setSelectedEndpoints(new Set(SUBPAGE_PRESET_KEYS))
+        setSelectedEndpoints(new Set(SUBSCRIPTION_PAGE_SCOPES))
+    }
+
+    const presetUsers = () => {
+        setFullAccess(false)
+        setSelectedEndpoints(new Set(getUserManagementKeys(resources)))
     }
 
     const handlePasteScopes = async () => {
@@ -259,14 +259,14 @@ export const CreateApiTokenContentWidget = ({ isMobile, token }: IProps) => {
         createApiToken({
             variables: {
                 name: tokenNameField.getValue(),
-                expiresInDays: Number(expiresInDays),
+                expiresInDays: permanent ? null : Number(expiresInDays),
                 scopes: submittedScopes
             }
         })
     }
 
     const isNameInvalid = !!tokenNameField.error || tokenNameField.getValue().trim() === ''
-    const isExpiresInvalid = !Number.isInteger(Number(expiresInDays)) || Number(expiresInDays) < 1
+    const isExpiresInvalid = !permanent && !CreateApiTokenCommand.RequestBodySchema.shape.expiresInDays.safeParse(Number(expiresInDays)).success
     const canCreate =
         !isNameInvalid &&
         (Boolean(token) || !isExpiresInvalid) &&
@@ -317,7 +317,8 @@ export const CreateApiTokenContentWidget = ({ isMobile, token }: IProps) => {
                         allowNegative={false}
                         clampBehavior="strict"
                         label={t('api-tokens-card.widget.expires-in-days')}
-                        max={999999}
+                        disabled={permanent}
+                        max={365000}
                         min={1}
                         onChange={setExpiresInDays}
                         required
@@ -327,7 +328,24 @@ export const CreateApiTokenContentWidget = ({ isMobile, token }: IProps) => {
                 )}
             </Flex>
 
+            {!token && (
+                <Checkbox
+                    checked={permanent}
+                    label={t('api-token-editor.no-expiry')}
+                    description={t('api-token-editor.no-expiry-description')}
+                    onChange={(event) => setPermanent(event.currentTarget.checked)}
+                />
+            )}
+
             <Group gap="xs">
+                <Button
+                    disabled={!scopesData || isError || !initialized}
+                    onClick={presetUsers}
+                    size="xs"
+                    variant="default"
+                >
+                    {t('api-token-editor.users-preset')}
+                </Button>
                 <Button
                     leftSection={<TbEye size={16} />}
                     disabled={!scopesData || isError || !initialized}
@@ -356,6 +374,8 @@ export const CreateApiTokenContentWidget = ({ isMobile, token }: IProps) => {
                     {uiText('subpage-9c141bb')}
                 </Button>
             </Group>
+
+            <Text c="dimmed" size="xs">{t('api-token-editor.users-preset-description')}</Text>
 
             <Text c="dimmed" size="xs">
                 {t(fullAccess ? 'api-token-editor.full-description' : 'api-token-editor.exact-description')}

@@ -3,7 +3,7 @@ import { ApiTokenEntity } from '../entities/api-token.entity';
 export class CreateApiTokenResponseModel {
     public readonly uuid: string;
     public readonly name: string;
-    public readonly expireAt: Date;
+    public readonly expireAt: Date | null;
     public readonly scopes: string[];
     public readonly createdAt: Date;
     public readonly updatedAt: Date;

@@ -17,10 +17,11 @@ export class SignApiTokenHandler implements ICommandHandler<SignApiTokenCommand,
             uuid: command.uuid,
             username: null,
             role: ROLE.API,
+            ...(command.expireInDays === null ? { permanent: true } : {}),
         };
 
         return ok(
-            this.jwtService.sign(payload, {
+            this.jwtService.sign(payload, command.expireInDays === null ? {} : {
                 expiresIn: `${command.expireInDays}d`,
             }),
         );

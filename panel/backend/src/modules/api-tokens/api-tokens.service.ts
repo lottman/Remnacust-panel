@@ -52,7 +52,7 @@ export class ApiTokensService {
             }
 
             const uuid = randomUUID();
-            const expireAt = dayjs().utc().add(expiresInDays, 'days').toDate();
+            const expireAt = expiresInDays === null ? null : dayjs().utc().add(expiresInDays, 'days').toDate();
 
             const token = await this.commandBus.execute(
                 new SignApiTokenCommand(uuid, expiresInDays),

@@ -74,7 +74,7 @@ ${separator}
 <tg-emoji emoji-id='5334882760735598374'>📝</tg-emoji> <b>#api_token_created</b>
 ${separator}
 <b>Name:</b> <code>${escapeText(e.data.apiToken!.name)}</code>
-<b>Expire at:</b> <tg-time unix="${dayjs(e.data.apiToken!.expireAt).unix()}" format="DT">${dayjs(e.data.apiToken!.expireAt).format('DD.MM.YYYY HH:mm:ss')}</tg-time>
+<b>Expire at:</b> ${e.data.apiToken!.expireAt === null ? 'Never' : `<tg-time unix="${dayjs(e.data.apiToken!.expireAt).unix()}" format="DT">${dayjs(e.data.apiToken!.expireAt).format('DD.MM.YYYY HH:mm:ss')}</tg-time>`}
 <b>Scopes:</b> <code>${e.data.apiToken!.scopes.length}</code>
 <b>UUID:</b> <code>${e.data.apiToken!.uuid}</code>`,
     }),
@@ -83,7 +83,7 @@ ${separator}
 <tg-emoji emoji-id='5334882760735598374'>📝</tg-emoji> <b>#api_token_deleted</b>
 ${separator}
 <b>Name:</b> <code>${escapeText(e.data.apiToken!.name)}</code>
-<b>Expire at:</b> <tg-time unix="${dayjs(e.data.apiToken!.expireAt).unix()}" format="DT">${dayjs(e.data.apiToken!.expireAt).format('DD.MM.YYYY HH:mm:ss')}</tg-time>
+<b>Expire at:</b> ${e.data.apiToken!.expireAt === null ? 'Never' : `<tg-time unix="${dayjs(e.data.apiToken!.expireAt).unix()}" format="DT">${dayjs(e.data.apiToken!.expireAt).format('DD.MM.YYYY HH:mm:ss')}</tg-time>`}
 <b>Scopes:</b> <code>${e.data.apiToken!.scopes.length}</code>
 <b>UUID:</b> <code>${e.data.apiToken!.uuid}</code>`,
     }),

@@ -95,7 +95,7 @@ Select an already registered device, format and User-Agent in the device card an
 
 ### Fields and controls
 
-- **Status**: ACTIVE means active, DISABLED disabled, EXPIRED expired and LIMITED overall quota exhausted. A working connection also requires a valid expiry date and host access.
+- **Status**: ACTIVE means active, DISABLED disabled, EXPIRED expired, LIMITED quota exhausted, and FROZEN pauses access while retaining the remaining subscription lifetime until resumption. Expired accounts cannot be frozen. Connecting requires valid lifetime, traffic and host access.
 - **Expiry date**: Subscription expiry date and time. Choose a future date for a valid subscription and use the time zone shown in the form.
 - **Telegram ID**: Numeric user Telegram ID, distinct from a username or backup-delivery chat ID.
 - **Email**: User contact/search field; it does not grant inbound access.
@@ -133,7 +133,7 @@ Squad, traffic, expiry, device and status changes affect each recipient. Review 
 
 ### Fields and controls
 
-- **Status**: ACTIVE means active, DISABLED disabled, EXPIRED expired and LIMITED overall quota exhausted. A working connection also requires a valid expiry date and host access.
+- **Status**: ACTIVE means active, DISABLED disabled, EXPIRED expired, LIMITED quota exhausted, and FROZEN pauses access while retaining the remaining subscription lifetime until resumption. Expired accounts cannot be frozen. Connecting requires valid lifetime, traffic and host access.
 - **Expiry date**: Subscription expiry date and time. Choose a future date for a valid subscription and use the time zone shown in the form.
 - **Telegram ID**: Numeric user Telegram ID, distinct from a username or backup-delivery chat ID.
 - **Email**: User contact/search field; it does not grant inbound access.
@@ -1001,9 +1001,14 @@ Grant access only to the required sections and actions. Read access retrieves da
 
 Share the token only with a trusted integration. If exposed, delete it and create a replacement. The token name helps identify which service uses the access. Access for individual customers is managed by the integration itself.
 
+### User-management bots and permanent access
+
+The Users preset permits creating, editing, freezing/resuming users, resetting traffic, reading subscription keys and managing HWID devices; internal/external squad lists are read-only. It excludes panel settings, servers, backups and token administration. In the user API, set status FROZEN to freeze and ACTIVE to resume. Required scope: users:update, users:write or users:*. Expired accounts cannot be frozen. When creating a token select No expiration: expiresInDays: null stores expireAt: null and signs a JWT without exp with an explicit permanent marker. No fabricated distant date is used. Every request checks deletion and current scopes in the database. Editing names/permissions preserves token value and expiry; create a replacement and delete the old token to change lifetime. The minimum subscription-page preset contains only system:metadata, subscriptions:subpage-config, subscription-page-configs:get and subscription-page-configs:list. Add users:by-username separately only for enabled Marzban legacy-link compatibility.
+
 ### Fields and controls
 
 - **API tokens**: Manage your API access tokens for programmatic access.
+- **No expiration**: Valid until deleted. Permission changes take effect immediately.
 
 ## Language and appearance
 

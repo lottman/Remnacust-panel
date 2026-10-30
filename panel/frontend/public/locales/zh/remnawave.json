@@ -3106,7 +3106,11 @@
         "loading": "正在加载权限…",
         "catalog-error": "无法加载权限。保存已禁用。",
         "obsolete-scopes": "以下权限已不可用，保存时将移除：",
-        "search": "搜索方法、URL、权限范围或描述"
+        "search": "搜索方法、URL、权限范围或描述",
+        "no-expiry": "永不过期",
+        "no-expiry-description": "删除前一直有效。权限变更立即生效。",
+        "users-preset": "用户",
+        "users-preset-description": "用户权限：创建、修改、冻结和恢复用户，管理流量、订阅密钥及 HWID 设备。分组列表仅可读取。"
     },
     "limitsUnlimited": {
         "grant": "授予无限流量",

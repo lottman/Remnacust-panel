@@ -149,6 +149,11 @@ export declare const ERRORS: {
         readonly message: "Resume the frozen user before disabling";
         readonly httpCode: 409;
     };
+    readonly USER_FREEZE_EXPIRED: {
+        readonly code: "A902";
+        readonly message: "An expired subscription cannot be frozen";
+        readonly httpCode: 409;
+    };
     readonly USER_ALREADY_ENABLED: {
         readonly code: "A030";
         readonly message: "User already enabled";

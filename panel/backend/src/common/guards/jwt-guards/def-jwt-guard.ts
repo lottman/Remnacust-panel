@@ -99,7 +99,15 @@ export class JwtDefaultGuard extends AuthGuard('registeredUserJWT') {
         // Authorization must observe revocation and current scopes. A cache fill
         // racing a deletion can otherwise resurrect a token for the cache TTL.
         const token = await this.getTokenByUuid({ uuid: apiTokenUuid });
-        if (!token.isOk || token.response.expireAt <= new Date()) {
+        if (!token.isOk) {
+            return false;
+        }
+        const expiry = token.response.expireAt;
+        if (expiry !== null && (!(expiry instanceof Date) ||
+            !Number.isFinite(expiry.getTime()) || expiry <= new Date())) {
+            return false;
+        }
+        if (user.permanent === true && expiry !== null) {
             return false;
         }
 

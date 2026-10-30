@@ -21,7 +21,9 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'registeredUserJWT')
     async validate(JWTPrivatePayload: IJWTAuthPayload): Promise<IJWTAuthPayload> {
         if (!JWTPrivatePayload || typeof JWTPrivatePayload !== 'object' ||
             typeof JWTPrivatePayload.uuid !== 'string' || !JWTPrivatePayload.uuid ||
-            !Number.isSafeInteger(JWTPrivatePayload.exp)) {
+            !(Number.isSafeInteger(JWTPrivatePayload.exp) ||
+                (JWTPrivatePayload.role === 'API' && JWTPrivatePayload.permanent === true &&
+                    JWTPrivatePayload.exp === undefined))) {
             throw new UnauthorizedException();
         }
         return JWTPrivatePayload;

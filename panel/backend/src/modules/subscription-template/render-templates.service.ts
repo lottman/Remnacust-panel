@@ -6,6 +6,7 @@ import { MihomoGeneratorService } from './generators/mihomo.generator.service';
 import { SingBoxGeneratorService } from './generators/singbox.generator.service';
 import { XrayJsonGeneratorService } from './generators/xray-json.generator.service';
 import { XrayGeneratorService } from './generators/xray.generator.service';
+import { compactIncySubscription } from './geofiles/incy-config';
 import {
     xrayGeofileClient,
     XrayGeofileDelivery,
@@ -143,6 +144,9 @@ export class RenderTemplatesService {
                         'x-remnacust-geofiles-delivery': `inline; reason=${error.reason}`,
                     };
                 }
+                // Collect DAT references before compacting StringLists: the
+                // delivery collector must still see each individual geotag.
+                if (client === 'incy') subscription = compactIncySubscription(subscription);
                 return {
                     subscription,
                     contentType: SUBSCRIPTION_CONFIG_TYPES['XRAY_JSON'].CONTENT_TYPE,

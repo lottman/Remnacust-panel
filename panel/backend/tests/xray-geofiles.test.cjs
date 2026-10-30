@@ -274,6 +274,41 @@ test('request-local renderer delivers Happ and INCY profiles, preserves manual h
     assert.match(later.headersToApply.routing, /^happ:/);
 });
 
+test('INCY compaction runs after geofile collection, including manual routing and bundle fallback', async () => {
+    const networks = Array.from({length:26000}, (_,i)=>`100.${i >> 8}.${i & 255}.0/24`);
+    let failBundle = false;
+    const generator = {async generateConfig({geofileDelivery}) {
+        const domain = geofileDelivery ? geofileDelivery.register('geosite',
+            {id,categories:['example'],target:'DIRECT',downloadToClient:true},
+            async()=>{if(failBundle) throw Error('bundle');return 'https://sub.test/rules.dat';})
+            : ['domain:example.com'];
+        return JSON.stringify([{inbounds:[],outbounds:[],routing:{rules:[
+            {ip:networks,outboundTag:'direct'}, {domain,outboundTag:'direct'}]}}]);
+    }};
+    const renderer = new RenderTemplatesService({resolveProxyConfig:async()=>[]},null,null,null,null,generator);
+    for (const mode of ['download','manual','settings','fallback','other-client']) {
+        failBundle = mode === 'fallback';
+        const context = {userAgent:mode==='other-client'?'Happ/4.0.0':'INCY/2.6.2/iOS',
+            matchedResponseType:'XRAY_JSON', isExtendedClient:true, subscriptionSettings:{}};
+        if(mode==='manual') context.headersToApply={Routing:'off'};
+        if(mode==='settings') context.subscriptionSettings.customResponseHeaders={routing:'off'};
+        const output = await renderer.generateSubscription({srrContext:context,user:{id:42},hosts:[]});
+        const config=JSON.parse(output.subscription)[0];
+        if(mode==='other-client') {
+            assert.deepEqual(config.routing.rules[0].ip,networks);
+            continue;
+        }
+        assert.deepEqual(config.routing.rules[0].ip.split(','),networks,mode);
+        assert.ok(Buffer.byteLength(JSON.stringify(config,null,4))<500_000,mode);
+        if(mode==='download') assert.match(context.headersToApply.routing,/^incy:\/\/routing\/onadd\//);
+        if(mode==='manual') assert.deepEqual(context.headersToApply,{Routing:'off'});
+        if(mode==='fallback') {
+            assert.equal(context.headersToApply.routing,undefined);
+            assert.equal(context.headersToApply['x-remnacust-geofiles-delivery'],'inline; reason=bundle');
+        }
+    }
+});
+
 test('INCY rounds the longest requested interval up to supported whole hours', async () => {
     const delivery = new XrayGeofileDelivery('incy');
     const values = [1800, 7201].flatMap((interval, index) =>

@@ -1,4 +1,8 @@
-import { injectedPrefixesCollide, injectedTagMatches, RemnawaveInjectorSchema } from '@remnawave/backend-contract'
+import {
+    injectedPrefixesCollide,
+    injectedTagMatches,
+    RemnawaveInjectorSchema
+} from '@remnawave/backend-contract'
 import { applyEdits, modify } from 'jsonc-parser'
 
 // The editor preserves arbitrary legacy Xray fields; known containers are checked in parseTemplate.
@@ -200,7 +204,16 @@ export function removeAutoselectGroup(text: string, group: AutoselectGroup): str
 }
 
 export function editTemplate(text: string, path: (string | number)[], value: unknown): string {
-    parseTemplate(text)
+    const config = parseTemplate(text)
+    // jsonc-parser cannot delete a child of a missing container. Removing an
+    // absent setting must preserve the original draft and its formatting.
+    if (value === undefined) {
+        let current: unknown = config
+        for (const key of path) {
+            if (!current || typeof current !== 'object' || !Object.hasOwn(current, key)) return text
+            current = (current as JsonObject)[key]
+        }
+    }
     return applyEdits(
         text,
         modify(text, path, value, {
@@ -460,7 +473,11 @@ export function renameBalancer(text: string, index: number, name: string): strin
             next = editTemplate(next, ['routing', 'rules', ruleIndex, 'balancerTag'], name)
     for (const [assignmentIndex, assignment] of (config.remnawave?.assignments ?? []).entries())
         if (assignment.balancerTag === old)
-            next = editTemplate(next, ['remnawave', 'assignments', assignmentIndex, 'balancerTag'], name)
+            next = editTemplate(
+                next,
+                ['remnawave', 'assignments', assignmentIndex, 'balancerTag'],
+                name
+            )
     if (config.remnawave?.assignTo?.balancerTag === old)
         next = editTemplate(next, ['remnawave', 'assignTo', 'balancerTag'], name)
     return remapGeofileTargets(next, old, name)
@@ -474,7 +491,13 @@ export function removeBalancer(text: string, index: number): string {
         if (config.routing.rules[rule].balancerTag === tag)
             next = editTemplate(next, ['routing', 'rules', rule], undefined)
     if (config.remnawave?.assignments)
-        next = editTemplate(next, ['remnawave', 'assignments'], config.remnawave.assignments.filter((assignment: JsonObject) => assignment.balancerTag !== tag))
+        next = editTemplate(
+            next,
+            ['remnawave', 'assignments'],
+            config.remnawave.assignments.filter(
+                (assignment: JsonObject) => assignment.balancerTag !== tag
+            )
+        )
     if (config.remnawave?.assignTo?.balancerTag === tag)
         next = editTemplate(next, ['remnawave', 'assignTo'], undefined)
     return remapGeofileTargets(next, tag, '')
@@ -563,16 +586,29 @@ export function validationPath(config: JsonObject): string | null {
         .filter(Boolean)
     for (const [index, pool] of poolsOf(config).entries()) {
         const prefix = pool.tagPrefix
-        if (prefix && (staticTags.some((tag: unknown) => typeof tag === 'string' && injectedTagMatches(prefix, tag)) || poolsOf(config).some((other, otherIndex) =>
-            index !== otherIndex && other.tagPrefix &&
-            injectedPrefixesCollide(prefix, other.tagPrefix))))
+        if (
+            prefix &&
+            (staticTags.some(
+                (tag: unknown) => typeof tag === 'string' && injectedTagMatches(prefix, tag)
+            ) ||
+                poolsOf(config).some(
+                    (other, otherIndex) =>
+                        index !== otherIndex &&
+                        other.tagPrefix &&
+                        injectedPrefixesCollide(prefix, other.tagPrefix)
+                ))
+        )
             return `remnawave.injectHosts.${index}.tagPrefix`
     }
     const assignedHosts = new Set<string>()
     const assignedBalancers = new Set<string>()
     for (const [index, assignment] of (config.remnawave?.assignments ?? []).entries()) {
-        if (assignedBalancers.has(assignment.balancerTag) ||
-            !config.routing?.balancers?.some((item: JsonObject) => item.tag === assignment.balancerTag))
+        if (
+            assignedBalancers.has(assignment.balancerTag) ||
+            !config.routing?.balancers?.some(
+                (item: JsonObject) => item.tag === assignment.balancerTag
+            )
+        )
             return `remnawave.assignments.${index}.balancerTag`
         assignedBalancers.add(assignment.balancerTag)
         for (const host of assignment.hosts ?? []) {

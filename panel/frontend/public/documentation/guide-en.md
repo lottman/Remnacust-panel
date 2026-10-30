@@ -85,6 +85,10 @@ Set status, expiry, subscription traffic quota, reset strategy, internal squads 
 
 Before saving, check squads and subscription expiry. Then verify the status and date in the detail view. A subscription ends at the specified time; the date indicator’s color does not change the expiry.
 
+### How expiry is checked
+
+The panel scheduler enqueues an expiry check every 30 seconds in USERS_WATCHDOG_QUEUE. Overdue ACTIVE and LIMITED users become EXPIRED and node access is synchronized. No extra crontab is needed. The scheduler, queue worker, Valkey and database must be running; stopping a worker delays execution. FROZEN users are excluded from expiry: the saved remainder is expireAt minus frozenAt, and activation computes a new expiry from the current time. No continuous database date rewrite is required. Scheduled traffic resets follow their own schedule and never unfreeze users.
+
 ### Freeze a subscription
 
 Choose Freeze in the user menu: ordinary access is paused and the remaining lifetime is retained. Two days remaining stay two days until activation. Resuming sets the new expiry from that remainder; repeating Freeze does not change it. Zero remaining time or an exhausted quota does not grant access. Extending adds to the remainder. Expired subscriptions cannot be frozen. The open menu disables Freeze automatically at expiry; the saved remainder is formatted independently of the current date. A blue saved remainder replaces the date editor. Active expiry warnings turn yellow at three days and red on expiry. Freezing itself does not reset usage; scheduled traffic resets continue. The state survives restarts and export/import. Bulk freezes synchronize each user’s device access through the queue.
@@ -660,7 +664,7 @@ selector.type supports uuids, exact tags, tagRegex, remarkRegex and sameTagAsRec
 
 ### Assignment and balancing
 
-In Where to use autoselect, choose a specific selection and its recipients. remnawave.assignments contains balancerTag, hosts and tags. Direct host assignment beats a tag match; an explicit template in the host card beats another template. Source pools remain limited by user access. Renaming or deleting a balancer updates its assignments. Legacy assignTo remains readable; choose its selection when editing. The card menu can duplicate any supported template format: settings, draft, tags and geofile references are preserved, while recipient assignments are cleared. Save remains available with code errors; invalid content stays a draft. Error paths identify the pool and reveal its field in code. The failed-probe fraction tolerance is between 0 and 1: 0.01 means 1%. Zero disables this check. A numeric value outside 0–1 is preserved in JSON; Xray clamps it internally when reading the configuration (for example, 2 becomes 1).
+In Where to use autoselect, choose a specific selection and its recipients. remnawave.assignments contains balancerTag and a recipient list. In the GUI, choose Hosts or Tags first; only that list is shown. Switching mode removes the other list from this assignment. Existing mixed assignments show a warning and change only after an explicit choice. Direct host assignment beats a tag match; an explicit template in the host card beats another template. Source pools remain limited by user access. Renaming or deleting a balancer updates its assignments. Legacy assignTo remains readable; choose its selection when editing. The card menu can duplicate any supported template format: settings, draft, tags and geofile references are preserved, while recipient assignments are cleared. Save remains available with code errors; invalid content stays a draft. Error paths identify the pool and reveal its field in code. The failed-probe fraction tolerance is between 0 and 1: 0.01 means 1%. Zero disables this check. A numeric value outside 0–1 is preserved in JSON; Xray clamps it internally when reading the configuration (for example, 2 becomes 1).
 
 ### History and recovery
 
@@ -713,6 +717,10 @@ Ready-made datasets is one library for every template: PC uploads, URL imports a
 ### If Happ does not download the file
 
 V2Fly DAT is supported. A full JSON subscription with a routing header is required. For the regular subscription URL, enable “Serve JSON at base subscription” in subscription settings, or use a URL ending in /json. Response rules and external squads can override the format. Save the switch in the template actually used: a template selected in the host card takes priority. The editor shows the global JSON setting and opens settings in a new tab, keeping the draft. After saving, refresh the subscription in the app. Update the panel and a separately installed subscription page. In 1.1.7.51 compact category names reduce profile size; old signed URLs remain supported. Refresh the subscription and reconnect. If downloading does not start, check the Remnacust profile, x-remnacust-geofiles-delivery header and app logs. Incompatible settings or size limits trigger inline rules instead of a separate download.
+
+### Subscription refresh and personal links
+
+If a client still shows an old error after a panel release, verify that the subscription itself refreshed: when HTTPS on its old domain fails, the app keeps its saved configuration. Retain the old domain and certificate while migrating links; changing the panel address does not migrate installed subscriptions. Update a separately installed subscription page together with the panel. Personal /device/ links are bound to the subscription and HWID; the panel checks their signature, device block and user access on every request. Keep these links private. INCY receives long inline lists in lossless Xray string form; the size budget includes JSON formatting. Disabled DAT downloads are never enabled automatically.
 
 ### Selection and geofile editor workflow
 

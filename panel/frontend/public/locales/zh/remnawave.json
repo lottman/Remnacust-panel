@@ -3427,8 +3427,8 @@
         "recipients-title": "此自动选择的显示位置",
         "recipients-help": "在此处选择的订阅主机上使用“{{name}}”。客户端可选择的服务器在上方配置。",
         "recipient-host-placeholder": "选择订阅主机",
-        "recipient-tag-placeholder": "或选择主机标签",
-        "recipients-empty-help": "留空时不创建显式分配，使用模板的常规设置。",
+        "recipient-tag-placeholder": "选择主机标签",
+        "recipients-empty-help": "空列表不会创建显式分配，仍使用模板的常规设置。",
         "legacy-assignment-title": "关联现有分配",
         "legacy-assignment-row": "主机和标签：{{count}}",
         "servers-title": "可选服务器",
@@ -3436,7 +3436,9 @@
         "load-settings": "负载评估设置",
         "pool-count": "符合当前筛选：{{count}}",
         "pool-hosts-help": "客户端可选择的服务器。",
-        "priority-summary": "客户端按顺序选择首个可用服务器。切换仅影响新连接。"
+        "priority-summary": "客户端按顺序选择首个可用服务器。切换仅影响新连接。",
+        "assignment-mode": "分配依据",
+        "assignment-mixed": "此旧分配同时包含主机和标签。请选择一种方式，保留其列表并移除另一列表。"
     },
     "template-history": {
         "title": "历史",

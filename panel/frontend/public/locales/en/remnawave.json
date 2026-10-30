@@ -3427,8 +3427,8 @@
     "recipients-title": "Where this selection appears",
     "recipients-help": "Use “{{name}}” on the subscription hosts selected here. The servers the client chooses between are configured above.",
     "recipient-host-placeholder": "Choose subscription hosts",
-    "recipient-tag-placeholder": "Or choose host tags",
-    "recipients-empty-help": "Empty fields create no explicit assignment; normal template settings apply.",
+    "recipient-tag-placeholder": "Choose host tags",
+    "recipients-empty-help": "An empty list creates no explicit assignment; normal template settings apply.",
     "legacy-assignment-title": "Link an existing assignment",
     "legacy-assignment-row": "Hosts and tags: {{count}}",
     "servers-title": "Available servers",
@@ -3436,7 +3436,9 @@
     "load-settings": "Load evaluation settings",
     "pool-count": "Matching configured filters: {{count}}",
     "pool-hosts-help": "Servers the client will choose between.",
-    "priority-summary": "The client uses the first available server in order. Switching affects new connections."
+    "priority-summary": "The client uses the first available server in order. Switching affects new connections.",
+    "assignment-mode": "Assign by",
+    "assignment-mixed": "This existing assignment contains both hosts and tags. Choose one mode to keep its list and remove the other."
   },
   "template-history": {
     "title": "History",

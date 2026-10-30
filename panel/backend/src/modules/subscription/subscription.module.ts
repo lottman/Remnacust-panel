@@ -55,6 +55,10 @@ export class SubscriptionModule implements NestModule {
                     path: `${SUBSCRIPTION_CONTROLLER}${SUBSCRIPTION_ROUTES.GET}/:shortUuid/device/:token`,
                     method: RequestMethod.GET,
                 },
+                {
+                    path: `${SUBSCRIPTION_CONTROLLER}${SUBSCRIPTION_ROUTES.GET}/:shortUuid/device/:token/:clientType`,
+                    method: RequestMethod.GET,
+                },
                 // ...REQUEST_TEMPLATE_TYPE_VALUES.map((clientType) => ({
                 //     path: `${SUBSCRIPTION_CONTROLLER}${SUBSCRIPTION_ROUTES.GET}/:shortUuid/${clientType}`,
                 //     method: RequestMethod.GET,

@@ -2,6 +2,12 @@ import { editTemplate, parseTemplate, type JsonObject } from './autoselect-model
 
 export type Assignment = JsonObject & { hosts?: string[]; tags?: string[]; balancerTag?: string }
 
+export function assignmentMode(assignment?: Assignment): 'hosts' | 'tags' | 'mixed' | undefined {
+    const hosts = !!assignment?.hosts?.length
+    const tags = !!assignment?.tags?.length
+    return hosts && tags ? 'mixed' : hosts ? 'hosts' : tags ? 'tags' : undefined
+}
+
 export function templateAssignments(config: JsonObject): Assignment[] {
     return [
         ...(config.remnawave?.assignments ?? []),
@@ -31,6 +37,7 @@ export function setAssignment(
     const rows = templateAssignments(config)
     const current = assignmentFor(config, tag)
     const replacement = { ...current, balancerTag: tag, [field]: [...new Set(values)] }
+    delete replacement[field === 'hosts' ? 'tags' : 'hosts']
     const next = rows.filter((row) => row !== current)
     if ((replacement.hosts?.length ?? 0) || (replacement.tags?.length ?? 0)) {
         // Preserve assignment precedence when editing a row in place.

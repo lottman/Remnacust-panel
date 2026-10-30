@@ -55,6 +55,7 @@ export class GeofilesService {
     private active = 0;
     private compiling = 0;
     private readonly compiled = new Map<string, DatRules>();
+    private readonly compilingByKey = new Map<string, Promise<DatRules>>();
     private readonly bundled = new Map<string, Buffer>();
     private bundling = 0;
     private readonly base: string;
@@ -353,20 +354,28 @@ export class GeofilesService {
         const key = file.id + ':' + file.sha256 + ':' + JSON.stringify(categories),
             cached = this.compiled.get(key);
         if (cached) return cached;
+        const pending = this.compilingByKey.get(key);
+        if (pending) return pending;
         if (this.compiling >= 2) throw new ServiceUnavailableException('geofile-busy');
         this.compiling++;
-        try {
-            const rules = compileDat(
-                await this.readActive(file),
-                file.kind as 'geoip' | 'geosite',
-                categories,
-            );
-            if (this.compiled.size >= 32) this.compiled.delete(this.compiled.keys().next().value!);
-            this.compiled.set(key, rules);
-            return rules;
-        } finally {
-            this.compiling--;
-        }
+        const operation = (async () => {
+            try {
+                const rules = compileDat(
+                    await this.readActive(file),
+                    file.kind as 'geoip' | 'geosite',
+                    categories,
+                );
+                if (this.compiled.size >= 32)
+                    this.compiled.delete(this.compiled.keys().next().value!);
+                this.compiled.set(key, rules);
+                return rules;
+            } finally {
+                this.compiling--;
+                this.compilingByKey.delete(key);
+            }
+        })();
+        this.compilingByKey.set(key, operation);
+        return operation;
     }
 
     public async configureRefresh(

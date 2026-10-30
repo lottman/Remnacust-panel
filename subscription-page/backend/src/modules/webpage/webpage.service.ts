@@ -239,7 +239,7 @@ export class WebpageService implements OnApplicationBootstrap {
                     panelData: Buffer.from(JSON.stringify(subscriptionData)).toString('base64'),
                 }),
             );
-        } catch (error) {
+        } catch {
             if (!res.destroyed && !abort.signal.aborted) {
                 this.logger.error('Unable to render subscription page');
                 sendWebpageError(req, res, 503);

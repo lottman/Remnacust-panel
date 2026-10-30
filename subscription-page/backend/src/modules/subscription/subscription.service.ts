@@ -19,9 +19,12 @@ export class SubscriptionService {
         res: Response,
         shortUuid: string,
         clientType?: TRequestTemplateTypeKeys,
+        personalToken?: string,
     ): Promise<void> {
         const abort = new AbortController();
-        const onClose = () => { if (!res.writableEnded) abort.abort(); };
+        const onClose = () => {
+            if (!res.writableEnded) abort.abort();
+        };
         res.once('close', onClose);
         try {
             const subscriptionDataResponse = await this.axiosService.getSubscription(
@@ -31,6 +34,7 @@ export class SubscriptionService {
                 !!clientType,
                 clientType,
                 abort.signal,
+                personalToken,
             );
 
             if (!subscriptionDataResponse) {
@@ -46,7 +50,7 @@ export class SubscriptionService {
 
             res.status(200).send(subscriptionDataResponse.subscription);
             return;
-        } catch (error) {
+        } catch {
             this.logger.error('Subscription delivery failed');
 
             if (!res.destroyed) {

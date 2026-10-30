@@ -1,10 +1,10 @@
-import type { IncomingHttpHeaders } from 'node:http';
-
 import axios, { AxiosError, AxiosInstance, RawAxiosResponseHeaders } from 'axios';
+import { Agent as HttpAgent, type IncomingHttpHeaders } from 'node:http';
+import { Agent as HttpsAgent } from 'node:https';
 import { exit } from 'node:process';
 import { table } from 'table';
 
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 
 import {
     GetMetadataCommand,
@@ -21,19 +21,35 @@ import { TypedConfigService } from '@common/config/app-config';
 import { IGNORED_HEADERS } from '@common/constants';
 
 import { ICommandResponse } from '../types/command-response.type';
+import { subscriptionRequestHeaders } from './subscription-request-headers';
 
 @Injectable()
-export class AxiosService implements OnModuleInit {
+export class AxiosService implements OnModuleInit, OnModuleDestroy {
     private readonly logger = new Logger(AxiosService.name);
     private subpageVersion = __RW_SUBPAGE_VERSION__;
 
     public axiosInstance: AxiosInstance;
+    private readonly httpAgent = new HttpAgent({
+        keepAlive: true,
+        maxSockets: 32,
+        maxFreeSockets: 8,
+        timeout: 10_000,
+    });
+    private readonly httpsAgent = new HttpsAgent({
+        keepAlive: true,
+        maxSockets: 32,
+        maxFreeSockets: 8,
+        timeout: 10_000,
+    });
 
     constructor(private readonly configService: TypedConfigService) {
         this.axiosInstance = axios.create({
             baseURL: this.configService.getOrThrow('REMNAWAVE_PANEL_URL'),
             timeout: 10_000,
             maxContentLength: 16 * 1024 * 1024,
+            maxRedirects: 0,
+            httpAgent: this.httpAgent,
+            httpsAgent: this.httpsAgent,
             headers: {
                 'user-agent': 'Remnawave Subscription Page',
                 'x-subpage-version': this.subpageVersion,
@@ -71,6 +87,11 @@ export class AxiosService implements OnModuleInit {
         if (egamesCookie) {
             this.axiosInstance.defaults.headers.common['Cookie'] = egamesCookie;
         }
+    }
+
+    onModuleDestroy(): void {
+        this.httpAgent.destroy();
+        this.httpsAgent.destroy();
     }
 
     async onModuleInit(): Promise<void> {
@@ -183,7 +204,7 @@ export class AxiosService implements OnModuleInit {
                 isOk: true,
                 response: response.data.response,
             };
-        } catch (error) {
+        } catch {
             this.logger.error('Unable to fetch subscription page configuration');
 
             return { isOk: false };
@@ -253,7 +274,10 @@ export class AxiosService implements OnModuleInit {
                 this.logger.error('Unable to fetch subscription information');
             }
 
-            return { isOk: false, status: axios.isAxiosError(error) ? error.response?.status : undefined };
+            return {
+                isOk: false,
+                status: axios.isAxiosError(error) ? error.response?.status : undefined,
+            };
         }
     }
 
@@ -279,7 +303,10 @@ export class AxiosService implements OnModuleInit {
             };
         } catch (error) {
             this.logger.error('Unable to fetch subscription page rules');
-            return { isOk: false, status: axios.isAxiosError(error) ? error.response?.status : undefined };
+            return {
+                isOk: false,
+                status: axios.isAxiosError(error) ? error.response?.status : undefined,
+            };
         }
     }
 
@@ -290,12 +317,15 @@ export class AxiosService implements OnModuleInit {
         withClientType: boolean = false,
         clientType?: TRequestTemplateTypeKeys,
         signal?: AbortSignal,
+        personalToken?: string,
     ): Promise<{
         subscription: Buffer;
         headers: RawAxiosResponseHeaders;
     } | null> {
         try {
             let basePath = 'api/sub/' + encodeURIComponent(shortUuid);
+
+            if (personalToken) basePath += '/device/' + encodeURIComponent(personalToken);
 
             if (withClientType && clientType) {
                 basePath += '/' + encodeURIComponent(clientType);
@@ -307,7 +337,7 @@ export class AxiosService implements OnModuleInit {
                 url: basePath,
                 responseType: 'arraybuffer',
                 headers: {
-                    ...headers,
+                    ...subscriptionRequestHeaders(headers),
                     'Accept-Encoding': undefined,
                     Accept: '*/*',
                     'Cache-Control': 'no-cache, no-store, must-revalidate, private, max-age=0',

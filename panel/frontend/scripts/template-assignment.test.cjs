@@ -3,7 +3,18 @@ const assert = require('node:assert/strict')
 const path = require('node:path')
 const load = require('../../backend/tests/load-typescript.cjs')
 const root = path.join(__dirname, '../src/widgets/dashboard/templates/subscription-template-editor')
-const { assignmentFor, setAssignment, bindLegacyAssignment } = load(path.join(root, 'template-assignment-model.ts'))
+const { assignmentFor, assignmentMode, setAssignment, bindLegacyAssignment } = load(path.join(root, 'template-assignment-model.ts'))
+
+test('first assignment and mode changes work before the remnawave container exists', () => {
+    const text = '{\n  "routing": {"balancers": [{"tag": "auto"}]}\n}'
+    const { parseTemplate, editTemplate } = load(path.join(root, 'autoselect-model.ts'))
+    assert.equal(editTemplate(text, ['remnawave', 'assignTo'], undefined), text)
+    const assigned = setAssignment(text, 'auto', 'hosts', ['fixture-host'])
+    assert.deepEqual(parseTemplate(assigned).remnawave.assignments, [{balancerTag:'auto',hosts:['fixture-host']}])
+    const tags = setAssignment(assigned, 'auto', 'tags', ['fixture-tag'])
+    assert.deepEqual(parseTemplate(tags).remnawave.assignments, [{balancerTag:'auto',tags:['fixture-tag']}])
+    assert.doesNotThrow(() => setAssignment(text, 'auto', 'tags', []))
+})
 
 test('editing another selection leaves an unresolved legacy assignment in its original valid slot', () => {
     const { RemnawaveInjectorSchema } = require('@remnawave/backend-contract')
@@ -23,7 +34,7 @@ test('one legacy assignment is edited inside its only selection without losing s
     assert.equal(assignmentFor(config, 'auto'), config.remnawave.assignTo)
     const next = JSON.parse(setAssignment(JSON.stringify(config), 'auto', 'tags', ['new', 'new']))
     assert.equal(next.remnawave.assignTo, undefined)
-    assert.deepEqual(next.remnawave.assignments, [{ hosts: ['host-a'], tags: ['new'], future: 7, balancerTag: 'auto' }])
+    assert.deepEqual(next.remnawave.assignments, [{ tags: ['new'], future: 7, balancerTag: 'auto' }])
     assert.deepEqual(next.custom, config.custom)
     assert.deepEqual(config.remnawave.assignTo.tags, ['old'])
 })
@@ -52,4 +63,19 @@ test('explicit recovery merges a legacy or missing-target assignment without dup
     const next = JSON.parse(bindLegacyAssignment(JSON.stringify(config), 1, 'one'))
     assert.deepEqual(next.remnawave.assignments, [{ balancerTag: 'one', hosts: ['a', 'b'], tags: ['A', 'B'], future: true }])
     assert.throws(() => bindLegacyAssignment(JSON.stringify(config), 1, 'missing'), /assignment-target/)
+})
+
+test('recipient modes are exclusive and mixed legacy values are retained until an explicit choice', () => {
+    assert.equal(assignmentMode(), undefined)
+    assert.equal(assignmentMode({hosts:[],tags:[]}), undefined)
+    assert.equal(assignmentMode({hosts:['a']}), 'hosts')
+    assert.equal(assignmentMode({tags:['A']}), 'tags')
+    const source={routing:{balancers:[{tag:'auto'}]},remnawave:{assignments:[{balancerTag:'auto',hosts:['a'],tags:['A'],custom:true}]}}
+    assert.equal(assignmentMode(assignmentFor(source,'auto')), 'mixed')
+    const next=JSON.parse(setAssignment(JSON.stringify(source),'auto','hosts',['a']))
+    assert.deepEqual(next.remnawave.assignments,[{balancerTag:'auto',hosts:['a'],custom:true}])
+    assert.equal(assignmentMode(assignmentFor(next,'auto')),'hosts')
+    const cleared=JSON.parse(setAssignment(JSON.stringify(next),'auto','tags',[]))
+    assert.equal(cleared.remnawave.assignments,undefined)
+    assert.deepEqual(source.remnawave.assignments[0].tags,['A'])
 })

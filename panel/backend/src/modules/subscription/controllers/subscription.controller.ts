@@ -163,7 +163,10 @@ export class SubscriptionController {
     }
 
     @UseFilters(PublicHttpExceptionFilter)
-    @Get([SUBSCRIPTION_ROUTES.GET + '/:shortUuid/device/:token'])
+    @Get([
+        SUBSCRIPTION_ROUTES.GET + '/:shortUuid/device/:token',
+        SUBSCRIPTION_ROUTES.GET + '/:shortUuid/device/:token/:clientType',
+    ])
     async getPersonalSubscription(
         @GetSrrContext() srrContext: ISRRContext,
         @Param('shortUuid') shortUuid: string,

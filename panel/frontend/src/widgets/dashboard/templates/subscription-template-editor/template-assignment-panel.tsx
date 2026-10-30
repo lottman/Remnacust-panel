@@ -1,12 +1,14 @@
 import type { GetHostsCommand } from '@remnawave/backend-contract'
 
 import { Alert, MultiSelect, Select, Stack, Text } from '@mantine/core'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { type JsonObject } from './autoselect-model'
 import styles from './autoselect-panel.module.css'
 import {
     assignmentFor,
+    assignmentMode,
     bindLegacyAssignment,
     setAssignment,
     templateAssignments
@@ -30,6 +32,9 @@ export function TemplateAssignmentPanel({
 }: Props & { balancerTag: string }) {
     const { t } = useTranslation()
     const assignment = assignmentFor(config, balancerTag)
+    const [emptyMode, setEmptyMode] = useState<'hosts' | 'tags'>('hosts')
+    const savedMode = assignmentMode(assignment)
+    const mode = savedMode === 'mixed' ? null : (savedMode ?? emptyMode)
     const hostOptions = hosts.map((host) => ({
         value: host.uuid,
         label: `${host.remark} · ${host.address}:${host.port}`
@@ -46,28 +51,59 @@ export function TemplateAssignmentPanel({
                     {t('autoselect.recipients-help', { name: balancerTag })}
                 </Text>
             </div>
-            <div className={styles.fields}>
+            <Select
+                label={t('autoselect.assignment-mode')}
+                placeholder={t('autoselect.assignment-mode')}
+                allowDeselect={false}
+                data={[
+                    { value: 'hosts', label: t('autoselect.hosts') },
+                    { value: 'tags', label: t('autoselect.tags') }
+                ]}
+                value={mode}
+                onChange={(value) => {
+                    if (value !== 'hosts' && value !== 'tags') return
+                    setEmptyMode(value)
+                    onChange(setAssignment(text, balancerTag, value, assignment?.[value] ?? []))
+                }}
+            />
+            {savedMode === 'mixed' && (
+                <Alert color="yellow">
+                    <Text size="sm">{t('autoselect.assignment-mixed')}</Text>
+                    <Text size="xs" mt={4}>
+                        {[
+                            ...(assignment?.hosts ?? []).map(
+                                (uuid) =>
+                                    hostOptions.find((host) => host.value === uuid)?.label ?? uuid
+                            ),
+                            ...(assignment?.tags ?? []).map((tag) => `#${tag}`)
+                        ].join(', ')}
+                    </Text>
+                </Alert>
+            )}
+            {mode && (
                 <MultiSelect
+                    key={mode}
                     searchable
                     clearable
                     limit={50}
-                    label={t('autoselect.assignment-hosts')}
-                    placeholder={t('autoselect.recipient-host-placeholder')}
-                    data={withSaved(hostOptions, assignment?.hosts ?? [])}
-                    value={assignment?.hosts ?? []}
-                    onChange={(value) => onChange(setAssignment(text, balancerTag, 'hosts', value))}
+                    label={t(
+                        mode === 'hosts'
+                            ? 'autoselect.assignment-hosts'
+                            : 'autoselect.assignment-tags'
+                    )}
+                    placeholder={t(
+                        mode === 'hosts'
+                            ? 'autoselect.recipient-host-placeholder'
+                            : 'autoselect.recipient-tag-placeholder'
+                    )}
+                    data={withSaved(
+                        mode === 'hosts' ? hostOptions : tags,
+                        assignment?.[mode] ?? []
+                    )}
+                    value={assignment?.[mode] ?? []}
+                    onChange={(value) => onChange(setAssignment(text, balancerTag, mode, value))}
                 />
-                <MultiSelect
-                    searchable
-                    clearable
-                    limit={50}
-                    label={t('autoselect.assignment-tags')}
-                    placeholder={t('autoselect.recipient-tag-placeholder')}
-                    data={withSaved(tags, assignment?.tags ?? [])}
-                    value={assignment?.tags ?? []}
-                    onChange={(value) => onChange(setAssignment(text, balancerTag, 'tags', value))}
-                />
-            </div>
+            )}
             <Text size="xs" c="dimmed">
                 {t('autoselect.recipients-empty-help')}
             </Text>

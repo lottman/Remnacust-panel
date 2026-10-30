@@ -72,6 +72,10 @@ jobs:
       - run: node --test tests/*.test.cjs
       - name: Check private Xray IPC and certificate files on Linux
         run: sudo --preserve-env=REMNACUST_NODE_SOURCE "$(command -v node)" --test tests/node-api-socket.test.cjs tests/pem-file-security.test.cjs tests/node-upgrade-script.test.cjs tests/node-install-script.test.cjs
+      - name: Verify documentation against freshly generated backend contract
+        run: |
+          npm run generate:openapi
+          node ../frontend/docs-tools/check-documentation.mjs
       - run: npm run build
       - name: Apply migrations to the disposable test database
         run: npm run migrate:deploy

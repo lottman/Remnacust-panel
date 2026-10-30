@@ -1955,7 +1955,7 @@
             "name": "cursor",
             "required": false,
             "in": "query",
-            "description": "Cursor for pagination вЂ” pass the nextCursor from the previous response. Omit on the first request.",
+            "description": "Cursor for pagination — pass the nextCursor from the previous response. Omit on the first request.",
             "schema": {
               "type": "number"
             }
@@ -14053,7 +14053,7 @@
             }
           }
         },
-        "description": "HOST key must be a host UUID; TAG key is a tag name. SELECTED accepts 1вЂ“500 user IDs as positive signed-64-bit decimal strings; duplicate IDs are normalized. Every selected user must be entitled to the scope. ALL and SQUAD target current entitled recipients, independently of search and pagination. This endpoint reads state for the specified selection without changing quotas."
+        "description": "HOST key must be a host UUID; TAG key is a tag name. SELECTED accepts 1–500 user IDs as positive signed-64-bit decimal strings; duplicate IDs are normalized. Every selected user must be entitled to the scope. ALL and SQUAD target current entitled recipients, independently of search and pagination. This endpoint reads state for the specified selection without changing quotas."
       }
     },
     "/api/limits/actions": {
@@ -14270,7 +14270,7 @@
             }
           }
         },
-        "description": "HOST key must be a host UUID; TAG key is a tag name. SELECTED accepts 1вЂ“500 user IDs as positive signed-64-bit decimal strings; duplicate IDs are normalized. Every selected user must be entitled to the scope. ALL and SQUAD target current entitled recipients, independently of search and pagination. requestId is a UUID: replay an identical request with the same ID. Reusing an ID with a different body returns 409. ADD requires a positive amountBytes and a positive base quota; other actions require amountBytes = 0."
+        "description": "HOST key must be a host UUID; TAG key is a tag name. SELECTED accepts 1–500 user IDs as positive signed-64-bit decimal strings; duplicate IDs are normalized. Every selected user must be entitled to the scope. ALL and SQUAD target current entitled recipients, independently of search and pagination. requestId is a UUID: replay an identical request with the same ID. Reusing an ID with a different body returns 409. ADD requires a positive amountBytes and a positive base quota; other actions require amountBytes = 0."
       }
     },
     "/api/limits/unlimited": {
@@ -14475,7 +14475,7 @@
         "x-remnacust-resource": "limits",
         "x-remnacust-kind": "write",
         "summary": "Grant or revoke personal unlimited quota",
-        "description": "HOST key must be a host UUID; TAG key is a tag name. SELECTED accepts 1вЂ“500 user IDs as positive signed-64-bit decimal strings; duplicate IDs are normalized. Every selected user must be entitled to the scope. ALL and SQUAD target current entitled recipients, independently of search and pagination. Set enabled=true or false for the selected scope. A personal unlimited exemption persists until revoked and does not override other access restrictions. requestId identifies an idempotent request; a different body with the same ID returns 409."
+        "description": "HOST key must be a host UUID; TAG key is a tag name. SELECTED accepts 1–500 user IDs as positive signed-64-bit decimal strings; duplicate IDs are normalized. Every selected user must be entitled to the scope. ALL and SQUAD target current entitled recipients, independently of search and pagination. Set enabled=true or false for the selected scope. A personal unlimited exemption persists until revoked and does not override other access restrictions. requestId identifies an idempotent request; a different body with the same ID returns 409."
       }
     },
     "/api/hosts/tags": {
@@ -19283,9 +19283,9 @@
     }
   },
   "info": {
-    "title": "Remnacust API v1.1.7.64",
+    "title": "Remnacust API v1.1.7.65",
     "description": "\nRemnacust manages Xray users, nodes, configuration profiles and subscriptions.\n\n## Resources\n* https://t.me/lottman\n* https://github.com/lottman/Remnacust-panel\n",
-    "version": "1.1.7.64",
+    "version": "1.1.7.65",
     "contact": {},
     "license": {
       "name": "AGPL-3.0",
@@ -25942,7 +25942,7 @@
                                             "minLength": 1,
                                             "maxLength": 512,
                                             "title": "Source path",
-                                            "markdownDescription": "Dot-separated path inside the **raw inbound** of the config profile this host belongs to. Array items are addressed by index.\n\nWith a `$host.` prefix the value is read from the **host** itself, after overrides have been resolved вЂ“ `$host.securityOptions.serverName` holds the SNI that actually went into the config.\n\nOnly a part of the host is readable. Each entry below also opens everything nested under it:\n\n`address`, `port`, `finalRemark`, `protocol`, `transport`, `security`, `protocolOptions`, `transportOptions`, `securityOptions`, `mux`, `streamOverrides.finalMask`, `streamOverrides.sockopt`, `clientOverrides.serverDescription`, `metadata.remark`, `metadata.tags`, `metadata.inboundTag`\n\n> If the path resolves to nothing вЂ“ or points outside the list above вЂ“ the operation is skipped and the target key is **not** created.",
+                                            "markdownDescription": "Dot-separated path inside the **raw inbound** of the config profile this host belongs to. Array items are addressed by index.\n\nWith a `$host.` prefix the value is read from the **host** itself, after overrides have been resolved – `$host.securityOptions.serverName` holds the SNI that actually went into the config.\n\nOnly a part of the host is readable. Each entry below also opens everything nested under it:\n\n`address`, `port`, `finalRemark`, `protocol`, `transport`, `security`, `protocolOptions`, `transportOptions`, `securityOptions`, `mux`, `streamOverrides.finalMask`, `streamOverrides.sockopt`, `clientOverrides.serverDescription`, `metadata.remark`, `metadata.tags`, `metadata.inboundTag`\n\n> If the path resolves to nothing – or points outside the list above – the operation is skipped and the target key is **not** created.",
                                             "examples": [
                                               "streamSettings.tlsSettings.cipherSuites",
                                               "streamSettings.tlsSettings.alpn",
@@ -25958,7 +25958,7 @@
                                             "minLength": 1,
                                             "maxLength": 512,
                                             "title": "Target path",
-                                            "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                                            "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                                             "examples": [
                                               "streamSettings.tlsSettings.enableSessionResumption",
                                               "streamSettings.tlsSettings.cipherSuites"
@@ -26027,7 +26027,7 @@
                                             "minLength": 1,
                                             "maxLength": 512,
                                             "title": "Target path",
-                                            "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                                            "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                                             "examples": [
                                               "streamSettings.tlsSettings.enableSessionResumption",
                                               "streamSettings.tlsSettings.cipherSuites"
@@ -26069,7 +26069,7 @@
                                             "minLength": 1,
                                             "maxLength": 512,
                                             "title": "Target path",
-                                            "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                                            "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                                             "examples": [
                                               "streamSettings.tlsSettings.enableSessionResumption",
                                               "streamSettings.tlsSettings.cipherSuites"
@@ -26120,7 +26120,7 @@
                                             "minLength": 1,
                                             "maxLength": 512,
                                             "title": "Source path",
-                                            "markdownDescription": "Dot-separated path inside the **raw inbound** of the config profile this host belongs to. Array items are addressed by index.\n\nWith a `$host.` prefix the value is read from the **host** itself, after overrides have been resolved вЂ“ `$host.securityOptions.serverName` holds the SNI that actually went into the config.\n\nOnly a part of the host is readable. Each entry below also opens everything nested under it:\n\n`address`, `port`, `finalRemark`, `protocol`, `transport`, `security`, `protocolOptions`, `transportOptions`, `securityOptions`, `mux`, `streamOverrides.finalMask`, `streamOverrides.sockopt`, `clientOverrides.serverDescription`, `metadata.remark`, `metadata.tags`, `metadata.inboundTag`\n\n> If the path resolves to nothing вЂ“ or points outside the list above вЂ“ the operation is skipped and the target key is **not** created.",
+                                            "markdownDescription": "Dot-separated path inside the **raw inbound** of the config profile this host belongs to. Array items are addressed by index.\n\nWith a `$host.` prefix the value is read from the **host** itself, after overrides have been resolved – `$host.securityOptions.serverName` holds the SNI that actually went into the config.\n\nOnly a part of the host is readable. Each entry below also opens everything nested under it:\n\n`address`, `port`, `finalRemark`, `protocol`, `transport`, `security`, `protocolOptions`, `transportOptions`, `securityOptions`, `mux`, `streamOverrides.finalMask`, `streamOverrides.sockopt`, `clientOverrides.serverDescription`, `metadata.remark`, `metadata.tags`, `metadata.inboundTag`\n\n> If the path resolves to nothing – or points outside the list above – the operation is skipped and the target key is **not** created.",
                                             "examples": [
                                               "streamSettings.tlsSettings.cipherSuites",
                                               "streamSettings.tlsSettings.alpn",
@@ -26136,7 +26136,7 @@
                                             "minLength": 1,
                                             "maxLength": 512,
                                             "title": "Target path",
-                                            "markdownDescription": "Dot-separated path inside the generated **proxy node**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                                            "markdownDescription": "Dot-separated path inside the generated **proxy node**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                                             "examples": [
                                               "ip-version",
                                               "client-fingerprint",
@@ -26207,7 +26207,7 @@
                                             "minLength": 1,
                                             "maxLength": 512,
                                             "title": "Target path",
-                                            "markdownDescription": "Dot-separated path inside the generated **proxy node**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                                            "markdownDescription": "Dot-separated path inside the generated **proxy node**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                                             "examples": [
                                               "ip-version",
                                               "client-fingerprint",
@@ -26251,7 +26251,7 @@
                                             "minLength": 1,
                                             "maxLength": 512,
                                             "title": "Target path",
-                                            "markdownDescription": "Dot-separated path inside the generated **proxy node**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                                            "markdownDescription": "Dot-separated path inside the generated **proxy node**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                                             "examples": [
                                               "ip-version",
                                               "client-fingerprint",
@@ -26284,7 +26284,7 @@
                                 },
                                 "base64": {
                                   "title": "Base64",
-                                  "markdownDescription": "Operations applied to the share link generated for this host in the Base64 subscription.\n\n`to` is a plain query parameter name, not a path вЂ“ dots carry no meaning here.\n\nWith a `$link.` prefix the operation rewrites the link itself instead of its query string. Writable parts: `$link.address`, `$link.port`, `$link.password`, `$link.remark`, and `$link.method` for Shadowsocks. `$link.password` is the credential of the protocol.\n\n> A value that cannot make a valid link вЂ“ an empty address, a port outside 1-65535 вЂ“ is ignored, and the generated one is kept.\n\n```json\n[\n  {\n    \"op\": \"set\",\n    \"to\": \"fp\",\n    \"value\": \"chrome\"\n  },\n  {\n    \"op\": \"unset\",\n    \"to\": \"fm\"\n  },\n  {\n    \"op\": \"set\",\n    \"to\": \"$link.port\",\n    \"value\": 2053\n  },\n  {\n    \"op\": \"copy\",\n    \"from\": \"$host.securityOptions.serverName\",\n    \"to\": \"$link.address\"\n  }\n]\n```",
+                                  "markdownDescription": "Operations applied to the share link generated for this host in the Base64 subscription.\n\n`to` is a plain query parameter name, not a path – dots carry no meaning here.\n\nWith a `$link.` prefix the operation rewrites the link itself instead of its query string. Writable parts: `$link.address`, `$link.port`, `$link.password`, `$link.remark`, and `$link.method` for Shadowsocks. `$link.password` is the credential of the protocol.\n\n> A value that cannot make a valid link – an empty address, a port outside 1-65535 – is ignored, and the generated one is kept.\n\n```json\n[\n  {\n    \"op\": \"set\",\n    \"to\": \"fp\",\n    \"value\": \"chrome\"\n  },\n  {\n    \"op\": \"unset\",\n    \"to\": \"fm\"\n  },\n  {\n    \"op\": \"set\",\n    \"to\": \"$link.port\",\n    \"value\": 2053\n  },\n  {\n    \"op\": \"copy\",\n    \"from\": \"$host.securityOptions.serverName\",\n    \"to\": \"$link.address\"\n  }\n]\n```",
                                   "type": "array",
                                   "items": {
                                     "oneOf": [
@@ -26304,7 +26304,7 @@
                                             "minLength": 1,
                                             "maxLength": 512,
                                             "title": "Source path",
-                                            "markdownDescription": "Dot-separated path inside the **raw inbound** of the config profile this host belongs to. Array items are addressed by index.\n\nWith a `$host.` prefix the value is read from the **host** itself, after overrides have been resolved вЂ“ `$host.securityOptions.serverName` holds the SNI that actually went into the config.\n\nOnly a part of the host is readable. Each entry below also opens everything nested under it:\n\n`address`, `port`, `finalRemark`, `protocol`, `transport`, `security`, `protocolOptions`, `transportOptions`, `securityOptions`, `mux`, `streamOverrides.finalMask`, `streamOverrides.sockopt`, `clientOverrides.serverDescription`, `metadata.remark`, `metadata.tags`, `metadata.inboundTag`\n\n> If the path resolves to nothing вЂ“ or points outside the list above вЂ“ the operation is skipped and the target key is **not** created.",
+                                            "markdownDescription": "Dot-separated path inside the **raw inbound** of the config profile this host belongs to. Array items are addressed by index.\n\nWith a `$host.` prefix the value is read from the **host** itself, after overrides have been resolved – `$host.securityOptions.serverName` holds the SNI that actually went into the config.\n\nOnly a part of the host is readable. Each entry below also opens everything nested under it:\n\n`address`, `port`, `finalRemark`, `protocol`, `transport`, `security`, `protocolOptions`, `transportOptions`, `securityOptions`, `mux`, `streamOverrides.finalMask`, `streamOverrides.sockopt`, `clientOverrides.serverDescription`, `metadata.remark`, `metadata.tags`, `metadata.inboundTag`\n\n> If the path resolves to nothing – or points outside the list above – the operation is skipped and the target key is **not** created.",
                                             "examples": [
                                               "streamSettings.tlsSettings.cipherSuites",
                                               "streamSettings.tlsSettings.alpn",
@@ -26320,7 +26320,7 @@
                                             "minLength": 1,
                                             "maxLength": 512,
                                             "title": "Target path",
-                                            "markdownDescription": "Dot-separated path inside the query string of the generated **share link**, or the link itself with a `$link.` prefix, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                                            "markdownDescription": "Dot-separated path inside the query string of the generated **share link**, or the link itself with a `$link.` prefix, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                                             "examples": [
                                               "$link.address",
                                               "$link.port",
@@ -26420,7 +26420,7 @@
                                             "minLength": 1,
                                             "maxLength": 512,
                                             "title": "Target path",
-                                            "markdownDescription": "Dot-separated path inside the query string of the generated **share link**, or the link itself with a `$link.` prefix, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                                            "markdownDescription": "Dot-separated path inside the query string of the generated **share link**, or the link itself with a `$link.` prefix, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                                             "examples": [
                                               "$link.address",
                                               "$link.port",
@@ -26493,7 +26493,7 @@
                                             "minLength": 1,
                                             "maxLength": 512,
                                             "title": "Target path",
-                                            "markdownDescription": "Dot-separated path inside the query string of the generated **share link**, or the link itself with a `$link.` prefix, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                                            "markdownDescription": "Dot-separated path inside the query string of the generated **share link**, or the link itself with a `$link.` prefix, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                                             "examples": [
                                               "$link.address",
                                               "$link.port",
@@ -26575,7 +26575,7 @@
                                             "minLength": 1,
                                             "maxLength": 512,
                                             "title": "Source path",
-                                            "markdownDescription": "Dot-separated path inside the **raw inbound** of the config profile this host belongs to. Array items are addressed by index.\n\nWith a `$host.` prefix the value is read from the **host** itself, after overrides have been resolved вЂ“ `$host.securityOptions.serverName` holds the SNI that actually went into the config.\n\nOnly a part of the host is readable. Each entry below also opens everything nested under it:\n\n`address`, `port`, `finalRemark`, `protocol`, `transport`, `security`, `protocolOptions`, `transportOptions`, `securityOptions`, `mux`, `streamOverrides.finalMask`, `streamOverrides.sockopt`, `clientOverrides.serverDescription`, `metadata.remark`, `metadata.tags`, `metadata.inboundTag`\n\n> If the path resolves to nothing вЂ“ or points outside the list above вЂ“ the operation is skipped and the target key is **not** created.",
+                                            "markdownDescription": "Dot-separated path inside the **raw inbound** of the config profile this host belongs to. Array items are addressed by index.\n\nWith a `$host.` prefix the value is read from the **host** itself, after overrides have been resolved – `$host.securityOptions.serverName` holds the SNI that actually went into the config.\n\nOnly a part of the host is readable. Each entry below also opens everything nested under it:\n\n`address`, `port`, `finalRemark`, `protocol`, `transport`, `security`, `protocolOptions`, `transportOptions`, `securityOptions`, `mux`, `streamOverrides.finalMask`, `streamOverrides.sockopt`, `clientOverrides.serverDescription`, `metadata.remark`, `metadata.tags`, `metadata.inboundTag`\n\n> If the path resolves to nothing – or points outside the list above – the operation is skipped and the target key is **not** created.",
                                             "examples": [
                                               "streamSettings.tlsSettings.cipherSuites",
                                               "streamSettings.tlsSettings.alpn",
@@ -26591,7 +26591,7 @@
                                             "minLength": 1,
                                             "maxLength": 512,
                                             "title": "Target path",
-                                            "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                                            "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                                             "examples": [
                                               "domain_resolver",
                                               "multiplex.protocol",
@@ -26664,7 +26664,7 @@
                                             "minLength": 1,
                                             "maxLength": 512,
                                             "title": "Target path",
-                                            "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                                            "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                                             "examples": [
                                               "domain_resolver",
                                               "multiplex.protocol",
@@ -26710,7 +26710,7 @@
                                             "minLength": 1,
                                             "maxLength": 512,
                                             "title": "Target path",
-                                            "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                                            "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                                             "examples": [
                                               "domain_resolver",
                                               "multiplex.protocol",
@@ -34724,7 +34724,7 @@
                           "minLength": 1,
                           "maxLength": 512,
                           "title": "Source path",
-                          "markdownDescription": "Dot-separated path inside the **raw inbound** of the config profile this host belongs to. Array items are addressed by index.\n\nWith a `$host.` prefix the value is read from the **host** itself, after overrides have been resolved вЂ“ `$host.securityOptions.serverName` holds the SNI that actually went into the config.\n\nOnly a part of the host is readable. Each entry below also opens everything nested under it:\n\n`address`, `port`, `finalRemark`, `protocol`, `transport`, `security`, `protocolOptions`, `transportOptions`, `securityOptions`, `mux`, `streamOverrides.finalMask`, `streamOverrides.sockopt`, `clientOverrides.serverDescription`, `metadata.remark`, `metadata.tags`, `metadata.inboundTag`\n\n> If the path resolves to nothing вЂ“ or points outside the list above вЂ“ the operation is skipped and the target key is **not** created.",
+                          "markdownDescription": "Dot-separated path inside the **raw inbound** of the config profile this host belongs to. Array items are addressed by index.\n\nWith a `$host.` prefix the value is read from the **host** itself, after overrides have been resolved – `$host.securityOptions.serverName` holds the SNI that actually went into the config.\n\nOnly a part of the host is readable. Each entry below also opens everything nested under it:\n\n`address`, `port`, `finalRemark`, `protocol`, `transport`, `security`, `protocolOptions`, `transportOptions`, `securityOptions`, `mux`, `streamOverrides.finalMask`, `streamOverrides.sockopt`, `clientOverrides.serverDescription`, `metadata.remark`, `metadata.tags`, `metadata.inboundTag`\n\n> If the path resolves to nothing – or points outside the list above – the operation is skipped and the target key is **not** created.",
                           "examples": [
                             "streamSettings.tlsSettings.cipherSuites",
                             "streamSettings.tlsSettings.alpn",
@@ -34740,7 +34740,7 @@
                           "minLength": 1,
                           "maxLength": 512,
                           "title": "Target path",
-                          "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                          "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                           "examples": [
                             "streamSettings.tlsSettings.enableSessionResumption",
                             "streamSettings.tlsSettings.cipherSuites"
@@ -34809,7 +34809,7 @@
                           "minLength": 1,
                           "maxLength": 512,
                           "title": "Target path",
-                          "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                          "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                           "examples": [
                             "streamSettings.tlsSettings.enableSessionResumption",
                             "streamSettings.tlsSettings.cipherSuites"
@@ -34851,7 +34851,7 @@
                           "minLength": 1,
                           "maxLength": 512,
                           "title": "Target path",
-                          "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                          "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                           "examples": [
                             "streamSettings.tlsSettings.enableSessionResumption",
                             "streamSettings.tlsSettings.cipherSuites"
@@ -34902,7 +34902,7 @@
                           "minLength": 1,
                           "maxLength": 512,
                           "title": "Source path",
-                          "markdownDescription": "Dot-separated path inside the **raw inbound** of the config profile this host belongs to. Array items are addressed by index.\n\nWith a `$host.` prefix the value is read from the **host** itself, after overrides have been resolved вЂ“ `$host.securityOptions.serverName` holds the SNI that actually went into the config.\n\nOnly a part of the host is readable. Each entry below also opens everything nested under it:\n\n`address`, `port`, `finalRemark`, `protocol`, `transport`, `security`, `protocolOptions`, `transportOptions`, `securityOptions`, `mux`, `streamOverrides.finalMask`, `streamOverrides.sockopt`, `clientOverrides.serverDescription`, `metadata.remark`, `metadata.tags`, `metadata.inboundTag`\n\n> If the path resolves to nothing вЂ“ or points outside the list above вЂ“ the operation is skipped and the target key is **not** created.",
+                          "markdownDescription": "Dot-separated path inside the **raw inbound** of the config profile this host belongs to. Array items are addressed by index.\n\nWith a `$host.` prefix the value is read from the **host** itself, after overrides have been resolved – `$host.securityOptions.serverName` holds the SNI that actually went into the config.\n\nOnly a part of the host is readable. Each entry below also opens everything nested under it:\n\n`address`, `port`, `finalRemark`, `protocol`, `transport`, `security`, `protocolOptions`, `transportOptions`, `securityOptions`, `mux`, `streamOverrides.finalMask`, `streamOverrides.sockopt`, `clientOverrides.serverDescription`, `metadata.remark`, `metadata.tags`, `metadata.inboundTag`\n\n> If the path resolves to nothing – or points outside the list above – the operation is skipped and the target key is **not** created.",
                           "examples": [
                             "streamSettings.tlsSettings.cipherSuites",
                             "streamSettings.tlsSettings.alpn",
@@ -34918,7 +34918,7 @@
                           "minLength": 1,
                           "maxLength": 512,
                           "title": "Target path",
-                          "markdownDescription": "Dot-separated path inside the generated **proxy node**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                          "markdownDescription": "Dot-separated path inside the generated **proxy node**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                           "examples": [
                             "ip-version",
                             "client-fingerprint",
@@ -34989,7 +34989,7 @@
                           "minLength": 1,
                           "maxLength": 512,
                           "title": "Target path",
-                          "markdownDescription": "Dot-separated path inside the generated **proxy node**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                          "markdownDescription": "Dot-separated path inside the generated **proxy node**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                           "examples": [
                             "ip-version",
                             "client-fingerprint",
@@ -35033,7 +35033,7 @@
                           "minLength": 1,
                           "maxLength": 512,
                           "title": "Target path",
-                          "markdownDescription": "Dot-separated path inside the generated **proxy node**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                          "markdownDescription": "Dot-separated path inside the generated **proxy node**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                           "examples": [
                             "ip-version",
                             "client-fingerprint",
@@ -35066,7 +35066,7 @@
               },
               "base64": {
                 "title": "Base64",
-                "markdownDescription": "Operations applied to the share link generated for this host in the Base64 subscription.\n\n`to` is a plain query parameter name, not a path вЂ“ dots carry no meaning here.\n\nWith a `$link.` prefix the operation rewrites the link itself instead of its query string. Writable parts: `$link.address`, `$link.port`, `$link.password`, `$link.remark`, and `$link.method` for Shadowsocks. `$link.password` is the credential of the protocol.\n\n> A value that cannot make a valid link вЂ“ an empty address, a port outside 1-65535 вЂ“ is ignored, and the generated one is kept.\n\n```json\n[\n  {\n    \"op\": \"set\",\n    \"to\": \"fp\",\n    \"value\": \"chrome\"\n  },\n  {\n    \"op\": \"unset\",\n    \"to\": \"fm\"\n  },\n  {\n    \"op\": \"set\",\n    \"to\": \"$link.port\",\n    \"value\": 2053\n  },\n  {\n    \"op\": \"copy\",\n    \"from\": \"$host.securityOptions.serverName\",\n    \"to\": \"$link.address\"\n  }\n]\n```",
+                "markdownDescription": "Operations applied to the share link generated for this host in the Base64 subscription.\n\n`to` is a plain query parameter name, not a path – dots carry no meaning here.\n\nWith a `$link.` prefix the operation rewrites the link itself instead of its query string. Writable parts: `$link.address`, `$link.port`, `$link.password`, `$link.remark`, and `$link.method` for Shadowsocks. `$link.password` is the credential of the protocol.\n\n> A value that cannot make a valid link – an empty address, a port outside 1-65535 – is ignored, and the generated one is kept.\n\n```json\n[\n  {\n    \"op\": \"set\",\n    \"to\": \"fp\",\n    \"value\": \"chrome\"\n  },\n  {\n    \"op\": \"unset\",\n    \"to\": \"fm\"\n  },\n  {\n    \"op\": \"set\",\n    \"to\": \"$link.port\",\n    \"value\": 2053\n  },\n  {\n    \"op\": \"copy\",\n    \"from\": \"$host.securityOptions.serverName\",\n    \"to\": \"$link.address\"\n  }\n]\n```",
                 "type": "array",
                 "items": {
                   "oneOf": [
@@ -35086,7 +35086,7 @@
                           "minLength": 1,
                           "maxLength": 512,
                           "title": "Source path",
-                          "markdownDescription": "Dot-separated path inside the **raw inbound** of the config profile this host belongs to. Array items are addressed by index.\n\nWith a `$host.` prefix the value is read from the **host** itself, after overrides have been resolved вЂ“ `$host.securityOptions.serverName` holds the SNI that actually went into the config.\n\nOnly a part of the host is readable. Each entry below also opens everything nested under it:\n\n`address`, `port`, `finalRemark`, `protocol`, `transport`, `security`, `protocolOptions`, `transportOptions`, `securityOptions`, `mux`, `streamOverrides.finalMask`, `streamOverrides.sockopt`, `clientOverrides.serverDescription`, `metadata.remark`, `metadata.tags`, `metadata.inboundTag`\n\n> If the path resolves to nothing вЂ“ or points outside the list above вЂ“ the operation is skipped and the target key is **not** created.",
+                          "markdownDescription": "Dot-separated path inside the **raw inbound** of the config profile this host belongs to. Array items are addressed by index.\n\nWith a `$host.` prefix the value is read from the **host** itself, after overrides have been resolved – `$host.securityOptions.serverName` holds the SNI that actually went into the config.\n\nOnly a part of the host is readable. Each entry below also opens everything nested under it:\n\n`address`, `port`, `finalRemark`, `protocol`, `transport`, `security`, `protocolOptions`, `transportOptions`, `securityOptions`, `mux`, `streamOverrides.finalMask`, `streamOverrides.sockopt`, `clientOverrides.serverDescription`, `metadata.remark`, `metadata.tags`, `metadata.inboundTag`\n\n> If the path resolves to nothing – or points outside the list above – the operation is skipped and the target key is **not** created.",
                           "examples": [
                             "streamSettings.tlsSettings.cipherSuites",
                             "streamSettings.tlsSettings.alpn",
@@ -35102,7 +35102,7 @@
                           "minLength": 1,
                           "maxLength": 512,
                           "title": "Target path",
-                          "markdownDescription": "Dot-separated path inside the query string of the generated **share link**, or the link itself with a `$link.` prefix, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                          "markdownDescription": "Dot-separated path inside the query string of the generated **share link**, or the link itself with a `$link.` prefix, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                           "examples": [
                             "$link.address",
                             "$link.port",
@@ -35202,7 +35202,7 @@
                           "minLength": 1,
                           "maxLength": 512,
                           "title": "Target path",
-                          "markdownDescription": "Dot-separated path inside the query string of the generated **share link**, or the link itself with a `$link.` prefix, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                          "markdownDescription": "Dot-separated path inside the query string of the generated **share link**, or the link itself with a `$link.` prefix, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                           "examples": [
                             "$link.address",
                             "$link.port",
@@ -35275,7 +35275,7 @@
                           "minLength": 1,
                           "maxLength": 512,
                           "title": "Target path",
-                          "markdownDescription": "Dot-separated path inside the query string of the generated **share link**, or the link itself with a `$link.` prefix, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                          "markdownDescription": "Dot-separated path inside the query string of the generated **share link**, or the link itself with a `$link.` prefix, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                           "examples": [
                             "$link.address",
                             "$link.port",
@@ -35357,7 +35357,7 @@
                           "minLength": 1,
                           "maxLength": 512,
                           "title": "Source path",
-                          "markdownDescription": "Dot-separated path inside the **raw inbound** of the config profile this host belongs to. Array items are addressed by index.\n\nWith a `$host.` prefix the value is read from the **host** itself, after overrides have been resolved вЂ“ `$host.securityOptions.serverName` holds the SNI that actually went into the config.\n\nOnly a part of the host is readable. Each entry below also opens everything nested under it:\n\n`address`, `port`, `finalRemark`, `protocol`, `transport`, `security`, `protocolOptions`, `transportOptions`, `securityOptions`, `mux`, `streamOverrides.finalMask`, `streamOverrides.sockopt`, `clientOverrides.serverDescription`, `metadata.remark`, `metadata.tags`, `metadata.inboundTag`\n\n> If the path resolves to nothing вЂ“ or points outside the list above вЂ“ the operation is skipped and the target key is **not** created.",
+                          "markdownDescription": "Dot-separated path inside the **raw inbound** of the config profile this host belongs to. Array items are addressed by index.\n\nWith a `$host.` prefix the value is read from the **host** itself, after overrides have been resolved – `$host.securityOptions.serverName` holds the SNI that actually went into the config.\n\nOnly a part of the host is readable. Each entry below also opens everything nested under it:\n\n`address`, `port`, `finalRemark`, `protocol`, `transport`, `security`, `protocolOptions`, `transportOptions`, `securityOptions`, `mux`, `streamOverrides.finalMask`, `streamOverrides.sockopt`, `clientOverrides.serverDescription`, `metadata.remark`, `metadata.tags`, `metadata.inboundTag`\n\n> If the path resolves to nothing – or points outside the list above – the operation is skipped and the target key is **not** created.",
                           "examples": [
                             "streamSettings.tlsSettings.cipherSuites",
                             "streamSettings.tlsSettings.alpn",
@@ -35373,7 +35373,7 @@
                           "minLength": 1,
                           "maxLength": 512,
                           "title": "Target path",
-                          "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                          "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                           "examples": [
                             "domain_resolver",
                             "multiplex.protocol",
@@ -35446,7 +35446,7 @@
                           "minLength": 1,
                           "maxLength": 512,
                           "title": "Target path",
-                          "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                          "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                           "examples": [
                             "domain_resolver",
                             "multiplex.protocol",
@@ -35492,7 +35492,7 @@
                           "minLength": 1,
                           "maxLength": 512,
                           "title": "Target path",
-                          "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                          "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                           "examples": [
                             "domain_resolver",
                             "multiplex.protocol",
@@ -36125,7 +36125,7 @@
                               "minLength": 1,
                               "maxLength": 512,
                               "title": "Source path",
-                              "markdownDescription": "Dot-separated path inside the **raw inbound** of the config profile this host belongs to. Array items are addressed by index.\n\nWith a `$host.` prefix the value is read from the **host** itself, after overrides have been resolved вЂ“ `$host.securityOptions.serverName` holds the SNI that actually went into the config.\n\nOnly a part of the host is readable. Each entry below also opens everything nested under it:\n\n`address`, `port`, `finalRemark`, `protocol`, `transport`, `security`, `protocolOptions`, `transportOptions`, `securityOptions`, `mux`, `streamOverrides.finalMask`, `streamOverrides.sockopt`, `clientOverrides.serverDescription`, `metadata.remark`, `metadata.tags`, `metadata.inboundTag`\n\n> If the path resolves to nothing вЂ“ or points outside the list above вЂ“ the operation is skipped and the target key is **not** created.",
+                              "markdownDescription": "Dot-separated path inside the **raw inbound** of the config profile this host belongs to. Array items are addressed by index.\n\nWith a `$host.` prefix the value is read from the **host** itself, after overrides have been resolved – `$host.securityOptions.serverName` holds the SNI that actually went into the config.\n\nOnly a part of the host is readable. Each entry below also opens everything nested under it:\n\n`address`, `port`, `finalRemark`, `protocol`, `transport`, `security`, `protocolOptions`, `transportOptions`, `securityOptions`, `mux`, `streamOverrides.finalMask`, `streamOverrides.sockopt`, `clientOverrides.serverDescription`, `metadata.remark`, `metadata.tags`, `metadata.inboundTag`\n\n> If the path resolves to nothing – or points outside the list above – the operation is skipped and the target key is **not** created.",
                               "examples": [
                                 "streamSettings.tlsSettings.cipherSuites",
                                 "streamSettings.tlsSettings.alpn",
@@ -36141,7 +36141,7 @@
                               "minLength": 1,
                               "maxLength": 512,
                               "title": "Target path",
-                              "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                              "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                               "examples": [
                                 "streamSettings.tlsSettings.enableSessionResumption",
                                 "streamSettings.tlsSettings.cipherSuites"
@@ -36210,7 +36210,7 @@
                               "minLength": 1,
                               "maxLength": 512,
                               "title": "Target path",
-                              "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                              "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                               "examples": [
                                 "streamSettings.tlsSettings.enableSessionResumption",
                                 "streamSettings.tlsSettings.cipherSuites"
@@ -36252,7 +36252,7 @@
                               "minLength": 1,
                               "maxLength": 512,
                               "title": "Target path",
-                              "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                              "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                               "examples": [
                                 "streamSettings.tlsSettings.enableSessionResumption",
                                 "streamSettings.tlsSettings.cipherSuites"
@@ -36303,7 +36303,7 @@
                               "minLength": 1,
                               "maxLength": 512,
                               "title": "Source path",
-                              "markdownDescription": "Dot-separated path inside the **raw inbound** of the config profile this host belongs to. Array items are addressed by index.\n\nWith a `$host.` prefix the value is read from the **host** itself, after overrides have been resolved вЂ“ `$host.securityOptions.serverName` holds the SNI that actually went into the config.\n\nOnly a part of the host is readable. Each entry below also opens everything nested under it:\n\n`address`, `port`, `finalRemark`, `protocol`, `transport`, `security`, `protocolOptions`, `transportOptions`, `securityOptions`, `mux`, `streamOverrides.finalMask`, `streamOverrides.sockopt`, `clientOverrides.serverDescription`, `metadata.remark`, `metadata.tags`, `metadata.inboundTag`\n\n> If the path resolves to nothing вЂ“ or points outside the list above вЂ“ the operation is skipped and the target key is **not** created.",
+                              "markdownDescription": "Dot-separated path inside the **raw inbound** of the config profile this host belongs to. Array items are addressed by index.\n\nWith a `$host.` prefix the value is read from the **host** itself, after overrides have been resolved – `$host.securityOptions.serverName` holds the SNI that actually went into the config.\n\nOnly a part of the host is readable. Each entry below also opens everything nested under it:\n\n`address`, `port`, `finalRemark`, `protocol`, `transport`, `security`, `protocolOptions`, `transportOptions`, `securityOptions`, `mux`, `streamOverrides.finalMask`, `streamOverrides.sockopt`, `clientOverrides.serverDescription`, `metadata.remark`, `metadata.tags`, `metadata.inboundTag`\n\n> If the path resolves to nothing – or points outside the list above – the operation is skipped and the target key is **not** created.",
                               "examples": [
                                 "streamSettings.tlsSettings.cipherSuites",
                                 "streamSettings.tlsSettings.alpn",
@@ -36319,7 +36319,7 @@
                               "minLength": 1,
                               "maxLength": 512,
                               "title": "Target path",
-                              "markdownDescription": "Dot-separated path inside the generated **proxy node**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                              "markdownDescription": "Dot-separated path inside the generated **proxy node**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                               "examples": [
                                 "ip-version",
                                 "client-fingerprint",
@@ -36390,7 +36390,7 @@
                               "minLength": 1,
                               "maxLength": 512,
                               "title": "Target path",
-                              "markdownDescription": "Dot-separated path inside the generated **proxy node**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                              "markdownDescription": "Dot-separated path inside the generated **proxy node**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                               "examples": [
                                 "ip-version",
                                 "client-fingerprint",
@@ -36434,7 +36434,7 @@
                               "minLength": 1,
                               "maxLength": 512,
                               "title": "Target path",
-                              "markdownDescription": "Dot-separated path inside the generated **proxy node**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                              "markdownDescription": "Dot-separated path inside the generated **proxy node**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                               "examples": [
                                 "ip-version",
                                 "client-fingerprint",
@@ -36467,7 +36467,7 @@
                   },
                   "base64": {
                     "title": "Base64",
-                    "markdownDescription": "Operations applied to the share link generated for this host in the Base64 subscription.\n\n`to` is a plain query parameter name, not a path вЂ“ dots carry no meaning here.\n\nWith a `$link.` prefix the operation rewrites the link itself instead of its query string. Writable parts: `$link.address`, `$link.port`, `$link.password`, `$link.remark`, and `$link.method` for Shadowsocks. `$link.password` is the credential of the protocol.\n\n> A value that cannot make a valid link вЂ“ an empty address, a port outside 1-65535 вЂ“ is ignored, and the generated one is kept.\n\n```json\n[\n  {\n    \"op\": \"set\",\n    \"to\": \"fp\",\n    \"value\": \"chrome\"\n  },\n  {\n    \"op\": \"unset\",\n    \"to\": \"fm\"\n  },\n  {\n    \"op\": \"set\",\n    \"to\": \"$link.port\",\n    \"value\": 2053\n  },\n  {\n    \"op\": \"copy\",\n    \"from\": \"$host.securityOptions.serverName\",\n    \"to\": \"$link.address\"\n  }\n]\n```",
+                    "markdownDescription": "Operations applied to the share link generated for this host in the Base64 subscription.\n\n`to` is a plain query parameter name, not a path – dots carry no meaning here.\n\nWith a `$link.` prefix the operation rewrites the link itself instead of its query string. Writable parts: `$link.address`, `$link.port`, `$link.password`, `$link.remark`, and `$link.method` for Shadowsocks. `$link.password` is the credential of the protocol.\n\n> A value that cannot make a valid link – an empty address, a port outside 1-65535 – is ignored, and the generated one is kept.\n\n```json\n[\n  {\n    \"op\": \"set\",\n    \"to\": \"fp\",\n    \"value\": \"chrome\"\n  },\n  {\n    \"op\": \"unset\",\n    \"to\": \"fm\"\n  },\n  {\n    \"op\": \"set\",\n    \"to\": \"$link.port\",\n    \"value\": 2053\n  },\n  {\n    \"op\": \"copy\",\n    \"from\": \"$host.securityOptions.serverName\",\n    \"to\": \"$link.address\"\n  }\n]\n```",
                     "type": "array",
                     "items": {
                       "oneOf": [
@@ -36487,7 +36487,7 @@
                               "minLength": 1,
                               "maxLength": 512,
                               "title": "Source path",
-                              "markdownDescription": "Dot-separated path inside the **raw inbound** of the config profile this host belongs to. Array items are addressed by index.\n\nWith a `$host.` prefix the value is read from the **host** itself, after overrides have been resolved вЂ“ `$host.securityOptions.serverName` holds the SNI that actually went into the config.\n\nOnly a part of the host is readable. Each entry below also opens everything nested under it:\n\n`address`, `port`, `finalRemark`, `protocol`, `transport`, `security`, `protocolOptions`, `transportOptions`, `securityOptions`, `mux`, `streamOverrides.finalMask`, `streamOverrides.sockopt`, `clientOverrides.serverDescription`, `metadata.remark`, `metadata.tags`, `metadata.inboundTag`\n\n> If the path resolves to nothing вЂ“ or points outside the list above вЂ“ the operation is skipped and the target key is **not** created.",
+                              "markdownDescription": "Dot-separated path inside the **raw inbound** of the config profile this host belongs to. Array items are addressed by index.\n\nWith a `$host.` prefix the value is read from the **host** itself, after overrides have been resolved – `$host.securityOptions.serverName` holds the SNI that actually went into the config.\n\nOnly a part of the host is readable. Each entry below also opens everything nested under it:\n\n`address`, `port`, `finalRemark`, `protocol`, `transport`, `security`, `protocolOptions`, `transportOptions`, `securityOptions`, `mux`, `streamOverrides.finalMask`, `streamOverrides.sockopt`, `clientOverrides.serverDescription`, `metadata.remark`, `metadata.tags`, `metadata.inboundTag`\n\n> If the path resolves to nothing – or points outside the list above – the operation is skipped and the target key is **not** created.",
                               "examples": [
                                 "streamSettings.tlsSettings.cipherSuites",
                                 "streamSettings.tlsSettings.alpn",
@@ -36503,7 +36503,7 @@
                               "minLength": 1,
                               "maxLength": 512,
                               "title": "Target path",
-                              "markdownDescription": "Dot-separated path inside the query string of the generated **share link**, or the link itself with a `$link.` prefix, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                              "markdownDescription": "Dot-separated path inside the query string of the generated **share link**, or the link itself with a `$link.` prefix, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                               "examples": [
                                 "$link.address",
                                 "$link.port",
@@ -36603,7 +36603,7 @@
                               "minLength": 1,
                               "maxLength": 512,
                               "title": "Target path",
-                              "markdownDescription": "Dot-separated path inside the query string of the generated **share link**, or the link itself with a `$link.` prefix, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                              "markdownDescription": "Dot-separated path inside the query string of the generated **share link**, or the link itself with a `$link.` prefix, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                               "examples": [
                                 "$link.address",
                                 "$link.port",
@@ -36676,7 +36676,7 @@
                               "minLength": 1,
                               "maxLength": 512,
                               "title": "Target path",
-                              "markdownDescription": "Dot-separated path inside the query string of the generated **share link**, or the link itself with a `$link.` prefix, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                              "markdownDescription": "Dot-separated path inside the query string of the generated **share link**, or the link itself with a `$link.` prefix, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                               "examples": [
                                 "$link.address",
                                 "$link.port",
@@ -36758,7 +36758,7 @@
                               "minLength": 1,
                               "maxLength": 512,
                               "title": "Source path",
-                              "markdownDescription": "Dot-separated path inside the **raw inbound** of the config profile this host belongs to. Array items are addressed by index.\n\nWith a `$host.` prefix the value is read from the **host** itself, after overrides have been resolved вЂ“ `$host.securityOptions.serverName` holds the SNI that actually went into the config.\n\nOnly a part of the host is readable. Each entry below also opens everything nested under it:\n\n`address`, `port`, `finalRemark`, `protocol`, `transport`, `security`, `protocolOptions`, `transportOptions`, `securityOptions`, `mux`, `streamOverrides.finalMask`, `streamOverrides.sockopt`, `clientOverrides.serverDescription`, `metadata.remark`, `metadata.tags`, `metadata.inboundTag`\n\n> If the path resolves to nothing вЂ“ or points outside the list above вЂ“ the operation is skipped and the target key is **not** created.",
+                              "markdownDescription": "Dot-separated path inside the **raw inbound** of the config profile this host belongs to. Array items are addressed by index.\n\nWith a `$host.` prefix the value is read from the **host** itself, after overrides have been resolved – `$host.securityOptions.serverName` holds the SNI that actually went into the config.\n\nOnly a part of the host is readable. Each entry below also opens everything nested under it:\n\n`address`, `port`, `finalRemark`, `protocol`, `transport`, `security`, `protocolOptions`, `transportOptions`, `securityOptions`, `mux`, `streamOverrides.finalMask`, `streamOverrides.sockopt`, `clientOverrides.serverDescription`, `metadata.remark`, `metadata.tags`, `metadata.inboundTag`\n\n> If the path resolves to nothing – or points outside the list above – the operation is skipped and the target key is **not** created.",
                               "examples": [
                                 "streamSettings.tlsSettings.cipherSuites",
                                 "streamSettings.tlsSettings.alpn",
@@ -36774,7 +36774,7 @@
                               "minLength": 1,
                               "maxLength": 512,
                               "title": "Target path",
-                              "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                              "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                               "examples": [
                                 "domain_resolver",
                                 "multiplex.protocol",
@@ -36847,7 +36847,7 @@
                               "minLength": 1,
                               "maxLength": 512,
                               "title": "Target path",
-                              "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                              "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                               "examples": [
                                 "domain_resolver",
                                 "multiplex.protocol",
@@ -36893,7 +36893,7 @@
                               "minLength": 1,
                               "maxLength": 512,
                               "title": "Target path",
-                              "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                              "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                               "examples": [
                                 "domain_resolver",
                                 "multiplex.protocol",
@@ -37545,7 +37545,7 @@
                           "minLength": 1,
                           "maxLength": 512,
                           "title": "Source path",
-                          "markdownDescription": "Dot-separated path inside the **raw inbound** of the config profile this host belongs to. Array items are addressed by index.\n\nWith a `$host.` prefix the value is read from the **host** itself, after overrides have been resolved вЂ“ `$host.securityOptions.serverName` holds the SNI that actually went into the config.\n\nOnly a part of the host is readable. Each entry below also opens everything nested under it:\n\n`address`, `port`, `finalRemark`, `protocol`, `transport`, `security`, `protocolOptions`, `transportOptions`, `securityOptions`, `mux`, `streamOverrides.finalMask`, `streamOverrides.sockopt`, `clientOverrides.serverDescription`, `metadata.remark`, `metadata.tags`, `metadata.inboundTag`\n\n> If the path resolves to nothing вЂ“ or points outside the list above вЂ“ the operation is skipped and the target key is **not** created.",
+                          "markdownDescription": "Dot-separated path inside the **raw inbound** of the config profile this host belongs to. Array items are addressed by index.\n\nWith a `$host.` prefix the value is read from the **host** itself, after overrides have been resolved – `$host.securityOptions.serverName` holds the SNI that actually went into the config.\n\nOnly a part of the host is readable. Each entry below also opens everything nested under it:\n\n`address`, `port`, `finalRemark`, `protocol`, `transport`, `security`, `protocolOptions`, `transportOptions`, `securityOptions`, `mux`, `streamOverrides.finalMask`, `streamOverrides.sockopt`, `clientOverrides.serverDescription`, `metadata.remark`, `metadata.tags`, `metadata.inboundTag`\n\n> If the path resolves to nothing – or points outside the list above – the operation is skipped and the target key is **not** created.",
                           "examples": [
                             "streamSettings.tlsSettings.cipherSuites",
                             "streamSettings.tlsSettings.alpn",
@@ -37561,7 +37561,7 @@
                           "minLength": 1,
                           "maxLength": 512,
                           "title": "Target path",
-                          "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                          "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                           "examples": [
                             "streamSettings.tlsSettings.enableSessionResumption",
                             "streamSettings.tlsSettings.cipherSuites"
@@ -37630,7 +37630,7 @@
                           "minLength": 1,
                           "maxLength": 512,
                           "title": "Target path",
-                          "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                          "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                           "examples": [
                             "streamSettings.tlsSettings.enableSessionResumption",
                             "streamSettings.tlsSettings.cipherSuites"
@@ -37672,7 +37672,7 @@
                           "minLength": 1,
                           "maxLength": 512,
                           "title": "Target path",
-                          "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                          "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                           "examples": [
                             "streamSettings.tlsSettings.enableSessionResumption",
                             "streamSettings.tlsSettings.cipherSuites"
@@ -37723,7 +37723,7 @@
                           "minLength": 1,
                           "maxLength": 512,
                           "title": "Source path",
-                          "markdownDescription": "Dot-separated path inside the **raw inbound** of the config profile this host belongs to. Array items are addressed by index.\n\nWith a `$host.` prefix the value is read from the **host** itself, after overrides have been resolved вЂ“ `$host.securityOptions.serverName` holds the SNI that actually went into the config.\n\nOnly a part of the host is readable. Each entry below also opens everything nested under it:\n\n`address`, `port`, `finalRemark`, `protocol`, `transport`, `security`, `protocolOptions`, `transportOptions`, `securityOptions`, `mux`, `streamOverrides.finalMask`, `streamOverrides.sockopt`, `clientOverrides.serverDescription`, `metadata.remark`, `metadata.tags`, `metadata.inboundTag`\n\n> If the path resolves to nothing вЂ“ or points outside the list above вЂ“ the operation is skipped and the target key is **not** created.",
+                          "markdownDescription": "Dot-separated path inside the **raw inbound** of the config profile this host belongs to. Array items are addressed by index.\n\nWith a `$host.` prefix the value is read from the **host** itself, after overrides have been resolved – `$host.securityOptions.serverName` holds the SNI that actually went into the config.\n\nOnly a part of the host is readable. Each entry below also opens everything nested under it:\n\n`address`, `port`, `finalRemark`, `protocol`, `transport`, `security`, `protocolOptions`, `transportOptions`, `securityOptions`, `mux`, `streamOverrides.finalMask`, `streamOverrides.sockopt`, `clientOverrides.serverDescription`, `metadata.remark`, `metadata.tags`, `metadata.inboundTag`\n\n> If the path resolves to nothing – or points outside the list above – the operation is skipped and the target key is **not** created.",
                           "examples": [
                             "streamSettings.tlsSettings.cipherSuites",
                             "streamSettings.tlsSettings.alpn",
@@ -37739,7 +37739,7 @@
                           "minLength": 1,
                           "maxLength": 512,
                           "title": "Target path",
-                          "markdownDescription": "Dot-separated path inside the generated **proxy node**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                          "markdownDescription": "Dot-separated path inside the generated **proxy node**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                           "examples": [
                             "ip-version",
                             "client-fingerprint",
@@ -37810,7 +37810,7 @@
                           "minLength": 1,
                           "maxLength": 512,
                           "title": "Target path",
-                          "markdownDescription": "Dot-separated path inside the generated **proxy node**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                          "markdownDescription": "Dot-separated path inside the generated **proxy node**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                           "examples": [
                             "ip-version",
                             "client-fingerprint",
@@ -37854,7 +37854,7 @@
                           "minLength": 1,
                           "maxLength": 512,
                           "title": "Target path",
-                          "markdownDescription": "Dot-separated path inside the generated **proxy node**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                          "markdownDescription": "Dot-separated path inside the generated **proxy node**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                           "examples": [
                             "ip-version",
                             "client-fingerprint",
@@ -37887,7 +37887,7 @@
               },
               "base64": {
                 "title": "Base64",
-                "markdownDescription": "Operations applied to the share link generated for this host in the Base64 subscription.\n\n`to` is a plain query parameter name, not a path вЂ“ dots carry no meaning here.\n\nWith a `$link.` prefix the operation rewrites the link itself instead of its query string. Writable parts: `$link.address`, `$link.port`, `$link.password`, `$link.remark`, and `$link.method` for Shadowsocks. `$link.password` is the credential of the protocol.\n\n> A value that cannot make a valid link вЂ“ an empty address, a port outside 1-65535 вЂ“ is ignored, and the generated one is kept.\n\n```json\n[\n  {\n    \"op\": \"set\",\n    \"to\": \"fp\",\n    \"value\": \"chrome\"\n  },\n  {\n    \"op\": \"unset\",\n    \"to\": \"fm\"\n  },\n  {\n    \"op\": \"set\",\n    \"to\": \"$link.port\",\n    \"value\": 2053\n  },\n  {\n    \"op\": \"copy\",\n    \"from\": \"$host.securityOptions.serverName\",\n    \"to\": \"$link.address\"\n  }\n]\n```",
+                "markdownDescription": "Operations applied to the share link generated for this host in the Base64 subscription.\n\n`to` is a plain query parameter name, not a path – dots carry no meaning here.\n\nWith a `$link.` prefix the operation rewrites the link itself instead of its query string. Writable parts: `$link.address`, `$link.port`, `$link.password`, `$link.remark`, and `$link.method` for Shadowsocks. `$link.password` is the credential of the protocol.\n\n> A value that cannot make a valid link – an empty address, a port outside 1-65535 – is ignored, and the generated one is kept.\n\n```json\n[\n  {\n    \"op\": \"set\",\n    \"to\": \"fp\",\n    \"value\": \"chrome\"\n  },\n  {\n    \"op\": \"unset\",\n    \"to\": \"fm\"\n  },\n  {\n    \"op\": \"set\",\n    \"to\": \"$link.port\",\n    \"value\": 2053\n  },\n  {\n    \"op\": \"copy\",\n    \"from\": \"$host.securityOptions.serverName\",\n    \"to\": \"$link.address\"\n  }\n]\n```",
                 "type": "array",
                 "items": {
                   "oneOf": [
@@ -37907,7 +37907,7 @@
                           "minLength": 1,
                           "maxLength": 512,
                           "title": "Source path",
-                          "markdownDescription": "Dot-separated path inside the **raw inbound** of the config profile this host belongs to. Array items are addressed by index.\n\nWith a `$host.` prefix the value is read from the **host** itself, after overrides have been resolved вЂ“ `$host.securityOptions.serverName` holds the SNI that actually went into the config.\n\nOnly a part of the host is readable. Each entry below also opens everything nested under it:\n\n`address`, `port`, `finalRemark`, `protocol`, `transport`, `security`, `protocolOptions`, `transportOptions`, `securityOptions`, `mux`, `streamOverrides.finalMask`, `streamOverrides.sockopt`, `clientOverrides.serverDescription`, `metadata.remark`, `metadata.tags`, `metadata.inboundTag`\n\n> If the path resolves to nothing вЂ“ or points outside the list above вЂ“ the operation is skipped and the target key is **not** created.",
+                          "markdownDescription": "Dot-separated path inside the **raw inbound** of the config profile this host belongs to. Array items are addressed by index.\n\nWith a `$host.` prefix the value is read from the **host** itself, after overrides have been resolved – `$host.securityOptions.serverName` holds the SNI that actually went into the config.\n\nOnly a part of the host is readable. Each entry below also opens everything nested under it:\n\n`address`, `port`, `finalRemark`, `protocol`, `transport`, `security`, `protocolOptions`, `transportOptions`, `securityOptions`, `mux`, `streamOverrides.finalMask`, `streamOverrides.sockopt`, `clientOverrides.serverDescription`, `metadata.remark`, `metadata.tags`, `metadata.inboundTag`\n\n> If the path resolves to nothing – or points outside the list above – the operation is skipped and the target key is **not** created.",
                           "examples": [
                             "streamSettings.tlsSettings.cipherSuites",
                             "streamSettings.tlsSettings.alpn",
@@ -37923,7 +37923,7 @@
                           "minLength": 1,
                           "maxLength": 512,
                           "title": "Target path",
-                          "markdownDescription": "Dot-separated path inside the query string of the generated **share link**, or the link itself with a `$link.` prefix, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                          "markdownDescription": "Dot-separated path inside the query string of the generated **share link**, or the link itself with a `$link.` prefix, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                           "examples": [
                             "$link.address",
                             "$link.port",
@@ -38023,7 +38023,7 @@
                           "minLength": 1,
                           "maxLength": 512,
                           "title": "Target path",
-                          "markdownDescription": "Dot-separated path inside the query string of the generated **share link**, or the link itself with a `$link.` prefix, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                          "markdownDescription": "Dot-separated path inside the query string of the generated **share link**, or the link itself with a `$link.` prefix, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                           "examples": [
                             "$link.address",
                             "$link.port",
@@ -38096,7 +38096,7 @@
                           "minLength": 1,
                           "maxLength": 512,
                           "title": "Target path",
-                          "markdownDescription": "Dot-separated path inside the query string of the generated **share link**, or the link itself with a `$link.` prefix, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                          "markdownDescription": "Dot-separated path inside the query string of the generated **share link**, or the link itself with a `$link.` prefix, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                           "examples": [
                             "$link.address",
                             "$link.port",
@@ -38178,7 +38178,7 @@
                           "minLength": 1,
                           "maxLength": 512,
                           "title": "Source path",
-                          "markdownDescription": "Dot-separated path inside the **raw inbound** of the config profile this host belongs to. Array items are addressed by index.\n\nWith a `$host.` prefix the value is read from the **host** itself, after overrides have been resolved вЂ“ `$host.securityOptions.serverName` holds the SNI that actually went into the config.\n\nOnly a part of the host is readable. Each entry below also opens everything nested under it:\n\n`address`, `port`, `finalRemark`, `protocol`, `transport`, `security`, `protocolOptions`, `transportOptions`, `securityOptions`, `mux`, `streamOverrides.finalMask`, `streamOverrides.sockopt`, `clientOverrides.serverDescription`, `metadata.remark`, `metadata.tags`, `metadata.inboundTag`\n\n> If the path resolves to nothing вЂ“ or points outside the list above вЂ“ the operation is skipped and the target key is **not** created.",
+                          "markdownDescription": "Dot-separated path inside the **raw inbound** of the config profile this host belongs to. Array items are addressed by index.\n\nWith a `$host.` prefix the value is read from the **host** itself, after overrides have been resolved – `$host.securityOptions.serverName` holds the SNI that actually went into the config.\n\nOnly a part of the host is readable. Each entry below also opens everything nested under it:\n\n`address`, `port`, `finalRemark`, `protocol`, `transport`, `security`, `protocolOptions`, `transportOptions`, `securityOptions`, `mux`, `streamOverrides.finalMask`, `streamOverrides.sockopt`, `clientOverrides.serverDescription`, `metadata.remark`, `metadata.tags`, `metadata.inboundTag`\n\n> If the path resolves to nothing – or points outside the list above – the operation is skipped and the target key is **not** created.",
                           "examples": [
                             "streamSettings.tlsSettings.cipherSuites",
                             "streamSettings.tlsSettings.alpn",
@@ -38194,7 +38194,7 @@
                           "minLength": 1,
                           "maxLength": 512,
                           "title": "Target path",
-                          "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                          "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                           "examples": [
                             "domain_resolver",
                             "multiplex.protocol",
@@ -38267,7 +38267,7 @@
                           "minLength": 1,
                           "maxLength": 512,
                           "title": "Target path",
-                          "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                          "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                           "examples": [
                             "domain_resolver",
                             "multiplex.protocol",
@@ -38313,7 +38313,7 @@
                           "minLength": 1,
                           "maxLength": 512,
                           "title": "Target path",
-                          "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                          "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                           "examples": [
                             "domain_resolver",
                             "multiplex.protocol",
@@ -38945,7 +38945,7 @@
                                 "minLength": 1,
                                 "maxLength": 512,
                                 "title": "Source path",
-                                "markdownDescription": "Dot-separated path inside the **raw inbound** of the config profile this host belongs to. Array items are addressed by index.\n\nWith a `$host.` prefix the value is read from the **host** itself, after overrides have been resolved вЂ“ `$host.securityOptions.serverName` holds the SNI that actually went into the config.\n\nOnly a part of the host is readable. Each entry below also opens everything nested under it:\n\n`address`, `port`, `finalRemark`, `protocol`, `transport`, `security`, `protocolOptions`, `transportOptions`, `securityOptions`, `mux`, `streamOverrides.finalMask`, `streamOverrides.sockopt`, `clientOverrides.serverDescription`, `metadata.remark`, `metadata.tags`, `metadata.inboundTag`\n\n> If the path resolves to nothing вЂ“ or points outside the list above вЂ“ the operation is skipped and the target key is **not** created.",
+                                "markdownDescription": "Dot-separated path inside the **raw inbound** of the config profile this host belongs to. Array items are addressed by index.\n\nWith a `$host.` prefix the value is read from the **host** itself, after overrides have been resolved – `$host.securityOptions.serverName` holds the SNI that actually went into the config.\n\nOnly a part of the host is readable. Each entry below also opens everything nested under it:\n\n`address`, `port`, `finalRemark`, `protocol`, `transport`, `security`, `protocolOptions`, `transportOptions`, `securityOptions`, `mux`, `streamOverrides.finalMask`, `streamOverrides.sockopt`, `clientOverrides.serverDescription`, `metadata.remark`, `metadata.tags`, `metadata.inboundTag`\n\n> If the path resolves to nothing – or points outside the list above – the operation is skipped and the target key is **not** created.",
                                 "examples": [
                                   "streamSettings.tlsSettings.cipherSuites",
                                   "streamSettings.tlsSettings.alpn",
@@ -38961,7 +38961,7 @@
                                 "minLength": 1,
                                 "maxLength": 512,
                                 "title": "Target path",
-                                "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                                "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                                 "examples": [
                                   "streamSettings.tlsSettings.enableSessionResumption",
                                   "streamSettings.tlsSettings.cipherSuites"
@@ -39030,7 +39030,7 @@
                                 "minLength": 1,
                                 "maxLength": 512,
                                 "title": "Target path",
-                                "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                                "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                                 "examples": [
                                   "streamSettings.tlsSettings.enableSessionResumption",
                                   "streamSettings.tlsSettings.cipherSuites"
@@ -39072,7 +39072,7 @@
                                 "minLength": 1,
                                 "maxLength": 512,
                                 "title": "Target path",
-                                "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                                "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                                 "examples": [
                                   "streamSettings.tlsSettings.enableSessionResumption",
                                   "streamSettings.tlsSettings.cipherSuites"
@@ -39123,7 +39123,7 @@
                                 "minLength": 1,
                                 "maxLength": 512,
                                 "title": "Source path",
-                                "markdownDescription": "Dot-separated path inside the **raw inbound** of the config profile this host belongs to. Array items are addressed by index.\n\nWith a `$host.` prefix the value is read from the **host** itself, after overrides have been resolved вЂ“ `$host.securityOptions.serverName` holds the SNI that actually went into the config.\n\nOnly a part of the host is readable. Each entry below also opens everything nested under it:\n\n`address`, `port`, `finalRemark`, `protocol`, `transport`, `security`, `protocolOptions`, `transportOptions`, `securityOptions`, `mux`, `streamOverrides.finalMask`, `streamOverrides.sockopt`, `clientOverrides.serverDescription`, `metadata.remark`, `metadata.tags`, `metadata.inboundTag`\n\n> If the path resolves to nothing вЂ“ or points outside the list above вЂ“ the operation is skipped and the target key is **not** created.",
+                                "markdownDescription": "Dot-separated path inside the **raw inbound** of the config profile this host belongs to. Array items are addressed by index.\n\nWith a `$host.` prefix the value is read from the **host** itself, after overrides have been resolved – `$host.securityOptions.serverName` holds the SNI that actually went into the config.\n\nOnly a part of the host is readable. Each entry below also opens everything nested under it:\n\n`address`, `port`, `finalRemark`, `protocol`, `transport`, `security`, `protocolOptions`, `transportOptions`, `securityOptions`, `mux`, `streamOverrides.finalMask`, `streamOverrides.sockopt`, `clientOverrides.serverDescription`, `metadata.remark`, `metadata.tags`, `metadata.inboundTag`\n\n> If the path resolves to nothing – or points outside the list above – the operation is skipped and the target key is **not** created.",
                                 "examples": [
                                   "streamSettings.tlsSettings.cipherSuites",
                                   "streamSettings.tlsSettings.alpn",
@@ -39139,7 +39139,7 @@
                                 "minLength": 1,
                                 "maxLength": 512,
                                 "title": "Target path",
-                                "markdownDescription": "Dot-separated path inside the generated **proxy node**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                                "markdownDescription": "Dot-separated path inside the generated **proxy node**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                                 "examples": [
                                   "ip-version",
                                   "client-fingerprint",
@@ -39210,7 +39210,7 @@
                                 "minLength": 1,
                                 "maxLength": 512,
                                 "title": "Target path",
-                                "markdownDescription": "Dot-separated path inside the generated **proxy node**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                                "markdownDescription": "Dot-separated path inside the generated **proxy node**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                                 "examples": [
                                   "ip-version",
                                   "client-fingerprint",
@@ -39254,7 +39254,7 @@
                                 "minLength": 1,
                                 "maxLength": 512,
                                 "title": "Target path",
-                                "markdownDescription": "Dot-separated path inside the generated **proxy node**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                                "markdownDescription": "Dot-separated path inside the generated **proxy node**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                                 "examples": [
                                   "ip-version",
                                   "client-fingerprint",
@@ -39287,7 +39287,7 @@
                     },
                     "base64": {
                       "title": "Base64",
-                      "markdownDescription": "Operations applied to the share link generated for this host in the Base64 subscription.\n\n`to` is a plain query parameter name, not a path вЂ“ dots carry no meaning here.\n\nWith a `$link.` prefix the operation rewrites the link itself instead of its query string. Writable parts: `$link.address`, `$link.port`, `$link.password`, `$link.remark`, and `$link.method` for Shadowsocks. `$link.password` is the credential of the protocol.\n\n> A value that cannot make a valid link вЂ“ an empty address, a port outside 1-65535 вЂ“ is ignored, and the generated one is kept.\n\n```json\n[\n  {\n    \"op\": \"set\",\n    \"to\": \"fp\",\n    \"value\": \"chrome\"\n  },\n  {\n    \"op\": \"unset\",\n    \"to\": \"fm\"\n  },\n  {\n    \"op\": \"set\",\n    \"to\": \"$link.port\",\n    \"value\": 2053\n  },\n  {\n    \"op\": \"copy\",\n    \"from\": \"$host.securityOptions.serverName\",\n    \"to\": \"$link.address\"\n  }\n]\n```",
+                      "markdownDescription": "Operations applied to the share link generated for this host in the Base64 subscription.\n\n`to` is a plain query parameter name, not a path – dots carry no meaning here.\n\nWith a `$link.` prefix the operation rewrites the link itself instead of its query string. Writable parts: `$link.address`, `$link.port`, `$link.password`, `$link.remark`, and `$link.method` for Shadowsocks. `$link.password` is the credential of the protocol.\n\n> A value that cannot make a valid link – an empty address, a port outside 1-65535 – is ignored, and the generated one is kept.\n\n```json\n[\n  {\n    \"op\": \"set\",\n    \"to\": \"fp\",\n    \"value\": \"chrome\"\n  },\n  {\n    \"op\": \"unset\",\n    \"to\": \"fm\"\n  },\n  {\n    \"op\": \"set\",\n    \"to\": \"$link.port\",\n    \"value\": 2053\n  },\n  {\n    \"op\": \"copy\",\n    \"from\": \"$host.securityOptions.serverName\",\n    \"to\": \"$link.address\"\n  }\n]\n```",
                       "type": "array",
                       "items": {
                         "oneOf": [
@@ -39307,7 +39307,7 @@
                                 "minLength": 1,
                                 "maxLength": 512,
                                 "title": "Source path",
-                                "markdownDescription": "Dot-separated path inside the **raw inbound** of the config profile this host belongs to. Array items are addressed by index.\n\nWith a `$host.` prefix the value is read from the **host** itself, after overrides have been resolved вЂ“ `$host.securityOptions.serverName` holds the SNI that actually went into the config.\n\nOnly a part of the host is readable. Each entry below also opens everything nested under it:\n\n`address`, `port`, `finalRemark`, `protocol`, `transport`, `security`, `protocolOptions`, `transportOptions`, `securityOptions`, `mux`, `streamOverrides.finalMask`, `streamOverrides.sockopt`, `clientOverrides.serverDescription`, `metadata.remark`, `metadata.tags`, `metadata.inboundTag`\n\n> If the path resolves to nothing вЂ“ or points outside the list above вЂ“ the operation is skipped and the target key is **not** created.",
+                                "markdownDescription": "Dot-separated path inside the **raw inbound** of the config profile this host belongs to. Array items are addressed by index.\n\nWith a `$host.` prefix the value is read from the **host** itself, after overrides have been resolved – `$host.securityOptions.serverName` holds the SNI that actually went into the config.\n\nOnly a part of the host is readable. Each entry below also opens everything nested under it:\n\n`address`, `port`, `finalRemark`, `protocol`, `transport`, `security`, `protocolOptions`, `transportOptions`, `securityOptions`, `mux`, `streamOverrides.finalMask`, `streamOverrides.sockopt`, `clientOverrides.serverDescription`, `metadata.remark`, `metadata.tags`, `metadata.inboundTag`\n\n> If the path resolves to nothing – or points outside the list above – the operation is skipped and the target key is **not** created.",
                                 "examples": [
                                   "streamSettings.tlsSettings.cipherSuites",
                                   "streamSettings.tlsSettings.alpn",
@@ -39323,7 +39323,7 @@
                                 "minLength": 1,
                                 "maxLength": 512,
                                 "title": "Target path",
-                                "markdownDescription": "Dot-separated path inside the query string of the generated **share link**, or the link itself with a `$link.` prefix, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                                "markdownDescription": "Dot-separated path inside the query string of the generated **share link**, or the link itself with a `$link.` prefix, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                                 "examples": [
                                   "$link.address",
                                   "$link.port",
@@ -39423,7 +39423,7 @@
                                 "minLength": 1,
                                 "maxLength": 512,
                                 "title": "Target path",
-                                "markdownDescription": "Dot-separated path inside the query string of the generated **share link**, or the link itself with a `$link.` prefix, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                                "markdownDescription": "Dot-separated path inside the query string of the generated **share link**, or the link itself with a `$link.` prefix, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                                 "examples": [
                                   "$link.address",
                                   "$link.port",
@@ -39496,7 +39496,7 @@
                                 "minLength": 1,
                                 "maxLength": 512,
                                 "title": "Target path",
-                                "markdownDescription": "Dot-separated path inside the query string of the generated **share link**, or the link itself with a `$link.` prefix, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                                "markdownDescription": "Dot-separated path inside the query string of the generated **share link**, or the link itself with a `$link.` prefix, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                                 "examples": [
                                   "$link.address",
                                   "$link.port",
@@ -39578,7 +39578,7 @@
                                 "minLength": 1,
                                 "maxLength": 512,
                                 "title": "Source path",
-                                "markdownDescription": "Dot-separated path inside the **raw inbound** of the config profile this host belongs to. Array items are addressed by index.\n\nWith a `$host.` prefix the value is read from the **host** itself, after overrides have been resolved вЂ“ `$host.securityOptions.serverName` holds the SNI that actually went into the config.\n\nOnly a part of the host is readable. Each entry below also opens everything nested under it:\n\n`address`, `port`, `finalRemark`, `protocol`, `transport`, `security`, `protocolOptions`, `transportOptions`, `securityOptions`, `mux`, `streamOverrides.finalMask`, `streamOverrides.sockopt`, `clientOverrides.serverDescription`, `metadata.remark`, `metadata.tags`, `metadata.inboundTag`\n\n> If the path resolves to nothing вЂ“ or points outside the list above вЂ“ the operation is skipped and the target key is **not** created.",
+                                "markdownDescription": "Dot-separated path inside the **raw inbound** of the config profile this host belongs to. Array items are addressed by index.\n\nWith a `$host.` prefix the value is read from the **host** itself, after overrides have been resolved – `$host.securityOptions.serverName` holds the SNI that actually went into the config.\n\nOnly a part of the host is readable. Each entry below also opens everything nested under it:\n\n`address`, `port`, `finalRemark`, `protocol`, `transport`, `security`, `protocolOptions`, `transportOptions`, `securityOptions`, `mux`, `streamOverrides.finalMask`, `streamOverrides.sockopt`, `clientOverrides.serverDescription`, `metadata.remark`, `metadata.tags`, `metadata.inboundTag`\n\n> If the path resolves to nothing – or points outside the list above – the operation is skipped and the target key is **not** created.",
                                 "examples": [
                                   "streamSettings.tlsSettings.cipherSuites",
                                   "streamSettings.tlsSettings.alpn",
@@ -39594,7 +39594,7 @@
                                 "minLength": 1,
                                 "maxLength": 512,
                                 "title": "Target path",
-                                "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                                "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                                 "examples": [
                                   "domain_resolver",
                                   "multiplex.protocol",
@@ -39667,7 +39667,7 @@
                                 "minLength": 1,
                                 "maxLength": 512,
                                 "title": "Target path",
-                                "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                                "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                                 "examples": [
                                   "domain_resolver",
                                   "multiplex.protocol",
@@ -39713,7 +39713,7 @@
                                 "minLength": 1,
                                 "maxLength": 512,
                                 "title": "Target path",
-                                "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                                "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                                 "examples": [
                                   "domain_resolver",
                                   "multiplex.protocol",
@@ -40471,7 +40471,7 @@
                           "minLength": 1,
                           "maxLength": 512,
                           "title": "Source path",
-                          "markdownDescription": "Dot-separated path inside the **raw inbound** of the config profile this host belongs to. Array items are addressed by index.\n\nWith a `$host.` prefix the value is read from the **host** itself, after overrides have been resolved вЂ“ `$host.securityOptions.serverName` holds the SNI that actually went into the config.\n\nOnly a part of the host is readable. Each entry below also opens everything nested under it:\n\n`address`, `port`, `finalRemark`, `protocol`, `transport`, `security`, `protocolOptions`, `transportOptions`, `securityOptions`, `mux`, `streamOverrides.finalMask`, `streamOverrides.sockopt`, `clientOverrides.serverDescription`, `metadata.remark`, `metadata.tags`, `metadata.inboundTag`\n\n> If the path resolves to nothing вЂ“ or points outside the list above вЂ“ the operation is skipped and the target key is **not** created.",
+                          "markdownDescription": "Dot-separated path inside the **raw inbound** of the config profile this host belongs to. Array items are addressed by index.\n\nWith a `$host.` prefix the value is read from the **host** itself, after overrides have been resolved – `$host.securityOptions.serverName` holds the SNI that actually went into the config.\n\nOnly a part of the host is readable. Each entry below also opens everything nested under it:\n\n`address`, `port`, `finalRemark`, `protocol`, `transport`, `security`, `protocolOptions`, `transportOptions`, `securityOptions`, `mux`, `streamOverrides.finalMask`, `streamOverrides.sockopt`, `clientOverrides.serverDescription`, `metadata.remark`, `metadata.tags`, `metadata.inboundTag`\n\n> If the path resolves to nothing – or points outside the list above – the operation is skipped and the target key is **not** created.",
                           "examples": [
                             "streamSettings.tlsSettings.cipherSuites",
                             "streamSettings.tlsSettings.alpn",
@@ -40487,7 +40487,7 @@
                           "minLength": 1,
                           "maxLength": 512,
                           "title": "Target path",
-                          "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                          "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                           "examples": [
                             "streamSettings.tlsSettings.enableSessionResumption",
                             "streamSettings.tlsSettings.cipherSuites"
@@ -40556,7 +40556,7 @@
                           "minLength": 1,
                           "maxLength": 512,
                           "title": "Target path",
-                          "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                          "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                           "examples": [
                             "streamSettings.tlsSettings.enableSessionResumption",
                             "streamSettings.tlsSettings.cipherSuites"
@@ -40598,7 +40598,7 @@
                           "minLength": 1,
                           "maxLength": 512,
                           "title": "Target path",
-                          "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                          "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                           "examples": [
                             "streamSettings.tlsSettings.enableSessionResumption",
                             "streamSettings.tlsSettings.cipherSuites"
@@ -40649,7 +40649,7 @@
                           "minLength": 1,
                           "maxLength": 512,
                           "title": "Source path",
-                          "markdownDescription": "Dot-separated path inside the **raw inbound** of the config profile this host belongs to. Array items are addressed by index.\n\nWith a `$host.` prefix the value is read from the **host** itself, after overrides have been resolved вЂ“ `$host.securityOptions.serverName` holds the SNI that actually went into the config.\n\nOnly a part of the host is readable. Each entry below also opens everything nested under it:\n\n`address`, `port`, `finalRemark`, `protocol`, `transport`, `security`, `protocolOptions`, `transportOptions`, `securityOptions`, `mux`, `streamOverrides.finalMask`, `streamOverrides.sockopt`, `clientOverrides.serverDescription`, `metadata.remark`, `metadata.tags`, `metadata.inboundTag`\n\n> If the path resolves to nothing вЂ“ or points outside the list above вЂ“ the operation is skipped and the target key is **not** created.",
+                          "markdownDescription": "Dot-separated path inside the **raw inbound** of the config profile this host belongs to. Array items are addressed by index.\n\nWith a `$host.` prefix the value is read from the **host** itself, after overrides have been resolved – `$host.securityOptions.serverName` holds the SNI that actually went into the config.\n\nOnly a part of the host is readable. Each entry below also opens everything nested under it:\n\n`address`, `port`, `finalRemark`, `protocol`, `transport`, `security`, `protocolOptions`, `transportOptions`, `securityOptions`, `mux`, `streamOverrides.finalMask`, `streamOverrides.sockopt`, `clientOverrides.serverDescription`, `metadata.remark`, `metadata.tags`, `metadata.inboundTag`\n\n> If the path resolves to nothing – or points outside the list above – the operation is skipped and the target key is **not** created.",
                           "examples": [
                             "streamSettings.tlsSettings.cipherSuites",
                             "streamSettings.tlsSettings.alpn",
@@ -40665,7 +40665,7 @@
                           "minLength": 1,
                           "maxLength": 512,
                           "title": "Target path",
-                          "markdownDescription": "Dot-separated path inside the generated **proxy node**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                          "markdownDescription": "Dot-separated path inside the generated **proxy node**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                           "examples": [
                             "ip-version",
                             "client-fingerprint",
@@ -40736,7 +40736,7 @@
                           "minLength": 1,
                           "maxLength": 512,
                           "title": "Target path",
-                          "markdownDescription": "Dot-separated path inside the generated **proxy node**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                          "markdownDescription": "Dot-separated path inside the generated **proxy node**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                           "examples": [
                             "ip-version",
                             "client-fingerprint",
@@ -40780,7 +40780,7 @@
                           "minLength": 1,
                           "maxLength": 512,
                           "title": "Target path",
-                          "markdownDescription": "Dot-separated path inside the generated **proxy node**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                          "markdownDescription": "Dot-separated path inside the generated **proxy node**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                           "examples": [
                             "ip-version",
                             "client-fingerprint",
@@ -40813,7 +40813,7 @@
               },
               "base64": {
                 "title": "Base64",
-                "markdownDescription": "Operations applied to the share link generated for this host in the Base64 subscription.\n\n`to` is a plain query parameter name, not a path вЂ“ dots carry no meaning here.\n\nWith a `$link.` prefix the operation rewrites the link itself instead of its query string. Writable parts: `$link.address`, `$link.port`, `$link.password`, `$link.remark`, and `$link.method` for Shadowsocks. `$link.password` is the credential of the protocol.\n\n> A value that cannot make a valid link вЂ“ an empty address, a port outside 1-65535 вЂ“ is ignored, and the generated one is kept.\n\n```json\n[\n  {\n    \"op\": \"set\",\n    \"to\": \"fp\",\n    \"value\": \"chrome\"\n  },\n  {\n    \"op\": \"unset\",\n    \"to\": \"fm\"\n  },\n  {\n    \"op\": \"set\",\n    \"to\": \"$link.port\",\n    \"value\": 2053\n  },\n  {\n    \"op\": \"copy\",\n    \"from\": \"$host.securityOptions.serverName\",\n    \"to\": \"$link.address\"\n  }\n]\n```",
+                "markdownDescription": "Operations applied to the share link generated for this host in the Base64 subscription.\n\n`to` is a plain query parameter name, not a path – dots carry no meaning here.\n\nWith a `$link.` prefix the operation rewrites the link itself instead of its query string. Writable parts: `$link.address`, `$link.port`, `$link.password`, `$link.remark`, and `$link.method` for Shadowsocks. `$link.password` is the credential of the protocol.\n\n> A value that cannot make a valid link – an empty address, a port outside 1-65535 – is ignored, and the generated one is kept.\n\n```json\n[\n  {\n    \"op\": \"set\",\n    \"to\": \"fp\",\n    \"value\": \"chrome\"\n  },\n  {\n    \"op\": \"unset\",\n    \"to\": \"fm\"\n  },\n  {\n    \"op\": \"set\",\n    \"to\": \"$link.port\",\n    \"value\": 2053\n  },\n  {\n    \"op\": \"copy\",\n    \"from\": \"$host.securityOptions.serverName\",\n    \"to\": \"$link.address\"\n  }\n]\n```",
                 "type": "array",
                 "items": {
                   "oneOf": [
@@ -40833,7 +40833,7 @@
                           "minLength": 1,
                           "maxLength": 512,
                           "title": "Source path",
-                          "markdownDescription": "Dot-separated path inside the **raw inbound** of the config profile this host belongs to. Array items are addressed by index.\n\nWith a `$host.` prefix the value is read from the **host** itself, after overrides have been resolved вЂ“ `$host.securityOptions.serverName` holds the SNI that actually went into the config.\n\nOnly a part of the host is readable. Each entry below also opens everything nested under it:\n\n`address`, `port`, `finalRemark`, `protocol`, `transport`, `security`, `protocolOptions`, `transportOptions`, `securityOptions`, `mux`, `streamOverrides.finalMask`, `streamOverrides.sockopt`, `clientOverrides.serverDescription`, `metadata.remark`, `metadata.tags`, `metadata.inboundTag`\n\n> If the path resolves to nothing вЂ“ or points outside the list above вЂ“ the operation is skipped and the target key is **not** created.",
+                          "markdownDescription": "Dot-separated path inside the **raw inbound** of the config profile this host belongs to. Array items are addressed by index.\n\nWith a `$host.` prefix the value is read from the **host** itself, after overrides have been resolved – `$host.securityOptions.serverName` holds the SNI that actually went into the config.\n\nOnly a part of the host is readable. Each entry below also opens everything nested under it:\n\n`address`, `port`, `finalRemark`, `protocol`, `transport`, `security`, `protocolOptions`, `transportOptions`, `securityOptions`, `mux`, `streamOverrides.finalMask`, `streamOverrides.sockopt`, `clientOverrides.serverDescription`, `metadata.remark`, `metadata.tags`, `metadata.inboundTag`\n\n> If the path resolves to nothing – or points outside the list above – the operation is skipped and the target key is **not** created.",
                           "examples": [
                             "streamSettings.tlsSettings.cipherSuites",
                             "streamSettings.tlsSettings.alpn",
@@ -40849,7 +40849,7 @@
                           "minLength": 1,
                           "maxLength": 512,
                           "title": "Target path",
-                          "markdownDescription": "Dot-separated path inside the query string of the generated **share link**, or the link itself with a `$link.` prefix, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                          "markdownDescription": "Dot-separated path inside the query string of the generated **share link**, or the link itself with a `$link.` prefix, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                           "examples": [
                             "$link.address",
                             "$link.port",
@@ -40949,7 +40949,7 @@
                           "minLength": 1,
                           "maxLength": 512,
                           "title": "Target path",
-                          "markdownDescription": "Dot-separated path inside the query string of the generated **share link**, or the link itself with a `$link.` prefix, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                          "markdownDescription": "Dot-separated path inside the query string of the generated **share link**, or the link itself with a `$link.` prefix, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                           "examples": [
                             "$link.address",
                             "$link.port",
@@ -41022,7 +41022,7 @@
                           "minLength": 1,
                           "maxLength": 512,
                           "title": "Target path",
-                          "markdownDescription": "Dot-separated path inside the query string of the generated **share link**, or the link itself with a `$link.` prefix, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                          "markdownDescription": "Dot-separated path inside the query string of the generated **share link**, or the link itself with a `$link.` prefix, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                           "examples": [
                             "$link.address",
                             "$link.port",
@@ -41104,7 +41104,7 @@
                           "minLength": 1,
                           "maxLength": 512,
                           "title": "Source path",
-                          "markdownDescription": "Dot-separated path inside the **raw inbound** of the config profile this host belongs to. Array items are addressed by index.\n\nWith a `$host.` prefix the value is read from the **host** itself, after overrides have been resolved вЂ“ `$host.securityOptions.serverName` holds the SNI that actually went into the config.\n\nOnly a part of the host is readable. Each entry below also opens everything nested under it:\n\n`address`, `port`, `finalRemark`, `protocol`, `transport`, `security`, `protocolOptions`, `transportOptions`, `securityOptions`, `mux`, `streamOverrides.finalMask`, `streamOverrides.sockopt`, `clientOverrides.serverDescription`, `metadata.remark`, `metadata.tags`, `metadata.inboundTag`\n\n> If the path resolves to nothing вЂ“ or points outside the list above вЂ“ the operation is skipped and the target key is **not** created.",
+                          "markdownDescription": "Dot-separated path inside the **raw inbound** of the config profile this host belongs to. Array items are addressed by index.\n\nWith a `$host.` prefix the value is read from the **host** itself, after overrides have been resolved – `$host.securityOptions.serverName` holds the SNI that actually went into the config.\n\nOnly a part of the host is readable. Each entry below also opens everything nested under it:\n\n`address`, `port`, `finalRemark`, `protocol`, `transport`, `security`, `protocolOptions`, `transportOptions`, `securityOptions`, `mux`, `streamOverrides.finalMask`, `streamOverrides.sockopt`, `clientOverrides.serverDescription`, `metadata.remark`, `metadata.tags`, `metadata.inboundTag`\n\n> If the path resolves to nothing – or points outside the list above – the operation is skipped and the target key is **not** created.",
                           "examples": [
                             "streamSettings.tlsSettings.cipherSuites",
                             "streamSettings.tlsSettings.alpn",
@@ -41120,7 +41120,7 @@
                           "minLength": 1,
                           "maxLength": 512,
                           "title": "Target path",
-                          "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                          "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                           "examples": [
                             "domain_resolver",
                             "multiplex.protocol",
@@ -41193,7 +41193,7 @@
                           "minLength": 1,
                           "maxLength": 512,
                           "title": "Target path",
-                          "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                          "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                           "examples": [
                             "domain_resolver",
                             "multiplex.protocol",
@@ -41239,7 +41239,7 @@
                           "minLength": 1,
                           "maxLength": 512,
                           "title": "Target path",
-                          "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object вЂ“ for example `path.foo`, where `path` holds a string вЂ“ is refused, so an existing value is never destroyed.",
+                          "markdownDescription": "Dot-separated path inside the generated **outbound**, counted from its root.\n\nMissing objects along the path are created. Array items are addressed by index, and keys with dashes are written as is (`ip-version`).\n\n> A path running through a value that is not an object – for example `path.foo`, where `path` holds a string – is refused, so an existing value is never destroyed.",
                           "examples": [
                             "domain_resolver",
                             "multiplex.protocol",
@@ -49034,7 +49034,7 @@
               "A238",
               "A245"
             ],
-            "description": "Error code. Possible values:\n\n- `A007` вЂ” Requested token not found\n- `A011` вЂ” Node not found\n- `A012` вЂ” Configuration not found\n- `A025` вЂ” User not found\n- `A046` вЂ” Host not found\n- `A062` вЂ” Users not found\n- `A063` вЂ” User with specified params not found\n- `A065` вЂ” Admin not found\n- `A071` вЂ” Subscription settings not found\n- `A076` вЂ” Inbound not found\n- `A111` вЂ” Config profile not found\n- `A118` вЂ” Internal squad not found\n- `A124` вЂ” Config profile inbound not found in specified profile\n- `A128` вЂ” Infra provider not found\n- `A147` вЂ” OAuth2 provider not found\n- `A162` вЂ” Snippet not found\n- `A170` вЂ” Subscription template not found\n- `A182` вЂ” External squad not found\n- `A191` вЂ” Passkey not found\n- `A204` вЂ” HWID device not found\n- `A206` вЂ” Subscription page config not found\n- `A218` вЂ” Job result fetch failed or job not found\n- `A219` вЂ” Connected nodes not found\n- `A220` вЂ” Node plugin not found\n- `A226` вЂ” Metadata not found\n- `A238` вЂ” Node integration not found\n- `A245` вЂ” Shared list not found"
+            "description": "Error code. Possible values:\n\n- `A007` — Requested token not found\n- `A011` — Node not found\n- `A012` — Configuration not found\n- `A025` — User not found\n- `A046` — Host not found\n- `A062` — Users not found\n- `A063` — User with specified params not found\n- `A065` — Admin not found\n- `A071` — Subscription settings not found\n- `A076` — Inbound not found\n- `A111` — Config profile not found\n- `A118` — Internal squad not found\n- `A124` — Config profile inbound not found in specified profile\n- `A128` — Infra provider not found\n- `A147` — OAuth2 provider not found\n- `A162` — Snippet not found\n- `A170` — Subscription template not found\n- `A182` — External squad not found\n- `A191` — Passkey not found\n- `A204` — HWID device not found\n- `A206` — Subscription page config not found\n- `A218` — Job result fetch failed or job not found\n- `A219` — Connected nodes not found\n- `A220` — Node plugin not found\n- `A226` — Metadata not found\n- `A238` — Node integration not found\n- `A245` — Shared list not found"
           }
         },
         "required": [
@@ -49148,7 +49148,7 @@
               "A246",
               "A259"
             ],
-            "description": "Error code. Possible values:\n\n- `A019` вЂ” User username already exists\n- `A020` вЂ” User short UUID already exists\n- `A021` вЂ” User subscription UUID already exists\n- `A029` вЂ” User already disabled\n- `A030` вЂ” User already enabled\n- `A033` вЂ” Node name already exists\n- `A034` вЂ” Node address already exists\n- `A045` вЂ” Host remark already exists\n- `A089` вЂ” LIMITED and EXPIRED statuses are not allowed to be set manually.\n- `A098` вЂ” User hwid device already exists\n- `A099` вЂ” User hwid device limit reached\n- `A144` вЂ” This name is reserved by Remnawave. Please use a different name.\n- `A145` вЂ” This name is reserved by Remnawave. Please use a different name.\n- `A149` вЂ” Node is disabled\n- `A152` вЂ” Name or config is required\n- `A153` вЂ” Name or inbounds is required\n- `A164` вЂ” Snippet name already exists\n- `A166` вЂ” Snippet cannot be empty\n- `A167` вЂ” Snippet cannot contain empty objects\n- `A172` вЂ” This name is reserved. Please use a different name.\n- `A173` вЂ” Template JSON is not allowed for YAML template\n- `A174` вЂ” Template YAML is not allowed for JSON template\n- `A175` вЂ” Template JSON and YAML cannot be updated simultaneously\n- `A176` вЂ” Template name already exists for this type\n- `A178` вЂ” Reserved template cannot be deleted\n- `A180` вЂ” Template type not allowed\n- `A189` вЂ” External squad name already exists\n- `A190` вЂ” Name or templates are required\n- `A194` вЂ” Passkeys not configured\n- `A195` вЂ” Passkeys not enabled. Please enable it first.\n- `A209` вЂ” Reserved config name\n- `A210` вЂ” Config name already exists\n- `A212` вЂ” Reserved subpage config cannot be deleted\n- `A215` вЂ” Invalid subscription page config\n- `A216` вЂ” Invalid Remnawave injector\n- `A223` вЂ” Node plugin name already exists\n- `A229` вЂ” One or more provided API token scopes are invalid\n- `A230` вЂ” Either nodeUuid or name must be provided\n- `A235` вЂ” Start date must be before or equal to end date\n- `A244` вЂ” Node integration name already exists\n- `A246` вЂ” Shared list name already exists\n- `A259` вЂ” SNI regeneration is not configured for this host"
+            "description": "Error code. Possible values:\n\n- `A019` — User username already exists\n- `A020` — User short UUID already exists\n- `A021` — User subscription UUID already exists\n- `A029` — User already disabled\n- `A030` — User already enabled\n- `A033` — Node name already exists\n- `A034` — Node address already exists\n- `A045` — Host remark already exists\n- `A089` — LIMITED and EXPIRED statuses are not allowed to be set manually.\n- `A098` — User hwid device already exists\n- `A099` — User hwid device limit reached\n- `A144` — This name is reserved by Remnawave. Please use a different name.\n- `A145` — This name is reserved by Remnawave. Please use a different name.\n- `A149` — Node is disabled\n- `A152` — Name or config is required\n- `A153` — Name or inbounds is required\n- `A164` — Snippet name already exists\n- `A166` — Snippet cannot be empty\n- `A167` — Snippet cannot contain empty objects\n- `A172` — This name is reserved. Please use a different name.\n- `A173` — Template JSON is not allowed for YAML template\n- `A174` — Template YAML is not allowed for JSON template\n- `A175` — Template JSON and YAML cannot be updated simultaneously\n- `A176` — Template name already exists for this type\n- `A178` — Reserved template cannot be deleted\n- `A180` — Template type not allowed\n- `A189` — External squad name already exists\n- `A190` — Name or templates are required\n- `A194` — Passkeys not configured\n- `A195` — Passkeys not enabled. Please enable it first.\n- `A209` — Reserved config name\n- `A210` — Config name already exists\n- `A212` — Reserved subpage config cannot be deleted\n- `A215` — Invalid subscription page config\n- `A216` — Invalid Remnawave injector\n- `A223` — Node plugin name already exists\n- `A229` — One or more provided API token scopes are invalid\n- `A230` — Either nodeUuid or name must be provided\n- `A235` — Start date must be before or equal to end date\n- `A244` — Node integration name already exists\n- `A246` — Shared list name already exists\n- `A259` — SNI regeneration is not configured for this host"
           }
         },
         "required": [
@@ -49533,7 +49533,7 @@
               "A260",
               "A261"
             ],
-            "description": "Error code. Possible values:\n\n- `A001` вЂ” Server error\n- `A002` вЂ” Login error\n- `A005` вЂ” Create API token error\n- `A006` вЂ” Delete API token error\n- `A008` вЂ” Find all API tokens error\n- `A009` вЂ” Get public key error\n- `A010` вЂ” Enable node error\n- `A013` вЂ” Error updating configuration\n- `A014` вЂ” Error retrieving configuration\n- `A015` вЂ” Delete many inbounds error\n- `A016` вЂ” Create many inbounds error\n- `A017` вЂ” Find all inbounds error\n- `A018` вЂ” Failed to create user\n- `A022` вЂ” User creation successful, but inbound creation failed. User not created.\n- `A023` вЂ” User creation successful, but failed to get created user with inbounds.\n- `A024` вЂ” Get all users error\n- `A026` вЂ” Get user by error\n- `A027` вЂ” Revoke user subscription error\n- `A028` вЂ” Disable user error\n- `A031` вЂ” Enable user error\n- `A032` вЂ” Create node error\n- `A035` вЂ” Restart node error\n- `A036` вЂ” Get config with users error\n- `A037` вЂ” Delete user error\n- `A038` вЂ” Update node error\n- `A039` вЂ” Update user error\n- `A040` вЂ” Increment used traffic error\n- `A041` вЂ” Get all nodes error\n- `A042` вЂ” Get one node error\n- `A043` вЂ” Delete node error\n- `A044` вЂ” Create host error\n- `A047` вЂ” Delete host error\n- `A048` вЂ” Get user stats error\n- `A049` вЂ” Update user with inbounds error\n- `A050` вЂ” Get all hosts error\n- `A051` вЂ” Reorder hosts error\n- `A052` вЂ” Update host error\n- `A053` вЂ” Create config error\n- `A055` вЂ” Get nodes usage by range error\n- `A056` вЂ” Reset user traffic error\n- `A057` вЂ” Reorder nodes error\n- `A058` вЂ” Get all inbounds error\n- `A059` вЂ” Bulk delete users by status error\n- `A060` вЂ” Update inbound error\n- `A064` вЂ” Update exceeded traffic users error\n- `A066` вЂ” Create admin error\n- `A067` вЂ” Get auth status error\n- `A069` вЂ” Disable node error\n- `A070` вЂ” Get one host error\n- `A072` вЂ” Get subscription settings error\n- `A073` вЂ” Update subscription settings error\n- `A074` вЂ” Add inbound to users error\n- `A075` вЂ” Remove inbound from users error\n- `A077` вЂ” Add inbound to nodes error\n- `A078` вЂ” Remove inbound from nodes error\n- `A079` вЂ” Delete hosts error\n- `A080` вЂ” Bulk enable hosts error\n- `A081` вЂ” Bulk disable hosts error\n- `A084` вЂ” Bulk delete users by user IDs error\n- `A085` вЂ” Bulk revoke users subscription error\n- `A086` вЂ” Bulk reset user traffic error\n- `A087` вЂ” Bulk update users error\n- `A088` вЂ” Bulk add inbounds to users error\n- `A089` вЂ” Bulk update all users error\n- `A090` вЂ” Keypair creation error\n- `A091` вЂ” Get user usage by range error\n- `A092` вЂ” Keypair not found. Restart app.\n- `A093` вЂ” Activate all inbounds error\n- `A096` вЂ” Create hwid user device error\n- `A097` вЂ” Check hwid exists error\n- `A100` вЂ” Get user hwid devices error\n- `A101` вЂ” Delete hwid user device error\n- `A102` вЂ” Upsert hwid user device error\n- `A103` вЂ” Get all tags error\n- `A104` вЂ” Getting all subscriptions error\n- `A105` вЂ” Trigger threshold notification error\n- `A106` вЂ” Bulk delete by status error\n- `A107` вЂ” Clean old usage records error\n- `A108` вЂ” Vacuum table error\n- `A109` вЂ” Get config profiles error\n- `A110` вЂ” Get config profile by UUID error\n- `A112` вЂ” Create config profile error\n- `A115` вЂ” Get inbounds by profile UUID error\n- `A116` вЂ” Get internal squads error\n- `A117` вЂ” Get internal squad by UUID error\n- `A119` вЂ” Create internal squad error\n- `A121` вЂ” Update internal squad error\n- `A122` вЂ” Delete internal squad error\n- `A123` вЂ” Create user with internal squad error\n- `A125` вЂ” Get user accessible nodes error\n- `A126` вЂ” Get infra providers error\n- `A127` вЂ” Get infra provider by UUID error\n- `A129` вЂ” Delete infra provider by UUID error\n- `A130` вЂ” Create infra provider error\n- `A131` вЂ” Update infra provider error\n- `A132` вЂ” Create infra billing history record error\n- `A133` вЂ” Get infra billing history records error\n- `A134` вЂ” Delete infra billing history record by UUID error\n- `A135` вЂ” Get billing nodes error\n- `A136` вЂ” Update infra billing node error\n- `A137` вЂ” Create infra billing node error\n- `A138` вЂ” Delete infra billing node by UUID error\n- `A139` вЂ” Get billing nodes for notifications error\n- `A140` вЂ” Add users to internal squad error\n- `A141` вЂ” Internal squad bulk actions error\n- `A142` вЂ” Remove users from internal squad error\n- `A143` вЂ” Delete config profile by UUID error\n- `A146` вЂ” Update config profile error\n- `A148` вЂ” OAuth2 authorize error\n- `A150` вЂ” Sync active profile error\n- `A151` вЂ” Get all host tags error\n- `A154` вЂ” Get internal squad accessible nodes error\n- `A155` вЂ” Delete hwid user devices error\n- `A156` вЂ” Create user subscription request history error\n- `A157` вЂ” Get user subscription request history error\n- `A158` вЂ” Get all hwid devices error\n- `A159` вЂ” Get hwid devices stats error\n- `A160` вЂ” Get user subscription request history stats error\n- `A161` вЂ” Get snippets error\n- `A163` вЂ” Delete snippet by name error\n- `A165` вЂ” Update snippet error\n- `A168` вЂ” Get all subscription templates error\n- `A169` вЂ” Get subscription template by UUID error\n- `A171` вЂ” Update subscription template error\n- `A177` вЂ” Delete subscription template error\n- `A179` вЂ” Create subscription template error\n- `A181` вЂ” Get external squads error\n- `A183` вЂ” Create external squad error\n- `A184` вЂ” Update external squad error\n- `A185` вЂ” Delete external squad error\n- `A186` вЂ” Add users to external squad error\n- `A187` вЂ” Remove users from external squad error\n- `A188` вЂ” Get external squad by UUID error\n- `A192` вЂ” Get Remnawave settings error\n- `A193` вЂ” Update Remnawave settings error\n- `A196` вЂ” Generate passkey registration options error\n- `A197` вЂ” Verify passkey registration error\n- `A198` вЂ” Get active passkeys error\n- `A199` вЂ” Delete passkey error\n- `A200` вЂ” Get computed config profile by UUID error\n- `A201` вЂ” Reset node traffic error\n- `A202` вЂ” Update passkey error\n- `A203` вЂ” Generic reorder error\n- `A205` вЂ” Bulk extend expiration date error\n- `A207` вЂ” Get subscription page config by UUID error\n- `A208` вЂ” Get all subscription page configs error\n- `A211` вЂ” Update subscription page config error\n- `A213` вЂ” Delete subscription page config error\n- `A214` вЂ” Create subscription page config error\n- `A217` вЂ” Job creation failed\n- `A219` вЂ” Get all node plugins error\n- `A221` вЂ” Get node plugin by UUID error\n- `A224` вЂ” Update node plugin error\n- `A225` вЂ” Create node plugin error\n- `A227` вЂ” Get torrent blocker reports error\n- `A228` вЂ” Update hosts error\n- `A232` вЂ” Get internal squad usage error\n- `A233` вЂ” Add many users to internal squad error\n- `A234` вЂ” Remove many users from internal squad error\n- `A236` вЂ” Get stats digest error\n- `A237` вЂ” Sync snippet error\n- `A239` вЂ” Get all node integrations error\n- `A240` вЂ” Get node integration by UUID error\n- `A241` вЂ” Create node integration error\n- `A242` вЂ” Update node integration error\n- `A243` вЂ” Delete node integration error\n- `A247` вЂ” Get all shared lists error\n- `A248` вЂ” Get shared list by name error\n- `A249` вЂ” Create shared list error\n- `A250` вЂ” Update shared list error\n- `A251` вЂ” Delete shared list error\n- `A254` вЂ” Create SSH ticket error\n- `A256` вЂ” Get tags error\n- `A257` вЂ” Set tags error\n- `A258` вЂ” Clone host error\n- `A260` вЂ” SNI regeneration failed\n- `A261` вЂ” HWID device block state update failed"
+            "description": "Error code. Possible values:\n\n- `A001` — Server error\n- `A002` — Login error\n- `A005` — Create API token error\n- `A006` — Delete API token error\n- `A008` — Find all API tokens error\n- `A009` — Get public key error\n- `A010` — Enable node error\n- `A013` — Error updating configuration\n- `A014` — Error retrieving configuration\n- `A015` — Delete many inbounds error\n- `A016` — Create many inbounds error\n- `A017` — Find all inbounds error\n- `A018` — Failed to create user\n- `A022` — User creation successful, but inbound creation failed. User not created.\n- `A023` — User creation successful, but failed to get created user with inbounds.\n- `A024` — Get all users error\n- `A026` — Get user by error\n- `A027` — Revoke user subscription error\n- `A028` — Disable user error\n- `A031` — Enable user error\n- `A032` — Create node error\n- `A035` — Restart node error\n- `A036` — Get config with users error\n- `A037` — Delete user error\n- `A038` — Update node error\n- `A039` — Update user error\n- `A040` — Increment used traffic error\n- `A041` — Get all nodes error\n- `A042` — Get one node error\n- `A043` — Delete node error\n- `A044` — Create host error\n- `A047` — Delete host error\n- `A048` — Get user stats error\n- `A049` — Update user with inbounds error\n- `A050` — Get all hosts error\n- `A051` — Reorder hosts error\n- `A052` — Update host error\n- `A053` — Create config error\n- `A055` — Get nodes usage by range error\n- `A056` — Reset user traffic error\n- `A057` — Reorder nodes error\n- `A058` — Get all inbounds error\n- `A059` — Bulk delete users by status error\n- `A060` — Update inbound error\n- `A064` — Update exceeded traffic users error\n- `A066` — Create admin error\n- `A067` — Get auth status error\n- `A069` — Disable node error\n- `A070` — Get one host error\n- `A072` — Get subscription settings error\n- `A073` — Update subscription settings error\n- `A074` — Add inbound to users error\n- `A075` — Remove inbound from users error\n- `A077` — Add inbound to nodes error\n- `A078` — Remove inbound from nodes error\n- `A079` — Delete hosts error\n- `A080` — Bulk enable hosts error\n- `A081` — Bulk disable hosts error\n- `A084` — Bulk delete users by user IDs error\n- `A085` — Bulk revoke users subscription error\n- `A086` — Bulk reset user traffic error\n- `A087` — Bulk update users error\n- `A088` — Bulk add inbounds to users error\n- `A089` — Bulk update all users error\n- `A090` — Keypair creation error\n- `A091` — Get user usage by range error\n- `A092` — Keypair not found. Restart app.\n- `A093` — Activate all inbounds error\n- `A096` — Create hwid user device error\n- `A097` — Check hwid exists error\n- `A100` — Get user hwid devices error\n- `A101` — Delete hwid user device error\n- `A102` — Upsert hwid user device error\n- `A103` — Get all tags error\n- `A104` — Getting all subscriptions error\n- `A105` — Trigger threshold notification error\n- `A106` — Bulk delete by status error\n- `A107` — Clean old usage records error\n- `A108` — Vacuum table error\n- `A109` — Get config profiles error\n- `A110` — Get config profile by UUID error\n- `A112` — Create config profile error\n- `A115` — Get inbounds by profile UUID error\n- `A116` — Get internal squads error\n- `A117` — Get internal squad by UUID error\n- `A119` — Create internal squad error\n- `A121` — Update internal squad error\n- `A122` — Delete internal squad error\n- `A123` — Create user with internal squad error\n- `A125` — Get user accessible nodes error\n- `A126` — Get infra providers error\n- `A127` — Get infra provider by UUID error\n- `A129` — Delete infra provider by UUID error\n- `A130` — Create infra provider error\n- `A131` — Update infra provider error\n- `A132` — Create infra billing history record error\n- `A133` — Get infra billing history records error\n- `A134` — Delete infra billing history record by UUID error\n- `A135` — Get billing nodes error\n- `A136` — Update infra billing node error\n- `A137` — Create infra billing node error\n- `A138` — Delete infra billing node by UUID error\n- `A139` — Get billing nodes for notifications error\n- `A140` — Add users to internal squad error\n- `A141` — Internal squad bulk actions error\n- `A142` — Remove users from internal squad error\n- `A143` — Delete config profile by UUID error\n- `A146` — Update config profile error\n- `A148` — OAuth2 authorize error\n- `A150` — Sync active profile error\n- `A151` — Get all host tags error\n- `A154` — Get internal squad accessible nodes error\n- `A155` — Delete hwid user devices error\n- `A156` — Create user subscription request history error\n- `A157` — Get user subscription request history error\n- `A158` — Get all hwid devices error\n- `A159` — Get hwid devices stats error\n- `A160` — Get user subscription request history stats error\n- `A161` — Get snippets error\n- `A163` — Delete snippet by name error\n- `A165` — Update snippet error\n- `A168` — Get all subscription templates error\n- `A169` — Get subscription template by UUID error\n- `A171` — Update subscription template error\n- `A177` — Delete subscription template error\n- `A179` — Create subscription template error\n- `A181` — Get external squads error\n- `A183` — Create external squad error\n- `A184` — Update external squad error\n- `A185` — Delete external squad error\n- `A186` — Add users to external squad error\n- `A187` — Remove users from external squad error\n- `A188` — Get external squad by UUID error\n- `A192` — Get Remnawave settings error\n- `A193` — Update Remnawave settings error\n- `A196` — Generate passkey registration options error\n- `A197` — Verify passkey registration error\n- `A198` — Get active passkeys error\n- `A199` — Delete passkey error\n- `A200` — Get computed config profile by UUID error\n- `A201` — Reset node traffic error\n- `A202` — Update passkey error\n- `A203` — Generic reorder error\n- `A205` — Bulk extend expiration date error\n- `A207` — Get subscription page config by UUID error\n- `A208` — Get all subscription page configs error\n- `A211` — Update subscription page config error\n- `A213` — Delete subscription page config error\n- `A214` — Create subscription page config error\n- `A217` — Job creation failed\n- `A219` — Get all node plugins error\n- `A221` — Get node plugin by UUID error\n- `A224` — Update node plugin error\n- `A225` — Create node plugin error\n- `A227` — Get torrent blocker reports error\n- `A228` — Update hosts error\n- `A232` — Get internal squad usage error\n- `A233` — Add many users to internal squad error\n- `A234` — Remove many users from internal squad error\n- `A236` — Get stats digest error\n- `A237` — Sync snippet error\n- `A239` — Get all node integrations error\n- `A240` — Get node integration by UUID error\n- `A241` — Create node integration error\n- `A242` — Update node integration error\n- `A243` — Delete node integration error\n- `A247` — Get all shared lists error\n- `A248` — Get shared list by name error\n- `A249` — Create shared list error\n- `A250` — Update shared list error\n- `A251` — Delete shared list error\n- `A254` — Create SSH ticket error\n- `A256` — Get tags error\n- `A257` — Set tags error\n- `A258` — Clone host error\n- `A260` — SNI regeneration failed\n- `A261` — HWID device block state update failed"
           }
         },
         "required": [

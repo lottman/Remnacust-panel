@@ -316,7 +316,13 @@ export async function materializeGeofiles(
                         'network',
                     ].includes(field),
                 ) &&
-                (!rule.network || rule.network === 'tcp,udp'),
+                (!rule.network ||
+                    ['tcp,udp', 'udp,tcp'].includes(rule.network) ||
+                    (sing &&
+                        Array.isArray(rule.network) &&
+                        rule.network.length === 2 &&
+                        rule.network.includes('tcp') &&
+                        rule.network.includes('udp'))),
         );
         root[key].rules = [
             ...rules.slice(0, at < 0 ? rules.length : at),

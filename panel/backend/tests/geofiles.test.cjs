@@ -63,6 +63,115 @@ test('geofiles cannot target a pool prefix when legacy naming flags replace that
     }
 });
 
+test('overlapping DAT categories deduplicate identical matchers without merging different domain types', () => {
+    const data = Buffer.concat(
+        ['FIRST', 'SECOND'].map((code) =>
+            fixtures.bytes(
+                1,
+                Buffer.concat([
+                    fixtures.bytes(1, code),
+                    fixtures.bytes(2, fixtures.domain(2, 'shared.test')),
+                    fixtures.bytes(2, fixtures.domain(3, 'shared.test')),
+                    fixtures.bytes(2, fixtures.domain(2, code.toLowerCase() + '.test')),
+                ]),
+            ),
+        ),
+    );
+    validateGeofile(data, 'geosite');
+    assert.deepEqual(compileDat(data, 'geosite', ['first', 'second']).domains, [
+        { type: 2, value: 'shared.test' },
+        { type: 3, value: 'shared.test' },
+        { type: 2, value: 'first.test' },
+        { type: 2, value: 'second.test' },
+    ]);
+    const ipEntry = (code) =>
+        fixtures.bytes(
+            1,
+            Buffer.concat([
+                fixtures.bytes(1, code),
+                fixtures.bytes(
+                    2,
+                    Buffer.concat([
+                        fixtures.bytes(1, Buffer.from([203, 0, 113, 0])),
+                        fixtures.number(2, 24),
+                    ]),
+                ),
+            ]),
+        );
+    const ips = Buffer.concat([ipEntry('FIRST'), ipEntry('SECOND')]);
+    validateGeofile(ips, 'geoip');
+    assert.deepEqual(compileDat(ips, 'geoip', ['first', 'second']).ips, ['203.0.113.0/24']);
+});
+
+test('geofile restrictions precede a UDP-first catch-all and retain earlier manual restrictions', async () => {
+    const id = '00' + 'a'.repeat(32);
+    for (const type of ['XRAY_JSON', 'SINGBOX']) {
+        const xray = type === 'XRAY_JSON';
+        const key = xray ? 'routing' : 'route';
+        const manual = xray
+            ? { type: 'field', domain: ['full:manual.test'], outboundTag: 'block' }
+            : { domain: ['manual.test'], action: 'reject' };
+        const fallback = xray
+            ? { type: 'field', network: 'udp,tcp', outboundTag: 'proxy' }
+            : { network: ['udp', 'tcp'], action: 'route', outbound: 'proxy' };
+        const source = {
+            remnacust: {
+                geofiles: [
+                    { id, categories: ['example'], target: 'REJECT', downloadToClient: false },
+                ],
+            },
+            [key]: { rules: [manual, fallback] },
+        };
+        const result = await materializeGeofiles(
+            source,
+            type,
+            async () => ({ id, kind: 'geosite' }),
+            async () => compileDat(fixtures.geosite, 'geosite', ['example']),
+        );
+        assert.deepEqual(result[key].rules[0], manual);
+        assert.deepEqual(result[key].rules.at(-1), fallback);
+        assert.ok(result[key].rules[1].domain || result[key].rules[1].domain_suffix);
+        assert.equal(source[key].rules.length, 2);
+    }
+});
+
+test('large overlapping categories retain every unique rule and enforce the UTF-8 text budget', () => {
+    const domains = Array.from({ length: 26000 }, (_, n) =>
+        fixtures.bytes(2, fixtures.domain(2, `host-${n}.example.test`)),
+    );
+    const data = Buffer.concat(
+        ['FIRST', 'SECOND'].map((code) =>
+            fixtures.bytes(1, Buffer.concat([fixtures.bytes(1, code), ...domains])),
+        ),
+    );
+    validateGeofile(data, 'geosite');
+    const rules = compileDat(data, 'geosite', ['first', 'second']);
+    assert.equal(rules.domains.length, 26000);
+    assert.equal(rules.domains[0].value, 'host-0.example.test');
+    assert.equal(rules.domains.at(-1).value, 'host-25999.example.test');
+    const unique = fixtures.bytes(
+        1,
+        Buffer.concat([
+            fixtures.bytes(1, 'UNIQUE'),
+            ...Array.from({ length: 50001 }, (_, n) =>
+                fixtures.bytes(2, fixtures.domain(2, `${n}.test`)),
+            ),
+        ]),
+    );
+    assert.throws(() => compileDat(unique, 'geosite', ['unique']), /inline-limit/);
+    const unicode = fixtures.bytes(
+        1,
+        Buffer.concat([
+            fixtures.bytes(1, 'UNICODE'),
+            ...Array.from({ length: 650 }, (_, n) =>
+                fixtures.bytes(2, fixtures.domain(1, '界'.repeat(1100) + n)),
+            ),
+        ]),
+    );
+    validateGeofile(unicode, 'geosite');
+    assert.throws(() => compileDat(unicode, 'geosite', ['unicode']), /inline-limit/);
+});
+
 test('text rules and SRS containers enforce format, nesting, compression and size boundaries', () => {
     validateGeofile(Buffer.from('payload:\n  - example.com\n'), 'mihomo-domain');
     validateGeofile(

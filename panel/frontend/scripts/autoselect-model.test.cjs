@@ -40,6 +40,17 @@ test('adding autoselect is non-destructive and inserts balancing after restricti
     assert.ok(m.templateChanges(existing, added).some(change => change.kind === 'added'));
     assert.equal(m.templateChanges(existing, added).some(change => change.kind === 'removed'), false);
 });
+
+test('GUI adds a reachable balancer before UDP-first catch-all and keeps TCP-only rules ahead', () => {
+    const restricted = { type: 'field', network: 'tcp', outboundTag: 'custom' };
+    const fallback = { type: 'field', network: 'udp,tcp', outboundTag: 'custom' };
+    const source = { ...existing, routing: { rules: [restricted, fallback] } };
+    const next = m.parseTemplate(m.addPool(JSON.stringify(source)));
+    assert.deepEqual(next.routing.rules[0], restricted);
+    assert.equal(next.routing.rules[1].balancerTag, 'balance-auto');
+    assert.deepEqual(next.routing.rules[2], fallback);
+    assert.deepEqual(source.routing.rules, [restricted, fallback]);
+});
 test('editing existing pools and balances updates their linked code without duplicating or clobbering custom settings', () => {
     let code = m.addPool(JSON.stringify(existing));
     code = m.updatePool(code, 0, ['selector', 'type'], 'tags'); code = m.updatePool(code, 0, ['selector', 'values'], ['LTE']);

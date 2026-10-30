@@ -3959,7 +3959,7 @@
     "choose-target": "Select an action or group",
     "direct": "Direct (DIRECT)",
     "reject": "Block (REJECT)",
-    "inline-help": "Rules are embedded in the full configuration without a separate download. Server changes reach the app when its subscription is updated. DAT limit: 50,000 records and 2 MiB of text per dataset.",
+    "inline-help": "Rules are embedded in the full configuration without a separate download. Server changes reach the app when its subscription is updated. Identical matchers within selected DAT categories are included once. DAT limit: 50,000 unique records and 2 MiB of UTF-8 text per dataset. The app may impose a lower configuration limit. If it reports a configuration that is too large, select fewer categories or enable a supported remote download; rules are never silently removed.",
     "download-help": "The app downloads this rule set using the URL in its configuration. The client version must support its format.",
     "add": "Upload a new file",
     "name": "Library name",

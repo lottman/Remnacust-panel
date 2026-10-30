@@ -35,6 +35,7 @@ export function compileDat(
         throw new Error('geofile-categories');
     const wanted = new Set(categories.map((code) => code.toLowerCase()));
     const seen = new Set<string>();
+    const matchers = new Set<string>();
     const result: DatRules = { ips: [], domains: [] };
     let bytes = 0;
     for (const entry of geofileFields(data)) {
@@ -67,6 +68,8 @@ export function compileDat(
                         ? [...ip].join('.')
                         : Address6.fromByteArray([...ip]).correctForm();
                 const value = `${address}/${prefix}`;
+                if (matchers.has(value)) continue;
+                matchers.add(value);
                 result.ips.push(value);
                 bytes += value.length;
             } else {
@@ -92,8 +95,13 @@ export function compileDat(
                 const value = parts.find((field) => field.field === 2)?.value;
                 if (!Buffer.isBuffer(value)) throw new Error('geofile-dat');
                 const domain = value.toString('utf8');
+                const type = Number(parts.find((field) => field.field === 1)?.value ?? 0);
+                // Categories form a union in one route; identical matchers add no coverage.
+                const key = `${type}:${domain}`;
+                if (matchers.has(key)) continue;
+                matchers.add(key);
                 result.domains.push({
-                    type: Number(parts.find((field) => field.field === 1)?.value ?? 0),
+                    type,
                     value: domain,
                 });
                 bytes += value.length;

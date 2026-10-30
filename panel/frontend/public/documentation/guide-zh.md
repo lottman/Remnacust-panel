@@ -694,6 +694,10 @@ Xray JSON、sing-box、Mihomo、Clash 和 Stash 均提供自动选择。sing-box
 
 默认将 GeoIP/GeoSite DAT 转换为完整配置中的内嵌规则。新开关可让支持的应用下载转换后的规则集；Xray JSON 为 Happ 和 INCY 提供 DAT 首次下载配置，其他客户端使用内嵌规则。sing-box 原生 JSON/SRS 和 Mihomo/Clash/Stash YAML/text 使用应用格式。需要完整 JSON/YAML 订阅；单独的 VLESS 链接无法携带路由。客户端间隔和服务端自动下载分别设置，详见下文。
 
+### 内嵌规则大小
+
+所选 DAT 分类中的相同匹配条件只添加一次；不同域名匹配类型仍分别保留。每个集合最多包含 50,000 条唯一条件和 2 MiB UTF-8 文本。应用的限制可能更低。INCY 提示 The configuration is too large 时，请减少分类或使用完整 JSON 订阅启用受支持的 DAT 下载。官方文档未说明 INCY iOS 2.6.2 的大小上限。关闭下载后仍内嵌规则，不会自动删除规则或启用下载。手动 routing 或不兼容的地理数据可能使开启开关后仍以内嵌方式提供。地理文件规则插入到任一 TCP/UDP 排列顺序的默认路由之前，并保留先前的限制。
+
 ### 将地理文件下载到客户端
 
 新附件默认关闭“下载到客户端”：规则嵌入完整订阅。开启后使用远程规则集。两种模式均可独立选择 DIRECT、REJECT（拦截）、已配置的组或代理。更改传递方式会保留动作；新附件默认使用 DIRECT。服务端将 DAT 转为 sing-box JSON 或 Mihomo/Clash/Stash YAML。客户端间隔为 5 分钟至 30 天，默认一天，写入 update_interval / interval。这是应用的计划，手动重试可能绕过间隔。内嵌规则在订阅本身更新后改变。没有新字段的旧附件保留原有行为。对于 Xray JSON，支持订阅路由配置的 Happ 和 INCY 版本接收带签名的 DAT 和 routing 响应头以完成首次下载。文件合并时分类相互隔离；动作保留在 JSON 中。其他 Xray 客户端获得内嵌规则。手动 routing 和现有 geosite/geoip 设置保持不变。配置过大或集合不可用时整体回退为内嵌规则。Happ 间隔控制订阅刷新时的修订标记；实际下载由应用管理。INCY 接收独立的地理文件间隔，向上取整为小时，至少 1 小时；用户本地设置优先。共享配置使用最长文件间隔。SHA-256 避免重复下载未变更的文件。更新后请重新连接。SRS 保持为远程二进制集；若要内嵌，请导入源 JSON。
@@ -762,7 +766,7 @@ INCY 获得不含查询参数的稳定 DAT URL。经过签名的文件选择位�
 
 ### 此服务器上的页面
 
-“订阅页面”标签只管理面板服务器上已注册的实例，可启动、停止、重启或单独更新。需要安装程序 1.2.98 及本地控制服务。CLI：install-subscription-page、upgrade-subscription-page --page-id ID、manage-subscription-page；列表显示 ID。本地面板使用独立受限令牌和 Docker 网络，远程面板需要 HTTPS 及订阅页面 API 令牌。页面端口仅绑定 loopback；HTTPS 可使用空闲端口上的独立 Caddy 或现有代理。更新保留设置和停止状态，未通过就绪检查时回滚 Compose。私有日志位于 /opt/remnacust/logs/page-<id>.log。浏览器不能提交任意命令、路径或镜像。
+“订阅页面”标签只管理面板服务器上已注册的实例，可启动、停止、重启或单独更新。需要安装程序 1.2.99 及本地控制服务。CLI：install-subscription-page、upgrade-subscription-page --page-id ID、manage-subscription-page；列表显示 ID。本地面板使用独立受限令牌和 Docker 网络，远程面板需要 HTTPS 及订阅页面 API 令牌。页面端口仅绑定 loopback；HTTPS 可使用空闲端口上的独立 Caddy 或现有代理。更新保留设置和停止状态，未通过就绪检查时回滚 Compose。私有日志位于 /opt/remnacust/logs/page-<id>.log。浏览器不能提交任意命令、路径或镜像。
 
 ### 字段与控件
 

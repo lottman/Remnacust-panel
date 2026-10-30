@@ -91,6 +91,30 @@ sections.push(
 export function explainGeofileRefresh(articles) {
     const article = articles.find((item) => item.id === 'templates')
     if (!article) throw new Error('Missing templates article')
+    const sizes = {
+        ru: [
+            'Размер встроенных правил',
+            'Одинаковые условия выбранных категорий DAT включаются один раз; разные типы доменных условий сохраняются. Лимит набора — 50 000 уникальных условий и 2 MiB текста UTF-8. Приложение может иметь меньший предел. Если INCY сообщает The configuration is too large, выберите меньше категорий или включите поддерживаемую загрузку DAT с полной JSON-подпиской. Точный предел INCY iOS 2.6.2 в официальной документации не указан. Выключенная загрузка остаётся встроенным режимом: правила не удаляются и скачивание не включается автоматически. Ручной routing или несовместимые геоданные могут оставить встроенную выдачу даже при включённом переключателе. Правила геофайлов вставляются перед общим маршрутом TCP/UDP в любом порядке протоколов, сохраняя предыдущие ограничения.'
+        ],
+        en: [
+            'Embedded rule size',
+            'Identical matchers in selected DAT categories are included once; different domain match types remain distinct. Each set allows 50,000 unique matchers and 2 MiB of UTF-8 text. Apps may have lower limits. If INCY reports The configuration is too large, select fewer categories or enable supported DAT downloads with a full JSON subscription. Official documentation does not specify the INCY iOS 2.6.2 limit. Disabling downloads keeps rules embedded: rules are not removed and downloads are not enabled automatically. Manual routing or incompatible geodata may retain inline delivery even with the switch on. Geofile rules precede the TCP/UDP catch-all in either protocol order while retaining earlier restrictions.'
+        ],
+        fa: [
+            'حجم قوانین داخلی',
+            'شرط‌های یکسان در دسته‌های انتخاب‌شده DAT فقط یک بار اضافه می‌شوند؛ انواع متفاوت شرط دامنه جدا می‌مانند. سقف هر مجموعه ۵۰٬۰۰۰ شرط یکتا و 2 MiB متن UTF-8 است. برنامه ممکن است سقف کمتری داشته باشد. اگر INCY خطای The configuration is too large داد، دسته‌های کمتری انتخاب کنید یا دانلود DAT پشتیبانی‌شده را با اشتراک کامل JSON روشن کنید. مستندات رسمی سقف INCY iOS 2.6.2 را مشخص نمی‌کند. با خاموش بودن دانلود، قوانین داخلی می‌مانند؛ حذف قانون یا روشن کردن خودکار دانلود انجام نمی‌شود. routing دستی یا داده جغرافیایی ناسازگار ممکن است حتی با کلید روشن باعث تحویل داخلی شود. قوانین فایل پیش از مسیر عمومی TCP/UDP با هر ترتیب پروتکل قرار می‌گیرند و محدودیت‌های قبلی حفظ می‌شوند.'
+        ],
+        zh: [
+            '内嵌规则大小',
+            '所选 DAT 分类中的相同匹配条件只添加一次；不同域名匹配类型仍分别保留。每个集合最多包含 50,000 条唯一条件和 2 MiB UTF-8 文本。应用的限制可能更低。INCY 提示 The configuration is too large 时，请减少分类或使用完整 JSON 订阅启用受支持的 DAT 下载。官方文档未说明 INCY iOS 2.6.2 的大小上限。关闭下载后仍内嵌规则，不会自动删除规则或启用下载。手动 routing 或不兼容的地理数据可能使开启开关后仍以内嵌方式提供。地理文件规则插入到任一 TCP/UDP 排列顺序的默认路由之前，并保留先前的限制。'
+        ]
+    }
+    article.sections.push({
+        id: 'geofile-inline-size',
+        ...Object.fromEntries(
+            Object.entries(sizes).map(([language, [title, body]]) => [language, { title, body }])
+        )
+    })
     for (const [id, translations] of sections)
         article.sections.push({
             id,

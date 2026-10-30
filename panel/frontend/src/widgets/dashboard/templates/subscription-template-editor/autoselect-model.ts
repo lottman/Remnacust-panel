@@ -382,7 +382,7 @@ export function addBalancer(text: string, prefix: string, strategy = 'leastPing'
     const catchAll = rules.findIndex(
         (rule: JsonObject) =>
             !matchKeys.some((key) => rule[key] !== undefined) &&
-            (!rule.network || rule.network === 'tcp,udp')
+            (!rule.network || ['tcp,udp', 'udp,tcp'].includes(rule.network))
     )
     const rule = { type: 'field', network: 'tcp,udp', balancerTag: tag }
     next =

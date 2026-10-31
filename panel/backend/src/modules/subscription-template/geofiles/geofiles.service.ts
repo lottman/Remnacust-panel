@@ -57,6 +57,7 @@ export class GeofilesService {
     private readonly compiled = new Map<string, DatRules>();
     private readonly compilingByKey = new Map<string, Promise<DatRules>>();
     private readonly bundled = new Map<string, Buffer>();
+    private readonly bundlingByKey = new Map<string, Promise<Buffer>>();
     private bundling = 0;
     private readonly base: string;
     private readonly secret: string;
@@ -90,7 +91,7 @@ export class GeofilesService {
                         if (reference.id === file.id) {
                             if (
                                 template.templateType === 'XRAY_JSON' &&
-                                reference.downloadToClient === true
+                                ['geoip', 'geosite'].includes(file.kind)
                             )
                                 nativeXray = true;
                             selections.add(
@@ -102,8 +103,20 @@ export class GeofilesService {
                         }
                 }
                 for (const selection of selections) {
-                    const { categories, format } = JSON.parse(selection),
+                    const { categories, format } = JSON.parse(selection);
+                    let rules: DatRules;
+                    try {
                         rules = compileDat(data, file.kind as 'geoip' | 'geosite', categories);
+                    } catch (error) {
+                        if (
+                            format !== 'XRAY_JSON' ||
+                            !(error instanceof Error) ||
+                            error.message !== 'geofile-inline-limit'
+                        )
+                            throw error;
+                        compileDat(data, file.kind as 'geoip' | 'geosite', categories, true);
+                        continue;
+                    }
                     if (['SINGBOX', 'MIHOMO', 'CLASH', 'STASH'].includes(format))
                         datClientFile(rules, format);
                 }
@@ -237,28 +250,38 @@ export class GeofilesService {
         const key = namespace + ':' + files.map((file) => `${file.id}:${file.sha256}`).join(',');
         const cached = this.bundled.get(key);
         if (cached) return cached;
+        const pending = this.bundlingByKey.get(key);
+        if (pending) return pending;
         if (this.bundling >= 2) throw new ServiceUnavailableException('geofile-busy');
         this.bundling++;
-        try {
-            const sources = [];
-            for (const file of files)
-                sources.push({ id: file.id, data: await this.readActive(file) });
-            const data = bundleDat(sources, namespace);
-            if (data.length <= 32 * 1024 * 1024) {
-                while (
-                    this.bundled.size &&
-                    (this.bundled.size >= 2 ||
-                        [...this.bundled.values()].reduce((sum, value) => sum + value.length, 0) +
-                            data.length >
-                            32 * 1024 * 1024)
-                )
-                    this.bundled.delete(this.bundled.keys().next().value!);
-                this.bundled.set(key, data);
+        const operation = (async () => {
+            try {
+                const sources = [];
+                for (const file of files)
+                    sources.push({ id: file.id, data: await this.readActive(file) });
+                const data = bundleDat(sources, namespace);
+                if (data.length <= 32 * 1024 * 1024) {
+                    while (
+                        this.bundled.size &&
+                        (this.bundled.size >= 2 ||
+                            [...this.bundled.values()].reduce(
+                                (sum, value) => sum + value.length,
+                                0,
+                            ) +
+                                data.length >
+                                32 * 1024 * 1024)
+                    )
+                        this.bundled.delete(this.bundled.keys().next().value!);
+                    this.bundled.set(key, data);
+                }
+                return data;
+            } finally {
+                this.bundling--;
+                this.bundlingByKey.delete(key);
             }
-            return data;
-        } finally {
-            this.bundling--;
-        }
+        })();
+        this.bundlingByKey.set(key, operation);
+        return operation;
     }
 
     private async bundleUrl(kind: DatKind, ids: string[]): Promise<string> {
@@ -350,8 +373,18 @@ export class GeofilesService {
         }
     }
 
-    private async compile(file: StoredGeofile, categories: string[]): Promise<DatRules> {
-        const key = file.id + ':' + file.sha256 + ':' + JSON.stringify(categories),
+    private async compile(
+        file: StoredGeofile,
+        categories: string[],
+        validateOnly = false,
+    ): Promise<DatRules> {
+        const key =
+                file.id +
+                ':' +
+                file.sha256 +
+                ':' +
+                JSON.stringify(categories) +
+                (validateOnly ? ':validate' : ''),
             cached = this.compiled.get(key);
         if (cached) return cached;
         const pending = this.compilingByKey.get(key);
@@ -364,6 +397,7 @@ export class GeofilesService {
                     await this.readActive(file),
                     file.kind as 'geoip' | 'geosite',
                     categories,
+                    validateOnly,
                 );
                 if (this.compiled.size >= 32)
                     this.compiled.delete(this.compiled.keys().next().value!);
@@ -436,6 +470,7 @@ export class GeofilesService {
         config: Record<string, unknown>,
         type: string,
         happ?: XrayGeofileDelivery,
+        mode?: 'inline' | 'remote',
     ): Promise<Record<string, unknown>> {
         try {
             return await materializeGeofiles(
@@ -445,10 +480,14 @@ export class GeofilesService {
                 (file, categories) => this.compile(file, categories),
                 {
                     read: (file) => this.readActive(file),
+                    validateDat: async (file, categories) => {
+                        await this.compile(file, categories, true);
+                    },
                     datUrl: (file, categories, format) => this.derivedUrl(file, categories, format),
                     datBundleUrl: (kind, ids) => this.bundleUrl(kind, ids),
                 },
                 happ,
+                mode,
             );
         } catch (error) {
             if (error instanceof XrayGeofileFallback) throw error;

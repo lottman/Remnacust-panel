@@ -144,6 +144,8 @@ test('delivery preserves routing actions and remote mode carries the configured 
             async () => file,
             dat,
             { read: async () => fixtures.geosite, datUrl: () => 'https://sub.test/rules/signed' },
+            undefined,
+            'remote',
         );
         if (format === 'SINGBOX') {
             assert.equal(remote.route.rule_set[0].url, 'https://sub.test/rules/signed');
@@ -192,28 +194,28 @@ test('native JSON and YAML can be embedded without a URL; binary SRS cannot pret
         const yaml = await materializeGeofiles(
             { remnacust: { geofiles: [ref] } },
             format,
-            async () => ({ id, kind: 'mihomo-domain' }),
+            async () => ({ id, kind: 'mihomo-domain', url: 'https://sub.test/domains.yaml' }),
             async () => {},
             { read: async () => Buffer.from('payload: ["+.example.com"]'), datUrl: () => '' },
         );
-        assert.deepEqual(yaml['rule-providers']['geo_' + id], {
+        if (format === 'CLASH') assert.equal(yaml['rule-providers']['geo_' + id].url, 'https://sub.test/domains.yaml');
+        else assert.deepEqual(yaml['rule-providers']['geo_' + id], {
             type: 'inline',
             behavior: 'domain',
             payload: ['+.example.com'],
         });
         assert.match(yaml.rules[0], /,REJECT$/);
     }
-    await assert.rejects(
-        () =>
-            materializeGeofiles(
+    const binary = await materializeGeofiles(
                 { remnacust: { geofiles: [ref] } },
                 'SINGBOX',
-                async () => ({ id, kind: 'singbox-srs' }),
+                async () => ({ id, kind: 'singbox-srs', url: 'https://sub.test/rules.srs' }),
                 async () => {},
-                { read: async () => Buffer.alloc(0), datUrl: () => '' },
-            ),
-        /requires-download/,
-    );
+                { read: async () => { throw Error('binary is never inlined'); }, datUrl: () => '' },
+            );
+    assert.equal(binary.route.rule_set[0].type, 'remote');
+    assert.equal(binary.route.rule_set[0].format, 'binary');
+    assert.equal(binary.route.rule_set[0].url, 'https://sub.test/rules.srs');
 });
 
 test('refresh survives restart, keeps immutable bytes, honors cooldown and retains the last valid version on source failure', async () => {
@@ -411,6 +413,8 @@ test('refresh survives restart, keeps immutable bytes, honors cooldown and retai
                 },
             },
             'SINGBOX',
+            undefined,
+            'remote',
         );
         const url = new URL(prepared.route.rule_set[0].url),
             filename = url.pathname.split('/').at(-1);

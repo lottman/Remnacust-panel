@@ -29,7 +29,7 @@ type Report = {
     format: string
     rule?: string | null
     template?: string | null
-    geofileDelivery?: 'downloadProfile' | 'inlineFallback' | 'inlineOrNative'
+    geofileDelivery?: 'downloadProfile' | 'inlineRules' | 'inlineFallback' | 'inlineOrNative'
     bytes?: number
     config?: string | null
     configTooLarge?: boolean

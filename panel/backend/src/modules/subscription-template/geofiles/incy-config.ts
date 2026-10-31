@@ -4,11 +4,12 @@ import { ClientPoolError } from '../generators/client-pool';
 // Reserve room for its inbounds, logging and DNS patches, rather than measuring
 // only the minified HTTP response.
 export const INCY_FORMATTED_CONFIG_BUDGET = 900_000;
+export const XRAY_FORMATTED_CONFIG_BUDGET = 8 * 1024 * 1024;
 const MAX_SUBSCRIPTION_BYTES = 16 * 1024 * 1024;
 const MIN_COMPACT_LIST_ENTRIES = 64;
 const STRING_LIST_FIELDS = ['ip', 'domain', 'domains', 'source', 'sourceIP', 'localIP'] as const;
 
-export function compactIncySubscription(subscription: string): string {
+export function compactIncySubscription(subscription: string, enforceBudget = true): string {
     if (!subscription) return subscription;
     if (Buffer.byteLength(subscription) > MAX_SUBSCRIPTION_BYTES)
         throw new ClientPoolError('subscription-size-limit');
@@ -43,10 +44,35 @@ export function compactIncySubscription(subscription: string): string {
                 }
             }
         }
-        if (Buffer.byteLength(JSON.stringify(config, null, 4)) > INCY_FORMATTED_CONFIG_BUDGET)
+        if (
+            enforceBudget &&
+            Buffer.byteLength(JSON.stringify(config, null, 4)) > INCY_FORMATTED_CONFIG_BUDGET
+        )
             throw new ClientPoolError(
-                'incy-configuration-size-limit: enable client geofile delivery or reduce inline rules',
+                'incy-configuration-size-limit: configuration remains too large after geofile delivery',
             );
     }
     return changed ? JSON.stringify(configs) : subscription;
+}
+
+// A subscription is an array of independently loaded profiles. Never compare
+// its combined length with a client's single-configuration budget.
+export function xrayProfilesFit(
+    subscription: string,
+    budget = INCY_FORMATTED_CONFIG_BUDGET,
+): boolean {
+    if (!subscription) return true;
+    if (Buffer.byteLength(subscription) > MAX_SUBSCRIPTION_BYTES)
+        throw new ClientPoolError('subscription-size-limit');
+    const configs: unknown = JSON.parse(subscription);
+    return (
+        Array.isArray(configs) &&
+        configs.every(
+            (config) =>
+                config &&
+                typeof config === 'object' &&
+                !Array.isArray(config) &&
+                Buffer.byteLength(JSON.stringify(config, null, 4)) <= budget,
+        )
+    );
 }

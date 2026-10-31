@@ -8,6 +8,7 @@ const { SubscriptionTemplateService } = load(path.join(directory, 'subscription-
     '@common/types': { ok: response => ({ isOk: true, response }), fail: error => ({ isOk: false, error }) },
     '@common/utils': {}, '@libs/contracts/constants': { ERRORS, CACHE_KEYS: {} }, '@libs/contracts/models': {},
     './constants': {}, './models/get-templates.response.model': {},
+    './geofiles/xray-geofile-delivery': { XrayGeofileDelivery: class {} },
 });
 const id = 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa';
 const source = {

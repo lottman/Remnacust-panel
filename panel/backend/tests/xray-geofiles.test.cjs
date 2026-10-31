@@ -39,12 +39,12 @@ const id = '00' + 'a'.repeat(32),
 const decode = (header) =>
     JSON.parse(Buffer.from(header.slice('happ://routing/onadd/'.length), 'base64').toString());
 
-test('turning INCY downloads off embeds rules and clears URLs on the same provider profile', async () => {
+test('switching automatically to inline delivery embeds rules and clears URLs on the same provider profile', async () => {
     const clock = 1793204000000;
     const previous = new XrayGeofileDelivery('incy');
     const refs = previous.register('geosite', { id, categories: ['example'], target: 'DIRECT', downloadToClient: true }, async () => 'https://sub.test/geosite.dat');
     const remote = JSON.parse(Buffer.from((await previous.header(JSON.stringify([{routing:{rules:[{domain:refs}]}}]), 'user', clock)).split('/onadd/')[1], 'base64'));
-    const delivery = new XrayGeofileDelivery('incy');
+    const delivery = new XrayGeofileDelivery('incy', 'inline');
     const native = await materializeGeofiles({ remnacust: { geofiles: [{id, categories:['example'], target:'DIRECT', downloadToClient:false}] }, outbounds: [] }, 'XRAY_JSON', async()=>({id,kind:'geosite'}), async(_, categories)=>compileDat(fixture.geosite,'geosite',categories), undefined, delivery);
     const body = JSON.stringify([native]);
     const header = await delivery.header(body, 'user', clock + 1000);
@@ -145,7 +145,7 @@ test('Happ receives native references and one stable profile; generic Xray recei
     const profile = decode(first);
     assert.equal(profile.LastUpdated, '3601');
     assert.match(profile.Geositeurl, /revision=3601$/);
-    assert.equal(profile.Geoipurl, undefined);
+    assert.equal(profile.Geoipurl, '');
     assert.deepEqual(profile.BlockSites, native.routing.rules[0].domain);
     const inline = await prepare();
     assert.deepEqual(inline.routing.rules[0].domain, ['full:ads.example.com']);
@@ -168,7 +168,7 @@ test('request-local renderer delivers Happ and INCY profiles, preserves manual h
     let failure = false;
     const generator = {
         async generateConfig({ geofileDelivery }) {
-            if (geofileDelivery) {
+            if (geofileDelivery?.mode === 'remote') {
                 const [value] = geofileDelivery.register(
                     'geosite',
                     {
@@ -186,6 +186,7 @@ test('request-local renderer delivers Happ and INCY profiles, preserves manual h
                     { routing: { rules: [{ domain: [value], outboundTag: 'direct' }] } },
                 ]);
             }
+            geofileDelivery?.registerInline();
             return JSON.stringify([
                 { routing: { rules: [{ domain: ['domain:example.com'], outboundTag: 'direct' }] } },
             ]);
@@ -214,11 +215,11 @@ test('request-local renderer delivers Happ and INCY profiles, preserves manual h
     const incy = context('INCY/2.4.0 (Android)');
     await run(incy);
     assert.match(incy.headersToApply.routing, /^incy:\/\/routing\/onadd\//);
-    assert.equal(incy.headersToApply['routing-geo-update-interval'], '1');
+    assert.equal(incy.headersToApply['routing-geo-update-interval'], '0');
     const incyProfile = JSON.parse(
         Buffer.from(incy.headersToApply.routing.slice('incy://routing/onadd/'.length), 'base64'),
     );
-    assert.equal(incyProfile.Geositeurl, 'https://sub.test/rules.dat');
+    assert.equal(incyProfile.Geositeurl, '');
     assert.equal(incyProfile.useChunkFiles, undefined, 'Full JSON uses original geofiles');
     for (const where of ['customResponseHeaders', 'headersToApply']) {
         const manualInterval = context('INCY/2.4.0');
@@ -262,12 +263,7 @@ test('request-local renderer delivers Happ and INCY profiles, preserves manual h
     const fallback = context('Happ/4.0.0');
     const result = await run(fallback);
     assert.match(result.subscription, /domain:example.com/);
-    assert.equal(fallback.headersToApply.routing, undefined);
-    assert.equal(fallback.headersToApply['x-remnacust-geofiles-delivery'], 'inline; reason=bundle');
-    const incyFallback = context('INCY/2.4.0');
-    await run(incyFallback);
-    assert.equal(incyFallback.headersToApply.routing, undefined);
-    assert.equal(incyFallback.headersToApply['routing-geo-update-interval'], undefined);
+    assert.equal(decode(fallback.headersToApply.routing).Geositeurl, '', 'Small inline rules never request a bundle');
     failure = false;
     const later = context('Happ/4.0.0');
     await run(later);
@@ -278,7 +274,8 @@ test('INCY compaction runs after geofile collection, including manual routing an
     const networks = Array.from({length:26000}, (_,i)=>`100.${i >> 8}.${i & 255}.0/24`);
     let failBundle = false;
     const generator = {async generateConfig({geofileDelivery}) {
-        const domain = geofileDelivery ? geofileDelivery.register('geosite',
+        geofileDelivery?.registerInline();
+        const domain = geofileDelivery?.mode === 'remote' ? geofileDelivery.register('geosite',
             {id,categories:['example'],target:'DIRECT',downloadToClient:true},
             async()=>{if(failBundle) throw Error('bundle');return 'https://sub.test/rules.dat';})
             : ['domain:example.com'];
@@ -303,8 +300,8 @@ test('INCY compaction runs after geofile collection, including manual routing an
         if(mode==='download') assert.match(context.headersToApply.routing,/^incy:\/\/routing\/onadd\//);
         if(mode==='manual') assert.deepEqual(context.headersToApply,{Routing:'off'});
         if(mode==='fallback') {
-            assert.equal(context.headersToApply.routing,undefined);
-            assert.equal(context.headersToApply['x-remnacust-geofiles-delivery'],'inline; reason=bundle');
+            assert.equal(JSON.parse(Buffer.from(context.headersToApply.routing.split('/onadd/')[1],'base64')).Geositeurl,'');
+            assert.equal(context.headersToApply['x-remnacust-geofiles-delivery'],'inline');
         }
     }
 });
@@ -372,7 +369,7 @@ test('a normal combination of GeoSite and GeoIP categories fits a default proxy 
     assert.equal(profile.DirectIp.length, 4);
 });
 
-test('unused resources do not emit a profile and oversized profiles request a complete inline retry', async () => {
+test('unused resources do not emit a profile and large tag mirrors keep full JSON rules out of HTTP headers', async () => {
     const empty = new XrayGeofileDelivery();
     assert.equal(
         await empty.header(
@@ -405,9 +402,10 @@ test('unused resources do not emit a profile and oversized profiles request a co
         ),
         undefined,
     );
-    await assert.rejects(
-        () =>
-            delivery.header(JSON.stringify([{ routing: { rules: [{ domain: values }] } }]), 'user'),
-        /header-size/,
-    );
+    const body = JSON.stringify([{ routing: { rules: [{ domain: values }] } }]);
+    const header = await delivery.header(body, 'user');
+    assert(Buffer.byteLength(header) <= 3000);
+    assert.equal(decode(header).Geositeurl.split('?')[0], 'https://sub.test/file.dat');
+    assert.deepEqual(decode(header).DirectSites, []);
+    assert.deepEqual(JSON.parse(body)[0].routing.rules[0].domain, values);
 });

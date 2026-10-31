@@ -37,6 +37,7 @@ export const EditHostDrawer = NiceModal.create((props: IProps) => {
     const {
         data: host,
         isLoading: isGetHostLoading,
+        isFetchedAfterMount,
         isError,
         error,
         refetch
@@ -60,12 +61,12 @@ export const EditHostDrawer = NiceModal.create((props: IProps) => {
                 />
             }
         >
-            {isError && !host ? (
+            {isError ? (
                 <Stack>
                     <Alert color="red">{error?.message}</Alert>
                     <Button onClick={() => void refetch()}>{t('common.action.refresh')}</Button>
                 </Stack>
-            ) : isGetHostLoading || !host ? (
+            ) : isGetHostLoading || !host || !isFetchedAfterMount ? (
                 <LoaderModalShared mih="78vh" />
             ) : (
                 <EditHostDrawerContent key={host.uuid} host={host} onClose={hide} />

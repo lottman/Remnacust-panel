@@ -17,6 +17,17 @@ mocks['@common/utils/templates/replace-templates-values'] = { TemplateEngine: {
 mocks['./models'] = { SubscriptionWithConfigResponse: Response };
 const { SubscriptionService } = load(filename, mocks);
 
+test('geofile title follows case-insensitive response overrides and falls back to the subscription domain', async () => {
+    const service=Object.create(SubscriptionService.prototype);service.subPublicDomain='sub.example.com/path';
+    let rendered;service.renderTemplatesService={generateSubscription:async args=>(rendered=args)};
+    const user={id:42n};
+    await service.renderSubscription({user,hosts:[],srrContext:{subscriptionSettings:{customResponseHeaders:{'profile-title':'Base'}},headersToApply:{'Profile-Title':'Моя подписка'}}});
+    assert.equal(Buffer.from(rendered.profileTitle.slice(7),'base64').toString(),'Моя подписка');
+    assert.equal(rendered.profileKey,'sub.example.com/path:42');
+    await service.renderSubscription({user,hosts:[],srrContext:{subscriptionSettings:{},headersToApply:{}}});
+    assert.equal(rendered.profileTitle,'sub.example.com');
+});
+
 function fixture(personal, settings, unsupported = false) {
     const user = { id: 1n, shortUuid: 'fixture', status: 'ACTIVE', expireAt: new Date(Date.now() + 86400000) };
     const context = { matchedResponseType: 'XRAY_JSON', userAgent: 'fixture-client', hwidHeaders: { hwid: 'fixture-device' }, subscriptionSettings: settings };

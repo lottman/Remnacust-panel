@@ -41,7 +41,6 @@ export function attachLibraryGeofile(
                 id: file.id,
                 ...(['geoip', 'geosite'].includes(file.kind) ? { categories: [] } : {}),
                 target: 'DIRECT',
-                downloadToClient: file.kind === 'singbox-srs',
                 clientRefreshIntervalSeconds: 86400
             }
         ]

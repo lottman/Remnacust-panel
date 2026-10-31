@@ -14,6 +14,7 @@ const { SubscriptionTemplateService } = load(path.join(directory, 'subscription-
     './entities/subscription-template.entity': load(path.join(directory, 'entities/subscription-template.entity.ts')),
     './models/base-template.response.model': load(path.join(directory, 'models/base-template.response.model.ts')),
     './models/get-templates.response.model': {},
+    './geofiles/xray-geofile-delivery': { XrayGeofileDelivery: class {} },
 });
 const current = { uuid: 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa', name: 'Autoselect', templateType: 'XRAY_JSON', tags: [], viewPosition: 1, templateJson: {} };
 const conflict = (target = ['template_type', 'name'], modelName = 'SubscriptionTemplate') =>

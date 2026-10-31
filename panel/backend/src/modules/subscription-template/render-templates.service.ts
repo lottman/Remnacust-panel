@@ -6,12 +6,8 @@ import { MihomoGeneratorService } from './generators/mihomo.generator.service';
 import { SingBoxGeneratorService } from './generators/singbox.generator.service';
 import { XrayJsonGeneratorService } from './generators/xray-json.generator.service';
 import { XrayGeneratorService } from './generators/xray.generator.service';
-import { compactIncySubscription } from './geofiles/incy-config';
-import {
-    xrayGeofileClient,
-    XrayGeofileDelivery,
-    XrayGeofileFallback,
-} from './geofiles/xray-geofile-delivery';
+import { automaticXrayDelivery } from './geofiles/automatic-xray-delivery';
+import { xrayGeofileClient, XrayGeofileDelivery } from './geofiles/xray-geofile-delivery';
 import { IGenerateSubscription } from './interfaces';
 import { ResolvedProxyConfig } from './resolve-proxy/interfaces';
 import {
@@ -105,8 +101,6 @@ export class RenderTemplatesService {
                     (key) => key.toLowerCase() === 'routing',
                 );
                 const client = xrayGeofileClient(srrContext.userAgent);
-                const delivery =
-                    client && !hasRouting ? new XrayGeofileDelivery(client) : undefined;
                 const generate = (geofileDelivery?: XrayGeofileDelivery) =>
                     this.xrayJsonGeneratorService.generateConfig({
                         hosts: formattedHosts,
@@ -115,40 +109,27 @@ export class RenderTemplatesService {
                         ignoreHostXrayJsonTemplate: srrContext.ignoreHostXrayJsonTemplate,
                         geofileDelivery,
                     });
-                let subscription: string;
-                try {
-                    subscription = await generate(delivery);
-                    const header =
-                        delivery && subscription
-                            ? await delivery.header(subscription, String(user.id))
-                            : undefined;
-                    if (header)
-                        srrContext.headersToApply = {
-                            ...srrContext.headersToApply,
-                            routing: header,
-                            ...(delivery?.inlineOnly
-                                ? { 'x-remnacust-geofiles-delivery': 'inline' }
-                                : {}),
-                            ...(client === 'incy' &&
-                            !Object.keys(configuredHeaders).some(
-                                (key) => key.toLowerCase() === 'routing-geo-update-interval',
-                            )
-                                ? { 'routing-geo-update-interval': String(delivery!.intervalHours) }
-                                : {}),
-                        };
-                } catch (error) {
-                    if (!(error instanceof XrayGeofileFallback)) throw error;
-                    subscription = await generate();
+                const output = await automaticXrayDelivery({
+                    client,
+                    manualRouting: hasRouting,
+                    title: params.profileTitle ?? 'Subscription',
+                    profileKey: params.profileKey ?? String(user.id),
+                    generate,
+                });
+                if (output.header)
                     srrContext.headersToApply = {
                         ...srrContext.headersToApply,
-                        'x-remnacust-geofiles-delivery': `inline; reason=${error.reason}`,
+                        routing: output.header,
+                        ...(output.inline ? { 'x-remnacust-geofiles-delivery': 'inline' } : {}),
+                        ...(client === 'incy' &&
+                        !Object.keys(configuredHeaders).some(
+                            (key) => key.toLowerCase() === 'routing-geo-update-interval',
+                        )
+                            ? { 'routing-geo-update-interval': String(output.intervalHours) }
+                            : {}),
                     };
-                }
-                // Collect DAT references before compacting StringLists: the
-                // delivery collector must still see each individual geotag.
-                if (client === 'incy') subscription = compactIncySubscription(subscription);
                 return {
-                    subscription,
+                    subscription: output.subscription,
                     contentType: SUBSCRIPTION_CONFIG_TYPES['XRAY_JSON'].CONTENT_TYPE,
                 };
             }

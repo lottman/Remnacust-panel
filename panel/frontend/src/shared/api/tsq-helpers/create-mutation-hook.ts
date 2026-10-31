@@ -6,6 +6,7 @@ import { instance } from '../axios'
 import { createUrl, handleRequestError } from '../helpers'
 import { CreateMutationHookArgs, MutationResponse } from '../interfaces'
 import { affectsLimits, invalidateLimits } from '../limit-invalidation'
+import { affectsHosts, cancelHostReads, invalidateHosts } from '../host-invalidation'
 
 export function createMutationHook<
     RouteParamsSchema extends z.ZodType<Record<string, unknown>>,
@@ -51,6 +52,8 @@ export function createMutationHook<
                 throw new Error(i18n.t('requestErrors.invalidRequest'), { cause: body.error })
             }
 
+            if (affectsHosts(baseUrl)) await cancelHostReads(queryClient)
+
             return instance
                 .request({
                     method: requestMethod,
@@ -83,11 +86,12 @@ export function createMutationHook<
             ...rMutationParams,
             ...params?.mutationFns,
             mutationFn,
-            onSuccess: (data, variables, context) => {
+            onSuccess: async (data, variables, context) => {
+                if (affectsHosts(baseUrl)) await invalidateHosts(queryClient)
                 if (affectsLimits(baseUrl)) void invalidateLimits(queryClient)
-                rMutationParams?.onSuccess?.(data, variables, context, queryClient)
-                params?.mutationFns?.onSuccess?.(data, variables, context, queryClient)
-                variables?.mutationFns?.onSuccess?.(data, variables, context, queryClient)
+                await rMutationParams?.onSuccess?.(data, variables, context, queryClient)
+                await params?.mutationFns?.onSuccess?.(data, variables, context, queryClient)
+                await variables?.mutationFns?.onSuccess?.(data, variables, context, queryClient)
             },
             onError: (error, variables, context) => {
                 rMutationParams?.onError?.(error, variables, context, queryClient)

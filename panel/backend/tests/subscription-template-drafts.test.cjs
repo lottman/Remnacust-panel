@@ -21,6 +21,7 @@ const { SubscriptionTemplateService } = load(
         },
         '@libs/contracts/models': contracts,
         './constants': {},
+        './geofiles/xray-geofile-delivery': { XrayGeofileDelivery: class {} },
         './models/get-templates.response.model': {},
     },
 );

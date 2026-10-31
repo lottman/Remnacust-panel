@@ -5,6 +5,7 @@ const test = require('node:test')
 const vm = require('node:vm')
 const ts = require('typescript')
 const { z, ZodError } = require('zod')
+const { QueryClient } = require('@tanstack/react-query')
 
 function load(file, dependencies) {
     const exports = {}
@@ -24,10 +25,11 @@ for (const language of ['en', 'ru', 'fa', 'zh']) {
         let options, networkCalls = 0, response = { response: { name: 'Valid response' } }
         const { createMutationHook } = load('tsq-helpers/create-mutation-hook.ts', {
             i18next: translation,
-            '@tanstack/react-query': { useQueryClient: () => ({}), useMutation: value => { options = value; return value } },
+            '@tanstack/react-query': { useQueryClient: () => new QueryClient(), useMutation: value => { options = value; return value } },
             '../axios': { instance: { request: async () => { networkCalls++; return { data: response } } } },
             '../helpers': { handleRequestError, createUrl: url => url },
-            '../limit-invalidation': { affectsLimits: () => false, invalidateLimits() {} }
+            '../limit-invalidation': { affectsLimits: () => false, invalidateLimits() {} },
+            '../host-invalidation': load('host-invalidation.ts', {})
         })
         createMutationHook({ endpoint: '/hosts', requestMethod: 'PATCH',
             bodySchema: z.object({ inbound: z.object({ configProfileInboundUuid: z.uuid() }) }),

@@ -16,7 +16,9 @@ import { BaseHostForm } from '@shared/ui/forms/hosts/base-host-form'
 import { validateHostDomainRules } from '@shared/ui/forms/hosts/base-host-form/domain-presets'
 import { HostFormLoading } from '@shared/ui/forms/hosts/base-host-form/host-form-loading'
 import { validateHostInbound } from '@shared/ui/forms/hosts/base-host-form/validate-host-inbound'
-import { parseJsonField, stringifyJsonField } from '@shared/utils/misc'
+import { stringifyJsonField } from '@shared/utils/misc'
+
+import { hostPatch } from './host-patch'
 
 interface IProps {
     host: UpdateHostCommand.Response['response']
@@ -130,14 +132,7 @@ export const EditHostDrawerContent = (props: IProps) => {
 
     const handleSubmit = form.onSubmit(async (values) => {
         updateHost({
-            variables: {
-                ...values,
-                uuid: host.uuid,
-                xhttpExtraParams: parseJsonField(values.xhttpExtraParams),
-                muxParams: parseJsonField(values.muxParams),
-                sockoptParams: parseJsonField(values.sockoptParams),
-                finalMask: parseJsonField(values.finalMask)
-            }
+            variables: hostPatch(values, (field) => form.isDirty(field), host.uuid)
         })
     })
 

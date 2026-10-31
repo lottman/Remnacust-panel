@@ -39,7 +39,30 @@ export class XrayGeofileDelivery {
         this.containsInline = true;
     }
 
-    constructor(public readonly client: 'happ' | 'incy' = 'happ') {}
+    constructor(
+        public readonly client: 'happ' | 'incy' = 'happ',
+        public readonly mode: 'inline' | 'remote' = 'remote',
+        private readonly title = 'Subscription',
+    ) {}
+
+    private profileName(profileKey: string): string {
+        let name = this.title.slice(0, 8192);
+        if (name.startsWith('base64:')) {
+            try {
+                name = new TextDecoder('utf-8', { fatal: true }).decode(
+                    Buffer.from(name.slice(7), 'base64'),
+                );
+            } catch {
+                name = '';
+            }
+        }
+        // The suffix isolates two subscriptions with the same visible title.
+        const clean = [...name.normalize('NFC')]
+            .filter((char) => char.codePointAt(0)! >= 32 && char.codePointAt(0)! !== 127)
+            .join('')
+            .trim();
+        return `${[...clean].slice(0, 80).join('') || 'Subscription'} · ${createHash('sha256').update(profileKey).digest('hex').slice(0, 8)}`;
+    }
     private readonly references = new Map<
         string,
         { kind: DatKind; id: string; target: string; interval: number }
@@ -62,14 +85,14 @@ export class XrayGeofileDelivery {
     }
 
     private inlineHeader(profileKey: string, now: number): string | undefined {
-        if (this.client !== 'incy' || !this.containsInline) return undefined;
+        if (!this.containsInline) return undefined;
         // Absence of a routing header leaves the previous provider profile on
         // the device. Replace that profile's old URLs instead of disabling
         // the client's routing feature or deleting unrelated profiles.
         this.inlineOnly = true;
         this.intervalHours = 0;
         const profile = {
-            Name: `Remnacust ${createHash('sha256').update(profileKey).digest('hex').slice(0, 12)}`,
+            Name: this.profileName(profileKey),
             GlobalProxy: 'true',
             Geoipurl: '',
             Geositeurl: '',
@@ -81,7 +104,10 @@ export class XrayGeofileDelivery {
             ProxySites: [],
             LastUpdated: String(Math.floor(now / 1000)),
         };
-        return 'incy://routing/onadd/' + Buffer.from(JSON.stringify(profile)).toString('base64');
+        return (
+            `${this.client}://routing/onadd/` +
+            Buffer.from(JSON.stringify(profile)).toString('base64')
+        );
     }
 
     public async header(
@@ -119,8 +145,10 @@ export class XrayGeofileDelivery {
         // Force one refresh when migrating from the longer v1 names in the same interval.
         const revision = Math.floor(now / 1000 / interval) * interval + DAT_NAMESPACE_VERSION - 1;
         const profile: Record<string, unknown> = {
-            Name: `Remnacust ${createHash('sha256').update(profileKey).digest('hex').slice(0, 12)}`,
+            Name: this.profileName(profileKey),
             GlobalProxy: 'true',
+            Geoipurl: '',
+            Geositeurl: '',
             // INCY compares this with the saved profile, including an inline
             // replacement. A window-rounded value could move backwards after
             // downloads are re-enabled. Stable URLs and SHA-256 prevent an
@@ -153,9 +181,20 @@ export class XrayGeofileDelivery {
                 });
             }
         }
-        const header =
+        let header =
             `${this.client}://routing/onadd/` +
             Buffer.from(JSON.stringify(profile)).toString('base64');
+        if (Buffer.byteLength(header) > 3000) {
+            // Full JSON already contains the complete ordered routing rules.
+            // These mirrored lists are optional profile metadata, not the rules
+            // consumed by Xray. Keep all DAT URLs without duplicating every tag
+            // into an HTTP header when multiple files/categories are selected.
+            for (const action of ['Direct', 'Block', 'Proxy'])
+                for (const kind of ['Ip', 'Sites']) profile[action + kind] = [];
+            header =
+                `${this.client}://routing/onadd/` +
+                Buffer.from(JSON.stringify(profile)).toString('base64');
+        }
         // Leave room for ordinary response headers in a default 4 KiB reverse-proxy buffer.
         if (Buffer.byteLength(header) > 3000) throw new XrayGeofileFallback('header-size');
         this.intervalHours = Math.ceil(interval / 3600);

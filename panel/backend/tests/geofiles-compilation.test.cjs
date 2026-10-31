@@ -32,3 +32,27 @@ test('different compilations remain bounded and failed work can be retried', asy
     assert.equal(s.compilingByKey.size, 0); assert.equal(s.compiling, 0);
     assert((await s.compile(changed, ['example'])).domains.length > 0); assert.equal(reads, 2);
 });
+
+test('selection validation and inline rules use separate cache entries', async () => {
+    const s = service(); let reads = 0;
+    s.readActive = async () => { reads++; return geosite; };
+    assert.deepEqual(await s.compile(file, ['example'], true), {ips: [], domains: []});
+    assert.equal((await s.compile(file, ['example'])).domains.length, 2);
+    await s.compile(file, ['example'], true); await s.compile(file, ['example']);
+    assert.equal(reads, 2);
+});
+
+test('concurrent bundle and checksum requests share cold work and preserve every namespaced category', async () => {
+    const s=service();let reads=0, release;
+    s.fileById=async id=>({...file,id,size:geosite.length});s.activeFile=f=>f;
+    s.readActive=async()=>{reads++;await new Promise(r=>release=r);return geosite;};
+    const jobs=Array.from({length:12},()=>s.bundleContent('geosite',[file.id]));
+    while(!release) await new Promise(r=>setImmediate(r));
+    assert.equal(reads,1);release();
+    const results=await Promise.all(jobs);
+    assert(results.every(r=>r===results[0]));assert.equal(s.bundling,0);assert.equal(s.bundlingByKey.size,0);
+    const {datCategory}=load(path.join(__dirname,'../src/modules/subscription-template/geofiles/xray-geofile-delivery.ts'), {'../generators/client-pool':pool});
+    const {compileDat}=load(path.join(__dirname,'../src/modules/subscription-template/geofiles/compile-dat.ts'),poolMocks);
+    assert.equal(compileDat(results[0],'geosite',[datCategory(file.id,'example')]).domains.length,2);
+    assert.equal(reads,1);await s.bundleContent('geosite',[file.id]);assert.equal(reads,1);
+});

@@ -8,9 +8,7 @@ import { useTranslation } from 'react-i18next'
 import { PiListChecks } from 'react-icons/pi'
 
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
-import { queryClient } from '@shared/api'
 import {
-    QueryKeys,
     useGetConfigProfiles,
     useGetHostTags,
     useGetInternalSquads,
@@ -73,16 +71,8 @@ export const EditManyHostsDrawer = NiceModal.create((props: IProps) => {
 
     const { mutate: updateManyHosts, isPending: isUpdateManyHostsPending } = useUpdateManyHosts({
         mutationFns: {
-            onSuccess: async () => {
+            onSuccess: () => {
                 hide()
-
-                await queryClient.refetchQueries({
-                    queryKey: QueryKeys.hosts.getAllTags.queryKey
-                })
-
-                await queryClient.refetchQueries({
-                    queryKey: QueryKeys.hosts.getAllHosts.queryKey
-                })
             }
         }
     })

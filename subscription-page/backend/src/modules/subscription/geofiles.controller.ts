@@ -53,6 +53,9 @@ export class GeofilesController {
                 `/api/sub/geofiles/${id}/${filename}`,
                 {
                     responseType: 'stream',
+                    // Axios also enforces maxContentLength on streams. The
+                    // subscription JSON cap is smaller than a valid DAT bundle.
+                    maxContentLength: 64 * 1024 * 1024,
                     params: filename.startsWith('bundle-') ? { selection } : undefined,
                     maxRedirects: 0,
                     signal: abort.signal,

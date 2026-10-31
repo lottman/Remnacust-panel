@@ -172,6 +172,8 @@ test('real HTTP binary upload, admin-only roles, public byte stream and in-use d
                 },
             },
             'SINGBOX',
+            undefined,
+            'remote',
         );
         const derivedPath = new URL(prepared.route.rule_set[0].url).pathname;
         const derived = await fetch(proxyBase + derivedPath);

@@ -56,11 +56,40 @@ export async function materializeGeofiles(
     dat: (file: StoredGeofile, categories: string[]) => Promise<DatRules>,
     resources?: {
         read: (file: StoredGeofile) => Promise<Buffer>;
+        validateDat?: (file: StoredGeofile, categories: string[]) => Promise<void>;
         datUrl: (file: StoredGeofile, categories: string[], format: string) => string;
         datBundleUrl?: DatBundleUrl;
     },
     happ?: XrayGeofileDelivery,
+    mode: 'auto' | 'inline' | 'remote' = type === 'XRAY_JSON' ? 'inline' : 'auto',
 ): Promise<ObjectValue> {
+    if (mode === 'auto') {
+        try {
+            const inline = await materializeGeofiles(
+                config,
+                type,
+                fileById,
+                dat,
+                resources,
+                happ,
+                'inline',
+            );
+            if (Buffer.byteLength(JSON.stringify(inline, null, 4)) > 900_000)
+                throw new Error('geofile-config-size');
+            return inline;
+        } catch (error) {
+            if (
+                !(error instanceof Error) ||
+                ![
+                    'geofile-inline-limit',
+                    'geofile-config-size',
+                    'geofile-srs-requires-download',
+                ].includes(error.message)
+            )
+                throw error;
+            return materializeGeofiles(config, type, fileById, dat, resources, happ, 'remote');
+        }
+    }
     const references = geofileReferences(config);
     const root = structuredClone(config);
     delete root.remnacust;
@@ -74,7 +103,8 @@ export async function materializeGeofiles(
     for (const reference of references) {
         const file = await fileById(reference.id);
         if (
-            reference.downloadToClient === false &&
+            (happ?.mode ?? mode) !== 'remote' &&
+            file.kind !== 'singbox-srs' &&
             !['geoip', 'geosite'].includes(file.kind) &&
             !resources
         )
@@ -82,6 +112,12 @@ export async function materializeGeofiles(
         const tag = `geo_${file.id}`;
         let target = reference.target;
         const interval = reference.clientRefreshIntervalSeconds ?? DEFAULT_GEOFILE_INTERVAL;
+        // Legacy per-file switches no longer decide delivery. The renderer
+        // selects one mode for the complete generated configuration.
+        const download =
+            (happ?.mode ?? mode) === 'remote' ||
+            file.kind === 'singbox-srs' ||
+            (type === 'CLASH' && file.kind.startsWith('mihomo-'));
         let route: ObjectValue;
         if (xray) {
             if (target === 'DIRECT' || target === 'REJECT') {
@@ -140,13 +176,12 @@ export async function materializeGeofiles(
                 throw new Error('geofile-target');
             route = {};
         }
-        if (
-            (file.kind === 'geoip' || file.kind === 'geosite') &&
-            reference.downloadToClient === true
-        ) {
+        if ((file.kind === 'geoip' || file.kind === 'geosite') && download) {
             if (xray) {
-                const rules = await dat(file, reference.categories ?? []);
                 if (happ && resources?.datBundleUrl) {
+                    if (resources.validateDat)
+                        await resources.validateDat(file, reference.categories ?? []);
+                    else await dat(file, reference.categories ?? []);
                     generated.push({
                         ...route,
                         [file.kind === 'geoip' ? 'ip' : 'domain']: happ.register(
@@ -156,6 +191,7 @@ export async function materializeGeofiles(
                         ),
                     });
                 } else {
+                    const rules = await dat(file, reference.categories ?? []);
                     generated.push({
                         ...route,
                         ...(file.kind === 'geoip'
@@ -210,7 +246,7 @@ export async function materializeGeofiles(
                 yamlRules.push(`RULE-SET,${tag},${target}`);
             }
         } else if (file.kind === 'geoip' || file.kind === 'geosite') {
-            if (reference.downloadToClient === false) happ?.registerInline();
+            happ?.registerInline();
             const rules = await dat(file, reference.categories ?? []);
             inlineRecords += rules.ips.length + rules.domains.length;
             inlineBytes +=
@@ -264,9 +300,9 @@ export async function materializeGeofiles(
             if (existing && existing.url !== file.url) throw new Error('geofile-name-collision');
             if (!existing)
                 root.route.rule_set.push({
-                    type: reference.downloadToClient === false ? 'inline' : 'remote',
+                    type: download ? 'remote' : 'inline',
                     tag,
-                    ...(reference.downloadToClient === false
+                    ...(!download
                         ? { rules: nativePayload(await resources!.read(file), file.kind) }
                         : {
                               format: file.kind === 'singbox-srs' ? 'binary' : 'source',
@@ -286,9 +322,9 @@ export async function materializeGeofiles(
             if (existing && existing.url !== file.url) throw new Error('geofile-name-collision');
             if (!existing)
                 root['rule-providers'][tag] = {
-                    type: reference.downloadToClient === false ? 'inline' : 'http',
+                    type: download ? 'http' : 'inline',
                     behavior: file.kind.split('-').at(-1),
-                    ...(reference.downloadToClient === false
+                    ...(!download
                         ? { payload: nativePayload(await resources!.read(file), file.kind) }
                         : {
                               ...(text ? { format: 'text' } : {}),

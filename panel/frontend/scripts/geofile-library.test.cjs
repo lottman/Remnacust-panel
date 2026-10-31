@@ -16,7 +16,7 @@ test('completed uploads attach once to the latest draft and preserve current rul
     assert.equal(next.custom, current.custom)
     assert.deepEqual(next.routing, current.routing)
     assert.deepEqual(next.remnacust.geofiles[0], current.remnacust.geofiles[0])
-    assert.deepEqual(next.remnacust.geofiles[1], { id: 'new', categories: [], target: 'DIRECT', downloadToClient: false, clientRefreshIntervalSeconds: 86400 })
+    assert.deepEqual(next.remnacust.geofiles[1], { id: 'new', categories: [], target: 'DIRECT', clientRefreshIntervalSeconds: 86400 })
     assert.equal(attachLibraryGeofile(text, 'XRAY_JSON', file), text)
     assert.throws(() => attachLibraryGeofile('{broken', 'XRAY_JSON', file))
     assert.throws(() => attachLibraryGeofile('{}', 'XRAY_JSON', { ...file, kind: 'singbox-srs' }), /incompatible-geofile/)

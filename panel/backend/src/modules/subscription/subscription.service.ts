@@ -37,6 +37,7 @@ import { SubscriptionSettingsEntity } from '@modules/subscription-settings/entit
 import { GetCachedSubscriptionSettingsQuery } from '@modules/subscription-settings/queries/get-cached-subscrtipion-settings';
 import { isJsonSubscriptionFallbackSupported } from '@modules/subscription-template/constants';
 import { XrayGeneratorService } from '@modules/subscription-template/generators/xray.generator.service';
+import type { IGenerateSubscription } from '@modules/subscription-template/interfaces';
 import { RenderTemplatesService } from '@modules/subscription-template/render-templates.service';
 import { ResolvedProxyConfig } from '@modules/subscription-template/resolve-proxy/interfaces';
 import { ResolveProxyConfigService } from '@modules/subscription-template/resolve-proxy/resolve-proxy-config.service';
@@ -292,15 +293,14 @@ export class SubscriptionService {
             });
 
             if (srrContext.respondWithRemarks) {
-                const { subscription, contentType } =
-                    await this.renderTemplatesService.generateSubscription({
-                        srrContext,
-                        user: renderUser,
-                        hosts: [],
-                        fallbackOptions: {
-                            respondWithRemarks: srrContext.respondWithRemarks,
-                        },
-                    });
+                const { subscription, contentType } = await this.renderSubscription({
+                    srrContext,
+                    user: renderUser,
+                    hosts: [],
+                    fallbackOptions: {
+                        respondWithRemarks: srrContext.respondWithRemarks,
+                    },
+                });
 
                 return new SubscriptionWithConfigResponse({
                     headers: this.getUserProfileHeadersInfo(
@@ -434,7 +434,7 @@ export class SubscriptionService {
                         deviceSpeedLimitMbps: host.deviceSpeedLimitMbps,
                     };
                 });
-            const subscription = await this.renderTemplatesService.generateSubscription({
+            const subscription = await this.renderSubscription({
                 srrContext,
                 user: renderUser,
                 hosts: subscriptionSettings.randomizeHosts
@@ -615,9 +615,9 @@ export class SubscriptionService {
         const routing = Object.entries(headers).find(
             ([key]) => key.toLowerCase() === 'routing',
         )?.[1];
-        const inlineFallback = Object.keys(headers).some(
-            (key) => key.toLowerCase() === 'x-remnacust-geofiles-delivery',
-        );
+        const inlineDelivery = Object.entries(headers).find(
+            ([key]) => key.toLowerCase() === 'x-remnacust-geofiles-delivery',
+        )?.[1];
         const bytes = Buffer.byteLength(response.body);
         return {
             allowed: !device.blocked,
@@ -629,8 +629,10 @@ export class SubscriptionService {
             hosts: trace.hosts ?? [],
             bytes,
             contentType: response.contentType,
-            geofileDelivery: inlineFallback
-                ? 'inlineFallback'
+            geofileDelivery: inlineDelivery
+                ? inlineDelivery === 'inline'
+                    ? 'inlineRules'
+                    : 'inlineFallback'
                 : routing
                   ? 'downloadProfile'
                   : 'inlineOrNative',
@@ -1079,16 +1081,15 @@ export class SubscriptionService {
             (hwidCheckup.maxDeviceReached || hwidCheckup.hwidNotSupported) &&
             subscriptionSettings.isShowCustomRemarks
         ) {
-            const { subscription, contentType } =
-                await this.renderTemplatesService.generateSubscription({
-                    srrContext,
-                    user,
-                    hosts: [],
-                    fallbackOptions: {
-                        showHwidMaxDeviceRemarks: hwidCheckup.maxDeviceReached,
-                        showHwidNotSupportedRemarks: hwidCheckup.hwidNotSupported,
-                    },
-                });
+            const { subscription, contentType } = await this.renderSubscription({
+                srrContext,
+                user,
+                hosts: [],
+                fallbackOptions: {
+                    showHwidMaxDeviceRemarks: hwidCheckup.maxDeviceReached,
+                    showHwidNotSupportedRemarks: hwidCheckup.hwidNotSupported,
+                },
+            });
 
             response.body = subscription;
             response.contentType = contentType;
@@ -1113,13 +1114,12 @@ export class SubscriptionService {
         settings: SubscriptionSettingsEntity,
     ): Promise<SubscriptionWithConfigResponse> {
         const safe = registrationBlockedRemarks(user, settings);
-        const { subscription, contentType } =
-            await this.renderTemplatesService.generateSubscription({
-                srrContext,
-                user,
-                hosts: [],
-                fallbackOptions: { showHwidRegistrationBlockedRemarks: true },
-            });
+        const { subscription, contentType } = await this.renderSubscription({
+            srrContext,
+            user,
+            hosts: [],
+            fallbackOptions: { showHwidRegistrationBlockedRemarks: true },
+        });
         return new SubscriptionWithConfigResponse({
             body: subscription,
             contentType,
@@ -1137,13 +1137,12 @@ export class SubscriptionService {
         settings: SubscriptionSettingsEntity,
     ): Promise<SubscriptionWithConfigResponse> {
         const safeRemarks = this.getBlockedHwidRemarks(user, settings);
-        const { subscription, contentType } =
-            await this.renderTemplatesService.generateSubscription({
-                srrContext,
-                user,
-                hosts: [],
-                fallbackOptions: { showHwidBlockedRemarks: true },
-            });
+        const { subscription, contentType } = await this.renderSubscription({
+            srrContext,
+            user,
+            hosts: [],
+            fallbackOptions: { showHwidBlockedRemarks: true },
+        });
         const headers = this.getUserProfileHeadersInfo(user, settings, false, safeRemarks);
         const announcement = TemplateEngine.formatWithUser(
             safeRemarks[0],
@@ -1198,6 +1197,27 @@ export class SubscriptionService {
             hwidRemarks.length ? hwidRemarks : ['Device is blocked'],
             settings.customRemarks,
         );
+    }
+
+    private async renderSubscription(params: IGenerateSubscription) {
+        const settings = params.srrContext.subscriptionSettings;
+        const headers = { ...settings.customResponseHeaders, ...params.srrContext.headersToApply };
+        const rawTitle = Object.entries(headers)
+            .reverse()
+            .find(([key]) => key.toLowerCase() === 'profile-title')?.[1];
+        return this.renderTemplatesService.generateSubscription({
+            ...params,
+            profileTitle: rawTitle
+                ? TemplateEngine.formatWithUser(
+                      rawTitle,
+                      params.user,
+                      settings,
+                      this.subPublicDomain,
+                      params.hosts,
+                  )
+                : this.subPublicDomain.split('/')[0],
+            profileKey: `${this.subPublicDomain}:${params.user.id}`,
+        });
     }
 
     private getUserProfileHeadersInfo(

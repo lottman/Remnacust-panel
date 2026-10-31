@@ -28,6 +28,8 @@ function load(file, overrides = {}) {
         compilerOptions: { jsx: ts.JsxEmit.ReactJSX, module: ts.ModuleKind.CommonJS, esModuleInterop: true }
     }).outputText, { exports, require(name) {
         if (Object.hasOwn(overrides, name)) return overrides[name]
+        if (name === './host-patch') return load('shared/_modals/hosts/edit-host-modal/host-patch.ts')
+        if (name === '@shared/utils/misc/parse-json-field') return load('shared/utils/misc/parse-json-field.ts')
         if (name.endsWith('/validate-host-inbound')) return load('shared/ui/forms/hosts/base-host-form/validate-host-inbound.ts')
         if (name.endsWith('/domain-presets')) return load('shared/ui/forms/hosts/base-host-form/domain-presets.ts')
         if (name === '@shared/utils/destination-rule') return load('shared/utils/destination-rule.ts')
@@ -90,7 +92,7 @@ test('editing detached hosts omits missing bindings and preserves the saved port
         await result.submit()
         assert.equal(result.requests.length, 1)
         assert.equal(result.requests[0].inbound, undefined)
-        assert.equal(result.requests[0].port, 1234)
+        assert.equal(result.requests[0].port, undefined, 'unchanged port is preserved on the server rather than resent')
         assert.equal(result.requests[0].remark, 'Updated note')
     }
 })

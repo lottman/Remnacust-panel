@@ -21,6 +21,7 @@ export function compileDat(
     data: Buffer,
     kind: 'geoip' | 'geosite',
     categories: string[],
+    validateOnly = false,
 ): DatRules {
     if (
         !Array.isArray(categories) ||
@@ -38,6 +39,7 @@ export function compileDat(
     const matchers = new Set<string>();
     const result: DatRules = { ips: [], domains: [] };
     let bytes = 0;
+    let matched = false;
     for (const entry of geofileFields(data)) {
         if (!Buffer.isBuffer(entry.value)) continue;
         let code: number | Buffer | undefined;
@@ -68,6 +70,8 @@ export function compileDat(
                         ? [...ip].join('.')
                         : Address6.fromByteArray([...ip]).correctForm();
                 const value = `${address}/${prefix}`;
+                matched = true;
+                if (validateOnly) continue;
                 if (matchers.has(value)) continue;
                 matchers.add(value);
                 result.ips.push(value);
@@ -96,6 +100,8 @@ export function compileDat(
                 if (!Buffer.isBuffer(value)) throw new Error('geofile-dat');
                 const domain = value.toString('utf8');
                 const type = Number(parts.find((field) => field.field === 1)?.value ?? 0);
+                matched = true;
+                if (validateOnly) continue;
                 // Categories form a union in one route; identical matchers add no coverage.
                 const key = `${type}:${domain}`;
                 if (matchers.has(key)) continue;
@@ -110,10 +116,7 @@ export function compileDat(
                 throw new Error('geofile-inline-limit');
         }
     }
-    if (
-        [...wanted].some((value) => !seen.has(value)) ||
-        (!result.ips.length && !result.domains.length)
-    )
+    if ([...wanted].some((value) => !seen.has(value)) || !matched)
         throw new Error('geofile-category-empty');
     return result;
 }

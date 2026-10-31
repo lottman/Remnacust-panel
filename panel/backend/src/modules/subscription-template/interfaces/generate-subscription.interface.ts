@@ -4,6 +4,8 @@ import { ISRRContext } from '@modules/subscription-response-rules/interfaces';
 import { UserEntity } from '@modules/users/entities/user.entity';
 
 export interface IGenerateSubscription {
+    profileTitle?: string;
+    profileKey?: string;
     srrContext: ISRRContext;
     user: UserEntity;
     hosts: HostWithRawInbound[];

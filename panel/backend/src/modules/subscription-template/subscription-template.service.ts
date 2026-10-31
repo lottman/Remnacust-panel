@@ -1,5 +1,3 @@
-import type { XrayGeofileDelivery } from './geofiles/xray-geofile-delivery';
-
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { load } from 'js-yaml';
 
@@ -22,6 +20,7 @@ import { ReorderSubscriptionTemplatesBodyDto } from './dtos';
 import { SubscriptionTemplateEntity } from './entities/subscription-template.entity';
 import { validateClientTemplate } from './generators/validate-client-template';
 import { GeofilesService } from './geofiles/geofiles.service';
+import { XrayGeofileDelivery } from './geofiles/xray-geofile-delivery';
 import { BaseTemplateResponseModel } from './models/base-template.response.model';
 import { GetSubscriptionTemplatesResponseModel } from './models/get-templates.response.model';
 import { SubscriptionTemplateRepository } from './repositories/subscription-template.repository';
@@ -290,6 +289,9 @@ export class SubscriptionTemplateService {
                               await this.prepareClientTemplate(
                                   source as Record<string, unknown>,
                                   template.templateType,
+                                  template.templateType === 'XRAY_JSON'
+                                      ? new XrayGeofileDelivery('happ', 'remote')
+                                      : undefined,
                               );
                           } catch (error) {
                               if (draftContent === undefined) throw error;

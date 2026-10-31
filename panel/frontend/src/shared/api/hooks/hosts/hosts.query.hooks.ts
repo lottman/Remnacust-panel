@@ -45,6 +45,6 @@ export const useGetHost = createGetQueryHook({
     responseSchema: GetHostCommand.ResponseSchema,
     routeParamsSchema: GetHostCommand.RequestParamSchema,
     getQueryKey: ({ route }) => hostsQueryKeys.getHost(route!).queryKey,
-    rQueryParams: {},
+    rQueryParams: { refetchOnMount: 'always' },
     errorHandler: (error) => errorHandler(error, 'Get Host')
 })

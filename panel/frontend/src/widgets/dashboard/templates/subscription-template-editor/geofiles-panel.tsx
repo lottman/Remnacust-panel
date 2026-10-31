@@ -5,12 +5,10 @@ import {
     Badge,
     Button,
     Card,
-    Collapse,
     FileInput,
     Group,
     Loader,
     NumberInput,
-    Switch,
     TagsInput,
     Progress,
     Select,
@@ -30,7 +28,6 @@ import { TbPlus, TbTrash } from 'react-icons/tb'
 import { instance } from '@shared/api'
 import { useGetSubscriptionSettings } from '@shared/api/hooks/subscription-settings/subscription-settings.query.hooks'
 import { ROUTES } from '@shared/constants/routes'
-import { usePanelReducedMotion } from '@shared/ui/appearance/appearance'
 
 import { type JsonObject } from './autoselect-model'
 import styles from './autoselect-panel.module.css'
@@ -84,7 +81,6 @@ export function GeofilesPanel({
     getValue: () => string
 }) {
     const { t } = useTranslation()
-    const reducedMotion = usePanelReducedMotion()
     const jsonSettingName = t('subscription-settings.widget.serve-json-at-base-subscription')
     const client = useQueryClient()
     const filesQuery = useQuery({
@@ -119,8 +115,7 @@ export function GeofilesPanel({
     const refs: Reference[] = Array.isArray(config.remnacust?.geofiles)
         ? config.remnacust.geofiles
         : []
-    const needsJsonDelivery =
-        format === 'XRAY_JSON' && refs.some((reference) => reference.downloadToClient === true)
+    const needsJsonDelivery = format === 'XRAY_JSON' && refs.length > 0
     const subscriptionSettings = useGetSubscriptionSettings({
         rQueryParams: {
             enabled: needsJsonDelivery,
@@ -163,7 +158,13 @@ export function GeofilesPanel({
                     text,
                     format,
                     ['remnacust', 'geofiles'],
-                    value.length ? value : undefined
+                    value.length
+                        ? value.map(({ downloadToClient, ...ref }) => ({
+                              ...ref,
+                              target:
+                                  ref.target ?? (downloadToClient === false ? 'DIRECT' : ref.target)
+                          }))
+                        : undefined
                 )
             )
             setError(null)
@@ -637,7 +638,6 @@ export function GeofilesPanel({
                     const item = files.find((file) => file.id === reference.id)
                     const categories = reference.categories ?? []
                     const dat = !!item && ['geoip', 'geosite'].includes(item.kind)
-                    const download = reference.downloadToClient ?? !dat
                     const target =
                         reference.target ?? (reference.downloadToClient === false ? 'DIRECT' : '')
                     const xray = format === 'XRAY_JSON'
@@ -668,11 +668,7 @@ export function GeofilesPanel({
                                             </Badge>
                                         )}
                                         <Badge variant="light" color="blue">
-                                            {t(
-                                                download
-                                                    ? 'geofiles.delivery-download'
-                                                    : 'geofiles.delivery-inline'
-                                            )}
+                                            {t('geofiles.delivery-auto')}
                                         </Badge>
                                     </Group>
                                 </Group>
@@ -747,69 +743,38 @@ export function GeofilesPanel({
                                                 )
                                             }
                                         />
-                                        <Stack gap={0}>
-                                            <Switch
-                                                label={t('geofiles.download-to-client')}
+                                        <Stack gap="sm">
+                                            <Text size="sm" c="dimmed">
+                                                {t('geofiles.delivery-auto-help')}
+                                            </Text>
+                                            <NumberInput
+                                                hideControls
+                                                label={t('geofiles.client-interval')}
                                                 description={t(
-                                                    xray
-                                                        ? 'geofiles.delivery-choice-xray'
-                                                        : 'geofiles.delivery-choice-help',
-                                                    { setting: jsonSettingName }
+                                                    'geofiles.client-interval-auto-help'
                                                 )}
-                                                checked={download}
-                                                disabled={item?.kind === 'singbox-srs'}
-                                                onChange={(event) =>
-                                                    patch(
-                                                        refs.map((ref, i) =>
-                                                            i === index
-                                                                ? {
-                                                                      ...ref,
-                                                                      target,
-                                                                      downloadToClient:
-                                                                          event.currentTarget
-                                                                              .checked
-                                                                  }
-                                                                : ref
-                                                        )
-                                                    )
+                                                min={5}
+                                                max={43200}
+                                                allowDecimal={false}
+                                                value={
+                                                    (reference.clientRefreshIntervalSeconds ??
+                                                        86400) / 60
                                                 }
-                                            />
-                                            <Collapse
-                                                expanded={download}
-                                                transitionDuration={reducedMotion ? 0 : 180}
-                                            >
-                                                <NumberInput
-                                                    mt="md"
-                                                    hideControls
-                                                    label={t('geofiles.client-interval')}
-                                                    description={t(
-                                                        xray
-                                                            ? 'geofiles.client-interval-xray-help'
-                                                            : 'geofiles.client-interval-help'
-                                                    )}
-                                                    min={5}
-                                                    max={43200}
-                                                    allowDecimal={false}
-                                                    value={
-                                                        (reference.clientRefreshIntervalSeconds ??
-                                                            86400) / 60
-                                                    }
-                                                    onChange={(value) => {
-                                                        if (typeof value === 'number')
-                                                            patch(
-                                                                refs.map((ref, i) =>
-                                                                    i === index
-                                                                        ? {
-                                                                              ...ref,
-                                                                              clientRefreshIntervalSeconds:
-                                                                                  value * 60
-                                                                          }
-                                                                        : ref
-                                                                )
+                                                onChange={(value) => {
+                                                    if (typeof value === 'number')
+                                                        patch(
+                                                            refs.map((ref, i) =>
+                                                                i === index
+                                                                    ? {
+                                                                          ...ref,
+                                                                          clientRefreshIntervalSeconds:
+                                                                              value * 60
+                                                                      }
+                                                                    : ref
                                                             )
-                                                    }}
-                                                />
-                                            </Collapse>
+                                                        )
+                                                }}
+                                            />
                                         </Stack>
                                     </div>
                                     <Accordion variant="separated">
@@ -837,16 +802,8 @@ export function GeofilesPanel({
                                                             {t('geofiles.srs-download-limit')}
                                                         </Text>
                                                     )}
-                                                    <Text size="xs" c="dimmed">
-                                                        {t(
-                                                            download
-                                                                ? xray
-                                                                    ? 'geofiles.xray-download-help'
-                                                                    : 'geofiles.download-help'
-                                                                : 'geofiles.inline-help'
-                                                        )}
-                                                    </Text>
-                                                    {item && download && !dat && (
+
+                                                    {item && !dat && (
                                                         <Text
                                                             size="xs"
                                                             c="dimmed"

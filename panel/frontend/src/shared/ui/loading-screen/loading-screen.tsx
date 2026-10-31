@@ -17,20 +17,19 @@ export function LoadingScreen({
 }) {
     const { t } = useTranslation()
     const reducedMotion = usePanelReducedMotion()
+    const label = text ?? t('common.message.loading')
     return (
         <Center
             className={classes.screen}
             style={{ '--loading-height': height } as CSSProperties}
             role="status"
-            aria-label={text ?? t('common.message.loading')}
+            aria-label={label}
             aria-live="polite"
         >
             <Stack align="stretch" gap="sm" className={classes.content}>
-                {text && (
-                    <Text size="sm" className={classes.label}>
-                        {text}
-                    </Text>
-                )}
+                <Text size="sm" className={classes.label}>
+                    {label}
+                </Text>
                 <Progress
                     animated={!reducedMotion}
                     color="brand"

@@ -106,7 +106,7 @@ export const SubscriptionAdditionalOptionsWidget = (props: IProps) => {
                     </Stack>
                 </SettingsCardShared.Content>
 
-                <SettingsCardShared.Bottom sticky>
+                <SettingsCardShared.Bottom>
                     <Group justify="flex-end">
                         <Button
                             color="teal"

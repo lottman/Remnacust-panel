@@ -784,6 +784,10 @@ The Subscription pages tab manages registered instances on the panel server: sta
 
 Local discovery also includes legacy Remnawave Compose pages connected to this exact panel. It checks the official image, connection to the panel and its network, Compose identity and safe files. Listing does not register or change the deployment. Legacy pages support start, stop and restart; their image, token and settings are preserved. Migrate explicitly with the installer before upgrading. Remote pages, non-Compose deployments, connections to another panel and unsafe paths are not accepted for management. Registered pages retain their existing controls.
 
+### Page connection to the panel
+
+During page installation or migration, choose the local panel or another panel’s HTTPS address and an API token with subscription-page permissions. Option 9 in the installer’s page management changes the panel and token. Enter the token privately or use a private file with mode 0600. Connectivity and permissions are checked first; failed application restores the previous settings. Only the selected page changes, and stopped pages remain stopped. An existing Remnacust image is not offered for migration again.
+
 ### Fields and controls
 
 - **Additional options**: Configure additional subscription options
@@ -1049,6 +1053,10 @@ The update dialog shows the current stage out of eight, stage completion percent
 In theme settings, Launcher is grouped with the compact interface and reduced motion switches. It shows or hides the floating quick navigation window. Enable it, open quick link settings and choose the sections you need. Your selection and window position are saved in this browser.
 
 Reset at the bottom restores the default theme, accent, font, density and motion setting. The launcher switch keeps its value; turn the window off separately when needed.
+
+### Theme settings
+
+Open the palette in the header. Checkmarks identify the selected theme and accent, and the current accent name appears above the palette. Choose a font from the list; interface density, motion and the launcher have switches below. Changes apply immediately and are saved in this browser; no separate Save button is needed. Reset restores the default theme, accent, font, density and motion; the launcher state and position are stored separately.
 
 ## Notifications
 

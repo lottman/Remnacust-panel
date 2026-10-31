@@ -1,59 +1,50 @@
+.drawerBody {
+    --panel-overlay-bottom-padding: max(12px, env(safe-area-inset-bottom, 0px));
+    padding: 16px;
+    padding-bottom: var(--panel-overlay-bottom-padding);
+}
+.themes {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
 .themeTile {
-    position: relative;
-    min-height: 112px;
-    overflow: hidden;
+    min-width: 0;
     padding: 10px;
-    border: 1px solid var(--mantine-color-default-border);
-    border-radius: 14px;
+    border: 1px solid var(--panel-border);
+    border-radius: var(--mantine-radius-md);
     background: var(--tile-background);
     text-align: start;
-    transition:
-        transform 190ms ease,
-        border-color 190ms ease,
-        box-shadow 190ms ease;
+    transition: border-color 150ms ease;
 }
-.themeTile:hover {
-    transform: none;
-    box-shadow: 0 8px 18px color-mix(in srgb, var(--tile-accent) 12%, transparent);
+.themeTile:hover,
+.accentTile:hover {
+    border-color: var(--panel-accent);
 }
-.themeTile[aria-pressed='true'] {
-    border-color: color-mix(
-        in srgb,
-        var(--mantine-primary-color-filled) 58%,
-        var(--mantine-color-default-border)
-    );
-    outline: 2px solid color-mix(in srgb, var(--mantine-primary-color-filled) 32%, transparent);
-    outline-offset: 1px;
-    box-shadow: 0 0 0 1px var(--tile-accent);
+.themeTile[aria-pressed='true'],
+.accentTile[aria-pressed='true'] {
+    border-color: var(--panel-accent);
+    box-shadow: inset 0 0 0 1px var(--panel-accent);
 }
 .themeTile:focus-visible,
 .accentTile:focus-visible {
-    outline: 2px solid var(--mantine-primary-color-filled);
+    outline: 2px solid var(--panel-accent);
     outline-offset: 2px;
 }
 .themePreview {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    height: 71px;
-    padding: 12px;
-    border-radius: 8px;
+    justify-content: center;
+    gap: 4px;
+    height: 32px;
+    padding: 7px 9px;
+    border-radius: var(--mantine-radius-sm);
     background: var(--tile-surface);
 }
 .themePreview span {
-    height: 6px;
+    height: 3px;
     border-radius: 4px;
     background: var(--tile-accent);
-    transform-origin: left center;
-    transition:
-        transform 220ms ease,
-        opacity 220ms ease;
-}
-.themeTile:hover .themePreview span:first-child {
-    transform: scaleX(0.92);
-}
-.themeTile:hover .themePreview span:nth-child(2) {
-    transform: scaleX(1.12);
 }
 .themePreview span:nth-child(2) {
     width: 74%;
@@ -64,76 +55,99 @@
     opacity: 0.3;
 }
 .themeLabel {
-    display: block;
-    margin-top: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+    margin-top: 8px;
     font-size: 12px;
-    font-weight: 700;
+    font-weight: 600;
+    overflow-wrap: anywhere;
     color: var(--tile-text);
+}
+.selectionCheck {
+    flex-shrink: 0;
+    opacity: 0;
+}
+[aria-pressed='true'] > .selectionCheck,
+[aria-pressed='true'] .themeLabel .selectionCheck {
+    opacity: 1;
 }
 .accents {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 8px;
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    gap: 6px;
 }
 .accentTile {
+    position: relative;
     display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: 6px;
-    padding: 8px 2px;
-    border: 1px solid var(--mantine-color-default-border);
-    border-radius: 10px;
-    font-size: 10px;
-    overflow: hidden;
-    transition:
-        transform 180ms ease,
-        border-color 180ms ease,
-        background-color 180ms ease;
+    justify-content: center;
+    min-height: 44px;
+    min-width: 0;
+    border: 1px solid var(--panel-border);
+    border-radius: var(--mantine-radius-md);
+    background: var(--panel-subtle);
+    transition: border-color 150ms ease;
 }
-.accentTile:hover {
-    transform: none;
-    border-color: var(--mantine-primary-color-filled);
-}
-.accentTile span {
-    display: block;
-    width: 27px;
-    height: 27px;
+.swatch {
+    width: 22px;
+    height: 22px;
     border-radius: 50%;
-    transition:
-        transform 180ms ease,
-        box-shadow 180ms ease;
+    background: var(--swatch-color);
 }
-.accentTile:hover span,
-.accentTile[aria-pressed='true'] span {
-    transform: scale(1.13);
-    box-shadow: 0 0 0 4px color-mix(in srgb, var(--mantine-primary-color-filled) 12%, transparent);
+.accentTile .selectionCheck {
+    position: absolute;
+    inset-inline-end: 2px;
+    bottom: 2px;
+    color: var(--panel-text);
+    background: var(--panel-surface);
+    border-radius: 50%;
 }
-.accentTile[aria-pressed='true'] {
-    border-color: var(--mantine-primary-color-filled);
-    background: var(--mantine-primary-color-light);
+.fontInput {
+    min-height: 44px;
+}
+.preferences {
+    padding-inline: 12px;
+    border: 1px solid var(--panel-border);
+    border-radius: var(--mantine-radius-md);
+}
+.preferenceRow {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    padding-block: 8px;
+}
+.preferenceRow + .preferenceRow {
+    border-top: 1px solid var(--panel-border);
+}
+.preferenceBody {
+    width: 100%;
+    justify-content: space-between;
+}
+.preferenceLabel {
+    padding-inline-start: 0;
+    padding-inline-end: 12px;
+}
+.resetRow {
+    padding-top: 8px;
+    border-top: 1px solid var(--panel-border);
+}
+.resetRow button {
+    min-height: 44px;
+}
+@media (max-width: 430px) {
+    .accents {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
 }
 @media (prefers-reduced-motion: reduce) {
     .themeTile,
-    .accentTile,
-    .accentTile span,
-    .themePreview span {
+    .accentTile {
         transition: none;
     }
-    .themeTile:hover,
-    .accentTile:hover,
-    .accentTile:hover span {
-        transform: none;
-    }
 }
-
-:global(html[data-panel-reduced-motion='true']) .themePreview span,
-:global(html[data-panel-reduced-motion='true']) .accentTile span {
-    transform: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .themePreview span,
-    .accentTile span {
-        transform: none;
-    }
+:global(html[data-panel-reduced-motion='true']) .themeTile,
+:global(html[data-panel-reduced-motion='true']) .accentTile {
+    transition: none;
 }

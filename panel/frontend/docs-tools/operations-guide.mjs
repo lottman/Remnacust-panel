@@ -288,6 +288,40 @@ sections.push([
     ]
 ])
 
+sections.push([
+    'subscription-settings',
+    'page-panel-connection',
+    [
+        [
+            'Подключение страницы к панели',
+            'При установке и переносе страницы можно выбрать локальную панель или HTTPS-адрес другой панели и её API-токен с правами страницы подписки. В меню управления страницей установщика пункт 9 меняет панель и токен. Токен вводится скрыто либо читается из приватного файла с правами 0600. Сначала проверяются подключение и права; при ошибке применения прежние настройки восстанавливаются. Меняется только выбранная страница, остановленная страница не запускается. Уже установленный образ Remnacust повторно не предлагается переносить.'
+        ],
+        [
+            'Page connection to the panel',
+            'During page installation or migration, choose the local panel or another panel’s HTTPS address and an API token with subscription-page permissions. Option 9 in the installer’s page management changes the panel and token. Enter the token privately or use a private file with mode 0600. Connectivity and permissions are checked first; failed application restores the previous settings. Only the selected page changes, and stopped pages remain stopped. An existing Remnacust image is not offered for migration again.'
+        ],
+        [
+            'اتصال صفحه به پنل',
+            'هنگام نصب یا انتقال صفحه، پنل محلی یا نشانی HTTPS پنل دیگر و توکن API با مجوزهای صفحه اشتراک را انتخاب کنید. گزینه ۹ مدیریت صفحه در نصب‌کننده پنل و توکن را تغییر می‌دهد. توکن مخفی وارد می‌شود یا از فایل خصوصی با مجوز 0600 خوانده می‌شود. ابتدا اتصال و مجوزها بررسی می‌شوند؛ خطای اعمال تنظیمات قبلی را بازمی‌گرداند. فقط صفحه انتخاب‌شده تغییر می‌کند و صفحه متوقف‌شده روشن نمی‌شود. تصویر نصب‌شده Remnacust دوباره برای انتقال پیشنهاد نمی‌شود.'
+        ],
+        [
+            '页面与面板的连接',
+            '安装或迁移页面时，可选择本地面板，或填写其他面板的 HTTPS 地址及具有订阅页面权限的 API 令牌。安装程序的页面管理菜单第 9 项可更改面板和令牌。令牌通过隐藏输入或权限为 0600 的私密文件提供。程序先检查连接和权限；应用失败时恢复原设置。仅更改所选页面，已停止的页面保持停止。已安装的 Remnacust 镜像不会重复提示迁移。'
+        ]
+    ]
+])
+
+sections.push([
+    'appearance',
+    'appearance-controls',
+    [
+        ['Настройки темы', 'Откройте палитру в верхней панели. Выбранные тема и акцент отмечены галочкой, название текущего акцента показано над палитрой. Шрифт выбирается из списка; плотность интерфейса, анимация и лаунчер переключаются ниже. Изменения применяются сразу и сохраняются в этом браузере, отдельная кнопка сохранения не нужна. «Сбросить» возвращает тему, акцент, шрифт, плотность и анимацию по умолчанию; положение и состояние лаунчера сохраняются отдельно.'],
+        ['Theme settings', 'Open the palette in the header. Checkmarks identify the selected theme and accent, and the current accent name appears above the palette. Choose a font from the list; interface density, motion and the launcher have switches below. Changes apply immediately and are saved in this browser; no separate Save button is needed. Reset restores the default theme, accent, font, density and motion; the launcher state and position are stored separately.'],
+        ['تنظیمات پوسته', 'پالت را از نوار بالا باز کنید. پوسته و رنگ انتخاب‌شده با علامت مشخص می‌شوند و نام رنگ بالای پالت است. قلم را از فهرست و تراکم، حرکت و راه‌انداز را با کلیدهای پایین انتخاب کنید. تغییرات فوری اعمال و در همین مرورگر ذخیره می‌شوند و دکمه ذخیره جدا لازم نیست. بازنشانی پوسته، رنگ، قلم، تراکم و حرکت پیش‌فرض را برمی‌گرداند؛ وضعیت و جای راه‌انداز جدا ذخیره می‌شود.'],
+        ['主题设置', '从顶部栏打开调色板。勾选标记表示当前主题和强调色，颜色名称显示在调色板上方。字体通过下拉列表选择，界面密度、动画和启动器由下方开关控制。更改立即生效并保存在当前浏览器，无需另行保存。重置恢复默认主题、强调色、字体、密度和动画；启动器的状态和位置单独保存。']
+    ]
+])
+
 export function explainOperations(articles) {
     for (const [articleId, id, translations] of sections) {
         const article = articles.find((item) => item.id === articleId)

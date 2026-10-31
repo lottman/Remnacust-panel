@@ -5,7 +5,7 @@ import {
     isLightColor,
     MantineProvider,
     defaultVariantColorsResolver,
-    SimpleGrid,
+    Select,
     Stack,
     Switch,
     Text,
@@ -27,11 +27,12 @@ import {
     useState
 } from 'react'
 import { useTranslation } from 'react-i18next'
-import { TbPalette, TbRestore } from 'react-icons/tb'
+import { TbCheck, TbPalette, TbRestore } from 'react-icons/tb'
 
 import { theme as baseTheme } from '@shared/constants'
 import { useUiText } from '@shared/i18n/interface-text'
 import { HeaderControl } from '@shared/ui/header-buttons/HeaderControl'
+import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 
 import {
     useLauncherEnabled,
@@ -517,16 +518,23 @@ export function AppearanceControl() {
                 opened={opened}
                 onClose={() => setOpened(false)}
                 position="right"
-                size="min(420px, 100vw)"
+                size="min(460px, 100vw)"
+                classNames={{ body: classes.drawerBody }}
                 closeButtonProps={{ 'aria-label': t('common.action.close') }}
-                title={label}
+                title={
+                    <BaseOverlayHeader
+                        IconComponent={TbPalette}
+                        iconVariant="light"
+                        title={label}
+                    />
+                }
             >
-                <Stack gap="lg" pb="lg">
+                <Stack gap="lg">
                     <section>
-                        <Text fw={700} mb="xs" size="sm">
+                        <Text fw={600} mb="xs" size="sm">
                             {uiText('appearance-3907fa7')}
                         </Text>
-                        <SimpleGrid cols={2} spacing="sm">
+                        <div className={classes.themes}>
                             {(Object.keys(themes) as ThemeName[]).map((name) => (
                                 <UnstyledButton
                                     aria-label={t(themeLabels[name])}
@@ -557,15 +565,25 @@ export function AppearanceControl() {
                                     </span>
                                     <span className={classes.themeLabel}>
                                         {t(themeLabels[name])}
+                                        <TbCheck
+                                            aria-hidden
+                                            className={classes.selectionCheck}
+                                            size={16}
+                                        />
                                     </span>
                                 </UnstyledButton>
                             ))}
-                        </SimpleGrid>
+                        </div>
                     </section>
                     <section>
-                        <Text fw={700} mb="xs" size="sm">
-                            {uiText('accent-a5c6fb1')}
-                        </Text>
+                        <Group justify="space-between" gap="xs" mb="xs">
+                            <Text fw={600} size="sm">
+                                {uiText('accent-a5c6fb1')}
+                            </Text>
+                            <Text c="dimmed" size="xs">
+                                {t(colorLabels[appearance.accent])}
+                            </Text>
+                        </Group>
                         <div className={classes.accents}>
                             {(Object.keys(accents) as AccentName[]).map((name) => (
                                 <UnstyledButton
@@ -575,34 +593,44 @@ export function AppearanceControl() {
                                     key={name}
                                     onClick={() => setAppearance({ accent: name })}
                                     title={t(colorLabels[name])}
+                                    style={
+                                        { '--swatch-color': accents[name] } as React.CSSProperties
+                                    }
                                 >
-                                    <span style={{ backgroundColor: accents[name] }} />
-                                    {t(colorLabels[name])}
+                                    <span className={classes.swatch} aria-hidden />
+                                    <TbCheck
+                                        aria-hidden
+                                        className={classes.selectionCheck}
+                                        size={14}
+                                    />
                                 </UnstyledButton>
                             ))}
                         </div>
                     </section>
-                    <section>
-                        <Text fw={700} mb="xs" size="sm">
-                            {uiText('font-64d0b3a')}
-                        </Text>
-                        <SimpleGrid cols={2} spacing="xs">
-                            {(Object.keys(fonts) as FontName[]).map((name) => (
-                                <Button
-                                    aria-pressed={appearance.font === name}
-                                    color={appearance.font === name ? 'brand' : 'gray'}
-                                    key={name}
-                                    onClick={() => setAppearance({ font: name })}
-                                    variant={appearance.font === name ? 'light' : 'default'}
-                                >
-                                    {name === 'System' ? t('design-ui.font-system') : name}
-                                </Button>
-                            ))}
-                        </SimpleGrid>
-                    </section>
-                    <Stack gap="sm">
+                    <Select
+                        label={uiText('font-64d0b3a')}
+                        value={appearance.font}
+                        onChange={(value) => {
+                            if (value && Object.hasOwn(fonts, value))
+                                setAppearance({ font: value as FontName })
+                        }}
+                        data={(Object.keys(fonts) as FontName[]).map((name) => ({
+                            value: name,
+                            label: name === 'System' ? t('design-ui.font-system') : name
+                        }))}
+                        allowDeselect={false}
+                        classNames={{ input: classes.fontInput }}
+                        comboboxProps={{ withinPortal: false }}
+                    />
+                    <Stack gap={0} className={classes.preferences}>
                         <Switch
                             checked={appearance.compact}
+                            labelPosition="left"
+                            classNames={{
+                                root: classes.preferenceRow,
+                                body: classes.preferenceBody,
+                                label: classes.preferenceLabel
+                            }}
                             label={uiText('compact-interface-b1b6a87')}
                             onChange={(event) =>
                                 setAppearance({ compact: event.currentTarget.checked })
@@ -610,6 +638,12 @@ export function AppearanceControl() {
                         />
                         <Switch
                             checked={appearance.reduceMotion}
+                            labelPosition="left"
+                            classNames={{
+                                root: classes.preferenceRow,
+                                body: classes.preferenceBody,
+                                label: classes.preferenceLabel
+                            }}
                             label={uiText('reduce-motion-297ef4c')}
                             onChange={(event) =>
                                 setAppearance({ reduceMotion: event.currentTarget.checked })
@@ -617,11 +651,17 @@ export function AppearanceControl() {
                         />
                         <Switch
                             checked={launcherEnabled}
+                            labelPosition="left"
+                            classNames={{
+                                root: classes.preferenceRow,
+                                body: classes.preferenceBody,
+                                label: classes.preferenceLabel
+                            }}
                             label={uiText('launcher-22614ac')}
                             onChange={(event) => setLauncherEnabled(event.currentTarget.checked)}
                         />
                     </Stack>
-                    <Group justify="flex-end">
+                    <Group justify="flex-end" className={classes.resetRow}>
                         <Button
                             leftSection={<TbRestore size={16} />}
                             onClick={resetAppearance}

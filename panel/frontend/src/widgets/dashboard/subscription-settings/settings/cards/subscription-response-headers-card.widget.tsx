@@ -232,7 +232,7 @@ export const SubscriptionResponseHeadersCardWidget = (props: IProps) => {
                     </Stack>
                 </SettingsCardShared.Content>
 
-                <SettingsCardShared.Bottom sticky>
+                <SettingsCardShared.Bottom>
                     <Group justify="flex-end">
                         <HelpActionIconShared screen="PAGE_RESPONSE_HEADERS" />
                         <Group gap={0} wrap="nowrap">

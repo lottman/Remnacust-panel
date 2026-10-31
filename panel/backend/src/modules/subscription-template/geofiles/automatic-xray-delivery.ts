@@ -21,10 +21,12 @@ export async function automaticXrayDelivery(options: {
     const compact = (body: string) =>
         client === 'incy' ? compactIncySubscription(body, false) : body;
     let subscription: string;
+    let header: string | undefined;
     try {
         subscription = compact(await generate(inline));
         if (client && !xrayProfilesFit(subscription, budget))
             throw new ClientPoolError('geofile-client-config-size-limit');
+        header = inline && subscription ? await inline.header(subscription, profileKey) : undefined;
     } catch (error) {
         const size =
             error instanceof Error &&
@@ -32,6 +34,7 @@ export async function automaticXrayDelivery(options: {
                 'geofile-inline-limit',
                 'geofile-config-size',
                 'geofile-client-config-size-limit',
+                'geofile-xray-size',
             ].includes(error.message);
         if (!size || !client || manualRouting) throw error;
         // One oversized profile triggers a second render with compact DAT
@@ -50,7 +53,5 @@ export async function automaticXrayDelivery(options: {
             throw failure;
         }
     }
-    const header =
-        inline && subscription ? await inline.header(subscription, profileKey) : undefined;
     return { subscription, header, intervalHours: inline?.intervalHours, inline: true };
 }

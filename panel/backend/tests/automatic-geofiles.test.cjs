@@ -46,6 +46,31 @@ test('per-profile boundaries count UTF-8 bytes and include formatted JSON overhe
  const body=JSON.stringify([profile,profile]);
  assert(xrayProfilesFit(body,bytes));assert.equal(xrayProfilesFit(body,bytes-1),false);
 });
+
+test('many valid host profiles do not share a routing-header complexity budget',async()=>{
+ const records=Array.from({length:16000},(_,i)=>fixture.bytes(2,fixture.domain(1,`x${i},x`)));
+ const rules=fixture.bytes(1,Buffer.concat([fixture.bytes(1,'EXAMPLE'),...records]));
+ for(const client of ['incy','happ']){
+  const f=setup({rules,profiles:13});const result=await render(f,{client});
+  assert.equal(result.inline,true);assert.deepEqual(f.calls,['inline']);
+  assert(Buffer.byteLength(result.subscription)<16*1024*1024);
+  assert(xrayProfilesFit(result.subscription,900000));
+  assert.equal(JSON.parse(result.subscription)[12].routing.rules[0].domain.length,16000);
+ }
+});
+
+test('an inline header complexity failure retries DAT without leaking the abandoned header',async()=>{
+ const calls=[];const f={generate:async delivery=>{
+  calls.push(delivery.mode);
+  if(delivery.mode==='inline'){
+   delivery.registerInline();return JSON.stringify([{routing:{rules:[]},extra:Array(210000).fill(0)}]);
+  }
+  const refs=delivery.register('geosite',{id:source(0),categories:['example'],target:'DIRECT'},async()=> 'https://subscription.test/combined.dat');
+  return JSON.stringify([{routing:{rules:[{type:'field',domain:refs,outboundTag:'direct'}]}}]);
+ }};
+ const result=await render(f,{client:'happ'});assert.equal(result.inline,false);assert.deepEqual(calls,['inline','remote']);
+ assert.equal(decode(result.header).Geositeurl.startsWith('https://subscription.test/combined.dat'),true);
+});
 test('the independent transport cap is not misclassified as a per-host geofile limit',async()=>{
  const f=setup({profiles:110,extra:'x'.repeat(160000)});
  await assert.rejects(render(f),/subscription-size-limit/);

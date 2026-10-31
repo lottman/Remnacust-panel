@@ -122,19 +122,23 @@ export class XrayGeofileDelivery {
         const configs = JSON.parse(subscription);
         if (!Array.isArray(configs)) throw new XrayGeofileFallback('configuration');
         let existingGeodata = configs.some((config) => config?.geodata);
-        const stack: unknown[] = [...configs];
-        let visited = 0;
-        while (stack.length) {
-            if (++visited > 200_000) throw new XrayGeofileFallback('size');
-            const value = stack.pop();
-            if (typeof value === 'string' && /^(?:geoip|geosite):/i.test(value)) {
-                const key = value.toLowerCase();
-                if (this.references.has(key)) used.add(key);
-                else existingGeodata = true;
-            } else if (Array.isArray(value)) {
-                for (const item of value) stack.push(item);
-            } else if (value && typeof value === 'object') {
-                for (const item of Object.values(value)) stack.push(item);
+        // Like the size budget, complexity belongs to one client profile.
+        // A valid subscription may repeat the same rules on many hosts.
+        for (const config of configs) {
+            const stack: unknown[] = [config];
+            let visited = 0;
+            while (stack.length) {
+                if (++visited > 200_000) throw new XrayGeofileFallback('size');
+                const value = stack.pop();
+                if (typeof value === 'string' && /^(?:geoip|geosite):/i.test(value)) {
+                    const key = value.toLowerCase();
+                    if (this.references.has(key)) used.add(key);
+                    else existingGeodata = true;
+                } else if (Array.isArray(value)) {
+                    for (const item of value) stack.push(item);
+                } else if (value && typeof value === 'object') {
+                    for (const item of Object.values(value)) stack.push(item);
+                }
             }
         }
         if (!used.size) return existingGeodata ? undefined : this.inlineHeader(profileKey, now);

@@ -3965,8 +3965,6 @@
     "choose-target": "Select an action or group",
     "direct": "Direct (DIRECT)",
     "reject": "Block (REJECT)",
-    "inline-help": "Delivery is selected for the complete configuration: small datasets become inline rules, large ones are downloaded by the app. Categories and actions are preserved.",
-    "download-help": "Delivery is selected for the complete configuration: small datasets become inline rules, large ones are downloaded by the app. Categories and actions are preserved.",
     "add": "Upload a new file",
     "name": "Library name",
     "format": "Content format",
@@ -4039,7 +4037,6 @@
     "json-setting-unknown": "Could not check JSON delivery. Check “{{setting}}” manually, or use a URL ending in /json.",
     "open-subscription-settings": "Open subscription settings in a new tab",
     "happ-check-help": "Save this template and make sure the host or external squad uses it. A template selected in the host card takes priority. Then refresh the subscription in Happ or INCY.",
-    "xray-download-help": "Delivery is selected for the complete configuration: small datasets become inline rules, large ones are downloaded by the app. Categories and actions are preserved.",
     "attached-count": "Attached files: {{count}}",
     "library-source": "Library",
     "library-settings": "File and server updates",
@@ -4055,7 +4052,6 @@
     "attach-failed": "Could not attach the file to the draft. It is saved in the library; check the template code and attach it again.",
     "configure-attached": "Configure in this template",
     "delivery-auto": "Automatic delivery",
-    "delivery-auto-help": "Delivery is selected for the complete configuration: small datasets become inline rules, large ones are downloaded by the app. Categories and actions are preserved.",
     "client-interval-auto-help": "Used only when files are downloaded automatically. This does not set the subscription refresh interval; actual scheduling depends on the app."
   },
   "template-draft": {
@@ -4179,13 +4175,15 @@
     "resumeBlocked": "Access remains unavailable: the subscription expired or its traffic quota is exhausted."
   },
   "subscription-pages": {
+    "legacy-title": "Existing subscription page",
+    "legacy-help": "A Remnawave page connected to this panel was found on this server. Start, stop and restart are available. Migrate it with the installer before upgrading; its image, settings and token are not replaced automatically.",
     "title": "Subscription pages",
     "loading": "Loading pages",
-    "help": "Manage registered pages on this server. Updates preserve settings and stopped pages remain stopped.",
+    "help": "Manage local subscription pages on this server. Updates preserve settings and stopped pages remain stopped.",
     "refresh": "Refresh",
     "unavailable": "Page management requires the current installer and its local control service on the same server.",
     "failed": "The operation failed. Check the private page log on the server.",
-    "empty": "No registered pages. Install one with remnacust install-subscription-page.",
+    "empty": "No local pages found. Install one with remnacust install-subscription-page. Pages hosted on another server are not listed here.",
     "running": "Running",
     "stopped": "Stopped",
     "working": "Operation in progress…",
@@ -4193,5 +4191,9 @@
     "stop": "Stop",
     "restart": "Restart",
     "upgrade": "Update"
+  },
+  "nodes-usage-chart": {
+    "show-legend": "Show legend",
+    "hide-legend": "Hide legend"
   }
 }

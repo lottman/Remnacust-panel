@@ -14,6 +14,7 @@ type PageInstance = {
     running: boolean
     image: string
     companion: boolean
+    managed?: boolean
     job: null | {
         phase: 'queued' | 'running' | 'completed' | 'failed'
         operation: Operation
@@ -101,6 +102,14 @@ export function SubscriptionPagesWidget() {
                                         {page.domain}
                                     </Text>
                                 )}
+                                {page.managed === false && (
+                                    <Alert
+                                        color="blue"
+                                        title={t('subscription-pages.legacy-title')}
+                                    >
+                                        {t('subscription-pages.legacy-help')}
+                                    </Alert>
+                                )}
                                 <Text c="dimmed" size="xs" style={{ overflowWrap: 'anywhere' }}>
                                     {page.image}
                                 </Text>
@@ -121,6 +130,8 @@ export function SubscriptionPagesWidget() {
                                                 color={operation === 'stop' ? 'red' : 'cyan'}
                                                 disabled={
                                                     busy ||
+                                                    (operation === 'upgrade' &&
+                                                        page.managed === false) ||
                                                     (operation === 'start' && page.running) ||
                                                     (operation === 'stop' && !page.running)
                                                 }

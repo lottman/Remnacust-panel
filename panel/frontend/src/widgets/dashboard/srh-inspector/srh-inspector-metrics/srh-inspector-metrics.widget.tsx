@@ -7,11 +7,13 @@ import { useTranslation } from 'react-i18next'
 import { PiAppWindowDuotone, PiChartBar } from 'react-icons/pi'
 
 import { useGetSubscriptionRequestHistoryStats } from '@shared/api/hooks'
+import { usePanelReducedMotion } from '@shared/ui/appearance/appearance'
 import { TopLeaderboardCardShared } from '@shared/ui/leaderboard-item-card'
 import { formatInt } from '@shared/utils/misc'
 
 export function SrhInspectorMetrics() {
     const { t } = useTranslation()
+    const reducedMotion = usePanelReducedMotion()
 
     const { data: stats, isLoading } = useGetSubscriptionRequestHistoryStats()
 
@@ -23,6 +25,7 @@ export function SrhInspectorMetrics() {
                 type: 'column',
                 backgroundColor: 'transparent',
                 height: 300,
+                animation: !reducedMotion,
                 style: {
                     fontFamily: 'inherit'
                 }
@@ -68,6 +71,7 @@ export function SrhInspectorMetrics() {
             },
 
             tooltip: {
+                animation: !reducedMotion,
                 shared: true,
                 backgroundColor: 'var(--mantine-color-body)',
                 borderColor: 'var(--mantine-color-gray-4)',
@@ -76,10 +80,11 @@ export function SrhInspectorMetrics() {
                     color: 'var(--mantine-color-text)'
                 },
                 pointFormatter(this: { x: number; y: number }): string {
-                    return `<b>${dayjs(this.x).format('DD.MM.YYYY, HH:mm')}</b> </br> Requests: <b>${this.y}<b>`
+                    return `<b>${dayjs(this.x).format('DD.MM.YYYY, HH:mm')}</b><br/>${t('srh-inspector-metrics.widget.requests')}: <b>${this.y}</b>`
                 }
             },
             plotOptions: {
+                series: { animation: !reducedMotion },
                 column: {
                     borderWidth: 0,
                     borderRadius: 4,
@@ -123,7 +128,7 @@ export function SrhInspectorMetrics() {
                 }
             ]
         }
-    }, [stats?.hourlyRequestStats, t])
+    }, [stats?.hourlyRequestStats, t, reducedMotion])
 
     const loaderCard = (
         <Center h={300}>

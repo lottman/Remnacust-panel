@@ -109,6 +109,8 @@ export const NodesUsageChart = memo(({ categories, series, onDayClick }: Props) 
     const { t, i18n } = useTranslation()
     const reducedMotion = usePanelReducedMotion()
     const tooltipId = useId()
+    const legendId = useId()
+    const [legendExpanded, setLegendExpanded] = useState(false)
     const [hiddenNames, setHiddenNames] = useState<Set<string>>(() => new Set())
     const hidden = useMemo(
         () =>
@@ -378,27 +380,45 @@ export const NodesUsageChart = memo(({ categories, series, onDayClick }: Props) 
                     <span key={fraction}>{prettifyBytesUtil(fraction * max, true)}</span>
                 ))}
             </div>
-            <div className={classes.legend}>
-                {series.map((entry, index) => (
-                    <button
-                        type="button"
-                        key={`${entry.name}-${index}`}
-                        className={classes.legendButton}
-                        aria-pressed={!hidden.has(index)}
-                        onClick={() =>
-                            setHiddenNames((previous) => {
-                                const next = new Set(previous)
-                                const name = entry.uuid ?? entry.name
-                                if (next.has(name)) next.delete(name)
-                                else next.add(name)
-                                return next
-                            })
-                        }
-                    >
-                        <span className={classes.legendDot} style={{ background: entry.color }} />
-                        <span>{entry.name}</span>
-                    </button>
-                ))}
+            <div className={classes.legendSection} data-expanded={legendExpanded}>
+                <button
+                    type="button"
+                    className={classes.legendToggle}
+                    aria-expanded={legendExpanded}
+                    aria-controls={legendId}
+                    onClick={() => setLegendExpanded((value) => !value)}
+                >
+                    {t(
+                        legendExpanded
+                            ? 'nodes-usage-chart.hide-legend'
+                            : 'nodes-usage-chart.show-legend'
+                    )}
+                </button>
+                <div className={classes.legend} id={legendId}>
+                    {series.map((entry, index) => (
+                        <button
+                            type="button"
+                            key={`${entry.name}-${index}`}
+                            className={classes.legendButton}
+                            aria-pressed={!hidden.has(index)}
+                            onClick={() =>
+                                setHiddenNames((previous) => {
+                                    const next = new Set(previous)
+                                    const name = entry.uuid ?? entry.name
+                                    if (next.has(name)) next.delete(name)
+                                    else next.add(name)
+                                    return next
+                                })
+                            }
+                        >
+                            <span
+                                className={classes.legendDot}
+                                style={{ background: entry.color }}
+                            />
+                            <span>{entry.name}</span>
+                        </button>
+                    ))}
+                </div>
             </div>
         </div>
     )

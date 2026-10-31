@@ -18,6 +18,7 @@ export const subscriptionPagesSchema = z.object({
                 running: z.boolean(),
                 image: z.string().max(256),
                 companion: z.boolean(),
+                managed: z.boolean().default(true),
                 job: z
                     .object({
                         requestId: z.string().uuid(),

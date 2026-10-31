@@ -8,6 +8,19 @@ const { createHmac } = require('node:crypto');
 const load = require('./load-typescript.cjs');
 const base = path.join(__dirname, '../src');
 const ROLE = { ADMIN: 'ADMIN', API: 'API' };
+
+test('subscription page responses retain legacy ownership and accept older agents', () => {
+    const { subscriptionPagesSchema } = load(path.join(base, 'modules/system/panel-update.service.ts'), {
+        '@common/config/app-config': {},
+    });
+    const page = {
+        id: 'a'.repeat(24), name: 'Existing page', domain: '', status: 'running',
+        running: true, image: 'remnawave/subscription-page:old', companion: false, job: null,
+    };
+    assert.equal(subscriptionPagesSchema.parse({ pages: [page] }).pages[0].managed, true);
+    assert.equal(subscriptionPagesSchema.parse({ pages: [{ ...page, managed: false }] }).pages[0].managed, false);
+    assert.equal(subscriptionPagesSchema.safeParse({ pages: [{ ...page, managed: 'false' }] }).success, false);
+});
 const exception = load(path.join(base, 'common/exception/http-exeception-with-error-code.type.ts'));
 const constants = { ROLE };
 const { PanelUpdateInterceptor } = load(

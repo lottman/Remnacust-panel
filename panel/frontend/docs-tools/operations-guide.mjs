@@ -1,57 +1,178 @@
 const sections = [
-    ['templates', 'subscription-delivery-diagnostics', [
-        ['Обновление подписки и персональные ссылки', 'Если приложение показывает прежнюю ошибку после выпуска панели, проверьте, что обновилась именно подписка: при недоступном HTTPS старого домена клиент продолжает использовать сохранённую конфигурацию. Сохраните старый домен и его сертификат на время переноса ссылок; изменение адреса в панели само по себе не переносит установленную подписку. Отдельно установленную страницу подписки обновляйте вместе с панелью. Персональные ссылки /device/ привязаны к подписке и HWID; их подпись, блокировка устройства и доступ пользователя проверяются панелью при каждом запросе. Не публикуйте эти ссылки. В INCY длинные встроенные списки выдаются без потери правил в строковой форме Xray; размер проверяется после форматирования JSON. Способ доставки выбирается автоматически по размеру каждого профиля.'],
-        ['Subscription refresh and personal links', 'If a client still shows an old error after a panel release, verify that the subscription itself refreshed: when HTTPS on its old domain fails, the app keeps its saved configuration. Retain the old domain and certificate while migrating links; changing the panel address does not migrate installed subscriptions. Update a separately installed subscription page together with the panel. Personal /device/ links are bound to the subscription and HWID; the panel checks their signature, device block and user access on every request. Keep these links private. INCY receives long inline lists in lossless Xray string form; the size budget includes JSON formatting. Delivery is chosen automatically using each profile’s size.'],
-        ['به‌روزرسانی اشتراک و پیوند شخصی', 'اگر پس از انتشار پنل خطای قدیمی باقی است، به‌روزرسانی خود اشتراک را بررسی کنید: خرابی HTTPS دامنه قدیمی باعث استفاده از پیکربندی ذخیره‌شده می‌شود. هنگام انتقال پیوندها دامنه و گواهی قبلی را نگه دارید؛ تغییر آدرس پنل اشتراک نصب‌شده را منتقل نمی‌کند. صفحه اشتراک مستقل را همراه پنل به‌روز کنید. پیوند /device/ به اشتراک و HWID وابسته است و پنل در هر درخواست امضا، مسدود بودن دستگاه و دسترسی کاربر را بررسی می‌کند؛ پیوند را محرمانه نگه دارید. فهرست‌های بلند INCY بدون حذف قوانین به قالب رشته‌ای Xray تبدیل می‌شوند و اندازه پس از قالب‌بندی JSON سنجیده می‌شود. روش تحویل با توجه به اندازه هر پروفایل خودکار انتخاب می‌شود.'],
-        ['订阅刷新与设备链接', '面板更新后仍显示旧错误时，请确认订阅本身已刷新：旧域名 HTTPS 不可用时，应用会继续使用已保存配置。迁移链接期间保留旧域名及证书；更改面板地址不会迁移已安装订阅。独立订阅页面应与面板一起更新。/device/ 个人链接绑定订阅和 HWID；每次请求由面板检查签名、设备封禁及用户权限。请勿公开链接。INCY 的大型内嵌列表使用无损 Xray 字符串格式，大小限制包含 JSON 格式化开销。交付方式按每个配置的大小自动选择。']
-    ]],
-    ['users', 'expiry-scheduler', [
-        ['Кто проверяет окончание срока', 'Внутренний планировщик панели каждые 30 секунд отправляет проверку срока в очередь USERS_WATCHDOG_QUEUE. Просроченные ACTIVE и LIMITED переводятся в EXPIRED, затем синхронизируется доступ на нодах. Дополнительный crontab не нужен. Планировщик, обработчик очереди, Valkey и база данных должны работать; при остановке обработчика выполнение задерживается. FROZEN исключён из автоматического истечения: остаток хранится как разница expireAt и frozenAt, при активации новый срок вычисляется от текущего времени. Постоянно переписывать дату в БД не требуется. Сбросы трафика выполняются своим расписанием и не размораживают пользователя.'],
-        ['How expiry is checked', 'The panel scheduler enqueues an expiry check every 30 seconds in USERS_WATCHDOG_QUEUE. Overdue ACTIVE and LIMITED users become EXPIRED and node access is synchronized. No extra crontab is needed. The scheduler, queue worker, Valkey and database must be running; stopping a worker delays execution. FROZEN users are excluded from expiry: the saved remainder is expireAt minus frozenAt, and activation computes a new expiry from the current time. No continuous database date rewrite is required. Scheduled traffic resets follow their own schedule and never unfreeze users.'],
-        ['بررسی پایان اعتبار', 'زمان‌بند داخلی پنل هر ۳۰ ثانیه بررسی اعتبار را در USERS_WATCHDOG_QUEUE قرار می‌دهد. کاربران ACTIVE و LIMITED منقضی به EXPIRED تغییر می‌کنند و دسترسی نود همگام می‌شود. crontab اضافی لازم نیست. زمان‌بند، پردازشگر صف، Valkey و پایگاه داده باید فعال باشند؛ توقف پردازشگر اجرا را عقب می‌اندازد. کاربران FROZEN از انقضای خودکار مستثنا هستند: باقی‌مانده اختلاف expireAt و frozenAt است و فعال‌سازی تاریخ جدید را از زمان جاری محاسبه می‌کند. بازنویسی پیوسته تاریخ لازم نیست. بازنشانی ترافیک زمان‌بندی مستقل دارد و کاربر را از توقف خارج نمی‌کند.'],
-        ['到期检查机制', '面板内部调度器每 30 秒向 USERS_WATCHDOG_QUEUE 提交到期检查。到期的 ACTIVE 和 LIMITED 用户转为 EXPIRED，并同步节点访问权限。无需额外 crontab。调度器、队列处理器、Valkey 和数据库必须运行；处理器停止会延迟执行。FROZEN 用户不参与自动到期：保存的剩余时长为 expireAt 与 frozenAt 之差，激活时从当前时间计算新到期日期，无需不断更新数据库日期。流量重置遵循独立计划，不会解除冻结。']
-    ]],
-    ['api-tokens', 'permanent-user-management-tokens', [
-        ['Токен бота для пользователей и бессрочный доступ', 'Набор «Пользователи» разрешает создание, изменение, заморозку и активацию, сброс трафика, чтение ключей подписки и управление HWID-устройствами; списки внутренних и внешних сквадов доступны только для чтения. Настройки панели, серверы, резервные копии и управление токенами в этот набор не входят. В API пользователей status FROZEN включает заморозку, ACTIVE — активацию. Нужен users:update, users:write или users:*. Истёкший аккаунт заморозить нельзя. При создании можно выбрать «Без срока действия»: API принимает expiresInDays: null, хранит expireAt: null и выпускает JWT без exp с явным признаком permanent. Это не фиктивная далёкая дата. Удаление и текущие права проверяются в БД при каждом запросе. Правка имени и прав не меняет срок или строку токена; для нового срока создайте замену и удалите старый токен. Минимальный набор страницы подписки содержит только system:metadata, subscriptions:subpage-config, subscription-page-configs:get и subscription-page-configs:list. Для включённой совместимости старых ссылок Marzban отдельно добавьте users:by-username.'],
-        ['User-management bots and permanent access', 'The Users preset permits creating, editing, freezing/resuming users, resetting traffic, reading subscription keys and managing HWID devices; internal/external squad lists are read-only. It excludes panel settings, servers, backups and token administration. In the user API, set status FROZEN to freeze and ACTIVE to resume. Required scope: users:update, users:write or users:*. Expired accounts cannot be frozen. When creating a token select No expiration: expiresInDays: null stores expireAt: null and signs a JWT without exp with an explicit permanent marker. No fabricated distant date is used. Every request checks deletion and current scopes in the database. Editing names/permissions preserves token value and expiry; create a replacement and delete the old token to change lifetime. The minimum subscription-page preset contains only system:metadata, subscriptions:subpage-config, subscription-page-configs:get and subscription-page-configs:list. Add users:by-username separately only for enabled Marzban legacy-link compatibility.'],
-        ['توکن مدیریت کاربران و دسترسی بدون انقضا', 'گزینه کاربران ایجاد، ویرایش، تعلیق و فعال‌سازی، بازنشانی ترافیک، خواندن کلیدهای اشتراک و مدیریت دستگاه‌های HWID را مجاز می‌کند؛ فهرست گروه‌ها فقط خواندنی است. تنظیمات پنل، سرورها، پشتیبان‌ها و مدیریت توکن‌ها شامل نمی‌شود. برای تعلیق از API کاربران و {"id":123,"status":"FROZEN"} و برای فعال‌سازی از ACTIVE استفاده کنید. مجوز users:update یا users:write یا users:* لازم است. حساب منقضی قابل تعلیق نیست. گزینه بدون انقضا با expiresInDays: null، مقدار expireAt: null و JWT بدون exp با permanent صریح ایجاد می‌شود. حذف و مجوزهای جاری در هر درخواست از پایگاه داده بررسی می‌شوند. ویرایش نام و مجوز، مقدار و مدت توکن را تغییر نمی‌دهد؛ برای تغییر مدت، توکن جایگزین بسازید و قبلی را حذف کنید. صفحه اشتراک فقط system:metadata، subscriptions:subpage-config، subscription-page-configs:get و subscription-page-configs:list نیاز دارد؛ users:by-username فقط برای سازگاری فعال لینک قدیمی Marzban اضافه شود.'],
-        ['用户管理令牌与永久访问', '“用户”预设允许创建、修改、冻结/恢复用户、重置流量、读取订阅密钥及管理 HWID 设备；内部及外部分组列表仅可读取。不包含面板设置、服务器、备份或令牌管理。冻结使用 用户 API 和 {"id":123,"status":"FROZEN"}，恢复使用 ACTIVE。需要 users:update、users:write 或 users:*。已过期账户不能冻结。创建时选择“永不过期”：expiresInDays: null 保存为 expireAt: null，并签发带显式 permanent 标记且没有 exp 的 JWT，不使用虚假的遥远日期。每次请求均检查数据库中的撤销状态和当前权限。编辑名称及权限不会改变令牌值和期限；更改期限请创建替代令牌后删除旧令牌。订阅页面最小权限仅为 system:metadata、subscriptions:subpage-config、subscription-page-configs:get、subscription-page-configs:list。仅在启用 Marzban 旧链接兼容时另加 users:by-username。']
-    ]],
-    ['templates', 'selection-and-geofile-workflow', [
-        ['Автовыбор и геофайлы в редакторе', 'У каждого автовыбора одна раскрывающаяся карточка: серверы для выбора, стратегия и хосты подписки, на которых он используется. Назначение относится к имени конкретного балансера; переименование сохраняет связь. Если у старого назначения единственный возможный автовыбор, оно показано внутри него; при нескольких вариантах выберите связь явно. Простое открытие страницы не переписывает код. Вкладки прокручиваются со страницей, сохранение остаётся внизу. В геофайлах выберите библиотеку, компьютер или ссылку. Загрузка сразу сохраняет файл в общей библиотеке; совместимый файл подключается к текущему черновику одним действием. Настройте категории, действие и доставку в карточке файла и сохраните шаблон. Удаление из шаблона не удаляет файл из библиотеки. Общие параметры файла и обновления на сервере находятся в раскрывающемся разделе библиотеки.'],
-        ['Selection and geofile editor workflow', 'Each selection has one expandable card containing its servers, strategy and subscription host assignments. Assignments belong to a specific balancer name; renaming preserves the link. A legacy assignment with one possible selection appears inside it; ambiguous assignments require an explicit target. Opening the page does not rewrite code. Tabs scroll with the page; saving stays at the bottom. For geofiles, choose the library, computer or URL. Uploads immediately store the file in the shared library; a compatible file attaches to the current draft in one action. Set categories, action and delivery in its card, then save the template. Detaching a file does not delete it from the library. Shared file settings and server refresh are in the expandable library section.'],
-        ['روند ویرایش انتخاب خودکار و فایل جغرافیایی', 'هر انتخاب خودکار یک کارت بازشدنی شامل سرورها، روش انتخاب و میزبان‌های اشتراک دارد. تخصیص به نام یک بالانسر مشخص متصل است و تغییر نام این ارتباط را حفظ می‌کند. تخصیص قدیمی با یک انتخاب ممکن در همان کارت نشان داده می‌شود؛ برای تخصیص مبهم مقصد را صریح انتخاب کنید. باز کردن صفحه کد را تغییر نمی‌دهد. زبانه‌ها با صفحه حرکت می‌کنند و ذخیره در پایین می‌ماند. برای فایل جغرافیایی کتابخانه، رایانه یا نشانی را انتخاب کنید. بارگذاری فایل را بلافاصله در کتابخانه مشترک ذخیره می‌کند و فایل سازگار با یک عمل به پیش‌نویس فعلی متصل می‌شود. دسته‌ها، عمل و تحویل را تنظیم و الگو را ذخیره کنید. جدا کردن فایل از الگو آن را از کتابخانه حذف نمی‌کند. تنظیمات مشترک فایل و به‌روزرسانی سرور در بخش بازشدنی کتابخانه است.'],
-        ['自动选择和地理文件编辑流程', '每个自动选择使用一张可展开卡片，集中配置服务器、策略和订阅主机分配。分配关联到具体的负载均衡器名称，重命名时保留关联。旧分配若只有一个可用目标，会显示在该卡片中；目标不明确时需显式选择。打开页面不会重写代码。选项卡随页面滚动，保存操作保留在底部。地理文件可从文件库、电脑或链接添加。上传会立即将文件存入共享文件库，兼容文件可一步关联至当前草稿。设置分类、动作和交付方式后保存模板。从模板移除文件不会从文件库删除文件。共享文件设置和服务器刷新位于文件库的可展开区域。']
-    ]],
-    ['subscription-settings', 'local-subscription-page-management', [
-        ['Страницы на сервере', 'Вкладка «Страницы подписки» управляет только зарегистрированными экземплярами на сервере панели. Доступны запуск, остановка, перезапуск и отдельное обновление. Нужен установщик 1.2.100 с локальной службой управления. CLI: install-subscription-page, upgrade-subscription-page --page-id ID и manage-subscription-page. Список показывает ID. Локальная панель использует отдельный ограниченный токен и сеть Docker; удалённая требует HTTPS и API-токен с правами страницы. Порты страницы доступны на loopback; HTTPS настраивается через свободный отдельный Caddy или существующий proxy. Обновление сохраняет настройки и остановленное состояние, при сбое готовности откатывает Compose. Приватные журналы находятся в /opt/remnacust/logs/page-<id>.log. Произвольные Docker-команды, пути и образы через браузер не принимаются.'],
-        ['Pages on this server', 'The Subscription pages tab manages registered instances on the panel server: start, stop, restart and independent update. Installer 1.2.100 and its local control service are required. CLI commands: install-subscription-page, upgrade-subscription-page --page-id ID, and manage-subscription-page; the list shows IDs. A local panel uses a separate restricted token and Docker network. A remote panel requires HTTPS and a subscription-page API token. Page ports bind to loopback; use a separate Caddy on free HTTPS ports or your existing proxy. Updates preserve settings and stopped state; failed readiness rolls Compose back. Private operation logs: /opt/remnacust/logs/page-<id>.log. Browser requests cannot supply arbitrary commands, paths or images.'],
-        ['صفحه‌های همین سرور', 'زبانه صفحه‌های اشتراک فقط نمونه‌های ثبت‌شده در سرور پنل را اجرا، متوقف، بازراه‌اندازی و جداگانه به‌روزرسانی می‌کند. نصب‌کننده 1.2.100 و سرویس محلی لازم است. فرمان‌ها: install-subscription-page، upgrade-subscription-page --page-id ID و manage-subscription-page. اتصال محلی از توکن محدود و شبکه Docker استفاده می‌کند؛ اتصال راه دور به HTTPS و توکن صفحه نیاز دارد. پورت فقط روی loopback است؛ HTTPS با Caddy جداگانه روی پورت آزاد یا proxy موجود تنظیم می‌شود. تنظیمات و وضعیت توقف حفظ می‌شوند و خطای آمادگی Compose را برمی‌گرداند. گزارش خصوصی در /opt/remnacust/logs/page-<id>.log است. فرمان، مسیر و تصویر دلخواه از مرورگر پذیرفته نمی‌شود.'],
-        ['此服务器上的页面', '“订阅页面”标签只管理面板服务器上已注册的实例，可启动、停止、重启或单独更新。需要安装程序 1.2.100 及本地控制服务。CLI：install-subscription-page、upgrade-subscription-page --page-id ID、manage-subscription-page；列表显示 ID。本地面板使用独立受限令牌和 Docker 网络，远程面板需要 HTTPS 及订阅页面 API 令牌。页面端口仅绑定 loopback；HTTPS 可使用空闲端口上的独立 Caddy 或现有代理。更新保留设置和停止状态，未通过就绪检查时回滚 Compose。私有日志位于 /opt/remnacust/logs/page-<id>.log。浏览器不能提交任意命令、路径或镜像。']
-    ]],
-    ['templates', 'incy-checksum-delivery', [
-        ['Проверка геофайлов INCY', 'INCY получает стабильные URL DAT без параметров запроса. Подписанный выбор файлов находится в пути: добавление .sha256 к полному URL возвращает контрольную сумму того же набора. Неизменённый файл можно проверить без повторной загрузки; интервал задаётся routing-geo-update-interval в часах. Если отдельно установлена страница подписки, обновите её вместе с панелью. Если выбран встроенный режим, профиль получает пустые URL и интервал 0; правила остаются в JSON. Ранее выданные ссылки поддерживаются. Поведение расписания и повторов после сетевой ошибки зависит от версии клиента; сервер не включает туннель. Официальный протокол: https://docs.incy.cc/routing/'],
-        ['INCY geofile checks', 'INCY receives stable DAT URLs without query parameters. The signed file selection is in the path, so appending .sha256 to the complete URL returns the checksum for the same bundle. Unchanged files can be checked without downloading them again. routing-geo-update-interval uses hours. Update a separately deployed subscription page together with the panel. Automatic inline delivery sends empty geofile URLs and disables periodic checks; the JSON keeps the rules. Previously issued URLs remain supported. Scheduling and network-error retries depend on the client version; the server does not start the tunnel. Official protocol: https://docs.incy.cc/routing/'],
-        ['بررسی فایل جغرافیایی INCY', 'نشانی DAT برای INCY ثابت و بدون query است. انتخاب امضاشده در مسیر قرار دارد؛ افزودن .sha256 به نشانی کامل، هش همان مجموعه را می‌دهد. فایل بدون تغییر به دانلود مجدد نیاز ندارد. routing-geo-update-interval بر حسب ساعت است. صفحه اشتراک جداگانه را همراه پنل به‌روزرسانی کنید. در روش داخلی خودکار، نشانی فایل‌ها خالی و بررسی دوره‌ای غیرفعال می‌شود؛ قوانین در JSON می‌مانند. نشانی‌های قبلی همچنان کار می‌کنند. زمان‌بندی و تکرار پس از خطای شبکه به نسخه برنامه بستگی دارد؛ تونل اجرا نمی‌شود. پروتکل رسمی: https://docs.incy.cc/routing/'],
-        ['INCY 地理文件校验', 'INCY 获得不含查询参数的稳定 DAT URL。经过签名的文件选择位于路径中，在完整 URL 后添加 .sha256 即返回同一文件包的校验和。未更改的文件无需重新下载。routing-geo-update-interval 的单位为小时。独立部署的订阅页面应与面板一同更新。自动选择内嵌方式时，地理文件 URL 为空且定期检查停用，规则仍保留在 JSON 中。旧 URL 仍受支持。调度和网络错误重试取决于客户端版本；服务器不会开启隧道。官方协议：https://docs.incy.cc/routing/']
-    ]],
     [
-        'nodes', 'nodes-ssh-install-http01',
+        'templates',
+        'subscription-delivery-diagnostics',
         [
-            ['Установка и сертификат', 'Для установки по SSH нужен root или sudo без пароля; существующий пустой каталог допустим. Ошибка показывает этап, а подробный журнал сохраняется на сервере. При ограничении по IP панели и HTTP-01 TCP 80 временно открывается для проверки сертификата и автоматически закрывается после неё; при сбое окно истекает не позднее чем через 15 минут. Так же работает продление. Внешний firewall и ограничения провайдера нужно настроить отдельно. Для постоянно закрытого порта 80 используйте DNS-01 или готовый сертификат.'],
-            ['Installation and certificates', 'SSH installation requires root or passwordless sudo; an existing empty directory is allowed. Failures show the stage and detailed logs remain on the server. With a panel-IP restriction and HTTP-01, TCP 80 opens temporarily for certificate validation and closes afterwards; a failed process cannot keep it open longer than 15 minutes. Renewal uses the same rule. External and provider firewalls need their own configuration. Use DNS-01 or an existing certificate to keep port 80 closed.'],
-            ['نصب و گواهی', 'نصب از طریق SSH به root یا sudo بدون گذرواژه نیاز دارد؛ پوشه خالی موجود پذیرفته می‌شود. مرحله خطا نمایش داده می‌شود و گزارش کامل روی سرور می‌ماند. با محدودیت IP پنل و HTTP-01، پورت 80 فقط برای تأیید گواهی موقتاً باز و سپس بسته می‌شود؛ در صورت خطا حداکثر پس از ۱۵ دقیقه بسته می‌شود. تمدید نیز همین روش را دارد. دیوار آتش خارجی و ارائه‌دهنده باید جداگانه تنظیم شوند. برای بسته ماندن دائمی پورت 80 از DNS-01 یا گواهی موجود استفاده کنید.'],
-            ['安装和证书', 'SSH 安装需要 root 或免密码 sudo；允许使用已有空目录。错误会显示失败阶段，详细日志保存在服务器上。启用面板 IP 限制并使用 HTTP-01 时，TCP 80 仅在证书验证期间临时开放，随后关闭；进程异常时最多 15 分钟后自动关闭。续期采用相同方式。外部及服务商防火墙需单独配置。若要始终关闭 80 端口，请使用 DNS-01 或现有证书。']
+            [
+                'Обновление подписки и персональные ссылки',
+                'Если приложение показывает прежнюю ошибку после выпуска панели, проверьте, что обновилась именно подписка: при недоступном HTTPS старого домена клиент продолжает использовать сохранённую конфигурацию. Сохраните старый домен и его сертификат на время переноса ссылок; изменение адреса в панели само по себе не переносит установленную подписку. Отдельно установленную страницу подписки обновляйте вместе с панелью. Персональные ссылки /device/ привязаны к подписке и HWID; их подпись, блокировка устройства и доступ пользователя проверяются панелью при каждом запросе. Не публикуйте эти ссылки. В INCY длинные встроенные списки выдаются без потери правил в строковой форме Xray; размер проверяется после форматирования JSON. Способ доставки выбирается автоматически по размеру каждого профиля.'
+            ],
+            [
+                'Subscription refresh and personal links',
+                'If a client still shows an old error after a panel release, verify that the subscription itself refreshed: when HTTPS on its old domain fails, the app keeps its saved configuration. Retain the old domain and certificate while migrating links; changing the panel address does not migrate installed subscriptions. Update a separately installed subscription page together with the panel. Personal /device/ links are bound to the subscription and HWID; the panel checks their signature, device block and user access on every request. Keep these links private. INCY receives long inline lists in lossless Xray string form; the size budget includes JSON formatting. Delivery is chosen automatically using each profile’s size.'
+            ],
+            [
+                'به‌روزرسانی اشتراک و پیوند شخصی',
+                'اگر پس از انتشار پنل خطای قدیمی باقی است، به‌روزرسانی خود اشتراک را بررسی کنید: خرابی HTTPS دامنه قدیمی باعث استفاده از پیکربندی ذخیره‌شده می‌شود. هنگام انتقال پیوندها دامنه و گواهی قبلی را نگه دارید؛ تغییر آدرس پنل اشتراک نصب‌شده را منتقل نمی‌کند. صفحه اشتراک مستقل را همراه پنل به‌روز کنید. پیوند /device/ به اشتراک و HWID وابسته است و پنل در هر درخواست امضا، مسدود بودن دستگاه و دسترسی کاربر را بررسی می‌کند؛ پیوند را محرمانه نگه دارید. فهرست‌های بلند INCY بدون حذف قوانین به قالب رشته‌ای Xray تبدیل می‌شوند و اندازه پس از قالب‌بندی JSON سنجیده می‌شود. روش تحویل با توجه به اندازه هر پروفایل خودکار انتخاب می‌شود.'
+            ],
+            [
+                '订阅刷新与设备链接',
+                '面板更新后仍显示旧错误时，请确认订阅本身已刷新：旧域名 HTTPS 不可用时，应用会继续使用已保存配置。迁移链接期间保留旧域名及证书；更改面板地址不会迁移已安装订阅。独立订阅页面应与面板一起更新。/device/ 个人链接绑定订阅和 HWID；每次请求由面板检查签名、设备封禁及用户权限。请勿公开链接。INCY 的大型内嵌列表使用无损 Xray 字符串格式，大小限制包含 JSON 格式化开销。交付方式按每个配置的大小自动选择。'
+            ]
+        ]
+    ],
+    [
+        'users',
+        'expiry-scheduler',
+        [
+            [
+                'Кто проверяет окончание срока',
+                'Внутренний планировщик панели каждые 30 секунд отправляет проверку срока в очередь USERS_WATCHDOG_QUEUE. Просроченные ACTIVE и LIMITED переводятся в EXPIRED, затем синхронизируется доступ на нодах. Дополнительный crontab не нужен. Планировщик, обработчик очереди, Valkey и база данных должны работать; при остановке обработчика выполнение задерживается. FROZEN исключён из автоматического истечения: остаток хранится как разница expireAt и frozenAt, при активации новый срок вычисляется от текущего времени. Постоянно переписывать дату в БД не требуется. Сбросы трафика выполняются своим расписанием и не размораживают пользователя.'
+            ],
+            [
+                'How expiry is checked',
+                'The panel scheduler enqueues an expiry check every 30 seconds in USERS_WATCHDOG_QUEUE. Overdue ACTIVE and LIMITED users become EXPIRED and node access is synchronized. No extra crontab is needed. The scheduler, queue worker, Valkey and database must be running; stopping a worker delays execution. FROZEN users are excluded from expiry: the saved remainder is expireAt minus frozenAt, and activation computes a new expiry from the current time. No continuous database date rewrite is required. Scheduled traffic resets follow their own schedule and never unfreeze users.'
+            ],
+            [
+                'بررسی پایان اعتبار',
+                'زمان‌بند داخلی پنل هر ۳۰ ثانیه بررسی اعتبار را در USERS_WATCHDOG_QUEUE قرار می‌دهد. کاربران ACTIVE و LIMITED منقضی به EXPIRED تغییر می‌کنند و دسترسی نود همگام می‌شود. crontab اضافی لازم نیست. زمان‌بند، پردازشگر صف، Valkey و پایگاه داده باید فعال باشند؛ توقف پردازشگر اجرا را عقب می‌اندازد. کاربران FROZEN از انقضای خودکار مستثنا هستند: باقی‌مانده اختلاف expireAt و frozenAt است و فعال‌سازی تاریخ جدید را از زمان جاری محاسبه می‌کند. بازنویسی پیوسته تاریخ لازم نیست. بازنشانی ترافیک زمان‌بندی مستقل دارد و کاربر را از توقف خارج نمی‌کند.'
+            ],
+            [
+                '到期检查机制',
+                '面板内部调度器每 30 秒向 USERS_WATCHDOG_QUEUE 提交到期检查。到期的 ACTIVE 和 LIMITED 用户转为 EXPIRED，并同步节点访问权限。无需额外 crontab。调度器、队列处理器、Valkey 和数据库必须运行；处理器停止会延迟执行。FROZEN 用户不参与自动到期：保存的剩余时长为 expireAt 与 frozenAt 之差，激活时从当前时间计算新到期日期，无需不断更新数据库日期。流量重置遵循独立计划，不会解除冻结。'
+            ]
+        ]
+    ],
+    [
+        'api-tokens',
+        'permanent-user-management-tokens',
+        [
+            [
+                'Токен бота для пользователей и бессрочный доступ',
+                'Набор «Пользователи» разрешает создание, изменение, заморозку и активацию, сброс трафика, чтение ключей подписки и управление HWID-устройствами; списки внутренних и внешних сквадов доступны только для чтения. Настройки панели, серверы, резервные копии и управление токенами в этот набор не входят. В API пользователей status FROZEN включает заморозку, ACTIVE — активацию. Нужен users:update, users:write или users:*. Истёкший аккаунт заморозить нельзя. При создании можно выбрать «Без срока действия»: API принимает expiresInDays: null, хранит expireAt: null и выпускает JWT без exp с явным признаком permanent. Это не фиктивная далёкая дата. Удаление и текущие права проверяются в БД при каждом запросе. Правка имени и прав не меняет срок или строку токена; для нового срока создайте замену и удалите старый токен. Минимальный набор страницы подписки содержит только system:metadata, subscriptions:subpage-config, subscription-page-configs:get и subscription-page-configs:list. Для включённой совместимости старых ссылок Marzban отдельно добавьте users:by-username.'
+            ],
+            [
+                'User-management bots and permanent access',
+                'The Users preset permits creating, editing, freezing/resuming users, resetting traffic, reading subscription keys and managing HWID devices; internal/external squad lists are read-only. It excludes panel settings, servers, backups and token administration. In the user API, set status FROZEN to freeze and ACTIVE to resume. Required scope: users:update, users:write or users:*. Expired accounts cannot be frozen. When creating a token select No expiration: expiresInDays: null stores expireAt: null and signs a JWT without exp with an explicit permanent marker. No fabricated distant date is used. Every request checks deletion and current scopes in the database. Editing names/permissions preserves token value and expiry; create a replacement and delete the old token to change lifetime. The minimum subscription-page preset contains only system:metadata, subscriptions:subpage-config, subscription-page-configs:get and subscription-page-configs:list. Add users:by-username separately only for enabled Marzban legacy-link compatibility.'
+            ],
+            [
+                'توکن مدیریت کاربران و دسترسی بدون انقضا',
+                'گزینه کاربران ایجاد، ویرایش، تعلیق و فعال‌سازی، بازنشانی ترافیک، خواندن کلیدهای اشتراک و مدیریت دستگاه‌های HWID را مجاز می‌کند؛ فهرست گروه‌ها فقط خواندنی است. تنظیمات پنل، سرورها، پشتیبان‌ها و مدیریت توکن‌ها شامل نمی‌شود. برای تعلیق از API کاربران و {"id":123,"status":"FROZEN"} و برای فعال‌سازی از ACTIVE استفاده کنید. مجوز users:update یا users:write یا users:* لازم است. حساب منقضی قابل تعلیق نیست. گزینه بدون انقضا با expiresInDays: null، مقدار expireAt: null و JWT بدون exp با permanent صریح ایجاد می‌شود. حذف و مجوزهای جاری در هر درخواست از پایگاه داده بررسی می‌شوند. ویرایش نام و مجوز، مقدار و مدت توکن را تغییر نمی‌دهد؛ برای تغییر مدت، توکن جایگزین بسازید و قبلی را حذف کنید. صفحه اشتراک فقط system:metadata، subscriptions:subpage-config، subscription-page-configs:get و subscription-page-configs:list نیاز دارد؛ users:by-username فقط برای سازگاری فعال لینک قدیمی Marzban اضافه شود.'
+            ],
+            [
+                '用户管理令牌与永久访问',
+                '“用户”预设允许创建、修改、冻结/恢复用户、重置流量、读取订阅密钥及管理 HWID 设备；内部及外部分组列表仅可读取。不包含面板设置、服务器、备份或令牌管理。冻结使用 用户 API 和 {"id":123,"status":"FROZEN"}，恢复使用 ACTIVE。需要 users:update、users:write 或 users:*。已过期账户不能冻结。创建时选择“永不过期”：expiresInDays: null 保存为 expireAt: null，并签发带显式 permanent 标记且没有 exp 的 JWT，不使用虚假的遥远日期。每次请求均检查数据库中的撤销状态和当前权限。编辑名称及权限不会改变令牌值和期限；更改期限请创建替代令牌后删除旧令牌。订阅页面最小权限仅为 system:metadata、subscriptions:subpage-config、subscription-page-configs:get、subscription-page-configs:list。仅在启用 Marzban 旧链接兼容时另加 users:by-username。'
+            ]
+        ]
+    ],
+    [
+        'templates',
+        'selection-and-geofile-workflow',
+        [
+            [
+                'Автовыбор и геофайлы в редакторе',
+                'У каждого автовыбора одна раскрывающаяся карточка: серверы для выбора, стратегия и хосты подписки, на которых он используется. Назначение относится к имени конкретного балансера; переименование сохраняет связь. Если у старого назначения единственный возможный автовыбор, оно показано внутри него; при нескольких вариантах выберите связь явно. Простое открытие страницы не переписывает код. Вкладки прокручиваются со страницей, сохранение остаётся внизу. В геофайлах выберите библиотеку, компьютер или ссылку. Загрузка сразу сохраняет файл в общей библиотеке; совместимый файл подключается к текущему черновику одним действием. Настройте категории, действие и интервал клиента в карточке файла и сохраните шаблон; способ доставки выбирается автоматически. Удаление из шаблона не удаляет файл из библиотеки. Общие параметры файла и обновления на сервере находятся в раскрывающемся разделе библиотеки.'
+            ],
+            [
+                'Selection and geofile editor workflow',
+                'Each selection has one expandable card containing its servers, strategy and subscription host assignments. Assignments belong to a specific balancer name; renaming preserves the link. A legacy assignment with one possible selection appears inside it; ambiguous assignments require an explicit target. Opening the page does not rewrite code. Tabs scroll with the page; saving stays at the bottom. For geofiles, choose the library, computer or URL. Uploads immediately store the file in the shared library; a compatible file attaches to the current draft in one action. Set categories, action and the client interval in its card, then save the template; delivery is selected automatically. Detaching a file does not delete it from the library. Shared file settings and server refresh are in the expandable library section.'
+            ],
+            [
+                'روند ویرایش انتخاب خودکار و فایل جغرافیایی',
+                'هر انتخاب خودکار یک کارت بازشدنی شامل سرورها، روش انتخاب و میزبان‌های اشتراک دارد. تخصیص به نام یک بالانسر مشخص متصل است و تغییر نام این ارتباط را حفظ می‌کند. تخصیص قدیمی با یک انتخاب ممکن در همان کارت نشان داده می‌شود؛ برای تخصیص مبهم مقصد را صریح انتخاب کنید. باز کردن صفحه کد را تغییر نمی‌دهد. زبانه‌ها با صفحه حرکت می‌کنند و ذخیره در پایین می‌ماند. برای فایل جغرافیایی کتابخانه، رایانه یا نشانی را انتخاب کنید. بارگذاری فایل را بلافاصله در کتابخانه مشترک ذخیره می‌کند و فایل سازگار با یک عمل به پیش‌نویس فعلی متصل می‌شود. دسته‌ها، عمل و فاصله زمانی کلاینت را تنظیم و الگو را ذخیره کنید؛ روش تحویل خودکار انتخاب می‌شود. جدا کردن فایل از الگو آن را از کتابخانه حذف نمی‌کند. تنظیمات مشترک فایل و به‌روزرسانی سرور در بخش بازشدنی کتابخانه است.'
+            ],
+            [
+                '自动选择和地理文件编辑流程',
+                '每个自动选择使用一张可展开卡片，集中配置服务器、策略和订阅主机分配。分配关联到具体的负载均衡器名称，重命名时保留关联。旧分配若只有一个可用目标，会显示在该卡片中；目标不明确时需显式选择。打开页面不会重写代码。选项卡随页面滚动，保存操作保留在底部。地理文件可从文件库、电脑或链接添加。上传会立即将文件存入共享文件库，兼容文件可一步关联至当前草稿。设置分类、动作和客户端更新间隔后保存模板；交付方式由系统自动选择。从模板移除文件不会从文件库删除文件。共享文件设置和服务器刷新位于文件库的可展开区域。'
+            ]
+        ]
+    ],
+    [
+        'subscription-settings',
+        'local-subscription-page-management',
+        [
+            [
+                'Страницы на сервере',
+                'Вкладка «Страницы подписки» управляет только зарегистрированными экземплярами на сервере панели. Доступны запуск, остановка, перезапуск и отдельное обновление. Нужен установщик 1.2.100 с локальной службой управления. CLI: install-subscription-page, upgrade-subscription-page --page-id ID и manage-subscription-page. Список показывает ID. Локальная панель использует отдельный ограниченный токен и сеть Docker; удалённая требует HTTPS и API-токен с правами страницы. Порты страницы доступны на loopback; HTTPS настраивается через свободный отдельный Caddy или существующий proxy. Обновление сохраняет настройки и остановленное состояние, при сбое готовности откатывает Compose. Приватные журналы находятся в /opt/remnacust/logs/page-<id>.log. Произвольные Docker-команды, пути и образы через браузер не принимаются.'
+            ],
+            [
+                'Pages on this server',
+                'The Subscription pages tab manages registered instances on the panel server: start, stop, restart and independent update. Installer 1.2.100 and its local control service are required. CLI commands: install-subscription-page, upgrade-subscription-page --page-id ID, and manage-subscription-page; the list shows IDs. A local panel uses a separate restricted token and Docker network. A remote panel requires HTTPS and a subscription-page API token. Page ports bind to loopback; use a separate Caddy on free HTTPS ports or your existing proxy. Updates preserve settings and stopped state; failed readiness rolls Compose back. Private operation logs: /opt/remnacust/logs/page-<id>.log. Browser requests cannot supply arbitrary commands, paths or images.'
+            ],
+            [
+                'صفحه‌های همین سرور',
+                'زبانه صفحه‌های اشتراک فقط نمونه‌های ثبت‌شده در سرور پنل را اجرا، متوقف، بازراه‌اندازی و جداگانه به‌روزرسانی می‌کند. نصب‌کننده 1.2.100 و سرویس محلی لازم است. فرمان‌ها: install-subscription-page، upgrade-subscription-page --page-id ID و manage-subscription-page. اتصال محلی از توکن محدود و شبکه Docker استفاده می‌کند؛ اتصال راه دور به HTTPS و توکن صفحه نیاز دارد. پورت فقط روی loopback است؛ HTTPS با Caddy جداگانه روی پورت آزاد یا proxy موجود تنظیم می‌شود. تنظیمات و وضعیت توقف حفظ می‌شوند و خطای آمادگی Compose را برمی‌گرداند. گزارش خصوصی در /opt/remnacust/logs/page-<id>.log است. فرمان، مسیر و تصویر دلخواه از مرورگر پذیرفته نمی‌شود.'
+            ],
+            [
+                '此服务器上的页面',
+                '“订阅页面”标签只管理面板服务器上已注册的实例，可启动、停止、重启或单独更新。需要安装程序 1.2.100 及本地控制服务。CLI：install-subscription-page、upgrade-subscription-page --page-id ID、manage-subscription-page；列表显示 ID。本地面板使用独立受限令牌和 Docker 网络，远程面板需要 HTTPS 及订阅页面 API 令牌。页面端口仅绑定 loopback；HTTPS 可使用空闲端口上的独立 Caddy 或现有代理。更新保留设置和停止状态，未通过就绪检查时回滚 Compose。私有日志位于 /opt/remnacust/logs/page-<id>.log。浏览器不能提交任意命令、路径或镜像。'
+            ]
+        ]
+    ],
+    [
+        'templates',
+        'incy-checksum-delivery',
+        [
+            [
+                'Проверка геофайлов INCY',
+                'INCY получает стабильные URL DAT без параметров запроса. Подписанный выбор файлов находится в пути: добавление .sha256 к полному URL возвращает контрольную сумму того же набора. Неизменённый файл можно проверить без повторной загрузки; интервал задаётся routing-geo-update-interval в часах. Если отдельно установлена страница подписки, обновите её вместе с панелью. Если выбран встроенный режим, профиль получает пустые URL и интервал 0; правила остаются в JSON. Ранее выданные ссылки поддерживаются. Поведение расписания и повторов после сетевой ошибки зависит от версии клиента; сервер не включает туннель. Официальный протокол: https://docs.incy.cc/routing/'
+            ],
+            [
+                'INCY geofile checks',
+                'INCY receives stable DAT URLs without query parameters. The signed file selection is in the path, so appending .sha256 to the complete URL returns the checksum for the same bundle. Unchanged files can be checked without downloading them again. routing-geo-update-interval uses hours. Update a separately deployed subscription page together with the panel. Automatic inline delivery sends empty geofile URLs and disables periodic checks; the JSON keeps the rules. Previously issued URLs remain supported. Scheduling and network-error retries depend on the client version; the server does not start the tunnel. Official protocol: https://docs.incy.cc/routing/'
+            ],
+            [
+                'بررسی فایل جغرافیایی INCY',
+                'نشانی DAT برای INCY ثابت و بدون query است. انتخاب امضاشده در مسیر قرار دارد؛ افزودن .sha256 به نشانی کامل، هش همان مجموعه را می‌دهد. فایل بدون تغییر به دانلود مجدد نیاز ندارد. routing-geo-update-interval بر حسب ساعت است. صفحه اشتراک جداگانه را همراه پنل به‌روزرسانی کنید. در روش داخلی خودکار، نشانی فایل‌ها خالی و بررسی دوره‌ای غیرفعال می‌شود؛ قوانین در JSON می‌مانند. نشانی‌های قبلی همچنان کار می‌کنند. زمان‌بندی و تکرار پس از خطای شبکه به نسخه برنامه بستگی دارد؛ تونل اجرا نمی‌شود. پروتکل رسمی: https://docs.incy.cc/routing/'
+            ],
+            [
+                'INCY 地理文件校验',
+                'INCY 获得不含查询参数的稳定 DAT URL。经过签名的文件选择位于路径中，在完整 URL 后添加 .sha256 即返回同一文件包的校验和。未更改的文件无需重新下载。routing-geo-update-interval 的单位为小时。独立部署的订阅页面应与面板一同更新。自动选择内嵌方式时，地理文件 URL 为空且定期检查停用，规则仍保留在 JSON 中。旧 URL 仍受支持。调度和网络错误重试取决于客户端版本；服务器不会开启隧道。官方协议：https://docs.incy.cc/routing/'
+            ]
+        ]
+    ],
+    [
+        'nodes',
+        'nodes-ssh-install-http01',
+        [
+            [
+                'Установка и сертификат',
+                'Для установки по SSH нужен root или sudo без пароля; существующий пустой каталог допустим. Ошибка показывает этап, а подробный журнал сохраняется на сервере. При ограничении по IP панели и HTTP-01 TCP 80 временно открывается для проверки сертификата и автоматически закрывается после неё; при сбое окно истекает не позднее чем через 15 минут. Так же работает продление. Внешний firewall и ограничения провайдера нужно настроить отдельно. Для постоянно закрытого порта 80 используйте DNS-01 или готовый сертификат.'
+            ],
+            [
+                'Installation and certificates',
+                'SSH installation requires root or passwordless sudo; an existing empty directory is allowed. Failures show the stage and detailed logs remain on the server. With a panel-IP restriction and HTTP-01, TCP 80 opens temporarily for certificate validation and closes afterwards; a failed process cannot keep it open longer than 15 minutes. Renewal uses the same rule. External and provider firewalls need their own configuration. Use DNS-01 or an existing certificate to keep port 80 closed.'
+            ],
+            [
+                'نصب و گواهی',
+                'نصب از طریق SSH به root یا sudo بدون گذرواژه نیاز دارد؛ پوشه خالی موجود پذیرفته می‌شود. مرحله خطا نمایش داده می‌شود و گزارش کامل روی سرور می‌ماند. با محدودیت IP پنل و HTTP-01، پورت 80 فقط برای تأیید گواهی موقتاً باز و سپس بسته می‌شود؛ در صورت خطا حداکثر پس از ۱۵ دقیقه بسته می‌شود. تمدید نیز همین روش را دارد. دیوار آتش خارجی و ارائه‌دهنده باید جداگانه تنظیم شوند. برای بسته ماندن دائمی پورت 80 از DNS-01 یا گواهی موجود استفاده کنید.'
+            ],
+            [
+                '安装和证书',
+                'SSH 安装需要 root 或免密码 sudo；允许使用已有空目录。错误会显示失败阶段，详细日志保存在服务器上。启用面板 IP 限制并使用 HTTP-01 时，TCP 80 仅在证书验证期间临时开放，随后关闭；进程异常时最多 15 分钟后自动关闭。续期采用相同方式。外部及服务商防火墙需单独配置。若要始终关闭 80 端口，请使用 DNS-01 或现有证书。'
+            ]
         ]
     ],
     [
         'users',
         'users-frozen-lifetime',
         [
-            ['Заморозка подписки', 'В меню пользователя выберите «Заморозить»: обычный доступ отключается, а оставшийся срок сохраняется. Например, два оставшихся дня останутся двумя днями до активации. При возобновлении новый срок рассчитывается из остатка; повторная заморозка его не меняет. Если остаток равен нулю или квота исчерпана, доступ автоматически не включится. Продление увеличивает остаток. Истёкшую подписку нельзя заморозить. При наступлении срока открытое меню отключает заморозку автоматически; сохранённый остаток форматируется независимо от текущей даты. Вместо даты отображается синий сохранённый остаток; дата не редактируется. Для действующего срока предупреждение жёлтое за три дня, после окончания — красное. Существующий трафик не сбрасывается самой заморозкой; настроенные периодические сбросы продолжают работать. Состояние сохраняется при перезапуске и экспорте с импортом. При массовой заморозке доступ устройств обновляется для каждого пользователя; обработка выполняется в очереди.'],
-            ['Freeze a subscription', 'Choose Freeze in the user menu: ordinary access is paused and the remaining lifetime is retained. Two days remaining stay two days until activation. Resuming sets the new expiry from that remainder; repeating Freeze does not change it. Zero remaining time or an exhausted quota does not grant access. Extending adds to the remainder. Expired subscriptions cannot be frozen. The open menu disables Freeze automatically at expiry; the saved remainder is formatted independently of the current date. A blue saved remainder replaces the date editor. Active expiry warnings turn yellow at three days and red on expiry. Freezing itself does not reset usage; scheduled traffic resets continue. The state survives restarts and export/import. Bulk freezes synchronize each user’s device access through the queue.'],
-            ['توقف اشتراک', 'در منوی کاربر، توقف اشتراک را انتخاب کنید. دسترسی معمول قطع و زمان باقی‌مانده حفظ می‌شود؛ مثلاً دو روز تا زمان فعال‌سازی دو روز می‌ماند. با فعال‌سازی، تاریخ انقضا از باقی‌مانده محاسبه می‌شود و تکرار توقف آن را تغییر نمی‌دهد. زمان صفر یا سهمیه تمام‌شده موجب فعال شدن دسترسی نمی‌شود. تمدید به زمان باقی‌مانده اضافه می‌شود و تاریخ در حالت توقف قابل ویرایش نیست. اشتراک منقضی‌شده متوقف نمی‌شود. هنگام انقضا، گزینه توقف در منوی باز خودکار غیرفعال می‌شود؛ نمایش زمان ذخیره‌شده به تاریخ جاری وابسته نیست. باقی‌مانده آبی است؛ هشدار سه روز مانده زرد و پس از انقضا قرمز است. توقف، ترافیک را بازنشانی نمی‌کند؛ بازنشانی زمان‌بندی‌شده ادامه دارد. وضعیت پس از راه‌اندازی مجدد و انتقال فایل حفظ می‌شود. دسترسی دستگاه‌ها در عملیات گروهی از طریق صف همگام می‌شود.'],
-            ['冻结订阅', '在用户菜单选择冻结：普通访问暂停，剩余有效期被保存。例如剩余两天会一直保持两天，直到重新激活。恢复时根据剩余时长计算新到期时间；重复冻结不会改变时长。剩余时间为零或流量额度耗尽时不会自动开放访问。续期增加剩余时间；已过期的订阅无法冻结。到期时，打开的菜单会自动禁用冻结；保存的剩余时间不依赖当前日期进行格式化。冻结时显示蓝色剩余时长，日期不可编辑。有效期剩余三天时显示黄色，过期后显示红色。冻结本身不会清空流量，计划流量重置仍会执行。重启及导出导入后状态仍会保留。批量冻结通过队列逐个同步设备访问。']
+            [
+                'Заморозка подписки',
+                'В меню пользователя выберите «Заморозить»: обычный доступ отключается, а оставшийся срок сохраняется. Например, два оставшихся дня останутся двумя днями до активации. При возобновлении новый срок рассчитывается из остатка; повторная заморозка его не меняет. Если остаток равен нулю или квота исчерпана, доступ автоматически не включится. Продление увеличивает остаток. Истёкшую подписку нельзя заморозить. При наступлении срока открытое меню отключает заморозку автоматически; сохранённый остаток форматируется независимо от текущей даты. Вместо даты отображается синий сохранённый остаток; дата не редактируется. Для действующего срока предупреждение жёлтое за три дня, после окончания — красное. Существующий трафик не сбрасывается самой заморозкой; настроенные периодические сбросы продолжают работать. Состояние сохраняется при перезапуске и экспорте с импортом. При массовой заморозке доступ устройств обновляется для каждого пользователя; обработка выполняется в очереди.'
+            ],
+            [
+                'Freeze a subscription',
+                'Choose Freeze in the user menu: ordinary access is paused and the remaining lifetime is retained. Two days remaining stay two days until activation. Resuming sets the new expiry from that remainder; repeating Freeze does not change it. Zero remaining time or an exhausted quota does not grant access. Extending adds to the remainder. Expired subscriptions cannot be frozen. The open menu disables Freeze automatically at expiry; the saved remainder is formatted independently of the current date. A blue saved remainder replaces the date editor. Active expiry warnings turn yellow at three days and red on expiry. Freezing itself does not reset usage; scheduled traffic resets continue. The state survives restarts and export/import. Bulk freezes synchronize each user’s device access through the queue.'
+            ],
+            [
+                'توقف اشتراک',
+                'در منوی کاربر، توقف اشتراک را انتخاب کنید. دسترسی معمول قطع و زمان باقی‌مانده حفظ می‌شود؛ مثلاً دو روز تا زمان فعال‌سازی دو روز می‌ماند. با فعال‌سازی، تاریخ انقضا از باقی‌مانده محاسبه می‌شود و تکرار توقف آن را تغییر نمی‌دهد. زمان صفر یا سهمیه تمام‌شده موجب فعال شدن دسترسی نمی‌شود. تمدید به زمان باقی‌مانده اضافه می‌شود و تاریخ در حالت توقف قابل ویرایش نیست. اشتراک منقضی‌شده متوقف نمی‌شود. هنگام انقضا، گزینه توقف در منوی باز خودکار غیرفعال می‌شود؛ نمایش زمان ذخیره‌شده به تاریخ جاری وابسته نیست. باقی‌مانده آبی است؛ هشدار سه روز مانده زرد و پس از انقضا قرمز است. توقف، ترافیک را بازنشانی نمی‌کند؛ بازنشانی زمان‌بندی‌شده ادامه دارد. وضعیت پس از راه‌اندازی مجدد و انتقال فایل حفظ می‌شود. دسترسی دستگاه‌ها در عملیات گروهی از طریق صف همگام می‌شود.'
+            ],
+            [
+                '冻结订阅',
+                '在用户菜单选择冻结：普通访问暂停，剩余有效期被保存。例如剩余两天会一直保持两天，直到重新激活。恢复时根据剩余时长计算新到期时间；重复冻结不会改变时长。剩余时间为零或流量额度耗尽时不会自动开放访问。续期增加剩余时间；已过期的订阅无法冻结。到期时，打开的菜单会自动禁用冻结；保存的剩余时间不依赖当前日期进行格式化。冻结时显示蓝色剩余时长，日期不可编辑。有效期剩余三天时显示黄色，过期后显示红色。冻结本身不会清空流量，计划流量重置仍会执行。重启及导出导入后状态仍会保留。批量冻结通过队列逐个同步设备访问。'
+            ]
         ]
     ],
     [
@@ -143,6 +264,29 @@ const sections = [
         ]
     ]
 ]
+
+sections.push([
+    'subscription-settings',
+    'existing-remnawave-pages',
+    [
+        [
+            'Существующие страницы Remnawave',
+            'На локальном сервере обнаруживаются также старые Compose-страницы Remnawave, связанные именно с этой панелью: проверяются официальный образ, привязка к панели и её сети, идентичность Compose и доступность безопасных файлов. Просмотр не регистрирует и не изменяет установку. Старой странице доступны запуск, остановка и перезапуск; её образ, токен и настройки не заменяются. Для обновления сначала выполните явный перенос через установщик. Страницы на другом сервере, без Compose, с адресом другой панели или небезопасными путями не принимаются в управление. Зарегистрированные страницы сохраняют прежнее управление.'
+        ],
+        [
+            'Existing Remnawave pages',
+            'Local discovery also includes legacy Remnawave Compose pages connected to this exact panel. It checks the official image, connection to the panel and its network, Compose identity and safe files. Listing does not register or change the deployment. Legacy pages support start, stop and restart; their image, token and settings are preserved. Migrate explicitly with the installer before upgrading. Remote pages, non-Compose deployments, connections to another panel and unsafe paths are not accepted for management. Registered pages retain their existing controls.'
+        ],
+        [
+            'صفحه‌های موجود Remnawave',
+            'صفحه‌های قدیمی Compose در همین سرور که به این پنل متصل‌اند نیز کشف می‌شوند. تصویر رسمی، اتصال به پنل و شبکه آن، هویت Compose و امن بودن فایل‌ها بررسی می‌شود. مشاهده فهرست نصب را ثبت یا تغییر نمی‌دهد. شروع، توقف و راه‌اندازی مجدد مجاز است؛ تصویر، توکن و تنظیمات حفظ می‌شوند. پیش از ارتقا انتقال را صریح با نصب‌کننده انجام دهید. سرور دیگر، نصب بدون Compose، پنل نامرتبط و مسیر ناامن پذیرفته نمی‌شود. کنترل صفحه‌های ثبت‌شده بدون تغییر است.'
+        ],
+        [
+            '现有 Remnawave 页面',
+            '本地发现也包含关联当前面板的旧版 Remnawave Compose 页面。系统检查官方镜像、与面板及其网络的关联、Compose 身份及文件安全性。查看列表不会注册或修改部署。旧页面支持启动、停止和重启，保留镜像、令牌和设置；升级前须明确使用安装程序迁移。其他服务器、非 Compose 部署、其他面板或不安全路径不会纳入管理。已注册页面保留原有控制。'
+        ]
+    ]
+])
 
 export function explainOperations(articles) {
     for (const [articleId, id, translations] of sections) {

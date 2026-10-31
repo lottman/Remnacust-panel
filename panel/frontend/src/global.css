@@ -99,7 +99,7 @@ html .xera-users-table .mrt-table-head-cell-content {
     max-width: 100%;
 }
 /* Keep glyphs compact when touch controls grow; MRT otherwise uses size="100%". */
-html .xera-users-table .mrt-table-head-cell-content svg {
+html :is(.xera-users-table, [data-panel-table]) .mrt-table-head-cell-content svg {
     width: 18px;
     height: 18px;
     flex-shrink: 0;

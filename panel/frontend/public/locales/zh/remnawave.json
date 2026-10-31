@@ -3965,8 +3965,6 @@
         "choose-target": "请选择操作或分组",
         "direct": "直连（DIRECT）",
         "reject": "阻止（REJECT）",
-        "inline-help": "按完整配置自动选择：小型数据集内嵌为规则，大型数据集由应用下载。分类与路由操作保持不变。",
-        "download-help": "按完整配置自动选择：小型数据集内嵌为规则，大型数据集由应用下载。分类与路由操作保持不变。",
         "add": "上传新文件",
         "name": "文件库名称",
         "format": "内容格式",
@@ -4039,7 +4037,6 @@
         "json-setting-unknown": "无法检查 JSON 订阅设置。请手动检查“{{setting}}”，或使用以 /json 结尾的链接。",
         "open-subscription-settings": "在新标签页打开订阅设置",
         "happ-check-help": "保存此模板，并确认主机或外部组实际使用它。主机卡片中选择的模板优先。然后在 Happ 或 INCY 中刷新订阅。",
-        "xray-download-help": "按完整配置自动选择：小型数据集内嵌为规则，大型数据集由应用下载。分类与路由操作保持不变。",
         "attached-count": "已关联文件：{{count}}",
         "library-source": "文件库",
         "library-settings": "文件和服务器更新",
@@ -4055,7 +4052,6 @@
         "attach-failed": "无法将文件关联至草稿。文件已保存在文件库中，请检查模板代码后重新关联。",
         "configure-attached": "在此模板中配置",
         "delivery-auto": "自动交付",
-        "delivery-auto-help": "按完整配置自动选择：小型数据集内嵌为规则，大型数据集由应用下载。分类与路由操作保持不变。",
         "client-interval-auto-help": "仅在自动选择文件下载时使用，不控制订阅本身的刷新间隔；实际调度由应用决定。"
     },
     "template-draft": {
@@ -4179,13 +4175,15 @@
         "resumeBlocked": "访问未启用：订阅已过期或流量额度已耗尽。"
     },
     "subscription-pages": {
+        "legacy-title": "现有订阅页面",
+        "legacy-help": "在此服务器上找到关联当前面板的 Remnawave 页面。可以启动、停止和重启。升级前请使用安装程序迁移；不会自动替换现有镜像、设置或令牌。",
         "title": "订阅页面",
         "loading": "正在加载页面",
-        "help": "管理此服务器上已注册的页面。更新保留设置，已停止的页面不会自动启动。",
+        "help": "管理此服务器上的本地订阅页面。更新会保留设置，已停止的页面保持停止。",
         "refresh": "刷新列表",
         "unavailable": "管理功能需要同一服务器上的最新版安装程序及其本地控制服务。",
         "failed": "操作未完成，请检查服务器上的页面私有日志。",
-        "empty": "没有已注册的页面。请使用 remnacust install-subscription-page 安装。",
+        "empty": "未找到本地页面。请使用 remnacust install-subscription-page 安装。其他服务器上的页面不会显示在这里。",
         "running": "运行中",
         "stopped": "已停止",
         "working": "正在执行操作…",
@@ -4193,5 +4191,9 @@
         "stop": "停止",
         "restart": "重启",
         "upgrade": "更新"
+    },
+    "nodes-usage-chart": {
+        "show-legend": "显示图例",
+        "hide-legend": "隐藏图例"
     }
 }

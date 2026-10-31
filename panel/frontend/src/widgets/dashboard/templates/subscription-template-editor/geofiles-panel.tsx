@@ -743,39 +743,32 @@ export function GeofilesPanel({
                                                 )
                                             }
                                         />
-                                        <Stack gap="sm">
-                                            <Text size="sm" c="dimmed">
-                                                {t('geofiles.delivery-auto-help')}
-                                            </Text>
-                                            <NumberInput
-                                                hideControls
-                                                label={t('geofiles.client-interval')}
-                                                description={t(
-                                                    'geofiles.client-interval-auto-help'
-                                                )}
-                                                min={5}
-                                                max={43200}
-                                                allowDecimal={false}
-                                                value={
-                                                    (reference.clientRefreshIntervalSeconds ??
-                                                        86400) / 60
-                                                }
-                                                onChange={(value) => {
-                                                    if (typeof value === 'number')
-                                                        patch(
-                                                            refs.map((ref, i) =>
-                                                                i === index
-                                                                    ? {
-                                                                          ...ref,
-                                                                          clientRefreshIntervalSeconds:
-                                                                              value * 60
-                                                                      }
-                                                                    : ref
-                                                            )
+                                        <NumberInput
+                                            hideControls
+                                            label={t('geofiles.client-interval')}
+                                            description={t('geofiles.client-interval-auto-help')}
+                                            min={5}
+                                            max={43200}
+                                            allowDecimal={false}
+                                            value={
+                                                (reference.clientRefreshIntervalSeconds ?? 86400) /
+                                                60
+                                            }
+                                            onChange={(value) => {
+                                                if (typeof value === 'number')
+                                                    patch(
+                                                        refs.map((ref, i) =>
+                                                            i === index
+                                                                ? {
+                                                                      ...ref,
+                                                                      clientRefreshIntervalSeconds:
+                                                                          value * 60
+                                                                  }
+                                                                : ref
                                                         )
-                                                }}
-                                            />
-                                        </Stack>
+                                                    )
+                                            }}
+                                        />
                                     </div>
                                     <Accordion variant="separated">
                                         <Accordion.Item value="delivery-help">

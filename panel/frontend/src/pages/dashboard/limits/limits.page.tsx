@@ -152,6 +152,7 @@ export function LimitsPage() {
                     </Text>
                     <Group className={classes.toolbar} wrap="wrap">
                         <SegmentedControl
+                            className={classes.scopeFilter}
                             value={filter}
                             onChange={setFilter}
                             data={[
@@ -752,7 +753,11 @@ function ScopeUsers({ scope: initial, back }: { scope: Scope; back: () => void }
                         expireAt: (u) => (
                             <Text c="dimmed" size="xs">
                                 {u.status === 'FROZEN' && u.frozenRemainingMs != null
-                                    ? t('frozen-user.remaining', { duration: dayjs(Date.now() + u.frozenRemainingMs).locale(i18n.language).fromNow(true) })
+                                    ? t('frozen-user.remaining', {
+                                          duration: dayjs(Date.now() + u.frozenRemainingMs)
+                                              .locale(i18n.language)
+                                              .fromNow(true)
+                                      })
                                     : getExpirationTextUtil(u.expireAt, t, i18n)}
                             </Text>
                         ),

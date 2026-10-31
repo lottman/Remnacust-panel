@@ -1,6 +1,17 @@
 .toolbar {
     gap: var(--mantine-spacing-sm);
 }
+:global(html.panel-themed) .scopeFilter {
+    flex-shrink: 0;
+    min-inline-size: max-content;
+}
+:global(html.panel-themed) .scopeFilter :global(.mantine-SegmentedControl-label) {
+    white-space: nowrap;
+    overflow-wrap: normal;
+}
+:global(html.panel-themed) .scopeFilter :global(.mantine-SegmentedControl-control) {
+    min-inline-size: max-content;
+}
 .username {
     width: 100%;
     min-width: 0;

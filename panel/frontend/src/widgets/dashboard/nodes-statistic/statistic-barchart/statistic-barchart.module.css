@@ -129,6 +129,37 @@
     max-height: 160px;
     overflow: auto;
 }
+.legendSection {
+    min-width: 0;
+}
+.legendToggle {
+    display: none;
+}
+@media (max-width: 48em) {
+    .legendSection[data-expanded='false'] .legend {
+        display: none;
+    }
+    .legendToggle {
+        display: block;
+        width: 100%;
+        min-height: 44px;
+        padding: 8px 12px;
+        border: 1px solid var(--panel-border);
+        border-radius: 6px;
+        background: var(--panel-surface);
+        color: var(--panel-text);
+        font: inherit;
+        font-size: 12px;
+        cursor: pointer;
+    }
+    .legendToggle:focus-visible {
+        outline: 2px solid var(--mantine-primary-color-filled);
+        outline-offset: 2px;
+    }
+    .legend {
+        margin-block-start: 8px;
+    }
+}
 .legendButton {
     display: inline-flex;
     align-items: center;

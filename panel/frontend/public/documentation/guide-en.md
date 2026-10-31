@@ -728,7 +728,7 @@ If a client still shows an old error after a panel release, verify that the subs
 
 ### Selection and geofile editor workflow
 
-Each selection has one expandable card containing its servers, strategy and subscription host assignments. Assignments belong to a specific balancer name; renaming preserves the link. A legacy assignment with one possible selection appears inside it; ambiguous assignments require an explicit target. Opening the page does not rewrite code. Tabs scroll with the page; saving stays at the bottom. For geofiles, choose the library, computer or URL. Uploads immediately store the file in the shared library; a compatible file attaches to the current draft in one action. Set categories, action and delivery in its card, then save the template. Detaching a file does not delete it from the library. Shared file settings and server refresh are in the expandable library section.
+Each selection has one expandable card containing its servers, strategy and subscription host assignments. Assignments belong to a specific balancer name; renaming preserves the link. A legacy assignment with one possible selection appears inside it; ambiguous assignments require an explicit target. Opening the page does not rewrite code. Tabs scroll with the page; saving stays at the bottom. For geofiles, choose the library, computer or URL. Uploads immediately store the file in the shared library; a compatible file attaches to the current draft in one action. Set categories, action and the client interval in its card, then save the template; delivery is selected automatically. Detaching a file does not delete it from the library. Shared file settings and server refresh are in the expandable library section.
 
 ### INCY geofile checks
 
@@ -779,6 +779,10 @@ Traffic quota exhaustion, the maximum device count and missing HWID support have
 ### Pages on this server
 
 The Subscription pages tab manages registered instances on the panel server: start, stop, restart and independent update. Installer 1.2.100 and its local control service are required. CLI commands: install-subscription-page, upgrade-subscription-page --page-id ID, and manage-subscription-page; the list shows IDs. A local panel uses a separate restricted token and Docker network. A remote panel requires HTTPS and a subscription-page API token. Page ports bind to loopback; use a separate Caddy on free HTTPS ports or your existing proxy. Updates preserve settings and stopped state; failed readiness rolls Compose back. Private operation logs: /opt/remnacust/logs/page-<id>.log. Browser requests cannot supply arbitrary commands, paths or images.
+
+### Existing Remnawave pages
+
+Local discovery also includes legacy Remnawave Compose pages connected to this exact panel. It checks the official image, connection to the panel and its network, Compose identity and safe files. Listing does not register or change the deployment. Legacy pages support start, stop and restart; their image, token and settings are preserved. Migrate explicitly with the installer before upgrading. Remote pages, non-Compose deployments, connections to another panel and unsafe paths are not accepted for management. Registered pages retain their existing controls.
 
 ### Fields and controls
 

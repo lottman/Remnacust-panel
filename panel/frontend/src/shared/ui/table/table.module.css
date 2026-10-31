@@ -17,6 +17,17 @@
     margin-inline-start: auto;
     max-width: 100%;
 }
+:global(html.panel-themed) .actionsSection :global(.mantine-SegmentedControl-root) {
+    flex-shrink: 0;
+    min-inline-size: max-content;
+}
+:global(html.panel-themed) .actionsSection :global(.mantine-SegmentedControl-label) {
+    white-space: nowrap;
+    overflow-wrap: normal;
+}
+:global(html.panel-themed) .actionsSection :global(.mantine-SegmentedControl-control) {
+    min-inline-size: max-content;
+}
 @media (max-width: 48em) {
     .actionsSection {
         margin-inline-start: 0;

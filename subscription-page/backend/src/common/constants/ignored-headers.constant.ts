@@ -42,6 +42,7 @@ export const IGNORED_HEADERS = new Set([
     'x-remnawave-client-type',
     'x-remnawave-real-ip',
     'x-subpage-version',
+    'x-remnacust-geofile-origin',
     'etag',
     'last-modified',
 ]);

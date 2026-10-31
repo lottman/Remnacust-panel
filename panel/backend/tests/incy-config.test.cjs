@@ -3,13 +3,13 @@ const assert = require('node:assert/strict');
 const path = require('node:path');
 const load = require('./load-typescript.cjs');
 const { pool } = require('./client-pool-fixture.cjs');
-const { compactIncySubscription, INCY_FORMATTED_CONFIG_BUDGET } = load(
+const { compactIncySubscription, xrayProfileFormattedBytes, xrayProfilesFit, INCY_FORMATTED_CONFIG_BUDGET } = load(
     path.join(__dirname, '../src/modules/subscription-template/geofiles/incy-config.ts'),
     { '../generators/client-pool': pool },
 );
 const networks = Array.from({ length: 26000 }, (_, i) => `100.${i >> 8}.${i & 255}.0/24`);
 
-test('large inline networks survive iOS four-space reformatting without losing any entry', () => {
+test('wire compaction preserves entries but cannot hide an oversized expanded profile', () => {
     const original = {
         inbounds: [],
         outbounds: [{ tag: 'proxy', protocol: 'freedom' }],
@@ -18,7 +18,10 @@ test('large inline networks survive iOS four-space reformatting without losing a
         meta: { preserved: true },
     };
     assert.ok(Buffer.byteLength(JSON.stringify(original, null, 4)) > 900_000);
-    const result = JSON.parse(compactIncySubscription(JSON.stringify([original])))[0];
+    assert.throws(() => compactIncySubscription(JSON.stringify([original])), /incy-configuration-size-limit/);
+    const compacted = compactIncySubscription(JSON.stringify([original]), false);
+    assert.equal(xrayProfilesFit(compacted), false);
+    const result = JSON.parse(compacted)[0];
     assert.ok(Buffer.byteLength(JSON.stringify(result, null, 4)) < 500_000);
     assert.deepEqual(result.routing.rules[0].ip.split(','), networks);
     result.routing.rules[0].ip = result.routing.rules[0].ip.split(',');
@@ -56,4 +59,13 @@ test('oversized uncompactable configs fail explicitly without dropping rules or 
     assert.throws(() => compactIncySubscription('[null]'), /incy-configuration-format/);
     assert.equal(compactIncySubscription(''), '');
     assert.equal(compactIncySubscription('[{}]'), '[{}]');
+});
+
+test('semantic size matches real StringList expansion without allocating expanded arrays', () => {
+    for (const values of [['domain:a.test'], ['domain:пример.рф','regexp:^a{1,3}\\.test$','full:two.test'], Array(1000).fill('10.0.0.0/8')]) {
+        const compact = {routing:{rules:[{domain:values.join(','),ip:'geoip:private'}]}};
+        const expanded = structuredClone(compact);
+        for (const rule of expanded.routing.rules) for (const key of ['domain','ip']) rule[key] = rule[key].split(',');
+        assert.equal(xrayProfileFormattedBytes(compact), Buffer.byteLength(JSON.stringify(expanded, null, 4)));
+    }
 });

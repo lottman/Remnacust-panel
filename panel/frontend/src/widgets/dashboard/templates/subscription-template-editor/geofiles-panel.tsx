@@ -292,25 +292,16 @@ export function GeofilesPanel({
                     {t('geofiles.help')}
                 </Text>
             </Card>
-            {needsJsonDelivery && (
+            {needsJsonDelivery && subscriptionSettings.isSuccess && jsonAtBase === false && (
                 <Alert
                     role="status"
                     aria-live="polite"
-                    color={subscriptionSettings.isError || jsonAtBase === false ? 'yellow' : 'blue'}
+                    color="yellow"
                     title={t('geofiles.json-delivery-title')}
                 >
                     <Stack gap="xs">
                         <Text size="sm">
-                            {t(
-                                subscriptionSettings.isError
-                                    ? 'geofiles.json-setting-unknown'
-                                    : subscriptionSettings.isFetching || jsonAtBase === undefined
-                                      ? 'geofiles.json-setting-loading'
-                                      : jsonAtBase
-                                        ? 'geofiles.json-setting-enabled'
-                                        : 'geofiles.json-setting-disabled',
-                                { setting: jsonSettingName }
-                            )}
+                            {t('geofiles.json-setting-disabled', { setting: jsonSettingName })}
                         </Text>
                         <Anchor
                             href={ROUTES.DASHBOARD.MANAGEMENT.SUBSCRIPTION_SETTINGS}
@@ -320,16 +311,6 @@ export function GeofilesPanel({
                         >
                             {t('geofiles.open-subscription-settings')}
                         </Anchor>
-                        {subscriptionSettings.isError && (
-                            <Button
-                                variant="subtle"
-                                size="xs"
-                                loading={subscriptionSettings.isFetching}
-                                onClick={() => void subscriptionSettings.refetch()}
-                            >
-                                {t('common.action.refresh')}
-                            </Button>
-                        )}
                     </Stack>
                 </Alert>
             )}
@@ -640,7 +621,6 @@ export function GeofilesPanel({
                     const dat = !!item && ['geoip', 'geosite'].includes(item.kind)
                     const target =
                         reference.target ?? (reference.downloadToClient === false ? 'DIRECT' : '')
-                    const xray = format === 'XRAY_JSON'
                     return (
                         <Accordion.Item
                             key={`${reference.id}:${index}`}
@@ -770,46 +750,6 @@ export function GeofilesPanel({
                                             }}
                                         />
                                     </div>
-                                    <Accordion variant="separated">
-                                        <Accordion.Item value="delivery-help">
-                                            <Accordion.Control>
-                                                {t('geofiles.delivery-details')}
-                                            </Accordion.Control>
-                                            <Accordion.Panel>
-                                                <Stack gap="sm">
-                                                    <Text size="sm">
-                                                        {t(
-                                                            xray
-                                                                ? 'geofiles.download-to-client-xray-help'
-                                                                : 'geofiles.download-to-client-help',
-                                                            { setting: jsonSettingName }
-                                                        )}
-                                                    </Text>
-                                                    {xray && (
-                                                        <Text size="xs" c="dimmed">
-                                                            {t('geofiles.xray-download-limit')}
-                                                        </Text>
-                                                    )}
-                                                    {item?.kind === 'singbox-srs' && (
-                                                        <Text size="xs" c="dimmed">
-                                                            {t('geofiles.srs-download-limit')}
-                                                        </Text>
-                                                    )}
-
-                                                    {item && !dat && (
-                                                        <Text
-                                                            size="xs"
-                                                            c="dimmed"
-                                                            dir="ltr"
-                                                            className={styles.path}
-                                                        >
-                                                            {item.url}
-                                                        </Text>
-                                                    )}
-                                                </Stack>
-                                            </Accordion.Panel>
-                                        </Accordion.Item>
-                                    </Accordion>
                                     <Group justify="flex-end" className={styles.selectionActions}>
                                         <Button
                                             color="red"
@@ -847,9 +787,23 @@ export function GeofilesPanel({
                                 {t(
                                     format === 'XRAY_JSON'
                                         ? 'geofiles.delivery-xray'
-                                        : 'geofiles.delivery-native'
+                                        : 'geofiles.delivery-native',
+                                    { setting: jsonSettingName }
                                 )}
                             </Text>
+                            {format === 'XRAY_JSON' && (
+                                <Text size="xs" c="dimmed">
+                                    {t('geofiles.xray-download-limit')}
+                                </Text>
+                            )}
+                            {refs.some(
+                                (ref) =>
+                                    files.find((file) => file.id === ref.id)?.kind === 'singbox-srs'
+                            ) && (
+                                <Text size="xs" c="dimmed">
+                                    {t('geofiles.srs-download-limit')}
+                                </Text>
+                            )}
                             <Text size="sm">{t('geofiles.happ-check-help')}</Text>
                         </Stack>
                     </Accordion.Panel>

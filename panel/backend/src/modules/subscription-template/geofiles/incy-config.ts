@@ -4,10 +4,31 @@ import { ClientPoolError } from '../generators/client-pool';
 // Reserve room for its inbounds, logging and DNS patches, rather than measuring
 // only the minified HTTP response.
 export const INCY_FORMATTED_CONFIG_BUDGET = 900_000;
-export const XRAY_FORMATTED_CONFIG_BUDGET = 8 * 1024 * 1024;
+export const XRAY_FORMATTED_CONFIG_BUDGET = 900_000;
 const MAX_SUBSCRIPTION_BYTES = 16 * 1024 * 1024;
 const MIN_COMPACT_LIST_ENTRIES = 64;
 const STRING_LIST_FIELDS = ['ip', 'domain', 'domains', 'source', 'sourceIP', 'localIP'] as const;
+
+export function xrayProfileFormattedBytes(config: Record<string, any>): number {
+    let bytes = Buffer.byteLength(JSON.stringify(config, null, 4));
+    if (!Array.isArray(config.routing?.rules)) return bytes;
+    for (const rule of config.routing.rules) {
+        if (!rule || typeof rule !== 'object' || Array.isArray(rule)) continue;
+        for (const key of STRING_LIST_FIELDS) {
+            const value = rule[key];
+            if (typeof value !== 'string') continue;
+            let count = 1;
+            for (let index = 0; index < value.length; index++)
+                if (value.charCodeAt(index) === 44) count++;
+            // Xray StringList parsing restores comma-separated strings to arrays.
+            // At routing.rules[*].field, four-space JSON adds two quotes,
+            // a newline and 20 spaces per entry, plus the closing array line.
+            // Count that expansion without allocating potentially huge arrays.
+            bytes += count * 23 + 17;
+        }
+    }
+    return bytes;
+}
 
 export function compactIncySubscription(subscription: string, enforceBudget = true): string {
     if (!subscription) return subscription;
@@ -44,10 +65,7 @@ export function compactIncySubscription(subscription: string, enforceBudget = tr
                 }
             }
         }
-        if (
-            enforceBudget &&
-            Buffer.byteLength(JSON.stringify(config, null, 4)) > INCY_FORMATTED_CONFIG_BUDGET
-        )
+        if (enforceBudget && xrayProfileFormattedBytes(config) > INCY_FORMATTED_CONFIG_BUDGET)
             throw new ClientPoolError(
                 'incy-configuration-size-limit: configuration remains too large after geofile delivery',
             );
@@ -72,7 +90,7 @@ export function xrayProfilesFit(
                 config &&
                 typeof config === 'object' &&
                 !Array.isArray(config) &&
-                Buffer.byteLength(JSON.stringify(config, null, 4)) <= budget,
+                xrayProfileFormattedBytes(config) <= budget,
         )
     );
 }

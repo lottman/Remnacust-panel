@@ -49,15 +49,15 @@ const additions = [
         [
             [
                 'Когда приложение скачивает geofiles',
-                'По умолчанию GeoIP/GeoSite DAT встраивается в полную конфигурацию как правила. Новый переключатель позволяет отдельно загружать преобразованный набор в поддерживаемом приложении; Xray JSON передаёт Happ и INCY профиль первоначальной загрузки DAT, а остальным клиентам — встроенные правила. Нативные sing-box JSON/SRS и Mihomo/Clash/Stash YAML/text используют формат приложения. Нужна полная JSON/YAML-подписка, отдельная ссылка VLESS не передаёт маршрутизацию. Клиентский интервал и серверная автозагрузка настраиваются независимо, подробности ниже.'
+                "Панель проверяет размер каждого профиля с учётом разворачивания списков и форматирования в приложении. Небольшие наборы встроены в правила; большие Happ/INCY получают как DAT. Нужна JSON-подписка: включите «Отдавать JSON на базовом пути подписки» либо используйте /json. Сохраните шаблон и обновите подписку."
             ],
             [
                 'When the app downloads geofiles',
-                'By default, GeoIP/GeoSite DAT is embedded in the full configuration as rules. The new switch downloads a converted rule set in supported apps; Xray JSON delivers a DAT bootstrap profile to Happ/INCY and inline rules to other clients. Native sing-box JSON/SRS and Mihomo/Clash/Stash YAML/text use the app format. A full JSON/YAML subscription is required; an individual VLESS link cannot carry routing. Client intervals and server auto downloads are configured separately, as explained below.'
+                "The panel measures each profile including list expansion and client formatting. Small datasets are inline rules; Happ/INCY download large datasets as DAT. A JSON subscription is required: enable “Serve JSON at the base subscription path” or use /json. Save the template and refresh the subscription."
             ],
             [
                 'زمان دانلود فایل‌های جغرافیایی در برنامه',
-                'به‌صورت پیش‌فرض GeoIP/GeoSite DAT به قوانین داخل پیکربندی کامل تبدیل می‌شود. کلید جدید مجموعه تبدیل‌شده را در برنامه پشتیبانی‌شده دانلود می‌کند؛ Xray JSON نمایه دانلود اولیه DAT را به Happ و INCY و قوانین داخلی را به سایر کلاینت‌ها می‌دهد. JSON/SRS بومی sing-box و YAML/text برای Mihomo/Clash/Stash از قالب برنامه استفاده می‌کنند. اشتراک کامل JSON/YAML لازم است؛ پیوند تکی VLESS مسیریابی ندارد. فاصله کلاینت و دانلود خودکار سرور جدا تنظیم می‌شوند؛ جزئیات در ادامه است.'
+                "پنل اندازه هر نمایه را با بازشدن فهرست‌ها و قالب‌بندی برنامه بررسی می‌کند. مجموعه کوچک داخل قوانین است؛ Happ/INCY مجموعه بزرگ را به‌صورت DAT دانلود می‌کنند. اشتراک JSON لازم است: «ارائه JSON در مسیر پایه اشتراک» را فعال کنید یا /json را به‌کار ببرید. قالب را ذخیره و اشتراک را به‌روز کنید."
             ],
             [
                 '应用何时下载地理文件',
@@ -71,7 +71,7 @@ const additions = [
         [
             [
                 'Массовые действия и поиск стран',
-                'Включение, отключение и удаление отвечают после записи в БД; доставка политики нодам запускается в фоне с повторной синхронизацией недоступных нод. Подтверждение сохранения не означает, что отключённая от панели нода уже получила изменение. Кнопки показывают выполнение, список обновляется после подтверждения API. Клонирование выполняет не более трёх запросов одновременно; успешно обработанные источники снимаются с выбора, неудачные остаются для повтора. Во флагах ищите страну на RU/EN/FA/ZH или по двухбуквенному коду независимо от языка интерфейса.'
+                "面板按每个配置计算大小，包含列表展开和客户端格式化开销。小型规则集内嵌，Happ/INCY 下载大型 DAT。需要 JSON 订阅：启用“在订阅基础路径提供 JSON”或使用 /json。保存模板并刷新订阅。"
             ],
             [
                 'Bulk actions and country search',

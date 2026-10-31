@@ -318,6 +318,7 @@ export class AxiosService implements OnModuleInit, OnModuleDestroy {
         clientType?: TRequestTemplateTypeKeys,
         signal?: AbortSignal,
         personalToken?: string,
+        geofileOrigin?: string,
     ): Promise<{
         subscription: Buffer;
         headers: RawAxiosResponseHeaders;
@@ -344,7 +345,10 @@ export class AxiosService implements OnModuleInit, OnModuleDestroy {
                     Pragma: 'no-cache',
                     Expires: '0',
                     [REMNAWAVE_REAL_IP_HEADER]: clientIp,
-                    Authorization: undefined,
+                    Authorization: geofileOrigin
+                        ? `Bearer ${this.configService.getOrThrow('REMNAWAVE_API_TOKEN')}`
+                        : undefined,
+                    'x-remnacust-geofile-origin': geofileOrigin,
                 },
             });
 

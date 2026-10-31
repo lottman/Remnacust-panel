@@ -15,6 +15,7 @@ import {
 import { TypedConfigService } from '@common/config/app-config/typed-config.service';
 import { PrismaService } from '@common/database/prisma.service';
 
+import { requestGeofileBase } from '../../../common/utils/geofile-request-context';
 import { ClientPoolError } from '../generators/client-pool';
 import { SubscriptionTemplateRepository } from '../repositories/subscription-template.repository';
 import { bundleDat } from './bundle-dat';
@@ -59,7 +60,10 @@ export class GeofilesService {
     private readonly bundled = new Map<string, Buffer>();
     private readonly bundlingByKey = new Map<string, Promise<Buffer>>();
     private bundling = 0;
-    private readonly base: string;
+    private readonly defaultBase: string;
+    private get base(): string {
+        return requestGeofileBase(this.defaultBase);
+    }
     private readonly secret: string;
     private readonly refreshStore: GeofileRefreshStore;
     constructor(
@@ -67,7 +71,7 @@ export class GeofilesService {
         private readonly repository: SubscriptionTemplateRepository,
         private readonly prisma: PrismaService,
     ) {
-        this.base = `https://${config.getOrThrow('SUB_PUBLIC_DOMAIN')}/geofiles/`;
+        this.defaultBase = `https://${config.getOrThrow('SUB_PUBLIC_DOMAIN')}/geofiles/`;
         this.secret = config.getOrThrow('APP_SECRET');
         this.refreshStore = new GeofileRefreshStore({
             directory: (id) => this.directory(id),

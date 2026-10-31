@@ -4,11 +4,16 @@ import { Request, Response, NextFunction } from 'express';
 
 import { Injectable, NestMiddleware, Logger } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
+import { JwtService } from '@nestjs/jwt';
 
+import { TypedConfigService } from '@common/config/app-config';
 import { HttpExceptionWithErrorCodeType } from '@common/exception/http-exeception-with-error-code.type';
 import { runSubscriptionWork } from '@common/middlewares/subscription-budget.middleware';
 import { configuredRegex } from '@common/utils/bounded-regex';
 import { extractHwidHeaders } from '@common/utils/extract-hwid-headers/extract-hwid-headers.util';
+import { relayGeofileOrigin } from '@common/utils/geofile-relay-origin';
+import { withGeofileOrigin } from '@common/utils/geofile-request-context';
+import { publicGeofileOrigin } from '@common/utils/public-geofile-origin';
 import { truncateHeader } from '@common/utils/truncate-header.util';
 import {
     ERRORS,
@@ -16,6 +21,7 @@ import {
     TRequestTemplateTypeKeys,
 } from '@libs/contracts/constants';
 
+import { GetTokenByUuidQuery } from '@modules/api-tokens/queries/get-token-by-uuid/get-token-by-uuid.query';
 import { GetCachedSubscriptionSettingsQuery } from '@modules/subscription-settings/queries/get-cached-subscrtipion-settings';
 import { isExtendedClient } from '@modules/subscription-template/constants';
 
@@ -28,6 +34,7 @@ export class ResponseRulesMiddleware implements NestMiddleware {
     constructor(
         private readonly queryBus: QueryBus,
         private readonly matcher: ResponseRulesMatcherService,
+        private readonly config: TypedConfigService,
     ) {}
 
     async use(
@@ -36,7 +43,23 @@ export class ResponseRulesMiddleware implements NestMiddleware {
         next: NextFunction,
     ) {
         try {
-            await runSubscriptionWork(res, () => this.applyRules(req, res, next));
+            await runSubscriptionWork(res, async () => {
+                const relayed = await relayGeofileOrigin(
+                    req.headers,
+                    (token) =>
+                        new JwtService().verifyAsync(token, {
+                            secret: this.config.getOrThrow('APP_SECRET'),
+                            algorithms: ['HS256'],
+                        }),
+                    async (uuid) => {
+                        const token = await this.queryBus.execute(new GetTokenByUuidQuery(uuid));
+                        return token?.isOk ? token.response : undefined;
+                    },
+                );
+                return withGeofileOrigin(relayed ?? publicGeofileOrigin(req.headers.host), () =>
+                    this.applyRules(req, res, next),
+                );
+            });
         } catch (error) {
             next(error);
         }

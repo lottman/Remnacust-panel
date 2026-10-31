@@ -4,7 +4,7 @@ const path = require('node:path');
 const fs = require('node:fs');
 const { EventEmitter } = require('node:events');
 const load = require('./load-typescript.cjs');
-const axiosMocks = {'@common/axios/axios.service': {}};
+const axiosMocks = {'@common/axios/axios.service': {}, '../../common/utils/public-geofile-origin': load(path.join(__dirname,'../src/common/utils/public-geofile-origin.ts'))};
 function response() {
     const res = new EventEmitter(); res.headers = {}; res.cookies = [];
     res.set = (name, value) => {if (typeof name === 'object') Object.assign(res.headers,name);else res.headers[name]=value;return res;};
@@ -161,4 +161,14 @@ test('navigation rejects executable URL schemes and control-character bypasses w
         'clash://install-config?url=https%3A%2F%2Fexample.com','mailto:support@example.com']) {
         assert.equal(isSafeNavigationUrl(value),true,value);
     }
+});
+
+test('request filtering retains authority locally and relays only the URL authority, never client origin headers',async()=>{
+    const {headerFilterMiddleware}=load(path.join(__dirname,'../src/common/middlewares/header-filter.middleware.ts'),{'@common/constants':{IGNORED_HEADERS:new Set(['host','authorization','x-remnacust-geofile-origin'])}});
+    const req={headers:{host:'cdn.example.test:8443','user-agent':'INCY/2.6.2/iOS',authorization:'client-secret','x-remnacust-geofile-origin':'https://evil.test','x-forwarded-host':'evil.test'}};
+    headerFilterMiddleware(req,{},()=>{});
+    assert.equal(req.headers.host,'cdn.example.test:8443');assert.equal(req.headers.authorization,undefined);assert.equal(req.headers['x-remnacust-geofile-origin'],undefined);
+    let args;const service=new SubscriptionService({getSubscription:async(...values)=>{args=values;return{subscription:Buffer.from('[{}]'),headers:{}}}});
+    await service.serveSubscriptionPage('192.0.2.1',req,response(),'fixture');
+    assert.equal(args[7],'https://cdn.example.test:8443');
 });

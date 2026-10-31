@@ -13,7 +13,7 @@ const { AxiosService } = load(path.join(__dirname, '../src/common/axios/axios.se
 
 test('subscription metadata cannot replace gateway credentials or forward hop-by-hop headers', () => {
     assert.deepEqual(headersModule.subscriptionRequestHeaders({
-        authorization: 'client', cookie: 'client', 'x-api-key': 'client',
+        authorization: 'client', cookie: 'client', 'x-api-key': 'client', 'x-remnacust-geofile-origin':'https://evil.test',
         'cf-access-client-secret': 'client', 'x-forwarded-for': 'spoofed',
         connection: 'x-hop', 'x-hop': 'discard', host: 'evil.test',
         'user-agent': 'INCY/2.6.2', 'x-hwid': 'test-device', 'x-custom-rule': 'keep',
@@ -58,6 +58,10 @@ test('real HTTP transport reuses connections, proxies device formats and refuses
             assert.equal(headers['x-hwid'], 'fixture-device');
             assert.equal(headers['user-agent'], 'INCY/2.6.2');
         }
+        await service.getSubscription('192.0.2.1', 'fixture123', {...supplied,'x-remnacust-geofile-origin':'https://evil.test'}, false, undefined, undefined, undefined, 'https://cdn.example.test');
+        assert.equal(requests.at(-1).headers['x-remnacust-geofile-origin'],'https://cdn.example.test');
+        assert.equal(requests.at(-1).headers.authorization,'Bearer configured-panel');
+        assert(requests.at(-1).headers.host.startsWith('127.0.0.1:'),'CDN authority must not change the actual upstream');
         await assert.rejects(service.getSubscription('192.0.2.1', 'redirect', {}), /UPSTREAM_SUBSCRIPTION_UNAVAILABLE/);
         assert.equal(redirected, 0);
         assert.equal(service.axiosInstance.defaults.httpAgent.maxSockets, 32);

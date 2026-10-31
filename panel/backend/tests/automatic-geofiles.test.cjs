@@ -77,7 +77,7 @@ test('the independent transport cap is not misclassified as a per-host geofile l
  assert.deepEqual(f.calls,['inline']);
 });
 test('two individually small files can exceed the complete profile budget and trigger one DAT bundle',async()=>{
- const records=Array.from({length:18000},(_,i)=>fixture.bytes(2,fixture.domain(2,`host-${i}.example.test`)));
+ const records=Array.from({length:12000},(_,i)=>fixture.bytes(2,fixture.domain(2,`host-${i}.example.test`)));
  const rules=fixture.bytes(1,Buffer.concat([fixture.bytes(1,'EXAMPLE'),...records]));
  const small=setup({rules});assert.equal((await render(small)).inline,true);
  const f=setup({rules,refs:2,profiles:3});const r=await render(f);const p=decode(r.header);
@@ -92,11 +92,21 @@ test('large single files can be validated for native download without allocating
  assert.throws(()=>compileDat(data,'geosite',['missing'],true),/empty/);
  const f=setup({rules:data});const r=await render(f);assert.equal(r.inline,false);assert.deepEqual(f.calls,['inline','remote']);
 });
-test('inline StringList compaction is tried before enabling downloads',async()=>{
- const calls=[];const networks=Array.from({length:26000},(_,i)=>`100.${i>>8}.${i&255}.0/24`);
- const r=await automaticXrayDelivery({client:'incy',manualRouting:false,title:'Test',profileKey:'id',generate:async d=>{calls.push(d.mode);d.registerInline();return JSON.stringify([{inbounds:[],outbounds:[],routing:{rules:[{ip:networks,outboundTag:'direct'}]}}]);}});
- assert.deepEqual(calls,['inline']);assert.equal(r.inline,true);assert.deepEqual(JSON.parse(r.subscription)[0].routing.rules[0].ip.split(','),networks);
+test('StringList wire compaction cannot keep an iOS-sized profile in inline delivery',async()=>{
+ for(const client of ['incy','happ']){
+  const calls=[];const networks=Array.from({length:26000},(_,i)=>`100.${i>>8}.${i&255}.0/24`);
+  const r=await automaticXrayDelivery({client,manualRouting:false,title:'Test',profileKey:'id',generate:async d=>{
+   calls.push(d.mode);
+   if(d.mode==='inline'){d.registerInline();return JSON.stringify([{inbounds:[],outbounds:[],routing:{rules:[{ip:networks,outboundTag:'direct'}]}}]);}
+   const refs=d.register('geoip',{id:source(0),categories:['example'],target:'DIRECT'},async()=> 'https://subscription.test/combined.dat');
+   return JSON.stringify([{inbounds:[],outbounds:[],routing:{rules:[{ip:refs,outboundTag:'direct'}]}}]);
+  }});
+  assert.deepEqual(calls,['inline','remote']);assert.equal(r.inline,false);
+  assert.equal(decode(r.header).Geoipurl.startsWith('https://subscription.test/combined.dat'),true);
+  assert(JSON.parse(r.subscription)[0].routing.rules[0].ip[0].startsWith('geoip:'));
+ }
 });
+
 test('bundle failure, unrelated oversized data and manual routing conflicts fail without returning broken configurations',async()=>{
  const records=Array.from({length:40000},(_,i)=>fixture.bytes(2,fixture.domain(2,`host-${i}.example.test`)));
  const rules=fixture.bytes(1,Buffer.concat([fixture.bytes(1,'EXAMPLE'),...records]));

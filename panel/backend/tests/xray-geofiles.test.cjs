@@ -271,7 +271,7 @@ test('request-local renderer delivers Happ and INCY profiles, preserves manual h
 });
 
 test('INCY compaction runs after geofile collection, including manual routing and bundle fallback', async () => {
-    const networks = Array.from({length:26000}, (_,i)=>`100.${i >> 8}.${i & 255}.0/24`);
+    const networks = Array.from({length:10000}, (_,i)=>`100.${i >> 8}.${i & 255}.0/24`);
     let failBundle = false;
     const generator = {async generateConfig({geofileDelivery}) {
         geofileDelivery?.registerInline();
@@ -303,6 +303,18 @@ test('INCY compaction runs after geofile collection, including manual routing an
             assert.equal(JSON.parse(Buffer.from(context.headersToApply.routing.split('/onadd/')[1],'base64')).Geositeurl,'');
             assert.equal(context.headersToApply['x-remnacust-geofiles-delivery'],'inline');
         }
+    }
+});
+
+test('oversized unmanaged StringLists are rejected instead of disguised by wire compaction', async () => {
+    const networks = Array.from({length:26000}, (_,i)=>`100.${i >> 8}.${i & 255}.0/24`);
+    const generator={async generateConfig(){return JSON.stringify([{inbounds:[],outbounds:[],routing:{rules:[{ip:networks,outboundTag:'direct'}]}}]);}};
+    const renderer=new RenderTemplatesService({resolveProxyConfig:async()=>[]},null,null,null,null,generator);
+    for(const client of ['INCY/2.6.2/iOS','Happ/6.2.0'])for(const manual of [false,true]){
+        const context={userAgent:client,matchedResponseType:'XRAY_JSON',isExtendedClient:true,subscriptionSettings:{}};
+        if(manual)context.headersToApply={Routing:'off'};
+        await assert.rejects(renderer.generateSubscription({srrContext:context,user:{id:42},hosts:[]}),/geofile-client-config-size-limit/);
+        if(manual)assert.deepEqual(context.headersToApply,{Routing:'off'});
     }
 });
 

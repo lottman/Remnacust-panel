@@ -91,7 +91,7 @@ The panel scheduler enqueues an expiry check every 30 seconds in USERS_WATCHDOG_
 
 ### Freeze a subscription
 
-Choose Freeze in the user menu: ordinary access is paused and the remaining lifetime is retained. Two days remaining stay two days until activation. Resuming sets the new expiry from that remainder; repeating Freeze does not change it. Zero remaining time or an exhausted quota does not grant access. Extending adds to the remainder. Expired subscriptions cannot be frozen. The open menu disables Freeze automatically at expiry; the saved remainder is formatted independently of the current date. A blue saved remainder replaces the date editor. Active expiry warnings turn yellow at three days and red on expiry. Freezing itself does not reset usage; scheduled traffic resets continue. The state survives restarts and export/import. Bulk freezes synchronize each user’s device access through the queue.
+Choose Freeze in the user menu: ordinary access is paused and the remaining lifetime is retained. Two days remaining stay two days until activation. Resuming sets the new expiry from that remainder; repeating Freeze does not change it. Zero remaining time or an exhausted quota does not grant access. Extending adds to the remainder. Expired subscriptions can be frozen with zero remaining time; the saved remainder is formatted independently of the current date. A blue saved remainder replaces the date editor. Active expiry warnings turn yellow at three days and red on expiry. Freezing itself does not reset usage; scheduled traffic resets continue. The state survives restarts and export/import. Bulk freezes synchronize each user’s device access through the queue.
 
 ### Device subscription preview
 
@@ -99,7 +99,7 @@ Select an already registered device, format and User-Agent in the device card an
 
 ### Fields and controls
 
-- **Status**: ACTIVE means active, DISABLED disabled, EXPIRED expired, LIMITED quota exhausted, and FROZEN pauses access while retaining the remaining subscription lifetime until resumption. Expired accounts cannot be frozen. Connecting requires valid lifetime, traffic and host access.
+- **Status**: ACTIVE means active, DISABLED disabled, EXPIRED expired, LIMITED quota exhausted, and FROZEN pauses access while retaining the remaining subscription lifetime until resumption. Expired accounts freeze with zero remaining time; the expiry cannot be edited while frozen. Connecting requires valid lifetime, traffic and host access.
 - **Expiry date**: Subscription expiry date and time. Choose a future date for a valid subscription and use the time zone shown in the form.
 - **Telegram ID**: Numeric user Telegram ID, distinct from a username or backup-delivery chat ID.
 - **Email**: User contact/search field; it does not grant inbound access.
@@ -109,6 +109,7 @@ Select an already registered device, format and User-Agent in the device card an
 - **External squad**: External squad with its own subscription delivery settings. Select it when the user needs that group’s template or subscription page.
 - **Expiry date**: The lifetime and access are paused. The saved remainder resumes on activation. The date cannot be edited while frozen.
 - **Internal squads**: Internal squads granting the user access to selected inbounds. Multiple squads can be assigned.
+- **Subscription domain**: UUID of a registered primary or CDN domain. Empty uses the default domain.
 - **Username**: Account name used to find and manage the user. It must be available when creating an account.
 
 ## User actions and details
@@ -137,7 +138,7 @@ Squad, traffic, expiry, device and status changes affect each recipient. Review 
 
 ### Fields and controls
 
-- **Status**: ACTIVE means active, DISABLED disabled, EXPIRED expired, LIMITED quota exhausted, and FROZEN pauses access while retaining the remaining subscription lifetime until resumption. Expired accounts cannot be frozen. Connecting requires valid lifetime, traffic and host access.
+- **Status**: ACTIVE means active, DISABLED disabled, EXPIRED expired, LIMITED quota exhausted, and FROZEN pauses access while retaining the remaining subscription lifetime until resumption. Expired accounts freeze with zero remaining time; the expiry cannot be edited while frozen. Connecting requires valid lifetime, traffic and host access.
 - **Expiry date**: Subscription expiry date and time. Choose a future date for a valid subscription and use the time zone shown in the form.
 - **Telegram ID**: Numeric user Telegram ID, distinct from a username or backup-delivery chat ID.
 - **Email**: User contact/search field; it does not grant inbound access.
@@ -798,6 +799,12 @@ During page installation or migration, choose the local panel or another panel�
 - **Fallback device limit**: Device limit for users without an individual limit. For example, 3 allows up to three registered devices; 0 removes the count limit.
 - **Max devices announce**: Device-count announcement sent to a compatible app with the subscription. An empty value leaves the announcement unset.
 - **Response headers**: Headers that will be sent with the subscription content.
+- **Name**: Object display name. UUID remains a separate identifier.
+- **Domain**: Use a public hostname only, without protocol, port or path.
+- **Subscription path**: Optional subscription path, such as /api/sub. It must match the page and proxy configuration.
+- **Type**: Primary subscription domain or CDN address. A CDN must belong to a primary domain.
+- **Primary domain**: UUID of the primary domain associated with this CDN.
+- **Make the primary domain**: Use this primary domain for users without an explicit domain assignment.
 
 ## Subscription response rules
 
@@ -1023,7 +1030,7 @@ Share the token only with a trusted integration. If exposed, delete it and creat
 
 ### User-management bots and permanent access
 
-The Users preset permits creating, editing, freezing/resuming users, resetting traffic, reading subscription keys and managing HWID devices; internal/external squad lists are read-only. It excludes panel settings, servers, backups and token administration. In the user API, set status FROZEN to freeze and ACTIVE to resume. Required scope: users:update, users:write or users:*. Expired accounts cannot be frozen. When creating a token select No expiration: expiresInDays: null stores expireAt: null and signs a JWT without exp with an explicit permanent marker. No fabricated distant date is used. Every request checks deletion and current scopes in the database. Editing names/permissions preserves token value and expiry; create a replacement and delete the old token to change lifetime. The minimum subscription-page preset contains only system:metadata, subscriptions:subpage-config, subscription-page-configs:get and subscription-page-configs:list. Add users:by-username separately only for enabled Marzban legacy-link compatibility.
+The Users preset permits creating, editing, freezing/resuming users, resetting traffic, reading subscription keys and managing HWID devices; internal/external squad lists are read-only. It excludes panel settings, servers, backups and token administration. In the user API, set status FROZEN to freeze and ACTIVE to resume. Required scope: users:update, users:write or users:*. Expired accounts freeze with zero remaining time. When creating a token select No expiration: expiresInDays: null stores expireAt: null and signs a JWT without exp with an explicit permanent marker. No fabricated distant date is used. Every request checks deletion and current scopes in the database. Editing names/permissions preserves token value and expiry; create a replacement and delete the old token to change lifetime. The minimum subscription-page preset contains only system:metadata, subscriptions:subpage-config, subscription-page-configs:get and subscription-page-configs:list. Add users:by-username separately only for enabled Marzban legacy-link compatibility.
 
 ### Fields and controls
 

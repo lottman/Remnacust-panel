@@ -27,6 +27,7 @@ import { subscriptionRequestHeaders } from './subscription-request-headers';
 export class AxiosService implements OnModuleInit, OnModuleDestroy {
     private readonly logger = new Logger(AxiosService.name);
     private subpageVersion = __RW_SUBPAGE_VERSION__;
+    private readonly privatePanelUrl: URL;
 
     public axiosInstance: AxiosInstance;
     private readonly httpAgent = new HttpAgent({
@@ -43,6 +44,7 @@ export class AxiosService implements OnModuleInit, OnModuleDestroy {
     });
 
     constructor(private readonly configService: TypedConfigService) {
+        this.privatePanelUrl = new URL(this.configService.getOrThrow('REMNAWAVE_PANEL_URL'));
         this.axiosInstance = axios.create({
             baseURL: this.configService.getOrThrow('REMNAWAVE_PANEL_URL'),
             timeout: 10_000,
@@ -97,7 +99,7 @@ export class AxiosService implements OnModuleInit, OnModuleDestroy {
     async onModuleInit(): Promise<void> {
         this.subpageVersion = __RW_SUBPAGE_VERSION__;
 
-        this.logger.log(`Remnawave API URL: ${this.axiosInstance.defaults.baseURL}`);
+        this.logger.log('Private Remnawave upstream is configured.');
 
         const remnawaveMetadata = await this.getRemnawaveMetadata();
         if (!remnawaveMetadata.isOk || !remnawaveMetadata.remnawaveVersion) {
@@ -352,11 +354,26 @@ export class AxiosService implements OnModuleInit, OnModuleDestroy {
                 },
             });
 
-            return {
-                subscription: response.data,
-                headers: Object.fromEntries(
-                    Object.entries(response.headers).filter(([key]) => !IGNORED_HEADERS.has(key)),
+            const responseHeaders = Object.fromEntries(
+                Object.entries(response.headers).filter(
+                    ([key, value]) =>
+                        !IGNORED_HEADERS.has(key) &&
+                        !this.containsPrivatePanelAddress(String(value)),
                 ),
+            );
+            const subscription = Buffer.isBuffer(response.data)
+                ? response.data
+                : Buffer.from(response.data);
+            if (this.containsPrivatePanelAddress(subscription.toString('utf8'))) {
+                this.logger.error(
+                    'Refused a subscription response containing the private panel address.',
+                );
+                throw new Error('PRIVATE_PANEL_ADDRESS_DISCLOSURE');
+            }
+
+            return {
+                subscription,
+                headers: responseHeaders,
             };
         } catch (error) {
             if (error instanceof AxiosError) {
@@ -373,5 +390,13 @@ export class AxiosService implements OnModuleInit, OnModuleDestroy {
 
             throw new Error('UPSTREAM_SUBSCRIPTION_UNAVAILABLE');
         }
+    }
+
+    private containsPrivatePanelAddress(value: string): boolean {
+        const normalized = value.toLowerCase();
+        return (
+            normalized.includes(this.privatePanelUrl.origin.toLowerCase()) ||
+            normalized.includes(this.privatePanelUrl.host.toLowerCase())
+        );
     }
 }

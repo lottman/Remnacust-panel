@@ -37,6 +37,7 @@ const entityToModel = (entity: BaseUserEntity): Users => {
         hwidDeviceLimit: entity.hwidDeviceLimit,
 
         externalSquadUuid: entity.externalSquadUuid,
+        subscriptionDomainUuid: entity.subscriptionDomainUuid,
 
         lastTrafficResetAt: entity.lastTrafficResetAt,
         lastTriggeredThreshold: entity.lastTriggeredThreshold,

@@ -213,7 +213,8 @@ export class TemplateEngine {
             USERNAME: () => user.username,
             EMAIL: () => user.email || '',
             TELEGRAM_ID: () => user.telegramId?.toString() || '',
-            SUBSCRIPTION_URL: () => `https://${subPublicDomain}/${user.shortUuid}`,
+            SUBSCRIPTION_URL: () =>
+                `https://${user.subscriptionDomain ? `${user.subscriptionDomain.domain}${user.subscriptionDomain.path}` : subPublicDomain}/${user.shortUuid}`,
             TAG: () => user.tag || '',
             EXPIRE_UNIX: () => dayjs(effectiveUserExpiry(user)).unix(),
             SHORT_UUID: () => user.shortUuid,

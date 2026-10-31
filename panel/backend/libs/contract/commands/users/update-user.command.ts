@@ -52,7 +52,8 @@ export namespace UpdateUserCommand {
             email: z.email().nullish(),
             hwidDeviceLimit: z.int().min(0).nullish(),
             activeInternalSquads: z.array(z.uuid()).optional(),
-            externalSquadUuid: z
+            subscriptionDomainUuid: z.uuid().nullable().optional().describe('Registered subscription domain UUID. Null uses the default domain.'),
+        externalSquadUuid: z
                 .optional(z.nullable(z.uuid()))
                 .describe('Optional. External squad UUID.'),
         })

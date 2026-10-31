@@ -494,7 +494,7 @@ export class SubscriptionService {
                     ...headers,
                     ...(personalCredentialsReady && hwidHeaders
                         ? {
-                              'x-device-subscription-url': `https://${this.subPublicDomain}/${shortUuid}/device/${this.deviceAccess.linkToken(user.response, hwidHeaders.hwid)}`,
+                              'x-device-subscription-url': `https://${user.response.subscriptionDomain ? `${user.response.subscriptionDomain.domain}${user.response.subscriptionDomain.path}` : this.subPublicDomain}/${shortUuid}/device/${this.deviceAccess.linkToken(user.response, hwidHeaders.hwid)}`,
                           }
                         : {}),
                 },
@@ -994,7 +994,7 @@ export class SubscriptionService {
             },
             links,
             ssConfLinks,
-            subscriptionUrl: this.resolveSubscriptionUrl(user.shortUuid),
+            subscriptionUrl: `https://${user.subscriptionDomain ? `${user.subscriptionDomain.domain}${user.subscriptionDomain.path}` : this.subPublicDomain}/${user.shortUuid}`,
         });
     }
 
@@ -1635,10 +1635,6 @@ export class SubscriptionService {
 
             return;
         }
-    }
-
-    private resolveSubscriptionUrl(shortUuid: string): string {
-        return `https://${this.subPublicDomain}/${shortUuid}`;
     }
 
     private async updateAndReportSubscriptionRequest(args: ISubscriptionRequest): Promise<void> {

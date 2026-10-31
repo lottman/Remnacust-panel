@@ -1,5 +1,35 @@
 // Each tuple is RU, EN, FA, ZH. Keep field names aligned with the actual forms.
 export const operatorFieldHelp = {
+    kind: [
+        'Основной домен или CDN-адрес подписки. CDN должен быть связан с основным доменом.',
+        'Primary subscription domain or CDN address. A CDN must belong to a primary domain.',
+        'دامنه اصلی اشتراک یا آدرس CDN. CDN باید به یک دامنه اصلی متصل باشد.',
+        '主订阅域名或 CDN 地址。CDN 必须关联主域名。'
+    ],
+    parentUuid: [
+        'UUID основного домена, к которому привязан CDN.',
+        'UUID of the primary domain associated with this CDN.',
+        'شناسه UUID دامنه اصلی مرتبط با این CDN.',
+        '此 CDN 关联的主域名 UUID。'
+    ],
+    isDefault: [
+        'Использовать этот основной домен для пользователей без отдельной привязки.',
+        'Use this primary domain for users without an explicit domain assignment.',
+        'از این دامنه اصلی برای کاربران بدون دامنه اختصاصی استفاده شود.',
+        '为未指定域名的用户使用此主域名。'
+    ],
+    path: [
+        'Необязательный общий путь подписки, например /api/sub. Он должен соответствовать настройкам страницы и прокси.',
+        'Optional subscription path, such as /api/sub. It must match the page and proxy configuration.',
+        'مسیر اختیاری اشتراک مانند /api/sub؛ باید با تنظیمات صفحه و پراکسی یکسان باشد.',
+        '可选订阅路径，例如 /api/sub。必须与页面和代理配置一致。'
+    ],
+    subscriptionDomainUuid: [
+        'UUID зарегистрированного основного или CDN-домена. Пустое значение использует домен по умолчанию.',
+        'UUID of a registered primary or CDN domain. Empty uses the default domain.',
+        'شناسه UUID دامنه اصلی یا CDN ثبت‌شده؛ مقدار خالی از پیش‌فرض استفاده می‌کند.',
+        '已注册主域名或 CDN 域名的 UUID。留空使用默认域名。'
+    ],
     deviceSpeedLimitMbps: [
         'Скорость одного приватного ключа устройства на этом хосте, Mbps. Все соединения, загрузка и отдача делят предел. 0 отключает свой предел; лимит пользователя остаётся. Действует с совместимыми нодой и ядром.',
         'Speed ceiling for one private device key on this host, in Mbps. All connections and both directions share it. Zero removes this cap; the user ceiling still applies. Requires compatible node and core.',
@@ -31,10 +61,10 @@ export const operatorFieldHelp = {
         '供管理员查看的记录说明，可填写服务条件或配置备注。'
     ],
     status: [
-        'ACTIVE — активен, DISABLED — отключён, EXPIRED — срок истёк, LIMITED — общая квота исчерпана, FROZEN — доступ приостановлен с сохранением остатка срока до активации. Истёкший аккаунт заморозить нельзя. Для подключения нужны действующий срок, трафик и доступ к хосту.',
-        'ACTIVE means active, DISABLED disabled, EXPIRED expired, LIMITED quota exhausted, and FROZEN pauses access while retaining the remaining subscription lifetime until resumption. Expired accounts cannot be frozen. Connecting requires valid lifetime, traffic and host access.',
-        'ACTIVE فعال، DISABLED غیرفعال، EXPIRED منقضی، LIMITED پایان سهمیه و FROZEN توقف دسترسی با حفظ زمان باقی‌مانده تا فعال‌سازی است. حساب منقضی قابل تعلیق نیست. اتصال به زمان معتبر، ترافیک و دسترسی میزبان نیاز دارد.',
-        'ACTIVE 为启用，DISABLED 为停用，EXPIRED 为过期，LIMITED 为配额耗尽，FROZEN 为暂停访问并保留剩余订阅时长，直到恢复。已过期账户不能冻结。连接需要有效时长、流量和主机访问权限。'
+        'ACTIVE — активен, DISABLED — отключён, EXPIRED — срок истёк, LIMITED — общая квота исчерпана, FROZEN — доступ приостановлен с сохранением остатка срока до активации. Истёкший аккаунт замораживается с нулевым остатком; новая дата при заморозке не задаётся. Для подключения нужны действующий срок, трафик и доступ к хосту.',
+        'ACTIVE means active, DISABLED disabled, EXPIRED expired, LIMITED quota exhausted, and FROZEN pauses access while retaining the remaining subscription lifetime until resumption. Expired accounts freeze with zero remaining time; the expiry cannot be edited while frozen. Connecting requires valid lifetime, traffic and host access.',
+        'ACTIVE فعال، DISABLED غیرفعال، EXPIRED منقضی، LIMITED پایان سهمیه و FROZEN توقف دسترسی با حفظ زمان باقی‌مانده تا فعال‌سازی است. حساب منقضی با زمان صفر تعلیق می‌شود و تاریخ آن قابل ویرایش نیست. اتصال به زمان معتبر، ترافیک و دسترسی میزبان نیاز دارد.',
+        'ACTIVE 为启用，DISABLED 为停用，EXPIRED 为过期，LIMITED 为配额耗尽，FROZEN 为暂停访问并保留剩余订阅时长，直到恢复。已过期账户冻结后剩余时间为零，冻结期间不可编辑到期日期。连接需要有效时长、流量和主机访问权限。'
     ],
     expireAt: [
         'Дата и время окончания подписки. Укажите будущую дату для действующей подписки и учитывайте часовой пояс, показанный в форме.',

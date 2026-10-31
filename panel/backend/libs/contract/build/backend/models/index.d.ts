@@ -42,4 +42,5 @@ export * from './xray-json-advanced';
 export * from './path-params.schema';
 export * from './host-mapper';
 export * from './ssh-terminal.schema';
+export * from './subscription-domain.schema';
 //# sourceMappingURL=index.d.ts.map

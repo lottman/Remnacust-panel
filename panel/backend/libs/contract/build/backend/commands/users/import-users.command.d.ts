@@ -11,6 +11,7 @@ export declare namespace ImportUsersCommand {
             vlessUuid: z.ZodOptional<z.ZodGUID>;
             ssPassword: z.ZodOptional<z.ZodString>;
             lastTrafficResetAt: z.ZodOptional<z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>>;
+            subscriptionDomainUuid: z.ZodOptional<z.ZodNullable<z.ZodUUID>>;
             externalSquadUuid: z.ZodOptional<z.ZodNullable<z.ZodUUID>>;
             status: z.ZodOptional<z.ZodNullable<z.ZodOptional<z.ZodDefault<z.ZodEnum<{
                 readonly ACTIVE: "ACTIVE";

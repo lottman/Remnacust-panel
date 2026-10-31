@@ -17,6 +17,7 @@ export const UsersSchema = z.object({
     description: z.nullable(z.string()),
     tag: z.nullable(z.string()),
     hwidDeviceLimit: z.nullable(z.int()),
+    subscriptionDomainUuid: z.uuid().nullable().optional(),
     externalSquadUuid: z.nullable(z.uuid()),
     trojanPassword: z.string(),
     vlessUuid: z.guid(),

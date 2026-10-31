@@ -15,11 +15,16 @@ test('user-management preset includes freeze/update and devices but excludes unr
     assert.ok(keys.some(key=>key.startsWith('hwid-user-devices:')));
     assert.ok(!keys.includes('*'));
     assert.deepEqual(fixture.catalog.findInvalidScopes(keys),[]);
-    for(const key of keys) assert.ok(key.startsWith('users:')||key.startsWith('hwid-user-devices:')||resources.some(r=>['internal-squads','external-squads','subscriptions'].includes(r.resource)&&r.endpoints.some(e=>e.key===key&&e.kind==='read')),key);
+    for(const key of keys) assert.ok(key.startsWith('users:')||key.startsWith('hwid-user-devices:')||resources.some(r=>['internal-squads','external-squads','subscriptions','subscription-domains'].includes(r.resource)&&r.endpoints.some(e=>e.key===key&&e.kind==='read')),key);
+    assert.ok(keys.includes('subscription-domains:list'));
+    assert.ok(keys.includes('subscription-domains:get'));
+    assert.ok(!keys.includes('subscription-domains:create'));
+    assert.ok(!keys.includes('subscription-domains:update'));
+    assert.ok(!keys.includes('subscription-domains:delete'));
     const endpoint=fixture.endpoints.find(e=>e.method==='PATCH'&&e.url==='/api/users');
     assert.ok(endpoint);assert.equal(fixture.authorize(endpoint,fixture.ROLE.API,keys),true);
     assert.equal(fixture.authorize(endpoint,fixture.ROLE.API,['users:read']),false);
-    for(const resource of resources.filter(r=>!['users','hwid-user-devices','internal-squads','external-squads','subscriptions'].includes(r.resource))) {
+    for(const resource of resources.filter(r=>!['users','hwid-user-devices','internal-squads','external-squads','subscriptions','subscription-domains'].includes(r.resource))) {
         assert.ok(resource.endpoints.every(e=>!keys.includes(e.key)),resource.resource);
     }
 });

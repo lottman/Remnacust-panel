@@ -14,10 +14,22 @@ export const getUserManagementKeys = (resources: readonly Resource[]): string[] 
         resource.resource === 'users' || resource.resource === 'hwid-user-devices'
             ? resource.endpoints.map((endpoint) => endpoint.key)
             : resource.resource === 'internal-squads' || resource.resource === 'external-squads'
-              ? resource.endpoints.filter((endpoint) => endpoint.kind === 'read').map((endpoint) => endpoint.key)
+              ? resource.endpoints
+                    .filter((endpoint) => endpoint.kind === 'read')
+                    .map((endpoint) => endpoint.key)
               : resource.resource === 'subscriptions'
-                ? resource.endpoints.filter((endpoint) => endpoint.kind === 'read' && USER_SUBSCRIPTION_READ_KEYS.has(endpoint.key)).map((endpoint) => endpoint.key)
-              : []
+                ? resource.endpoints
+                      .filter(
+                          (endpoint) =>
+                              endpoint.kind === 'read' &&
+                              USER_SUBSCRIPTION_READ_KEYS.has(endpoint.key)
+                      )
+                      .map((endpoint) => endpoint.key)
+                : resource.resource === 'subscription-domains'
+                  ? resource.endpoints
+                        .filter((endpoint) => endpoint.kind === 'read')
+                        .map((endpoint) => endpoint.key)
+                  : []
     )
 
 export const SUBSCRIPTION_PAGE_SCOPES = [

@@ -26,6 +26,7 @@ export declare const UsersSchema: z.ZodObject<{
     description: z.ZodNullable<z.ZodString>;
     tag: z.ZodNullable<z.ZodString>;
     hwidDeviceLimit: z.ZodNullable<z.ZodInt>;
+    subscriptionDomainUuid: z.ZodOptional<z.ZodNullable<z.ZodUUID>>;
     externalSquadUuid: z.ZodNullable<z.ZodUUID>;
     trojanPassword: z.ZodString;
     vlessUuid: z.ZodGUID;

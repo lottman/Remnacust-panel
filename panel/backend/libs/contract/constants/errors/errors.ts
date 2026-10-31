@@ -126,10 +126,10 @@ export const ERRORS = {
         message: 'Resume the frozen user before disabling',
         httpCode: 409,
     },
-    USER_FREEZE_EXPIRED: {
-        code: 'A902',
-        message: 'An expired subscription cannot be frozen',
-        httpCode: 409,
+    SUBSCRIPTION_DOMAIN_NOT_FOUND: {
+        code: 'A903',
+        message: 'Subscription domain does not exist',
+        httpCode: 400,
     },
     USER_ALREADY_ENABLED: {
         code: 'A030',
@@ -1321,7 +1321,8 @@ export const ERRORS = {
     },
     HWID_DEVICE_ENFORCEMENT_UNAVAILABLE: {
         code: 'A262',
-        message: 'HWID traffic blocking requires personal device credentials and a node with active-session revocation',
+        message:
+            'HWID traffic blocking requires personal device credentials and a node with active-session revocation',
         httpCode: 409,
     },
 } as const;

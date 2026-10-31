@@ -27,7 +27,7 @@ function load(relative) {
     }).outputText;
     new Function('require', 'module', 'exports', js)(id => {
         if (aliases[id]) return load(aliases[id]);
-        if (id === 'zod') return require('zod');
+        if (id === 'zod' || id === 'nestjs-zod') return require(id);
         if (id === './limit-selection') return load('src/modules/hosts/limit-selection.ts');
         if (id.startsWith('@contract/') || id.startsWith('@libs/contracts/'))
             return require(path.join(root, 'libs/contract/build/backend', id.replace(/^@(contract|libs\/contracts)\//, '')));

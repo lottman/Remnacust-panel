@@ -42,6 +42,7 @@ var UpdateUserCommand;
         email: zod_1.z.email().nullish(),
         hwidDeviceLimit: zod_1.z.int().min(0).nullish(),
         activeInternalSquads: zod_1.z.array(zod_1.z.uuid()).optional(),
+        subscriptionDomainUuid: zod_1.z.uuid().nullable().optional().describe('Registered subscription domain UUID. Null uses the default domain.'),
         externalSquadUuid: zod_1.z
             .optional(zod_1.z.nullable(zod_1.z.uuid()))
             .describe('Optional. External squad UUID.'),

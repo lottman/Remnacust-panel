@@ -36,6 +36,7 @@ __exportStar(require("./remnawave-settings"), exports);
 __exportStar(require("./snippets"), exports);
 __exportStar(require("./subscription"), exports);
 __exportStar(require("./subscription-page-configs"), exports);
+__exportStar(require("./subscription-domains"), exports);
 __exportStar(require("./subscription-request-history"), exports);
 __exportStar(require("./subscription-settings"), exports);
 __exportStar(require("./subscription-template"), exports);

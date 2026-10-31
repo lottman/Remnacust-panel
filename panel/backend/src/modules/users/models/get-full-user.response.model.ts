@@ -39,6 +39,8 @@ export class GetFullUserResponseModel {
     public readonly updatedAt: Date;
 
     public readonly subscriptionUrl: string;
+    public readonly subscriptionDomainUuid: string | null;
+    public readonly subscriptionDomain: UserEntity['subscriptionDomain'];
     public readonly activeInternalSquads: Omit<
         InternalSquadEntity,
         'createdAt' | 'tags' | 'updatedAt' | 'viewPosition'
@@ -84,7 +86,12 @@ export class GetFullUserResponseModel {
         this.createdAt = entity.createdAt;
         this.updatedAt = entity.updatedAt;
 
-        this.subscriptionUrl = `https://${subPublicDomain}/${entity.shortUuid}`;
+        this.subscriptionDomainUuid = entity.subscriptionDomainUuid ?? null;
+        this.subscriptionDomain = entity.subscriptionDomain ?? null;
+        const domain = entity.subscriptionDomain
+            ? `${entity.subscriptionDomain.domain}${entity.subscriptionDomain.path}`
+            : subPublicDomain;
+        this.subscriptionUrl = `https://${domain}/${entity.shortUuid}`;
         this.activeInternalSquads = entity.activeInternalSquads;
 
         this.userTraffic = {
@@ -94,7 +101,5 @@ export class GetFullUserResponseModel {
             lastConnectedNodeUuid: entity.userTraffic.lastConnectedNodeUuid,
             firstConnectedAt: entity.userTraffic.firstConnectedAt,
         };
-
-        this.subscriptionUrl = `https://${subPublicDomain}/${entity.shortUuid}`;
     }
 }

@@ -32,6 +32,7 @@ import { SubscriptionTemplateModule } from './subscription-template/subscription
 import { SubscriptionModule } from './subscription/subscription.module';
 import { SystemModule } from './system/system.module';
 import { UserSubscriptionRequestHistoryModule } from './user-subscription-request-history/user-subscription-request-history.module';
+import { SubscriptionDomainsModule } from './subscription-domains/subscription-domains.module';
 import { UsersModule } from './users/users.module';
 
 @Module({
@@ -40,6 +41,7 @@ import { UsersModule } from './users/users.module';
         ConditionalModule.registerWhen(AdminModule, () => isRestApi()),
         ConditionalModule.registerWhen(AuthModule, () => isRestApi()),
         ConditionalModule.registerWhen(SubscriptionPageConfigModule, () => isRestApi()),
+        SubscriptionDomainsModule,
         UsersModule,
         ConditionalModule.registerWhen(SubscriptionResponseRulesModule, () => isRestApi()),
         ConditionalModule.registerWhen(SubscriptionModule, () => isRestApi()),

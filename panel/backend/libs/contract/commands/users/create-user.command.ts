@@ -114,6 +114,7 @@ export namespace CreateUserCommand {
             .array(z.uuid())
             .optional()
             .describe('Optional. Array of UUIDs representing enabled internal squads.'),
+        subscriptionDomainUuid: z.uuid().nullable().optional().describe('Registered subscription domain UUID. Null uses the default domain.'),
         externalSquadUuid: z
             .optional(z.nullable(z.uuid()))
             .describe('Optional. External squad UUID.'),

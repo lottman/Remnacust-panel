@@ -11,6 +11,15 @@ interface IActiveInternalSquads {
 }
 
 export class UserEntity extends BaseUserEntity {
+    public subscriptionDomain?: {
+        uuid: string;
+        name: string;
+        domain: string;
+        path: string;
+        kind: 'PRIMARY' | 'CDN';
+        parentUuid: string | null;
+        isDefault: boolean;
+    } | null;
     public xrayUsername?: string;
     public hostIdentityContext?: {
         hwid: string | null;

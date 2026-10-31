@@ -197,6 +197,14 @@ export class UsersRepository {
         return result;
     }
 
+    private get subscriptionDomainSelection() {
+        return sql<
+            UserEntity['subscriptionDomain']
+        >`(SELECT jsonb_build_object('uuid', d.uuid, 'name', d.name, 'domain', d.domain, 'path', d.path, 'kind', d.kind, 'parentUuid', d.parent_uuid, 'isDefault', d.is_default) FROM subscription_domains d WHERE d.uuid = COALESCE(users.subscription_domain_uuid, (SELECT uuid FROM subscription_domains WHERE is_default LIMIT 1)))`.as(
+            'subscriptionDomain',
+        );
+    }
+
     private get baseUsersQb() {
         return this.qb.kysely
             .selectFrom('users')
@@ -210,7 +218,10 @@ export class UsersRepository {
         filterModes,
         sorting,
     }: GetUsersQueryDto): Promise<[UserEntity[], number]> {
-        let qb = this.baseUsersQb.selectAll().select((eb) => this.includeActiveInternalSquads(eb));
+        let qb = this.baseUsersQb
+            .selectAll()
+            .select(this.subscriptionDomainSelection)
+            .select((eb) => this.includeActiveInternalSquads(eb));
 
         if (filters?.length) {
             qb = this.applyUsersFilters(qb, filters, filterModes);
@@ -261,7 +272,10 @@ export class UsersRepository {
             externalSquadUuid,
         } = dto;
 
-        let qb = this.baseUsersQb.selectAll().select((eb) => this.includeActiveInternalSquads(eb));
+        let qb = this.baseUsersQb
+            .selectAll()
+            .select(this.subscriptionDomainSelection)
+            .select((eb) => this.includeActiveInternalSquads(eb));
 
         if (cursor) {
             qb = qb.where('users.id', '>', BigInt(cursor));
@@ -443,6 +457,7 @@ export class UsersRepository {
                 .selectFrom('users')
                 .innerJoin('userTraffic', 'userTraffic.id', 'users.id')
                 .selectAll()
+                .select(this.subscriptionDomainSelection)
                 .select((eb) => this.includeActiveInternalSquads(eb))
                 .$if(beforeId !== undefined, (qb) => qb.where('users.id', '<', beforeId!))
                 .offset(start)
@@ -521,6 +536,7 @@ export class UsersRepository {
             .selectFrom('users')
             .innerJoin('userTraffic', 'userTraffic.id', 'users.id')
             .selectAll()
+            .select(this.subscriptionDomainSelection)
             .$if(includeOptions.activeInternalSquads, (qb) =>
                 qb.select((eb) => this.includeActiveInternalSquads(eb)),
             )
@@ -1072,6 +1088,7 @@ export class UsersRepository {
             .selectFrom('users')
             .innerJoin('userTraffic', 'userTraffic.id', 'users.id')
             .selectAll()
+            .select(this.subscriptionDomainSelection)
             .where(
                 'users.id',
                 'in',
@@ -1380,6 +1397,7 @@ export class UsersRepository {
             .selectFrom('users')
             .innerJoin('userTraffic', 'userTraffic.id', 'users.id')
             .selectAll()
+            .select(this.subscriptionDomainSelection)
             .where('status', '=', 'ACTIVE')
             .where('userTraffic.firstConnectedAt', 'is', null)
             .where('userTraffic.onlineAt', 'is', null)

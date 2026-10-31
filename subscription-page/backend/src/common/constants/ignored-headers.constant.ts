@@ -45,4 +45,13 @@ export const IGNORED_HEADERS = new Set([
     'x-remnacust-geofile-origin',
     'etag',
     'last-modified',
+    // The panel is only an upstream. These response headers can disclose its
+    // private address when a proxy or a custom response rule returns them.
+    'location',
+    'refresh',
+    'link',
+    'via',
+    'x-powered-by',
+    'x-upstream',
+    'x-envoy-upstream-service-time',
 ]);

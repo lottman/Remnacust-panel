@@ -29,8 +29,8 @@ test('every token-accessible administrative HTTP method has a selectable enforce
         const guards=reflector.getAllAndOverride(GUARDS_METADATA,[endpoint.handler,endpoint.controller]);
         assert.ok(guards.some(guard=>guard.name==='ScopesGuard'),`ScopesGuard missing: ${endpoint.url}`);
     }
-    assert.equal(available.length,211);
-    assert.equal(catalog.getCatalog().length,211);
+    assert.equal(available.length,216);
+    assert.equal(catalog.getCatalog().length,216);
     assert.deepEqual(catalog.findInvalidScopes(blocked.map(row=>row[2])),blocked.map(row=>row[2]));
     assert.equal(catalog.getCatalog().some(row=>['backups','node-ssh','remnawave-settings'].includes(row.resource)),false);
 });
@@ -103,9 +103,9 @@ test('checkbox selections never become broader wildcard grants',()=>{
     const resources=catalog.getGroupedCatalog().resources;
     const all=new Set(resources.flatMap(r=>r.endpoints.map(e=>e.key)));
     const built=buildScopes(resources,all);
-    assert.equal(built.length,211);assert.ok(!built.includes('*'));
+    assert.equal(built.length,216);assert.ok(!built.includes('*'));
     assert.ok(built.every(scope=>!scope.endsWith(':*')&&!scope.endsWith(':read')&&!scope.endsWith(':write')));
-    const fullKeys=expandScopesToKeys(resources,['*']);assert.equal(fullKeys.length,211);
+    const fullKeys=expandScopesToKeys(resources,['*']);assert.equal(fullKeys.length,216);
     const one=buildScopes(resources,new Set(['hwid-user-devices:block']));assert.deepEqual(one,['hwid-user-devices:block']);
     assert.deepEqual(buildScopes(resources,new Set()),[]);
     assert.deepEqual(expandScopesToKeys(resources,['nodes:core-status']),[]);

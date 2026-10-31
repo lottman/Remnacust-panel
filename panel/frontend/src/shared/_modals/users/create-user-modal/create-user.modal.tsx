@@ -113,7 +113,8 @@ export const CreateUserModal = NiceModal.create(() => {
             email: undefined,
             hwidDeviceLimit: undefined,
             tag: undefined,
-            activeInternalSquads: []
+            activeInternalSquads: [],
+            subscriptionDomainUuid: undefined
         }
     })
 
@@ -135,7 +136,8 @@ export const CreateUserModal = NiceModal.create(() => {
                     hwidDeviceLimit: values.hwidDeviceLimit === '' ? null : values.hwidDeviceLimit,
                     tag: values.tag,
                     activeInternalSquads: values.activeInternalSquads,
-                    externalSquadUuid: values.externalSquadUuid
+                    externalSquadUuid: values.externalSquadUuid,
+                    subscriptionDomainUuid: values.subscriptionDomainUuid
                 }
             },
             {

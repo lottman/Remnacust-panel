@@ -22,6 +22,7 @@ import {
 } from '@libs/contracts/constants';
 
 import { GetTokenByUuidQuery } from '@modules/api-tokens/queries/get-token-by-uuid/get-token-by-uuid.query';
+import { SubscriptionDomainsService } from '@modules/subscription-domains/subscription-domains.service';
 import { GetCachedSubscriptionSettingsQuery } from '@modules/subscription-settings/queries/get-cached-subscrtipion-settings';
 import { isExtendedClient } from '@modules/subscription-template/constants';
 
@@ -35,6 +36,7 @@ export class ResponseRulesMiddleware implements NestMiddleware {
         private readonly queryBus: QueryBus,
         private readonly matcher: ResponseRulesMatcherService,
         private readonly config: TypedConfigService,
+        private readonly domains: SubscriptionDomainsService,
     ) {}
 
     async use(
@@ -56,9 +58,11 @@ export class ResponseRulesMiddleware implements NestMiddleware {
                         return token?.isOk ? token.response : undefined;
                     },
                 );
-                return withGeofileOrigin(relayed ?? publicGeofileOrigin(req.headers.host), () =>
-                    this.applyRules(req, res, next),
-                );
+                const candidate = relayed ?? publicGeofileOrigin(req.headers.host);
+                const origin = this.domains
+                    ? await this.domains.resolveOrigin(candidate)
+                    : candidate;
+                return withGeofileOrigin(origin, () => this.applyRules(req, res, next));
             });
         } catch (error) {
             next(error);

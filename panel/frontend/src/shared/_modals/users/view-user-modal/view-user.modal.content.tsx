@@ -138,7 +138,8 @@ export const ViewUserModalContent = (props: IProps) => {
                 email: user.email ?? undefined,
                 hwidDeviceLimit: user.hwidDeviceLimit ?? undefined,
                 tag: user.tag ?? undefined,
-                externalSquadUuid: user.externalSquadUuid ?? undefined
+                externalSquadUuid: user.externalSquadUuid ?? undefined,
+                subscriptionDomainUuid: user.subscriptionDomainUuid ?? undefined
             })
         }
     }, [user, internalSquads])
@@ -156,7 +157,10 @@ export const ViewUserModalContent = (props: IProps) => {
                     ? values.trafficLimitBytes
                     : undefined,
                 // @ts-expect-error - TODO: fix ZOD schema
-                expireAt: user.status !== 'FROZEN' && touchedFields.expireAt ? dayjs(values.expireAt).toISOString() : undefined,
+                expireAt:
+                    user?.status !== 'FROZEN' && touchedFields.expireAt
+                        ? dayjs(values.expireAt).toISOString()
+                        : undefined,
                 activeInternalSquads: touchedFields.activeInternalSquads
                     ? values.activeInternalSquads
                     : undefined,
@@ -170,6 +174,9 @@ export const ViewUserModalContent = (props: IProps) => {
                 tag: touchedFields.tag ? (values.tag === '' ? null : values.tag) : undefined,
                 externalSquadUuid: touchedFields.externalSquadUuid
                     ? values.externalSquadUuid
+                    : undefined,
+                subscriptionDomainUuid: touchedFields.subscriptionDomainUuid
+                    ? values.subscriptionDomainUuid
                     : undefined
             }
         })

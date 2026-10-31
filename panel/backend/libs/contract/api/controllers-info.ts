@@ -136,6 +136,11 @@ export const CONTROLLERS_INFO = {
         description: '',
         resource: 'subscription-page-configs',
     },
+    SUBSCRIPTION_DOMAINS: {
+        tag: 'Subscription Domains Controller',
+        description: 'Manage public subscription and CDN domains.',
+        resource: 'subscription-domains',
+    },
     METADATA: {
         tag: 'Metadata Controller',
         description: 'Manage arbitrary metadata for Users and Nodes.',

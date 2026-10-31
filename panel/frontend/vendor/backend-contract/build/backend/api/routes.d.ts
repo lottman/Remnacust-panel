@@ -302,6 +302,13 @@ export declare const REST_API: {
             readonly SET: "/api/subscription-page-configs/tags";
         };
     };
+    readonly SUBSCRIPTION_DOMAINS: {
+        readonly GET_ALL: "/api/subscription-domains/";
+        readonly GET: (uuid: string) => string;
+        readonly CREATE: "/api/subscription-domains/";
+        readonly UPDATE: (uuid: string) => string;
+        readonly DELETE: (uuid: string) => string;
+    };
     readonly NODE_INTEGRATIONS: {
         readonly GET: (uuid: string) => string;
         readonly GET_ALL: "/api/node-integrations/";

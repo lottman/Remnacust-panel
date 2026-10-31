@@ -91,6 +91,8 @@ model Users {
   email                  String?   @map("email")
   hwidDeviceLimit        Int?      @map("hwid_device_limit")
   externalSquadUuid      String?   @map("external_squad_uuid") @db.Uuid
+  subscriptionDomainUuid String? @map("subscription_domain_uuid") @db.Uuid
+  subscriptionDomain SubscriptionDomains? @relation(fields: [subscriptionDomainUuid], references: [uuid], onDelete: Restrict)
   lastTriggeredThreshold Int       @default(0) @map("last_triggered_threshold")
 
   createdAt DateTime @default(now()) @map("created_at")
@@ -106,6 +108,7 @@ model Users {
 
   externalSquad ExternalSquads? @relation(fields: [externalSquadUuid], references: [uuid], onDelete: SetNull)
 
+  @@index([subscriptionDomainUuid])
   @@index([expireAt])
   @@map("users")
 }
@@ -777,4 +780,19 @@ model SessionRecording {
   expiresAt DateTime @map("expires_at") @db.Timestamptz
   @@index([expiresAt])
   @@map("xera_session_recordings")
+}
+
+model SubscriptionDomains {
+  uuid String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name String @db.VarChar(100)
+  domain String @unique @db.VarChar(253)
+  path String @default("") @db.VarChar(240)
+  kind String @db.VarChar(7)
+  parentUuid String? @map("parent_uuid") @db.Uuid
+  isDefault Boolean @default(false) @map("is_default")
+  parent SubscriptionDomains? @relation("DomainAliases", fields: [parentUuid], references: [uuid], onDelete: Restrict)
+  aliases SubscriptionDomains[] @relation("DomainAliases")
+  users Users[]
+  @@index([parentUuid])
+  @@map("subscription_domains")
 }

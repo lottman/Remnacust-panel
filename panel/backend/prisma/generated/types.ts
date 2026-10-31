@@ -333,6 +333,15 @@ export type SharedLists = {
     createdAt: Generated<Timestamp>;
     updatedAt: Generated<Timestamp>;
 };
+export type SubscriptionDomains = {
+    uuid: Generated<string>;
+    name: string;
+    domain: string;
+    path: Generated<string>;
+    kind: string;
+    parentUuid: string | null;
+    isDefault: Generated<boolean>;
+};
 export type SubscriptionPageConfig = {
     uuid: Generated<string>;
     viewPosition: Generated<number>;
@@ -413,6 +422,7 @@ export type Users = {
     email: string | null;
     hwidDeviceLimit: number | null;
     externalSquadUuid: string | null;
+    subscriptionDomainUuid: string | null;
     lastTriggeredThreshold: Generated<number>;
     createdAt: Generated<Timestamp>;
     updatedAt: Generated<Timestamp>;
@@ -477,6 +487,7 @@ export type DB = {
     passkeys: Passkeys;
     remnawaveSettings: RemnawaveSettings;
     sharedLists: SharedLists;
+    subscriptionDomains: SubscriptionDomains;
     subscriptionPageConfig: SubscriptionPageConfig;
     subscriptionSettings: SubscriptionSettings;
     subscriptionTemplateRevisions: SubscriptionTemplateRevisions;

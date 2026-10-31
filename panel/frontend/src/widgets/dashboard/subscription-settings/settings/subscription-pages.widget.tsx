@@ -5,6 +5,8 @@ import { useTranslation } from 'react-i18next'
 import { instance } from '@shared/api/axios'
 import { SectionCard } from '@shared/ui/section-card'
 
+import { SubscriptionDomainsWidget } from './subscription-domains.widget'
+
 type Operation = 'start' | 'stop' | 'restart' | 'upgrade'
 type PageInstance = {
     id: string
@@ -59,6 +61,7 @@ export function SubscriptionPagesWidget() {
     if (query.isError) return <Alert color="yellow">{t('subscription-pages.unavailable')}</Alert>
     return (
         <Stack gap="md">
+            <SubscriptionDomainsWidget />
             <Group justify="space-between">
                 <Text c="dimmed" size="sm">
                     {t('subscription-pages.help')}

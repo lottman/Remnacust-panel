@@ -89,6 +89,7 @@ var CreateUserCommand;
             .array(zod_1.z.uuid())
             .optional()
             .describe('Optional. Array of UUIDs representing enabled internal squads.'),
+        subscriptionDomainUuid: zod_1.z.uuid().nullable().optional().describe('Registered subscription domain UUID. Null uses the default domain.'),
         externalSquadUuid: zod_1.z
             .optional(zod_1.z.nullable(zod_1.z.uuid()))
             .describe('Optional. External squad UUID.'),

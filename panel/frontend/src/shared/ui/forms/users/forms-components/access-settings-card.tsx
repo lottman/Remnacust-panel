@@ -8,6 +8,7 @@ import {
     GetInternalSquadsCommand,
     UpdateUserCommand
 } from '@remnawave/backend-contract'
+import { useQuery } from '@tanstack/react-query'
 import { InternalSquadsListWidget } from '@widgets/dashboard/users/internal-squads-list'
 import dayjs from 'dayjs'
 import { ForwardRefComponent, HTMLMotionProps, Variants } from 'motion/react'
@@ -16,6 +17,7 @@ import { useTranslation } from 'react-i18next'
 import { PiCalendarDuotone } from 'react-icons/pi'
 import { TbShield, TbWebhook } from 'react-icons/tb'
 
+import { instance } from '@shared/api/axios'
 import { useUiText } from '@shared/i18n/interface-text'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SectionCard } from '@shared/ui/section-card'
@@ -31,6 +33,15 @@ interface IProps<T extends CreateUserCommand.RequestBody | UpdateUserCommand.Req
     motionWrapper: ForwardRefComponent<HTMLDivElement, HTMLMotionProps<'div'>>
 }
 
+type SubscriptionDomain = {
+    uuid: string
+    name: string
+    domain: string
+    path: string
+    kind: 'PRIMARY' | 'CDN'
+    isDefault: boolean
+}
+
 export const AccessSettingsCard = <
     T extends CreateUserCommand.RequestBody | UpdateUserCommand.RequestBody
 >(
@@ -44,6 +55,13 @@ export const AccessSettingsCard = <
 
     const [searchQuery, setSearchQuery] = useState('')
     const [localExpireAt, setLocalExpireAt] = useState<Date | undefined>(undefined)
+    const subscriptionDomains = useQuery({
+        queryKey: ['subscription-domains'],
+        queryFn: async () =>
+            (await instance.get<{ response: SubscriptionDomain[] }>('/api/subscription-domains'))
+                .data.response,
+        staleTime: 30_000
+    })
 
     const MotionWrapper = motionWrapper
     const isFrozen = props.isFrozen || form.values.status === 'FROZEN'
@@ -217,6 +235,24 @@ export const AccessSettingsCard = <
                             leftSection={<TbWebhook size="16px" />}
                             placeholder={t('access-settings-card.select-an-external-squad')}
                             {...form.getInputProps('externalSquadUuid')}
+                        />
+
+                        <Select
+                            clearable
+                            data={(subscriptionDomains.data ?? []).map((domain) => ({
+                                value: domain.uuid,
+                                label: `${domain.name} · ${domain.domain}${domain.path || '/'}${
+                                    domain.isDefault
+                                        ? ` · ${t('access-settings-card.default-domain')}`
+                                        : ''
+                                }`
+                            }))}
+                            description={t('access-settings-card.subscription-domain-description')}
+                            disabled={subscriptionDomains.isLoading}
+                            key={form.key('subscriptionDomainUuid')}
+                            label={t('access-settings-card.subscription-domain')}
+                            placeholder={t('access-settings-card.default-domain')}
+                            {...form.getInputProps('subscriptionDomainUuid')}
                         />
                     </Stack>
                 </SectionCard.Section>

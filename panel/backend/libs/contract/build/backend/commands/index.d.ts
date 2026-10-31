@@ -26,4 +26,5 @@ export * from './subscription-template';
 export * from './subscriptions';
 export * from './system';
 export * from './users';
+export * from './subscription-domains';
 //# sourceMappingURL=index.d.ts.map

@@ -1,14 +1,26 @@
-# Remnacust API 1.1.7.31
+# Remnacust API 1.1.7.74
 
 Области действия `serverSpeedLimitMbps`, общей скорости и квот хостов/тегов: [HOST-LIMITS.md](HOST-LIMITS.md). Скорость — целые Mbps (Мбит/с), квоты API — байты; поле Brutal `speedLimitMbps` самого хоста не является серверным ограничителем.
 
-Generated from the current OpenAPI. 231 operations; 210 accept scoped API tokens.
+The current OpenAPI defines 244 operations; 216 accept scoped API tokens. The tables below cover the operator-facing API; the in-panel reference contains the complete generated catalog.
 
 Full request/response schemas: [openapi.json](../panel/backend/openapi.json). The panel also exposes a separate API reference with searchable operations, schemas and events.
 
 ## Authentication and permissions
 
 Send an API token using `Authorization: Bearer TOKEN`. An endpoint marked `api-token` still requires its scope and allowed resource selection. `admin` methods require an administrator session, `public` methods have their own public flow, and `special` methods use the authentication described by OpenAPI. A wildcard token does not bypass admin-only routes. Never put a token in a URL or in client subscription content.
+
+## Subscription domains and CDN
+
+Manage public subscription hostnames through the `subscription-domains` resource. A primary domain may be the default; a CDN domain belongs to one primary domain and cannot be the default. The stable domain UUID can be assigned to a user as `subscriptionDomainUuid`. When a request comes through a registered CDN hostname, DAT links retain that hostname. Unregistered `Host` and forwarded-host headers are never trusted. See [SUBSCRIPTION-DOMAINS.md](SUBSCRIPTION-DOMAINS.md) for request fields and deployment rules.
+
+| Method | Path | Scope | Resource |
+|---|---|---|---|
+| GET | `/api/subscription-domains` | `subscription-domains:list` | `subscription-domains` |
+| GET | `/api/subscription-domains/{uuid}` | `subscription-domains:get` | `subscription-domains` |
+| POST | `/api/subscription-domains` | `subscription-domains:create` | `subscription-domains` |
+| PATCH | `/api/subscription-domains/{uuid}` | `subscription-domains:update` | `subscription-domains` |
+| DELETE | `/api/subscription-domains/{uuid}` | `subscription-domains:delete` | `subscription-domains` |
 
 ## Panel-only migration operations
 

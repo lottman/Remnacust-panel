@@ -9,7 +9,10 @@ if (databaseUrl) {
     assert.equal(target.hostname, '127.0.0.1');
     assert.equal(target.port, '55439');
 } else assert.equal(process.env.FROZEN_TEST_CONTAINER, 'remnacust-deep-audit-pg');
-const migration = fs.readFileSync(path.join(__dirname, '../prisma/migrations/20261027190000_frozen_user_lifetime/migration.sql'), 'utf8');
+const migration = fs.readFileSync(
+    path.join(__dirname, '../prisma/migrations/20261027190000_frozen_user_lifetime/migration.sql'),
+    'utf8',
+);
 const schema = `frozen_test_${process.pid}`;
 const input = `
 BEGIN;
@@ -48,6 +51,7 @@ BEGIN
  IF (SELECT status FROM users WHERE id=3) <> 'LIMITED' THEN RAISE EXCEPTION 'quota bypass'; END IF;
 END $test$;
 ${fs.readFileSync(path.join(__dirname, '../prisma/migrations/20261028190000_reject_expired_freeze/migration.sql'), 'utf8')}
+${fs.readFileSync(path.join(__dirname, '../prisma/migrations/20261101010100_allow_expired_freeze/migration.sql'), 'utf8')}
 DO $test$
 DECLARE at_time timestamp := statement_timestamp() AT TIME ZONE 'UTC';
 BEGIN
@@ -55,18 +59,62 @@ BEGIN
  INSERT INTO users VALUES (5,'ACTIVE',at_time+interval '2 days',0,NULL);
  INSERT INTO users VALUES (6,'EXPIRED',at_time+interval '2 days',0,NULL);
  UPDATE users SET status='FROZEN' WHERE id IN (4,5,6);
- IF (SELECT status FROM users WHERE id=4) <> 'EXPIRED' OR (SELECT frozen_at FROM users WHERE id=4) IS NOT NULL THEN RAISE EXCEPTION 'expired freeze accepted'; END IF;
+ IF (SELECT status FROM users WHERE id=4) <> 'FROZEN' OR (SELECT expire_at-frozen_at FROM users WHERE id=4) <> interval '0 seconds' THEN RAISE EXCEPTION 'expired freeze did not retain zero lifetime'; END IF;
  IF (SELECT status FROM users WHERE id=5) <> 'FROZEN' THEN RAISE EXCEPTION 'valid bulk freeze rejected'; END IF;
- IF (SELECT status FROM users WHERE id=6) <> 'EXPIRED' THEN RAISE EXCEPTION 'expired status freeze accepted'; END IF;
+ IF (SELECT status FROM users WHERE id=6) <> 'FROZEN' THEN RAISE EXCEPTION 'expired status freeze was rejected'; END IF;
  INSERT INTO users VALUES (7,'FROZEN',at_time,0,NULL);
- IF (SELECT status FROM users WHERE id=7) <> 'EXPIRED' THEN RAISE EXCEPTION 'expired import freeze accepted'; END IF;
+ IF (SELECT status FROM users WHERE id=7) <> 'FROZEN' THEN RAISE EXCEPTION 'expired import freeze was rejected'; END IF;
  UPDATE users SET status='FROZEN' WHERE id=5;
  IF (SELECT expire_at-frozen_at FROM users WHERE id=5) <> interval '2 days' THEN RAISE EXCEPTION 'repeated freeze changed lifetime'; END IF;
+ UPDATE users SET expire_at=expire_at+interval '1 day' WHERE id=5;
+ IF (SELECT expire_at-frozen_at FROM users WHERE id=5) <> interval '3 days' THEN RAISE EXCEPTION 'renewal during freeze was lost'; END IF;
+ UPDATE users SET status='ACTIVE' WHERE id=5;
+ IF abs(extract(epoch FROM ((SELECT expire_at FROM users WHERE id=5)-at_time-interval '3 days'))) > 0.002 THEN RAISE EXCEPTION 'renewed frozen remainder lost on resume'; END IF;
 END $test$;
 ROLLBACK;
 `;
 const result = databaseUrl
-    ? spawnSync('docker', ['run', '--rm', '-i', '--network', 'host', 'mirror.gcr.io/library/postgres:17.6', 'psql', databaseUrl, '-X', '-v', 'ON_ERROR_STOP=1'], { input, encoding: 'utf8', timeout: 60000 })
-    : spawnSync('wsl.exe', ['-d', 'Ubuntu-24.04', '-u', 'root', '--', 'docker', 'exec', '-i', process.env.FROZEN_TEST_CONTAINER, 'psql', '-X', '-v', 'ON_ERROR_STOP=1', '-U', 'postgres', '-d', 'postgres'], { input, encoding: 'utf8', timeout: 60000 });
+    ? spawnSync(
+          'docker',
+          [
+              'run',
+              '--rm',
+              '-i',
+              '--network',
+              'host',
+              'mirror.gcr.io/library/postgres:17.6',
+              'psql',
+              databaseUrl,
+              '-X',
+              '-v',
+              'ON_ERROR_STOP=1',
+          ],
+          { input, encoding: 'utf8', timeout: 60000 },
+      )
+    : spawnSync(
+          'wsl.exe',
+          [
+              '-d',
+              'Ubuntu-24.04',
+              '-u',
+              'root',
+              '--',
+              'docker',
+              'exec',
+              '-i',
+              process.env.FROZEN_TEST_CONTAINER,
+              'psql',
+              '-X',
+              '-v',
+              'ON_ERROR_STOP=1',
+              '-U',
+              'postgres',
+              '-d',
+              'postgres',
+          ],
+          { input, encoding: 'utf8', timeout: 60000 },
+      );
 assert.equal(result.status, 0, result.stderr || result.stdout);
-console.log('PASS real PostgreSQL: frozen clock, repeated freeze, extension, resume, zero lifetime, quota and non-UTC timezone');
+console.log(
+    'PASS real PostgreSQL: frozen clock, repeated freeze, extension, resume, zero lifetime, quota and non-UTC timezone',
+);

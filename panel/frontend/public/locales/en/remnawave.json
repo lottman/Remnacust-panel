@@ -1035,7 +1035,10 @@
     "access-settings": "Access settings",
     "select-an-external-squad-to-apply-custom-settings-to-this-user": "Select an external squad to apply custom settings to this user.",
     "external-squad": "External squad",
-    "select-an-external-squad": "Select an external squad..."
+    "select-an-external-squad": "Select an external squad...",
+    "subscription-domain": "Subscription domain",
+    "subscription-domain-description": "The domain used in this user's link. The default domain is used when this is empty.",
+    "default-domain": "Default domain"
   },
   "device-tag-settings-card": {
     "device-and-tag-settings": "Device & tag settings"
@@ -4191,6 +4194,9 @@
     "stop": "Stop",
     "restart": "Restart",
     "upgrade": "Update"
+  },
+  "subscription-domains": {
+    "title": "Subscription domains", "help": "The primary domain is used for new links. A CDN domain belongs to it and preserves the address through which the client requested the subscription.", "add": "Add domain", "edit": "Edit domain", "failed": "Could not save the domain. Check its name, CDN relation and usage.", "empty": "No domains are registered yet.", "name": "Name", "domain": "Domain", "domain-help": "Use a public hostname only, without protocol, port or path.", "path": "Subscription path", "path-help": "Optional shared path, for example /api/sub. A CDN with no path inherits its primary domain path.", "type": "Type", "kind-primary": "Primary", "kind-cdn": "CDN", "default": "Default", "make-default": "Make the primary domain", "primary-domain": "Primary domain", "cdn-help": "The CDN serves the same content, while client links stay on the CDN domain.", "cdn-for": "CDN for {{domain}}", "uuid": "ID", "usage": "Usage", "users": "Users: {{count}}", "aliases": "CDN domains: {{count}}", "remove-disabled": "The domain is in use or is the default"
   },
   "nodes-usage-chart": {
     "show-legend": "Show legend",

@@ -134,6 +134,11 @@ export declare const CONTROLLERS_INFO: {
         readonly description: "";
         readonly resource: "subscription-page-configs";
     };
+    readonly SUBSCRIPTION_DOMAINS: {
+        readonly tag: "Subscription Domains Controller";
+        readonly description: "Manage public subscription and CDN domains.";
+        readonly resource: "subscription-domains";
+    };
     readonly METADATA: {
         readonly tag: "Metadata Controller";
         readonly description: "Manage arbitrary metadata for Users and Nodes.";

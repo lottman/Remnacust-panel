@@ -242,6 +242,7 @@ export class UsersService {
                 hwidDeviceLimit: dto.hwidDeviceLimit,
                 tag: dto.tag,
                 externalSquadUuid: dto.externalSquadUuid,
+                subscriptionDomainUuid: dto.subscriptionDomainUuid,
             });
 
             const { id } = await this.userRepository.create(userEntity, dto.activeInternalSquads);
@@ -285,6 +286,12 @@ export class UsersService {
                 }
             }
 
+            if (
+                error instanceof Prisma.PrismaClientKnownRequestError &&
+                error.code === 'P2003' &&
+                dto.subscriptionDomainUuid
+            )
+                return fail(ERRORS.SUBSCRIPTION_DOMAIN_NOT_FOUND);
             return fail(ERRORS.CREATE_USER_ERROR);
         }
     }
@@ -296,6 +303,7 @@ export class UsersService {
                 id,
                 trafficLimitBytes,
                 telegramId,
+                expireAt,
                 activeInternalSquads: newActiveInternalSquadsUuids,
                 status,
                 ...rest
@@ -313,14 +321,6 @@ export class UsersService {
 
             if (!user) return fail(ERRORS.USER_NOT_FOUND);
 
-            if (
-                status === USERS_STATUS.FROZEN &&
-                user.status !== USERS_STATUS.FROZEN &&
-                (user.status === USERS_STATUS.EXPIRED || user.expireAt.getTime() <= Date.now())
-            ) {
-                return fail(ERRORS.USER_FREEZE_EXPIRED);
-            }
-
             if (user.status === USERS_STATUS.FROZEN && status === USERS_STATUS.DISABLED) {
                 return fail(ERRORS.USER_FROZEN_NEEDS_RESUME);
             }
@@ -328,6 +328,12 @@ export class UsersService {
             const newUserEntity = new BaseUserEntity({
                 ...rest,
                 id: user.id,
+                // A frozen subscription keeps its saved remainder. Date edits must
+                // never create time while freezing or while it remains frozen.
+                expireAt:
+                    user.status === USERS_STATUS.FROZEN || status === USERS_STATUS.FROZEN
+                        ? undefined
+                        : expireAt,
                 trafficLimitBytes: wrapBigInt(trafficLimitBytes),
                 telegramId: wrapBigIntNullable(telegramId),
                 lastTriggeredThreshold: trafficLimitBytes !== undefined ? 0 : undefined,
@@ -444,6 +450,12 @@ export class UsersService {
         } catch (error) {
             this.logger.error(error);
 
+            if (
+                error instanceof Prisma.PrismaClientKnownRequestError &&
+                error.code === 'P2003' &&
+                dto.subscriptionDomainUuid
+            )
+                return fail(ERRORS.SUBSCRIPTION_DOMAIN_NOT_FOUND);
             return fail(ERRORS.UPDATE_USER_ERROR);
         }
     }

@@ -1484,6 +1484,380 @@
         "x-remnacust-kind": "write"
       }
     },
+    "/api/subscription-domains": {
+      "get": {
+        "operationId": "SubscriptionDomainsController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Operation successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionDomainsResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request / Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/RemnawaveBadRequestErrorDto"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RemnawaveValidationErrorDto"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemnawaveNotFoundErrorDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemnawaveInternalServerErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Authorization": []
+          }
+        ],
+        "summary": "List subscription domains",
+        "tags": [
+          "Subscription Domains Controller"
+        ],
+        "x-remnacust-access": "api-token",
+        "x-remnacust-scope": "subscription-domains:list",
+        "x-remnacust-resource": "subscription-domains",
+        "x-remnacust-kind": "read"
+      },
+      "post": {
+        "operationId": "SubscriptionDomainsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubscriptionDomainBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Resource created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionDomainResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request / Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/RemnawaveBadRequestErrorDto"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RemnawaveValidationErrorDto"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemnawaveNotFoundErrorDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemnawaveInternalServerErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Authorization": []
+          }
+        ],
+        "summary": "Register a subscription domain",
+        "tags": [
+          "Subscription Domains Controller"
+        ],
+        "x-remnacust-access": "api-token",
+        "x-remnacust-scope": "subscription-domains:create",
+        "x-remnacust-resource": "subscription-domains",
+        "x-remnacust-kind": "write"
+      }
+    },
+    "/api/subscription-domains/{uuid}": {
+      "get": {
+        "operationId": "SubscriptionDomainsController_get",
+        "parameters": [
+          {
+            "name": "uuid",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operation successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionDomainResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request / Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/RemnawaveBadRequestErrorDto"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RemnawaveValidationErrorDto"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemnawaveNotFoundErrorDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemnawaveInternalServerErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Authorization": []
+          }
+        ],
+        "summary": "Get a subscription domain by UUID",
+        "tags": [
+          "Subscription Domains Controller"
+        ],
+        "x-remnacust-access": "api-token",
+        "x-remnacust-scope": "subscription-domains:get",
+        "x-remnacust-resource": "subscription-domains",
+        "x-remnacust-kind": "read"
+      },
+      "patch": {
+        "operationId": "SubscriptionDomainsController_update",
+        "parameters": [
+          {
+            "name": "uuid",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubscriptionDomainBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Operation successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionDomainResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request / Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/RemnawaveBadRequestErrorDto"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RemnawaveValidationErrorDto"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemnawaveNotFoundErrorDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemnawaveInternalServerErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Authorization": []
+          }
+        ],
+        "summary": "Update a subscription domain",
+        "tags": [
+          "Subscription Domains Controller"
+        ],
+        "x-remnacust-access": "api-token",
+        "x-remnacust-scope": "subscription-domains:update",
+        "x-remnacust-resource": "subscription-domains",
+        "x-remnacust-kind": "write"
+      },
+      "delete": {
+        "operationId": "SubscriptionDomainsController_remove",
+        "parameters": [
+          {
+            "name": "uuid",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Operation successful, no content returned"
+          },
+          "400": {
+            "description": "Bad request / Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/RemnawaveBadRequestErrorDto"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RemnawaveValidationErrorDto"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemnawaveNotFoundErrorDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemnawaveInternalServerErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Authorization": []
+          }
+        ],
+        "summary": "Delete an unused subscription domain",
+        "tags": [
+          "Subscription Domains Controller"
+        ],
+        "x-remnacust-access": "api-token",
+        "x-remnacust-scope": "subscription-domains:delete",
+        "x-remnacust-resource": "subscription-domains",
+        "x-remnacust-kind": "write"
+      }
+    },
     "/api/users": {
       "post": {
         "operationId": "UsersController_createUser",
@@ -19352,9 +19726,9 @@
     }
   },
   "info": {
-    "title": "Remnacust API v1.1.7.73",
+    "title": "Remnacust API v1.1.7.74",
     "description": "\nRemnacust manages Xray users, nodes, configuration profiles and subscriptions.\n\n## Resources\n* https://t.me/lottman\n* https://github.com/lottman/Remnacust-panel\n",
-    "version": "1.1.7.73",
+    "version": "1.1.7.74",
     "contact": {},
     "license": {
       "name": "AGPL-3.0",
@@ -19469,6 +19843,10 @@
     {
       "name": "Subscription Page Configs Controller",
       "description": ""
+    },
+    {
+      "name": "Subscription Domains Controller",
+      "description": "Manage public subscription and CDN domains."
     },
     {
       "name": "Metadata Controller",
@@ -20389,6 +20767,181 @@
           "response"
         ]
       },
+      "SubscriptionDomainsResponseDto": {
+        "type": "object",
+        "properties": {
+          "response": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "uuid": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "domain": {
+                  "type": "string"
+                },
+                "path": {
+                  "type": "string"
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "PRIMARY",
+                    "CDN"
+                  ]
+                },
+                "parentUuid": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                  "nullable": true
+                },
+                "isDefault": {
+                  "type": "boolean"
+                },
+                "usersCount": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "aliasesCount": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": [
+                "uuid",
+                "name",
+                "domain",
+                "path",
+                "kind",
+                "parentUuid",
+                "isDefault",
+                "usersCount",
+                "aliasesCount"
+              ]
+            }
+          }
+        },
+        "required": [
+          "response"
+        ]
+      },
+      "SubscriptionDomainResponseDto": {
+        "type": "object",
+        "properties": {
+          "response": {
+            "type": "object",
+            "properties": {
+              "uuid": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "name": {
+                "type": "string"
+              },
+              "domain": {
+                "type": "string"
+              },
+              "path": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "PRIMARY",
+                  "CDN"
+                ]
+              },
+              "parentUuid": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                "nullable": true
+              },
+              "isDefault": {
+                "type": "boolean"
+              },
+              "usersCount": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "aliasesCount": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "uuid",
+              "name",
+              "domain",
+              "path",
+              "kind",
+              "parentUuid",
+              "isDefault",
+              "usersCount",
+              "aliasesCount"
+            ]
+          }
+        },
+        "required": [
+          "response"
+        ]
+      },
+      "SubscriptionDomainBodyDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "domain": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 253
+          },
+          "path": {
+            "default": "",
+            "type": "string",
+            "maxLength": 240
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "PRIMARY",
+              "CDN"
+            ]
+          },
+          "parentUuid": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "default": null,
+            "nullable": true
+          },
+          "isDefault": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "domain",
+          "kind"
+        ],
+        "additionalProperties": false
+      },
       "CreateUserBodyDto": {
         "type": "object",
         "properties": {
@@ -20503,6 +21056,13 @@
               "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
             }
           },
+          "subscriptionDomainUuid": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "description": "Registered subscription domain UUID. Null uses the default domain.",
+            "nullable": true
+          },
           "externalSquadUuid": {
             "type": "string",
             "format": "uuid",
@@ -20596,6 +21156,12 @@
                 "maximum": 9007199254740991,
                 "nullable": true
               },
+              "subscriptionDomainUuid": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                "nullable": true
+              },
               "externalSquadUuid": {
                 "type": "string",
                 "format": "uuid",
@@ -20642,6 +21208,51 @@
               },
               "subscriptionUrl": {
                 "type": "string"
+              },
+              "subscriptionDomain": {
+                "type": "object",
+                "properties": {
+                  "uuid": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "domain": {
+                    "type": "string"
+                  },
+                  "path": {
+                    "type": "string"
+                  },
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "PRIMARY",
+                      "CDN"
+                    ]
+                  },
+                  "parentUuid": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                    "nullable": true
+                  },
+                  "isDefault": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "uuid",
+                  "name",
+                  "domain",
+                  "path",
+                  "kind",
+                  "parentUuid",
+                  "isDefault"
+                ],
+                "nullable": true
               },
               "activeInternalSquads": {
                 "type": "array",
@@ -20806,6 +21417,13 @@
               "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
             }
           },
+          "subscriptionDomainUuid": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "description": "Registered subscription domain UUID. Null uses the default domain.",
+            "nullable": true
+          },
           "externalSquadUuid": {
             "type": "string",
             "format": "uuid",
@@ -20900,6 +21518,12 @@
                       "maximum": 9007199254740991,
                       "nullable": true
                     },
+                    "subscriptionDomainUuid": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                      "nullable": true
+                    },
                     "externalSquadUuid": {
                       "type": "string",
                       "format": "uuid",
@@ -20946,6 +21570,51 @@
                     },
                     "subscriptionUrl": {
                       "type": "string"
+                    },
+                    "subscriptionDomain": {
+                      "type": "object",
+                      "properties": {
+                        "uuid": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "domain": {
+                          "type": "string"
+                        },
+                        "path": {
+                          "type": "string"
+                        },
+                        "kind": {
+                          "type": "string",
+                          "enum": [
+                            "PRIMARY",
+                            "CDN"
+                          ]
+                        },
+                        "parentUuid": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                          "nullable": true
+                        },
+                        "isDefault": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "uuid",
+                        "name",
+                        "domain",
+                        "path",
+                        "kind",
+                        "parentUuid",
+                        "isDefault"
+                      ],
+                      "nullable": true
                     },
                     "activeInternalSquads": {
                       "type": "array",
@@ -21131,6 +21800,12 @@
                       "maximum": 9007199254740991,
                       "nullable": true
                     },
+                    "subscriptionDomainUuid": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                      "nullable": true
+                    },
                     "externalSquadUuid": {
                       "type": "string",
                       "format": "uuid",
@@ -21177,6 +21852,51 @@
                     },
                     "subscriptionUrl": {
                       "type": "string"
+                    },
+                    "subscriptionDomain": {
+                      "type": "object",
+                      "properties": {
+                        "uuid": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "domain": {
+                          "type": "string"
+                        },
+                        "path": {
+                          "type": "string"
+                        },
+                        "kind": {
+                          "type": "string",
+                          "enum": [
+                            "PRIMARY",
+                            "CDN"
+                          ]
+                        },
+                        "parentUuid": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                          "nullable": true
+                        },
+                        "isDefault": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "uuid",
+                        "name",
+                        "domain",
+                        "path",
+                        "kind",
+                        "parentUuid",
+                        "isDefault"
+                      ],
+                      "nullable": true
                     },
                     "activeInternalSquads": {
                       "type": "array",
@@ -25736,6 +26456,12 @@
                     "maximum": 9007199254740991,
                     "nullable": true
                   },
+                  "subscriptionDomainUuid": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                    "nullable": true
+                  },
                   "externalSquadUuid": {
                     "type": "string",
                     "format": "uuid",
@@ -25782,6 +26508,51 @@
                   },
                   "subscriptionUrl": {
                     "type": "string"
+                  },
+                  "subscriptionDomain": {
+                    "type": "object",
+                    "properties": {
+                      "uuid": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "domain": {
+                        "type": "string"
+                      },
+                      "path": {
+                        "type": "string"
+                      },
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "PRIMARY",
+                          "CDN"
+                        ]
+                      },
+                      "parentUuid": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                        "nullable": true
+                      },
+                      "isDefault": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "uuid",
+                      "name",
+                      "domain",
+                      "path",
+                      "kind",
+                      "parentUuid",
+                      "isDefault"
+                    ],
+                    "nullable": true
                   },
                   "activeInternalSquads": {
                     "type": "array",
@@ -47078,6 +47849,12 @@
                 "maximum": 9007199254740991,
                 "nullable": true
               },
+              "subscriptionDomainUuid": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                "nullable": true
+              },
               "externalSquadUuid": {
                 "type": "string",
                 "format": "uuid",
@@ -47124,6 +47901,51 @@
               },
               "subscriptionUrl": {
                 "type": "string"
+              },
+              "subscriptionDomain": {
+                "type": "object",
+                "properties": {
+                  "uuid": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "domain": {
+                    "type": "string"
+                  },
+                  "path": {
+                    "type": "string"
+                  },
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "PRIMARY",
+                      "CDN"
+                    ]
+                  },
+                  "parentUuid": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                    "nullable": true
+                  },
+                  "isDefault": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "uuid",
+                  "name",
+                  "domain",
+                  "path",
+                  "kind",
+                  "parentUuid",
+                  "isDefault"
+                ],
+                "nullable": true
               },
               "activeInternalSquads": {
                 "type": "array",
@@ -47333,6 +48155,12 @@
                     "maximum": 9007199254740991,
                     "nullable": true
                   },
+                  "subscriptionDomainUuid": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                    "nullable": true
+                  },
                   "externalSquadUuid": {
                     "type": "string",
                     "format": "uuid",
@@ -47379,6 +48207,51 @@
                   },
                   "subscriptionUrl": {
                     "type": "string"
+                  },
+                  "subscriptionDomain": {
+                    "type": "object",
+                    "properties": {
+                      "uuid": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "domain": {
+                        "type": "string"
+                      },
+                      "path": {
+                        "type": "string"
+                      },
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "PRIMARY",
+                          "CDN"
+                        ]
+                      },
+                      "parentUuid": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                        "nullable": true
+                      },
+                      "isDefault": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "uuid",
+                      "name",
+                      "domain",
+                      "path",
+                      "kind",
+                      "parentUuid",
+                      "isDefault"
+                    ],
+                    "nullable": true
                   },
                   "activeInternalSquads": {
                     "type": "array",
@@ -48777,6 +49650,12 @@
                     "maximum": 9007199254740991,
                     "nullable": true
                   },
+                  "subscriptionDomainUuid": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                    "nullable": true
+                  },
                   "externalSquadUuid": {
                     "type": "string",
                     "format": "uuid",
@@ -48823,6 +49702,51 @@
                   },
                   "subscriptionUrl": {
                     "type": "string"
+                  },
+                  "subscriptionDomain": {
+                    "type": "object",
+                    "properties": {
+                      "uuid": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "domain": {
+                        "type": "string"
+                      },
+                      "path": {
+                        "type": "string"
+                      },
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "PRIMARY",
+                          "CDN"
+                        ]
+                      },
+                      "parentUuid": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                        "nullable": true
+                      },
+                      "isDefault": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "uuid",
+                      "name",
+                      "domain",
+                      "path",
+                      "kind",
+                      "parentUuid",
+                      "isDefault"
+                    ],
+                    "nullable": true
                   },
                   "activeInternalSquads": {
                     "type": "array",
@@ -49137,6 +50061,7 @@
               "User short UUID already exists",
               "User subscription UUID already exists",
               "User already disabled",
+              "Subscription domain does not exist",
               "User already enabled",
               "Node name already exists",
               "Node address already exists",
@@ -49184,6 +50109,7 @@
               "A020",
               "A021",
               "A029",
+              "A903",
               "A030",
               "A033",
               "A034",
@@ -49223,7 +50149,7 @@
               "A246",
               "A259"
             ],
-            "description": "Error code. Possible values:\n\n- `A019` — User username already exists\n- `A020` — User short UUID already exists\n- `A021` — User subscription UUID already exists\n- `A029` — User already disabled\n- `A030` — User already enabled\n- `A033` — Node name already exists\n- `A034` — Node address already exists\n- `A045` — Host remark already exists\n- `A089` — LIMITED and EXPIRED statuses are not allowed to be set manually.\n- `A098` — User hwid device already exists\n- `A099` — User hwid device limit reached\n- `A144` — This name is reserved by Remnawave. Please use a different name.\n- `A145` — This name is reserved by Remnawave. Please use a different name.\n- `A149` — Node is disabled\n- `A152` — Name or config is required\n- `A153` — Name or inbounds is required\n- `A164` — Snippet name already exists\n- `A166` — Snippet cannot be empty\n- `A167` — Snippet cannot contain empty objects\n- `A172` — This name is reserved. Please use a different name.\n- `A173` — Template JSON is not allowed for YAML template\n- `A174` — Template YAML is not allowed for JSON template\n- `A175` — Template JSON and YAML cannot be updated simultaneously\n- `A176` — Template name already exists for this type\n- `A178` — Reserved template cannot be deleted\n- `A180` — Template type not allowed\n- `A189` — External squad name already exists\n- `A190` — Name or templates are required\n- `A194` — Passkeys not configured\n- `A195` — Passkeys not enabled. Please enable it first.\n- `A209` — Reserved config name\n- `A210` — Config name already exists\n- `A212` — Reserved subpage config cannot be deleted\n- `A215` — Invalid subscription page config\n- `A216` — Invalid Remnawave injector\n- `A223` — Node plugin name already exists\n- `A229` — One or more provided API token scopes are invalid\n- `A230` — Either nodeUuid or name must be provided\n- `A235` — Start date must be before or equal to end date\n- `A244` — Node integration name already exists\n- `A246` — Shared list name already exists\n- `A259` — SNI regeneration is not configured for this host"
+            "description": "Error code. Possible values:\n\n- `A019` — User username already exists\n- `A020` — User short UUID already exists\n- `A021` — User subscription UUID already exists\n- `A029` — User already disabled\n- `A903` — Subscription domain does not exist\n- `A030` — User already enabled\n- `A033` — Node name already exists\n- `A034` — Node address already exists\n- `A045` — Host remark already exists\n- `A089` — LIMITED and EXPIRED statuses are not allowed to be set manually.\n- `A098` — User hwid device already exists\n- `A099` — User hwid device limit reached\n- `A144` — This name is reserved by Remnawave. Please use a different name.\n- `A145` — This name is reserved by Remnawave. Please use a different name.\n- `A149` — Node is disabled\n- `A152` — Name or config is required\n- `A153` — Name or inbounds is required\n- `A164` — Snippet name already exists\n- `A166` — Snippet cannot be empty\n- `A167` — Snippet cannot contain empty objects\n- `A172` — This name is reserved. Please use a different name.\n- `A173` — Template JSON is not allowed for YAML template\n- `A174` — Template YAML is not allowed for JSON template\n- `A175` — Template JSON and YAML cannot be updated simultaneously\n- `A176` — Template name already exists for this type\n- `A178` — Reserved template cannot be deleted\n- `A180` — Template type not allowed\n- `A189` — External squad name already exists\n- `A190` — Name or templates are required\n- `A194` — Passkeys not configured\n- `A195` — Passkeys not enabled. Please enable it first.\n- `A209` — Reserved config name\n- `A210` — Config name already exists\n- `A212` — Reserved subpage config cannot be deleted\n- `A215` — Invalid subscription page config\n- `A216` — Invalid Remnawave injector\n- `A223` — Node plugin name already exists\n- `A229` — One or more provided API token scopes are invalid\n- `A230` — Either nodeUuid or name must be provided\n- `A235` — Start date must be before or equal to end date\n- `A244` — Node integration name already exists\n- `A246` — Shared list name already exists\n- `A259` — SNI regeneration is not configured for this host"
           }
         },
         "required": [

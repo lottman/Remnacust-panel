@@ -20,6 +20,7 @@ export * from './remnawave-settings';
 export * from './snippets';
 export * from './subscription';
 export * from './subscription-page-configs';
+export * from './subscription-domains';
 export * from './subscription-request-history';
 export * from './subscription-settings';
 export * from './subscription-template';

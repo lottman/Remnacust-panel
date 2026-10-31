@@ -18,6 +18,7 @@ exports.UsersSchema = zod_1.z.object({
     description: zod_1.z.nullable(zod_1.z.string()),
     tag: zod_1.z.nullable(zod_1.z.string()),
     hwidDeviceLimit: zod_1.z.nullable(zod_1.z.int()),
+    subscriptionDomainUuid: zod_1.z.uuid().nullable().optional(),
     externalSquadUuid: zod_1.z.nullable(zod_1.z.uuid()),
     trojanPassword: zod_1.z.string(),
     vlessUuid: zod_1.z.guid(),

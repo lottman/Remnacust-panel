@@ -29,6 +29,7 @@ export class BaseUserEntity implements Users {
 
     public hwidDeviceLimit: number | null;
 
+    public subscriptionDomainUuid: string | null;
     public externalSquadUuid: string | null;
 
     public createdAt: Date;

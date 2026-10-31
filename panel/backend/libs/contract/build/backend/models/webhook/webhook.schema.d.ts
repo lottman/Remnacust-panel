@@ -44,6 +44,7 @@ export declare const RemnawaveWebhookUserEvents: z.ZodObject<{
         description: z.ZodNullable<z.ZodString>;
         tag: z.ZodNullable<z.ZodString>;
         hwidDeviceLimit: z.ZodNullable<z.ZodInt>;
+        subscriptionDomainUuid: z.ZodOptional<z.ZodNullable<z.ZodUUID>>;
         externalSquadUuid: z.ZodNullable<z.ZodUUID>;
         trojanPassword: z.ZodString;
         vlessUuid: z.ZodGUID;
@@ -54,6 +55,18 @@ export declare const RemnawaveWebhookUserEvents: z.ZodObject<{
         createdAt: z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>;
         updatedAt: z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>;
         subscriptionUrl: z.ZodString;
+        subscriptionDomain: z.ZodOptional<z.ZodNullable<z.ZodObject<{
+            uuid: z.ZodUUID;
+            name: z.ZodString;
+            domain: z.ZodString;
+            path: z.ZodString;
+            kind: z.ZodEnum<{
+                PRIMARY: "PRIMARY";
+                CDN: "CDN";
+            }>;
+            parentUuid: z.ZodNullable<z.ZodUUID>;
+            isDefault: z.ZodBoolean;
+        }, z.core.$strip>>>;
         activeInternalSquads: z.ZodArray<z.ZodObject<{
             uuid: z.ZodUUID;
             name: z.ZodString;
@@ -106,6 +119,7 @@ export declare const RemnawaveWebhookUserHwidDevicesEvents: z.ZodObject<{
             description: z.ZodNullable<z.ZodString>;
             tag: z.ZodNullable<z.ZodString>;
             hwidDeviceLimit: z.ZodNullable<z.ZodInt>;
+            subscriptionDomainUuid: z.ZodOptional<z.ZodNullable<z.ZodUUID>>;
             externalSquadUuid: z.ZodNullable<z.ZodUUID>;
             trojanPassword: z.ZodString;
             vlessUuid: z.ZodGUID;
@@ -116,6 +130,18 @@ export declare const RemnawaveWebhookUserHwidDevicesEvents: z.ZodObject<{
             createdAt: z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>;
             updatedAt: z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>;
             subscriptionUrl: z.ZodString;
+            subscriptionDomain: z.ZodOptional<z.ZodNullable<z.ZodObject<{
+                uuid: z.ZodUUID;
+                name: z.ZodString;
+                domain: z.ZodString;
+                path: z.ZodString;
+                kind: z.ZodEnum<{
+                    PRIMARY: "PRIMARY";
+                    CDN: "CDN";
+                }>;
+                parentUuid: z.ZodNullable<z.ZodUUID>;
+                isDefault: z.ZodBoolean;
+            }, z.core.$strip>>>;
             activeInternalSquads: z.ZodArray<z.ZodObject<{
                 uuid: z.ZodUUID;
                 name: z.ZodString;
@@ -451,6 +477,7 @@ export declare const RemnawaveWebhookTorrentBlockerEvents: z.ZodObject<{
             description: z.ZodNullable<z.ZodString>;
             tag: z.ZodNullable<z.ZodString>;
             hwidDeviceLimit: z.ZodNullable<z.ZodInt>;
+            subscriptionDomainUuid: z.ZodOptional<z.ZodNullable<z.ZodUUID>>;
             externalSquadUuid: z.ZodNullable<z.ZodUUID>;
             trojanPassword: z.ZodString;
             vlessUuid: z.ZodGUID;
@@ -461,6 +488,18 @@ export declare const RemnawaveWebhookTorrentBlockerEvents: z.ZodObject<{
             createdAt: z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>;
             updatedAt: z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>;
             subscriptionUrl: z.ZodString;
+            subscriptionDomain: z.ZodOptional<z.ZodNullable<z.ZodObject<{
+                uuid: z.ZodUUID;
+                name: z.ZodString;
+                domain: z.ZodString;
+                path: z.ZodString;
+                kind: z.ZodEnum<{
+                    PRIMARY: "PRIMARY";
+                    CDN: "CDN";
+                }>;
+                parentUuid: z.ZodNullable<z.ZodUUID>;
+                isDefault: z.ZodBoolean;
+            }, z.core.$strip>>>;
             activeInternalSquads: z.ZodArray<z.ZodObject<{
                 uuid: z.ZodUUID;
                 name: z.ZodString;
@@ -545,6 +584,7 @@ export declare const RemnawaveWebhookEventSchema: z.ZodDiscriminatedUnion<[z.Zod
         description: z.ZodNullable<z.ZodString>;
         tag: z.ZodNullable<z.ZodString>;
         hwidDeviceLimit: z.ZodNullable<z.ZodInt>;
+        subscriptionDomainUuid: z.ZodOptional<z.ZodNullable<z.ZodUUID>>;
         externalSquadUuid: z.ZodNullable<z.ZodUUID>;
         trojanPassword: z.ZodString;
         vlessUuid: z.ZodGUID;
@@ -555,6 +595,18 @@ export declare const RemnawaveWebhookEventSchema: z.ZodDiscriminatedUnion<[z.Zod
         createdAt: z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>;
         updatedAt: z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>;
         subscriptionUrl: z.ZodString;
+        subscriptionDomain: z.ZodOptional<z.ZodNullable<z.ZodObject<{
+            uuid: z.ZodUUID;
+            name: z.ZodString;
+            domain: z.ZodString;
+            path: z.ZodString;
+            kind: z.ZodEnum<{
+                PRIMARY: "PRIMARY";
+                CDN: "CDN";
+            }>;
+            parentUuid: z.ZodNullable<z.ZodUUID>;
+            isDefault: z.ZodBoolean;
+        }, z.core.$strip>>>;
         activeInternalSquads: z.ZodArray<z.ZodObject<{
             uuid: z.ZodUUID;
             name: z.ZodString;
@@ -606,6 +658,7 @@ export declare const RemnawaveWebhookEventSchema: z.ZodDiscriminatedUnion<[z.Zod
             description: z.ZodNullable<z.ZodString>;
             tag: z.ZodNullable<z.ZodString>;
             hwidDeviceLimit: z.ZodNullable<z.ZodInt>;
+            subscriptionDomainUuid: z.ZodOptional<z.ZodNullable<z.ZodUUID>>;
             externalSquadUuid: z.ZodNullable<z.ZodUUID>;
             trojanPassword: z.ZodString;
             vlessUuid: z.ZodGUID;
@@ -616,6 +669,18 @@ export declare const RemnawaveWebhookEventSchema: z.ZodDiscriminatedUnion<[z.Zod
             createdAt: z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>;
             updatedAt: z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>;
             subscriptionUrl: z.ZodString;
+            subscriptionDomain: z.ZodOptional<z.ZodNullable<z.ZodObject<{
+                uuid: z.ZodUUID;
+                name: z.ZodString;
+                domain: z.ZodString;
+                path: z.ZodString;
+                kind: z.ZodEnum<{
+                    PRIMARY: "PRIMARY";
+                    CDN: "CDN";
+                }>;
+                parentUuid: z.ZodNullable<z.ZodUUID>;
+                isDefault: z.ZodBoolean;
+            }, z.core.$strip>>>;
             activeInternalSquads: z.ZodArray<z.ZodObject<{
                 uuid: z.ZodUUID;
                 name: z.ZodString;
@@ -946,6 +1011,7 @@ export declare const RemnawaveWebhookEventSchema: z.ZodDiscriminatedUnion<[z.Zod
             description: z.ZodNullable<z.ZodString>;
             tag: z.ZodNullable<z.ZodString>;
             hwidDeviceLimit: z.ZodNullable<z.ZodInt>;
+            subscriptionDomainUuid: z.ZodOptional<z.ZodNullable<z.ZodUUID>>;
             externalSquadUuid: z.ZodNullable<z.ZodUUID>;
             trojanPassword: z.ZodString;
             vlessUuid: z.ZodGUID;
@@ -956,6 +1022,18 @@ export declare const RemnawaveWebhookEventSchema: z.ZodDiscriminatedUnion<[z.Zod
             createdAt: z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>;
             updatedAt: z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>;
             subscriptionUrl: z.ZodString;
+            subscriptionDomain: z.ZodOptional<z.ZodNullable<z.ZodObject<{
+                uuid: z.ZodUUID;
+                name: z.ZodString;
+                domain: z.ZodString;
+                path: z.ZodString;
+                kind: z.ZodEnum<{
+                    PRIMARY: "PRIMARY";
+                    CDN: "CDN";
+                }>;
+                parentUuid: z.ZodNullable<z.ZodUUID>;
+                isDefault: z.ZodBoolean;
+            }, z.core.$strip>>>;
             activeInternalSquads: z.ZodArray<z.ZodObject<{
                 uuid: z.ZodUUID;
                 name: z.ZodString;

@@ -47,6 +47,42 @@ test('public panel gateway retains its fixed API destination and restores contex
     assert.equal(backendContext.currentGeofileOrigin(), undefined);
 });
 
+test('a CDN request header selects registered context for ordinary links without changing their path', async () => {
+    const value = { uuid, publicBaseUrl: `https://cdn.example.test/cdn/${uuid}` };
+    const legacy = { method: 'GET', url: '/cdn/shortuuid/json?revision=123', headers: { 'x-remnacust-cdn': uuid } };
+    let passed = false;
+    await page(async () => value, '/cdn')(legacy, response(), () => {
+        passed = true;
+        assert.equal(legacy.url, '/cdn/shortuuid/json?revision=123');
+        assert.deepEqual(context.currentSubscriptionDomain(), value);
+    });
+    assert.equal(passed, true);
+    for (const [factory, prefix, current] of [[page, '', () => context.currentSubscriptionDomain()],
+        [backend, '/api/sub', () => backendContext.currentGeofileOrigin()]]) {
+        for (const method of ['GET', 'HEAD']) {
+            const req = { method, url: prefix + '/shortuuid/json?revision=123', headers: { 'x-remnacust-cdn': uuid } };
+            const original = req.url;
+            await factory(async (id) => { assert.equal(id, uuid); return prefix ? value.publicBaseUrl : value; })(req, response(), () => {
+                assert.equal(req.url, original);
+                assert.equal(req.headers['x-remnacust-cdn'], undefined, 'public selector is consumed, not forwarded');
+                assert.deepEqual(current(), prefix ? value.publicBaseUrl : value);
+            });
+            assert.equal(current(), undefined);
+        }
+        for (const selector of ['', 'https://evil.test', 'bad', [uuid, uuid]]) {
+            const res = response();
+            await factory(async () => assert.fail('Malformed header reached lookup'))({ method: 'GET', url: prefix + '/shortuuid/json', headers: { 'x-remnacust-cdn': selector } }, res, () => assert.fail());
+            assert.equal(res.code, 404);
+        }
+        const conflict = response();
+        await factory(async () => assert.fail('Conflicting selectors reached lookup'))({ method: 'GET', url: `${prefix}/cdn/${uuid}/shortuuid/json`, headers: { 'x-remnacust-cdn': '22222222-2222-4222-8222-222222222222' } }, conflict, () => assert.fail());
+        assert.equal(conflict.code, 404);
+        const unknown = response();
+        await factory(async () => { throw Object.assign(Error('unknown'), { status: 404 }); })({ method: 'GET', url: prefix + '/shortuuid/json', headers: { 'x-remnacust-cdn': uuid } }, unknown, () => assert.fail());
+        assert.equal(unknown.code, 404);
+    }
+});
+
 test('malformed, encoded, nested and traversal selectors fail before any lookup; legacy links bypass gateway', async () => {
     const rest = [`/cdn/no-id/short`, `/cdn/${uuid}/cdn/${uuid}/short`, `/cdn/${uuid}/../admin`,
         `/cdn/${uuid}/%2e%2e/admin`, `/cdn/${uuid}/%2fadmin`, `/cdn/${uuid}//admin`, `/cdn/${uuid}/\\admin`];

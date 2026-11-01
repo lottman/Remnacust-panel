@@ -3,10 +3,10 @@ import { Request, Response, NextFunction } from 'express';
 import { IGNORED_HEADERS } from '@common/constants';
 
 export function headerFilterMiddleware(req: Request, _res: Response, next: NextFunction) {
-    // Keep the request authority for same-origin geofile delivery. The upstream
-    // request filter still strips Host before sending to the configured panel.
+    // The registered CDN selector is consumed by the following gateway middleware.
+    // Host is retained for legacy links; neither is forwarded as panel authority.
     for (const key of Object.keys(req.headers)) {
-        if (key !== 'accept-encoding' && key !== 'host' && IGNORED_HEADERS.has(key)) {
+        if (key !== 'accept-encoding' && key !== 'host' && key !== 'x-remnacust-cdn' && IGNORED_HEADERS.has(key)) {
             delete req.headers[key];
         }
     }

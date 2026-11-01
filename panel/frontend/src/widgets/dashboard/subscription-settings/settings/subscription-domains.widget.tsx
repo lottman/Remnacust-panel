@@ -1,4 +1,5 @@
 import {
+    Accordion,
     ActionIcon,
     Alert,
     Badge,
@@ -127,6 +128,27 @@ export function SubscriptionDomainsWidget() {
     const convertedLink = setupDomain
         ? cdnSubscriptionLink(setupDomain.publicBaseUrl, existingLink)
         : null
+    const copyableField = (label: string, value: string) => (
+        <TextInput
+            readOnly
+            dir="ltr"
+            label={label}
+            value={value}
+            rightSection={
+                <CopyButton value={value}>
+                    {({ copied, copy }) => (
+                        <ActionIcon
+                            onClick={copy}
+                            variant="subtle"
+                            aria-label={t('common.action.copy')}
+                        >
+                            {copied ? <TbCheck size={16} /> : <TbCopy size={16} />}
+                        </ActionIcon>
+                    )}
+                </CopyButton>
+            }
+        />
+    )
     const environmentError =
         isAxiosError(save.error) &&
         ['SUBSCRIPTION_DOMAIN_ENV_UNAVAILABLE', 'SUBSCRIPTION_DOMAIN_ENV_CHANGED'].includes(
@@ -372,66 +394,86 @@ export function SubscriptionDomainsWidget() {
                 {setupDomain && (
                     <Stack>
                         <Text size="sm">{t('subscription-domains.gateway-help')}</Text>
-                        <TextInput
-                            label={t('subscription-domains.existing-link')}
-                            description={t('subscription-domains.convert-help')}
-                            value={existingLink}
-                            onChange={(event) => setExistingLink(event.currentTarget.value)}
-                            error={
-                                existingLink.trim() && !convertedLink
-                                    ? t('subscription-domains.invalid-link')
-                                    : undefined
-                            }
-                            autoComplete="off"
-                            spellCheck={false}
-                            dir="ltr"
-                        />
-                        <TextInput
-                            readOnly
-                            dir="ltr"
-                            label={t(
-                                convertedLink
-                                    ? 'subscription-domains.ready-link'
-                                    : 'subscription-domains.public-link'
-                            )}
-                            value={
-                                convertedLink ??
-                                `${setupDomain.publicBaseUrl}/${t('subscription-domains.key-placeholder')}`
-                            }
-                            rightSection={
-                                <CopyButton value={convertedLink ?? ''}>
-                                    {({ copied, copy }) => (
-                                        <ActionIcon
-                                            disabled={!convertedLink}
-                                            onClick={copy}
-                                            variant="subtle"
-                                            aria-label={t('common.action.copy')}
-                                        >
-                                            {copied ? <TbCheck size={16} /> : <TbCopy size={16} />}
-                                        </ActionIcon>
-                                    )}
-                                </CopyButton>
-                            }
-                        />
-                        <TextInput
-                            readOnly
-                            label={t('subscription-domains.origin')}
-                            value={`https://${rows.find((row) => row.uuid === setupDomain.parentUuid)?.domain ?? ''}`}
-                        />
-                        <TextInput
-                            readOnly
-                            label="Host / SNI"
-                            value={
-                                rows.find((row) => row.uuid === setupDomain.parentUuid)?.domain ??
-                                ''
-                            }
-                        />
+                        {copyableField(
+                            t('subscription-domains.request-header-name'),
+                            'X-Remnacust-CDN'
+                        )}
+                        {copyableField(
+                            t('subscription-domains.request-header-value'),
+                            setupDomain.uuid
+                        )}
+                        {copyableField(
+                            t('subscription-domains.origin'),
+                            `https://${rows.find((row) => row.uuid === setupDomain.parentUuid)?.domain ?? ''}`
+                        )}
+                        {copyableField(
+                            'Host / SNI',
+                            rows.find((row) => row.uuid === setupDomain.parentUuid)?.domain ?? ''
+                        )}
                         <Text size="sm" c="dimmed">
                             {t('subscription-domains.origin-help')}
                         </Text>
-                        <Text size="sm" c="dimmed">
-                            {t('subscription-domains.gateway-migration')}
-                        </Text>
+                        <Accordion variant="separated">
+                            <Accordion.Item value="fallback">
+                                <Accordion.Control>
+                                    {t('subscription-domains.without-request-header')}
+                                </Accordion.Control>
+                                <Accordion.Panel>
+                                    <Stack gap="sm">
+                                        <TextInput
+                                            label={t('subscription-domains.existing-link')}
+                                            description={t('subscription-domains.convert-help')}
+                                            value={existingLink}
+                                            onChange={(event) =>
+                                                setExistingLink(event.currentTarget.value)
+                                            }
+                                            error={
+                                                existingLink.trim() && !convertedLink
+                                                    ? t('subscription-domains.invalid-link')
+                                                    : undefined
+                                            }
+                                            autoComplete="off"
+                                            spellCheck={false}
+                                            dir="ltr"
+                                        />
+                                        <TextInput
+                                            readOnly
+                                            dir="ltr"
+                                            label={t(
+                                                convertedLink
+                                                    ? 'subscription-domains.ready-link'
+                                                    : 'subscription-domains.public-link'
+                                            )}
+                                            value={
+                                                convertedLink ??
+                                                `${setupDomain.publicBaseUrl}/${t('subscription-domains.key-placeholder')}`
+                                            }
+                                            rightSection={
+                                                <CopyButton value={convertedLink ?? ''}>
+                                                    {({ copied, copy }) => (
+                                                        <ActionIcon
+                                                            disabled={!convertedLink}
+                                                            onClick={copy}
+                                                            variant="subtle"
+                                                            aria-label={t('common.action.copy')}
+                                                        >
+                                                            {copied ? (
+                                                                <TbCheck size={16} />
+                                                            ) : (
+                                                                <TbCopy size={16} />
+                                                            )}
+                                                        </ActionIcon>
+                                                    )}
+                                                </CopyButton>
+                                            }
+                                        />
+                                        <Text size="sm" c="dimmed">
+                                            {t('subscription-domains.gateway-migration')}
+                                        </Text>
+                                    </Stack>
+                                </Accordion.Panel>
+                            </Accordion.Item>
+                        </Accordion>
                     </Stack>
                 )}
             </Modal>
@@ -463,7 +505,10 @@ export function SubscriptionDomainsWidget() {
                         />
                         <Select
                             data={[
-                                { value: 'PRIMARY', label: t('subscription-domains.kind-primary') },
+                                {
+                                    value: 'PRIMARY',
+                                    label: t('subscription-domains.kind-primary')
+                                },
                                 { value: 'CDN', label: t('subscription-domains.kind-cdn') }
                             ]}
                             label={t('subscription-domains.type')}

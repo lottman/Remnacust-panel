@@ -4233,13 +4233,16 @@
     "public-link": "Subscription URL template",
     "key-placeholder": "<key>",
     "origin": "CDN origin (HTTPS)",
-    "gateway-help": "The domain ID path is added automatically. It keeps subscription and geofile URLs on the CDN even when the CDN rewrites Host. Select this domain in a user card to copy their ready-to-use URL.",
-    "origin-help": "In VK, use this origin, Host and SNI. Do not add an origin path: it is already included in the URL. Disable forced caching of subscription responses.",
-    "gateway-migration": "Existing URLs continue to work. Replace an old URL once with the new URL from the user card to enable automatic CDN identification.",
+    "gateway-help": "Add this request header to the CDN origin requests once in VK or Yandex. Existing client URLs keep working; subscriptions and geofiles are delivered through this CDN.",
+    "origin-help": "The origin is the main subscription site. Set this origin, Host and SNI in the CDN. Preserve paths and query parameters and disable forced caching of subscription responses.",
+    "gateway-migration": "This fallback uses a domain ID in the path and requires replacing an old URL once. With the request header configured above, existing URLs need no replacement.",
     "existing-link": "Existing URL or subscription key",
     "convert-help": "Paste a regular subscription URL to generate its CDN URL below. Nothing is sent to the server.",
     "invalid-link": "Enter an HTTPS subscription URL without query parameters, or its key.",
-    "ready-link": "Ready-to-use CDN URL"
+    "ready-link": "Ready-to-use CDN URL",
+    "request-header-name": "Request header name",
+    "request-header-value": "Header value",
+    "without-request-header": "If the CDN cannot add a request header"
   },
   "nodes-usage-chart": {
     "show-legend": "Show legend",

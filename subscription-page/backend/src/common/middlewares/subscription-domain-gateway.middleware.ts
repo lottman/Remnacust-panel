@@ -7,13 +7,35 @@ export function subscriptionDomainGateway(
 ) {
     const base = customPrefix ? '/' + customPrefix.replace(/^\/+|\/+$/g, '') : '';
     return async (req: Request, res: Response, next: NextFunction) => {
+        const selector = req.headers?.['x-remnacust-cdn'];
+        if (req.headers) delete req.headers['x-remnacust-cdn'];
         const path = req.url.split('?', 1)[0];
-        const marker = path.lastIndexOf('/cdn/');
-        if (marker < 0) return next();
+        let marker = path.lastIndexOf('/cdn/');
+        // A configured legacy prefix may itself be /cdn. With a header, only
+        // a UUID after /cdn/ is an explicit path selector; ordinary keys stay intact.
+        if (selector !== undefined && marker >= 0 &&
+            !/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}(?:\/|$)/.test(path.slice(marker + 5)))
+            marker = -1;
+        if (marker < 0 && selector === undefined) return next();
+        if (selector !== undefined && (typeof selector !== 'string' ||
+            !/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/.test(selector)))
+            return res.status(404).end();
+        if (marker < 0) {
+            res.set('Cache-Control', 'private, no-store');
+            if (!['GET', 'HEAD'].includes(req.method)) return res.status(404).end();
+            try {
+                const domain = await resolve(selector as string);
+                if (res.destroyed || res.writableEnded) return;
+                if (domain.uuid !== selector) return res.status(404).end();
+                return withSubscriptionDomain(domain, next);
+            } catch (error) {
+                return res.status((error as { status?: number }).status === 404 ? 404 : 503).end();
+            }
+        }
         const publicPrefix = path.slice(0, marker);
         res.set('Cache-Control', 'private, no-store');
         const match = /^([a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12})(\/[^?#]*)(\?[^#]*)?$/.exec(req.url.slice(marker + 5));
-        if (!match || !['GET', 'HEAD'].includes(req.method) || match[2].includes('/cdn/') ||
+        if (!match || (selector !== undefined && selector !== match[1]) || !['GET', 'HEAD'].includes(req.method) || match[2].includes('/cdn/') ||
             !/^(?:\/[A-Za-z0-9._~-]+)*$/.test(publicPrefix) ||
             /\/cdn\/[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}(?:\/|$)/.test(publicPrefix) ||
             /[%\\]/.test(path) || path.split('/').some(part => part === '.' || part === '..') || match[2].startsWith('//'))

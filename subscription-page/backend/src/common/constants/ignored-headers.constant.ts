@@ -44,6 +44,7 @@ export const IGNORED_HEADERS = new Set([
     'x-subpage-version',
     'x-remnacust-geofile-origin',
     'x-remnacust-subscription-domain',
+    'x-remnacust-cdn',
     'etag',
     'last-modified',
     // The panel is only an upstream. These response headers can disclose its

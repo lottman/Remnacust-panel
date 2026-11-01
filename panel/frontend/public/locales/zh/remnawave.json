@@ -4233,13 +4233,16 @@
         "public-link": "订阅链接模板",
         "key-placeholder": "<密钥>",
         "origin": "CDN 源站（HTTPS）",
-        "gateway-help": "系统自动添加域名 ID 路径。即使 CDN 改写 Host，订阅及地理文件链接仍使用 CDN 地址。在用户卡片中选择此域名后即可复制完整链接。",
-        "origin-help": "在 VK 中使用此源站、Host 和 SNI。无需额外添加源站路径，链接已包含该路径。请关闭订阅响应的强制缓存。",
-        "gateway-migration": "现有链接仍然有效。如需自动识别 CDN，请将旧链接替换一次，使用用户卡片中的新链接。",
+        "gateway-help": "在 VK 或 Yandex 中一次性为 CDN 到源站的请求添加此请求头。客户端现有链接保持有效，订阅和地理文件会通过此 CDN 提供。",
+        "origin-help": "源站是主订阅网站。在 CDN 中设置此源站、Host 和 SNI，保留路径和查询参数，并关闭对订阅响应的强制缓存。",
+        "gateway-migration": "此备用方式使用路径中的域名 ID，需要替换一次旧链接。配置上方请求头后，无需替换现有链接。",
         "existing-link": "现有链接或订阅密钥",
         "convert-help": "粘贴普通订阅链接，即可在下方生成 CDN 链接。不会向服务器发送内容。",
         "invalid-link": "请输入不含查询参数的 HTTPS 订阅链接，或订阅密钥。",
-        "ready-link": "可直接使用的 CDN 链接"
+        "ready-link": "可直接使用的 CDN 链接",
+        "request-header-name": "请求头名称",
+        "request-header-value": "请求头值",
+        "without-request-header": "CDN 不支持添加请求头时"
     },
     "nodes-usage-chart": {
         "show-legend": "显示图例",

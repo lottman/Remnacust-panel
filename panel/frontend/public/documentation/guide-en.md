@@ -781,9 +781,9 @@ New devices denied is handled separately. If registration is denied for a new de
 
 Traffic quota exhaustion, the maximum device count and missing HWID support have separate messages outside this list. Reordering changes subscription messages; restrictions and access checks still apply. Presentation depends on the client.
 
-### CDN links through an origin Host rewrite
+### CDN: configure once
 
-Panel and page 1.1.7.79 automatically add /cdn/<ID> to CDN user URLs, geofiles, checksums and device URLs. This works when the CDN sends the main site’s Host to the origin. Use Set up CDN to convert an old HTTPS URL or key locally in the browser and copy the result; it also shows the HTTPS origin, Host and SNI for VK. Do not add an extra origin path or force caching of personalized responses. Select the CDN in a user card, save and copy the new URL. Old links still work, but replace the URL once for CDN identification through a Host rewrite. The ID selects only a registered public CDN and does not bypass status, freeze, expiry, keys or HWID or expose the panel address. .env keeps the main address without the CDN prefix.
+Copy the X-Remnacust-CDN request header name and UUID value from Set up CDN. Add an origin request header in VK or Yandex. Use the main subscription site for the HTTPS origin, Host and SNI. Disable forced caching of personalized responses. Existing client URLs need no replacement; files, checksums and device URLs retain the CDN. The ID does not bypass keys, status, freezing, expiry or HWID. The /cdn/<ID> path remains a fallback for CDNs without request headers. No new .env variables are needed.
 
 ### Subscription domain and .env
 

@@ -32,6 +32,7 @@ const EXCLUDED = new Set([
     'x-subpage-version',
     'x-remnacust-geofile-origin',
     'x-remnacust-subscription-domain',
+    'x-remnacust-cdn',
 ]);
 
 export function subscriptionRequestHeaders(headers: IncomingHttpHeaders): IncomingHttpHeaders {

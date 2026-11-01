@@ -334,6 +334,53 @@ sections.push([
     ]
 ])
 
+sections.push(
+    [
+        'templates',
+        'geofile-profile-budget',
+        [
+            [
+                'Пороги и категории геофайлов',
+                'Встроенные правила ограничены 20 000 условиями на профиль. Для Happ/INCY панель дополнительно использует запас 90 000 байт с учётом форматирования и раскрытия строковых списков; это порог переключения панели, а не заявленный лимит приложения. Достаточно превысить один порог: сервер заново собирает выдачу с DAT, в которые входят только выбранные категории. GeoSite и GeoIP выдаются отдельно, правила и их порядок сохраняются. Профили разных хостов не суммируются. Обычные DIRECT/REJECT не дублируются именами direct/block; существующие простые выходы используются повторно, пользовательские настройки выходов не заменяются. Ссылки подписаны, прежние ссылки поддерживаются. При переносе сохраняйте весь backups/geofiles вместе с файлами выбора категорий. Подписка и DAT доступны без запущенного VPN через публичный домен или настроенный CDN; HTTP 502, DNS и ошибки сертификата требуют проверки внешнего прокси и работающей страницы подписки. Ошибка загрузки не превращается в пустой успешный набор.'
+            ],
+            [
+                'Geofile thresholds and categories',
+                'Inline rules are limited to 20,000 conditions per profile. For Happ/INCY the panel also reserves a 90,000-byte budget including client formatting and StringList expansion; this is the panel switching threshold, not a published application limit. Exceeding either threshold triggers a fresh render using DAT containing only selected categories. GeoSite and GeoIP are separate downloads; rule actions and order remain intact. Host profiles are never summed. Plain DIRECT/REJECT actions are not duplicated as direct/block; existing plain outbounds are reused without replacing custom outbound settings. Links are signed and earlier links remain supported. Preserve the entire backups/geofiles directory, including category selections, when migrating. Subscription and DAT URLs do not require a running VPN and use the public domain or configured CDN; HTTP 502, DNS and certificate failures require checking the external proxy and running subscription page. Download failure never becomes an empty successful dataset.'
+            ],
+            [
+                'سقف‌ها و دسته‌های فایل جغرافیایی',
+                'قوانین داخلی حداکثر ۲۰٬۰۰۰ شرط در هر پروفایل دارند. برای Happ/INCY سقف احتیاطی پنل ۹۰٬۰۰۰ بایت شامل قالب‌بندی و بازشدن StringList است؛ این سقف تغییر روش در پنل است، نه محدودیت اعلام‌شده برنامه. عبور از هر سقف باعث تولید دوباره با DAT شامل فقط دسته‌های انتخابی می‌شود. GeoSite و GeoIP جدا هستند و عمل و ترتیب قوانین حفظ می‌شود. اندازه پروفایل میزبان‌ها جمع نمی‌شود. DIRECT/REJECT با direct/block تکرار نمی‌شوند؛ خروجی ساده موجود دوباره استفاده می‌شود و تنظیمات سفارشی جایگزین نمی‌شود. پیوندها امضا دارند و پیوندهای قدیمی معتبر می‌مانند. هنگام انتقال، کل backups/geofiles و انتخاب دسته‌ها را حفظ کنید. دریافت اشتراک و DAT به VPN فعال نیاز ندارد و از دامنه عمومی یا CDN تنظیم‌شده انجام می‌شود؛ خطای HTTP 502، DNS و گواهی به بررسی پراکسی بیرونی و اجرای صفحه اشتراک نیاز دارد. شکست دانلود هرگز مجموعه خالی موفق محسوب نمی‌شود.'
+            ],
+            [
+                '地理文件阈值与分类',
+                '每个配置的内嵌规则最多包含 20,000 个匹配条件。对 Happ/INCY，面板还使用 90,000 字节的保守阈值，包含客户端格式化及 StringList 展开；这是面板切换阈值，不是应用公布的限制。超过任一阈值后重新生成配置，DAT 仅包含所选分类。GeoSite 和 GeoIP 分别下载，规则动作及顺序保持不变。不会累加各主机配置大小。普通 DIRECT/REJECT 不会重复显示为 direct/block；复用已有的普通出站，不覆盖自定义出站设置。链接经过签名，旧链接继续受支持。迁移时保留整个 backups/geofiles 目录及分类选择文件。订阅和 DAT 可通过公共域名或已配置的 CDN 下载，无需先开启 VPN；HTTP 502、DNS 或证书错误需要检查外部代理及订阅页面运行状态。下载失败不会被当作成功的空数据集。'
+            ]
+        ]
+    ],
+    [
+        'nodes',
+        'mptcp-kernel-security',
+        [
+            [
+                'MPTCP и безопасность ядра Linux',
+                'Xray v26.10.31 выключает MPTCP по умолчанию; явное streamSettings.sockopt.tcpMptcp сохраняется. Включать MPTCP для прежнего поведения следует только после установки исправленного ядра Linux и загрузки именно этого ядра. Docker-образ не обновляет ядро хоста. CVE-2026-98432 затрагивает TCP IPv4: выключение MPTCP снижает поверхность атаки, но не закрывает саму ошибку. Статус исправления проверяется по бюллетеню дистрибутива для конкретного пакета, а не только по номеру uname -r. Для проверки слушателей используйте sudo ss -Mlnp. Не включайте MPTCP на непроверенном ядре. Источники: https://github.com/XTLS/Xray-core/releases/tag/v26.10.31 и https://groups.google.com/g/golang-announce/c/PCoQcdxoScw/m/aD-MgXEvAAAJ.'
+            ],
+            [
+                'MPTCP and Linux kernel security',
+                'Xray v26.10.31 disables MPTCP by default; explicit streamSettings.sockopt.tcpMptcp remains available. Restore earlier MPTCP behavior only after installing a patched Linux kernel and booting that kernel. A Docker image does not update the host kernel. CVE-2026-98432 affects IPv4 TCP: disabling MPTCP reduces attack surface but does not fix the kernel bug itself. Verify the exact distribution package against its security bulletin rather than relying only on uname -r. Inspect listeners with sudo ss -Mlnp. Do not enable MPTCP on an unverified kernel. Sources: https://github.com/XTLS/Xray-core/releases/tag/v26.10.31 and https://groups.google.com/g/golang-announce/c/PCoQcdxoScw/m/aD-MgXEvAAAJ.'
+            ],
+            [
+                'MPTCP و امنیت هسته لینوکس',
+                'Xray v26.10.31 به‌طور پیش‌فرض MPTCP را خاموش می‌کند؛ تنظیم صریح streamSettings.sockopt.tcpMptcp باقی است. رفتار قبلی MPTCP را فقط پس از نصب هسته اصلاح‌شده لینوکس و راه‌اندازی با همان هسته برگردانید. تصویر Docker هسته میزبان را به‌روز نمی‌کند. CVE-2026-98432 مربوط به TCP IPv4 است؛ خاموش کردن MPTCP سطح حمله را کم می‌کند ولی خود خطای هسته را رفع نمی‌کند. وضعیت بسته دقیق توزیع را در بولتن امنیتی بررسی کنید، نه فقط شماره uname -r. شنونده‌ها با sudo ss -Mlnp بررسی می‌شوند. روی هسته تاییدنشده MPTCP را فعال نکنید. منابع: https://github.com/XTLS/Xray-core/releases/tag/v26.10.31 و https://groups.google.com/g/golang-announce/c/PCoQcdxoScw/m/aD-MgXEvAAAJ.'
+            ],
+            [
+                'MPTCP 与 Linux 内核安全',
+                'Xray v26.10.31 默认关闭 MPTCP，仍支持显式设置 streamSettings.sockopt.tcpMptcp。只有在安装修补后的 Linux 内核并启动该内核后，才应恢复原有 MPTCP 行为。Docker 镜像不会更新主机内核。CVE-2026-98432 影响 IPv4 TCP；关闭 MPTCP 可缩小攻击面，但无法修复内核漏洞本身。应根据发行版安全公告核验具体软件包，不能只依赖 uname -r。可使用 sudo ss -Mlnp 查看监听程序。不要在未经核验的内核上启用 MPTCP。来源：https://github.com/XTLS/Xray-core/releases/tag/v26.10.31 和 https://groups.google.com/g/golang-announce/c/PCoQcdxoScw/m/aD-MgXEvAAAJ。'
+            ]
+        ]
+    ]
+)
+
 export function explainOperations(articles) {
     for (const [articleId, id, translations] of sections) {
         const article = articles.find((item) => item.id === articleId)

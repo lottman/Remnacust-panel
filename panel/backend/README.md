@@ -1,6 +1,6 @@
 # Remnacust Backend
 
-**Версия 1.1.7.85**, основа Remnawave 3.4.7. NestJS API, фоновые обработчики и scheduler используют PostgreSQL, Valkey и общую контрактную библиотеку [libs/contract](libs/contract).
+**Версия 1.1.7.86**, основа Remnawave 3.4.7. NestJS API, фоновые обработчики и scheduler используют PostgreSQL, Valkey и общую контрактную библиотеку [libs/contract](libs/contract).
 
 ## Разработка
 

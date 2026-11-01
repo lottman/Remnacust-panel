@@ -5,6 +5,8 @@ import { ClientPoolError } from '../generators/client-pool';
 // only the minified HTTP response.
 export const INCY_FORMATTED_CONFIG_BUDGET = 900_000;
 export const XRAY_FORMATTED_CONFIG_BUDGET = 900_000;
+export const GEOFILE_INLINE_CONFIG_BUDGET = XRAY_FORMATTED_CONFIG_BUDGET / 10;
+export const GEOFILE_INLINE_RULE_LIMIT = 20_000;
 const MAX_SUBSCRIPTION_BYTES = 16 * 1024 * 1024;
 const MIN_COMPACT_LIST_ENTRIES = 64;
 const STRING_LIST_FIELDS = ['ip', 'domain', 'domains', 'source', 'sourceIP', 'localIP'] as const;
@@ -28,6 +30,26 @@ export function xrayProfileFormattedBytes(config: Record<string, any>): number {
         }
     }
     return bytes;
+}
+
+export function xrayRuleEntries(
+    config: Record<string, any>,
+    limit = GEOFILE_INLINE_RULE_LIMIT,
+): number {
+    let count = 0;
+    for (const rule of Array.isArray(config.routing?.rules) ? config.routing.rules : []) {
+        for (const key of STRING_LIST_FIELDS) {
+            const value = rule?.[key];
+            if (Array.isArray(value)) count += value.length;
+            else if (typeof value === 'string') {
+                count++;
+                for (let i = 0; i < value.length && count <= limit; i++)
+                    if (value.charCodeAt(i) === 44) count++;
+            }
+            if (count > limit) return count;
+        }
+    }
+    return count;
 }
 
 export function compactIncySubscription(subscription: string, enforceBudget = true): string {
@@ -78,6 +100,7 @@ export function compactIncySubscription(subscription: string, enforceBudget = tr
 export function xrayProfilesFit(
     subscription: string,
     budget = INCY_FORMATTED_CONFIG_BUDGET,
+    maxRuleEntries = Number.POSITIVE_INFINITY,
 ): boolean {
     if (!subscription) return true;
     if (Buffer.byteLength(subscription) > MAX_SUBSCRIPTION_BYTES)
@@ -90,7 +113,9 @@ export function xrayProfilesFit(
                 config &&
                 typeof config === 'object' &&
                 !Array.isArray(config) &&
-                xrayProfileFormattedBytes(config) <= budget,
+                xrayProfileFormattedBytes(config) <= budget &&
+                (maxRuleEntries === Number.POSITIVE_INFINITY ||
+                    xrayRuleEntries(config, maxRuleEntries) <= maxRuleEntries),
         )
     );
 }

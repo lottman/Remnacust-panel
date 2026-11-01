@@ -1,5 +1,8 @@
+import type { AxiosResponse } from 'axios';
 import type { Request, Response } from 'express';
+import type { Readable } from 'node:stream';
 
+import { isAxiosError } from 'axios';
 import { pipeline } from 'node:stream/promises';
 
 import { Controller, Get, NotFoundException, Param, Query, Req, Res } from '@nestjs/common';
@@ -47,9 +50,10 @@ export class GeofilesController {
             if (!response.writableFinished) abort.abort();
         };
         response.once('close', disconnected);
+        let upstream: AxiosResponse<Readable> | undefined;
         try {
             // Fixed trusted upstream; neither target URL nor headers come from the client.
-            const upstream = await this.axios.axiosInstance.get(
+            upstream = await this.axios.axiosInstance.get<Readable>(
                 `/api/sub/geofiles/${id}/${filename}`,
                 {
                     responseType: 'stream',
@@ -83,9 +87,33 @@ export class GeofilesController {
                 'Content-Security-Policy': "default-src 'none'; sandbox",
             });
             await pipeline(upstream.data, response, { signal: abort.signal });
-        } catch {
-            if (!response.headersSent && !response.destroyed) response.status(404).end();
-            else if (!response.writableFinished) response.destroy();
+        } catch (error) {
+            abort.abort();
+            upstream?.data.destroy();
+            upstream?.request?.destroy?.();
+            if (isAxiosError(error)) {
+                error.response?.data?.destroy?.();
+                error.request?.destroy?.();
+            }
+            const transient =
+                isAxiosError(error) &&
+                ((error.response?.status ?? 0) >= 500 ||
+                    error.response?.status === 429 ||
+                    [
+                        'ECONNABORTED',
+                        'ETIMEDOUT',
+                        'ECONNRESET',
+                        'ECONNREFUSED',
+                        'EHOSTUNREACH',
+                        'ENETUNREACH',
+                        'ENOTFOUND',
+                        'EAI_AGAIN',
+                    ].includes(error.code ?? ''));
+            if (!response.headersSent && !response.destroyed) {
+                response.set('Cache-Control', 'no-store');
+                if (transient) response.set('Retry-After', '2');
+                response.status(transient ? 503 : 404).end();
+            } else if (!response.writableFinished) response.destroy();
         } finally {
             response.off('close', disconnected);
         }

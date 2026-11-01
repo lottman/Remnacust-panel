@@ -1,6 +1,6 @@
 # Remnacust Panel — установка и разработка
 
-**Панель 1.1.7.85**, основа Remnawave backend/frontend 3.4.7. Полный согласованный комплект — [установщик 1.2.121](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.121), Node 1.1.20 и Core/WASM 1.1.12 на Xray v26.10.31.
+**Панель 1.1.7.86**, основа Remnawave backend/frontend 3.4.7. Полный согласованный комплект — [установщик 1.2.122](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.122), Node 1.1.20 и Core/WASM 1.1.12 на Xray v26.10.31.
 
 ![Интерфейс](assets/overview.png)
 
@@ -10,7 +10,7 @@
 
 ```bash
 curl -fsSL --proto '=https' --proto-redir '=https' https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh -o installer.sh
-sudo bash installer.sh install-panel --version 1.2.121
+sudo bash installer.sh install-panel --version 1.2.122
 ```
 
 Установщик спрашивает домен, HTTPS и необходимость сайта подписки. После запуска создайте администратора. Управление: `sudo remnacust manage-panel`; обновление: `sudo remnacust upgrade-panel`.
@@ -52,11 +52,11 @@ chmod 600 panel/backend/.env
 ```bash
 REVISION=$(git rev-parse HEAD)
 docker build -f panel/Dockerfile \
-  --build-arg __RW_METADATA_VERSION=1.1.7.85 \
+  --build-arg __RW_METADATA_VERSION=1.1.7.86 \
   --build-arg __RW_METADATA_GIT_BACKEND_COMMIT="$REVISION" \
   --build-arg __RW_METADATA_GIT_FRONTEND_COMMIT="$REVISION" \
   --build-arg __RW_METADATA_GIT_BRANCH=local \
-  --label org.opencontainers.image.version=1.1.7.85 \
+  --label org.opencontainers.image.version=1.1.7.86 \
   --label org.opencontainers.image.revision="$REVISION" \
   -t remnacust-panel:local .
 ```

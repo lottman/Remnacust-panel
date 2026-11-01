@@ -19,6 +19,7 @@ import { requestGeofileBase } from '../../../common/utils/geofile-request-contex
 import { ClientPoolError } from '../generators/client-pool';
 import { SubscriptionTemplateRepository } from '../repositories/subscription-template.repository';
 import { bundleDat } from './bundle-dat';
+import { readBundleSelection, storeBundleSelection } from './bundle-selection';
 import { compileDat, datCategories, DatRules } from './compile-dat';
 import { downloadGeofile, MAX_GEOFILE_BYTES } from './download-geofile';
 import { datClientFile } from './geofile-delivery';
@@ -33,6 +34,8 @@ import {
 import { DatKind, XrayGeofileDelivery, XrayGeofileFallback } from './xray-geofile-delivery';
 
 const MAX_FILES = 32;
+const MAX_BUNDLED_CACHE_BYTES = 32 * 1024 * 1024;
+const MAX_BUNDLED_CACHE_ENTRIES = 16;
 const ID = /^[0-9a-f]{34}$/;
 export interface StoredGeofile {
     id: string;
@@ -233,6 +236,7 @@ export class GeofilesService {
         kind: DatKind,
         ids: string[],
         namespace: 1 | 2 = 2,
+        categories?: Record<string, string[]>,
     ): Promise<Buffer> {
         if (
             !['geoip', 'geosite'].includes(kind) ||
@@ -251,9 +255,18 @@ export class GeofilesService {
                 throw new Error('geofile-bundle');
             files.push(file);
         }
-        const key = namespace + ':' + files.map((file) => `${file.id}:${file.sha256}`).join(',');
+        const key =
+            namespace +
+            ':' +
+            files.map((file) => `${file.id}:${file.sha256}`).join(',') +
+            ':' +
+            JSON.stringify(categories ?? null);
         const cached = this.bundled.get(key);
-        if (cached) return cached;
+        if (cached) {
+            this.bundled.delete(key);
+            this.bundled.set(key, cached);
+            return cached;
+        }
         const pending = this.bundlingByKey.get(key);
         if (pending) return pending;
         if (this.bundling >= 2) throw new ServiceUnavailableException('geofile-busy');
@@ -263,17 +276,17 @@ export class GeofilesService {
                 const sources = [];
                 for (const file of files)
                     sources.push({ id: file.id, data: await this.readActive(file) });
-                const data = bundleDat(sources, namespace);
-                if (data.length <= 32 * 1024 * 1024) {
+                const data = bundleDat(sources, namespace, categories);
+                if (data.length <= MAX_BUNDLED_CACHE_BYTES) {
                     while (
                         this.bundled.size &&
-                        (this.bundled.size >= 2 ||
+                        (this.bundled.size >= MAX_BUNDLED_CACHE_ENTRIES ||
                             [...this.bundled.values()].reduce(
                                 (sum, value) => sum + value.length,
                                 0,
                             ) +
                                 data.length >
-                                32 * 1024 * 1024)
+                                MAX_BUNDLED_CACHE_BYTES)
                     )
                         this.bundled.delete(this.bundled.keys().next().value!);
                     this.bundled.set(key, data);
@@ -288,8 +301,20 @@ export class GeofilesService {
         return operation;
     }
 
-    private async bundleUrl(kind: DatKind, ids: string[]): Promise<string> {
+    private async bundleUrl(
+        kind: DatKind,
+        ids: string[],
+        categories?: Record<string, string[]>,
+    ): Promise<string> {
         const ordered = [...ids].sort();
+        if (categories) {
+            const selection = { kind, ids: ordered, namespace: 2 as const, categories };
+            await this.bundleContent(kind, ordered, 2, categories);
+            const key = await storeBundleSelection(this.directory(ordered[0]), selection);
+            if (key) {
+                return `${this.base}${ordered[0]}/bundles/${key}/bundle-${this.bundleSignature(ordered[0], key)}.dat`;
+            }
+        }
         await this.bundleContent(kind, ordered);
         const payload = Buffer.from(JSON.stringify({ kind, ids: ordered, namespace: 2 })).toString(
             'base64url',
@@ -314,6 +339,19 @@ export class GeofilesService {
                 )
             )
                 throw new Error('geofile-bundle');
+            if (/^m-[a-f0-9]{64}$/.test(selection)) {
+                const manifest = await readBundleSelection(this.directory(id), selection);
+                if (manifest.ids[0] !== id) throw new Error('geofile-bundle');
+                const data = await this.bundleContent(
+                    manifest.kind,
+                    manifest.ids,
+                    2,
+                    manifest.categories,
+                );
+                return filename.endsWith('.sha256')
+                    ? Buffer.from(createHash('sha256').update(data).digest('hex'))
+                    : data;
+            }
             const raw = Buffer.from(selection, 'base64url');
             if (raw.length > 2048 || raw.toString('base64url') !== selection)
                 throw new Error('geofile-bundle');
@@ -488,7 +526,7 @@ export class GeofilesService {
                         await this.compile(file, categories, true);
                     },
                     datUrl: (file, categories, format) => this.derivedUrl(file, categories, format),
-                    datBundleUrl: (kind, ids) => this.bundleUrl(kind, ids),
+                    datBundleUrl: (kind, ids, categories) => this.bundleUrl(kind, ids, categories),
                 },
                 happ,
                 mode,

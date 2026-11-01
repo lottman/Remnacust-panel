@@ -4003,7 +4003,7 @@
         "preset-private": "仅包含私有 IP 范围。",
         "preset-lite": "常用服务的精简集，分类少于完整的 GeoSite。",
         "delivery-title": "规则如何传递到应用",
-        "delivery-xray": "面板按每个配置计算大小，包含列表展开和客户端格式化开销。小型规则集内嵌，Happ/INCY 下载大型 DAT。需要 JSON 订阅：启用“{{setting}}”或使用 /json。保存模板并刷新订阅。",
+        "delivery-xray": "每个配置不超过 20,000 个匹配条件和 90,000 字节时，规则内嵌于 JSON。超过任一阈值后，Happ/INCY 获取仅包含所选分类的 DAT。大小包含客户端格式化开销。请启用“{{setting}}”或使用 /json，保存模板并刷新订阅。",
         "delivery-native": "小型规则内嵌到订阅；数据集总量较大时，应用按自身格式下载远程规则。二进制 SRS 始终下载。DIRECT、REJECT 及分组操作保持不变。",
         "delivery-inline": "嵌入订阅",
         "delivery-download": "由应用下载",

@@ -19,21 +19,27 @@ function message(value: Buffer): Buffer {
 export function bundleDat(
     files: Array<{ id: string; data: Buffer }>,
     namespace: 1 | 2 = 2,
+    categories?: Record<string, string[]>,
 ): Buffer {
     const chunks: Buffer[] = [];
     const seen = new Set<string>();
     let bytes = 0,
         count = 0;
     for (const file of files) {
+        const found = new Set<string>();
+        const wanted = categories ? new Set(categories[file.id]) : undefined;
         for (const entry of geofileFields(file.data)) {
             if (entry.field !== 1 || !Buffer.isBuffer(entry.value)) throw new Error('geofile-dat');
-            const fields = [...geofileFields(entry.value, true)];
-            const names = fields.filter(
-                (field) => field.field === 1 && Buffer.isBuffer(field.value),
-            );
+            const names: Array<{ value: Buffer; start?: number; end?: number }> = [];
+            for (const field of geofileFields(entry.value, true))
+                if (field.field === 1 && Buffer.isBuffer(field.value))
+                    names.push({ value: field.value, start: field.start, end: field.end });
             const original = names.at(-1)?.value;
             if (!Buffer.isBuffer(original) || ++count > 50_000)
                 throw new Error('geofile-complexity');
+            const code = original.toString('utf8').toLowerCase();
+            if (wanted && !wanted.has(code)) continue;
+            found.add(code);
             const name = datCategory(file.id, original.toString('utf8'), namespace).toUpperCase();
             if (seen.has(name)) throw new Error('geofile-duplicate-category');
             seen.add(name);
@@ -50,6 +56,8 @@ export function bundleDat(
             if (bytes > MAX_GEOFILE_BYTES) throw new Error('geofile-size');
             chunks.push(renamed);
         }
+        if (wanted && (!wanted.size || [...wanted].some((category) => !found.has(category))))
+            throw new Error('geofile-category-empty');
     }
     if (!chunks.length) throw new Error('geofile-dat');
     return Buffer.concat(chunks, bytes);

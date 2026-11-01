@@ -56,3 +56,22 @@ test('concurrent bundle and checksum requests share cold work and preserve every
     assert.equal(compileDat(results[0],'geosite',[datCategory(file.id,'example')]).domains.length,2);
     assert.equal(reads,1);await s.bundleContent('geosite',[file.id]);assert.equal(reads,1);
 });
+
+test('small category subsets share a bounded LRU cache without increasing its byte budget', async () => {
+ const s=service();let reads=0;
+ s.fileById=async id=>({...file,id,size:geosite.length});s.activeFile=f=>f;
+ s.readActive=async()=>{reads++;return geosite;};
+ const ids=Array.from({length:17},(_,i)=>i.toString(16).padStart(2,'0')+'a'.repeat(32));
+ for(const id of ids.slice(0,16))await s.bundleContent('geosite',[id],2,{[id]:['example']});
+ assert.equal(reads,16);assert.equal(s.bundled.size,16);
+ await s.bundleContent('geosite',[ids[0]],2,{[ids[0]]:['example']});
+ await s.bundleContent('geosite',[ids[16]],2,{[ids[16]]:['example']});
+ await s.bundleContent('geosite',[ids[0]],2,{[ids[0]]:['example']});
+ assert.equal(reads,17,'The recently used selection stays cached');
+ await s.bundleContent('geosite',[ids[1]],2,{[ids[1]]:['example']});
+ assert.equal(reads,18);assert.equal(s.bundled.size,16);
+ s.bundled.clear();s.bundled.set('older-large-bundle',Buffer.alloc(32*1024*1024));
+ await s.bundleContent('geosite',[ids[0]],2,{[ids[0]]:['example']});
+ assert.equal(s.bundled.size,1);
+ assert([...s.bundled.values()].reduce((n,b)=>n+b.length,0)<=32*1024*1024);
+});

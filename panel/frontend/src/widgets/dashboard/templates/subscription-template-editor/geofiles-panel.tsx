@@ -35,6 +35,7 @@ import { editClientTemplate, readClientTemplate, type ClientFormat } from './cli
 import { attachLibraryGeofile, compatibleGeofile, geofileCatalog } from './geofile-library-model'
 import { geofilePresets } from './geofile-presets'
 import { GeofileRefreshSettings, type GeofileRefresh } from './geofile-refresh-settings'
+import { geofileTargetAliases, geofileTargets } from './geofile-targets'
 
 interface Geofile {
     id: string
@@ -124,33 +125,8 @@ export function GeofilesPanel({
         }
     })
     const jsonAtBase = subscriptionSettings.data?.serveJsonAtBaseSubscription
-    const targets = [
-        ...new Set([
-            'DIRECT',
-            'REJECT',
-            ...(format === 'XRAY_JSON'
-                ? [
-                      ...(!config.remnawave?.injectHosts ||
-                      config.remnawave?.addVirtualHostAsOutbound
-                          ? ['proxy']
-                          : []),
-                      ...(config.routing?.balancers ?? []).map((item: JsonObject) => item.tag),
-                      ...(config.remnawave?.injectHosts ?? [])
-                          .filter(
-                              (item: JsonObject) =>
-                                  !item.useHostRemarkAsTag && !item.useHostTagAsTag
-                          )
-                          .map((item: JsonObject) => item.tagPrefix),
-                      ...(config.outbounds ?? []).map((item: JsonObject) => item.tag)
-                  ]
-                : format === 'SINGBOX'
-                  ? (config.outbounds ?? []).map((item: JsonObject) => item.tag)
-                  : [
-                        ...(config['proxy-groups'] ?? []).map((item: JsonObject) => item.name),
-                        ...(config.proxies ?? []).map((item: JsonObject) => item.name)
-                    ])
-        ])
-    ].filter((value): value is string => typeof value === 'string')
+    const targetAliases = geofileTargetAliases(config, format)
+    const targets = geofileTargets(config, format)
     const patch = (value: Reference[]) => {
         try {
             onChange(
@@ -619,8 +595,9 @@ export function GeofilesPanel({
                     const item = files.find((file) => file.id === reference.id)
                     const categories = reference.categories ?? []
                     const dat = !!item && ['geoip', 'geosite'].includes(item.kind)
-                    const target =
+                    const storedTarget =
                         reference.target ?? (reference.downloadToClient === false ? 'DIRECT' : '')
+                    const target = targetAliases[storedTarget] ?? storedTarget
                     return (
                         <Accordion.Item
                             key={`${reference.id}:${index}`}
@@ -701,7 +678,7 @@ export function GeofilesPanel({
                                             value={target || null}
                                             allowDeselect={false}
                                             searchable
-                                            data={[...new Set([...targets, reference.target])]
+                                            data={[...new Set([...targets, target])]
                                                 .filter(Boolean)
                                                 .map((value) => ({
                                                     value,

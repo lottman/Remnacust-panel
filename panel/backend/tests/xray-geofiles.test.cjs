@@ -274,7 +274,7 @@ test('request-local renderer delivers Happ and INCY profiles, preserves manual h
 });
 
 test('INCY compaction runs after geofile collection, including manual routing and bundle fallback', async () => {
-    const networks = Array.from({length:10000}, (_,i)=>`100.${i >> 8}.${i & 255}.0/24`);
+    const networks = Array.from({length:1000}, (_,i)=>`100.${i >> 8}.${i & 255}.0/24`);
     let failBundle = false;
     const generator = {async generateConfig({geofileDelivery}) {
         geofileDelivery?.registerInline();

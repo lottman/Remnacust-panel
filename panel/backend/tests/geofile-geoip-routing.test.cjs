@@ -28,7 +28,7 @@ test('generated GeoIP resolves domains before a catch-all, for DIRECT, blocking 
             assert.deepEqual(result.routing.rules[1].ip, ['203.0.113.0/24']);
             assert.deepEqual(result.routing.rules[2], catchAll);
             if (target === 'auto') assert.equal(result.routing.rules[1].balancerTag, 'auto');
-            else assert.equal(result.routing.rules[1].outboundTag, target === 'DIRECT' ? 'geo-freedom' : 'geo-blackhole');
+            else assert.equal(result.routing.rules[1].outboundTag, target === 'DIRECT' ? 'manual' : 'geo-blackhole');
             assert.deepEqual(config, original, 'the cached template must remain unchanged');
         }
     }

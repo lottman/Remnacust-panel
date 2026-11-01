@@ -8,7 +8,7 @@ const {automaticXrayDelivery}=load(path.join(root,'automatic-xray-delivery.ts'),
 const {materializeGeofiles}=load(path.join(root,'materialize-geofiles.ts'),modules);
 const {compileDat}=load(path.join(root,'compile-dat.ts'),modules);
 const {XrayGeofileDelivery}=load(path.join(root,'xray-geofile-delivery.ts'),modules);
-const {xrayProfilesFit}=load(path.join(root,'incy-config.ts'),modules);
+const {xrayProfilesFit,xrayRuleEntries,GEOFILE_INLINE_CONFIG_BUDGET,GEOFILE_INLINE_RULE_LIMIT}=load(path.join(root,'incy-config.ts'),modules);
 const source=n=>String(n).padStart(2,'0')+'a'.repeat(32);
 const decode=h=>JSON.parse(Buffer.from(h.split('/onadd/')[1],'base64'));
 
@@ -37,7 +37,7 @@ test('small geofiles become inline rules regardless of legacy per-file switches'
  }
 });
 test('host profiles are measured separately, never as the sum of the subscription',async()=>{
- const f=setup({profiles:8,extra:'x'.repeat(160000)});const r=await render(f);
+ const f=setup({profiles:60,extra:'x'.repeat(20000)});const r=await render(f);
  assert(Buffer.byteLength(r.subscription)>900000);assert.equal(r.inline,true);assert.deepEqual(f.calls,['inline']);assert(xrayProfilesFit(r.subscription));
 });
 test('per-profile boundaries count UTF-8 bytes and include formatted JSON overhead',()=>{
@@ -47,15 +47,26 @@ test('per-profile boundaries count UTF-8 bytes and include formatted JSON overhe
  assert(xrayProfilesFit(body,bytes));assert.equal(xrayProfilesFit(body,bytes-1),false);
 });
 
+test('20,000 rule conditions are counted per profile, including comma lists and combined IP/domain rules',()=>{
+ const config={routing:{rules:[{domain:Array(10000).fill('x')},{ip:Array(10000).fill('1')}]}};
+ assert.equal(GEOFILE_INLINE_RULE_LIMIT,20000);assert.equal(GEOFILE_INLINE_CONFIG_BUDGET,90000);
+ assert.equal(xrayRuleEntries(config),20000);
+ assert(xrayProfilesFit(JSON.stringify([config,config]),Infinity,20000));
+ config.routing.rules.push({domain:'one,two'});
+ assert.equal(xrayRuleEntries(config,Infinity),20002);
+ assert.equal(xrayProfilesFit(JSON.stringify([config]),Infinity,20000),false);
+ assert.equal(xrayRuleEntries({routing:{rules:[{domain:'a,b,c'}]}},2),3);
+});
+
 test('many valid host profiles do not share a routing-header complexity budget',async()=>{
- const records=Array.from({length:16000},(_,i)=>fixture.bytes(2,fixture.domain(1,`x${i},x`)));
+ const records=Array.from({length:2100},(_,i)=>fixture.bytes(2,fixture.domain(1,`x${i},x`)));
  const rules=fixture.bytes(1,Buffer.concat([fixture.bytes(1,'EXAMPLE'),...records]));
  for(const client of ['incy','happ']){
-  const f=setup({rules,profiles:13});const result=await render(f,{client});
+  const f=setup({rules,profiles:100});const result=await render(f,{client});
   assert.equal(result.inline,true);assert.deepEqual(f.calls,['inline']);
   assert(Buffer.byteLength(result.subscription)<16*1024*1024);
   assert(xrayProfilesFit(result.subscription,900000));
-  assert.equal(JSON.parse(result.subscription)[12].routing.rules[0].domain.length,16000);
+  assert.equal(JSON.parse(result.subscription)[99].routing.rules[0].domain.length,2100);
  }
 });
 
@@ -77,7 +88,7 @@ test('the independent transport cap is not misclassified as a per-host geofile l
  assert.deepEqual(f.calls,['inline']);
 });
 test('two individually small files can exceed the complete profile budget and trigger one DAT bundle',async()=>{
- const records=Array.from({length:12000},(_,i)=>fixture.bytes(2,fixture.domain(2,`host-${i}.example.test`)));
+ const records=Array.from({length:1000},(_,i)=>fixture.bytes(2,fixture.domain(2,`host-${i}.example.test`)));
  const rules=fixture.bytes(1,Buffer.concat([fixture.bytes(1,'EXAMPLE'),...records]));
  const small=setup({rules});assert.equal((await render(small)).inline,true);
  const f=setup({rules,refs:2,profiles:3});const r=await render(f);const p=decode(r.header);
@@ -112,7 +123,7 @@ test('bundle failure, unrelated oversized data and manual routing conflicts fail
  const rules=fixture.bytes(1,Buffer.concat([fixture.bytes(1,'EXAMPLE'),...records]));
  await assert.rejects(render(setup({rules,bundleFails:true})),/geofile-auto-delivery-unavailable/);
  await assert.rejects(render(setup({extra:'x'.repeat(950000)})),/size-limit/);
- await assert.rejects(render(setup({rules}),{manualRouting:true}),/size-limit/);
+ await assert.rejects(render(setup({rules}),{manualRouting:true}),/size-limit|inline-limit/);
  const f=setup();await assert.rejects(render({...f,generate:async()=>{throw Error('geofile-category-empty');}}),/category-empty/);
 });
 test('profile identity is stable across automatic delivery transitions, sanitized and provider-scoped',async()=>{

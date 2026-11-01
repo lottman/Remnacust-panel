@@ -8,6 +8,7 @@ import {
     geofileInterval,
     nativePayload,
 } from './geofile-delivery';
+import { GEOFILE_INLINE_RULE_LIMIT } from './incy-config';
 
 export interface GeofileReference {
     id: string;
@@ -111,6 +112,7 @@ export async function materializeGeofiles(
             throw new Error('geofile-resources');
         const tag = `geo_${file.id}`;
         let target = reference.target;
+        let deliveryTarget = reference.target;
         const interval = reference.clientRefreshIntervalSeconds ?? DEFAULT_GEOFILE_INTERVAL;
         // Legacy per-file switches no longer decide delivery. The renderer
         // selects one mode for the complete generated configuration.
@@ -122,12 +124,34 @@ export async function materializeGeofiles(
         if (xray) {
             if (target === 'DIRECT' || target === 'REJECT') {
                 const protocol = target === 'DIRECT' ? 'freedom' : 'blackhole';
-                target = `geo-${protocol}`;
                 root.outbounds ??= [];
-                const existing = root.outbounds.find((item: ObjectValue) => item.tag === target);
-                if (existing && existing.protocol !== protocol)
-                    throw new Error('geofile-target-collision');
-                if (!existing) root.outbounds.push({ tag: target, protocol });
+                const groups = new Set([
+                    ...(root.routing?.balancers ?? []).map((item: ObjectValue) => item.tag),
+                    ...(root.remnawave?.injectHosts ?? []).map(
+                        (item: ObjectValue) => item.tagPrefix,
+                    ),
+                ]);
+                const reusable = root.outbounds.find(
+                    (item: ObjectValue) =>
+                        item.protocol === protocol &&
+                        typeof item.tag === 'string' &&
+                        item.tag &&
+                        Object.keys(item).every((key) =>
+                            ['tag', 'protocol', 'settings'].includes(key),
+                        ) &&
+                        (!item.settings || Object.keys(item.settings).length === 0) &&
+                        !groups.has(item.tag),
+                );
+                target = reusable?.tag ?? `geo-${protocol}`;
+                if (!reusable) {
+                    const occupied = new Set([
+                        ...groups,
+                        ...root.outbounds.map((item: ObjectValue) => item.tag),
+                    ]);
+                    let suffix = 0;
+                    while (occupied.has(target)) target = `geo-${protocol}-${++suffix}`;
+                    root.outbounds.push({ tag: target, protocol });
+                }
             }
             const balancer = root.routing?.balancers?.some(
                 (item: ObjectValue) => item.tag === target,
@@ -146,6 +170,20 @@ export async function materializeGeofiles(
                 !root.outbounds?.some((item: ObjectValue) => item.tag === target)
             )
                 throw new Error('geofile-target');
+            const outbound =
+                !balancer && !dynamic
+                    ? root.outbounds.find((item: ObjectValue) => item.tag === target)
+                    : undefined;
+            if (
+                outbound &&
+                Object.keys(outbound).every((key) =>
+                    ['tag', 'protocol', 'settings'].includes(key),
+                ) &&
+                (!outbound.settings || Object.keys(outbound.settings).length === 0)
+            ) {
+                if (outbound.protocol === 'freedom') deliveryTarget = 'DIRECT';
+                if (outbound.protocol === 'blackhole') deliveryTarget = 'REJECT';
+            }
             route = {
                 type: 'field',
                 ...(balancer ? { balancerTag: target } : { outboundTag: target }),
@@ -154,14 +192,23 @@ export async function materializeGeofiles(
             if (target === 'REJECT') route = { action: 'reject' };
             else {
                 if (target === 'DIRECT') {
-                    target = 'geo-direct';
                     root.outbounds ??= [];
-                    const existing = root.outbounds.find(
-                        (item: ObjectValue) => item.tag === target,
+                    const reusable = root.outbounds.find(
+                        (item: ObjectValue) =>
+                            item.type === 'direct' &&
+                            typeof item.tag === 'string' &&
+                            item.tag &&
+                            Object.keys(item).every((key) => ['tag', 'type'].includes(key)),
                     );
-                    if (existing && existing.type !== 'direct')
-                        throw new Error('geofile-target-collision');
-                    if (!existing) root.outbounds.push({ type: 'direct', tag: target });
+                    target = reusable?.tag ?? 'geo-direct';
+                    if (!reusable) {
+                        const occupied = new Set(
+                            root.outbounds.map((item: ObjectValue) => item.tag),
+                        );
+                        let suffix = 0;
+                        while (occupied.has(target)) target = `geo-direct-${++suffix}`;
+                        root.outbounds.push({ type: 'direct', tag: target });
+                    }
                 }
                 route = { action: 'route', outbound: target };
                 if (!root.outbounds?.some((item: ObjectValue) => item.tag === target))
@@ -186,7 +233,7 @@ export async function materializeGeofiles(
                         ...route,
                         [file.kind === 'geoip' ? 'ip' : 'domain']: happ.register(
                             file.kind,
-                            reference,
+                            { ...reference, target: deliveryTarget },
                             resources.datBundleUrl,
                         ),
                     });
@@ -208,7 +255,7 @@ export async function materializeGeofiles(
                     inlineBytes +=
                         rules.ips.reduce((sum, value) => sum + value.length, 0) +
                         rules.domains.reduce((sum, item) => sum + Buffer.byteLength(item.value), 0);
-                    if (inlineRecords > 100_000 || inlineBytes > 4 * 1024 * 1024)
+                    if (inlineRecords > GEOFILE_INLINE_RULE_LIMIT || inlineBytes > 4 * 1024 * 1024)
                         throw new Error('geofile-inline-limit');
                 }
                 continue;
@@ -252,7 +299,7 @@ export async function materializeGeofiles(
             inlineBytes +=
                 rules.ips.reduce((sum, value) => sum + value.length, 0) +
                 rules.domains.reduce((sum, item) => sum + Buffer.byteLength(item.value), 0);
-            if (inlineRecords > 100_000 || inlineBytes > 4 * 1024 * 1024)
+            if (inlineRecords > GEOFILE_INLINE_RULE_LIMIT || inlineBytes > 4 * 1024 * 1024)
                 throw new Error('geofile-inline-limit');
             if (xray) {
                 generated.push({

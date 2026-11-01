@@ -4,6 +4,8 @@ import {
     xrayProfilesFit,
     INCY_FORMATTED_CONFIG_BUDGET,
     XRAY_FORMATTED_CONFIG_BUDGET,
+    GEOFILE_INLINE_CONFIG_BUDGET,
+    GEOFILE_INLINE_RULE_LIMIT,
 } from './incy-config';
 import { XrayGeofileDelivery, XrayGeofileFallback } from './xray-geofile-delivery';
 
@@ -24,7 +26,14 @@ export async function automaticXrayDelivery(options: {
     let header: string | undefined;
     try {
         subscription = compact(await generate(inline));
-        if (client && !xrayProfilesFit(subscription, budget))
+        if (
+            client &&
+            !xrayProfilesFit(
+                subscription,
+                inline?.hasManagedRules ? GEOFILE_INLINE_CONFIG_BUDGET : budget,
+                inline?.hasManagedRules ? GEOFILE_INLINE_RULE_LIMIT : Number.POSITIVE_INFINITY,
+            )
+        )
             throw new ClientPoolError('geofile-client-config-size-limit');
         header = inline && subscription ? await inline.header(subscription, profileKey) : undefined;
     } catch (error) {

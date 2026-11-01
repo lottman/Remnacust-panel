@@ -5,7 +5,11 @@ import { createHash } from 'node:crypto';
 import { ClientPoolError } from '../generators/client-pool';
 
 export type DatKind = 'geoip' | 'geosite';
-export type DatBundleUrl = (kind: DatKind, ids: string[]) => Promise<string>;
+export type DatBundleUrl = (
+    kind: DatKind,
+    ids: string[],
+    categories?: Record<string, string[]>,
+) => Promise<string>;
 export const DAT_NAMESPACE_VERSION = 2;
 
 export function datCategory(
@@ -34,6 +38,9 @@ export class XrayGeofileDelivery {
     public intervalHours?: number;
     public inlineOnly = false;
     private containsInline = false;
+    public get hasManagedRules(): boolean {
+        return this.containsInline || this.references.size > 0;
+    }
 
     public registerInline(): void {
         this.containsInline = true;
@@ -65,7 +72,14 @@ export class XrayGeofileDelivery {
     }
     private readonly references = new Map<
         string,
-        { kind: DatKind; id: string; target: string; interval: number }
+        {
+            kind: DatKind;
+            id: string;
+            target: string;
+            interval: number;
+            category: string;
+            ambiguous: boolean;
+        }
     >();
     private bundleUrl?: DatBundleUrl;
 
@@ -73,11 +87,18 @@ export class XrayGeofileDelivery {
         this.bundleUrl ??= bundleUrl;
         return (reference.categories ?? []).map((category) => {
             const value = `${kind}:${datCategory(reference.id, category)}`;
+            const previous = this.references.get(value);
             this.references.set(value, {
                 kind,
                 id: reference.id,
                 target: reference.target,
-                interval: reference.clientRefreshIntervalSeconds ?? 86400,
+                category: category.toLowerCase().split('@')[0],
+                interval: Math.max(
+                    previous?.interval ?? 0,
+                    reference.clientRefreshIntervalSeconds ?? 86400,
+                ),
+                ambiguous:
+                    !!previous && (previous.ambiguous || previous.target !== reference.target),
             });
             if (this.references.size > 1024) throw new XrayGeofileFallback('size');
             return value;
@@ -164,7 +185,19 @@ export class XrayGeofileDelivery {
             if (!values.length) continue;
             const ids = [...new Set(values.map((key) => this.references.get(key)!.id))].sort();
             try {
-                const url = await this.bundleUrl(kind, ids);
+                const categories = Object.fromEntries(
+                    ids.map((id) => [
+                        id,
+                        [
+                            ...new Set(
+                                values
+                                    .filter((key) => this.references.get(key)!.id === id)
+                                    .map((key) => this.references.get(key)!.category),
+                            ),
+                        ].sort(),
+                    ]),
+                );
+                const url = await this.bundleUrl(kind, ids, categories);
                 profile[kind === 'geoip' ? 'Geoipurl' : 'Geositeurl'] =
                     this.client === 'incy'
                         ? url
@@ -178,7 +211,9 @@ export class XrayGeofileDelivery {
                 ['PROXY', 'Proxy'],
             ]) {
                 profile[field + (kind === 'geoip' ? 'Ip' : 'Sites')] = values.filter((key) => {
-                    const target = this.references.get(key)!.target;
+                    const entry = this.references.get(key)!;
+                    if (entry.ambiguous) return false;
+                    const target = entry.target;
                     return action === 'PROXY'
                         ? !['DIRECT', 'REJECT'].includes(target)
                         : target === action;

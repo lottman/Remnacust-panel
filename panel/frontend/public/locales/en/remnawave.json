@@ -4003,7 +4003,7 @@
     "preset-private": "Private IP ranges only.",
     "preset-lite": "A smaller selection of common services; fewer categories than the full GeoSite dataset.",
     "delivery-title": "How rules reach the app",
-    "delivery-xray": "The panel measures each profile including list expansion and client formatting. Small datasets are inline rules; Happ/INCY download large datasets as DAT. A JSON subscription is required: enable “{{setting}}” or use /json. Save the template and refresh the subscription.",
+    "delivery-xray": "Rules are embedded in JSON up to 20,000 conditions and 90,000 bytes per profile. Above either threshold, Happ/INCY receive DAT containing only selected categories. Size includes client formatting. Enable “{{setting}}” or use /json, save the template and refresh the subscription.",
     "delivery-native": "Small rules are embedded. If the combined dataset is too large, the app receives remote rules in its own format. Binary SRS is always downloaded. DIRECT, REJECT and group actions remain unchanged.",
     "delivery-inline": "Embedded in subscription",
     "delivery-download": "Downloaded by app",

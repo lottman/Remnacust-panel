@@ -226,6 +226,10 @@ SSH installation requires root or passwordless sudo; an existing empty directory
 
 Diagnostics make a real mTLS request to the registered node and check Xray, user synchronization and port apply status. They do not verify the full client network path. Disabled nodes are not probed; manual probes are rate limited. Port edits are reviewed, then confirmed with a review hash and current revision: stale reviews are rejected. Success requires node ACK, not merely enqueueing. Errors allow restoring a previously applied revision without overwriting newer edits. Outages require three observations over at least 20 seconds; recovery requires two over 10 seconds. Never-connected installations do not generate outage alerts. Maintenance and operations suppress alerts; a manual 30-minute pause does not stop health checks. The install wizard uses the verified installer over SSH and confirms connectivity separately; existing directories are not overwritten. NET_ADMIN defaults off. When a main server IP is set, all incoming ports and ping accept only that source except SSH (22 and detected sshd ports). Rules cover Docker forwarding and IPv6, preserve outbound replies and never flush other firewall rules. This blocks external HTTP-01 renewals: use DNS-01 or externally managed certificates. Remove the guard with python3 /etc/remnacust-node-firewall/guard.py remove.
 
+### MPTCP and Linux kernel security
+
+Xray v26.10.31 disables MPTCP by default; explicit streamSettings.sockopt.tcpMptcp remains available. Restore earlier MPTCP behavior only after installing a patched Linux kernel and booting that kernel. A Docker image does not update the host kernel. CVE-2026-98432 affects IPv4 TCP: disabling MPTCP reduces attack surface but does not fix the kernel bug itself. Verify the exact distribution package against its security bulletin rather than relying only on uname -r. Inspect listeners with sudo ss -Mlnp. Do not enable MPTCP on an unverified kernel. Sources: https://github.com/XTLS/Xray-core/releases/tag/v26.10.31 and https://groups.google.com/g/golang-announce/c/PCoQcdxoScw/m/aD-MgXEvAAAJ.
+
 ### Fields and controls
 
 - **Limit**: Subscription quota in bytes; 0 means unlimited. The form displays units separately. Host/tag limits remain independent.
@@ -750,6 +754,10 @@ Switching grouped selection to connection-time selection merges UUID and tag gro
 ### Selection at connection time
 
 Source pools and recipients are separate settings. Each remnawave.assignments entry binds a specific balancerTag to recipient hosts or tags. A direct host assignment takes precedence over a tag assignment. An explicit template in the host card remains highest priority; that template uses the balancer assigned to this recipient. DIRECT, REJECT and domain restrictions are preserved. all delivers every authorized source; the client strategy chooses a server for each new connection. random/group reduce membership when subscriptions refresh. Membership changes arrive on subscription refresh. A separate TCP entry for server changes is no longer created.
+
+### Geofile thresholds and categories
+
+Inline rules are limited to 20,000 conditions per profile. For Happ/INCY the panel also reserves a 90,000-byte budget including client formatting and StringList expansion; this is the panel switching threshold, not a published application limit. Exceeding either threshold triggers a fresh render using DAT containing only selected categories. GeoSite and GeoIP are separate downloads; rule actions and order remain intact. Host profiles are never summed. Plain DIRECT/REJECT actions are not duplicated as direct/block; existing plain outbounds are reused without replacing custom outbound settings. Links are signed and earlier links remain supported. Preserve the entire backups/geofiles directory, including category selections, when migrating. Subscription and DAT URLs do not require a running VPN and use the public domain or configured CDN; HTTP 502, DNS and certificate failures require checking the external proxy and running subscription page. Download failure never becomes an empty successful dataset.
 
 ## Variables {{…}} in names and headers
 

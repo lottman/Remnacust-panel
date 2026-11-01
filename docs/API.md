@@ -1,4 +1,4 @@
-# Remnacust API 1.1.7.78
+# Remnacust API 1.1.7.79
 
 Области действия `serverSpeedLimitMbps`, общей скорости и квот хостов/тегов: [HOST-LIMITS.md](HOST-LIMITS.md). Скорость — целые Mbps (Мбит/с), квоты API — байты; поле Brutal `speedLimitMbps` самого хоста не является серверным ограничителем.
 
@@ -23,6 +23,8 @@ The list response also reports `environment`: `synced`, `unavailable`, `invalid`
 | POST | `/api/subscription-domains` | `subscription-domains:create` | `subscription-domains` |
 | PATCH | `/api/subscription-domains/{uuid}` | `subscription-domains:update` | `subscription-domains` |
 | DELETE | `/api/subscription-domains/{uuid}` | `subscription-domains:delete` | `subscription-domains` |
+
+CDN domain records expose computed `publicBaseUrl`. User `subscriptionUrl` and subscription template links include its `/cdn/<domain-uuid>` gateway automatically. See [CDN setup and migration](SUBSCRIPTION-DOMAINS.md). The public resolver returns only a registered CDN’s public base; it grants no user access and exposes no origin or panel address.
 
 ## Panel-only migration operations
 

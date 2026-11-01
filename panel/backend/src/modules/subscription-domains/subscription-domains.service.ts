@@ -17,6 +17,7 @@ import { SubscriptionDomainInput } from '@libs/contracts/models/subscription-dom
 import { HttpExceptionWithErrorCodeType } from '../../common/exception/http-exeception-with-error-code.type';
 import { configuredSubscriptionDomain } from '../../common/utils/public-subscription-domain';
 import { isRestApi } from '../../common/utils/startup-app/is-development';
+import { subscriptionDomainBase } from '../../common/utils/subscription-domain-url';
 import {
     SubscriptionDomainEnvironmentService,
     DomainEnvironmentSnapshot,
@@ -74,7 +75,7 @@ export class SubscriptionDomainsService implements OnModuleInit, OnModuleDestroy
     }
     private model(row: SubscriptionDomains & { _count: { users: number; aliases: number } }) {
         const { _count, ...data } = row;
-        return { ...data, usersCount: _count.users, aliasesCount: _count.aliases };
+        return { ...data, publicBaseUrl: subscriptionDomainBase(row), usersCount: _count.users, aliasesCount: _count.aliases };
     }
     async list() {
         return (
@@ -290,8 +291,16 @@ export class SubscriptionDomainsService implements OnModuleInit, OnModuleDestroy
                 ? `https://${this.configuredDefault.domain}${this.configuredDefault.path}`
                 : undefined;
         const selected = rows.find((row) => `https://${row.domain}` === origin);
-        if (selected) return `https://${selected.domain}${selected.path}`;
+        if (selected) return subscriptionDomainBase(selected);
         const main = rows.find((row) => row.isDefault);
         return main ? `https://${main.domain}${main.path}` : undefined;
+    }
+
+    async gatewayBase(uuid: string): Promise<string> {
+        const rows = await this.registry();
+        const domain = rows.find(row => row.uuid === uuid && row.kind === 'CDN');
+        if (!domain || !rows.some(row => row.uuid === domain.parentUuid && row.kind === 'PRIMARY'))
+            throw new NotFoundException('SUBSCRIPTION_DOMAIN_NOT_FOUND');
+        return subscriptionDomainBase(domain);
     }
 }

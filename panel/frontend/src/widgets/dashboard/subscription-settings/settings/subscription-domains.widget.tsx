@@ -20,11 +20,13 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { isAxiosError } from 'axios'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { TbCheck, TbCopy, TbEdit, TbPlus, TbTrash, TbWorld } from 'react-icons/tb'
+import { TbCheck, TbCopy, TbEdit, TbPlus, TbTrash, TbWorld, TbLink } from 'react-icons/tb'
 
 import { instance } from '@shared/api/axios'
 import { SectionCard } from '@shared/ui/section-card'
 import { SettingsCardShared } from '@shared/ui/settings-card'
+
+import { cdnSubscriptionLink } from './subscription-domain-link'
 
 type DomainKind = 'PRIMARY' | 'CDN'
 type DomainEnvironmentStatus = 'synced' | 'unavailable' | 'invalid' | 'conflict'
@@ -38,6 +40,7 @@ type SubscriptionDomain = {
     isDefault: boolean
     usersCount: number
     aliasesCount: number
+    publicBaseUrl: string
 }
 
 type DomainForm = {
@@ -65,6 +68,8 @@ export function SubscriptionDomainsWidget() {
     const cache = useQueryClient()
     const [opened, setOpened] = useState(false)
     const [editing, setEditing] = useState<SubscriptionDomain | null>(null)
+    const [setupDomain, setSetupDomain] = useState<SubscriptionDomain | null>(null)
+    const [existingLink, setExistingLink] = useState('')
     const form = useForm<DomainForm>({ initialValues: emptyForm })
     const domains = useQuery({
         queryKey,
@@ -119,6 +124,9 @@ export function SubscriptionDomainsWidget() {
     }
     const rows = domains.data?.response ?? []
     const primaryDomains = rows.filter((domain) => domain.kind === 'PRIMARY')
+    const convertedLink = setupDomain
+        ? cdnSubscriptionLink(setupDomain.publicBaseUrl, existingLink)
+        : null
     const environmentError =
         isAxiosError(save.error) &&
         ['SUBSCRIPTION_DOMAIN_ENV_UNAVAILABLE', 'SUBSCRIPTION_DOMAIN_ENV_CHANGED'].includes(
@@ -187,6 +195,24 @@ export function SubscriptionDomainsWidget() {
                                                                 {domain.domain}
                                                                 {domain.path || '/'}
                                                             </Text>
+                                                            {domain.kind === 'CDN' && (
+                                                                <Button
+                                                                    variant="subtle"
+                                                                    size="compact-xs"
+                                                                    w="fit-content"
+                                                                    leftSection={
+                                                                        <TbLink size={14} />
+                                                                    }
+                                                                    onClick={() => {
+                                                                        setExistingLink('')
+                                                                        setSetupDomain(domain)
+                                                                    }}
+                                                                >
+                                                                    {t(
+                                                                        'subscription-domains.setup'
+                                                                    )}
+                                                                </Button>
+                                                            )}
                                                         </Stack>
                                                     </Table.Td>
                                                     <Table.Td>
@@ -333,6 +359,82 @@ export function SubscriptionDomainsWidget() {
                     </Stack>
                 </SectionCard.Section>
             </SectionCard.Root>
+
+            <Modal
+                centered
+                opened={!!setupDomain}
+                onClose={() => {
+                    setSetupDomain(null)
+                    setExistingLink('')
+                }}
+                title={t('subscription-domains.cdn-setup')}
+            >
+                {setupDomain && (
+                    <Stack>
+                        <Text size="sm">{t('subscription-domains.gateway-help')}</Text>
+                        <TextInput
+                            label={t('subscription-domains.existing-link')}
+                            description={t('subscription-domains.convert-help')}
+                            value={existingLink}
+                            onChange={(event) => setExistingLink(event.currentTarget.value)}
+                            error={
+                                existingLink.trim() && !convertedLink
+                                    ? t('subscription-domains.invalid-link')
+                                    : undefined
+                            }
+                            autoComplete="off"
+                            spellCheck={false}
+                            dir="ltr"
+                        />
+                        <TextInput
+                            readOnly
+                            dir="ltr"
+                            label={t(
+                                convertedLink
+                                    ? 'subscription-domains.ready-link'
+                                    : 'subscription-domains.public-link'
+                            )}
+                            value={
+                                convertedLink ??
+                                `${setupDomain.publicBaseUrl}/${t('subscription-domains.key-placeholder')}`
+                            }
+                            rightSection={
+                                <CopyButton value={convertedLink ?? ''}>
+                                    {({ copied, copy }) => (
+                                        <ActionIcon
+                                            disabled={!convertedLink}
+                                            onClick={copy}
+                                            variant="subtle"
+                                            aria-label={t('common.action.copy')}
+                                        >
+                                            {copied ? <TbCheck size={16} /> : <TbCopy size={16} />}
+                                        </ActionIcon>
+                                    )}
+                                </CopyButton>
+                            }
+                        />
+                        <TextInput
+                            readOnly
+                            label={t('subscription-domains.origin')}
+                            value={`https://${rows.find((row) => row.uuid === setupDomain.parentUuid)?.domain ?? ''}`}
+                        />
+                        <TextInput
+                            readOnly
+                            label="Host / SNI"
+                            value={
+                                rows.find((row) => row.uuid === setupDomain.parentUuid)?.domain ??
+                                ''
+                            }
+                        />
+                        <Text size="sm" c="dimmed">
+                            {t('subscription-domains.origin-help')}
+                        </Text>
+                        <Text size="sm" c="dimmed">
+                            {t('subscription-domains.gateway-migration')}
+                        </Text>
+                    </Stack>
+                )}
+            </Modal>
 
             <Modal
                 centered

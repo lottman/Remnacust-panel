@@ -4,6 +4,7 @@ const path = require('node:path');
 const fs = require('node:fs');
 const { EventEmitter } = require('node:events');
 const load = require('./load-typescript.cjs');
+const domainContext = load(path.join(__dirname, '../src/common/utils/subscription-domain-context.ts'));
 const axiosMocks = {'@common/axios/axios.service': {}, '../../common/utils/public-geofile-origin': load(path.join(__dirname,'../src/common/utils/public-geofile-origin.ts'))};
 function response() {
     const res = new EventEmitter(); res.headers = {}; res.cookies = [];
@@ -70,6 +71,7 @@ function webpage(axios) {
         '@common/utils': {isDevelopment: () => true},
         '@common/utils/webpage-error': load(path.join(__dirname,'../src/common/utils/webpage-error.ts')),
         '@common/utils/crypt-utils': {encryptUuid: v => v, decryptUuid: v => v},
+        '../../common/utils/subscription-domain-context': domainContext,
     });
     const service = new WebpageService({getOrThrow: () => 'test-only'}, axios, {sign: () => 'test-only'});
     service.getBaseSettings = () => ({showConnectionKeys: false, metaTitle: 'test', metaDescription: 'test'});
@@ -101,6 +103,20 @@ test('HTML distinguishes unknown subscriptions, denied pages and temporary panel
         assert.equal(res.code,expected);assert(!res.destroyed);
         if(expected===503)assert.equal(res.headers['Retry-After'],'30');
     }
+});
+
+test('HTML metadata uses the verified CDN gateway base while retaining account access checks', async () => {
+    const uuid = '11111111-1111-4111-8111-111111111111';
+    const value = { uuid, publicBaseUrl: `https://cdn.example.test/cdn/${uuid}` };
+    const res = response();
+    const service = webpage({
+        getSubscriptionInfo: async () => ({ isOk: true, response: { response: { subscriptionUrl: 'https://origin.example.test/key', links: [], ssConfLinks: {} } } }),
+        getSubpageConfig: async () => ({ isOk: true, response: { webpageAllowed: true, subpageConfigUuid: 'test' } }),
+    });
+    await domainContext.withSubscriptionDomain(value, () => service.serveWebpage('127.0.0.1', { headers: {} }, res, 'key'));
+    const data = JSON.parse(Buffer.from(res.body, 'base64').toString('utf8'));
+    assert.equal(data.response.subscriptionUrl, value.publicBaseUrl + '/key');
+    assert.equal(domainContext.currentSubscriptionDomain(), undefined);
 });
 test('page budget rejects overload, lets static files through and releases a disconnect once', () => {
     const {dynamicRequestBudget}=load(path.join(__dirname,'../src/common/middlewares/request-budget.middleware.ts'));

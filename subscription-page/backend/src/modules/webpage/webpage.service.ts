@@ -20,6 +20,7 @@ import { AxiosService } from '@common/axios';
 import { TypedConfigService } from '@common/config/app-config';
 import { getAssetsPath, isDevelopment } from '@common/utils';
 import { decryptUuid, encryptUuid } from '@common/utils/crypt-utils';
+import { currentSubscriptionDomain } from '../../common/utils/subscription-domain-context';
 
 @Injectable()
 export class WebpageService implements OnApplicationBootstrap {
@@ -219,6 +220,8 @@ export class WebpageService implements OnApplicationBootstrap {
             const baseSettings = this.getBaseSettings(subpageConfig.subpageConfigUuid);
 
             const subscriptionData = subscriptionDataResponse.response;
+            const domain = currentSubscriptionDomain();
+            if (domain) subscriptionData.response.subscriptionUrl = `${domain.publicBaseUrl}/${shortUuid}`;
 
             if (!baseSettings.showConnectionKeys) {
                 subscriptionData.response.links = [];

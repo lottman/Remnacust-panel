@@ -31,6 +31,7 @@ const EXCLUDED = new Set([
     'x-remnawave-real-ip',
     'x-subpage-version',
     'x-remnacust-geofile-origin',
+    'x-remnacust-subscription-domain',
 ]);
 
 export function subscriptionRequestHeaders(headers: IncomingHttpHeaders): IncomingHttpHeaders {

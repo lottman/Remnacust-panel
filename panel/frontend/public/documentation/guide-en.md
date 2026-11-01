@@ -781,6 +781,10 @@ New devices denied is handled separately. If registration is denied for a new de
 
 Traffic quota exhaustion, the maximum device count and missing HWID support have separate messages outside this list. Reordering changes subscription messages; restrictions and access checks still apply. Presentation depends on the client.
 
+### CDN links through an origin Host rewrite
+
+Panel and page 1.1.7.79 automatically add /cdn/<ID> to CDN user URLs, geofiles, checksums and device URLs. This works when the CDN sends the main siteâ€™s Host to the origin. Use Set up CDN to convert an old HTTPS URL or key locally in the browser and copy the result; it also shows the HTTPS origin, Host and SNI for VK. Do not add an extra origin path or force caching of personalized responses. Select the CDN in a user card, save and copy the new URL. Old links still work, but replace the URL once for CDN identification through a Host rewrite. The ID selects only a registered public CDN and does not bypass status, freeze, expiry, keys or HWID or expose the panel address. .env keeps the main address without the CDN prefix.
+
 ### Subscription domain and .env
 
 The primary domain and SUB_PUBLIC_DOMAIN are synchronized both ways through the local installer service. The API checks .env at startup, when opening the list and every 30 seconds. Changing the primary address in the panel updates .env and the registered Compose without a restart. A hostname, HTTPS URL and safe path are supported. CDN domains remain in the registry. The domain list API requires panel 1.1.7.78 or later to avoid the authentication dependency error. Installer 1.2.113 or later is required; a missing service shows an unavailable status rather than a false confirmation. Concurrent file changes prevent overwrites. Configure DNS and certificates separately.
@@ -808,6 +812,7 @@ During page installation or migration, choose the local panel or another panelâ€
 - **Max devices announce**: Device-count announcement sent to a compatible app with the subscription. An empty value leaves the announcement unset.
 - **Response headers**: Headers that will be sent with the subscription content.
 - **Subscription domains**: The primary domain is used for new links. A CDN domain belongs to it and preserves the address through which the client requested the subscription.
+- **Existing URL or subscription key**: Paste a regular subscription URL to generate its CDN URL below. Nothing is sent to the server.
 - **Name**: Object display name. UUID remains a separate identifier.
 - **Domain**: Use a public hostname only, without protocol, port or path.
 - **Subscription path**: Optional subscription path, such as /api/sub. It must match the page and proxy configuration.

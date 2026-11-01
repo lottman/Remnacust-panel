@@ -157,11 +157,16 @@ test('a registered CDN keeps its public hostname and applies its registered path
             subscriptionDomains: {
                 findMany: async () => [
                     {
+                        uuid: primaryId,
+                        kind: 'PRIMARY',
                         domain: 'sub.example.test',
                         path: '/api/sub',
                         isDefault: true,
                     },
                     {
+                        uuid: '11111111-1111-4111-8111-111111111111',
+                        kind: 'CDN',
+                        parentUuid: primaryId,
                         domain: 'cdn.example.test',
                         path: '/edge/sub',
                         isDefault: false,
@@ -174,7 +179,7 @@ test('a registered CDN keeps its public hostname and applies its registered path
 
     assert.equal(
         await service.resolveOrigin('https://cdn.example.test'),
-        'https://cdn.example.test/edge/sub',
+        'https://cdn.example.test/edge/sub/cdn/11111111-1111-4111-8111-111111111111',
     );
     assert.equal(
         await service.resolveOrigin('https://unknown.example.test'),

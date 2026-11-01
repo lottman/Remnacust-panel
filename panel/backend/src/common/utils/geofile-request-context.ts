@@ -8,3 +8,6 @@ export function requestGeofileBase(fallback: string): string {
     const origin = origins.getStore();
     return origin ? origin + '/geofiles/' : fallback;
 }
+export function currentGeofileOrigin(): string | undefined {
+    return origins.getStore();
+}

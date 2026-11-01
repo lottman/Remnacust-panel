@@ -22,12 +22,16 @@ import { IGNORED_HEADERS } from '@common/constants';
 
 import { ICommandResponse } from '../types/command-response.type';
 import { subscriptionRequestHeaders } from './subscription-request-headers';
+import type { SubscriptionDomainContext } from '../utils/subscription-domain-context';
+import { publicGeofileOrigin } from '../utils/public-geofile-origin';
 
 @Injectable()
 export class AxiosService implements OnModuleInit, OnModuleDestroy {
     private readonly logger = new Logger(AxiosService.name);
     private subpageVersion = __RW_SUBPAGE_VERSION__;
     private readonly privatePanelUrl: URL;
+    private readonly publicDomains = new Map<string, { value: SubscriptionDomainContext; until: number }>();
+    private readonly pendingDomains = new Map<string, Promise<SubscriptionDomainContext>>();
 
     public axiosInstance: AxiosInstance;
     private readonly httpAgent = new HttpAgent({
@@ -312,6 +316,42 @@ export class AxiosService implements OnModuleInit, OnModuleDestroy {
         }
     }
 
+    public async resolveSubscriptionDomain(uuid: string): Promise<SubscriptionDomainContext> {
+        if (!/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/.test(uuid))
+            throw Object.assign(new Error('Subscription domain not found'), { status: 404 });
+        const cached = this.publicDomains.get(uuid);
+        if (cached && cached.until > Date.now()) return cached.value;
+        const pending = this.pendingDomains.get(uuid);
+        if (pending) return pending;
+        if (this.pendingDomains.size >= 128)
+            throw new Error('Subscription domain is temporarily unavailable');
+        const request = this.axiosInstance.get(`api/sub/domains/${uuid}/resolve`, {
+            maxContentLength: 4096,
+            headers: { 'Cache-Control': 'no-cache', 'Accept-Encoding': 'identity' },
+        }).then(response => {
+            const data = response.data?.response;
+            if (data?.uuid !== uuid || typeof data.publicBaseUrl !== 'string' || data.publicBaseUrl.length > 600)
+                throw new Error('Invalid subscription domain response');
+            const url = new URL(data.publicBaseUrl);
+            if (url.protocol !== 'https:' || url.username || url.password || url.search || url.hash ||
+                publicGeofileOrigin(url.host) !== url.origin ||
+                !url.pathname.endsWith(`/cdn/${uuid}`) ||
+                this.containsPrivatePanelAddress(data.publicBaseUrl))
+                throw new Error('Invalid subscription domain response');
+            const value = { uuid, publicBaseUrl: data.publicBaseUrl };
+            this.publicDomains.delete(uuid);
+            this.publicDomains.set(uuid, { value, until: Date.now() + 5000 });
+            if (this.publicDomains.size > 128) this.publicDomains.delete(this.publicDomains.keys().next().value!);
+            return value;
+        }).catch(error => {
+            throw Object.assign(new Error('Subscription domain is unavailable'), {
+                status: axios.isAxiosError(error) && error.response?.status === 404 ? 404 : 503,
+            });
+        }).finally(() => { this.pendingDomains.delete(uuid); });
+        this.pendingDomains.set(uuid, request);
+        return request;
+    }
+
     public async getSubscription(
         clientIp: string,
         shortUuid: string,
@@ -321,6 +361,7 @@ export class AxiosService implements OnModuleInit, OnModuleDestroy {
         signal?: AbortSignal,
         personalToken?: string,
         geofileOrigin?: string,
+        domainUuid?: string,
     ): Promise<{
         subscription: Buffer;
         headers: RawAxiosResponseHeaders;
@@ -347,10 +388,11 @@ export class AxiosService implements OnModuleInit, OnModuleDestroy {
                     Pragma: 'no-cache',
                     Expires: '0',
                     [REMNAWAVE_REAL_IP_HEADER]: clientIp,
-                    Authorization: geofileOrigin
+                    Authorization: geofileOrigin || domainUuid
                         ? `Bearer ${this.configService.getOrThrow('REMNAWAVE_API_TOKEN')}`
                         : undefined,
                     'x-remnacust-geofile-origin': geofileOrigin,
+                    'x-remnacust-subscription-domain': domainUuid,
                 },
             });
 

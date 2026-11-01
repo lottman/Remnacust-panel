@@ -3,24 +3,42 @@ import type { IncomingHttpHeaders } from 'node:http';
 import { publicGeofileOrigin } from './public-geofile-origin';
 
 export const GEOFILE_ORIGIN_HEADER = 'x-remnacust-geofile-origin';
+export const SUBSCRIPTION_DOMAIN_HEADER = 'x-remnacust-subscription-domain';
 
 export async function relayGeofileOrigin(
     headers: IncomingHttpHeaders,
     verify: (token: string) => Promise<Record<string, unknown>>,
     lookup: (uuid: string) => Promise<{ expireAt: Date | null; scopes: string[] } | undefined>,
 ): Promise<string | undefined> {
+    return (await relayGeofileContext(headers, verify, lookup))?.origin;
+}
+
+export async function relayGeofileContext(
+    headers: IncomingHttpHeaders,
+    verify: (token: string) => Promise<Record<string, unknown>>,
+    lookup: (uuid: string) => Promise<{ expireAt: Date | null; scopes: string[] } | undefined>,
+): Promise<{ origin?: string; domainUuid?: string } | undefined> {
     const value = headers[GEOFILE_ORIGIN_HEADER];
+    const domainUuid = headers[SUBSCRIPTION_DOMAIN_HEADER];
     const auth = headers.authorization;
     if (
-        typeof value !== 'string' ||
-        !value.startsWith('https://') ||
+        (value === undefined && domainUuid === undefined) ||
         typeof auth !== 'string' ||
         auth.length > 16384 ||
         !auth.startsWith('Bearer ')
     )
         return;
-    const origin = publicGeofileOrigin(value.slice(8));
-    if (!origin || origin !== value) return;
+    const origin =
+        typeof value === 'string' && value.startsWith('https://')
+            ? publicGeofileOrigin(value.slice(8))
+            : undefined;
+    if (value !== undefined && (!origin || origin !== value)) return;
+    if (
+        domainUuid !== undefined &&
+        (typeof domainUuid !== 'string' ||
+            !/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/.test(domainUuid))
+    )
+        return;
     try {
         const payload = await verify(auth.slice(7));
         if (
@@ -46,7 +64,7 @@ export async function relayGeofileOrigin(
             !token.scopes.some((scope) => scope === '*' || scope === 'subscriptions:subpage-config')
         )
             return;
-        return origin;
+        return { origin, domainUuid: domainUuid as string | undefined };
     } catch {
         return;
     }

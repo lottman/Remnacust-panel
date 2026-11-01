@@ -43,7 +43,7 @@ const { ResponseRulesMiddleware } = load(
         '@common/utils/geofile-request-context': ctx,
         '@common/utils/public-geofile-origin': origin,
         '@common/utils/truncate-header.util': { truncateHeader: (v) => v },
-        '@libs/contracts/constants': { ERRORS: {}, RESPONSE_RULES_RESPONSE_TYPES: {} },
+        '@libs/contracts/constants': { ERRORS: require('../libs/contract/build/backend').ERRORS, RESPONSE_RULES_RESPONSE_TYPES: {} },
         '@modules/api-tokens/queries/get-token-by-uuid/get-token-by-uuid.query': {
             GetTokenByUuidQuery: class {
                 constructor(uuid) {
@@ -59,6 +59,10 @@ const { ResponseRulesMiddleware } = load(
     },
 );
 const pageRoot = path.join(__dirname, '../../../subscription-page/backend');
+const pageContext = subload(path.join(pageRoot, 'src/common/utils/subscription-domain-context.ts'));
+const { subscriptionDomainGateway } = subload(path.join(pageRoot, 'src/common/middlewares/subscription-domain-gateway.middleware.ts'), {
+    '../utils/subscription-domain-context': pageContext,
+});
 const ignored = subload(path.join(pageRoot, 'src/common/constants/ignored-headers.constant.ts'));
 const { headerFilterMiddleware } = subload(
     path.join(pageRoot, 'src/common/middlewares/header-filter.middleware.ts'),
@@ -76,7 +80,8 @@ const { AxiosService } = subload(
 );
 const { SubscriptionService } = subload(
     path.join(pageRoot, 'src/modules/subscription/subscription.service.ts'),
-    { '@common/axios/axios.service': {}, '../../common/utils/public-geofile-origin': origin },
+    { '@common/axios/axios.service': {}, '../../common/utils/public-geofile-origin': origin,
+      '../../common/utils/subscription-domain-context': pageContext },
 );
 const { GeofilesController } = subload(
     path.join(pageRoot, 'src/modules/subscription/geofiles.controller.ts'),
@@ -107,6 +112,13 @@ test('real page-to-panel HTTP keeps CDN authority for routing, JSON, DAT and che
     const dat = bundleDat([{ id, data: fixture.geosite }]);
     files.bundleContent = async () => dat;
     const domains = {
+        gatewayBase: async (uuid) => {
+            if (uuid === '11111111-1111-4111-8111-111111111111')
+                return `https://cdn-a.example.test/cdn/${uuid}`;
+            if (uuid === '22222222-2222-4222-8222-222222222222')
+                return `https://cdn-b.example.test/cdn/${uuid}`;
+            throw Error('Unknown domain');
+        },
         resolveOrigin: async (origin) =>
             ({
                 'https://cdn-a.example.test': 'https://cdn-a.example.test',
@@ -131,6 +143,11 @@ test('real page-to-panel HTTP keeps CDN authority for routing, JSON, DAT and che
         domains,
     );
     const upstream = express();
+    upstream.get('/api/sub/domains/:uuid/resolve', async (req, res) => {
+        try {
+            return res.json({ response: { uuid: req.params.uuid, publicBaseUrl: await domains.gatewayBase(req.params.uuid) } });
+        } catch { res.status(404).end(); }
+    });
     upstream.use((req, res, next) => middleware.use(req, res, next));
     upstream.get('/api/sub/fixture/json', async (req, res) => {
         await new Promise((r) => setTimeout(r, 3));
@@ -175,6 +192,7 @@ test('real page-to-panel HTTP keeps CDN authority for routing, JSON, DAT and che
         controller = new GeofilesController(axios);
     const page = express();
     page.use(headerFilterMiddleware);
+    page.use(subscriptionDomainGateway(uuid => axios.resolveSubscriptionDomain(uuid)));
     page.get('/fixture/json', (req, res) =>
         service.serveSubscriptionPage('192.0.2.1', req, res, 'fixture', 'json'),
     );
@@ -202,6 +220,7 @@ test('real page-to-panel HTTP keeps CDN authority for routing, JSON, DAT and che
                             'user-agent': 'INCY/2.6.2/iOS',
                             'x-forwarded-host': 'evil.test',
                             'x-remnacust-geofile-origin': 'https://evil.test',
+                            'x-remnacust-subscription-domain': '33333333-3333-4333-8333-333333333333',
                         },
                     },
                     (res) => {
@@ -242,7 +261,30 @@ test('real page-to-panel HTTP keeps CDN authority for routing, JSON, DAT and che
                 require('crypto').createHash('sha256').update(dat).digest('hex'),
             );
         }
+        // VK rewrites the HTTP authority to the canonical origin. Only the
+        // registered path ID, passed with the page's JWT, selects the CDN.
+        const domainId = '11111111-1111-4111-8111-111111111111';
+        const ids = [domainId, '22222222-2222-4222-8222-222222222222'];
+        const viaGateway = await Promise.all(Array.from({ length: 8 }, (_, index) =>
+            request('canonical.example.test', `/cdn/${ids[index % 2]}/fixture/json`)));
+        for (const [index, result] of viaGateway.entries()) {
+            assert.equal(result.status, 200);
+            const profile = JSON.parse(Buffer.from(result.headers.routing.split('/onadd/')[1], 'base64'));
+            const url = new URL(profile.Geositeurl);
+            assert.equal(url.hostname, index % 2 ? 'cdn-b.example.test' : 'cdn-a.example.test');
+            assert.ok(url.pathname.startsWith(`/cdn/${ids[index % 2]}/geofiles/`));
+            const download = await request('canonical.example.test', url.pathname + url.search);
+            assert.equal(download.status, 200);
+            assert.deepEqual(download.body, dat);
+            const checksum = await request('canonical.example.test', url.pathname + '.sha256' + url.search);
+            assert.equal(checksum.status, 200);
+            assert.equal(checksum.body.toString().trim(), require('crypto').createHash('sha256').update(dat).digest('hex'));
+        }
+        for (const url of ['/cdn/not-a-uuid/fixture/json', '/cdn/33333333-3333-4333-8333-333333333333/fixture/json',
+            `/cdn/${domainId}/cdn/${domainId}/fixture/json`])
+            assert.equal((await request('canonical.example.test', url)).status, 404);
         tokenActive = false;
+        assert.equal((await request('canonical.example.test', `/cdn/${domainId}/fixture/json`)).status, 503);
         const revoked = await request('cdn-a.example.test');
         const profile = JSON.parse(
             Buffer.from(revoked.headers.routing.split('/onadd/')[1], 'base64'),

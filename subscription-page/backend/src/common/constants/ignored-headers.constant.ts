@@ -43,6 +43,7 @@ export const IGNORED_HEADERS = new Set([
     'x-remnawave-real-ip',
     'x-subpage-version',
     'x-remnacust-geofile-origin',
+    'x-remnacust-subscription-domain',
     'etag',
     'last-modified',
     // The panel is only an upstream. These response headers can disclose its

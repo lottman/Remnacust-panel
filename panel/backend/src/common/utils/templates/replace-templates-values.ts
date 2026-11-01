@@ -9,6 +9,7 @@ import { SubscriptionSettingsEntity } from '@modules/subscription-settings/entit
 import { UserEntity } from '@modules/users/entities';
 
 import { prettyBytesUtil } from '../bytes';
+import { subscriptionUserUrl } from '../subscription-domain-url';
 import { getNextTrafficResetAt } from '../get-next-traffic-reset-at.util';
 import { getNextLocationResetAt } from './get-next-location-reset-at';
 import { parseTemplate, renderTemplate } from './template-parser';
@@ -214,7 +215,7 @@ export class TemplateEngine {
             EMAIL: () => user.email || '',
             TELEGRAM_ID: () => user.telegramId?.toString() || '',
             SUBSCRIPTION_URL: () =>
-                `https://${user.subscriptionDomain ? `${user.subscriptionDomain.domain}${user.subscriptionDomain.path}` : subPublicDomain}/${user.shortUuid}`,
+                subscriptionUserUrl(user.subscriptionDomain, subPublicDomain, user.shortUuid),
             TAG: () => user.tag || '',
             EXPIRE_UNIX: () => dayjs(effectiveUserExpiry(user)).unix(),
             SHORT_UUID: () => user.shortUuid,

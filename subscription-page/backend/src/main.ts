@@ -31,6 +31,8 @@ import { getAssetsPath, isDevelopment, isDevOrDebugLogsEnabled } from '@common/u
 import { getStartMessage } from '@common/utils/startup-app/get-start-message';
 
 import { AppModule } from './app.module';
+import { AxiosService } from '@common/axios';
+import { subscriptionDomainGateway } from '@common/middlewares/subscription-domain-gateway.middleware';
 
 // const levels = {
 //     error: 0,
@@ -70,6 +72,7 @@ async function bootstrap(): Promise<void> {
     });
 
     const config = app.get(TypedConfigService);
+    const customSubPrefix = config.get('CUSTOM_SUB_PREFIX');
 
     app.set('etag', false);
     app.disable('x-powered-by');
@@ -106,6 +109,7 @@ async function bootstrap(): Promise<void> {
         next();
     });
     app.use(noRobotsMiddleware, getRealIp, headerFilterMiddleware);
+    app.use(subscriptionDomainGateway(uuid => app.get(AxiosService).resolveSubscriptionDomain(uuid), customSubPrefix ?? ''));
 
     app.use(
         '/assets',
@@ -131,8 +135,6 @@ async function bootstrap(): Promise<void> {
             },
         ),
     );
-
-    const customSubPrefix = config.get('CUSTOM_SUB_PREFIX');
 
     app.setGlobalPrefix(customSubPrefix ?? '', { exclude: [APP_CONFIG_ROUTE_WO_LEADING_PATH] });
 

@@ -32,6 +32,8 @@ import {
 import { authResponseCache } from '@common/middlewares/auth-response-cache.middleware';
 import { boundedJsonParser } from '@common/middlewares/bounded-json.middleware';
 import { subscriptionBudget } from '@common/middlewares/subscription-budget.middleware';
+import { subscriptionDomainGateway } from '@common/middlewares/subscription-domain-gateway.middleware';
+import { SubscriptionDomainsService } from '@modules/subscription-domains/subscription-domains.service';
 import { RawCacheService } from '@common/raw-cache';
 import { customLogFilter } from '@common/utils/filter-logs';
 import { httpLogPath } from '@common/utils/http-log-path';
@@ -86,6 +88,7 @@ async function bootstrap(): Promise<void> {
     const config = app.get(TypedConfigService);
     app.use(authResponseCache);
     app.use(subscriptionBudget());
+    app.use(subscriptionDomainGateway(uuid => app.get(SubscriptionDomainsService).gatewayBase(uuid)));
     app.use(boundedJsonParser(config.getOrThrow('APP_SECRET')));
 
     const helmetMiddleware = helmet({

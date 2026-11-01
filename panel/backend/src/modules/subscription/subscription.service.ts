@@ -1,6 +1,8 @@
 import dayjs from 'dayjs';
 import _ from 'lodash';
 import pMap from 'p-map';
+import { subscriptionUserUrl } from '../../common/utils/subscription-domain-url';
+import { currentGeofileOrigin } from '../../common/utils/geofile-request-context';
 
 import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
@@ -489,12 +491,16 @@ export class SubscriptionService {
                 }
             }
 
+            const requestOrigin = currentGeofileOrigin();
+            const deviceSubscriptionUrl = requestOrigin
+                ? `${requestOrigin}/${shortUuid}`
+                : subscriptionUserUrl(user.response.subscriptionDomain, this.subPublicDomain, shortUuid);
             return new SubscriptionWithConfigResponse({
                 headers: {
                     ...headers,
                     ...(personalCredentialsReady && hwidHeaders
                         ? {
-                              'x-device-subscription-url': `https://${user.response.subscriptionDomain ? `${user.response.subscriptionDomain.domain}${user.response.subscriptionDomain.path}` : this.subPublicDomain}/${shortUuid}/device/${this.deviceAccess.linkToken(user.response, hwidHeaders.hwid)}`,
+                              'x-device-subscription-url': `${deviceSubscriptionUrl}/device/${this.deviceAccess.linkToken(user.response, hwidHeaders.hwid)}`,
                           }
                         : {}),
                 },
@@ -994,7 +1000,7 @@ export class SubscriptionService {
             },
             links,
             ssConfLinks,
-            subscriptionUrl: `https://${user.subscriptionDomain ? `${user.subscriptionDomain.domain}${user.subscriptionDomain.path}` : this.subPublicDomain}/${user.shortUuid}`,
+            subscriptionUrl: subscriptionUserUrl(user.subscriptionDomain, this.subPublicDomain, user.shortUuid),
         });
     }
 

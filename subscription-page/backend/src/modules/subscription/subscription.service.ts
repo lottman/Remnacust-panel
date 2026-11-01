@@ -8,6 +8,7 @@ import { TRequestTemplateTypeKeys } from '@remnawave/backend-contract';
 import { AxiosService } from '@common/axios/axios.service';
 
 import { publicGeofileOrigin } from '../../common/utils/public-geofile-origin';
+import { currentSubscriptionDomain } from '../../common/utils/subscription-domain-context';
 
 @Injectable()
 export class SubscriptionService {
@@ -38,6 +39,7 @@ export class SubscriptionService {
                 abort.signal,
                 personalToken,
                 publicGeofileOrigin(req.headers.host),
+                currentSubscriptionDomain()?.uuid,
             );
 
             if (!subscriptionDataResponse) {

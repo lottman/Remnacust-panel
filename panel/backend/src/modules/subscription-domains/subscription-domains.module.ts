@@ -2,6 +2,7 @@ import { Global, Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 
 import { SubscriptionDomainEnvironmentService } from './subscription-domain-environment.service';
+import { SubscriptionDomainGatewayController } from './subscription-domain-gateway.controller';
 import { SubscriptionDomainsController } from './subscription-domains.controller';
 import { SubscriptionDomainsService } from './subscription-domains.service';
 @Global()
@@ -9,6 +10,6 @@ import { SubscriptionDomainsService } from './subscription-domains.service';
     imports: [CqrsModule],
     providers: [SubscriptionDomainsService, SubscriptionDomainEnvironmentService],
     exports: [SubscriptionDomainsService],
-    controllers: [SubscriptionDomainsController],
+    controllers: [SubscriptionDomainsController, SubscriptionDomainGatewayController],
 })
 export class SubscriptionDomainsModule {}

@@ -21,9 +21,10 @@ const sessions = new Set([adminSessionKey(claims.jti)]);
 const tokens = new Map<string, { scopes: string[]; expireAt: Date | null }>();
 const row = { uuid: randomUUID(), name: 'Subscription', domain: 'sub.example.test', path: '',
     kind: 'PRIMARY', isDefault: true, parentUuid: null, _count: { users: 0, aliases: 0 } };
+const cdn = { ...row, uuid: randomUUID(), kind: 'CDN', isDefault: false, parentUuid: row.uuid, domain: 'cdn.example.test' };
 const database = { subscriptionDomains: {
     count: async () => 1,
-    findMany: async () => [row],
+    findMany: async () => [row, cdn],
     findUnique: async () => row,
 }, $executeRawUnsafe: async () => 0, $transaction: async (action: (tx: unknown) => unknown) => action(database) };
 
@@ -60,8 +61,8 @@ async function main() {
         const base = await app.getUrl();
         const jwt = new JwtService({ secret });
         const sign = (payload: Record<string, unknown>) => jwt.sign(payload, { expiresIn: 60 });
-        const request = async (token?: string, browser = false) => {
-            const response = await fetch(base + '/api/subscription-domains', { headers: {
+        const request = async (token?: string, browser = false, route = '/api/subscription-domains') => {
+            const response = await fetch(base + route, { headers: {
                 ...(token ? { Authorization: 'Bearer ' + token } : {}),
                 ...(browser ? { 'X-Remnawave-Client-Type': 'browser' } : {}),
             }, signal: AbortSignal.timeout(5000) });
@@ -83,6 +84,14 @@ async function main() {
         assert.equal((await request(apiToken)).status, 403);
         tokens.set(uuid, { scopes: ['subscription-domains:read'], expireAt: new Date(Date.now() + 60000) });
         assert.equal((await request(apiToken)).status, 200);
+        const relay = '/api/sub/domains/' + cdn.uuid + '/resolve';
+        assert.equal((await request()).status, 401);
+        const resolved = await request(undefined, false, relay);
+        assert.equal(resolved.status, 200);
+        assert.equal(resolved.body.response.publicBaseUrl, `https://cdn.example.test/cdn/${cdn.uuid}`);
+        assert.deepEqual(Object.keys(resolved.body.response).sort(), ['publicBaseUrl', 'uuid']);
+        assert.equal((await request(undefined, false, '/api/sub/domains/' + row.uuid + '/resolve')).status, 404);
+        assert.equal((await request(undefined, false, '/api/sub/domains/' + randomUUID() + '/resolve')).status, 404);
         tokens.set(uuid, { scopes: ['subscription-domains:read'], expireAt: new Date(0) });
         assert.equal((await request(apiToken)).status, 403);
         tokens.delete(uuid);

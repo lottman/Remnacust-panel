@@ -11,8 +11,8 @@ import { HttpExceptionWithErrorCodeType } from '@common/exception/http-execeptio
 import { runSubscriptionWork } from '@common/middlewares/subscription-budget.middleware';
 import { configuredRegex } from '@common/utils/bounded-regex';
 import { extractHwidHeaders } from '@common/utils/extract-hwid-headers/extract-hwid-headers.util';
-import { relayGeofileOrigin } from '@common/utils/geofile-relay-origin';
-import { withGeofileOrigin } from '@common/utils/geofile-request-context';
+import { relayGeofileContext, SUBSCRIPTION_DOMAIN_HEADER } from '@common/utils/geofile-relay-origin';
+import { withGeofileOrigin, currentGeofileOrigin } from '@common/utils/geofile-request-context';
 import { publicGeofileOrigin } from '@common/utils/public-geofile-origin';
 import { truncateHeader } from '@common/utils/truncate-header.util';
 import {
@@ -46,7 +46,7 @@ export class ResponseRulesMiddleware implements NestMiddleware {
     ) {
         try {
             await runSubscriptionWork(res, async () => {
-                const relayed = await relayGeofileOrigin(
+                const relayed = await relayGeofileContext(
                     req.headers,
                     (token) =>
                         new JwtService().verifyAsync(token, {
@@ -58,10 +58,12 @@ export class ResponseRulesMiddleware implements NestMiddleware {
                         return token?.isOk ? token.response : undefined;
                     },
                 );
-                const candidate = relayed ?? publicGeofileOrigin(req.headers.host);
-                const origin = this.domains
-                    ? await this.domains.resolveOrigin(candidate)
-                    : candidate;
+                if (req.headers[SUBSCRIPTION_DOMAIN_HEADER] !== undefined && !relayed?.domainUuid)
+                    throw new HttpExceptionWithErrorCodeType(ERRORS.FORBIDDEN.message, ERRORS.FORBIDDEN.code, ERRORS.FORBIDDEN.httpCode);
+                const candidate = relayed?.origin ?? publicGeofileOrigin(req.headers.host);
+                const origin = currentGeofileOrigin() ?? (relayed?.domainUuid && this.domains
+                    ? await this.domains.gatewayBase(relayed.domainUuid)
+                    : this.domains ? await this.domains.resolveOrigin(candidate) : candidate);
                 return withGeofileOrigin(origin, () => this.applyRules(req, res, next));
             });
         } catch (error) {

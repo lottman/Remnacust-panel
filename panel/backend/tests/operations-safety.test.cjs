@@ -133,6 +133,12 @@ test('device preview renders through production subscription logic without devic
     }
     class Missing {}
     const { SubscriptionService } = source('modules/subscription/subscription.service.ts', {
+        '../../common/utils/subscription-domain-url': load(
+            path.join(__dirname, '../src/common/utils/subscription-domain-url.ts'),
+        ),
+        '../../common/utils/geofile-request-context': load(
+            path.join(__dirname, '../src/common/utils/geofile-request-context.ts'),
+        ),
         '@integration-modules/notifications/interfaces': {},
         '@modules/users/queries/get-user-by-unique-field': { GetUserByUniqueFieldQuery: UserQuery },
         '@modules/hwid-user-devices/queries/check-hwid-exists/check-hwid-exists.query': {

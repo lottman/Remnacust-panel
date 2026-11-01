@@ -109,5 +109,62 @@
       }
     ],
     "afterSha256": "0b97d2672c2834ba79f736b44fba9c762a2f7f92b9c1a2490527c3951bb403cf"
+  },
+  {
+    "path": "node_modules/deepmerge/index.js",
+    "beforeSha256": "12440c84957c1990ea2d5e33dc0091722dc1dc1585c6d20e0c780e568ffa9d30",
+    "afterSha256": "29887f480a4a019094e10d81ff06887d7eb66ea9043e475c3258ab1af183bf0f",
+    "changes": [
+      {
+        "before": "destination[key] = cloneUnlessOtherwiseSpecified(target[key], options)",
+        "after": "Object.defineProperty(destination, key, { value: cloneUnlessOtherwiseSpecified(target[key], options), enumerable: true, configurable: true, writable: true });"
+      },
+      {
+        "before": "destination[key] = getMergeFunction(key, options)(target[key], source[key], options)",
+        "after": "Object.defineProperty(destination, key, { value: getMergeFunction(key, options)(target[key], source[key], options), enumerable: true, configurable: true, writable: true });"
+      },
+      {
+        "before": "destination[key] = cloneUnlessOtherwiseSpecified(source[key], options)",
+        "after": "Object.defineProperty(destination, key, { value: cloneUnlessOtherwiseSpecified(source[key], options), enumerable: true, configurable: true, writable: true });"
+      }
+    ]
+  },
+  {
+    "path": "node_modules/deepmerge/dist/cjs.js",
+    "beforeSha256": "2e5160f84a1141bd927264afe4d15766f1e6cf07daef182b37ff53fea121de7d",
+    "afterSha256": "a18bc1bcb0a285eed2280c1aae3c23bd9cd61bf3c3038dc06706bbbee19c9f42",
+    "changes": [
+      {
+        "before": "destination[key] = cloneUnlessOtherwiseSpecified(target[key], options);",
+        "after": "Object.defineProperty(destination, key, { value: cloneUnlessOtherwiseSpecified(target[key], options), enumerable: true, configurable: true, writable: true });"
+      },
+      {
+        "before": "destination[key] = getMergeFunction(key, options)(target[key], source[key], options);",
+        "after": "Object.defineProperty(destination, key, { value: getMergeFunction(key, options)(target[key], source[key], options), enumerable: true, configurable: true, writable: true });"
+      },
+      {
+        "before": "destination[key] = cloneUnlessOtherwiseSpecified(source[key], options);",
+        "after": "Object.defineProperty(destination, key, { value: cloneUnlessOtherwiseSpecified(source[key], options), enumerable: true, configurable: true, writable: true });"
+      }
+    ]
+  },
+  {
+    "path": "node_modules/deepmerge/dist/umd.js",
+    "beforeSha256": "f33e6596482d1fb5c7c427f8ef92f2aa849eea9223acd974176b2fb27ddbf73a",
+    "afterSha256": "ac73e83bcfefd4e39e9a2bee3d7ec478b3ba558c2ef71647d691b9737f6360e8",
+    "changes": [
+      {
+        "before": "destination[key] = cloneUnlessOtherwiseSpecified(target[key], options);",
+        "after": "Object.defineProperty(destination, key, { value: cloneUnlessOtherwiseSpecified(target[key], options), enumerable: true, configurable: true, writable: true });"
+      },
+      {
+        "before": "destination[key] = getMergeFunction(key, options)(target[key], source[key], options);",
+        "after": "Object.defineProperty(destination, key, { value: getMergeFunction(key, options)(target[key], source[key], options), enumerable: true, configurable: true, writable: true });"
+      },
+      {
+        "before": "destination[key] = cloneUnlessOtherwiseSpecified(source[key], options);",
+        "after": "Object.defineProperty(destination, key, { value: cloneUnlessOtherwiseSpecified(source[key], options), enumerable: true, configurable: true, writable: true });"
+      }
+    ]
   }
 ]

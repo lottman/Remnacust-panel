@@ -12,7 +12,10 @@ const pending = [];
 // Apply only the reviewed patches to their pinned package contents. A dependency
 // update with different contents requires reviewing and regenerating the manifest.
 for (const patch of manifest) {
-    if (!/^node_modules\/(nestjs-zod|xray-typed)\/dist\/[\w./-]+$/.test(patch.path) || patch.path.includes('..')) {
+    const allowedPath =
+        /^node_modules\/(nestjs-zod|xray-typed)\/dist\/[\w./-]+$/.test(patch.path) ||
+        /^node_modules\/deepmerge\/(index\.js|dist\/(cjs|umd)\.js)$/.test(patch.path);
+    if (!allowedPath || patch.path.includes('..')) {
         throw new Error('Invalid dependency patch path');
     }
     const target = path.join(root, patch.path);
@@ -29,7 +32,8 @@ for (const patch of manifest) {
         }
         result = result.slice(0, first) + change.after + result.slice(first + change.before.length);
     }
-    if (digest(result) !== patch.afterSha256) throw new Error(`Dependency patch checksum mismatch: ${patch.path}`);
+    if (digest(result) !== patch.afterSha256)
+        throw new Error(`Dependency patch checksum mismatch: ${patch.path}`);
     pending.push({ target, result });
 }
 

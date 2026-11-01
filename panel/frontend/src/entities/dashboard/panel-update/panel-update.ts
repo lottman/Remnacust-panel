@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { isAxiosError } from 'axios'
 import { useEffect } from 'react'
 import { z } from 'zod'
 import { create } from 'zustand'
@@ -165,6 +166,11 @@ export const usePanelUpdateStore = create<{
                 { timeout: 25000 }
             )
             get().accept(panelUpdateSchema.parse(result.data.response))
+        } catch (error) {
+            if (isAxiosError(error) && error.response?.data?.errorCode === 'NODE_CONTINUITY_NOT_READY') {
+                get().dismiss()
+            }
+            throw error
         } finally {
             // A lost response may follow an accepted job. The next status check decides.
             set({ starting: false })

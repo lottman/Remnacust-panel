@@ -1,0 +1,22 @@
+{
+  "date": "2026-11-01",
+  "nodeVersion": "1.1.19",
+  "coreVersion": "1.1.11",
+  "installerRelease": "v1.2.110",
+  "coreBinarySha256": "2e860367477e8893e15ae9043508ce383850d8cf47050f6fc66c0c29c729e58c",
+  "transport": "vless+xhttp/packet-up",
+  "loopbackOnly": true,
+  "privateMountNamespace": true,
+  "privateNetworkNamespace": true,
+  "panelProcessesStarted": 0,
+  "policyRefreshes": 0,
+  "reserveExhaustionDenied": true,
+  "offlineElapsedSeconds": 95.037,
+  "existingAndNewConnectionsAfter90s": true,
+  "identityExpiryDenied": true,
+  "independentControlContinues": true,
+  "policyUnchanged": true,
+  "elapsedSeconds": 115.011,
+  "reserveDenialConfirmedInCoreLog": true,
+  "notExercised": ["operator CDN", "XHTTP TLS", "actual panel shutdown", "global USER quota runtime mode"]
+}

@@ -193,6 +193,7 @@ export class AxiosService {
         opts: INodeConnectionOpts,
         data?: unknown,
         recoveryProof?: string,
+        maxResponseBytes?: number,
     ): Promise<TResult<T>> {
         if (recoveryProof !== undefined) {
             try {
@@ -207,6 +208,7 @@ export class AxiosService {
         const result = await this.request<{ response: T }>({
             label: 'HOST POLICY',
             opts,
+            maxResponseBytes,
             ...(recoveryProof === undefined ? {} : { recoveryProof }),
             path: '/node/xray/host-policy',
             method: data ? 'post' : 'get',

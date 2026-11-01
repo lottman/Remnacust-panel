@@ -40,12 +40,15 @@ type Node = INodeConnectionOpts & {
     stage: string | null;
     connectionHash: string | null;
     observedCore: string | null;
+    observedInstance: string | null;
     lastSample: Date | null;
     lastAttempt: Date | null;
 };
 type Target = { kind: 'USER' | 'HOST' | 'TAG'; key: string; owner: string; nodes: string[] };
+type PreflightEvidence = { core: string; instance: string | null };
+const PREFLIGHT_EVIDENCE_MAX_AGE_MS = 20000;
 const uuid = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/;
-const connectionHash = (node: Node) =>
+const connectionHash = (node: Pick<Node, 'address' | 'port' | 'proxyUrl'>) =>
     createHash('sha256')
         .update(JSON.stringify([node.address, node.port, node.proxyUrl]))
         .digest('hex');
@@ -92,7 +95,7 @@ export class QuotaCoordinatorService {
             n.consumption_multiplier::text AS multiplier,m.phase,m.instance_uuid AS instance,m.initial_core AS "initialCore",
             m.fenced_core AS "fencedCore",m.fenced_source AS "fencedSource",m.fenced_at AS "fencedAt",
             m.initial_drained_at AS drained,m.legacy_usage_drained_at AS "legacyDrained",
-            p.stage,p.connection_hash AS "connectionHash",p.observed_core AS "observedCore",s.last_requested_at AS "lastSample",
+            p.stage,p.connection_hash AS "connectionHash",p.observed_core AS "observedCore",p.observed_instance AS "observedInstance",s.last_requested_at AS "lastSample",
             p.last_attempted_at AS "lastAttempt"
             FROM nodes n LEFT JOIN xera_quota_node_modes m ON m.node_uuid=n.uuid
             LEFT JOIN xera_node_usage_streams s ON s.node_uuid=n.uuid AND s.node_id=n.id
@@ -124,20 +127,57 @@ export class QuotaCoordinatorService {
             name: string;
             stage: string;
             error: string | null;
-            checkedAt: Date;
+            checkedAt: Date | null;
+            mode: 'FENCING' | 'ACTIVE' | null;
+            ready: boolean;
+            address: string;
+            port: number | null;
+            proxyUrl: string | null;
+            connectionHash: string | null;
         }>`
-            SELECT p.node_uuid AS uuid,n.name,p.stage,p.error_code AS error,p.checked_at AS "checkedAt"
-            FROM xera_quota_node_progress p JOIN nodes n ON n.uuid=p.node_uuid
-            WHERE p.generation=(SELECT generation FROM xera_quota_coordinator WHERE id=1) ORDER BY n.id LIMIT 10000`.execute(
+            SELECT n.uuid,n.name,COALESCE(p.stage,'PREFLIGHT') AS stage,p.error_code AS error,p.checked_at AS "checkedAt",
+              n.address,n.port,n.proxy_url AS "proxyUrl",p.connection_hash AS "connectionHash",
+              m.phase AS mode,COALESCE(p.stage='ACTIVE' AND p.error_code IS NULL AND m.phase='ACTIVE' AND m.user_quota
+                AND m.instance_uuid IS NOT NULL AND m.applied_core IS NOT NULL
+                AND m.initial_drained_at IS NOT NULL AND m.legacy_usage_drained_at IS NOT NULL
+                AND m.desired_revision>0 AND m.desired_revision=m.applied_revision
+                AND m.desired_source IS NOT NULL AND m.desired_source=m.applied_source
+                AND m.desired_policy IS NOT NULL AND m.applied_policy IS NOT NULL,false) AS ready
+            FROM nodes n LEFT JOIN xera_quota_node_progress p ON p.node_uuid=n.uuid
+              AND p.generation=${state?.generation ?? null}::uuid
+            LEFT JOIN xera_quota_node_modes m ON m.node_uuid=n.uuid
+            WHERE NOT n.is_disabled AND n.active_config_profile_uuid IS NOT NULL ORDER BY n.id LIMIT 10001`.execute(
             this.db.kysely,
         );
+        if (rows.rows.length > 10000) throw new CoordinationError('NODE_ROSTER_TOO_LARGE');
+        // This is persisted coordination evidence, not a live node health or
+        // outage-duration guarantee. Maintenance must obtain its own live proof.
+        const nodes = rows.rows.map((row) => ({
+            uuid: row.uuid,
+            name: row.name,
+            stage: row.stage,
+            error: row.error,
+            checkedAt: row.checkedAt,
+            mode: row.mode,
+            ready: !pendingRestore && row.ready && row.connectionHash === connectionHash(row),
+        }));
+        const rosterMatches =
+            !!state &&
+            JSON.stringify([...state.roster].sort()) ===
+                JSON.stringify(nodes.map((node) => node.uuid).sort());
         return {
             phase: pendingRestore ? 'RECOVERY' : (state?.phase ?? 'PREFLIGHT'),
             error: pendingRestore
                 ? 'QUOTA_RESTORE_REQUIRES_RECONCILIATION'
                 : (state?.error ?? null),
             restore,
-            nodes: rows.rows,
+            ready:
+                !pendingRestore &&
+                state?.phase === 'ACTIVE' &&
+                !state.error &&
+                rosterMatches &&
+                nodes.every((node) => node.ready),
+            nodes,
         };
     }
 
@@ -205,17 +245,22 @@ export class QuotaCoordinatorService {
     }
 
     private async batch(owner: string, state: Coordinator, candidates: Node[]): Promise<Node[]> {
-        const selected = [...candidates].sort((a, b) =>
-            (a.lastAttempt?.getTime() ?? -1) - (b.lastAttempt?.getTime() ?? -1) ||
-            a.uuid.localeCompare(b.uuid),
-        ).slice(0, 8);
+        const selected = [...candidates]
+            .sort(
+                (a, b) =>
+                    (a.lastAttempt?.getTime() ?? -1) - (b.lastAttempt?.getTime() ?? -1) ||
+                    a.uuid.localeCompare(b.uuid),
+            )
+            .slice(0, 8);
         if (!selected.length) return selected;
         await this.write(owner, async () => {
             const current = await this.state();
             if (current?.generation !== state.generation || current.phase !== state.phase)
                 throw new CoordinationError('COORDINATOR_GENERATION_CHANGED');
-            const values = selected.map((node) => sql`(${node.uuid}::uuid,${state.generation}::uuid,
-                ${node.stage ?? 'PREFLIGHT'},clock_timestamp())`);
+            const values = selected.map(
+                (node) => sql`(${node.uuid}::uuid,${state.generation}::uuid,
+                ${node.stage ?? 'PREFLIGHT'},clock_timestamp())`,
+            );
             await sql`INSERT INTO xera_quota_node_progress(node_uuid,generation,stage,last_attempted_at)
                 VALUES ${sql.join(values)} ON CONFLICT(node_uuid) DO UPDATE SET
                   generation=excluded.generation,
@@ -241,14 +286,18 @@ export class QuotaCoordinatorService {
         }
         const pending = nodes.filter((node) => node.phase === 'FENCING');
         if (state.phase === 'FENCING') {
-            const batch = await this.batch(owner, state, pending
-                .filter((node) => node.stage !== 'FENCED' && node.stage !== 'BOOTSTRAPPED'));
+            const batch = await this.batch(
+                owner,
+                state,
+                pending.filter((node) => node.stage !== 'FENCED' && node.stage !== 'BOOTSTRAPPED'),
+            );
             if (!batch.length) {
                 await this.phase(owner, 'DRAINING');
                 return true;
             }
             const results = await Promise.allSettled(
                 batch.map(async (node) => {
+                    await this.preflightEvidence(node);
                     await this.policies.syncNode(node);
                     const row = (
                         await sql<{
@@ -272,14 +321,17 @@ export class QuotaCoordinatorService {
             return true;
         }
         if (state.phase === 'DRAINING') {
-            const unstarted = await this.batch(owner, state, pending
-                .filter(
+            const unstarted = await this.batch(
+                owner,
+                state,
+                pending.filter(
                     (node) =>
                         node.stage !== 'BOOTSTRAPPED' ||
                         !node.lastSample ||
                         !node.fencedAt ||
                         node.lastSample.getTime() <= node.fencedAt.getTime(),
-                ));
+                ),
+            );
             if (unstarted.length) {
                 await this.cutover.bootstrap(unstarted.map(usageNode));
                 await this.write(owner, async () => {
@@ -294,7 +346,11 @@ export class QuotaCoordinatorService {
                 if (!(await this.cutover.confirmDrained(pending.map(usageNode)))) return false;
                 return true;
             }
-            const uncaptured = await this.batch(owner, state, pending.filter((node) => !node.drained));
+            const uncaptured = await this.batch(
+                owner,
+                state,
+                pending.filter((node) => !node.drained),
+            );
             if (uncaptured.length) {
                 const results = await Promise.allSettled(
                     uncaptured.map((node) =>
@@ -346,7 +402,11 @@ export class QuotaCoordinatorService {
             return true;
         }
         if (state.phase === 'ACTIVE') {
-            const delivery = await this.batch(owner, state, nodes.filter((node) => node.stage !== 'ACTIVE'));
+            const delivery = await this.batch(
+                owner,
+                state,
+                nodes.filter((node) => node.stage !== 'ACTIVE'),
+            );
             const results = await Promise.allSettled(
                 delivery.map(async (node) => {
                     try {
@@ -354,7 +414,9 @@ export class QuotaCoordinatorService {
                     } catch {
                         await this.write(owner, async () => {
                             await sql`UPDATE xera_quota_node_progress SET error_code='ACTIVE_POLICY_RETRY_REQUIRED',checked_at=now()
-                                WHERE node_uuid=${node.uuid}::uuid AND generation=${state.generation}::uuid`.execute(this.db.kysely);
+                                WHERE node_uuid=${node.uuid}::uuid AND generation=${state.generation}::uuid`.execute(
+                                this.db.kysely,
+                            );
                         });
                         return false;
                     }
@@ -362,10 +424,14 @@ export class QuotaCoordinatorService {
                         const acknowledged = await sql`SELECT 1 FROM xera_quota_node_modes
                             WHERE node_uuid=${node.uuid}::uuid AND phase='ACTIVE'
                               AND instance_uuid=${node.instance}::uuid AND applied_core IS NOT NULL
-                              AND desired_revision=applied_revision AND desired_source=applied_source`.execute(this.db.kysely);
+                              AND desired_revision=applied_revision AND desired_source=applied_source`.execute(
+                            this.db.kysely,
+                        );
                         if (!acknowledged.rows.length) {
                             await sql`UPDATE xera_quota_node_progress SET error_code='ACTIVE_POLICY_ACK_PENDING',checked_at=now()
-                                WHERE node_uuid=${node.uuid}::uuid AND generation=${state.generation}::uuid`.execute(this.db.kysely);
+                                WHERE node_uuid=${node.uuid}::uuid AND generation=${state.generation}::uuid`.execute(
+                                this.db.kysely,
+                            );
                             return false;
                         }
                         await sql`UPDATE xera_quota_node_progress SET stage='ACTIVE',error_code=NULL,checked_at=now() WHERE node_uuid=${node.uuid}::uuid`.execute(
@@ -390,56 +456,79 @@ export class QuotaCoordinatorService {
                         this.db.kysely,
                     );
                 });
-            return funded || results.some((result) => result.status === 'fulfilled' && result.value);
+            return (
+                funded || results.some((result) => result.status === 'fulfilled' && result.value)
+            );
         }
         return false;
     }
 
+    private async preflightEvidence(node: Node): Promise<PreflightEvidence> {
+        const status = await this.axios.hostPolicy<{
+            version?: string;
+            supported?: boolean;
+            quotaReservesSupported?: boolean;
+            quotaRegistrationsSupported?: boolean;
+            quotaWatermarksSupported?: boolean;
+            quotaFencesSupported?: boolean;
+            policyRevisionsSupported?: boolean;
+            usageReceiptsSupported?: boolean;
+            coreIncarnationSupported?: boolean;
+            userQuotaReservesSupported?: boolean;
+            unreservedUsageSupported?: boolean;
+            coreProcessId?: string | null;
+            quotaInstanceId?: string | null;
+        }>(node);
+        if (!status.isOk) throw new CoordinationError('NODE_UNAVAILABLE', node.uuid);
+        const cap = status.response;
+        if (
+            cap.version !== HOST_POLICY_VERSION ||
+            !cap.supported ||
+            !cap.quotaReservesSupported ||
+            !cap.quotaRegistrationsSupported ||
+            !cap.quotaWatermarksSupported ||
+            !cap.quotaFencesSupported ||
+            !cap.policyRevisionsSupported ||
+            !cap.usageReceiptsSupported ||
+            !cap.coreIncarnationSupported ||
+            !cap.userQuotaReservesSupported ||
+            !cap.unreservedUsageSupported ||
+            !cap.coreProcessId ||
+            !uuid.test(cap.coreProcessId) ||
+            (cap.quotaInstanceId != null && !uuid.test(cap.quotaInstanceId))
+        )
+            throw new CoordinationError('NODE_UPGRADE_REQUIRED', node.uuid);
+        // Existing financial bindings cannot be rebased to a restarted core or
+        // replaced journal merely because its endpoint still answers.
+        if (node.phase === 'FENCING' && cap.coreProcessId !== node.initialCore)
+            throw new CoordinationError('INITIAL_CORE_CHANGED', node.uuid);
+        if (node.instance && cap.quotaInstanceId !== node.instance)
+            throw new CoordinationError('QUOTA_INSTANCE_CHANGED', node.uuid);
+        if (
+            node.phase === 'FENCING' &&
+            node.observedInstance &&
+            cap.quotaInstanceId !== node.observedInstance
+        )
+            throw new CoordinationError('QUOTA_INSTANCE_CHANGED', node.uuid);
+        return { core: cap.coreProcessId, instance: cap.quotaInstanceId ?? null };
+    }
+
     private async preflight(owner: string, state: Coordinator, nodes: Node[]): Promise<boolean> {
         const pending = nodes.filter((node) => !node.phase || node.phase === 'FENCING');
-        const batch = await this.batch(owner, state, pending
-            .filter(
+        const batch = await this.batch(
+            owner,
+            state,
+            pending.filter(
                 (node) => node.stage !== 'READY' || node.connectionHash !== connectionHash(node),
-            ));
+            ),
+        );
         if (batch.length) {
             const results = await Promise.allSettled(
                 batch.map(async (node) => {
-                    const status = await this.axios.hostPolicy<{
-                        version?: string;
-                        supported?: boolean;
-                        quotaReservesSupported?: boolean;
-                        quotaRegistrationsSupported?: boolean;
-                        quotaWatermarksSupported?: boolean;
-                        quotaFencesSupported?: boolean;
-                        policyRevisionsSupported?: boolean;
-                        usageReceiptsSupported?: boolean;
-                        coreIncarnationSupported?: boolean;
-                        userQuotaReservesSupported?: boolean;
-                        unreservedUsageSupported?: boolean;
-                        coreProcessId?: string | null;
-                        quotaInstanceId?: string | null;
-                    }>(node);
-                    if (!status.isOk) throw new CoordinationError('NODE_UNAVAILABLE', node.uuid);
-                    const cap = status.response;
-                    if (
-                        cap.version !== HOST_POLICY_VERSION ||
-                        !cap.supported ||
-                        !cap.quotaReservesSupported ||
-                        !cap.quotaRegistrationsSupported ||
-                        !cap.quotaWatermarksSupported ||
-                        !cap.quotaFencesSupported ||
-                        !cap.policyRevisionsSupported ||
-                        !cap.usageReceiptsSupported ||
-                        !cap.coreIncarnationSupported ||
-                        !cap.userQuotaReservesSupported ||
-                        !cap.unreservedUsageSupported ||
-                        !cap.coreProcessId ||
-                        !uuid.test(cap.coreProcessId)
-                    )
-                        throw new CoordinationError('NODE_UPGRADE_REQUIRED', node.uuid);
+                    const evidence = await this.preflightEvidence(node);
                     await this.write(owner, async () => {
                         await sql`INSERT INTO xera_quota_node_progress(node_uuid,generation,stage,connection_hash,observed_core,observed_instance)
-                        VALUES(${node.uuid}::uuid,${state.generation}::uuid,'READY',${connectionHash(node)},${cap.coreProcessId}::uuid,${cap.quotaInstanceId ?? null}::uuid)
+                        VALUES(${node.uuid}::uuid,${state.generation}::uuid,'READY',${connectionHash(node)},${evidence.core}::uuid,${evidence.instance}::uuid)
                         ON CONFLICT(node_uuid) DO UPDATE SET generation=excluded.generation,stage=excluded.stage,connection_hash=excluded.connection_hash,
                             observed_core=excluded.observed_core,observed_instance=excluded.observed_instance,error_code=NULL,checked_at=now()`.execute(
                             this.db.kysely,
@@ -450,10 +539,47 @@ export class QuotaCoordinatorService {
             for (const result of results) if (result.status === 'rejected') throw result.reason;
             return true;
         }
+        // READY is a discovery checkpoint, not permission to fence later. Probe
+        // the whole pending cohort again; no mode is committed on partial success.
+        const evidence = new Map<string, PreflightEvidence>();
+        const observedAt = performance.now();
+        const assertFresh = () => {
+            if (performance.now() - observedAt >= PREFLIGHT_EVIDENCE_MAX_AGE_MS)
+                throw new CoordinationError('PREFLIGHT_EVIDENCE_EXPIRED');
+        };
+        for (let offset = 0; offset < pending.length; offset += 8) {
+            assertFresh();
+            const results = await Promise.allSettled(
+                pending.slice(offset, offset + 8).map(async (node) => {
+                    evidence.set(node.uuid, await this.preflightEvidence(node));
+                }),
+            );
+            for (const result of results) if (result.status === 'rejected') throw result.reason;
+        }
+        assertFresh();
         await this.write(owner, async () => {
+            const current = await this.state();
+            if (current?.generation !== state.generation || current.phase !== 'PREFLIGHT')
+                throw new CoordinationError('COORDINATOR_GENERATION_CHANGED');
             await sql`SELECT 1 FROM xera_lock_usage_nodes(${nodes.map((node) => node.id)}::bigint[])`.execute(
                 this.db.kysely,
             );
+            await sql`SELECT node_uuid FROM xera_quota_node_modes
+                WHERE node_uuid=ANY(${nodes.map((node) => node.uuid)}::uuid[]) FOR UPDATE`.execute(
+                this.db.kysely,
+            );
+            const latest = await this.nodes();
+            const bindings = (values: Node[]) =>
+                values.map((node) => [
+                    node.uuid,
+                    node.id,
+                    connectionHash(node),
+                    node.phase,
+                    node.instance,
+                    node.initialCore,
+                ]);
+            if (JSON.stringify(bindings(latest)) !== JSON.stringify(bindings(nodes)))
+                throw new CoordinationError('NODE_SET_CHANGED');
             const unknown = await sql`SELECT 1 FROM xera_legacy_usage_streams
                 WHERE uncertain_since IS NOT NULL OR (requested_at IS NOT NULL AND payload IS NULL) LIMIT 1`.execute(
                 this.db.kysely,
@@ -465,20 +591,26 @@ export class QuotaCoordinatorService {
                     this.db.kysely,
                 );
             if (orphan.rows.length) throw new CoordinationError('ORPHANED_DEBT_REQUIRES_RECOVERY');
+            assertFresh();
             for (const node of nodes.filter((node) => node.phase === 'ACTIVE')) {
                 await sql`INSERT INTO xera_quota_node_progress(node_uuid,generation,stage,connection_hash)
-                    VALUES(${node.uuid}::uuid,${state.generation}::uuid,'ACTIVE',${connectionHash(node)})
-                    ON CONFLICT(node_uuid) DO UPDATE SET generation=excluded.generation,stage='ACTIVE',connection_hash=excluded.connection_hash,
+                    VALUES(${node.uuid}::uuid,${state.generation}::uuid,'PREFLIGHT',${connectionHash(node)})
+                    ON CONFLICT(node_uuid) DO UPDATE SET generation=excluded.generation,stage='PREFLIGHT',connection_hash=excluded.connection_hash,
                         error_code=NULL,checked_at=now()`.execute(this.db.kysely);
             }
             for (const node of pending) {
-                if (!node.observedCore)
-                    throw new CoordinationError('NODE_UPGRADE_REQUIRED', node.uuid);
+                const fresh = evidence.get(node.uuid)!;
+                await sql`UPDATE xera_quota_node_progress SET observed_core=${fresh.core}::uuid,
+                    observed_instance=${fresh.instance}::uuid,checked_at=clock_timestamp(),error_code=NULL
+                    WHERE node_uuid=${node.uuid}::uuid AND generation=${state.generation}::uuid`.execute(
+                    this.db.kysely,
+                );
                 await sql`INSERT INTO xera_quota_node_modes(node_uuid,user_quota,phase,initial_core)
-                    VALUES(${node.uuid}::uuid,true,'FENCING',${node.observedCore}::uuid) ON CONFLICT DO NOTHING`.execute(
+                    VALUES(${node.uuid}::uuid,true,'FENCING',${fresh.core}::uuid) ON CONFLICT DO NOTHING`.execute(
                     this.db.kysely,
                 );
             }
+            assertFresh();
             await sql`UPDATE xera_quota_coordinator SET phase=${pending.length ? 'FENCING' : 'ACTIVE'},roster=${nodes.map((node) => node.uuid)}::uuid[],
                 error_code=NULL,allocation_cursor=0,updated_at=now() WHERE id=1`.execute(
                 this.db.kysely,

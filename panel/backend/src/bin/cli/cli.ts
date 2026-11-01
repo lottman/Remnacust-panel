@@ -19,6 +19,7 @@ import { getRedisConnectionOptions } from '@common/utils';
 import { generateNodeCert } from '@common/utils/certs';
 import { encodeCertPayload } from '@common/utils/certs/encode-node-payload';
 import { CACHE_KEYS } from '@libs/contracts/constants';
+import { checkInstalledNodeContinuity } from './node-continuity';
 
 import { TResponseRuleEncryption } from '@modules/subscription-response-rules/types/response-rules.types';
 
@@ -44,6 +45,7 @@ const redisOptions = getRedisConnectionOptions(
 
 const redis = new Redis({
     ...redisOptions,
+    lazyConnect: process.argv[2] === 'check-node-continuity',
     password: process.env.REDIS_PASSWORD,
     username: process.env.REDIS_USERNAME,
     db: parseInt(process.env.REDIS_DB ?? '1'),
@@ -626,6 +628,20 @@ async function generateEncryptionKeys() {
 }
 
 async function main() {
+    if (process.argv[2] === 'check-node-continuity') {
+        try {
+            const result = await checkInstalledNodeContinuity(prisma);
+            console.log(JSON.stringify(result));
+            process.exitCode = result.ready ? 0 : 1;
+        } catch {
+            console.log(JSON.stringify({ ready: false, issues: [{ code: 'NODE_CONTINUITY_UNAVAILABLE' }] }));
+            process.exitCode = 1;
+        } finally {
+            await redis.quit().catch(() => redis.disconnect());
+            await prisma.$disconnect();
+        }
+        return;
+    }
     consola.box('Remnawave Rescue CLI v0.4');
 
     consola.start('🌱 Checking database connection...');

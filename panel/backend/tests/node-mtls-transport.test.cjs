@@ -59,6 +59,32 @@ test('real panel HTTPS transport and node RSA guard enforce mTLS, SNI, JWT and b
     });
     let handled = 0,
         redirected = 0;
+    let continuityMode = 'valid';
+    const continuityNode = {
+        uuid: '11111111-1111-4111-8111-111111111111',
+        phase: 'ACTIVE',
+        userQuota: true,
+        instance: '22222222-2222-4222-8222-222222222222',
+        core: '33333333-3333-4333-8333-333333333333',
+        desiredRevision: '12',
+        appliedRevision: '12',
+        desiredSource: 'same',
+        appliedSource: 'same',
+        recovering: false,
+        transitioning: false,
+    };
+    const continuityStatus = {
+        version: 'xera-host-policy-v2',
+        supported: true,
+        applied: true,
+        offlineReserves: 'remnacust-quota-reserves-v1',
+        userQuotaRequired: true,
+        quotaInstanceId: continuityNode.instance,
+        coreProcessId: continuityNode.core,
+        policyRevision: '12',
+        quotaRecoveryFencesSupported: true,
+        quotaRecovery: { version: 'remnacust-quota-recovery-fence-v1', record: null },
+    };
     const trap = https.createServer(
         { key: serverCert.nodeKeyPem, cert: serverCert.nodeCertPem },
         (_req, res) => {
@@ -83,6 +109,22 @@ test('real panel HTTPS transport and node RSA guard enforce mTLS, SNI, JWT and b
             handled++;
             const strategy = new JwtStrategy({ getOrThrow: () => keys.publicKey });
             strategy.success = () => {
+                if (req.url === '/node/xray/host-policy') {
+                    if (continuityMode === 'redirect') {
+                        res.writeHead(302, {
+                            Location: `https://127.0.0.1:${trap.address().port}/trap`,
+                        });
+                        res.end();
+                    } else {
+                        res.setHeader('Content-Type', 'application/json');
+                        res.end(
+                            continuityMode === 'large'
+                                ? 'x'.repeat(4 * 1024 * 1024 + 1)
+                                : JSON.stringify({ response: continuityStatus }),
+                        );
+                    }
+                    return;
+                }
                 if (req.url === '/hang') return;
                 if (req.url === '/redirect') {
                     res.writeHead(302, {
@@ -155,6 +197,49 @@ test('real panel HTTPS transport and node RSA guard enforce mTLS, SNI, JWT and b
             request.setTimeout(1500, () => request.destroy(new Error('fixture timeout')));
         });
     try {
+        const { checkInstalledNodeContinuity } = load(
+            path.join(__dirname, '../src/bin/cli/node-continuity.ts'),
+            {
+                '@common/utils/certs': sni,
+                '@common/axios/mtls-agent': load(
+                    path.join(__dirname, '../src/common/axios/mtls-agent.ts'),
+                ),
+                '@common/host-policy/node-continuity': load(
+                    path.join(__dirname, '../src/common/host-policy/node-continuity.ts'),
+                ),
+            },
+        );
+        const prisma = {
+            keygen: {
+                findFirst: async () => ({
+                    privKey: keys.privateKey,
+                    pubKey: keys.publicKey,
+                    caCert: master.caCertPem,
+                    clientCert: master.clientCertPem,
+                    clientKey: master.clientKeyPem,
+                }),
+            },
+            $transaction: async (callback) =>
+                callback({
+                    $executeRaw: async () => {},
+                    $queryRawUnsafe: async () => [{ ...continuityNode, ...opts }],
+                }),
+        };
+        assert.equal(
+            (await checkInstalledNodeContinuity(prisma)).ready,
+            true,
+            'the actual CLI probe authenticates with the node RSA/mTLS guard',
+        );
+        for (const mode of ['redirect', 'large']) {
+            continuityMode = mode;
+            assert.equal((await checkInstalledNodeContinuity(prisma)).ready, false);
+            assert.equal(
+                (await service.hostPolicy(opts, undefined, undefined, 4 * 1024 * 1024)).isOk,
+                false,
+            );
+        }
+        assert.equal(redirected, 0, 'neither continuity transport may redirect credentials');
+        continuityMode = 'valid';
         assert.deepEqual(await service.managedCore(opts), {
             isOk: true,
             response: { capabilityVersion: 1, state: 'running' },

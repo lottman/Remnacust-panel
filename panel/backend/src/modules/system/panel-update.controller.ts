@@ -15,8 +15,10 @@ import { ApiExcludeController } from '@nestjs/swagger';
 
 import { AdminOnlyEndpoint } from '@common/decorators/admin-only-endpoint';
 import { Roles } from '@common/decorators/roles/roles';
+import { HttpExceptionWithErrorCodeType } from '@common/exception/http-exeception-with-error-code.type';
 import { JwtDefaultGuard } from '@common/guards/jwt-guards/def-jwt-guard';
 import { RolesGuard } from '@common/guards/roles';
+import { NodeContinuityService } from '@common/host-policy/node-continuity.service';
 import { ROLE } from '@libs/contracts/constants';
 
 import { PanelUpdateService } from './panel-update.service';
@@ -37,7 +39,10 @@ const startSchema = z
 @Controller('system/update')
 export class PanelUpdateController {
     private readonly logger = new Logger(PanelUpdateController.name);
-    constructor(private readonly updates: PanelUpdateService) {}
+    constructor(
+        private readonly updates: PanelUpdateService,
+        private readonly continuity: NodeContinuityService,
+    ) {}
 
     @AdminOnlyEndpoint()
     @Get('status')
@@ -53,6 +58,13 @@ export class PanelUpdateController {
     async start(@Body() body: unknown) {
         const parsed = startSchema.safeParse(body);
         if (!parsed.success) throw new BadRequestException('INVALID_UPDATE_REQUEST');
+        const readiness = await this.continuity.check().catch(() => ({ ready: false }));
+        if (!readiness.ready)
+            throw new HttpExceptionWithErrorCodeType(
+                'NODE_CONTINUITY_NOT_READY',
+                'NODE_CONTINUITY_NOT_READY',
+                409,
+            );
         const state = await this.updates.start(parsed.data);
         this.logger.log('Panel update requested: ' + state.jobId);
         return { response: state };

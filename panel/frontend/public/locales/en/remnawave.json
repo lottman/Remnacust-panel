@@ -3261,6 +3261,7 @@
     "warning": "The panel will be unavailable during the update.",
     "setupRequired": "Updates from the panel are not configured. Update the installer on the server first.",
     "startFailed": "Could not start the update. Check the panel status and try again.",
+    "autonomyPending": "Update postponed: node autonomy is not confirmed. Check node availability, versions and quota synchronization before retrying. The panel is still running.",
     "running": "Updating panel",
     "failed": "Update did not complete",
     "checking": "Checking the installer release.",

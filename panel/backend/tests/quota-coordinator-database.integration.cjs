@@ -2,7 +2,7 @@ const assert=require('node:assert/strict');const fs=require('node:fs');const pat
 const {PrismaClient}=require('@prisma/client');const {TransactionHost}=require('@nestjs-cls/transactional');const k=require('kysely');const load=require('./load-typescript.cjs');
 const {PrismaTxDriver}=require('../node_modules/@kastov/nestjs-prisma-kysely/build/drivers/prisma-tx.driver.js');
 const url=process.env.QUOTA_COORDINATOR_TEST_DATABASE_URL;assert.ok(url);const parsed=new URL(url);
-assert.equal(parsed.hostname,'127.0.0.1');assert.equal(parsed.port,'55439');assert.equal(parsed.pathname,'/remnacust_coordinator_test');
+assert.equal(parsed.hostname,'127.0.0.1');assert.equal(parsed.port,'55439');assert.match(parsed.pathname,/^\/remnacust_coordinator_test(?:_codex_[0-9]{14})?$/);
 const prisma=new PrismaClient({datasourceUrl:url});
 let rejectCommit=false;
 const tx=new TransactionHost({defaultTxOptions:{},getFallbackInstance:()=>prisma,wrapWithTransaction:(opts,fn,set)=>prisma.$transaction(async client=>{set(client);const result=await fn();if(rejectCommit){rejectCommit=false;throw Error('Simulated commit failure');}return result;},opts)});
@@ -121,6 +121,33 @@ const coordinateUntil=async(condition)=>{for(let step=0;step<30;step++){await se
         await t.$executeRaw`UPDATE hosts SET user_traffic_limit_bytes=1000 WHERE uuid=${H}::uuid`;
         await t.$executeRaw`INSERT INTO xera_host_tag_limits(tag,user_traffic_limit_bytes,traffic_multiplier) VALUES('alpha',500,1)`;
     });
+    const undiscovered=await service.status();assert.equal(undiscovered.ready,false);assert.equal(undiscovered.nodes.length,2);
+    assert.ok(undiscovered.nodes.every(node=>node.stage==='PREFLIGHT'&&node.checkedAt===null&&!node.ready&&node.mode===null));
+    const {NODE_CONTINUITY_SQL}=load(path.join(__dirname,'../src/common/host-policy/node-continuity.ts'));
+    const rollbackContinuityFixture=new Error('ROLLBACK_CONTINUITY_FIXTURE');
+    try{await prisma.$transaction(async t=>{
+        const [transition]=await t.$queryRaw`INSERT INTO xera_quota_transitions(kind,key,user_id,source,phase,finite,limit_bytes,window_start,budget_epoch,desired_nodes)
+            VALUES('USER','global',901,repeat('a',64),'PREFLIGHT',true,1000,'1970-01-01',${I1}::uuid,ARRAY[${N1}::uuid]) RETURNING id`;
+        await t.$executeRaw`INSERT INTO xera_quota_transition_nodes(transition_id,node_uuid,required) VALUES(${transition.id}::uuid,${N1}::uuid,true)`;
+        for(const phase of ['PREFLIGHT','FENCING','DRAINING','SETTLING','FUNDING','RELEASING','RECOVERY']){
+            await t.$executeRaw`UPDATE xera_quota_transitions SET phase=${phase} WHERE id=${transition.id}::uuid`;
+            for(const releaseReady of [false,true]){
+                await t.$executeRaw`UPDATE xera_quota_transition_nodes SET release_ready=${releaseReady},released_at=NULL WHERE transition_id=${transition.id}::uuid`;
+                const rows=await t.$queryRawUnsafe(NODE_CONTINUITY_SQL);
+                assert.equal(rows.length,2);assert.equal(rows.find(node=>node.uuid===N1).transitioning,true,phase+' with missing release ACK must block maintenance');
+                assert.equal(rows.find(node=>node.uuid===N2).transitioning,false,'Unrelated nodes are not participants in this transition');
+            }
+        }
+        await t.$executeRaw`UPDATE xera_quota_transition_nodes SET release_ready=true,released_at=clock_timestamp() WHERE transition_id=${transition.id}::uuid`;
+        assert.equal((await t.$queryRawUnsafe(NODE_CONTINUITY_SQL)).find(node=>node.uuid===N1).transitioning,false,'An acknowledged release removes this participant barrier');
+        await t.$executeRaw`UPDATE xera_quota_transition_nodes SET release_ready=false WHERE transition_id=${transition.id}::uuid`;
+        assert.equal((await t.$queryRawUnsafe(NODE_CONTINUITY_SQL)).find(node=>node.uuid===N1).transitioning,true,'release_ready=false remains a barrier even if a release timestamp exists');
+        await t.$executeRaw`UPDATE xera_quota_transitions SET phase='ACTIVE' WHERE id=${transition.id}::uuid`;
+        assert.equal((await t.$queryRawUnsafe(NODE_CONTINUITY_SQL)).find(node=>node.uuid===N1).transitioning,false,'Historical ACTIVE transitions cannot block maintenance');
+        throw rollbackContinuityFixture;
+    },{timeout:10000});}catch(error){if(error!==rollbackContinuityFixture)throw error;}
+    assert.equal((await prisma.$queryRaw`SELECT count(*) AS n FROM xera_quota_transitions`)[0].n,0n,'Continuity fixtures must not alter coordinator funding state');
+    console.log('PASS real continuity SQL blocks every pending phase and lost release ACK, releases acknowledged participants and ignores completed history');
     await service.tick();assert.equal((await service.status()).phase,'PREFLIGHT');assert.equal(await counts(),0n);assert.equal(deliveries,0,'Unsupported nodes must be detected before any fleet fence');
     unsupported=null;missingUsage=true;await service.tick();assert.equal((await service.status()).phase,'PREFLIGHT');assert.equal(deliveries,0,'Unreserved usage compatibility must be proven before any fence');missingUsage=false;unavailable=N2;await service.tick();assert.equal((await service.status()).phase,'PREFLIGHT');assert.equal(deliveries,0);unavailable=null;
     console.log('PASS unsupported or unreachable participants leave ordinary legacy service untouched and cannot receive credit');
@@ -135,6 +162,18 @@ const coordinateUntil=async(condition)=>{for(let step=0;step<30;step++){await se
         await service.tick();const current=await service.status();if(current.phase==='ACTIVE'&&current.nodes.every(node=>node.stage==='ACTIVE'))break;
     }
     const current=await service.status();assert.equal(current.phase,'ACTIVE',JSON.stringify(current));assert.ok(current.nodes.every(node=>node.stage==='ACTIVE'),JSON.stringify(current));
+    assert.equal(current.ready,true);assert.ok(current.nodes.every(node=>node.ready&&node.mode==='ACTIVE'));
+    const [progress]=await prisma.$queryRaw`SELECT generation FROM xera_quota_node_progress WHERE node_uuid=${N1}::uuid`;
+    await prisma.$executeRaw`UPDATE xera_quota_node_progress SET generation=gen_random_uuid() WHERE node_uuid=${N1}::uuid`;
+    try{
+        const stale=await service.status();assert.equal(stale.phase,'ACTIVE');assert.equal(stale.ready,false);assert.equal(stale.nodes.length,2);
+        const node=stale.nodes.find(node=>node.uuid===N1);assert.equal(node.stage,'PREFLIGHT');assert.equal(node.checkedAt,null);assert.equal(node.ready,false);
+    }finally{await prisma.$executeRaw`UPDATE xera_quota_node_progress SET generation=${progress.generation}::uuid WHERE node_uuid=${N1}::uuid`;}
+    const [proof]=await prisma.$queryRaw`SELECT applied_source FROM xera_quota_node_modes WHERE node_uuid=${N1}::uuid`;
+    await prisma.$executeRaw`UPDATE xera_quota_node_modes SET applied_source=NULL WHERE node_uuid=${N1}::uuid`;
+    try{assert.equal((await service.status()).ready,false,'ACTIVE progress without matching policy proof cannot report ready');}
+    finally{await prisma.$executeRaw`UPDATE xera_quota_node_modes SET applied_source=${proof.applied_source} WHERE node_uuid=${N1}::uuid`;}
+    console.log('PASS status includes undiscovered and stale-generation serving nodes and requires acknowledged policy proof beyond ACTIVE phase');
     assert.equal((await prisma.$queryRaw`SELECT used_traffic_bytes AS n FROM user_traffic WHERE id=901`)[0].n,128n);
     assert.equal(lostSamples,1);assert.equal(lostDeliveries,1);
     const grants=await prisma.$queryRaw`SELECT kind,key,user_id,ceiling_bytes,node_uuid,id FROM xera_quota_reserves ORDER BY kind,key,user_id,node_uuid`;

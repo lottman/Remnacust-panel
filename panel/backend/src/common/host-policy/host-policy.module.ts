@@ -2,6 +2,7 @@ import { Global, Module } from '@nestjs/common';
 
 import { DurableUsageService } from './durable-usage.service';
 import { HostAccessService } from './host-access.service';
+import { NodeContinuityService } from './node-continuity.service';
 import { HostPolicyService } from './host-policy.service';
 import { HostUsageService } from './host-usage.service';
 import { LegacyBillingService } from './legacy-billing.service';
@@ -30,6 +31,7 @@ import { UsageJournalService } from './usage-journal.service';
 @Global()
 @Module({
     providers: [
+        NodeContinuityService,
         QuotaRecoveryService,
         QuotaRecoveryReleaseService,
         QuotaReleaseDeliveryService,
@@ -59,6 +61,7 @@ import { UsageJournalService } from './usage-journal.service';
         QuotaTransitionService,
     ],
     exports: [
+        NodeContinuityService,
         QuotaRecoveryService,
         QuotaRecoveryReleaseService,
         QuotaReleaseDeliveryService,

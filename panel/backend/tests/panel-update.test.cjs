@@ -10,16 +10,31 @@ const base = path.join(__dirname, '../src');
 const ROLE = { ADMIN: 'ADMIN', API: 'API' };
 
 test('subscription page responses retain legacy ownership and accept older agents', () => {
-    const { subscriptionPagesSchema } = load(path.join(base, 'modules/system/panel-update.service.ts'), {
-        '@common/config/app-config': {},
-    });
+    const { subscriptionPagesSchema } = load(
+        path.join(base, 'modules/system/panel-update.service.ts'),
+        {
+            '@common/config/app-config': {},
+        },
+    );
     const page = {
-        id: 'a'.repeat(24), name: 'Existing page', domain: '', status: 'running',
-        running: true, image: 'remnawave/subscription-page:old', companion: false, job: null,
+        id: 'a'.repeat(24),
+        name: 'Existing page',
+        domain: '',
+        status: 'running',
+        running: true,
+        image: 'remnawave/subscription-page:old',
+        companion: false,
+        job: null,
     };
     assert.equal(subscriptionPagesSchema.parse({ pages: [page] }).pages[0].managed, true);
-    assert.equal(subscriptionPagesSchema.parse({ pages: [{ ...page, managed: false }] }).pages[0].managed, false);
-    assert.equal(subscriptionPagesSchema.safeParse({ pages: [{ ...page, managed: 'false' }] }).success, false);
+    assert.equal(
+        subscriptionPagesSchema.parse({ pages: [{ ...page, managed: false }] }).pages[0].managed,
+        false,
+    );
+    assert.equal(
+        subscriptionPagesSchema.safeParse({ pages: [{ ...page, managed: 'false' }] }).success,
+        false,
+    );
 });
 const exception = load(path.join(base, 'common/exception/http-exeception-with-error-code.type.ts'));
 const constants = { ROLE };
@@ -80,6 +95,8 @@ test('update endpoints are panel-only and reject API-token roles and untrusted i
             '@common/guards/roles': { RolesGuard: class {} },
             '@libs/contracts/constants': constants,
             './panel-update.service': {},
+            '@common/host-policy/node-continuity.service': {},
+            '@common/exception/http-exeception-with-error-code.type': exception,
         },
     );
     const { RolesGuard } = load(path.join(base, 'common/guards/roles/roles.guard.ts'), {
@@ -102,12 +119,16 @@ test('update endpoints are panel-only and reject API-token roles and untrusted i
         assert.throws(() => guard.canActivate(requestContext(null)));
     }
     let starts = 0;
-    const controller = new PanelUpdateController({
-        start: async () => {
-            starts++;
-            return { jobId: 'test' };
+    let ready = false;
+    const controller = new PanelUpdateController(
+        {
+            start: async () => {
+                starts++;
+                return { jobId: 'test' };
+            },
         },
-    });
+        { check: async () => ({ ready }) },
+    );
     const valid = { targetVersion: '1.1.7.5', requestId: '55632671-6aa0-45db-aacb-92be57ce7e73' };
     for (const body of [
         {},
@@ -117,6 +138,9 @@ test('update endpoints are panel-only and reject API-token roles and untrusted i
     ])
         await assert.rejects(controller.start(body));
     assert.equal(starts, 0);
+    await assert.rejects(controller.start(valid), /NODE_CONTINUITY_NOT_READY/);
+    assert.equal(starts, 0, 'unconfirmed autonomy must never reach the host updater');
+    ready = true;
     await controller.start(valid);
     assert.equal(starts, 1);
 });
@@ -187,30 +211,64 @@ test('the update service authenticates on its private socket and does not cache 
 });
 
 test('subscription page administration rejects API tokens, commands, paths and unknown fields', async () => {
-    const roles = load(path.join(base, 'common/decorators/roles/roles.ts'), { '@libs/contracts/constants': constants });
+    const roles = load(path.join(base, 'common/decorators/roles/roles.ts'), {
+        '@libs/contracts/constants': constants,
+    });
     const adminOnly = load(path.join(base, 'common/decorators/admin-only-endpoint.ts'), {
-        '@common/decorators/roles/roles': roles, '@common/decorators/scopes': { SCOPE_ENDPOINT: 'scope' }, '@libs/contracts/constants': constants,
+        '@common/decorators/roles/roles': roles,
+        '@common/decorators/scopes': { SCOPE_ENDPOINT: 'scope' },
+        '@libs/contracts/constants': constants,
     });
-    const { SubscriptionPagesController } = load(path.join(base, 'modules/system/subscription-pages.controller.ts'), {
-        '@common/decorators/admin-only-endpoint': adminOnly, '@common/decorators/roles/roles': roles,
-        '@common/guards/jwt-guards/def-jwt-guard': { JwtDefaultGuard: class {} }, '@common/guards/roles': { RolesGuard: class {} },
-        '@libs/contracts/constants': constants, './panel-update.service': {},
-    });
+    const { SubscriptionPagesController } = load(
+        path.join(base, 'modules/system/subscription-pages.controller.ts'),
+        {
+            '@common/decorators/admin-only-endpoint': adminOnly,
+            '@common/decorators/roles/roles': roles,
+            '@common/guards/jwt-guards/def-jwt-guard': { JwtDefaultGuard: class {} },
+            '@common/guards/roles': { RolesGuard: class {} },
+            '@libs/contracts/constants': constants,
+            './panel-update.service': {},
+        },
+    );
     const { RolesGuard } = load(path.join(base, 'common/guards/roles/roles.guard.ts'), {
-        '@common/decorators/admin-only-endpoint': adminOnly, '@common/exception/http-exeception-with-error-code.type': exception,
-        '@libs/contracts/constants': { ...constants, ERRORS: { FORBIDDEN_ROLE_ERROR: { message: 'Forbidden', code: 'E403', httpCode: 403 } } },
+        '@common/decorators/admin-only-endpoint': adminOnly,
+        '@common/exception/http-exeception-with-error-code.type': exception,
+        '@libs/contracts/constants': {
+            ...constants,
+            ERRORS: { FORBIDDEN_ROLE_ERROR: { message: 'Forbidden', code: 'E403', httpCode: 403 } },
+        },
     });
     const guard = new RolesGuard(new Reflector());
     for (const method of ['list', 'manage']) {
-        const request = role => ({ ...context(role, '/api/system/subscription-pages'), getHandler: () => SubscriptionPagesController.prototype[method], getClass: () => SubscriptionPagesController });
+        const request = (role) => ({
+            ...context(role, '/api/system/subscription-pages'),
+            getHandler: () => SubscriptionPagesController.prototype[method],
+            getClass: () => SubscriptionPagesController,
+        });
         assert.equal(guard.canActivate(request(ROLE.ADMIN)), true);
         assert.throws(() => guard.canActivate(request(ROLE.API)));
         assert.throws(() => guard.canActivate(request(null)));
     }
     let starts = 0;
-    const controller = new SubscriptionPagesController({ subscriptionPageAction: async () => { starts++; return { pages: [] }; } });
-    const valid = { pageId: 'a'.repeat(24), operation: 'upgrade', requestId: '55632671-6aa0-45db-aacb-92be57ce7e73' };
-    for (const body of [{}, { ...valid, pageId: '../panel' }, { ...valid, operation: 'exec' }, { ...valid, image: 'attacker/image' }, { ...valid, requestId: 'invalid' }]) await assert.rejects(controller.manage(body));
+    const controller = new SubscriptionPagesController({
+        subscriptionPageAction: async () => {
+            starts++;
+            return { pages: [] };
+        },
+    });
+    const valid = {
+        pageId: 'a'.repeat(24),
+        operation: 'upgrade',
+        requestId: '55632671-6aa0-45db-aacb-92be57ce7e73',
+    };
+    for (const body of [
+        {},
+        { ...valid, pageId: '../panel' },
+        { ...valid, operation: 'exec' },
+        { ...valid, image: 'attacker/image' },
+        { ...valid, requestId: 'invalid' },
+    ])
+        await assert.rejects(controller.manage(body));
     assert.equal(starts, 0);
     await controller.manage(valid);
     assert.equal(starts, 1);

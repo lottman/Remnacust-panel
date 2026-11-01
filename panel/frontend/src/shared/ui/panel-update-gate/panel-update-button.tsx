@@ -1,5 +1,6 @@
 import { Button, Stack, Text } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
+import { isAxiosError } from 'axios'
 import { useTranslation } from 'react-i18next'
 import { TbRefresh } from 'react-icons/tb'
 
@@ -16,8 +17,9 @@ export function PanelUpdateButton({ available }: { available: boolean }) {
     const run = async () => {
         try {
             await start(latestVersion)
-        } catch {
-            notifications.show({ color: 'red', message: t('panelUpdate.startFailed') })
+        } catch (error) {
+            const autonomyPending = isAxiosError(error) && error.response?.data?.errorCode === 'NODE_CONTINUITY_NOT_READY'
+            notifications.show({ color: 'red', message: t(autonomyPending ? 'panelUpdate.autonomyPending' : 'panelUpdate.startFailed') })
         }
     }
     return (

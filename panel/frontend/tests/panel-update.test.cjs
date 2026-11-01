@@ -34,6 +34,15 @@ function store(post = async () => ({ data: { response: active } }), saved = null
     return { store: usePanelUpdateStore, memory, reloads: () => reloads, requests: () => requests }
 }
 
+test('a refused continuity preflight releases maintenance immediately without recording a job', async () => {
+    const error = { isAxiosError: true, response: { status: 409, data: { errorCode: 'NODE_CONTINUITY_NOT_READY' } } }
+    const browser = store(async () => { throw error })
+    await assert.rejects(browser.store.getState().start('1.1.7.5'))
+    assert.equal(browser.store.getState().starting, false)
+    assert.equal(browser.store.getState().observedJob, null)
+    assert.equal(browser.memory.has('remnacust-panel-update-job'), false)
+})
+
 test('all sessions observe maintenance and reload once after completion', () => {
     const browsers = [store(), store()]
     for (const browser of browsers) {

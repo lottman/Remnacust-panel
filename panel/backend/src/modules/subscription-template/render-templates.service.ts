@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
+import { RawCacheService } from '@common/raw-cache';
+
 import { SUBSCRIPTION_CONFIG_TYPES } from './constants/config-types';
 import { ClashGeneratorService } from './generators/clash.generator.service';
 import { MihomoGeneratorService } from './generators/mihomo.generator.service';
@@ -7,6 +9,7 @@ import { SingBoxGeneratorService } from './generators/singbox.generator.service'
 import { XrayJsonGeneratorService } from './generators/xray-json.generator.service';
 import { XrayGeneratorService } from './generators/xray.generator.service';
 import { automaticXrayDelivery } from './geofiles/automatic-xray-delivery';
+import { stabilizeRoutingProfile } from './geofiles/stabilize-routing-profile';
 import { xrayGeofileClient, XrayGeofileDelivery } from './geofiles/xray-geofile-delivery';
 import { IGenerateSubscription } from './interfaces';
 import { ResolvedProxyConfig } from './resolve-proxy/interfaces';
@@ -24,6 +27,7 @@ export class RenderTemplatesService {
         private readonly xrayGeneratorService: XrayGeneratorService,
         private readonly singBoxGeneratorService: SingBoxGeneratorService,
         private readonly xrayJsonGeneratorService: XrayJsonGeneratorService,
+        private readonly rawCache: RawCacheService,
     ) {}
 
     public async generateSubscription(params: IGenerateSubscription): Promise<{
@@ -119,7 +123,14 @@ export class RenderTemplatesService {
                 if (output.header)
                     srrContext.headersToApply = {
                         ...srrContext.headersToApply,
-                        routing: output.header,
+                        routing: await stabilizeRoutingProfile(
+                            output.header,
+                            output.intervalHours,
+                            (key, fingerprint, minimum) =>
+                                this.rawCache.routingProfileRevision(key, fingerprint, minimum),
+                            // Use the resolved credential identity, never an unregistered request HWID.
+                            user.vlessUuid ?? '',
+                        ),
                         ...(output.inline ? { 'x-remnacust-geofiles-delivery': 'inline' } : {}),
                         ...(client === 'incy' &&
                         !Object.keys(configuredHeaders).some(

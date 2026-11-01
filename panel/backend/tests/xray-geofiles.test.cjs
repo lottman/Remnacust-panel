@@ -6,6 +6,7 @@ const { mocks, pool } = require('./client-pool-fixture.cjs');
 const fixture = require('./geofiles-fixture.cjs');
 const root = path.join(__dirname, '../src/modules/subscription-template');
 const modules = { ...mocks, '../generators/client-pool': pool };
+const revisionCache = { routingProfileRevision: async (_key, _fingerprint, minimum) => minimum };
 const { XrayGeofileDelivery, XrayGeofileFallback, datCategory, xrayGeofileClient } = load(
     path.join(root, 'geofiles/xray-geofile-delivery.ts'),
     modules,
@@ -19,6 +20,7 @@ const { validateGeofile, geofileFields } = load(
 );
 const { RenderTemplatesService } = load(path.join(root, 'render-templates.service.ts'), {
     ...modules,
+    '@common/raw-cache': {},
     './constants/config-types': {
         SUBSCRIPTION_CONFIG_TYPES: { XRAY_JSON: { CONTENT_TYPE: 'application/json' } },
     },
@@ -199,6 +201,7 @@ test('request-local renderer delivers Happ and INCY profiles, preserves manual h
         null,
         null,
         generator,
+        revisionCache,
     );
     const context = (ua) => ({
         userAgent: ua,
@@ -282,7 +285,7 @@ test('INCY compaction runs after geofile collection, including manual routing an
         return JSON.stringify([{inbounds:[],outbounds:[],routing:{rules:[
             {ip:networks,outboundTag:'direct'}, {domain,outboundTag:'direct'}]}}]);
     }};
-    const renderer = new RenderTemplatesService({resolveProxyConfig:async()=>[]},null,null,null,null,generator);
+    const renderer = new RenderTemplatesService({resolveProxyConfig:async()=>[]},null,null,null,null,generator,revisionCache);
     for (const mode of ['download','manual','settings','fallback','other-client']) {
         failBundle = mode === 'fallback';
         const context = {userAgent:mode==='other-client'?'Happ/4.0.0':'INCY/2.6.2/iOS',
@@ -309,7 +312,7 @@ test('INCY compaction runs after geofile collection, including manual routing an
 test('oversized unmanaged StringLists are rejected instead of disguised by wire compaction', async () => {
     const networks = Array.from({length:26000}, (_,i)=>`100.${i >> 8}.${i & 255}.0/24`);
     const generator={async generateConfig(){return JSON.stringify([{inbounds:[],outbounds:[],routing:{rules:[{ip:networks,outboundTag:'direct'}]}}]);}};
-    const renderer=new RenderTemplatesService({resolveProxyConfig:async()=>[]},null,null,null,null,generator);
+    const renderer=new RenderTemplatesService({resolveProxyConfig:async()=>[]},null,null,null,null,generator,revisionCache);
     for(const client of ['INCY/2.6.2/iOS','Happ/6.2.0'])for(const manual of [false,true]){
         const context={userAgent:client,matchedResponseType:'XRAY_JSON',isExtendedClient:true,subscriptionSettings:{}};
         if(manual)context.headersToApply={Routing:'off'};

@@ -741,7 +741,7 @@ Xray JSON、sing-box、Mihomo、Clash 和 Stash 均提供自动选择。sing-box
 
 ### INCY 地理文件校验
 
-INCY 获得不含查询参数的稳定 DAT URL。经过签名的文件选择位于路径中，在完整 URL 后添加 .sha256 即返回同一文件包的校验和。未更改的文件无需重新下载。routing-geo-update-interval 的单位为小时。独立部署的订阅页面应与面板一同更新。自动选择内嵌方式时，地理文件 URL 为空且定期检查停用，规则仍保留在 JSON 中。旧 URL 仍受支持。调度和网络错误重试取决于客户端版本；服务器不会开启隧道。官方协议：https://docs.incy.cc/routing/
+INCY 获得不含查询参数的稳定 DAT URL。经过签名的文件选择位于路径中，在完整 URL 后添加 .sha256 即返回同一文件包的校验和。未更改的文件无需重新下载。Happ/INCY 的 LastUpdated 在订阅内容不变时保持稳定，仅在配置、文件或交付方式更改时增加。状态按设备隔离，并在面板重启后保留。routing-geo-update-interval 的单位为小时。独立部署的订阅页面应与面板一同更新。自动选择内嵌方式时，地理文件 URL 为空且定期检查停用，规则仍保留在 JSON 中。旧 URL 仍受支持。调度和网络错误重试取决于客户端版本；服务器不会开启隧道。官方协议：https://docs.incy.cc/routing/
 
 ### 切换后的池成员范围
 

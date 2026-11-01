@@ -5,6 +5,7 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import { MemoryCacheService } from './memory-cache.service';
 import { NODE_INCIDENT_SCRIPT, ACK_NODE_INCIDENT_SCRIPT } from './node-incident';
+import { ROUTING_PROFILE_REVISION_SCRIPT } from './routing-profile-revision';
 
 @Injectable()
 export class RawCacheService {
@@ -14,6 +15,36 @@ export class RawCacheService {
         @InjectRedis() private readonly redis: Redis,
         private readonly memoryCacheService: MemoryCacheService,
     ) {}
+
+    async routingProfileRevision(
+        key: string,
+        fingerprint: string,
+        minimum: number,
+    ): Promise<number> {
+        if (
+            !/^[a-f0-9]{64}$/.test(key) ||
+            !/^[a-f0-9]{64}$/.test(fingerprint) ||
+            !Number.isSafeInteger(minimum) ||
+            minimum < 0 ||
+            minimum >= 1e12
+        )
+            throw new Error('Invalid routing profile revision input');
+        const revision = await this.redis.eval(
+            ROUTING_PROFILE_REVISION_SCRIPT,
+            1,
+            `remnacust:routing-profile:v1:${key}`,
+            fingerprint,
+            minimum,
+        );
+        if (
+            typeof revision !== 'number' ||
+            !Number.isSafeInteger(revision) ||
+            revision < 0 ||
+            revision >= 1e12
+        )
+            throw new Error('Invalid routing profile revision response');
+        return revision;
+    }
 
     async observeNodeIncident(
         uuid: string,

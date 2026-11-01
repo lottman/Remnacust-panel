@@ -741,7 +741,7 @@ Each selection has one expandable card containing its servers, strategy and subs
 
 ### INCY geofile checks
 
-INCY receives stable DAT URLs without query parameters. The signed file selection is in the path, so appending .sha256 to the complete URL returns the checksum for the same bundle. Unchanged files can be checked without downloading them again. routing-geo-update-interval uses hours. Update a separately deployed subscription page together with the panel. Automatic inline delivery sends empty geofile URLs and disables periodic checks; the JSON keeps the rules. Previously issued URLs remain supported. Scheduling and network-error retries depend on the client version; the server does not start the tunnel. Official protocol: https://docs.incy.cc/routing/
+INCY receives stable DAT URLs without query parameters. The signed file selection is in the path, so appending .sha256 to the complete URL returns the checksum for the same bundle. Unchanged files can be checked without downloading them again. Happ/INCY profile LastUpdated stays stable across unchanged subscription requests; a profile, file or delivery-mode change advances it. State is device-scoped and survives panel restarts. routing-geo-update-interval uses hours. Update a separately deployed subscription page together with the panel. Automatic inline delivery sends empty geofile URLs and disables periodic checks; the JSON keeps the rules. Previously issued URLs remain supported. Scheduling and network-error retries depend on the client version; the server does not start the tunnel. Official protocol: https://docs.incy.cc/routing/
 
 ### Pool membership after switching
 

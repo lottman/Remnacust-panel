@@ -8,6 +8,7 @@ if (!url || !/^\/remnacust_test_subscription_domains(?:_[a-z0-9]+)?$/.test(new U
 const prisma = new PrismaClient({ datasourceUrl: url });
 const { SubscriptionDomainsService } = load(path.join(__dirname, '../src/modules/subscription-domains/subscription-domains.service.ts'), {
     '@common/config/app-config': {}, '@common/database/prisma.service': {},
+    '@libs/contracts/models/subscription-domain.schema': load(path.join(__dirname, '../libs/contract/models/subscription-domain.schema.ts')),
 });
 let value = 'old.example.test/api/sub', generation = 0, failWrite = false;
 const snapshot = () => ({ value, valid: value !== null, revision: generation.toString(16).padStart(64, '0') });
@@ -42,6 +43,19 @@ const service = () => new SubscriptionDomainsService(prisma, { getOrThrow: () =>
         assert.equal(listing.response.filter(row => row.isDefault).length, 1);
         const cdn = await instance.save(undefined, { name: 'CDN', domain: 'cdn.example.test', path: '', kind: 'CDN', parentUuid: main.uuid, isDefault: false });
         assert.equal(value, 'manual.example.test', 'CDNs do not replace SUB_PUBLIC_DOMAIN');
+        const competing = await Promise.allSettled([1,2,3].map(i => instance.save(undefined, {
+            name: `Concurrent ${i}`, domain: `cdn-${i}.example.test`, path: '', kind: 'CDN', parentUuid: main.uuid, isDefault: false,
+        })));
+        assert.equal(competing.filter(result => result.status === 'fulfilled').length, 2);
+        assert.equal(competing.filter(result => result.status === 'rejected' && result.reason.errorCode === 'SUBSCRIPTION_DOMAIN_CDN_LIMIT').length, 1);
+        assert.equal(await prisma.subscriptionDomains.count({ where: { parentUuid: main.uuid } }), 3);
+        const other = await instance.save(undefined, { name: 'Other', domain: 'other.example.test', path: '', kind: 'PRIMARY', parentUuid: null, isDefault: false });
+        const otherCdn = await instance.save(undefined, { name: 'Other CDN', domain: 'other-cdn.example.test', path: '', kind: 'CDN', parentUuid: other.uuid, isDefault: false });
+        await assert.rejects(instance.save(otherCdn.uuid, { name: otherCdn.name, domain: otherCdn.domain, path: '', kind: 'CDN', parentUuid: main.uuid, isDefault: false }), error => error.errorCode === 'SUBSCRIPTION_DOMAIN_CDN_LIMIT');
+        assert.equal((await instance.save(cdn.uuid, { name: 'Renamed CDN', domain: cdn.domain, path: '', kind: 'CDN', parentUuid: main.uuid, isDefault: false })).name, 'Renamed CDN');
+        assert.equal((await instance.list({ kind: 'CDN', parentUuid: main.uuid })).length, 3);
+        assert.equal((await instance.userLinks(cdn.uuid, 'fixture_key')).links.length, 4);
+        assert.equal((await instance.userLinks(other.uuid, 'fixture_key', { kind: 'CDN' })).links.length, 1);
         value = cdn.domain; generation++;
         assert.equal((await instance.listing()).environment, 'conflict');
         assert.equal((await prisma.subscriptionDomains.findUnique({ where: { uuid: cdn.uuid } })).kind, 'CDN');

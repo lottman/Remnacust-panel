@@ -17,6 +17,7 @@ import {
     Loader
 } from '@mantine/core'
 import { useForm } from '@mantine/form'
+import { MAX_CDN_PER_PRIMARY } from '@remnawave/backend-contract'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { isAxiosError } from 'axios'
 import { useState } from 'react'
@@ -155,6 +156,13 @@ export function SubscriptionDomainsWidget() {
         ['SUBSCRIPTION_DOMAIN_ENV_UNAVAILABLE', 'SUBSCRIPTION_DOMAIN_ENV_CHANGED'].includes(
             save.error.response?.data?.errorCode
         )
+    const cdnLimitError =
+        isAxiosError(save.error) &&
+        [
+            save.error.response?.data?.errorCode,
+            save.error.response?.data?.code,
+            save.error.response?.data?.message
+        ].includes('SUBSCRIPTION_DOMAIN_CDN_LIMIT')
 
     return (
         <>
@@ -525,7 +533,13 @@ export function SubscriptionDomainsWidget() {
                                     .filter((domain) => domain.uuid !== editing?.uuid)
                                     .map((domain) => ({
                                         value: domain.uuid,
-                                        label: `${domain.name} · ${domain.domain}${domain.path || '/'}`
+                                        label: `${domain.name} · ${domain.domain}${domain.path || '/'} · ${domain.aliasesCount}/${MAX_CDN_PER_PRIMARY} CDN`,
+                                        disabled:
+                                            domain.aliasesCount >= MAX_CDN_PER_PRIMARY &&
+                                            !(
+                                                editing?.kind === 'CDN' &&
+                                                editing.parentUuid === domain.uuid
+                                            )
                                     }))}
                                 description={t('subscription-domains.cdn-help')}
                                 label={t('subscription-domains.primary-domain')}
@@ -542,9 +556,11 @@ export function SubscriptionDomainsWidget() {
                         {save.isError && (
                             <Alert color="red">
                                 {t(
-                                    environmentError
-                                        ? 'subscription-domains.environment-save-failed'
-                                        : 'subscription-domains.failed'
+                                    cdnLimitError
+                                        ? 'subscription-domains.cdn-limit'
+                                        : environmentError
+                                          ? 'subscription-domains.environment-save-failed'
+                                          : 'subscription-domains.failed'
                                 )}
                             </Alert>
                         )}

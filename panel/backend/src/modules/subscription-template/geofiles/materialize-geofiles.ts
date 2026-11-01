@@ -365,6 +365,10 @@ export async function materializeGeofiles(
             ...generated,
             ...rules.slice(at < 0 ? rules.length : at),
         ];
+        // IPIfNonMatch never resolves a domain after an earlier catch-all has
+        // matched. GeoIP rules need resolution when their position is reached.
+        if (xray && generated.some((rule) => Array.isArray(rule.ip) && rule.ip.length > 0))
+            root.routing.domainStrategy = 'IPOnDemand';
     } else {
         const rules: string[] = root.rules ?? [];
         const at = rules.findIndex((rule) => /^(MATCH|FINAL),/i.test(rule.trim()));

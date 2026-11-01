@@ -3,7 +3,7 @@ const test=require('node:test');
 const path=require('node:path');
 const load=require('../../backend/tests/load-typescript.cjs');
 const fixture=require('../../backend/tests/api-permissions-fixture.cjs');
-const {getUserManagementKeys,SUBSCRIPTION_PAGE_SCOPES}=load(path.join(__dirname,'../src/widgets/remnawave-settings/api-tokens-card/modals/api-token-presets.ts'));
+const {getUserManagementKeys,SUBSCRIPTION_PAGE_SCOPES,getDomainLinkKeys,domainLinkScopeLabel}=load(path.join(__dirname,'../src/widgets/remnawave-settings/api-tokens-card/modals/api-token-presets.ts'));
 
 test('user-management preset includes freeze/update and devices but excludes unrelated writes',()=>{
     const resources=fixture.catalog.getGroupedCatalog().resources;
@@ -27,6 +27,21 @@ test('user-management preset includes freeze/update and devices but excludes unr
     for(const resource of resources.filter(r=>!['users','hwid-user-devices','internal-squads','external-squads','subscriptions','subscription-domains'].includes(r.resource))) {
         assert.ok(resource.endpoints.every(e=>!keys.includes(e.key)),resource.resource);
     }
+});
+
+test('subscription link presets grant exactly one route and keep ordinary and CDN access separate',()=>{
+    const resources=fixture.catalog.getGroupedCatalog().resources;
+    for(const [kind,key] of [['all','users:subscription-links'],['primary','users:subscription-links-primary'],['cdn','users:subscription-links-cdn']]) {
+        const keys=getDomainLinkKeys(resources,kind);
+        assert.deepEqual(keys,[key]);
+        assert.deepEqual(fixture.catalog.findInvalidScopes(keys),[]);
+        assert.equal(domainLinkScopeLabel(key),'user-domain-links.scope-'+kind);
+        const suffix=kind==='all'?'':kind==='primary'?'/primary':'/cdn';
+        for(const endpoint of fixture.endpoints.filter(e=>e.url.includes('/subscription-links'))) {
+            assert.equal(fixture.authorize(endpoint,fixture.ROLE.API,keys),endpoint.url.endsWith('/subscription-links'+suffix),endpoint.url);
+        }
+    }
+    assert.equal(domainLinkScopeLabel('users:update'),undefined);
 });
 
 test('subscription page preset matches the installer and never exposes user management',()=>{

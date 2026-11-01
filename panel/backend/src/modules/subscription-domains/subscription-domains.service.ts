@@ -12,13 +12,20 @@ import {
 
 import { TypedConfigService } from '@common/config/app-config';
 import { PrismaService } from '@common/database/prisma.service';
-import { SubscriptionDomainInput } from '@libs/contracts/models/subscription-domain.schema';
+import type {
+    ListSubscriptionDomainsCommand,
+    GetUserDomainLinksCommand,
+} from '@libs/contracts/commands';
+import {
+    MAX_CDN_PER_PRIMARY,
+    SubscriptionDomainInput,
+} from '@libs/contracts/models/subscription-domain.schema';
 
 import { HttpExceptionWithErrorCodeType } from '../../common/exception/http-exeception-with-error-code.type';
+import { cdnRequestHeaderName } from '../../common/utils/cdn-request-header';
 import { configuredSubscriptionDomain } from '../../common/utils/public-subscription-domain';
 import { isRestApi } from '../../common/utils/startup-app/is-development';
 import { subscriptionDomainBase } from '../../common/utils/subscription-domain-url';
-import { cdnRequestHeaderName } from '../../common/utils/cdn-request-header';
 import {
     SubscriptionDomainEnvironmentService,
     DomainEnvironmentSnapshot,
@@ -76,20 +83,33 @@ export class SubscriptionDomainsService implements OnModuleInit, OnModuleDestroy
     }
     private model(row: SubscriptionDomains & { _count: { users: number; aliases: number } }) {
         const { _count, ...data } = row;
-        return { ...data, publicBaseUrl: subscriptionDomainBase(row), requestHeaderName: row.kind === 'CDN' ? cdnRequestHeaderName(row.uuid, this.config.getOrThrow('APP_SECRET')) : null, usersCount: _count.users, aliasesCount: _count.aliases };
+        return {
+            ...data,
+            publicBaseUrl: subscriptionDomainBase(row),
+            requestHeaderName:
+                row.kind === 'CDN'
+                    ? cdnRequestHeaderName(row.uuid, this.config.getOrThrow('APP_SECRET'))
+                    : null,
+            usersCount: _count.users,
+            aliasesCount: _count.aliases,
+        };
     }
-    async list() {
+    async list(query: ListSubscriptionDomainsCommand.RequestQuery = {}) {
         return (
             await this.prisma.subscriptionDomains.findMany({
+                where: {
+                    ...(query.kind ? { kind: query.kind } : {}),
+                    ...(query.parentUuid ? { parentUuid: query.parentUuid, kind: 'CDN' } : {}),
+                },
                 include: counts,
                 orderBy: [{ isDefault: 'desc' }, { domain: 'asc' }],
                 take: 128,
             })
         ).map((row) => this.model(row));
     }
-    async listing() {
+    async listing(query: ListSubscriptionDomainsCommand.RequestQuery = {}) {
         const environment = await this.synchronizeEnvironment();
-        return { response: await this.list(), environment };
+        return { response: await this.list(query), environment };
     }
 
     private async synchronizeEnvironment(): Promise<
@@ -187,6 +207,19 @@ export class SubscriptionDomainsService implements OnModuleInit, OnModuleDestroy
                         });
                         if (!parent || parent.kind !== 'PRIMARY' || input.parentUuid === uuid)
                             throw new BadRequestException('SUBSCRIPTION_DOMAIN_PARENT');
+                        const sameParent =
+                            current?.kind === 'CDN' && current.parentUuid === input.parentUuid;
+                        if (
+                            !sameParent &&
+                            (await tx.subscriptionDomains.count({
+                                where: { kind: 'CDN', parentUuid: input.parentUuid },
+                            })) >= MAX_CDN_PER_PRIMARY
+                        )
+                            throw new HttpExceptionWithErrorCodeType(
+                                'A primary domain can have at most three CDN domains',
+                                'SUBSCRIPTION_DOMAIN_CDN_LIMIT',
+                                400,
+                            );
                         inheritedPath ||= parent.path;
                     }
                     const isDefault =
@@ -206,7 +239,12 @@ export class SubscriptionDomainsService implements OnModuleInit, OnModuleDestroy
                               include: counts,
                           })
                         : await tx.subscriptionDomains.create({ data, include: counts });
-                    if (isDefault && (!current?.isDefault || current.domain !== data.domain || current.path !== data.path)) {
+                    if (
+                        isDefault &&
+                        (!current?.isDefault ||
+                            current.domain !== data.domain ||
+                            current.path !== data.path)
+                    ) {
                         if (!this.environment)
                             throw new HttpExceptionWithErrorCodeType(
                                 'SUBSCRIPTION_DOMAIN_ENV_UNAVAILABLE',
@@ -299,8 +337,11 @@ export class SubscriptionDomainsService implements OnModuleInit, OnModuleDestroy
 
     async gatewayBase(uuid: string): Promise<string> {
         const rows = await this.registry();
-        const domain = rows.find(row => row.uuid === uuid && row.kind === 'CDN');
-        if (!domain || !rows.some(row => row.uuid === domain.parentUuid && row.kind === 'PRIMARY'))
+        const domain = rows.find((row) => row.uuid === uuid && row.kind === 'CDN');
+        if (
+            !domain ||
+            !rows.some((row) => row.uuid === domain.parentUuid && row.kind === 'PRIMARY')
+        )
             throw new NotFoundException('SUBSCRIPTION_DOMAIN_NOT_FOUND');
         return subscriptionDomainBase(domain);
     }
@@ -308,5 +349,54 @@ export class SubscriptionDomainsService implements OnModuleInit, OnModuleDestroy
     async gatewayHeaderName(uuid: string): Promise<string> {
         await this.gatewayBase(uuid);
         return cdnRequestHeaderName(uuid, this.config.getOrThrow('APP_SECRET'));
+    }
+
+    async userLinks(
+        assignedUuid: string | null | undefined,
+        shortUuid: string,
+        query: GetUserDomainLinksCommand.RequestQuery = {},
+    ): Promise<GetUserDomainLinksCommand.Response['response']> {
+        const rows = await this.registry();
+        const assigned = assignedUuid ? rows.find((row) => row.uuid === assignedUuid) : undefined;
+        if (assignedUuid && !assigned) throw new NotFoundException('SUBSCRIPTION_DOMAIN_NOT_FOUND');
+        const primary = assigned
+            ? assigned.kind === 'PRIMARY'
+                ? assigned
+                : rows.find((row) => row.uuid === assigned.parentUuid && row.kind === 'PRIMARY')
+            : rows.find((row) => row.isDefault && row.kind === 'PRIMARY');
+        if (!primary) throw new NotFoundException('SUBSCRIPTION_DOMAIN_NOT_FOUND');
+        const cdns = rows
+            .filter((row) => row.kind === 'CDN' && row.parentUuid === primary.uuid)
+            .sort((a, b) => a.domain.localeCompare(b.domain));
+        if (cdns.length > MAX_CDN_PER_PRIMARY && query.kind !== 'PRIMARY')
+            throw new HttpExceptionWithErrorCodeType(
+                'Remove excess CDN domains before requesting all links',
+                'SUBSCRIPTION_DOMAIN_CDN_LIMIT',
+                409,
+            );
+        const family = [primary, ...cdns];
+        if (query.domainUuid) {
+            const domain = family.find((row) => row.uuid === query.domainUuid);
+            if (!domain) throw new NotFoundException('SUBSCRIPTION_DOMAIN_NOT_FOUND');
+            if (query.kind && domain.kind !== query.kind)
+                throw new BadRequestException('SUBSCRIPTION_DOMAIN_KIND_MISMATCH');
+        }
+        return {
+            primaryDomainUuid: primary.uuid,
+            links: family
+                .filter(
+                    (row) =>
+                        (!query.kind || row.kind === query.kind) &&
+                        (!query.domainUuid || row.uuid === query.domainUuid),
+                )
+                .map((row) => ({
+                    domainUuid: row.uuid,
+                    name: row.name,
+                    domain: row.domain,
+                    kind: row.kind as 'PRIMARY' | 'CDN',
+                    url: `${subscriptionDomainBase(row)}/${shortUuid}`,
+                    isSelected: row.uuid === (assigned?.uuid ?? primary.uuid),
+                })),
+        };
     }
 }

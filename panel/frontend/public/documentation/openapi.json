@@ -1487,7 +1487,30 @@
     "/api/subscription-domains": {
       "get": {
         "operationId": "SubscriptionDomainsController_list",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "kind",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PRIMARY",
+                "CDN"
+              ]
+            }
+          },
+          {
+            "name": "parentUuid",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Operation successful",
@@ -1856,6 +1879,288 @@
         "x-remnacust-scope": "subscription-domains:delete",
         "x-remnacust-resource": "subscription-domains",
         "x-remnacust-kind": "write"
+      }
+    },
+    "/api/users/{userId}/subscription-links": {
+      "get": {
+        "operationId": "UserDomainLinksController_all",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "maximum": 9007199254740991,
+              "exclusiveMinimum": true,
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "domainUuid",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          },
+          {
+            "name": "kind",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PRIMARY",
+                "CDN"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operation successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDomainLinksResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request / Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/RemnawaveBadRequestErrorDto"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RemnawaveValidationErrorDto"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemnawaveNotFoundErrorDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemnawaveInternalServerErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Authorization": []
+          }
+        ],
+        "summary": "Get user subscription links for the primary domain and its CDNs",
+        "tags": [
+          "Users Controller"
+        ],
+        "x-remnacust-access": "api-token",
+        "x-remnacust-scope": "users:subscription-links",
+        "x-remnacust-resource": "users",
+        "x-remnacust-kind": "read"
+      }
+    },
+    "/api/users/{userId}/subscription-links/primary": {
+      "get": {
+        "operationId": "UserDomainLinksController_primary",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "maximum": 9007199254740991,
+              "exclusiveMinimum": true,
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "domainUuid",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operation successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDomainLinksResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request / Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/RemnawaveBadRequestErrorDto"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RemnawaveValidationErrorDto"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemnawaveNotFoundErrorDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemnawaveInternalServerErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Authorization": []
+          }
+        ],
+        "summary": "Get only the user primary subscription domain link",
+        "tags": [
+          "Users Controller"
+        ],
+        "x-remnacust-access": "api-token",
+        "x-remnacust-scope": "users:subscription-links-primary",
+        "x-remnacust-resource": "users",
+        "x-remnacust-kind": "read"
+      }
+    },
+    "/api/users/{userId}/subscription-links/cdn": {
+      "get": {
+        "operationId": "UserDomainLinksController_cdn",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "maximum": 9007199254740991,
+              "exclusiveMinimum": true,
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "domainUuid",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operation successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDomainLinksResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request / Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/RemnawaveBadRequestErrorDto"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RemnawaveValidationErrorDto"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemnawaveNotFoundErrorDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemnawaveInternalServerErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Authorization": []
+          }
+        ],
+        "summary": "Get only the user CDN subscription domain links",
+        "tags": [
+          "Users Controller"
+        ],
+        "x-remnacust-access": "api-token",
+        "x-remnacust-scope": "users:subscription-links-cdn",
+        "x-remnacust-resource": "users",
+        "x-remnacust-kind": "read"
       }
     },
     "/api/users": {
@@ -19726,9 +20031,9 @@
     }
   },
   "info": {
-    "title": "Remnacust API v1.1.7.82",
+    "title": "Remnacust API v1.1.7.83",
     "description": "\nRemnacust manages Xray users, nodes, configuration profiles and subscriptions.\n\n## Resources\n* https://t.me/lottman\n* https://github.com/lottman/Remnacust-panel\n",
-    "version": "1.1.7.82",
+    "version": "1.1.7.83",
     "contact": {},
     "license": {
       "name": "AGPL-3.0",
@@ -20972,6 +21277,70 @@
           "kind"
         ],
         "additionalProperties": false
+      },
+      "UserDomainLinksResponseDto": {
+        "type": "object",
+        "properties": {
+          "response": {
+            "type": "object",
+            "properties": {
+              "primaryDomainUuid": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "links": {
+                "maxItems": 4,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "domainUuid": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "domain": {
+                      "type": "string"
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "PRIMARY",
+                        "CDN"
+                      ]
+                    },
+                    "url": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "isSelected": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "domainUuid",
+                    "name",
+                    "domain",
+                    "kind",
+                    "url",
+                    "isSelected"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "primaryDomainUuid",
+              "links"
+            ]
+          }
+        },
+        "required": [
+          "response"
+        ]
       },
       "CreateUserBodyDto": {
         "type": "object",

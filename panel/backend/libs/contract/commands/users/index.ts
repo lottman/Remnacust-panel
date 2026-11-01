@@ -8,6 +8,7 @@ export * from './delete-user.command';
 export * from './get-users.command';
 export * from './get-by';
 export * from './get-user-accessible-nodes.command';
+export * from './get-user-domain-links.command';
 
 export * from './get-user-by-id.command';
 

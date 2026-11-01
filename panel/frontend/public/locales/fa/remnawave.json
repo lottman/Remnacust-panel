@@ -4242,10 +4242,28 @@
         "ready-link": "نشانی آماده CDN",
         "request-header-name": "نام هدر درخواست",
         "request-header-value": "مقدار هدر",
-        "without-request-header": "اگر CDN امکان افزودن هدر درخواست ندارد"
+        "without-request-header": "اگر CDN امکان افزودن هدر درخواست ندارد",
+        "cdn-limit": "هر دامنه عادی حداکثر سه CDN دارد. یک CDN اضافی را حذف یا دامنه عادی دیگری انتخاب کنید."
     },
     "nodes-usage-chart": {
         "show-legend": "نمایش راهنما",
         "hide-legend": "پنهان کردن راهنما"
+    },
+    "user-domain-links": {
+        "title": "نشانی‌های اشتراک",
+        "primary": "عادی",
+        "selected": "انتخاب‌شده",
+        "current": "نشانی فعلی",
+        "loading": "در حال بارگیری نشانی‌ها",
+        "refresh": "تازه‌سازی نشانی‌ها",
+        "load-failed": "بارگیری همه نشانی‌ها ممکن نشد. نشانی فعلی حفظ شده است؛ دوباره تلاش کنید.",
+        "retry": "تلاش دوباره",
+        "preset-title": "دسترسی به نشانی‌های اشتراک",
+        "preset-all": "همه نشانی‌ها",
+        "preset-primary": "فقط عادی",
+        "preset-cdn": "فقط CDN",
+        "scope-all": "دریافت همه نشانی‌های اشتراک کاربر",
+        "scope-primary": "دریافت فقط نشانی عادی اشتراک کاربر",
+        "scope-cdn": "دریافت فقط نشانی‌های CDN اشتراک کاربر"
     }
 }

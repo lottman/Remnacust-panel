@@ -7961,6 +7961,7 @@
           "$ref": "#/definitions/RemnacustCoreStreamConfig"
         },
         "extra": {},
+        "h2Params": {},
         "headers": {
           "additionalProperties": {
             "type": "string"
@@ -9102,6 +9103,9 @@
         "remoteFolder": {
           "type": "string"
         },
+        "s3": {
+          "$ref": "#/definitions/RemnacustCoreXDriveS3Config"
+        },
         "secrets": {
           "items": {
             "type": "string"
@@ -9471,12 +9475,30 @@
         }
       },
       "type": "object"
+    },
+    "RemnacustCoreXDriveS3Config": {
+      "additionalProperties": true,
+      "properties": {
+        "bucket": {
+          "type": "string"
+        },
+        "endpoint": {
+          "type": "string"
+        },
+        "pathStyle": {
+          "type": "boolean"
+        },
+        "region": {
+          "type": "string"
+        }
+      },
+      "type": "object"
     }
   },
   "x-remnacust-upstream": {
-    "version": "v26.10.21",
-    "commit": "1b1647cd9ddf0abc34b981d4611fc03bcac1ca74",
+    "version": "v26.10.31",
+    "commit": "a4a3dff5b20c2faae567b742c172c7b95e75c083",
     "patchCommit": null,
-    "coreVersion": "1.1.11"
+    "coreVersion": "1.1.12"
   }
 }

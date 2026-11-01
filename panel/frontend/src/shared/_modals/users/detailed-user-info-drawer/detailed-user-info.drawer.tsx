@@ -1,8 +1,8 @@
 import NiceModal, { useModal } from '@ebay/nice-modal-react'
 import { DataList, Drawer, Group, Stack } from '@mantine/core'
 import { UserStatusBadge } from '@widgets/dashboard/users/user-status-badge'
-import { useTranslation } from 'react-i18next'
 import dayjs from 'dayjs'
+import { useTranslation } from 'react-i18next'
 import {
     PiArrowsDownUpDuotone,
     PiCalendarDotDuotone,
@@ -15,6 +15,7 @@ import {
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
 import { useGetUserById } from '@shared/api/hooks'
 import { CopyableDataListItem } from '@shared/ui/copyable-field/copyable-data-list-item'
+import { UserDomainLinks } from '@shared/ui/forms/users/forms-components/user-domain-links'
 import { LoaderModalShared } from '@shared/ui/loader-modal'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SectionCard } from '@shared/ui/section-card'
@@ -171,21 +172,27 @@ export const DetailedUserInfoDrawer = NiceModal.create((props: IProps) => {
                             />
                         </SectionCard.Section>
                         <SectionCard.Section>
+                            <Stack mb="md">
+                                <UserDomainLinks user={user} />
+                            </Stack>
                             <DataList withDivider orientation="vertical">
                                 <CopyableDataListItem
-                                    label={t('common.field.subscription-url')}
-                                    monospace
-                                    value={user.subscriptionUrl}
-                                />
-                                <CopyableDataListItem
                                     label={t('detailed-user-info-drawer.widget.expires-at')}
-                                    value={user.status === 'FROZEN' && user.frozenRemainingMs != null
-                                        ? t('frozen-user.remaining', { duration: dayjs(Date.now() + user.frozenRemainingMs).locale(i18n.language).fromNow(true) })
-                                        : formatTimeUtil({
-                                        time: user.expireAt,
-                                        template: 'TIME_FIRST_DATETIME',
-                                        language: i18n.language
-                                    })}
+                                    value={
+                                        user.status === 'FROZEN' && user.frozenRemainingMs != null
+                                            ? t('frozen-user.remaining', {
+                                                  duration: dayjs(
+                                                      Date.now() + user.frozenRemainingMs
+                                                  )
+                                                      .locale(i18n.language)
+                                                      .fromNow(true)
+                                              })
+                                            : formatTimeUtil({
+                                                  time: user.expireAt,
+                                                  template: 'TIME_FIRST_DATETIME',
+                                                  language: i18n.language
+                                              })
+                                    }
                                 />
                                 <CopyableDataListItem
                                     label={t('detailed-user-info-drawer.widget.revoked-at')}

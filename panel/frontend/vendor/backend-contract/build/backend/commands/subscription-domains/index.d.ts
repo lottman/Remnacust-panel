@@ -3,6 +3,14 @@ export declare namespace ListSubscriptionDomainsCommand {
     const url: "/api/subscription-domains/";
     const TSQ_url: "/api/subscription-domains/";
     const endpointDetails: import("../../constants").EndpointDetails;
+    const RequestQuerySchema: z.ZodObject<{
+        kind: z.ZodOptional<z.ZodEnum<{
+            PRIMARY: "PRIMARY";
+            CDN: "CDN";
+        }>>;
+        parentUuid: z.ZodOptional<z.ZodUUID>;
+    }, z.core.$strict>;
+    type RequestQuery = z.infer<typeof RequestQuerySchema>;
     const ResponseSchema: z.ZodObject<{
         response: z.ZodArray<z.ZodObject<{
             uuid: z.ZodUUID;
@@ -17,7 +25,15 @@ export declare namespace ListSubscriptionDomainsCommand {
             isDefault: z.ZodBoolean;
             usersCount: z.ZodNumber;
             aliasesCount: z.ZodNumber;
+            publicBaseUrl: z.ZodString;
+            requestHeaderName: z.ZodNullable<z.ZodString>;
         }, z.core.$strip>>;
+        environment: z.ZodOptional<z.ZodEnum<{
+            unavailable: "unavailable";
+            synced: "synced";
+            invalid: "invalid";
+            conflict: "conflict";
+        }>>;
     }, z.core.$strip>;
 }
 export declare namespace GetSubscriptionDomainCommand {
@@ -38,6 +54,8 @@ export declare namespace GetSubscriptionDomainCommand {
             isDefault: z.ZodBoolean;
             usersCount: z.ZodNumber;
             aliasesCount: z.ZodNumber;
+            publicBaseUrl: z.ZodString;
+            requestHeaderName: z.ZodNullable<z.ZodString>;
         }, z.core.$strip>;
     }, z.core.$strip>;
 }
@@ -70,6 +88,8 @@ export declare namespace CreateSubscriptionDomainCommand {
             isDefault: z.ZodBoolean;
             usersCount: z.ZodNumber;
             aliasesCount: z.ZodNumber;
+            publicBaseUrl: z.ZodString;
+            requestHeaderName: z.ZodNullable<z.ZodString>;
         }, z.core.$strip>;
     }, z.core.$strip>;
 }
@@ -102,6 +122,8 @@ export declare namespace UpdateSubscriptionDomainCommand {
             isDefault: z.ZodBoolean;
             usersCount: z.ZodNumber;
             aliasesCount: z.ZodNumber;
+            publicBaseUrl: z.ZodString;
+            requestHeaderName: z.ZodNullable<z.ZodString>;
         }, z.core.$strip>;
     }, z.core.$strip>;
 }

@@ -4242,10 +4242,28 @@
         "ready-link": "可直接使用的 CDN 链接",
         "request-header-name": "请求头名称",
         "request-header-value": "请求头值",
-        "without-request-header": "CDN 不支持添加请求头时"
+        "without-request-header": "CDN 不支持添加请求头时",
+        "cdn-limit": "每个普通域名最多可关联三个 CDN。请删除多余的 CDN 或选择其他普通域名。"
     },
     "nodes-usage-chart": {
         "show-legend": "显示图例",
         "hide-legend": "隐藏图例"
+    },
+    "user-domain-links": {
+        "title": "订阅链接",
+        "primary": "普通",
+        "selected": "已选",
+        "current": "当前链接",
+        "loading": "正在加载链接",
+        "refresh": "刷新链接",
+        "load-failed": "无法获取所有链接。当前链接已保留，请重试。",
+        "retry": "重试",
+        "preset-title": "订阅链接访问权限",
+        "preset-all": "所有链接",
+        "preset-primary": "仅普通链接",
+        "preset-cdn": "仅 CDN 链接",
+        "scope-all": "获取用户的所有订阅链接",
+        "scope-primary": "仅获取用户的普通订阅链接",
+        "scope-cdn": "仅获取用户的 CDN 订阅链接"
     }
 }

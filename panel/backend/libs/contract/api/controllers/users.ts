@@ -13,6 +13,9 @@ export const USERS_ROUTES = {
     GET_BY_ID: (userId: string) => `${userId}`,
     ACCESSIBLE_NODES: (userId: string) => `${userId}/accessible-nodes`,
     SUBSCRIPTION_REQUEST_HISTORY: (userId: string) => `${userId}/subscription-request-history`,
+    SUBSCRIPTION_LINKS: (userId: string) => `${userId}/subscription-links`,
+    SUBSCRIPTION_LINKS_PRIMARY: (userId: string) => `${userId}/subscription-links/primary`,
+    SUBSCRIPTION_LINKS_CDN: (userId: string) => `${userId}/subscription-links/cdn`,
     ACTIONS: {
         ENABLE: (userId: string) => `${userId}/${USERS_ACTIONS_ROUTE}/enable`,
         DISABLE: (userId: string) => `${userId}/${USERS_ACTIONS_ROUTE}/disable`,

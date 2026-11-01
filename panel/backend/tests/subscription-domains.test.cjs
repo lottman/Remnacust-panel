@@ -3,7 +3,7 @@ const path = require('node:path');
 const test = require('node:test');
 
 const load = require('./load-typescript.cjs');
-const { SubscriptionDomainInputSchema } = load(
+const { SubscriptionDomainInputSchema, MAX_CDN_PER_PRIMARY } = load(
     path.join(__dirname, '../libs/contract/models/subscription-domain.schema.ts'),
 );
 const { publicGeofileOrigin } = load(
@@ -15,7 +15,7 @@ const { SubscriptionDomainsService } = load(
         '@common/config/app-config': {},
         '@common/database/prisma.service': {},
         '@common/utils/public-geofile-origin': { publicGeofileOrigin },
-        '@libs/contracts/models/subscription-domain.schema': { SubscriptionDomainInputSchema },
+        '@libs/contracts/models/subscription-domain.schema': { SubscriptionDomainInputSchema, MAX_CDN_PER_PRIMARY },
     },
 );
 

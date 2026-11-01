@@ -44,8 +44,13 @@ import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { sleep } from '@shared/utils/misc'
 
 import classes from '../api-token-card.module.css'
+import {
+    getUserManagementKeys,
+    SUBSCRIPTION_PAGE_SCOPES,
+    getDomainLinkKeys,
+    domainLinkScopeLabel
+} from './api-token-presets'
 import { ScopeResourceRow } from './scope-resource-row'
-import { getUserManagementKeys, SUBSCRIPTION_PAGE_SCOPES } from './api-token-presets'
 import {
     buildScopes,
     expandScopesToKeys,
@@ -99,7 +104,7 @@ export const CreateApiTokenContentWidget = ({ isMobile, token }: IProps) => {
         .map((resource) => ({
             ...resource,
             endpoints: resource.endpoints.filter((endpoint) =>
-                `${resource.resource} ${endpoint.key} ${endpoint.path} ${endpoint.method} ${endpoint.description} ${endpoint.key === 'limits:unlimited' ? t('limitsUnlimited.permission') : ''}`
+                `${resource.resource} ${endpoint.key} ${endpoint.path} ${endpoint.method} ${endpoint.description} ${endpoint.key === 'limits:unlimited' ? t('limitsUnlimited.permission') : ''} ${domainLinkScopeLabel(endpoint.key) ? t(domainLinkScopeLabel(endpoint.key)!) : ''}`
                     .toLowerCase()
                     .includes(search.trim().toLowerCase())
             )
@@ -214,6 +219,11 @@ export const CreateApiTokenContentWidget = ({ isMobile, token }: IProps) => {
         setSelectedEndpoints(new Set(getUserManagementKeys(resources)))
     }
 
+    const presetDomainLinks = (kind: 'all' | 'primary' | 'cdn') => {
+        setFullAccess(false)
+        setSelectedEndpoints(new Set(getDomainLinkKeys(resources, kind)))
+    }
+
     const handlePasteScopes = async () => {
         try {
             const text = await navigator.clipboard.readText()
@@ -266,7 +276,11 @@ export const CreateApiTokenContentWidget = ({ isMobile, token }: IProps) => {
     }
 
     const isNameInvalid = !!tokenNameField.error || tokenNameField.getValue().trim() === ''
-    const isExpiresInvalid = !permanent && !CreateApiTokenCommand.RequestBodySchema.shape.expiresInDays.safeParse(Number(expiresInDays)).success
+    const isExpiresInvalid =
+        !permanent &&
+        !CreateApiTokenCommand.RequestBodySchema.shape.expiresInDays.safeParse(
+            Number(expiresInDays)
+        ).success
     const canCreate =
         !isNameInvalid &&
         (Boolean(token) || !isExpiresInvalid) &&
@@ -375,10 +389,34 @@ export const CreateApiTokenContentWidget = ({ isMobile, token }: IProps) => {
                 </Button>
             </Group>
 
-            <Text c="dimmed" size="xs">{t('api-token-editor.users-preset-description')}</Text>
+            <Stack gap={6}>
+                <Text c="dimmed" size="xs">
+                    {t('user-domain-links.preset-title')}
+                </Text>
+                <Group gap="xs">
+                    {(['primary', 'cdn', 'all'] as const).map((kind) => (
+                        <Button
+                            key={kind}
+                            size="xs"
+                            variant="default"
+                            disabled={!scopesData || isError || !initialized}
+                            onClick={() => presetDomainLinks(kind)}
+                        >
+                            {t(`user-domain-links.preset-${kind}`)}
+                        </Button>
+                    ))}
+                </Group>
+            </Stack>
+            <Text c="dimmed" size="xs">
+                {t('api-token-editor.users-preset-description')}
+            </Text>
 
             <Text c="dimmed" size="xs">
-                {t(fullAccess ? 'api-token-editor.full-description' : 'api-token-editor.exact-description')}
+                {t(
+                    fullAccess
+                        ? 'api-token-editor.full-description'
+                        : 'api-token-editor.exact-description'
+                )}
             </Text>
             {isLoading && <Text role="status">{t('api-token-editor.loading')}</Text>}
             {isError && (

@@ -5,11 +5,16 @@ import { SubscriptionDomainEnvironmentService } from './subscription-domain-envi
 import { SubscriptionDomainGatewayController } from './subscription-domain-gateway.controller';
 import { SubscriptionDomainsController } from './subscription-domains.controller';
 import { SubscriptionDomainsService } from './subscription-domains.service';
+import { UserDomainLinksController } from './user-domain-links.controller';
 @Global()
 @Module({
     imports: [CqrsModule],
     providers: [SubscriptionDomainsService, SubscriptionDomainEnvironmentService],
     exports: [SubscriptionDomainsService],
-    controllers: [SubscriptionDomainsController, SubscriptionDomainGatewayController],
+    controllers: [
+        SubscriptionDomainsController,
+        SubscriptionDomainGatewayController,
+        UserDomainLinksController,
+    ],
 })
 export class SubscriptionDomainsModule {}

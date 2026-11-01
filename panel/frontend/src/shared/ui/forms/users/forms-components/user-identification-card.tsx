@@ -1,4 +1,4 @@
-import { ActionIcon, Box, Code, Group, Popover, Paper, Stack, Text, Tooltip } from '@mantine/core'
+import { ActionIcon, Box, Group, Paper, Stack, Text, Tooltip } from '@mantine/core'
 import { modals } from '@mantine/modals'
 import { GetUserByIdCommand, USERS_STATUS } from '@remnawave/backend-contract'
 import { UserStatusBadge } from '@widgets/dashboard/users/user-status-badge'
@@ -7,8 +7,7 @@ import { githubDarkTheme, JsonEditor } from 'json-edit-react'
 import { ForwardRefComponent, HTMLMotionProps, Variants } from 'motion/react'
 import { memo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { HiQuestionMarkCircle } from 'react-icons/hi'
-import { PiLinkBreak, PiLinkDuotone, PiUserCircle } from 'react-icons/pi'
+import { PiLinkBreak, PiUserCircle } from 'react-icons/pi'
 import {
     TbCalendar,
     TbDevices,
@@ -25,8 +24,6 @@ import {
 import { showModal } from '@shared/_modals/show-modal'
 import { useGetUserMetadata } from '@shared/api/hooks'
 import { translateUiText as uiText } from '@shared/i18n/interface-text'
-import { CopyableCodeBlock } from '@shared/ui/copyable-code-block'
-import { CopyableFieldShared } from '@shared/ui/copyable-field/copyable-field'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SectionCard } from '@shared/ui/section-card'
 import { resolveCountryCode } from '@shared/utils/misc/resolve-country-code'
@@ -37,6 +34,7 @@ import {
     getTimeAgoUtil
 } from '@shared/utils/time-utils'
 
+import { UserDomainLinks } from './user-domain-links'
 import { getUserExpirationState } from './user-expiration'
 import classes from './user-identification-card.module.css'
 
@@ -437,49 +435,7 @@ export const UserIdentificationCard = memo((props: IProps) => {
                 </SectionCard.Section>
 
                 <SectionCard.Section>
-                    <CopyableFieldShared
-                        label={
-                            <Group gap={4} justify="flex-start">
-                                <Text fw={500} fz="sm">
-                                    {t('common.field.subscription-url')}
-                                </Text>
-                                <Popover shadow="md" width={280} withArrow>
-                                    <Popover.Target>
-                                        <ActionIcon
-                                            aria-label={t('common.field.subscription-url')}
-                                            color="gray"
-                                            size="sm"
-                                            variant="subtle"
-                                        >
-                                            <HiQuestionMarkCircle size={16} />
-                                        </ActionIcon>
-                                    </Popover.Target>
-                                    <Popover.Dropdown>
-                                        <Stack gap="sm">
-                                            <Text fw={600} size="sm">
-                                                {t('common.field.subscription-url')}
-                                            </Text>
-                                            <Text c="dimmed" size="sm">
-                                                {t(
-                                                    'view-user-modal.widget.subscription-url-description-line-1'
-                                                )}{' '}
-                                                <Code bg="gray.1" c="dark.4" fw={700}>
-                                                    SUB_PUBLIC_DOMAIN
-                                                </Code>
-                                                <br />
-                                                {t(
-                                                    'view-user-modal.widget.subscription-url-description-line-2'
-                                                )}
-                                            </Text>
-                                            <CopyableCodeBlock value="docker compose down && docker compose up -d" />
-                                        </Stack>
-                                    </Popover.Dropdown>
-                                </Popover>
-                            </Group>
-                        }
-                        leftSection={<PiLinkDuotone size="16px" />}
-                        value={user.subscriptionUrl}
-                    />
+                    <UserDomainLinks user={user} />
                 </SectionCard.Section>
             </SectionCard.Root>
         </MotionWrapper>

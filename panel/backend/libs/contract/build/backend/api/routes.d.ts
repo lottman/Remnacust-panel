@@ -72,6 +72,9 @@ export declare const REST_API: {
         readonly DELETE: (userId: string) => string;
         readonly GET_BY_ID: (userId: string) => string;
         readonly ACCESSIBLE_NODES: (userId: string) => string;
+        readonly SUBSCRIPTION_LINKS: (userId: string) => string;
+        readonly SUBSCRIPTION_LINKS_PRIMARY: (userId: string) => string;
+        readonly SUBSCRIPTION_LINKS_CDN: (userId: string) => string;
         readonly SUBSCRIPTION_REQUEST_HISTORY: (userId: string) => string;
         readonly ACTIONS: {
             readonly DISABLE: (userId: string) => string;

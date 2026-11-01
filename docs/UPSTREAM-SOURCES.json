@@ -1,12 +1,12 @@
 {
-  "checkedAt": "2026-10-22T13:44:15.166915+00:00",
+  "checkedAt": "2026-11-01T18:29:47.440233+00:00",
   "components": [
     {
       "component": "backend",
       "repository": "https://github.com/remnawave/backend",
       "version": "3.4.7",
       "commit": "52321390ac4efe04a610811446d87335f1d10a93",
-      "checkedAt": "2026-10-22T13:44:15.166915+00:00",
+      "checkedAt": "2026-11-01T18:29:47.440233+00:00",
       "status": "integrated-and-released",
       "ref": "refs/tags/3.4.7",
       "tagEvidence": "https://api.github.com/repos/remnawave/backend/git/ref/tags/3.4.7",
@@ -17,7 +17,7 @@
       "repository": "https://github.com/remnawave/frontend",
       "version": "3.4.7",
       "commit": "dcb1affbfc42793799caecee988fd20ac0a270b7",
-      "checkedAt": "2026-10-22T13:44:15.166915+00:00",
+      "checkedAt": "2026-11-01T18:29:47.440233+00:00",
       "status": "integrated-and-released",
       "ref": "refs/tags/3.4.7",
       "tagEvidence": "https://api.github.com/repos/remnawave/frontend/git/ref/tags/3.4.7",
@@ -28,7 +28,7 @@
       "repository": "https://github.com/remnawave/node",
       "version": "3.4.3",
       "commit": "2ad154f8f1016c94c1872f337268af878af61b18",
-      "checkedAt": "2026-10-22T13:44:15.166915+00:00",
+      "checkedAt": "2026-11-01T18:29:47.440233+00:00",
       "status": "integrated-and-released",
       "ref": "refs/tags/3.4.3",
       "tagEvidence": "https://api.github.com/repos/remnawave/node/git/ref/tags/3.4.3",
@@ -39,7 +39,7 @@
       "repository": "https://github.com/remnawave/subscription-page",
       "version": "8.0.1",
       "commit": "9045728e6e197a2581c6da40f4f92b170a8bad53",
-      "checkedAt": "2026-10-22T13:44:15.166915+00:00",
+      "checkedAt": "2026-11-01T18:29:47.440233+00:00",
       "status": "integrated-and-released",
       "ref": "refs/tags/8.0.1",
       "tagEvidence": "https://api.github.com/repos/remnawave/subscription-page/git/ref/tags/8.0.1",
@@ -54,16 +54,17 @@
     {
       "component": "xray",
       "repository": "https://github.com/XTLS/Xray-core",
-      "version": "v26.10.21",
-      "commit": "1b1647cd9ddf0abc34b981d4611fc03bcac1ca74",
-      "checkedAt": "2026-10-22T13:44:15.166915+00:00",
-      "status": "integrated-and-released",
-      "ref": "refs/tags/v26.10.21",
-      "prerelease": true,
-      "tagEvidence": "https://api.github.com/repos/XTLS/Xray-core/git/ref/tags/v26.10.21"
+      "version": "v26.10.31",
+      "commit": "a4a3dff5b20c2faae567b742c172c7b95e75c083",
+      "checkedAt": "2026-11-01T18:29:47.440233+00:00",
+      "status": "integrated",
+      "ref": "refs/tags/v26.10.31",
+      "prerelease": false,
+      "tagEvidence": "https://api.github.com/repos/XTLS/Xray-core/git/ref/tags/v26.10.31",
+      "releaseEvidence": "https://github.com/XTLS/Xray-core/releases/tag/v26.10.31"
     }
   ],
-  "releaseStatus": "published-v1.2.74",
+  "releaseStatus": "verified-for-v1.2.119",
   "updatePolicy": "published-official-releases-only",
   "dependencySecurityUpdates": [
     {

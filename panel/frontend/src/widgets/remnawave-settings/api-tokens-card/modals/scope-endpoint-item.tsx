@@ -3,6 +3,7 @@ import { memo } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import classes from '../api-token-card.module.css'
+import { domainLinkScopeLabel } from './api-token-presets'
 import { getMethodColor, ScopeEndpoint } from './scopes.utils'
 
 interface IProps {
@@ -14,8 +15,12 @@ interface IProps {
 
 export const ScopeEndpointItem = memo(({ checked, endpoint, onToggle, readOnly }: IProps) => {
     const { t } = useTranslation()
-    const description =
-        endpoint.key === 'limits:unlimited' ? t('limitsUnlimited.permission') : endpoint.description
+    const domainLabel = domainLinkScopeLabel(endpoint.key)
+    const description = domainLabel
+        ? t(domainLabel)
+        : endpoint.key === 'limits:unlimited'
+          ? t('limitsUnlimited.permission')
+          : endpoint.description
     const isWrite = endpoint.kind === 'write'
 
     return (

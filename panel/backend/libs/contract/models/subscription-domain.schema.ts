@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+export const MAX_CDN_PER_PRIMARY = 3;
+
 export const SubscriptionDomainInputSchema = z
     .object({
         name: z.string().trim().min(1).max(100),
@@ -76,6 +78,9 @@ export const SubscriptionDomainSchema = z.object({
     usersCount: z.number().int().nonnegative(),
     aliasesCount: z.number().int().nonnegative(),
     publicBaseUrl: z.string().url(),
-    requestHeaderName: z.string().regex(/^X-[a-f0-9]{24}$/).nullable(),
+    requestHeaderName: z
+        .string()
+        .regex(/^X-[a-f0-9]{24}$/)
+        .nullable(),
 });
 export type SubscriptionDomainInput = z.infer<typeof SubscriptionDomainInputSchema>;

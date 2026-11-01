@@ -1,7 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SubscriptionDomainSchema = exports.SubscriptionDomainInputSchema = void 0;
+exports.SubscriptionDomainSchema = exports.SubscriptionDomainInputSchema = exports.MAX_CDN_PER_PRIMARY = void 0;
 const zod_1 = require("zod");
+exports.MAX_CDN_PER_PRIMARY = 3;
 exports.SubscriptionDomainInputSchema = zod_1.z
     .object({
     name: zod_1.z.string().trim().min(1).max(100),
@@ -76,4 +77,6 @@ exports.SubscriptionDomainSchema = zod_1.z.object({
     isDefault: zod_1.z.boolean(),
     usersCount: zod_1.z.number().int().nonnegative(),
     aliasesCount: zod_1.z.number().int().nonnegative(),
+    publicBaseUrl: zod_1.z.string().url(),
+    requestHeaderName: zod_1.z.string().regex(/^X-[a-f0-9]{24}$/).nullable(),
 });

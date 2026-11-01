@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-11-01T16:55:27.515Z",
-  "backendVersion": "1.1.7.82",
-  "coreVersion": "1.1.11",
-  "nodeVersion": "1.1.19",
+  "generatedAt": "2026-11-01T18:36:48.214Z",
+  "backendVersion": "1.1.7.83",
+  "coreVersion": "1.1.12",
+  "nodeVersion": "1.1.20",
   "upstreamPanelVersion": "3.4.7",
   "upstreamBackendPatches": [
     {
@@ -55,9 +55,9 @@
   "upstreamCoreCommit": "1b1647cd9ddf0abc34b981d4611fc03bcac1ca74",
   "upstreamCorePrerelease": true,
   "articles": 57,
-  "endpoints": 244,
-  "apiTokenEndpoints": 216,
+  "endpoints": 247,
+  "apiTokenEndpoints": 219,
   "controls": 237,
-  "sourceFiles": 3839,
-  "specSha256": "ffdfe50cd29463ba887e404ea79653e67e193094610ec7349c5fbdd6ce633c76"
+  "sourceFiles": 3843,
+  "specSha256": "7a951c939c7326d9a57056ff8a59c19ca572d9245760f3b403f7ca5bae1e694c"
 }

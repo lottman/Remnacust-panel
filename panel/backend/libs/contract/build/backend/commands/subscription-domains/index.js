@@ -13,7 +13,16 @@ var ListSubscriptionDomainsCommand;
         scope: 'list',
         kind: 'read',
     });
-    ListSubscriptionDomainsCommand.ResponseSchema = zod_1.z.object({ response: zod_1.z.array(subscription_domain_schema_1.SubscriptionDomainSchema) });
+    ListSubscriptionDomainsCommand.RequestQuerySchema = zod_1.z.object({
+        kind: zod_1.z.enum(['PRIMARY', 'CDN']).optional(),
+        parentUuid: zod_1.z.uuid().optional(),
+    }).strict().refine(value => !(value.kind === 'PRIMARY' && value.parentUuid), {
+        message: 'A parent filter applies only to CDN domains', path: ['parentUuid'],
+    });
+    ListSubscriptionDomainsCommand.ResponseSchema = zod_1.z.object({
+        response: zod_1.z.array(subscription_domain_schema_1.SubscriptionDomainSchema),
+        environment: zod_1.z.enum(['synced', 'unavailable', 'invalid', 'conflict']).optional(),
+    });
 })(ListSubscriptionDomainsCommand || (exports.ListSubscriptionDomainsCommand = ListSubscriptionDomainsCommand = {}));
 var GetSubscriptionDomainCommand;
 (function (GetSubscriptionDomainCommand) {

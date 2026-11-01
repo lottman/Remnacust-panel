@@ -38,3 +38,32 @@ export const SUBSCRIPTION_PAGE_SCOPES = [
     'subscriptions:subpage-config',
     'system:metadata'
 ]
+
+const DOMAIN_LINK_KEYS = {
+    all: 'users:subscription-links',
+    primary: 'users:subscription-links-primary',
+    cdn: 'users:subscription-links-cdn'
+} as const
+
+export function getDomainLinkKeys(
+    resources: readonly Resource[],
+    kind: keyof typeof DOMAIN_LINK_KEYS
+): string[] {
+    return resources
+        .flatMap((resource) => resource.endpoints)
+        .filter((endpoint) => endpoint.key === DOMAIN_LINK_KEYS[kind])
+        .map((endpoint) => endpoint.key)
+}
+
+export function domainLinkScopeLabel(
+    key: string
+):
+    | 'user-domain-links.scope-all'
+    | 'user-domain-links.scope-primary'
+    | 'user-domain-links.scope-cdn'
+    | undefined {
+    if (key === DOMAIN_LINK_KEYS.all) return 'user-domain-links.scope-all'
+    if (key === DOMAIN_LINK_KEYS.primary) return 'user-domain-links.scope-primary'
+    if (key === DOMAIN_LINK_KEYS.cdn) return 'user-domain-links.scope-cdn'
+    return undefined
+}

@@ -1,8 +1,8 @@
-# Remnacust API 1.1.7.82
+# Remnacust API 1.1.7.83
 
 Области действия `serverSpeedLimitMbps`, общей скорости и квот хостов/тегов: [HOST-LIMITS.md](HOST-LIMITS.md). Скорость — целые Mbps (Мбит/с), квоты API — байты; поле Brutal `speedLimitMbps` самого хоста не является серверным ограничителем.
 
-The current OpenAPI defines 244 operations; 216 accept scoped API tokens. The tables below cover the operator-facing API; the in-panel reference contains the complete generated catalog.
+The current OpenAPI defines 247 operations; 219 accept scoped API tokens. The tables below cover the operator-facing API; the in-panel reference contains the complete generated catalog.
 
 Full request/response schemas: [openapi.json](../panel/backend/openapi.json). The panel also exposes a separate API reference with searchable operations, schemas and events.
 
@@ -25,6 +25,22 @@ The list response also reports `environment`: `synced`, `unavailable`, `invalid`
 | DELETE | `/api/subscription-domains/{uuid}` | `subscription-domains:delete` | `subscription-domains` |
 
 CDN domain records expose computed `publicBaseUrl` and `requestHeaderName`. The latter is an individual neutral name for a CDN origin request header; primary domains return `null`. Its value is the CDN UUID. Both remain stable across upgrades. The name is derived with the private installation key; rotating APP_SECRET changes it and requires updating the CDN header name. User `subscriptionUrl` and subscription template links include the `/cdn/<domain-uuid>` fallback automatically. See [CDN setup and migration](SUBSCRIPTION-DOMAINS.md). The public resolver returns only a registered CDN’s UUID, public base and neutral header name; it grants no user access and exposes no origin or panel address.
+
+## User subscription links
+
+User cards show one ordinary link and up to three CDN links for the selected primary domain. Choosing a CDN selects the preferred URL, without creating another subscription or changing status, expiry, HWID or quotas. The original `subscriptionUrl` field remains available.
+
+| GET path | Exact token scope |
+|---|---|
+| `/api/users/{userId}/subscription-links` | `users:subscription-links` |
+| `/api/users/{userId}/subscription-links/primary` | `users:subscription-links-primary` |
+| `/api/users/{userId}/subscription-links/cdn` | `users:subscription-links-cdn` |
+
+`userId` is the numeric user ID. All three routes accept optional `domainUuid`, limited to that user's assigned primary domain and its CDN aliases (or the default primary when unassigned). The combined route also accepts `kind=PRIMARY` or `kind=CDN`. Narrow routes reject a `kind` override. A CDN-only request returns an empty list when no CDN is configured, and never substitutes the primary URL.
+
+The response is `{response:{primaryDomainUuid,links:[{domainUuid,name,domain,kind,url,isSelected}]}}`, with `Cache-Control: private, no-store`. It contains no origin configuration, panel address or setup header. These are protected operator endpoints; they do not activate expired or frozen users. The token editor has separate presets for all links, ordinary only and CDN only. Existing token scopes are unchanged until edited; `users:read` already grants all read operations in that resource.
+
+The domain catalog independently accepts `kind` and `parentUuid`: `/api/subscription-domains?kind=CDN&parentUuid=<primary UUID>`. A parent filter implies CDN; combining it with `kind=PRIMARY` is invalid. Catalog read access alone cannot retrieve user subscription keys. At most three CDN records may belong to a primary domain, enforced transactionally during creates and moves. Existing excess aliases are not deleted automatically; combined/CDN user-link responses report `SUBSCRIPTION_DOMAIN_CDN_LIMIT` until the excess is removed. Primary-only access remains available.
 
 ## Panel-only migration operations
 

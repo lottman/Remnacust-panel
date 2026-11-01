@@ -1,4 +1,5 @@
 import { z } from 'zod';
+export declare const MAX_CDN_PER_PRIMARY = 3;
 export declare const SubscriptionDomainInputSchema: z.ZodObject<{
     name: z.ZodString;
     domain: z.ZodPipe<z.ZodString, z.ZodTransform<string, string>>;
@@ -23,6 +24,8 @@ export declare const SubscriptionDomainSchema: z.ZodObject<{
     isDefault: z.ZodBoolean;
     usersCount: z.ZodNumber;
     aliasesCount: z.ZodNumber;
+    publicBaseUrl: z.ZodString;
+    requestHeaderName: z.ZodNullable<z.ZodString>;
 }, z.core.$strip>;
 export type SubscriptionDomainInput = z.infer<typeof SubscriptionDomainInputSchema>;
 //# sourceMappingURL=subscription-domain.schema.d.ts.map

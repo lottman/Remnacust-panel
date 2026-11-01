@@ -4242,10 +4242,28 @@
     "ready-link": "Ready-to-use CDN URL",
     "request-header-name": "Request header name",
     "request-header-value": "Header value",
-    "without-request-header": "If the CDN cannot add a request header"
+    "without-request-header": "If the CDN cannot add a request header",
+    "cdn-limit": "A regular domain can have at most three CDNs. Remove an extra CDN or choose another regular domain."
   },
   "nodes-usage-chart": {
     "show-legend": "Show legend",
     "hide-legend": "Hide legend"
+  },
+  "user-domain-links": {
+    "title": "Subscription URLs",
+    "primary": "Regular",
+    "selected": "Selected",
+    "current": "Current URL",
+    "loading": "Loading URLs",
+    "refresh": "Refresh URLs",
+    "load-failed": "Unable to load all URLs. The current URL is retained; try again.",
+    "retry": "Retry",
+    "preset-title": "Subscription URL access",
+    "preset-all": "All URLs",
+    "preset-primary": "Regular only",
+    "preset-cdn": "CDN only",
+    "scope-all": "Get all user subscription URLs",
+    "scope-primary": "Get only the user regular subscription URL",
+    "scope-cdn": "Get only the user CDN subscription URLs"
   }
 }

@@ -1,4 +1,10 @@
 const sections = [
+    ['geofile-geoip-resolution', [
+        ['GeoIP для доменных адресов', 'При наличии GeoIP итоговый Xray JSON использует IPOnDemand: DNS-разрешение выполняется при достижении IP-правила. Это позволяет DIRECT, REJECT и балансерам по GeoIP срабатывать перед общим правилом TCP/UDP. Способ доставки — встроенные правила или DAT — не меняет это поведение. Ручные правила выше сохраняют приоритет; исходный шаблон не перезаписывается. Только GeoSite и другие форматы клиентов не меняют стратегию DNS. Если IP определить не удалось, действуют следующие правила.'],
+        ['GeoIP for domain destinations', 'When geofiles generate GeoIP rules, the final Xray JSON uses IPOnDemand: DNS resolution occurs when an IP rule is reached. DIRECT, REJECT and GeoIP balancers can then match before the TCP/UDP catch-all. Inline rules and downloaded DAT use the same behavior. Earlier manual rules retain priority and the source template is not overwritten. Domain-only GeoSite and other client formats keep their DNS strategy. If resolution fails, subsequent routing rules apply.'],
+        ['GeoIP برای مقصدهای دامنه‌ای', 'اگر فایل جغرافیایی قانون GeoIP تولید کند، خروجی Xray JSON از IPOnDemand استفاده می‌کند و هنگام رسیدن به قانون IP، دامنه حل می‌شود. سپس DIRECT، REJECT و متعادل‌ساز GeoIP پیش از قانون عمومی TCP/UDP اعمال می‌شوند. قواعد داخلی و DAT دانلودی رفتار یکسان دارند. اولویت قواعد دستی قبلی و قالب اصلی حفظ می‌شود. GeoSite تنها و دیگر قالب‌ها راهبرد DNS خود را نگه می‌دارند. اگر حل نام ناموفق باشد، قواعد بعدی اجرا می‌شوند.'],
+        ['域名目标的 GeoIP', '地理文件生成 GeoIP 规则时，最终 Xray JSON 使用 IPOnDemand，在处理 IP 规则时解析域名，使 DIRECT、REJECT 和 GeoIP 均衡器能在 TCP/UDP 兜底规则之前匹配。内嵌规则和下载 DAT 的行为相同。此前手动规则的优先级不变，源模板不会被覆盖。仅含域名的 GeoSite 及其他客户端格式保留原有 DNS 策略。解析失败时继续应用后续路由规则。']
+    ]],
     [
         "geofile-client-delivery",
         [

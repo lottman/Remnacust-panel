@@ -22,6 +22,7 @@ __exportStar(require("./delete-user.command"), exports);
 __exportStar(require("./get-users.command"), exports);
 __exportStar(require("./get-by"), exports);
 __exportStar(require("./get-user-accessible-nodes.command"), exports);
+__exportStar(require("./get-user-domain-links.command"), exports);
 __exportStar(require("./get-user-by-id.command"), exports);
 __exportStar(require("./get-user-subscription-request-history.command"), exports);
 __exportStar(require("./get-users-stream.command"), exports);

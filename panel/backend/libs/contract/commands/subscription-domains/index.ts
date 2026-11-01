@@ -13,6 +13,17 @@ export namespace ListSubscriptionDomainsCommand {
         scope: 'list',
         kind: 'read',
     });
+    export const RequestQuerySchema = z
+        .object({
+            kind: z.enum(['PRIMARY', 'CDN']).optional(),
+            parentUuid: z.uuid().optional(),
+        })
+        .strict()
+        .refine((value) => !(value.kind === 'PRIMARY' && value.parentUuid), {
+            message: 'A parent filter applies only to CDN domains',
+            path: ['parentUuid'],
+        });
+    export type RequestQuery = z.infer<typeof RequestQuerySchema>;
     export const ResponseSchema = z.object({
         response: z.array(SubscriptionDomainSchema),
         environment: z.enum(['synced', 'unavailable', 'invalid', 'conflict']).optional(),

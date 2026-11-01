@@ -7,6 +7,7 @@ import {
     HttpStatus,
     Param,
     ParseUUIDPipe,
+    Query,
     UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
@@ -37,6 +38,9 @@ export class SubscriptionDomainResponseDto extends createZodDto(
 export class SubscriptionDomainsResponseDto extends createZodDto(
     ListSubscriptionDomainsCommand.ResponseSchema,
 ) {}
+export class SubscriptionDomainsQueryDto extends createZodDto(
+    ListSubscriptionDomainsCommand.RequestQuerySchema,
+) {}
 @ApiBearerAuth('Authorization')
 @ApiTags(CONTROLLERS_INFO.SUBSCRIPTION_DOMAINS.tag)
 @ApiScopeResource(CONTROLLERS_INFO.SUBSCRIPTION_DOMAINS.resource)
@@ -51,8 +55,8 @@ export class SubscriptionDomainsController {
         httpCode: HttpStatus.OK,
         type: SubscriptionDomainsResponseDto,
     })
-    async list() {
-        return this.service.listing();
+    async list(@Query() query: SubscriptionDomainsQueryDto) {
+        return this.service.listing(query);
     }
     @Header('Cache-Control', 'no-store')
     @Endpoint({

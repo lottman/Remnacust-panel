@@ -13,6 +13,9 @@ import { GetAdminByUsernameQuery } from '@modules/admin/queries/get-admin-by-use
 import { GetTokenByUuidQuery } from '@modules/api-tokens/queries/get-token-by-uuid';
 import { JwtStrategy } from '@modules/auth/strategies/jwt.strategy';
 import { SubscriptionDomainsModule } from '@modules/subscription-domains/subscription-domains.module';
+import { GetUserByUniqueFieldQuery } from '@modules/users/queries/get-user-by-unique-field';
+import { ERRORS } from '@libs/contracts/constants/errors';
+import { ZodValidationPipe } from 'nestjs-zod';
 
 const secret = randomBytes(32).toString('hex');
 const admin = { uuid: randomUUID(), username: 'domain_http_fixture', passwordHash: 'fixture-only' };
@@ -24,7 +27,9 @@ const row = { uuid: randomUUID(), name: 'Subscription', domain: 'sub.example.tes
 const cdn = { ...row, uuid: randomUUID(), kind: 'CDN', isDefault: false, parentUuid: row.uuid, domain: 'cdn.example.test' };
 const database = { subscriptionDomains: {
     count: async () => 1,
-    findMany: async () => [row, cdn],
+    findMany: async (args: { where?: { kind?: string; parentUuid?: string } } = {}) => [row, cdn].filter(domain =>
+        (!args.where?.kind || domain.kind === args.where.kind) &&
+        (!args.where?.parentUuid || domain.parentUuid === args.where.parentUuid)),
     findUnique: async () => row,
 }, $executeRawUnsafe: async () => 0, $transaction: async (action: (tx: unknown) => unknown) => action(database) };
 
@@ -40,6 +45,15 @@ class TokenLookup implements IQueryHandler<GetTokenByUuidQuery> {
         return { isOk: tokens.has(query.uuid), response: tokens.get(query.uuid) };
     }
 }
+@QueryHandler(GetUserByUniqueFieldQuery)
+class UserLookup {
+    async execute(query: GetUserByUniqueFieldQuery) {
+        return query.field.id === 1n || query.field.id === 2n
+            ? { isOk: true, response: { shortUuid: 'fixture_key', subscriptionDomainUuid: query.field.id === 1n ? cdn.uuid : null,
+                status: query.field.id === 1n ? 'ACTIVE' : 'FROZEN' } }
+            : { isOk: false, ...ERRORS.USER_NOT_FOUND };
+    }
+}
 
 // Only infrastructure is substituted. Controllers, guards, module imports,
 // CQRS resolution, JWT verification and domain service execute as shipped.
@@ -50,12 +64,13 @@ class TokenLookup implements IQueryHandler<GetTokenByUuidQuery> {
     { provide: RawCacheService, useValue: { exists: async (key: string) => sessions.has(key) } },
 ], exports: [PrismaService, TypedConfigService, RawCacheService] })
 class Infrastructure {}
-@Module({ imports: [Infrastructure, CqrsModule, SubscriptionDomainsModule], providers: [JwtStrategy, AdminLookup, TokenLookup] })
+@Module({ imports: [Infrastructure, CqrsModule, SubscriptionDomainsModule], providers: [JwtStrategy, AdminLookup, TokenLookup, UserLookup] })
 class Root {}
 
 async function main() {
     const app = await NestFactory.create(Root, { logger: false, abortOnError: false });
     app.setGlobalPrefix('api');
+    app.useGlobalPipes(new ZodValidationPipe());
     try {
         await app.listen(0, '127.0.0.1');
         const base = await app.getUrl();
@@ -84,6 +99,41 @@ async function main() {
         assert.equal((await request(apiToken)).status, 403);
         tokens.set(uuid, { scopes: ['subscription-domains:read'], expireAt: new Date(Date.now() + 60000) });
         assert.equal((await request(apiToken)).status, 200);
+        const filtered = await request(apiToken, false, '/api/subscription-domains?kind=CDN&parentUuid=' + row.uuid);
+        assert.deepEqual(filtered.body.response.map((domain: { uuid: string }) => domain.uuid), [cdn.uuid]);
+        assert.equal((await request(apiToken, false, '/api/subscription-domains?kind=PRIMARY&parentUuid=' + row.uuid)).status, 400);
+        const linksRoute = '/api/users/1/subscription-links';
+        assert.equal((await request(undefined, false, linksRoute)).status, 401);
+        assert.equal((await request(apiToken, false, linksRoute)).status, 403, 'catalog access does not disclose user keys');
+        for (const [scope, suffix, expectedKind] of [
+            ['users:subscription-links-primary', '/primary', 'PRIMARY'],
+            ['users:subscription-links-cdn', '/cdn', 'CDN'],
+        ]) {
+            tokens.set(uuid, { scopes: [scope], expireAt: null });
+            const allowed = await request(apiToken, false, linksRoute + suffix);
+            assert.equal(allowed.status, 200, JSON.stringify(allowed.body));
+            assert.equal(allowed.cache, 'private, no-store');
+            assert.equal(allowed.body.response.links.length, 1);
+            assert.equal(allowed.body.response.links[0].kind, expectedKind);
+            assert.deepEqual(Object.keys(allowed.body.response.links[0]).sort(), ['domain', 'domainUuid', 'isSelected', 'kind', 'name', 'url']);
+            assert.equal((await request(apiToken, false, linksRoute)).status, 403);
+            assert.equal((await request(apiToken, false, linksRoute + '?kind=' + expectedKind)).status, 403);
+            assert.equal((await request(apiToken, false, linksRoute + (suffix === '/primary' ? '/cdn' : '/primary'))).status, 403);
+            assert.equal((await request(apiToken, false, linksRoute + suffix + '?kind=' + (expectedKind === 'CDN' ? 'PRIMARY' : 'CDN'))).status, 400);
+        }
+        tokens.set(uuid, { scopes: ['users:subscription-links'], expireAt: null });
+        const links = await request(apiToken, false, linksRoute);
+        assert.equal(links.status, 200, JSON.stringify(links.body));
+        assert.equal(links.body.response.links.length, 2);
+        assert.equal(links.body.response.links.find((link: { isSelected: boolean }) => link.isSelected).domainUuid, cdn.uuid);
+        assert.equal((await request(apiToken, false, linksRoute + '?domainUuid=' + randomUUID())).status, 404);
+        assert.equal((await request(apiToken, false, linksRoute + '?kind=CDN&domainUuid=' + row.uuid)).status, 400);
+        assert.equal((await request(apiToken, false, '/api/users/999/subscription-links')).status, 404);
+        assert.equal((await request(apiToken, false, '/api/users/2/subscription-links')).status, 200, 'operators may retrieve a frozen user link; this grants no subscription access');
+        assert.equal((await request(apiToken, false, '/api/users/invalid/subscription-links')).status, 400);
+        tokens.set(uuid, { scopes: ['users:subscription-links'], expireAt: new Date(0) });
+        assert.equal((await request(apiToken, false, linksRoute)).status, 403);
+        tokens.set(uuid, { scopes: ['subscription-domains:read'], expireAt: new Date(Date.now() + 60000) });
         const relay = '/api/sub/domains/' + cdn.uuid + '/resolve';
         assert.equal((await request()).status, 401);
         const resolved = await request(undefined, false, relay);

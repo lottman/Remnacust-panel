@@ -85,7 +85,10 @@ export function SessionRecordings() {
 
     return (
         <Stack gap="md">
-            <PageHeaderShared title={t('session-recording.tab')} />
+            <PageHeaderShared
+                icon={<TbPlayerRecord size={24} />}
+                title={t('session-recording.tab')}
+            />
             <Alert>{t('session-recording.explanation')}</Alert>
             {error && <Alert color="red">{t('session-recording.error')}</Alert>}
             <Card withBorder p="md" radius="md">

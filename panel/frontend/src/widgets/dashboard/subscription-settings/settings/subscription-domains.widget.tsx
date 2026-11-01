@@ -12,18 +12,22 @@ import {
     Table,
     Text,
     TextInput,
-    Tooltip
+    Tooltip,
+    Loader
 } from '@mantine/core'
 import { useForm } from '@mantine/form'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { isAxiosError } from 'axios'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { TbCheck, TbCopy, TbEdit, TbPlus, TbTrash } from 'react-icons/tb'
+import { TbCheck, TbCopy, TbEdit, TbPlus, TbTrash, TbWorld } from 'react-icons/tb'
 
 import { instance } from '@shared/api/axios'
 import { SectionCard } from '@shared/ui/section-card'
+import { SettingsCardShared } from '@shared/ui/settings-card'
 
 type DomainKind = 'PRIMARY' | 'CDN'
+type DomainEnvironmentStatus = 'synced' | 'unavailable' | 'invalid' | 'conflict'
 type SubscriptionDomain = {
     uuid: string
     name: string
@@ -65,9 +69,14 @@ export function SubscriptionDomainsWidget() {
     const domains = useQuery({
         queryKey,
         queryFn: async () =>
-            (await instance.get<{ response: SubscriptionDomain[] }>('/api/subscription-domains'))
-                .data.response,
-        staleTime: 15_000
+            (
+                await instance.get<{
+                    response: SubscriptionDomain[]
+                    environment?: DomainEnvironmentStatus
+                }>('/api/subscription-domains')
+            ).data,
+        staleTime: 15_000,
+        refetchOnWindowFocus: 'always'
     })
     const save = useMutation({
         mutationFn: async (values: DomainForm) => {
@@ -108,31 +117,47 @@ export function SubscriptionDomainsWidget() {
         })
         setOpened(true)
     }
-    const primaryDomains = (domains.data ?? []).filter((domain) => domain.kind === 'PRIMARY')
+    const rows = domains.data?.response ?? []
+    const primaryDomains = rows.filter((domain) => domain.kind === 'PRIMARY')
+    const environmentError =
+        isAxiosError(save.error) &&
+        ['SUBSCRIPTION_DOMAIN_ENV_UNAVAILABLE', 'SUBSCRIPTION_DOMAIN_ENV_CHANGED'].includes(
+            save.error.response?.data?.errorCode
+        )
 
     return (
         <>
             <SectionCard.Root>
                 <SectionCard.Section>
                     <Stack gap="sm">
-                        <Group justify="space-between" align="flex-start" wrap="wrap">
-                            <div>
-                                <Text fw={600}>{t('subscription-domains.title')}</Text>
-                                <Text c="dimmed" size="sm">
-                                    {t('subscription-domains.help')}
-                                </Text>
-                            </div>
-                            <Button leftSection={<TbPlus size={16} />} onClick={openCreate}>
-                                {t('subscription-domains.add')}
-                            </Button>
-                        </Group>
-                        {domains.isError && (
-                            <Alert color="red">{t('subscription-domains.failed')}</Alert>
+                        <SettingsCardShared.Header
+                            title={t('subscription-domains.title')}
+                            description={t('subscription-domains.help')}
+                            icon={<TbWorld size={24} />}
+                            actions={
+                                <Button leftSection={<TbPlus size={16} />} onClick={openCreate}>
+                                    {t('subscription-domains.add')}
+                                </Button>
+                            }
+                        />
+                        {domains.isLoading && (
+                            <Loader aria-label={t('subscription-domains.loading')} />
                         )}
-                        {!domains.isLoading && !domains.data?.length && (
+                        {domains.data?.environment && (
+                            <Text
+                                size="sm"
+                                c={domains.data.environment === 'synced' ? 'dimmed' : 'yellow'}
+                            >
+                                {t(`subscription-domains.environment-${domains.data.environment}`)}
+                            </Text>
+                        )}
+                        {domains.isError && (
+                            <Alert color="red">{t('subscription-domains.load-failed')}</Alert>
+                        )}
+                        {domains.isSuccess && !rows.length && (
                             <Alert color="blue">{t('subscription-domains.empty')}</Alert>
                         )}
-                        {!!domains.data?.length && (
+                        {!!rows.length && (
                             <Table.ScrollContainer minWidth={720}>
                                 <Table verticalSpacing="sm">
                                     <Table.Thead>
@@ -145,8 +170,8 @@ export function SubscriptionDomainsWidget() {
                                         </Table.Tr>
                                     </Table.Thead>
                                     <Table.Tbody>
-                                        {domains.data.map((domain) => {
-                                            const parent = domains.data?.find(
+                                        {rows.map((domain) => {
+                                            const parent = rows.find(
                                                 (item) => item.uuid === domain.parentUuid
                                             )
                                             const inUse =
@@ -367,7 +392,13 @@ export function SubscriptionDomainsWidget() {
                             />
                         )}
                         {save.isError && (
-                            <Alert color="red">{t('subscription-domains.failed')}</Alert>
+                            <Alert color="red">
+                                {t(
+                                    environmentError
+                                        ? 'subscription-domains.environment-save-failed'
+                                        : 'subscription-domains.failed'
+                                )}
+                            </Alert>
                         )}
                         <Group justify="flex-end">
                             <Button onClick={() => setOpened(false)} variant="default">

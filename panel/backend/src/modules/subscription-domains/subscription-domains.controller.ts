@@ -52,7 +52,7 @@ export class SubscriptionDomainsController {
         type: SubscriptionDomainsResponseDto,
     })
     async list() {
-        return { response: await this.service.list() };
+        return this.service.listing();
     }
     @Header('Cache-Control', 'no-store')
     @Endpoint({

@@ -13,7 +13,10 @@ export namespace ListSubscriptionDomainsCommand {
         scope: 'list',
         kind: 'read',
     });
-    export const ResponseSchema = z.object({ response: z.array(SubscriptionDomainSchema) });
+    export const ResponseSchema = z.object({
+        response: z.array(SubscriptionDomainSchema),
+        environment: z.enum(['synced', 'unavailable', 'invalid', 'conflict']).optional(),
+    });
 }
 export namespace GetSubscriptionDomainCommand {
     export const url = REST_API.SUBSCRIPTION_DOMAINS.GET(':uuid');

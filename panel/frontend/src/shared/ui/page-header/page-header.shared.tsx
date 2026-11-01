@@ -1,19 +1,11 @@
-import {
-    Box,
-    Card,
-    CardProps,
-    Group,
-    Stack,
-    Text,
-    ThemeIcon,
-    Title,
-    UnstyledButton
-} from '@mantine/core'
+import { Box, Card, CardProps, Group, Stack, Text, Title, UnstyledButton } from '@mantine/core'
 import { useClipboard } from '@mantine/hooks'
 import { notifications } from '@mantine/notifications'
 import clsx from 'clsx'
 import { forwardRef, ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
+
+import { HeadingIcon } from '@shared/ui/heading-icon'
 
 import classes from './page-header.module.css'
 
@@ -66,11 +58,7 @@ export const PageHeaderShared = forwardRef<HTMLDivElement, PageHeaderSharedProps
                     <Group className={classes.contentSection} gap="sm" wrap="nowrap">
                         {(customThemeIcon || icon) && (
                             <Box className={classes.pageIcon}>
-                                {customThemeIcon || (
-                                    <ThemeIcon size={40} variant="light" radius="md">
-                                        {icon}
-                                    </ThemeIcon>
-                                )}
+                                {customThemeIcon || <HeadingIcon>{icon}</HeadingIcon>}
                             </Box>
                         )}
                         <Stack gap={4} miw={0}>

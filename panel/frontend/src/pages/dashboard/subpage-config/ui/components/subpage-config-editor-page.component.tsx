@@ -6,7 +6,6 @@ import {
     Group,
     SimpleGrid,
     Stack,
-    ThemeIcon,
     Tooltip
 } from '@mantine/core'
 import { useForm, schemaResolver } from '@mantine/form'
@@ -351,11 +350,7 @@ export const SubpageConfigEditorPageComponent = (props: Props) => {
                     </Group>
                 }
                 className={styles.headerCard}
-                customThemeIcon={
-                    <ThemeIcon color="cyan" size="lg" variant="soft">
-                        <TbPalette size={24} />
-                    </ThemeIcon>
-                }
+                icon={<TbPalette size={24} />}
                 description={t(
                     'subpage-config-visual-editor.widget.edit-your-subscription-page-configuration'
                 )}

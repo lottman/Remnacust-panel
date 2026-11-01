@@ -1,5 +1,7 @@
-import { Accordion, BoxProps, Text, ThemeIcon } from '@mantine/core'
+import { Accordion, BoxProps, Text } from '@mantine/core'
 import { ReactNode } from 'react'
+
+import { HeadingIcon } from '@shared/ui/heading-icon'
 
 import classes from './disclosure-card.module.css'
 
@@ -35,13 +37,7 @@ export function DisclosureCard({
             variant="contained"
         >
             <Accordion.Item value="content">
-                <Accordion.Control
-                    icon={
-                        <ThemeIcon aria-hidden color="cyan" radius="md" size={36} variant="light">
-                            {icon}
-                        </ThemeIcon>
-                    }
-                >
+                <Accordion.Control icon={<HeadingIcon size={36}>{icon}</HeadingIcon>}>
                     <Text className={classes.title} fw={600} size="md">
                         {title}
                     </Text>

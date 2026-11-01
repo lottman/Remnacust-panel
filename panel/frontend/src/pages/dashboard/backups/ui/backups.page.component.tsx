@@ -279,8 +279,6 @@ export const BackupsPageComponent = (props: IProps) => {
                         title={uiText('legacy-backups-101ec81')}
                         description={uiText('convert-to-encrypted-zip-5e62e37')}
                         icon={<TbDatabase size={24} />}
-                        iconColor="cyan"
-                        iconVariant="soft"
                     />
                     <SettingsCardShared.Content>
                         <Stack gap="sm" maw={560}>
@@ -319,8 +317,6 @@ export const BackupsPageComponent = (props: IProps) => {
                 <SettingsCardShared.Header
                     description={uiText('periodic-database-dumps-and-telegram-delivery-84bd8f9')}
                     icon={<PiClockCountdown size={24} />}
-                    iconColor="indigo"
-                    iconVariant="soft"
                     title={uiText('automation-d909750')}
                 />
                 <SettingsCardShared.Content>

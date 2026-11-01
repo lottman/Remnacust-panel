@@ -4197,6 +4197,13 @@
         "upgrade": "更新"
     },
     "subscription-domains": {
+        "loading": "正在加载域名",
+        "load-failed": "无法加载订阅域名，请重试。",
+        "environment-synced": "主域名已与 .env 中的 SUB_PUBLIC_DOMAIN 同步。",
+        "environment-unavailable": ".env 同步不可用，请更新本地安装程序和管理服务；CDN 域名仍保存在面板中。",
+        "environment-invalid": ".env 中没有有效的公共订阅域名，请检查 SUB_PUBLIC_DOMAIN。",
+        "environment-conflict": ".env 域名已注册为 CDN，或已达到域名数量上限。请先解决冲突。",
+        "environment-save-failed": "主域名未保存：.env 已更改或同步服务不可用。请刷新列表后重试。",
         "title": "订阅域名", "help": "主域名用于新链接。CDN 域名关联到主域名，并保留客户端请求订阅时使用的地址。", "add": "添加域名", "edit": "编辑域名", "failed": "无法保存域名。请检查名称、CDN 关联和域名使用情况。", "empty": "尚未注册域名。", "name": "名称", "domain": "域名", "domain-help": "仅使用公开主机名，不含协议、端口或路径。", "path": "订阅路径", "path-help": "可选的共享路径，例如 /api/sub。未指定路径的 CDN 会继承主域名路径。", "type": "类型", "kind-primary": "主域名", "kind-cdn": "CDN", "default": "默认", "make-default": "设为主域名", "primary-domain": "主域名", "cdn-help": "CDN 提供相同内容，但客户端链接仍使用 CDN 域名。", "cdn-for": "{{domain}} 的 CDN", "uuid": "ID", "usage": "使用情况", "users": "用户：{{count}}", "aliases": "CDN 域名：{{count}}", "remove-disabled": "该域名正在使用中或为默认域名"
     },
     "nodes-usage-chart": {

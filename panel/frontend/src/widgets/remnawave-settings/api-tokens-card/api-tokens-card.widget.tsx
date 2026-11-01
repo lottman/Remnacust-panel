@@ -41,8 +41,6 @@ export const ApiTokensCardWidget = (props: IProps) => {
             <SettingsCardShared.Header
                 description={t('api-tokens-card.widget.api-tokens-description')}
                 icon={<TbCookie size={24} />}
-                iconColor="cyan"
-                iconVariant="soft"
                 title={t('api-tokens-card.widget.api-tokens')}
             />
 

@@ -4197,6 +4197,13 @@
     "upgrade": "Update"
   },
   "subscription-domains": {
+        "loading": "Loading domains",
+        "load-failed": "Could not load subscription domains. Try again.",
+        "environment-synced": "The primary domain is synchronized with SUB_PUBLIC_DOMAIN in .env.",
+        "environment-unavailable": "Environment synchronization is unavailable. Update the local installer and management service; CDN domains remain in the panel.",
+        "environment-invalid": "The .env file has no valid public subscription domain. Check SUB_PUBLIC_DOMAIN.",
+        "environment-conflict": "The .env domain is registered as a CDN or the domain limit was reached. Resolve the conflict before synchronization.",
+        "environment-save-failed": "The primary domain was not saved: .env changed or synchronization is unavailable. Refresh the list and try again.",
     "title": "Subscription domains", "help": "The primary domain is used for new links. A CDN domain belongs to it and preserves the address through which the client requested the subscription.", "add": "Add domain", "edit": "Edit domain", "failed": "Could not save the domain. Check its name, CDN relation and usage.", "empty": "No domains are registered yet.", "name": "Name", "domain": "Domain", "domain-help": "Use a public hostname only, without protocol, port or path.", "path": "Subscription path", "path-help": "Optional shared path, for example /api/sub. A CDN with no path inherits its primary domain path.", "type": "Type", "kind-primary": "Primary", "kind-cdn": "CDN", "default": "Default", "make-default": "Make the primary domain", "primary-domain": "Primary domain", "cdn-help": "The CDN serves the same content, while client links stay on the CDN domain.", "cdn-for": "CDN for {{domain}}", "uuid": "ID", "usage": "Usage", "users": "Users: {{count}}", "aliases": "CDN domains: {{count}}", "remove-disabled": "The domain is in use or is the default"
   },
   "nodes-usage-chart": {

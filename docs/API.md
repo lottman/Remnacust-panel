@@ -1,4 +1,4 @@
-# Remnacust API 1.1.7.76
+# Remnacust API 1.1.7.77
 
 Области действия `serverSpeedLimitMbps`, общей скорости и квот хостов/тегов: [HOST-LIMITS.md](HOST-LIMITS.md). Скорость — целые Mbps (Мбит/с), квоты API — байты; поле Brutal `speedLimitMbps` самого хоста не является серверным ограничителем.
 
@@ -13,6 +13,8 @@ Send an API token using `Authorization: Bearer TOKEN`. An endpoint marked `api-t
 ## Subscription domains and CDN
 
 Manage public subscription hostnames through the `subscription-domains` resource. A primary domain may be the default; a CDN domain belongs to one primary domain and cannot be the default. The stable domain UUID can be assigned to a user as `subscriptionDomainUuid`. When a request comes through a registered CDN hostname, DAT links retain that hostname. Unregistered `Host` and forwarded-host headers are never trusted. See [SUBSCRIPTION-DOMAINS.md](SUBSCRIPTION-DOMAINS.md) for request fields and deployment rules.
+
+The list response also reports `environment`: `synced`, `unavailable`, `invalid` or `conflict`. Primary-domain changes synchronize `SUB_PUBLIC_DOMAIN` through the authenticated local installer service; this does not expose filesystem paths or environment contents. A failed host write rejects the change instead of reporting a successful `.env` update. CDN changes do not modify this variable. The existing scopes and admin-only boundaries remain unchanged.
 
 | Method | Path | Scope | Resource |
 |---|---|---|---|

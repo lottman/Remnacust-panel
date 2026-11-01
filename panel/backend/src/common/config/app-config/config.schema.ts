@@ -3,6 +3,8 @@ import { z } from 'zod';
 
 import { compileShortUuidPattern } from '@common/utils/short-uuid';
 
+import { configuredSubscriptionDomain } from '../../utils/public-subscription-domain';
+
 const booleanString = (def: 'true' | 'false' = 'false') =>
     z
         .string()
@@ -62,7 +64,10 @@ export const configSchema = z
         PANEL_DOMAIN: z.string().optional(),
         METRICS_USER: z.string().min(1),
         METRICS_PASS: z.string().min(1),
-        SUB_PUBLIC_DOMAIN: z.string(),
+        SUB_PUBLIC_DOMAIN: z.string().transform((value) => {
+            const origin = configuredSubscriptionDomain(value);
+            return origin ? origin.domain + origin.path : value.trim();
+        }),
         WEBHOOK_ENABLED: booleanString('false'),
         WEBHOOK_URL: z.string().optional(),
         WEBHOOK_SECRET_HEADER: z.string().optional(),

@@ -1,0 +1,10 @@
+.icon {
+    flex-shrink: 0;
+    color: var(--panel-accent-text, var(--mantine-primary-color-light-color));
+    background: color-mix(in srgb, var(--panel-accent) 12%, var(--panel-surface));
+    border: 1px solid color-mix(in srgb, var(--panel-accent) 26%, var(--panel-border));
+}
+
+.icon > svg {
+    flex-shrink: 0;
+}

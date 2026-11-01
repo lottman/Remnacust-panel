@@ -1,36 +1,40 @@
-import { Box, Divider, Group, Stack, Text, ThemeIcon, ThemeIconProps, Title } from '@mantine/core'
+import { Box, Divider, Group, Stack, Text, Title } from '@mantine/core'
 import { ReactNode } from 'react'
 
+import { HeadingIcon } from '@shared/ui/heading-icon'
+
 interface SettingsCardHeaderProps {
-    description: ReactNode | string
+    actions?: ReactNode
+    description?: ReactNode
     icon: ReactNode
-    iconColor: ThemeIconProps['color']
-    iconVariant: ThemeIconProps['variant']
     title: string
 }
 
-export function SettingsCardHeader({
-    description,
-    icon,
-    iconColor,
-    iconVariant,
-    title
-}: SettingsCardHeaderProps) {
+export function SettingsCardHeader({ description, icon, actions, title }: SettingsCardHeaderProps) {
     return (
         <Box>
-            <Group align="flex-start" justify="space-between">
-                <Group align="flex-start" gap="md" wrap="nowrap">
-                    <ThemeIcon color={iconColor} size="xl" variant={iconVariant}>
-                        {icon}
-                    </ThemeIcon>
+            <Group align="flex-start" justify="space-between" wrap="wrap">
+                <Group
+                    align="flex-start"
+                    gap="md"
+                    miw={0}
+                    style={{ flex: '1 1 220px' }}
+                    wrap="nowrap"
+                >
+                    <HeadingIcon size={44}>{icon}</HeadingIcon>
 
-                    <Stack gap={0}>
-                        <Title order={4}>{title}</Title>
-                        <Text c="dimmed" size="sm">
-                            {description}
-                        </Text>
+                    <Stack gap={0} miw={0}>
+                        <Title order={4} style={{ overflowWrap: 'anywhere' }}>
+                            {title}
+                        </Title>
+                        {description && (
+                            <Text c="dimmed" size="sm" style={{ overflowWrap: 'anywhere' }}>
+                                {description}
+                            </Text>
+                        )}
                     </Stack>
                 </Group>
+                {actions}
             </Group>
 
             <Divider

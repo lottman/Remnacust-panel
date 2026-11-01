@@ -3,7 +3,7 @@ import { UpdateSubscriptionSettingsCommand } from '@remnawave/backend-contract'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiInfo } from 'react-icons/pi'
-import { TbListLetters, TbPrescription } from 'react-icons/tb'
+import { TbListLetters, TbPrescription, TbWorld } from 'react-icons/tb'
 import Masonry from 'react-layout-masonry'
 
 import { SubscriptionAdditionalOptionsWidget } from './cards/subscription-additional-options.widget'
@@ -32,7 +32,6 @@ export const SubscriptionSettingsTabsWidget = ({ subscriptionSettings }: Subscri
 
     return (
         <Tabs
-            color="cyan"
             defaultValue={TABS.general}
             keepMountedMode="display-none"
             onChange={(value) => {
@@ -43,9 +42,11 @@ export const SubscriptionSettingsTabsWidget = ({ subscriptionSettings }: Subscri
             value={activeTab}
         >
             <Tabs.List>
-                <Tabs.Tab value={TABS.pages}>{t('subscription-pages.title')}</Tabs.Tab>
                 <Tabs.Tab leftSection={<PiInfo size={px('1.2rem')} />} value={TABS.general}>
                     {t('subscription-settings.widget.main-settings')}
+                </Tabs.Tab>
+                <Tabs.Tab leftSection={<TbWorld size={px('1.2rem')} />} value={TABS.pages}>
+                    {t('subscription-pages.title')}
                 </Tabs.Tab>
                 <Tabs.Tab leftSection={<TbListLetters size={px('1.2rem')} />} value={TABS.remarks}>
                     {t('subscription-settings.widget.custom-remarks')}

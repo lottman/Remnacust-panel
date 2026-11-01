@@ -4,7 +4,7 @@ import { notifications } from '@mantine/notifications'
 import i18next from 'i18next'
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { TbCamera, TbInfoCircle } from 'react-icons/tb'
+import { TbCamera, TbInfoCircle, TbLayoutDashboard } from 'react-icons/tb'
 
 import { useIsMobile } from '@shared/hooks'
 import { LoadingScreen, PageHeaderShared } from '@shared/ui'
@@ -81,7 +81,7 @@ export const HomePage = (props: IProps) => {
 
     return (
         <Page title={t('constants.home')}>
-            <PageHeaderShared title={t('constants.home')} />
+            <PageHeaderShared icon={<TbLayoutDashboard size={24} />} title={t('constants.home')} />
             <Stack gap="sm">
                 {runtimeSummaryMetrics.length > 0 && (
                     <div className={classes.section}>

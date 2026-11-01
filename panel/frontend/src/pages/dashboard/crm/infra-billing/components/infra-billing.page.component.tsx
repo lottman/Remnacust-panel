@@ -3,6 +3,7 @@ import { DesktopColumnsInfraBillingWidget } from '@widgets/dashboard/infra-billi
 import { MobileInfraBillingWidget } from '@widgets/dashboard/infra-billing/mobile'
 import { StatsWidget } from '@widgets/dashboard/infra-billing/stats-widget/stats.widget'
 import { useTranslation } from 'react-i18next'
+import { TbCreditCard } from 'react-icons/tb'
 
 import { useIsMobile, usePreventTableBackScroll } from '@shared/hooks'
 import { Page } from '@shared/ui/page'
@@ -16,7 +17,10 @@ export const InfraBillingPageComponent = () => {
 
     return (
         <Page title={t('constants.infra-billing')}>
-            <PageHeaderShared title={t('constants.infra-billing')} />
+            <PageHeaderShared
+                icon={<TbCreditCard size={24} />}
+                title={t('constants.infra-billing')}
+            />
             <div>
                 {isMobile ? (
                     <MobileInfraBillingWidget />

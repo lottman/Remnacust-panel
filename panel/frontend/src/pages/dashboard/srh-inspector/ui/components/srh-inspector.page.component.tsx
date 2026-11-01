@@ -2,6 +2,7 @@ import { Stack } from '@mantine/core'
 import { SrhInspectorMetrics } from '@widgets/dashboard/srh-inspector/srh-inspector-metrics'
 import { SrhInspectorTableWidget } from '@widgets/dashboard/srh-inspector/srh-inspector-table'
 import { useTranslation } from 'react-i18next'
+import { TbHistory } from 'react-icons/tb'
 
 import { Page } from '@shared/ui'
 import { PageHeaderShared } from '@shared/ui/page-header/page-header.shared'
@@ -11,7 +12,7 @@ export default function SrhInspectorPageComponent() {
 
     return (
         <Page title={t('constants.srh-inspector')}>
-            <PageHeaderShared title={t('constants.srh-inspector')} />
+            <PageHeaderShared icon={<TbHistory size={24} />} title={t('constants.srh-inspector')} />
             <Stack>
                 <SrhInspectorMetrics />
 

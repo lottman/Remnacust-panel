@@ -3,6 +3,7 @@ import { HwidInspectorLeaderboardWidget } from '@widgets/dashboard/hwid-inspecto
 import { HwidInspectorMetrics } from '@widgets/dashboard/hwid-inspector/hwid-inspector-metrics'
 import { HwidInspectorTableWidget } from '@widgets/dashboard/hwid-inspector/hwid-inspector-table'
 import { useTranslation } from 'react-i18next'
+import { TbFingerprint } from 'react-icons/tb'
 
 import { Page } from '@shared/ui'
 import { PageHeaderShared } from '@shared/ui/page-header/page-header.shared'
@@ -12,7 +13,10 @@ export default function HwidInspectorPageComponent() {
 
     return (
         <Page title={t('constants.hwid-inspector')}>
-            <PageHeaderShared title={t('constants.hwid-inspector')} />
+            <PageHeaderShared
+                icon={<TbFingerprint size={24} />}
+                title={t('constants.hwid-inspector')}
+            />
             <Stack>
                 <HwidInspectorMetrics />
 

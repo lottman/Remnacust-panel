@@ -91,6 +91,19 @@ jobs:
           NODE_INSTALL_TEST_LINUX: '1'
       - name: Check access policies and limits with PostgreSQL
         run: node tests/hwid-default-database.integration.cjs && node tests/host-policy-database.integration.cjs && node tests/limit-management-database.integration.cjs && node tests/device-reconciliation-database.integration.cjs && node tests/node-health-retention-database.integration.cjs
+      - name: Check bidirectional subscription domain synchronization with PostgreSQL
+        run: |
+          node - <<'NODE'
+          const {PrismaClient}=require('@prisma/client');
+          const database=new PrismaClient({datasourceUrl:'postgresql://postgres@127.0.0.1:55439/postgres'});
+          (async()=>{try{await database.$executeRawUnsafe('CREATE DATABASE remnacust_test_subscription_domains');}finally{await database.$disconnect();}})().catch(error=>{console.error(error);process.exitCode=1;});
+          NODE
+          npm run migrate:deploy
+          node tests/subscription-domains-database.integration.cjs
+        env:
+          DATABASE_URL: postgresql://postgres@127.0.0.1:55439/remnacust_test_subscription_domains
+          DIRECT_URL: postgresql://postgres@127.0.0.1:55439/remnacust_test_subscription_domains
+          SUBSCRIPTION_DOMAINS_TEST_DATABASE_URL: postgresql://postgres@127.0.0.1:55439/remnacust_test_subscription_domains
       - name: Check concurrent geofile imports across API processes
         run: |
           node - <<'NODE'

@@ -781,6 +781,10 @@ New devices denied is handled separately. If registration is denied for a new de
 
 Traffic quota exhaustion, the maximum device count and missing HWID support have separate messages outside this list. Reordering changes subscription messages; restrictions and access checks still apply. Presentation depends on the client.
 
+### Subscription domain and .env
+
+The primary domain and SUB_PUBLIC_DOMAIN are synchronized both ways through the local installer service. The API checks .env at startup, when opening the list and every 30 seconds. Changing the primary address in the panel updates .env and the registered Compose without a restart. A hostname, HTTPS URL and safe path are supported. CDN domains remain in the registry. Installer 1.2.113 or later is required; a missing service shows an unavailable status rather than a false confirmation. Concurrent file changes prevent overwrites. Configure DNS and certificates separately.
+
 ### Pages on this server
 
 The Subscription pages tab manages registered instances on the panel server: start, stop, restart and independent update. Installer 1.2.100 and its local control service are required. CLI commands: install-subscription-page, upgrade-subscription-page --page-id ID, and manage-subscription-page; the list shows IDs. A local panel uses a separate restricted token and Docker network. A remote panel requires HTTPS and a subscription-page API token. Page ports bind to loopback; use a separate Caddy on free HTTPS ports or your existing proxy. Updates preserve settings and stopped state; failed readiness rolls Compose back. Private operation logs: /opt/remnacust/logs/page-<id>.log. Browser requests cannot supply arbitrary commands, paths or images.
@@ -803,12 +807,14 @@ During page installation or migration, choose the local panel or another panelâ€
 - **Fallback device limit**: Device limit for users without an individual limit. For example, 3 allows up to three registered devices; 0 removes the count limit.
 - **Max devices announce**: Device-count announcement sent to a compatible app with the subscription. An empty value leaves the announcement unset.
 - **Response headers**: Headers that will be sent with the subscription content.
+- **Subscription domains**: The primary domain is used for new links. A CDN domain belongs to it and preserves the address through which the client requested the subscription.
 - **Name**: Object display name. UUID remains a separate identifier.
 - **Domain**: Use a public hostname only, without protocol, port or path.
 - **Subscription path**: Optional subscription path, such as /api/sub. It must match the page and proxy configuration.
 - **Type**: Primary subscription domain or CDN address. A CDN must belong to a primary domain.
 - **Primary domain**: UUID of the primary domain associated with this CDN.
 - **Make the primary domain**: Use this primary domain for users without an explicit domain assignment.
+- **Subscription pages**: Manage local subscription pages on this server. Updates preserve settings and stopped pages remain stopped.
 
 ## Subscription response rules
 

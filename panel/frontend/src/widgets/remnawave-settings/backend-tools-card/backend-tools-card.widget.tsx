@@ -77,10 +77,7 @@ export const BackendToolsCardWidget = () => {
         <SettingsCardShared.Container>
             <SettingsCardShared.Header
                 description={t('backend-tools-card.widget.backend-tools-description')}
-                icon={<TbServer size={24} />}
-                iconColor="blue"
-                iconVariant="soft"
-                title={t('backend-tools-card.widget.backend-tools')}
+                icon={<TbServer size={24} />}                title={t('backend-tools-card.widget.backend-tools')}
             />
 
             <SettingsCardShared.Content>

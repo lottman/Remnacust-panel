@@ -404,8 +404,6 @@ export const AuthentificationSettingsCardWidget = (props: IProps) => {
                 <SettingsCardShared.Header
                     description={t('auth-settings.header.description')}
                     icon={<PiKey size={24} />}
-                    iconColor="cyan"
-                    iconVariant="soft"
                     title={t('auth-settings.header.title')}
                 />
 

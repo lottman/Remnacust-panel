@@ -76,7 +76,7 @@ export class SubscriptionDomainsService implements OnModuleInit, OnModuleDestroy
     }
     private model(row: SubscriptionDomains & { _count: { users: number; aliases: number } }) {
         const { _count, ...data } = row;
-        return { ...data, publicBaseUrl: subscriptionDomainBase(row), requestHeaderName: row.kind === 'CDN' ? cdnRequestHeaderName(row.uuid) : null, usersCount: _count.users, aliasesCount: _count.aliases };
+        return { ...data, publicBaseUrl: subscriptionDomainBase(row), requestHeaderName: row.kind === 'CDN' ? cdnRequestHeaderName(row.uuid, this.config.getOrThrow('APP_SECRET')) : null, usersCount: _count.users, aliasesCount: _count.aliases };
     }
     async list() {
         return (
@@ -303,5 +303,10 @@ export class SubscriptionDomainsService implements OnModuleInit, OnModuleDestroy
         if (!domain || !rows.some(row => row.uuid === domain.parentUuid && row.kind === 'PRIMARY'))
             throw new NotFoundException('SUBSCRIPTION_DOMAIN_NOT_FOUND');
         return subscriptionDomainBase(domain);
+    }
+
+    async gatewayHeaderName(uuid: string): Promise<string> {
+        await this.gatewayBase(uuid);
+        return cdnRequestHeaderName(uuid, this.config.getOrThrow('APP_SECRET'));
     }
 }

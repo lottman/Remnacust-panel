@@ -339,7 +339,11 @@ export class AxiosService implements OnModuleInit, OnModuleDestroy {
                 !url.pathname.endsWith(`/cdn/${uuid}`) ||
                 this.containsPrivatePanelAddress(data.publicBaseUrl))
                 throw new Error('Invalid subscription domain response');
-            const value = { uuid, publicBaseUrl: data.publicBaseUrl };
+            if (data.requestHeaderName !== undefined &&
+                (typeof data.requestHeaderName !== 'string' || !/^X-[a-f0-9]{24}$/.test(data.requestHeaderName)))
+                throw new Error('Invalid subscription domain response');
+            const value = { uuid, publicBaseUrl: data.publicBaseUrl,
+                ...(data.requestHeaderName ? { requestHeaderName: data.requestHeaderName } : {}) };
             this.publicDomains.delete(uuid);
             this.publicDomains.set(uuid, { value, until: Date.now() + 5000 });
             if (this.publicDomains.size > 128) this.publicDomains.delete(this.publicDomains.keys().next().value!);

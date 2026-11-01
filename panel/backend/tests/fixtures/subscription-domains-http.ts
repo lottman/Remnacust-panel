@@ -89,7 +89,8 @@ async function main() {
         const resolved = await request(undefined, false, relay);
         assert.equal(resolved.status, 200);
         assert.equal(resolved.body.response.publicBaseUrl, `https://cdn.example.test/cdn/${cdn.uuid}`);
-        assert.deepEqual(Object.keys(resolved.body.response).sort(), ['publicBaseUrl', 'uuid']);
+        assert.match(resolved.body.response.requestHeaderName, /^X-[a-f0-9]{24}$/);
+        assert.deepEqual(Object.keys(resolved.body.response).sort(), ['publicBaseUrl', 'requestHeaderName', 'uuid']);
         assert.equal((await request(undefined, false, '/api/sub/domains/' + row.uuid + '/resolve')).status, 404);
         assert.equal((await request(undefined, false, '/api/sub/domains/' + randomUUID() + '/resolve')).status, 404);
         tokens.set(uuid, { scopes: ['subscription-domains:read'], expireAt: new Date(0) });

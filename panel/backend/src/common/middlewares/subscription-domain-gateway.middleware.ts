@@ -5,7 +5,10 @@ import { consumeCdnSelector } from '../utils/cdn-request-header';
 
 // The path is a public selector, not a credential. Existing subscription, HWID
 // and geofile handlers still perform their normal checks after normalization.
-export function subscriptionDomainGateway(resolve: (uuid: string) => Promise<string>) {
+export function subscriptionDomainGateway(
+    resolve: (uuid: string) => Promise<string>,
+    resolveHeaderName?: (uuid: string) => Promise<string>,
+) {
     const prefix = '/api/sub/cdn/';
     return async (req: Request, res: Response, next: NextFunction) => {
         const selection = consumeCdnSelector(req.headers);
@@ -22,6 +25,8 @@ export function subscriptionDomainGateway(resolve: (uuid: string) => Promise<str
             try {
                 const base = await resolve(selector as string);
                 if (res.destroyed || res.writableEnded) return;
+                if (selection.name && selection.name !== (await resolveHeaderName?.(selector as string))?.toLowerCase())
+                    return res.status(404).end();
                 return withGeofileOrigin(base, next);
             } catch {
                 return res.status(404).end();
@@ -43,6 +48,8 @@ export function subscriptionDomainGateway(resolve: (uuid: string) => Promise<str
         try {
             const base = await resolve(match[1]);
             if (res.destroyed || res.writableEnded) return;
+            if (selection.name && selection.name !== (await resolveHeaderName?.(match[1]))?.toLowerCase())
+                return res.status(404).end();
             req.url = '/api/sub' + match[2] + (match[3] ?? '');
             return withGeofileOrigin(base, next);
         } catch {

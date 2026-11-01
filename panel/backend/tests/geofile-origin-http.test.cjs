@@ -146,13 +146,13 @@ test('real page-to-panel HTTP keeps CDN authority for routing, JSON, DAT and che
     const upstream = express();
     upstream.get('/api/sub/domains/:uuid/resolve', async (req, res) => {
         try {
-            return res.json({ response: { uuid: req.params.uuid, publicBaseUrl: await domains.gatewayBase(req.params.uuid) } });
+            return res.json({ response: { uuid: req.params.uuid, publicBaseUrl: await domains.gatewayBase(req.params.uuid), requestHeaderName: cdnRequestHeaderName(req.params.uuid, key) } });
         } catch { res.status(404).end(); }
     });
     upstream.use((req, res, next) => middleware.use(req, res, next));
     upstream.get('/api/sub/fixture/json', async (req, res) => {
         assert.equal(Object.keys(req.headers).some(isCdnSelectorHeader), false, 'Public selectors must not reach the private upstream');
-        res.set(cdnRequestHeaderName('11111111-1111-4111-8111-111111111111'), 'must-not-reach-client');
+        res.set(cdnRequestHeaderName('11111111-1111-4111-8111-111111111111', key), 'must-not-reach-client');
         await new Promise((r) => setTimeout(r, 3));
         const delivery = new XrayGeofileDelivery('incy', 'remote', 'Fixture');
         const refs = delivery.register(
@@ -224,7 +224,7 @@ test('real page-to-panel HTTP keeps CDN authority for routing, JSON, DAT and che
                             'x-forwarded-host': 'evil.test',
                             'x-remnacust-geofile-origin': 'https://evil.test',
                             'x-remnacust-subscription-domain': '33333333-3333-4333-8333-333333333333',
-                            ...(cdnId ? { [neutral ? cdnRequestHeaderName(cdnId) : 'x-remnacust-cdn']: cdnId } : {}),
+                            ...(cdnId ? { [neutral ? cdnRequestHeaderName(cdnId, key) : 'x-remnacust-cdn']: cdnId } : {}),
                         },
                     },
                     (res) => {

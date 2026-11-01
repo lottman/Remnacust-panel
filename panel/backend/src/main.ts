@@ -88,7 +88,10 @@ async function bootstrap(): Promise<void> {
     const config = app.get(TypedConfigService);
     app.use(authResponseCache);
     app.use(subscriptionBudget());
-    app.use(subscriptionDomainGateway(uuid => app.get(SubscriptionDomainsService).gatewayBase(uuid)));
+    app.use(subscriptionDomainGateway(
+        uuid => app.get(SubscriptionDomainsService).gatewayBase(uuid),
+        uuid => app.get(SubscriptionDomainsService).gatewayHeaderName(uuid),
+    ));
     app.use(boundedJsonParser(config.getOrThrow('APP_SECRET')));
 
     const helmetMiddleware = helmet({

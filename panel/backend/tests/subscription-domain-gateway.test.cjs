@@ -13,7 +13,7 @@ const backend = load(path.join(__dirname, '../src/common/middlewares/subscriptio
     '../utils/geofile-request-context': backendContext,
 }).subscriptionDomainGateway;
 const uuid = '11111111-1111-4111-8111-111111111111';
-const neutralName = 'x-b696de253bef3af261369640';
+const neutralName = 'x-c57fd6ed1e03429887769a88';
 function response() { return { code: 200, headers: {}, set(k, v) { this.headers[k] = v; }, status(v) { this.code = v; return this; }, end() { this.ended = true; } }; }
 
 test('registered public prefix is translated into a custom page prefix without losing query or request context', async () => {
@@ -62,12 +62,18 @@ test('a CDN request header selects registered context for ordinary links without
         [backend, '/api/sub', () => backendContext.currentGeofileOrigin()]]) {
         const neutral = { method: 'GET', url: prefix + '/shortuuid/json', headers: { [neutralName]: uuid } };
         let accepted = false;
-        await factory(async () => prefix ? value.publicBaseUrl : value)(neutral, response(), () => {
+        const neutralValue = { ...value, requestHeaderName: neutralName };
+        await factory(async () => prefix ? value.publicBaseUrl : neutralValue, prefix ? async () => neutralName : '')(neutral, response(), () => {
             accepted = true;
-            assert.deepEqual(current(), prefix ? value.publicBaseUrl : value);
+            assert.deepEqual(current(), prefix ? value.publicBaseUrl : neutralValue);
             assert.equal(neutral.headers[neutralName], undefined);
         });
         assert.equal(accepted, true);
+        const wrong = response();
+        await factory(async () => prefix ? value.publicBaseUrl : neutralValue, prefix ? async () => neutralName : '')(
+            { method: 'GET', url: prefix + '/shortuuid/json', headers: { 'x-000000000000000000000000': uuid } },
+            wrong, () => assert.fail('Mismatched header reached subscription routes'));
+        assert.equal(wrong.code, 404);
         for (const method of ['GET', 'HEAD']) {
             const req = { method, url: prefix + '/shortuuid/json?revision=123', headers: { 'x-remnacust-cdn': uuid } };
             const original = req.url;

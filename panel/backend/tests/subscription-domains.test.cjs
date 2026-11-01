@@ -33,7 +33,7 @@ test('domain API computes stable individual request header names only for CDN re
     );
     const list = await service.list();
     assert.equal(list[0].requestHeaderName, null);
-    assert.equal(list[1].requestHeaderName, 'X-b696de253bef3af261369640');
+    assert.equal(list[1].requestHeaderName, 'X-d9f142b3f4d53ae2399cf5b5');
     assert.equal((await service.list())[1].requestHeaderName, list[1].requestHeaderName);
 });
 

@@ -19726,9 +19726,9 @@
     }
   },
   "info": {
-    "title": "Remnacust API v1.1.7.80",
+    "title": "Remnacust API v1.1.7.81",
     "description": "\nRemnacust manages Xray users, nodes, configuration profiles and subscriptions.\n\n## Resources\n* https://t.me/lottman\n* https://github.com/lottman/Remnacust-panel\n",
-    "version": "1.1.7.80",
+    "version": "1.1.7.81",
     "contact": {},
     "license": {
       "name": "AGPL-3.0",
@@ -20818,6 +20818,11 @@
                 "publicBaseUrl": {
                   "type": "string",
                   "format": "uri"
+                },
+                "requestHeaderName": {
+                  "type": "string",
+                  "pattern": "^X-[a-f0-9]{24}$",
+                  "nullable": true
                 }
               },
               "required": [
@@ -20830,7 +20835,8 @@
                 "isDefault",
                 "usersCount",
                 "aliasesCount",
-                "publicBaseUrl"
+                "publicBaseUrl",
+                "requestHeaderName"
               ]
             }
           },
@@ -20897,6 +20903,11 @@
               "publicBaseUrl": {
                 "type": "string",
                 "format": "uri"
+              },
+              "requestHeaderName": {
+                "type": "string",
+                "pattern": "^X-[a-f0-9]{24}$",
+                "nullable": true
               }
             },
             "required": [
@@ -20909,7 +20920,8 @@
               "isDefault",
               "usersCount",
               "aliasesCount",
-              "publicBaseUrl"
+              "publicBaseUrl",
+              "requestHeaderName"
             ]
           }
         },

@@ -4233,7 +4233,7 @@
     "public-link": "Subscription URL template",
     "key-placeholder": "<key>",
     "origin": "CDN origin (HTTPS)",
-    "gateway-help": "Add this request header to the CDN origin requests once in VK or Yandex. Existing client URLs keep working; subscriptions and geofiles are delivered through this CDN.",
+    "gateway-help": "Once in VK or Yandex, add a request header using the individual name and value below. Existing client URLs keep working; subscriptions and geofiles are delivered through this CDN.",
     "origin-help": "The origin is the main subscription site. Set this origin, Host and SNI in the CDN. Preserve paths and query parameters and disable forced caching of subscription responses.",
     "gateway-migration": "This fallback uses a domain ID in the path and requires replacing an old URL once. With the request header configured above, existing URLs need no replacement.",
     "existing-link": "Existing URL or subscription key",

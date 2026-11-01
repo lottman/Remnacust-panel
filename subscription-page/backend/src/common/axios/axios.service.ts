@@ -19,6 +19,7 @@ import {
 
 import { TypedConfigService } from '@common/config/app-config';
 import { IGNORED_HEADERS } from '@common/constants';
+import { isCdnSelectorHeader } from '../utils/cdn-request-header';
 
 import { ICommandResponse } from '../types/command-response.type';
 import { subscriptionRequestHeaders } from './subscription-request-headers';
@@ -399,7 +400,7 @@ export class AxiosService implements OnModuleInit, OnModuleDestroy {
             const responseHeaders = Object.fromEntries(
                 Object.entries(response.headers).filter(
                     ([key, value]) =>
-                        !IGNORED_HEADERS.has(key) &&
+                        !IGNORED_HEADERS.has(key) && !isCdnSelectorHeader(key) &&
                         !this.containsPrivatePanelAddress(String(value)),
                 ),
             );

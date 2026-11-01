@@ -21,6 +21,22 @@ const { SubscriptionDomainsService } = load(
 
 const primaryId = '01234567-89ab-4def-8123-456789abcdef';
 
+test('domain API computes stable individual request header names only for CDN records', async () => {
+    const uuid = '11111111-1111-4111-8111-111111111111';
+    const rows = [
+        { uuid: primaryId, domain: 'sub.example.test', path: '', kind: 'PRIMARY', _count: { users: 0, aliases: 1 } },
+        { uuid, domain: 'cdn.example.test', path: '', kind: 'CDN', _count: { users: 0, aliases: 0 } },
+    ];
+    const service = new SubscriptionDomainsService(
+        { subscriptionDomains: { findMany: async () => rows } },
+        { getOrThrow: () => 'sub.example.test' },
+    );
+    const list = await service.list();
+    assert.equal(list[0].requestHeaderName, null);
+    assert.equal(list[1].requestHeaderName, 'X-b696de253bef3af261369640');
+    assert.equal((await service.list())[1].requestHeaderName, list[1].requestHeaderName);
+});
+
 test('hostname-only configuration bootstraps a default UUID and safe fallback', async () => {
     let created;
     const service = new SubscriptionDomainsService(

@@ -18,6 +18,7 @@ import { HttpExceptionWithErrorCodeType } from '../../common/exception/http-exec
 import { configuredSubscriptionDomain } from '../../common/utils/public-subscription-domain';
 import { isRestApi } from '../../common/utils/startup-app/is-development';
 import { subscriptionDomainBase } from '../../common/utils/subscription-domain-url';
+import { cdnRequestHeaderName } from '../../common/utils/cdn-request-header';
 import {
     SubscriptionDomainEnvironmentService,
     DomainEnvironmentSnapshot,
@@ -75,7 +76,7 @@ export class SubscriptionDomainsService implements OnModuleInit, OnModuleDestroy
     }
     private model(row: SubscriptionDomains & { _count: { users: number; aliases: number } }) {
         const { _count, ...data } = row;
-        return { ...data, publicBaseUrl: subscriptionDomainBase(row), usersCount: _count.users, aliasesCount: _count.aliases };
+        return { ...data, publicBaseUrl: subscriptionDomainBase(row), requestHeaderName: row.kind === 'CDN' ? cdnRequestHeaderName(row.uuid) : null, usersCount: _count.users, aliasesCount: _count.aliases };
     }
     async list() {
         return (

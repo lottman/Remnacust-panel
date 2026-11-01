@@ -1,20 +1,22 @@
 import type { Request, Response, NextFunction } from 'express';
 
 import { withGeofileOrigin } from '../utils/geofile-request-context';
+import { consumeCdnSelector } from '../utils/cdn-request-header';
 
 // The path is a public selector, not a credential. Existing subscription, HWID
 // and geofile handlers still perform their normal checks after normalization.
 export function subscriptionDomainGateway(resolve: (uuid: string) => Promise<string>) {
     const prefix = '/api/sub/cdn/';
     return async (req: Request, res: Response, next: NextFunction) => {
-        const selector = req.headers?.['x-remnacust-cdn'];
-        if (req.headers) delete req.headers['x-remnacust-cdn'];
+        const selection = consumeCdnSelector(req.headers);
+        const selector = selection.uuid;
         if (!req.url.startsWith('/api/sub/')) return next();
+        if (selection.invalid) {
+            res.set('Cache-Control', 'private, no-store');
+            return res.status(404).end();
+        }
         if (!req.url.startsWith(prefix) && selector === undefined) return next();
         res.set('Cache-Control', 'private, no-store');
-        if (selector !== undefined && (typeof selector !== 'string' ||
-            !/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/.test(selector)))
-            return res.status(404).end();
         if (!req.url.startsWith(prefix)) {
             if (!['GET', 'HEAD'].includes(req.method)) return res.status(404).end();
             try {

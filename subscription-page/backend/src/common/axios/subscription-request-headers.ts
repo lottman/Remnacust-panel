@@ -1,4 +1,5 @@
 import type { IncomingHttpHeaders } from 'node:http';
+import { isCdnSelectorHeader } from '../utils/cdn-request-header';
 
 // Client metadata belongs to the public subscription request. Gateway
 // credentials and hop-by-hop headers belong to the configured upstream.
@@ -44,7 +45,7 @@ export function subscriptionRequestHeaders(headers: IncomingHttpHeaders): Incomi
     );
     return Object.fromEntries(
         Object.entries(headers).filter(
-            ([name]) => !EXCLUDED.has(name.toLowerCase()) && !named.has(name.toLowerCase()),
+            ([name]) => !EXCLUDED.has(name.toLowerCase()) && !named.has(name.toLowerCase()) && !isCdnSelectorHeader(name),
         ),
     );
 }

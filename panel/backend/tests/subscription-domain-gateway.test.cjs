@@ -13,6 +13,7 @@ const backend = load(path.join(__dirname, '../src/common/middlewares/subscriptio
     '../utils/geofile-request-context': backendContext,
 }).subscriptionDomainGateway;
 const uuid = '11111111-1111-4111-8111-111111111111';
+const neutralName = 'x-b696de253bef3af261369640';
 function response() { return { code: 200, headers: {}, set(k, v) { this.headers[k] = v; }, status(v) { this.code = v; return this; }, end() { this.ended = true; } }; }
 
 test('registered public prefix is translated into a custom page prefix without losing query or request context', async () => {
@@ -59,6 +60,14 @@ test('a CDN request header selects registered context for ordinary links without
     assert.equal(passed, true);
     for (const [factory, prefix, current] of [[page, '', () => context.currentSubscriptionDomain()],
         [backend, '/api/sub', () => backendContext.currentGeofileOrigin()]]) {
+        const neutral = { method: 'GET', url: prefix + '/shortuuid/json', headers: { [neutralName]: uuid } };
+        let accepted = false;
+        await factory(async () => prefix ? value.publicBaseUrl : value)(neutral, response(), () => {
+            accepted = true;
+            assert.deepEqual(current(), prefix ? value.publicBaseUrl : value);
+            assert.equal(neutral.headers[neutralName], undefined);
+        });
+        assert.equal(accepted, true);
         for (const method of ['GET', 'HEAD']) {
             const req = { method, url: prefix + '/shortuuid/json?revision=123', headers: { 'x-remnacust-cdn': uuid } };
             const original = req.url;

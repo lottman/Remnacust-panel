@@ -7,6 +7,7 @@ require('reflect-metadata');
 const load = require('./load-typescript.cjs');
 const subload = require('../../../subscription-page/backend/tests/load-typescript.cjs');
 const utils = path.join(__dirname, '../src/common/utils');
+const { cdnRequestHeaderName, isCdnSelectorHeader } = load(path.join(utils, 'cdn-request-header.ts'));
 const ctx = load(path.join(utils, 'geofile-request-context.ts'));
 const origin = load(path.join(utils, 'public-geofile-origin.ts'));
 const relay = load(path.join(utils, 'geofile-relay-origin.ts'));
@@ -150,6 +151,8 @@ test('real page-to-panel HTTP keeps CDN authority for routing, JSON, DAT and che
     });
     upstream.use((req, res, next) => middleware.use(req, res, next));
     upstream.get('/api/sub/fixture/json', async (req, res) => {
+        assert.equal(Object.keys(req.headers).some(isCdnSelectorHeader), false, 'Public selectors must not reach the private upstream');
+        res.set(cdnRequestHeaderName('11111111-1111-4111-8111-111111111111'), 'must-not-reach-client');
         await new Promise((r) => setTimeout(r, 3));
         const delivery = new XrayGeofileDelivery('incy', 'remote', 'Fixture');
         const refs = delivery.register(
@@ -208,7 +211,7 @@ test('real page-to-panel HTTP keeps CDN authority for routing, JSON, DAT and che
     const front = http.createServer(page);
     await new Promise((r) => front.listen(0, '127.0.0.1', r));
     try {
-        const request = (host, url = '/fixture/json', cdnId) =>
+        const request = (host, url = '/fixture/json', cdnId, neutral = false) =>
             new Promise((resolve, reject) => {
                 http.get(
                     {
@@ -221,7 +224,7 @@ test('real page-to-panel HTTP keeps CDN authority for routing, JSON, DAT and che
                             'x-forwarded-host': 'evil.test',
                             'x-remnacust-geofile-origin': 'https://evil.test',
                             'x-remnacust-subscription-domain': '33333333-3333-4333-8333-333333333333',
-                            ...(cdnId ? { 'x-remnacust-cdn': cdnId } : {}),
+                            ...(cdnId ? { [neutral ? cdnRequestHeaderName(cdnId) : 'x-remnacust-cdn']: cdnId } : {}),
                         },
                     },
                     (res) => {
@@ -266,6 +269,20 @@ test('real page-to-panel HTTP keeps CDN authority for routing, JSON, DAT and che
         // registered path ID, passed with the page's JWT, selects the CDN.
         const domainId = '11111111-1111-4111-8111-111111111111';
         const ids = [domainId, '22222222-2222-4222-8222-222222222222'];
+        for (const id of ids) {
+            const result = await request('canonical.example.test', '/fixture/json', id, true);
+            assert.equal(result.status, 200);
+            assert.equal(Object.keys(result.headers).some(isCdnSelectorHeader), false, 'Selector response headers are stripped');
+            const profile = JSON.parse(Buffer.from(result.headers.routing.split('/onadd/')[1], 'base64'));
+            const url = new URL(profile.Geositeurl);
+            assert.equal(url.hostname, id === domainId ? 'cdn-a.example.test' : 'cdn-b.example.test');
+            const downloaded = await request('canonical.example.test', url.pathname + url.search, id, true);
+            assert.equal(downloaded.status, 200);
+            assert.deepEqual(downloaded.body, dat);
+            const checksum = await request('canonical.example.test', url.pathname + '.sha256' + url.search, id, true);
+            assert.equal(checksum.status, 200);
+            assert.equal(checksum.body.toString().trim(), require('crypto').createHash('sha256').update(dat).digest('hex'));
+        }
         const viaHeader = await Promise.all(ids.map(id => request('canonical.example.test', '/fixture/json', id)));
         for (const [index, result] of viaHeader.entries()) {
             assert.equal(result.status, 200);
@@ -298,6 +315,7 @@ test('real page-to-panel HTTP keeps CDN authority for routing, JSON, DAT and che
             `/cdn/${domainId}/cdn/${domainId}/fixture/json`])
             assert.equal((await request('canonical.example.test', url)).status, 404);
         tokenActive = false;
+        assert.equal((await request('canonical.example.test', '/fixture/json', domainId, true)).status, 503);
         assert.equal((await request('canonical.example.test', '/fixture/json', domainId)).status, 503);
         assert.equal((await request('canonical.example.test', `/cdn/${domainId}/fixture/json`)).status, 503);
         const revoked = await request('cdn-a.example.test');

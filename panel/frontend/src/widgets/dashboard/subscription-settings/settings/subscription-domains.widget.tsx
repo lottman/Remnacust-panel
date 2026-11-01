@@ -42,6 +42,7 @@ type SubscriptionDomain = {
     usersCount: number
     aliasesCount: number
     publicBaseUrl: string
+    requestHeaderName: string | null
 }
 
 type DomainForm = {
@@ -396,7 +397,7 @@ export function SubscriptionDomainsWidget() {
                         <Text size="sm">{t('subscription-domains.gateway-help')}</Text>
                         {copyableField(
                             t('subscription-domains.request-header-name'),
-                            'X-Remnacust-CDN'
+                            setupDomain.requestHeaderName ?? ''
                         )}
                         {copyableField(
                             t('subscription-domains.request-header-value'),

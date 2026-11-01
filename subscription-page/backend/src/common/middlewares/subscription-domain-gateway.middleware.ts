@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import { withSubscriptionDomain, type SubscriptionDomainContext } from '../utils/subscription-domain-context';
+import { consumeCdnSelector } from '../utils/cdn-request-header';
 
 export function subscriptionDomainGateway(
     resolve: (uuid: string) => Promise<SubscriptionDomainContext>,
@@ -7,8 +8,12 @@ export function subscriptionDomainGateway(
 ) {
     const base = customPrefix ? '/' + customPrefix.replace(/^\/+|\/+$/g, '') : '';
     return async (req: Request, res: Response, next: NextFunction) => {
-        const selector = req.headers?.['x-remnacust-cdn'];
-        if (req.headers) delete req.headers['x-remnacust-cdn'];
+        const selection = consumeCdnSelector(req.headers);
+        if (selection.invalid) {
+            res.set('Cache-Control', 'private, no-store');
+            return res.status(404).end();
+        }
+        const selector = selection.uuid;
         const path = req.url.split('?', 1)[0];
         let marker = path.lastIndexOf('/cdn/');
         // A configured legacy prefix may itself be /cdn. With a header, only
@@ -17,9 +22,6 @@ export function subscriptionDomainGateway(
             !/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}(?:\/|$)/.test(path.slice(marker + 5)))
             marker = -1;
         if (marker < 0 && selector === undefined) return next();
-        if (selector !== undefined && (typeof selector !== 'string' ||
-            !/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/.test(selector)))
-            return res.status(404).end();
         if (marker < 0) {
             res.set('Cache-Control', 'private, no-store');
             if (!['GET', 'HEAD'].includes(req.method)) return res.status(404).end();

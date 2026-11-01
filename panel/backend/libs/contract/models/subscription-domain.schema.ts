@@ -76,5 +76,6 @@ export const SubscriptionDomainSchema = z.object({
     usersCount: z.number().int().nonnegative(),
     aliasesCount: z.number().int().nonnegative(),
     publicBaseUrl: z.string().url(),
+    requestHeaderName: z.string().regex(/^X-[a-f0-9]{24}$/).nullable(),
 });
 export type SubscriptionDomainInput = z.infer<typeof SubscriptionDomainInputSchema>;

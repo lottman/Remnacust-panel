@@ -1,4 +1,4 @@
-# Remnacust API 1.1.7.75
+# Remnacust API 1.1.7.76
 
 Области действия `serverSpeedLimitMbps`, общей скорости и квот хостов/тегов: [HOST-LIMITS.md](HOST-LIMITS.md). Скорость — целые Mbps (Мбит/с), квоты API — байты; поле Brutal `speedLimitMbps` самого хоста не является серверным ограничителем.
 

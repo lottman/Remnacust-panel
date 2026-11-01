@@ -119,7 +119,7 @@ test('update endpoints are panel-only and reject API-token roles and untrusted i
         assert.throws(() => guard.canActivate(requestContext(null)));
     }
     let starts = 0;
-    let ready = false;
+    let continuityChecks = 0;
     const controller = new PanelUpdateController(
         {
             start: async () => {
@@ -127,7 +127,7 @@ test('update endpoints are panel-only and reject API-token roles and untrusted i
                 return { jobId: 'test' };
             },
         },
-        { check: async () => ({ ready }) },
+        { check: async () => { continuityChecks++; throw Error('unavailable node'); } },
     );
     const valid = { targetVersion: '1.1.7.5', requestId: '55632671-6aa0-45db-aacb-92be57ce7e73' };
     for (const body of [
@@ -138,11 +138,9 @@ test('update endpoints are panel-only and reject API-token roles and untrusted i
     ])
         await assert.rejects(controller.start(body));
     assert.equal(starts, 0);
-    await assert.rejects(controller.start(valid), /NODE_CONTINUITY_NOT_READY/);
-    assert.equal(starts, 0, 'unconfirmed autonomy must never reach the host updater');
-    ready = true;
     await controller.start(valid);
     assert.equal(starts, 1);
+    assert.equal(continuityChecks, 0, 'node availability must not delay or prevent requesting an update');
 });
 
 test('the update service authenticates on its private socket and does not cache stale idle state over an accepted job', async () => {

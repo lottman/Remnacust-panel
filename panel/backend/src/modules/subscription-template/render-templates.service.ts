@@ -130,6 +130,7 @@ export class RenderTemplatesService {
                                 this.rawCache.routingProfileRevision(key, fingerprint, minimum),
                             // Use the resolved credential identity, never an unregistered request HWID.
                             user.vlessUuid ?? '',
+                            output.sourceRevision,
                         ),
                         ...(output.inline ? { 'x-remnacust-geofiles-delivery': 'inline' } : {}),
                         ...(client === 'incy' &&

@@ -5,6 +5,7 @@ export async function stabilizeRoutingProfile(
     intervalHours: number | undefined,
     revision: (key: string, fingerprint: string, minimum: number) => Promise<number>,
     credentialScope = '',
+    sourceRevision?: string,
 ): Promise<string> {
     const match = /^(happ|incy):\/\/routing\/onadd\/(.+)$/.exec(header);
     if (!match || Buffer.byteLength(header) > 3000)
@@ -21,7 +22,9 @@ export async function stabilizeRoutingProfile(
     delete profile.LastUpdated;
     const digest = (value: string) => createHash('sha256').update(value).digest('hex');
     const key = digest(JSON.stringify([match[1], profile.Name, credentialScope]));
-    const fingerprint = digest(JSON.stringify({ profile, intervalHours }));
+    if (sourceRevision !== undefined && !/^[a-f0-9]{64}$/.test(sourceRevision))
+        throw new Error('Invalid geofile source revision');
+    const fingerprint = digest(JSON.stringify({ profile, intervalHours, ...(sourceRevision ? { sourceRevision } : {}) }));
     const value = await revision(key, fingerprint, minimum);
     if (!Number.isSafeInteger(value) || value < 0 || value >= 1e12)
         throw new Error('Invalid stored routing revision');

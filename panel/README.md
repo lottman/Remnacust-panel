@@ -1,6 +1,6 @@
 # Remnacust Panel — установка и разработка
 
-**Панель 1.1.7.87**, основа Remnawave backend/frontend 3.4.7. Полный согласованный комплект — [установщик 1.2.123](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.123), Node 1.1.20 и Core/WASM 1.1.12 на Xray v26.10.31.
+**Панель 1.1.7.87**, основа Remnawave backend/frontend 3.4.7. Полный согласованный комплект — [установщик 1.2.124](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.124), Node 1.1.20 и Core/WASM 1.1.12 на Xray v26.10.31.
 
 ![Интерфейс](assets/overview.png)
 
@@ -10,7 +10,7 @@
 
 ```bash
 curl -fsSL --proto '=https' --proto-redir '=https' https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh -o installer.sh
-sudo bash installer.sh install-panel --version 1.2.123
+sudo bash installer.sh install-panel --version 1.2.124
 ```
 
 Установщик спрашивает домен, HTTPS и необходимость сайта подписки. После запуска создайте администратора. Управление: `sudo remnacust manage-panel`; обновление: `sudo remnacust upgrade-panel`.

@@ -235,6 +235,7 @@ export async function materializeGeofiles(
                             file.kind,
                             { ...reference, target: deliveryTarget },
                             resources.datBundleUrl,
+                            file.sha256,
                         ),
                     });
                 } else {

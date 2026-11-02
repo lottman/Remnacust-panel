@@ -12,12 +12,12 @@ const {xrayProfilesFit,xrayRuleEntries,GEOFILE_INLINE_CONFIG_BUDGET,GEOFILE_INLI
 const source=n=>String(n).padStart(2,'0')+'a'.repeat(32);
 const decode=h=>JSON.parse(Buffer.from(h.split('/onadd/')[1],'base64'));
 
-function setup({rules=fixture.geosite,refs=1,profiles=1,extra='',bundleFails=false}={}) {
+function setup({rules=fixture.geosite,refs=1,profiles=1,extra='',bundleFails=false,sha256}={}) {
  const calls=[];
  const config={inbounds:[],outbounds:[],routing:{rules:[]},extra,remnacust:{geofiles:Array.from({length:refs},(_,i)=>({id:source(i),categories:['example'],target:i%2?'REJECT':'DIRECT',downloadToClient:i%2===0}))}};
  const generate=async delivery=>{
   calls.push(delivery?.mode??'none');
-  const resolved=await materializeGeofiles(config,'XRAY_JSON',async id=>({id,kind:'geosite'}),async(_,cats)=>compileDat(rules,'geosite',cats),{
+  const resolved=await materializeGeofiles(config,'XRAY_JSON',async id=>({id,kind:'geosite',sha256}),async(_,cats)=>compileDat(rules,'geosite',cats),{
    read:async()=>rules,validateDat:async(_,cats)=>{compileDat(rules,'geosite',cats,true);},
    datUrl:()=>'',datBundleUrl:async()=>{if(bundleFails)throw Error('unavailable');return 'https://subscription.test/combined.dat';},
   },delivery);
@@ -134,4 +134,19 @@ test('profile identity is stable across automatic delivery transitions, sanitize
  const b=decode(await remote.header(JSON.stringify([{routing:{rules:[{domain:values}]}}]),'provider/a',1793204001000));
  assert.equal(a.Name,b.Name);assert(!/[\r\n]/.test(a.Name));assert(Number(b.LastUpdated)>Number(a.LastUpdated));
  assert.notEqual(b.Name,decode(await remote.header(JSON.stringify([{routing:{rules:[{domain:values}]}}]),'provider/b')).Name);
+});
+
+test('automatic DAT fallback forwards active file hashes while keeping stable download URLs',async()=>{
+ const records=Array.from({length:1000},(_,i)=>fixture.bytes(2,fixture.domain(2,`host-${i}.example.test`)));
+ const rules=fixture.bytes(1,Buffer.concat([fixture.bytes(1,'EXAMPLE'),...records]));
+ for(const client of ['happ','incy']){
+  const first=await render(setup({rules,refs:2,sha256:'a'.repeat(64)}),{client});
+  const changed=await render(setup({rules,refs:2,sha256:'b'.repeat(64)}),{client});
+  const same=await render(setup({rules,refs:2,sha256:'b'.repeat(64)}),{client});
+  assert.equal(first.inline,false);assert.equal(changed.inline,false);
+  assert.match(first.sourceRevision,/^[a-f0-9]{64}$/);
+  assert.notEqual(changed.sourceRevision,first.sourceRevision);
+  assert.equal(same.sourceRevision,changed.sourceRevision);
+  assert.equal(decode(first.header).Geositeurl,decode(changed.header).Geositeurl);
+ }
 });

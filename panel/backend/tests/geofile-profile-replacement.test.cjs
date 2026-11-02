@@ -25,14 +25,14 @@ function revisions() {
     };
 }
 
-async function render(client, references, resolve, legacy = false) {
+async function render(client, references, resolve, legacy = false, checksums = {}) {
     const delivery = new XrayGeofileDelivery(client, 'remote', 'Subscription');
     const downloads = [];
     const rules = references.map(({ kind, id, target }) => {
         const values = delivery.register(kind, { id, target, categories: ['example'] }, async (kind, ids) => {
             downloads.push({ kind, ids });
             return `https://subscription.example.test/${kind}/${ids.join('-')}.dat`;
-        });
+        }, checksums[id]);
         return { type: 'field', [kind === 'geoip' ? 'ip' : 'domain']: values, outboundTag: target };
     });
     let header = await delivery.header(JSON.stringify([{ routing: { rules } }]), 'provider/user', clock);
@@ -44,7 +44,7 @@ async function render(client, references, resolve, legacy = false) {
         }
         header = `${client}://routing/onadd/${Buffer.from(JSON.stringify(profile)).toString('base64')}`;
     }
-    return { profile: decode(await stabilizeRoutingProfile(header, delivery.intervalHours, resolve, 'device')), downloads };
+    return { profile: decode(await stabilizeRoutingProfile(header, delivery.intervalHours, resolve, 'device', delivery.sourceRevision)), downloads };
 }
 
 test('replacing GeoIP and GeoSite with one file explicitly clears the removed URLs and rule lists', async () => {
@@ -107,5 +107,21 @@ test('upgrading with an already cached legacy profile advances its revision once
             const nextRequest = await render(client, selected, resolve);
             assert.deepEqual(nextRequest.profile, upgraded.profile, 'Unchanged subscription does not trigger another profile update');
         }
+    }
+});
+
+test('refreshing DAT contents updates the saved profile even when its download URL and cooldown stay unchanged', async () => {
+    for (const client of ['happ', 'incy']) {
+        const resolve = revisions();
+        const files = [{ kind: 'geosite', id: first, target: 'DIRECT' }];
+        const before = await render(client, files, resolve, false, { [first]: 'a'.repeat(64) });
+        const after = await render(client, files, resolve, false, { [first]: 'b'.repeat(64) });
+        assert.equal(after.profile.Name, before.profile.Name);
+        assert.equal(after.profile.Geositeurl, before.profile.Geositeurl);
+        assert(Number(after.profile.LastUpdated) > Number(before.profile.LastUpdated));
+        const unchanged = await render(client, files, resolve, false, { [first]: 'b'.repeat(64) });
+        assert.deepEqual(unchanged.profile, after.profile);
+        const restored = await render(client, files, resolve, false, { [first]: 'a'.repeat(64) });
+        assert(Number(restored.profile.LastUpdated) > Number(after.profile.LastUpdated));
     }
 });

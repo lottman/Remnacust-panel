@@ -15,7 +15,7 @@ export async function automaticXrayDelivery(options: {
     title: string;
     profileKey: string;
     generate: (delivery?: XrayGeofileDelivery) => Promise<string>;
-}): Promise<{ subscription: string; header?: string; intervalHours?: number; inline: boolean }> {
+}): Promise<{ subscription: string; header?: string; intervalHours?: number; inline: boolean; sourceRevision?: string }> {
     const { client, manualRouting, title, profileKey, generate } = options;
     const budget = client === 'incy' ? INCY_FORMATTED_CONFIG_BUDGET : XRAY_FORMATTED_CONFIG_BUDGET;
     const inline =
@@ -55,7 +55,7 @@ export async function automaticXrayDelivery(options: {
             subscription = compact(body);
             if (!header || remote.inlineOnly || !xrayProfilesFit(subscription, budget))
                 throw new ClientPoolError('geofile-client-config-size-limit');
-            return { subscription, header, intervalHours: remote.intervalHours, inline: false };
+            return { subscription, header, intervalHours: remote.intervalHours, inline: false, sourceRevision: remote.sourceRevision };
         } catch (failure) {
             if (failure instanceof XrayGeofileFallback)
                 throw new ClientPoolError(`geofile-auto-delivery-unavailable: ${failure.reason}`);

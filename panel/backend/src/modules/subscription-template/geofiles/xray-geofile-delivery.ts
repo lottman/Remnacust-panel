@@ -36,6 +36,7 @@ export class XrayGeofileFallback extends ClientPoolError {
 // One collector belongs to one subscription response, never to a cached template.
 export class XrayGeofileDelivery {
     public intervalHours?: number;
+    public sourceRevision?: string;
     public inlineOnly = false;
     private containsInline = false;
     public get hasManagedRules(): boolean {
@@ -79,11 +80,19 @@ export class XrayGeofileDelivery {
             interval: number;
             category: string;
             ambiguous: boolean;
+            sourceSha256?: string;
         }
     >();
     private bundleUrl?: DatBundleUrl;
 
-    public register(kind: DatKind, reference: GeofileReference, bundleUrl: DatBundleUrl): string[] {
+    public register(
+        kind: DatKind,
+        reference: GeofileReference,
+        bundleUrl: DatBundleUrl,
+        sourceSha256?: string,
+    ): string[] {
+        if (sourceSha256 !== undefined && !/^[a-f0-9]{64}$/.test(sourceSha256))
+            throw new XrayGeofileFallback('source-revision');
         this.bundleUrl ??= bundleUrl;
         return (reference.categories ?? []).map((category) => {
             const value = `${kind}:${datCategory(reference.id, category)}`;
@@ -99,6 +108,7 @@ export class XrayGeofileDelivery {
                 ),
                 ambiguous:
                     !!previous && (previous.ambiguous || previous.target !== reference.target),
+                sourceSha256,
             });
             if (this.references.size > 1024) throw new XrayGeofileFallback('size');
             return value;
@@ -138,6 +148,7 @@ export class XrayGeofileDelivery {
     ): Promise<string | undefined> {
         this.inlineOnly = false;
         this.intervalHours = undefined;
+        this.sourceRevision = undefined;
         if ((!this.references.size || !this.bundleUrl) && !this.containsInline) return undefined;
         const used = new Set<string>();
         const configs = JSON.parse(subscription);
@@ -166,6 +177,13 @@ export class XrayGeofileDelivery {
         if (existingGeodata) throw new XrayGeofileFallback('existing-geodata');
         if (!this.bundleUrl) throw new XrayGeofileFallback('bundle');
         const selected = [...used].sort();
+        const sources = selected
+            .map((key) => this.references.get(key)!)
+            .filter((entry) => entry.sourceSha256 !== undefined)
+            .map((entry) => `${entry.kind}:${entry.id}:${entry.sourceSha256}`);
+        this.sourceRevision = sources.length
+            ? createHash('sha256').update(JSON.stringify([...new Set(sources)].sort())).digest('hex')
+            : undefined;
         const interval = Math.max(...selected.map((key) => this.references.get(key)!.interval));
         // Force one refresh when migrating from the longer v1 names in the same interval.
         const revision = Math.floor(now / 1000 / interval) * interval + DAT_NAMESPACE_VERSION - 1;

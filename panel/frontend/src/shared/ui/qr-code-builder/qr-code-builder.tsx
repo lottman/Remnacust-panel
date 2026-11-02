@@ -1,10 +1,9 @@
-import { Box, Button, ColorPicker, Grid, Group, Stack } from '@mantine/core'
+import { Alert, Box, Button, ColorPicker, Grid, Group, Stack } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
 import i18next from 'i18next'
-import { useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbCopy, TbDownload } from 'react-icons/tb'
-import { renderSVG } from 'uqr'
 
 import { useUiText } from '@shared/i18n/interface-text'
 import {
@@ -14,8 +13,10 @@ import {
 } from '@shared/utils/copy-screenshot.util'
 
 import classes from './qr-code-builder.module.css'
+import { qrSvg } from './qr-svg'
 
 const SWATCHES = [
+    '#000000',
     '#3CC9DB',
     '#A78BFA',
     '#38BDF8',
@@ -26,7 +27,6 @@ const SWATCHES = [
     '#EF4444',
     '#2DD4BF',
     '#C084FC',
-    '#FBB324',
     '#4ADE80',
     '#F97316',
     '#EC4899',
@@ -63,17 +63,14 @@ export function QrCodeBuilder({ data, title }: IProps) {
 
     const { t } = useTranslation()
 
-    const [fgColor, setFgColor] = useState('#3CC9DB')
-    const [bgColor, setBgColor] = useState('#161B22')
+    const [fgColor, setFgColor] = useState('#000000')
+    const [bgColor, setBgColor] = useState('#FFFFFF')
     const [copying, setCopying] = useState(false)
     const [downloading, setDownloading] = useState(false)
 
     const qrRef = useRef<HTMLDivElement>(null)
 
-    const svgHtml = renderSVG(data, {
-        whiteColor: bgColor,
-        blackColor: fgColor
-    })
+    const svgHtml = useMemo(() => qrSvg(data, fgColor, bgColor), [data, fgColor, bgColor])
 
     const handleCopy = async () => {
         if (!qrRef.current) return
@@ -153,27 +150,29 @@ export function QrCodeBuilder({ data, title }: IProps) {
     )
 
     const centerPreview = (
-        <Stack gap="xs" style={{ minWidth: 0, width: '100%', maxWidth: 400, flex: 1 }}>
+        <Stack gap="xs" className={classes.previewStack}>
             <Box
                 ref={qrRef}
-                style={{
-                    position: 'relative',
-                    borderRadius: 'var(--mantine-radius-md)',
-                    overflow: 'hidden',
-                    backgroundColor: bgColor,
-                    lineHeight: 0
-                }}
+                className={classes.preview}
+                style={{ backgroundColor: bgColor }}
             >
-                <div
-                    dangerouslySetInnerHTML={{ __html: svgHtml }}
-                    style={{ lineHeight: 0, fontSize: 0 }}
-                />
+                {svgHtml ? (
+                    <img
+                        alt={t('view-user-modal.widget.qr-code')}
+                        className={classes.qrImage}
+                        src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgHtml)}`}
+                        width={320}
+                        height={320}
+                    />
+                ) : (
+                    <Alert color="red">{t('qr-code-builder.unavailable')}</Alert>
+                )}
             </Box>
 
-            {isScreenshotSupported && (
-                <Group gap="xs">
+            {isScreenshotSupported && svgHtml && (
+                <Group gap="xs" grow>
                     <Button
-                        color={fgColor}
+                        color="brand"
                         fullWidth
                         leftSection={<TbCopy size={14} />}
                         loading={copying}
@@ -201,7 +200,7 @@ export function QrCodeBuilder({ data, title }: IProps) {
     )
 
     return (
-        <Grid align="flex-start" gap="md" justify="center">
+        <Grid align="flex-start" className={classes.root} gap="md" justify="center">
             <Grid.Col order={{ base: 2, sm: 1 }} span={{ base: 12, sm: 'content' }}>
                 {leftControls}
             </Grid.Col>

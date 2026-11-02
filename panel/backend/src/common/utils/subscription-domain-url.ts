@@ -6,8 +6,7 @@ export type PublicSubscriptionDomain = {
 };
 
 export function subscriptionDomainBase(domain: PublicSubscriptionDomain): string {
-    const prefix = domain.kind === 'CDN' ? `/cdn/${domain.uuid}` : '';
-    return `https://${domain.domain}${domain.path}${prefix}`;
+    return `https://${domain.domain}${domain.path}`;
 }
 
 export function subscriptionUserUrl(

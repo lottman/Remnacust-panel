@@ -4233,7 +4233,7 @@
     "public-link": "Subscription URL template",
     "key-placeholder": "<key>",
     "origin": "CDN origin (HTTPS)",
-    "gateway-help": "Once in VK or Yandex, add a request header using the individual name and value below. Existing client URLs keep working; subscriptions and geofiles are delivered through this CDN.",
+    "gateway-help": "In VK or Yandex, add a request header using the name and value below. Client URLs use the CDN subdomain without /cdn/ID. Subscriptions and geofiles retain this domain.",
     "origin-help": "The origin is the main subscription site. Set this origin, Host and SNI in the CDN. Preserve paths and query parameters and disable forced caching of subscription responses.",
     "gateway-migration": "This fallback uses a domain ID in the path and requires replacing an old URL once. With the request header configured above, existing URLs need no replacement.",
     "existing-link": "Existing URL or subscription key",
@@ -4243,7 +4243,8 @@
     "request-header-name": "Request header name",
     "request-header-value": "Header value",
     "without-request-header": "If the CDN cannot add a request header",
-    "cdn-limit": "A regular domain can have at most three CDNs. Remove an extra CDN or choose another regular domain."
+    "cdn-limit": "A regular domain can have at most three CDNs. Remove an extra CDN or choose another regular domain.",
+    "link-tools": "Check a link with this domain"
   },
   "nodes-usage-chart": {
     "show-legend": "Show legend",
@@ -4265,5 +4266,8 @@
     "scope-all": "Get all user subscription URLs",
     "scope-primary": "Get only the user regular subscription URL",
     "scope-cdn": "Get only the user CDN subscription URLs"
+  },
+  "qr-code-builder": {
+    "unavailable": "Unable to generate the QR code. Copy the subscription URL or connection key."
   }
 }

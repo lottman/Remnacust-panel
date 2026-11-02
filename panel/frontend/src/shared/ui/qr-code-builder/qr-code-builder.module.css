@@ -1,3 +1,30 @@
+.root {
+    width: 640px;
+    max-width: 100%;
+}
+
+.previewStack {
+    width: 320px;
+    max-width: 100%;
+    margin-inline: auto;
+}
+
+.preview {
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
+    border-radius: var(--mantine-radius-md);
+    line-height: 0;
+}
+
+.qrImage {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+    object-fit: contain;
+}
+
 .controlPanel {
     background: var(--panel-subtle);
     border: 1px solid var(--panel-border);
@@ -10,6 +37,6 @@
     font-weight: 600;
     letter-spacing: 1.5px;
     text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.35);
+    color: var(--mantine-color-dimmed);
     margin-bottom: 8px;
 }

@@ -25,16 +25,16 @@ docker compose up -d --no-build --pull never
 
 ## Текущий стабильный комплект
 
-Актуально на 1 ноября 2026 года. Версии компонентов имеют отдельную нумерацию.
+Актуально на 2 ноября 2026 года. Версии компонентов имеют отдельную нумерацию.
 
 | Компонент | Версия | Основа |
 | --- | --- | --- |
-| Панель и страница подписки | [1.1.7.86](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.86) | Remnawave backend/frontend 3.4.7, Subscription Page 8.0.1 |
-| Установщик и Docker-комплект | [1.2.122](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.122) | Готовые образы Linux amd64/arm64 |
+| Панель и страница подписки | [1.1.7.87](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.87) | Remnawave backend/frontend 3.4.7, Subscription Page 8.0.1 |
+| Установщик и Docker-комплект | [1.2.123](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.123) | Готовые образы Linux amd64/arm64 |
 | Агент ноды | [1.1.20](https://github.com/lottman/Remnacust-node/releases/tag/v1.1.20) | Remnawave Node 3.4.3 |
 | Core и валидатор конфигурации | [1.1.12](https://github.com/lottman/Remnacust-core/releases/tag/v1.1.12) | Опубликованный стабильный Xray v26.10.31 |
 
-Обновление панели не заменяет ядро удалённых нод. Для новых возможностей ядра обновляйте ноду или её Core через штатное управление. Подробности: [совместимость](docs/COMPATIBILITY.md), [последние изменения](docs/releases/1.1.7.86.md).
+Обновление панели не заменяет ядро удалённых нод. Для новых возможностей ядра обновляйте ноду или её Core через штатное управление. Подробности: [совместимость](docs/COMPATIBILITY.md), [последние изменения](docs/releases/1.1.7.87.md).
 
 ![Главная Remnacust](panel/assets/overview.png)
 
@@ -49,7 +49,7 @@ curl -fsSL --proto '=https' --proto-redir '=https' https://github.com/lottman/Re
 sudo bash installer.sh install-panel
 ```
 
-Скрипт спросит версию, домен, способ HTTPS и установку сайта подписки. Для закреплённого комплекта используйте `--version 1.2.122`. Домен подтверждается отдельно; обязательные пустые ответы запрашиваются повторно. Для своего reverse proxy есть `--proxy existing`. После запуска создайте администратора в панели.
+Скрипт спросит версию, домен, способ HTTPS и установку сайта подписки. Для закреплённого комплекта используйте `--version 1.2.123`. Домен подтверждается отдельно; обязательные пустые ответы запрашиваются повторно. Для своего reverse proxy есть `--proxy existing`. После запуска создайте администратора в панели.
 
 Отдельный сайт устанавливается командой `sudo remnacust install-subscription-page`; к нему можно подключить локальную либо удалённую панель с ограниченным API-токеном. [Руководство установщика](https://github.com/lottman/Remnacust-installer#readme), [документация сайта](subscription-page/README.md).
 

@@ -30,6 +30,9 @@ export function subscriptionDomainGateway(
                 if (res.destroyed || res.writableEnded) return;
                 if (domain.uuid !== selector) return res.status(404).end();
                 if (selection.name && selection.name !== domain.requestHeaderName?.toLowerCase()) return res.status(404).end();
+                const publicPrefix = new URL(domain.publicBaseUrl).pathname.replace(/\/$/, '');
+                if (publicPrefix && req.url.startsWith(publicPrefix + '/'))
+                    req.url = base + req.url.slice(publicPrefix.length);
                 return withSubscriptionDomain(domain, next);
             } catch (error) {
                 return res.status((error as { status?: number }).status === 404 ? 404 : 503).end();
@@ -46,7 +49,7 @@ export function subscriptionDomainGateway(
         try {
             const domain = await resolve(match[1]);
             if (res.destroyed || res.writableEnded) return;
-            if (domain.uuid !== match[1] || new URL(domain.publicBaseUrl).pathname !== `${publicPrefix}/cdn/${match[1]}`)
+            if (domain.uuid !== match[1] || new URL(domain.publicBaseUrl).pathname.replace(/\/$/, '') !== publicPrefix)
                 return res.status(404).end();
             if (selection.name && selection.name !== domain.requestHeaderName?.toLowerCase()) return res.status(404).end();
             req.url = base + match[2] + (match[3] ?? '');

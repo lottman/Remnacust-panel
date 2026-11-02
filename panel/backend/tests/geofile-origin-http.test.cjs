@@ -102,7 +102,8 @@ test('real page-to-panel HTTP keeps CDN authority for routing, JSON, DAT and che
     const key = 'fixture-cdn-key',
         id = 'a'.repeat(34),
         uuid = '01234567-89ab-4def-8123-456789abcdef';
-    let tokenActive = true;
+    let tokenActive = true, legacyResolver = false;
+    const resolverVersions = [];
     const jwt = new JwtService({ secret: key }),
         apiToken = jwt.sign({ uuid, role: 'API' }, { expiresIn: 300 });
     const files = new GeofilesService(
@@ -115,9 +116,11 @@ test('real page-to-panel HTTP keeps CDN authority for routing, JSON, DAT and che
     const domains = {
         gatewayBase: async (uuid) => {
             if (uuid === '11111111-1111-4111-8111-111111111111')
-                return `https://cdn-a.example.test/cdn/${uuid}`;
+                return 'https://cdn-a.example.test';
             if (uuid === '22222222-2222-4222-8222-222222222222')
-                return `https://cdn-b.example.test/cdn/${uuid}`;
+                return 'https://cdn-b.example.test';
+            if (uuid === '44444444-4444-4444-8444-444444444444')
+                return 'https://cdn-legacy.example.test';
             throw Error('Unknown domain');
         },
         resolveOrigin: async (origin) =>
@@ -146,7 +149,9 @@ test('real page-to-panel HTTP keeps CDN authority for routing, JSON, DAT and che
     const upstream = express();
     upstream.get('/api/sub/domains/:uuid/resolve', async (req, res) => {
         try {
-            return res.json({ response: { uuid: req.params.uuid, publicBaseUrl: await domains.gatewayBase(req.params.uuid), requestHeaderName: cdnRequestHeaderName(req.params.uuid, key) } });
+            resolverVersions.push(req.query.version);
+            const base = await domains.gatewayBase(req.params.uuid);
+            return res.json({ response: { uuid: req.params.uuid, publicBaseUrl: legacyResolver ? `${base}/cdn/${req.params.uuid}` : base, requestHeaderName: cdnRequestHeaderName(req.params.uuid, key) } });
         } catch { res.status(404).end(); }
     });
     upstream.use((req, res, next) => middleware.use(req, res, next));
@@ -303,17 +308,31 @@ test('real page-to-panel HTTP keeps CDN authority for routing, JSON, DAT and che
             const profile = JSON.parse(Buffer.from(result.headers.routing.split('/onadd/')[1], 'base64'));
             const url = new URL(profile.Geositeurl);
             assert.equal(url.hostname, index % 2 ? 'cdn-b.example.test' : 'cdn-a.example.test');
-            assert.ok(url.pathname.startsWith(`/cdn/${ids[index % 2]}/geofiles/`));
-            const download = await request('canonical.example.test', url.pathname + url.search);
+            assert.ok(url.pathname.startsWith('/geofiles/'));
+            assert.ok(!url.pathname.includes('/cdn/'));
+            const withoutSelector = await request('canonical.example.test', url.pathname + url.search);
+            assert.equal(withoutSelector.status, 200);
+            assert.deepEqual(withoutSelector.body, dat);
+            const download = await request('canonical.example.test', url.pathname + url.search, ids[index % 2], true);
             assert.equal(download.status, 200);
             assert.deepEqual(download.body, dat);
-            const checksum = await request('canonical.example.test', url.pathname + '.sha256' + url.search);
+            const checksum = await request('canonical.example.test', url.pathname + '.sha256' + url.search, ids[index % 2], true);
             assert.equal(checksum.status, 200);
             assert.equal(checksum.body.toString().trim(), require('crypto').createHash('sha256').update(dat).digest('hex'));
         }
         for (const url of ['/cdn/not-a-uuid/fixture/json', '/cdn/33333333-3333-4333-8333-333333333333/fixture/json',
             `/cdn/${domainId}/cdn/${domainId}/fixture/json`])
             assert.equal((await request('canonical.example.test', url)).status, 404);
+        legacyResolver = true;
+        const legacyId = '44444444-4444-4444-8444-444444444444';
+        const compatible = await request('canonical.example.test', '/fixture/json', legacyId, true);
+        assert.equal(compatible.status, 200);
+        const compatibleProfile = JSON.parse(Buffer.from(compatible.headers.routing.split('/onadd/')[1], 'base64'));
+        const compatibleUrl = new URL(compatibleProfile.Geositeurl);
+        assert.equal(compatibleUrl.hostname, 'cdn-legacy.example.test');
+        assert.ok(compatibleUrl.pathname.startsWith('/geofiles/'));
+        assert.equal((await request('canonical.example.test', compatibleUrl.pathname + compatibleUrl.search, legacyId, true)).status, 200);
+        assert.ok(resolverVersions.every(version => version === '2'));
         tokenActive = false;
         assert.equal((await request('canonical.example.test', '/fixture/json', domainId, true)).status, 503);
         assert.equal((await request('canonical.example.test', '/fixture/json', domainId)).status, 503);

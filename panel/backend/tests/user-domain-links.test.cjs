@@ -23,7 +23,8 @@ test('one ordinary URL and three CDN URLs share a user key, with explicit select
     assert.equal(result.links.length, 4);
     assert.equal(result.links[0].url, 'https://sub.example.test/sub/fixture_key');
     assert.equal(result.links[0].isSelected, true);
-    assert.equal(result.links[1].url, `https://cdn2.example.test/sub/cdn/${uuid(2)}/fixture_key`);
+    assert.equal(result.links[1].url, 'https://cdn2.example.test/sub/fixture_key');
+    for (const link of result.links) assert.equal(new URL(link.url).pathname, '/sub/fixture_key');
     for(const link of result.links) assert.deepEqual(Object.keys(link).sort(), ['domain','domainUuid','isSelected','kind','name','url']);
     const selected = await service.userLinks(cdns[1].uuid, 'fixture_key');
     assert.equal(selected.links.find(x => x.isSelected).domainUuid, cdns[1].uuid);

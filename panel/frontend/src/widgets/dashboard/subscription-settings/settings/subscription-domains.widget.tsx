@@ -425,7 +425,7 @@ export function SubscriptionDomainsWidget() {
                         <Accordion variant="separated">
                             <Accordion.Item value="fallback">
                                 <Accordion.Control>
-                                    {t('subscription-domains.without-request-header')}
+                                    {t('subscription-domains.link-tools')}
                                 </Accordion.Control>
                                 <Accordion.Panel>
                                     <Stack gap="sm">
@@ -476,9 +476,6 @@ export function SubscriptionDomainsWidget() {
                                                 </CopyButton>
                                             }
                                         />
-                                        <Text size="sm" c="dimmed">
-                                            {t('subscription-domains.gateway-migration')}
-                                        </Text>
                                     </Stack>
                                 </Accordion.Panel>
                             </Accordion.Item>

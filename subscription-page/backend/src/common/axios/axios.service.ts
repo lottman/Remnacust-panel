@@ -327,6 +327,7 @@ export class AxiosService implements OnModuleInit, OnModuleDestroy {
         if (this.pendingDomains.size >= 128)
             throw new Error('Subscription domain is temporarily unavailable');
         const request = this.axiosInstance.get(`api/sub/domains/${uuid}/resolve`, {
+            params: { version: '2' },
             maxContentLength: 4096,
             headers: { 'Cache-Control': 'no-cache', 'Accept-Encoding': 'identity' },
         }).then(response => {
@@ -334,15 +335,20 @@ export class AxiosService implements OnModuleInit, OnModuleDestroy {
             if (data?.uuid !== uuid || typeof data.publicBaseUrl !== 'string' || data.publicBaseUrl.length > 600)
                 throw new Error('Invalid subscription domain response');
             const url = new URL(data.publicBaseUrl);
+            const legacySuffix = `/cdn/${uuid}`;
+            const publicPath = (url.pathname.endsWith(legacySuffix)
+                ? url.pathname.slice(0, -legacySuffix.length)
+                : url.pathname).replace(/\/$/, '');
             if (url.protocol !== 'https:' || url.username || url.password || url.search || url.hash ||
                 publicGeofileOrigin(url.host) !== url.origin ||
-                !url.pathname.endsWith(`/cdn/${uuid}`) ||
+                !/^(?:\/[A-Za-z0-9._~-]+)*$/.test(publicPath) ||
+                publicPath.split('/').some(part => part === '.' || part === '..') ||
                 this.containsPrivatePanelAddress(data.publicBaseUrl))
                 throw new Error('Invalid subscription domain response');
             if (data.requestHeaderName !== undefined &&
                 (typeof data.requestHeaderName !== 'string' || !/^X-[a-f0-9]{24}$/.test(data.requestHeaderName)))
                 throw new Error('Invalid subscription domain response');
-            const value = { uuid, publicBaseUrl: data.publicBaseUrl,
+            const value = { uuid, publicBaseUrl: url.origin + publicPath,
                 ...(data.requestHeaderName ? { requestHeaderName: data.requestHeaderName } : {}) };
             this.publicDomains.delete(uuid);
             this.publicDomains.set(uuid, { value, until: Date.now() + 5000 });

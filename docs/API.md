@@ -1,4 +1,4 @@
-# Remnacust API 1.1.7.86
+# Remnacust API 1.1.7.87
 
 Области действия `serverSpeedLimitMbps`, общей скорости и квот хостов/тегов: [HOST-LIMITS.md](HOST-LIMITS.md). Скорость — целые Mbps (Мбит/с), квоты API — байты; поле Brutal `speedLimitMbps` самого хоста не является серверным ограничителем.
 
@@ -24,11 +24,11 @@ The list response also reports `environment`: `synced`, `unavailable`, `invalid`
 | PATCH | `/api/subscription-domains/{uuid}` | `subscription-domains:update` | `subscription-domains` |
 | DELETE | `/api/subscription-domains/{uuid}` | `subscription-domains:delete` | `subscription-domains` |
 
-CDN domain records expose computed `publicBaseUrl` and `requestHeaderName`. The latter is an individual neutral name for a CDN origin request header; primary domains return `null`. Its value is the CDN UUID. Both remain stable across upgrades. The name is derived with the private installation key; rotating APP_SECRET changes it and requires updating the CDN header name. User `subscriptionUrl` and subscription template links include the `/cdn/<domain-uuid>` fallback automatically. See [CDN setup and migration](SUBSCRIPTION-DOMAINS.md). The public resolver returns only a registered CDN’s UUID, public base and neutral header name; it grants no user access and exposes no origin or panel address.
+CDN domain records expose computed `publicBaseUrl` and `requestHeaderName`. The latter is an individual neutral name for a CDN origin request header; primary domains return `null`. Its value is the CDN UUID. The name is derived with the private installation key; rotating APP_SECRET changes it and requires updating the CDN header name. New user, API and template URLs use the CDN hostname and configured public prefix directly, without `/cdn/<domain-uuid>`. Previously issued path selectors remain accepted. See [CDN setup and migration](SUBSCRIPTION-DOMAINS.md). The public resolver returns only a registered CDN’s UUID, public base and neutral header name; it grants no user access and exposes no origin or panel address. Subscription pages request resolver version `2` for plain public bases; the default response retains legacy metadata for older pages.
 
 ## User subscription links
 
-User cards show one ordinary link and up to three CDN links for the selected primary domain. Choosing a CDN selects the preferred URL, without creating another subscription or changing status, expiry, HWID or quotas. The original `subscriptionUrl` field remains available.
+User cards show one ordinary link and up to three CDN links for the selected primary domain, each with its own QR action. Choosing a CDN selects the preferred URL, without creating another subscription or changing status, expiry, HWID or quotas. The original `subscriptionUrl` field remains available. On the public subscription page, copied URLs, QR codes and app imports retain the origin used to open the page, including a personal device token when present.
 
 | GET path | Exact token scope |
 |---|---|

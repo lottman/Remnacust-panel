@@ -82,8 +82,9 @@ export const SubscriptionLinkWidget = ({ supportUrl, hideGetLink }: IProps) => {
         vibrate('tap')
 
         const subscriptionQrCode = renderSVG(subscriptionUrl, {
-            whiteColor: '#161B22',
-            blackColor: '#22d3ee'
+            border: 4,
+            whiteColor: '#FFFFFF',
+            blackColor: '#000000'
         })
 
         modals.open({
@@ -97,9 +98,16 @@ export const SubscriptionLinkWidget = ({ supportUrl, hideGetLink }: IProps) => {
             children: (
                 <Stack align="center">
                     <Image
+                        alt={t(baseTranslations.scanQrCode)}
                         src={`data:image/svg+xml;utf8,${encodeURIComponent(subscriptionQrCode)}`}
-                        style={{ borderRadius: 'var(--mantine-radius-md)' }}
+                        w={320}
+                        h="auto"
+                        maw="100%"
+                        style={{ aspectRatio: '1', borderRadius: 'var(--mantine-radius-md)' }}
                     />
+                    <Text size="xs" c="dimmed" ta="center" dir="ltr" style={{ overflowWrap: 'anywhere' }}>
+                        {subscriptionUrl}
+                    </Text>
                     <Text c="white" fw={600} size="lg" ta="center">
                         {t(baseTranslations.scanQrCode)}
                     </Text>

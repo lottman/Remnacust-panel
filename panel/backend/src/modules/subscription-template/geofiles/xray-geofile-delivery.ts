@@ -174,6 +174,12 @@ export class XrayGeofileDelivery {
             GlobalProxy: 'true',
             Geoipurl: '',
             Geositeurl: '',
+            DirectIp: [],
+            DirectSites: [],
+            BlockIp: [],
+            BlockSites: [],
+            ProxyIp: [],
+            ProxySites: [],
             // INCY compares this with the saved profile, including an inline
             // replacement. A window-rounded value could move backwards after
             // downloads are re-enabled. Stable URLs and SHA-256 prevent an

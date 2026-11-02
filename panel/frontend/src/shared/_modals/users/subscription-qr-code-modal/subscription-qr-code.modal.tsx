@@ -1,11 +1,12 @@
 import NiceModal, { useModal } from '@ebay/nice-modal-react'
-import { Modal } from '@mantine/core'
+import { Modal, Stack } from '@mantine/core'
 import { useTranslation } from 'react-i18next'
 import { TbQrcode } from 'react-icons/tb'
 
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { QrCodeBuilder } from '@shared/ui/qr-code-builder'
+import { CopyableFieldShared } from '@shared/ui/copyable-field/copyable-field'
 
 interface IProps {
     subscriptionUrl: string
@@ -24,7 +25,7 @@ export const SubscriptionQrCodeModal = NiceModal.create((props: IProps) => {
     return (
         <Modal
             {...modalProps}
-            size="auto"
+            size="lg"
             title={
                 <BaseOverlayHeader
                     iconColor="teal"
@@ -34,7 +35,10 @@ export const SubscriptionQrCodeModal = NiceModal.create((props: IProps) => {
                 />
             }
         >
-            <QrCodeBuilder data={subscriptionUrl} title={username} />
+            <Stack gap="md">
+                <CopyableFieldShared label={t('user-domain-links.current')} value={subscriptionUrl} />
+                <QrCodeBuilder data={subscriptionUrl} title={username} />
+            </Stack>
         </Modal>
     )
 })

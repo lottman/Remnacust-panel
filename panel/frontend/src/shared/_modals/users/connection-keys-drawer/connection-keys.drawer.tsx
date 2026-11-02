@@ -37,6 +37,7 @@ import { LoaderModalShared } from '@shared/ui/loader-modal'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { PageQueryError } from '@shared/ui/page-query-error'
 import { QrCodeBuilder } from '@shared/ui/qr-code-builder'
+import { CopyableFieldShared } from '@shared/ui/copyable-field/copyable-field'
 import { SectionCardRoot } from '@shared/ui/section-card/section-card.root'
 import { SectionCardSection } from '@shared/ui/section-card/section-card.section'
 
@@ -73,7 +74,7 @@ export const ConnectionKeysDrawer = NiceModal.create((props: IProps) => {
     const renderQrCode = (link: string, remark: string) => {
         modals.open({
             centered: true,
-            size: 'auto',
+            size: 'lg',
             title: (
                 <BaseOverlayHeader
                     iconColor="teal"
@@ -82,7 +83,12 @@ export const ConnectionKeysDrawer = NiceModal.create((props: IProps) => {
                     title={remark}
                 />
             ),
-            children: <QrCodeBuilder data={link} title={remark} />
+            children: (
+                <Stack gap="md">
+                    <CopyableFieldShared label={t('user-domain-links.current')} value={link} />
+                    <QrCodeBuilder data={link} title={remark} />
+                </Stack>
+            )
         })
     }
 

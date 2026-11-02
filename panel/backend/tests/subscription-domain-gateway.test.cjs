@@ -17,7 +17,7 @@ const neutralName = 'x-c57fd6ed1e03429887769a88';
 function response() { return { code: 200, headers: {}, set(k, v) { this.headers[k] = v; }, status(v) { this.code = v; return this; }, end() { this.ended = true; } }; }
 
 test('registered public prefix is translated into a custom page prefix without losing query or request context', async () => {
-    const value = { uuid, publicBaseUrl: `https://cdn.example.test/edge/cdn/${uuid}` };
+    const value = { uuid, publicBaseUrl: 'https://cdn.example.test/edge' };
     const req = { method: 'GET', url: `/edge/cdn/${uuid}/shortuuid/json?revision=123` };
     const res = response();
     let called = 0;
@@ -31,7 +31,7 @@ test('registered public prefix is translated into a custom page prefix without l
     const mismatch = response();
     await page(async () => value)({ method: 'GET', url: `/wrong/cdn/${uuid}/shortuuid/json` }, mismatch, () => assert.fail());
     assert.equal(mismatch.code, 404);
-    const legacyPrefix = { uuid, publicBaseUrl: `https://cdn.example.test/cdn/cdn/${uuid}` };
+    const legacyPrefix = { uuid, publicBaseUrl: 'https://cdn.example.test/cdn' };
     const prefixed = { method: 'GET', url: `/cdn/cdn/${uuid}/shortuuid/json` };
     await page(async () => legacyPrefix, '/cdn')(prefixed, response(), () => {
         assert.equal(prefixed.url, '/cdn/shortuuid/json');
@@ -40,7 +40,7 @@ test('registered public prefix is translated into a custom page prefix without l
 
 test('public panel gateway retains its fixed API destination and restores context after completion', async () => {
     const req = { method: 'HEAD', url: `/api/sub/cdn/${uuid}/geofiles/id/bundles/selection/bundle.dat.sha256?revision=123` };
-    const base = `https://cdn.example.test/api/sub/cdn/${uuid}`;
+    const base = 'https://cdn.example.test/api/sub';
     await backend(async () => base)(req, response(), () => {
         assert.equal(req.url, '/api/sub/geofiles/id/bundles/selection/bundle.dat.sha256?revision=123');
         assert.equal(backendContext.requestGeofileBase('unused'), base + '/geofiles/');
@@ -48,8 +48,32 @@ test('public panel gateway retains its fixed API destination and restores contex
     assert.equal(backendContext.currentGeofileOrigin(), undefined);
 });
 
+test('plain CDN links translate a registered prefix while retaining the entered public domain', async () => {
+    const value = { uuid, publicBaseUrl: 'https://cdn.example.test/edge', requestHeaderName: neutralName };
+    const req = { method: 'GET', url: '/edge/shortuuid/json?revision=123', headers: { [neutralName]: uuid } };
+    await page(async () => value, '/source')(req, response(), () => {
+        assert.equal(req.url, '/source/shortuuid/json?revision=123');
+        assert.deepEqual(context.currentSubscriptionDomain(), value);
+    });
+});
+
+test('public resolver keeps legacy metadata for old pages and negotiates plain URLs for new pages', async () => {
+    const { SubscriptionDomainGatewayController } = load(path.join(__dirname, '../src/modules/subscription-domains/subscription-domain-gateway.controller.ts'), {
+        './subscription-domains.service': {},
+    });
+    const controller = new SubscriptionDomainGatewayController({
+        gatewayBase: async () => 'https://cdn.example.test/edge',
+        gatewayHeaderName: async () => neutralName,
+    });
+    assert.equal((await controller.resolve(uuid)).response.publicBaseUrl, `https://cdn.example.test/edge/cdn/${uuid}`);
+    assert.equal((await controller.resolve(uuid, '1')).response.publicBaseUrl, `https://cdn.example.test/edge/cdn/${uuid}`);
+    const current = (await controller.resolve(uuid, '2')).response;
+    assert.deepEqual(current, {uuid, publicBaseUrl:'https://cdn.example.test/edge', requestHeaderName:neutralName});
+    for (const value of ['3', '', ['2']]) await assert.rejects(controller.resolve(uuid, value), e => e.getStatus() === 400);
+});
+
 test('a CDN request header selects registered context for ordinary links without changing their path', async () => {
-    const value = { uuid, publicBaseUrl: `https://cdn.example.test/cdn/${uuid}` };
+    const value = { uuid, publicBaseUrl: 'https://cdn.example.test' };
     const legacy = { method: 'GET', url: '/cdn/shortuuid/json?revision=123', headers: { 'x-remnacust-cdn': uuid } };
     let passed = false;
     await page(async () => value, '/cdn')(legacy, response(), () => {

@@ -9,11 +9,11 @@ const source = ts.transpileModule(fs.readFileSync(filename, 'utf8'), { compilerO
 const ref = { exports: {} };
 new Function('require', 'exports', source)(createRequire(filename), ref.exports);
 const { cdnSubscriptionLink } = ref.exports;
-const base = 'https://cdn.example.test/cdn/11111111-1111-4111-8111-111111111111';
+const base = 'https://cdn.example.test';
 const key = 'fixture_user_key';
 
 test('old links and raw keys convert locally into the selected CDN gateway without duplicating a prefix', () => {
-    for (const input of [key, `https://origin.example.test/${key}`, `https://origin.example.test/api/sub/${key}`, `${base}/${key}`])
+    for (const input of [key, `https://origin.example.test/${key}`, `https://origin.example.test/api/sub/${key}`, `${base}/${key}`, `${base}/cdn/11111111-1111-4111-8111-111111111111/${key}`])
         assert.equal(cdnSubscriptionLink(base, input), `${base}/${key}`);
     for (const type of require('@remnawave/backend-contract').REQUEST_TEMPLATE_TYPE_VALUES)
         assert.equal(cdnSubscriptionLink(base, `https://origin.example.test/${key}/${type}`), `${base}/${key}/${type}`);

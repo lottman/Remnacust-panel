@@ -195,7 +195,7 @@ test('a registered CDN keeps its public hostname and applies its registered path
 
     assert.equal(
         await service.resolveOrigin('https://cdn.example.test'),
-        'https://cdn.example.test/edge/sub/cdn/11111111-1111-4111-8111-111111111111',
+        'https://cdn.example.test/edge/sub',
     );
     assert.equal(
         await service.resolveOrigin('https://unknown.example.test'),

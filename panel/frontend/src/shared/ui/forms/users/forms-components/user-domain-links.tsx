@@ -140,11 +140,29 @@ export function UserDomainLinks({ user }: Props) {
                 </Group>
             ))}
             {!links.data?.links.length && (
-                <CopyableFieldShared
-                    label={t('user-domain-links.current')}
-                    value={user.subscriptionUrl}
-                    leftSection={<PiLinkDuotone size={16} />}
-                />
+                <Group align="flex-end" gap="xs" wrap="nowrap">
+                    <Box style={{ flex: 1, minWidth: 0 }}>
+                        <CopyableFieldShared
+                            label={t('user-domain-links.current')}
+                            value={user.subscriptionUrl}
+                            leftSection={<PiLinkDuotone size={16} />}
+                        />
+                    </Box>
+                    <Tooltip label={t('view-user-modal.widget.qr-code')}>
+                        <ActionIcon
+                            size={36}
+                            variant="light"
+                            disabled={!user.subscriptionUrl}
+                            aria-label={t('view-user-modal.widget.qr-code')}
+                            onClick={() => showModal('users_subscriptionQrCodeModal', {
+                                subscriptionUrl: user.subscriptionUrl,
+                                username: user.username
+                            })}
+                        >
+                            <TbQrcode size={19} />
+                        </ActionIcon>
+                    </Tooltip>
+                </Group>
             )}
         </Stack>
     )

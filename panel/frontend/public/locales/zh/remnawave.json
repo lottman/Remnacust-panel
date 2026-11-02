@@ -4233,7 +4233,7 @@
         "public-link": "订阅链接模板",
         "key-placeholder": "<密钥>",
         "origin": "CDN 源站（HTTPS）",
-        "gateway-help": "在 VK 或 Yandex 中一次性添加请求头，使用下方专属名称和值。客户端现有链接保持有效，订阅和地理文件会通过此 CDN 提供。",
+        "gateway-help": "在 VK 或 Yandex 中添加下方名称和值的请求头。客户端链接只使用 CDN 子域名，不含 /cdn/ID。订阅和地理文件会保留此域名。",
         "origin-help": "源站是主订阅网站。在 CDN 中设置此源站、Host 和 SNI，保留路径和查询参数，并关闭对订阅响应的强制缓存。",
         "gateway-migration": "此备用方式使用路径中的域名 ID，需要替换一次旧链接。配置上方请求头后，无需替换现有链接。",
         "existing-link": "现有链接或订阅密钥",
@@ -4243,7 +4243,8 @@
         "request-header-name": "请求头名称",
         "request-header-value": "请求头值",
         "without-request-header": "CDN 不支持添加请求头时",
-        "cdn-limit": "每个普通域名最多可关联三个 CDN。请删除多余的 CDN 或选择其他普通域名。"
+        "cdn-limit": "每个普通域名最多可关联三个 CDN。请删除多余的 CDN 或选择其他普通域名。",
+        "link-tools": "检查使用此域名的链接"
     },
     "nodes-usage-chart": {
         "show-legend": "显示图例",
@@ -4265,5 +4266,8 @@
         "scope-all": "获取用户的所有订阅链接",
         "scope-primary": "仅获取用户的普通订阅链接",
         "scope-cdn": "仅获取用户的 CDN 订阅链接"
+    },
+    "qr-code-builder": {
+        "unavailable": "无法生成二维码。请复制订阅链接或连接密钥。"
     }
 }

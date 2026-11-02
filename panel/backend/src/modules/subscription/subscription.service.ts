@@ -98,6 +98,7 @@ export class SubscriptionService {
         shortUuid: string,
         personalToken?: string,
         preview?: {
+            resolvedHostCount?: number;
             hosts?: {
                 uuid: string;
                 remark: string;
@@ -432,6 +433,11 @@ export class SubscriptionService {
             const subscription = await this.renderSubscription({
                 srrContext,
                 user: renderUser,
+                onResolvedHosts: preview
+                    ? (hostUuids) => {
+                          preview.resolvedHostCount = hostUuids.length;
+                      }
+                    : undefined,
                 hosts: subscriptionSettings.randomizeHosts
                     ? _.shuffle(availableHosts)
                     : availableHosts,
@@ -618,9 +624,20 @@ export class SubscriptionService {
             ([key]) => key.toLowerCase() === 'x-remnacust-geofiles-delivery',
         )?.[1];
         const bytes = Buffer.byteLength(response.body);
+        const noAvailableHosts = trace.resolvedHostCount === 0;
+        const inactive =
+            result.response.status !== USERS_STATUS.ACTIVE ||
+            result.response.expireAt <= new Date();
         return {
-            allowed: !device.blocked,
-            reason: device.blocked ? 'deviceBlocked' : null,
+            allowed: !device.blocked && !noAvailableHosts,
+            reason: device.blocked
+                ? 'deviceBlocked'
+                : noAvailableHosts
+                  ? inactive
+                      ? 'noInactiveHosts'
+                      : 'noAvailableHosts'
+                  : null,
+            resolvedHostCount: trace.resolvedHostCount,
             checkedAt: new Date().toISOString(),
             format: context.matchedResponseType,
             rule: context.matchedRuleName ?? null,

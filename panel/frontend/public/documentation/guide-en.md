@@ -799,7 +799,7 @@ Traffic quota exhaustion, the maximum device count and missing HWID support have
 
 ### Inactive access and freezing
 
-Hosts enabled for inactive subscription access are available for EXPIRED, DISABLED, FROZEN and LIMITED, and for an ACTIVE account whose time has expired. The additional option hides them while the subscription is active. Squad permissions, device blocks and host-specific limits still apply. Configure the FROZEN block and its position in remark order under custom remarks. {{FREE_HOST}} inserts permitted hosts at that line; it cannot bypass an HWID block. External squads may override wording and order. Older settings gain default frozen wording without replacing saved messages.
+Hosts enabled for inactive subscription access are available for EXPIRED, DISABLED, FROZEN and LIMITED, and for an ACTIVE account whose time has expired. The additional option hides them while the subscription is active. Squad permissions, device blocks and host-specific limits still apply. Configure the FROZEN block and its position in remark order under custom remarks. {{FREE_HOST}} inserts permitted hosts at that line; it cannot bypass an HWID block or grant access. Add that host’s inbound to the user’s internal squad. For a shared inbound, restrict other hosts through their squad access settings to avoid granting extra connections. Device preview warns when only notifications remain after resolving credentials. External squads may override wording and order. Older settings gain default frozen wording without replacing saved messages.
 
 ### Multiple subscription links
 

@@ -44,6 +44,20 @@ export class RenderTemplatesService {
             fallbackOptions,
             excludeHostsByTags: srrContext.excludeHostsByTags,
         });
+        if (params.onResolvedHosts) {
+            params.onResolvedHosts(
+                formattedHosts
+                    .filter(
+                        (host) =>
+                            host.metadata.uuid !== '00000000-0000-0000-0000-000000000000' &&
+                            !host.metadata.isDisabled &&
+                            !host.metadata.excludeFromSubscriptionTypes.some(
+                                (type) => type === srrContext.matchedResponseType,
+                            ),
+                    )
+                    .map((host) => host.metadata.uuid),
+            );
+        }
 
         switch (srrContext.matchedResponseType) {
             case 'XRAY_BASE64':

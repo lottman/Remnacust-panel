@@ -25,7 +25,13 @@ type Device = {
 }
 type Report = {
     allowed: boolean
-    reason: 'responseRule' | 'deviceBlocked' | 'generationUnavailable' | null
+    reason:
+        | 'responseRule'
+        | 'deviceBlocked'
+        | 'generationUnavailable'
+        | 'noInactiveHosts'
+        | 'noAvailableHosts'
+        | null
     format: string
     rule?: string | null
     template?: string | null

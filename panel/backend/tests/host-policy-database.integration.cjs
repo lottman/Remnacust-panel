@@ -303,6 +303,9 @@ async function main() {
                     await tx.$executeRawUnsafe("UPDATE hosts SET always_available=false,only_when_inactive=false WHERE uuid='11111111-1111-4111-8111-111111111111'");
                     assert.equal((await tx.$queryRawUnsafe("SELECT xera_host_user_allowed(901,'11111111-1111-4111-8111-111111111111') AS allowed"))[0].allowed, false, status + ' must not grant ordinary hosts');
                 }
+                await tx.$executeRawUnsafe("UPDATE hosts SET always_available=true,only_when_inactive=true WHERE uuid='11111111-1111-4111-8111-111111111111'");
+                await tx.$executeRawUnsafe('DELETE FROM internal_squad_members WHERE user_id=901');
+                assert.equal((await tx.$queryRawUnsafe("SELECT xera_host_user_allowed(901,'11111111-1111-4111-8111-111111111111') AS allowed"))[0].allowed, false, 'exception hosts still require an inbound in the user squad');
                 throw rollbackInactiveFixture;
             });
         } catch (error) { if (error !== rollbackInactiveFixture) throw error; }

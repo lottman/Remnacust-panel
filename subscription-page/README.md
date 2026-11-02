@@ -1,6 +1,6 @@
 # Remnacust Subscription Page
 
-**Версия 1.1.7.87**, основа Remnawave Subscription Page 8.0.1. В браузере показывает данные подписки и инструкции; VPN-приложению отдаёт выбранный формат конфигурации. Панель и сайт обновляются согласованным [комплектом 1.2.124](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.124).
+**Версия 1.1.7.87**, основа Remnawave Subscription Page 8.0.1. В браузере показывает данные подписки и инструкции; VPN-приложению отдаёт выбранный формат конфигурации. Панель и сайт обновляются согласованным [комплектом 1.2.125](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.125).
 
 ## Установка
 
@@ -8,7 +8,7 @@
 
 ```bash
 curl -fsSL --proto '=https' --proto-redir '=https' https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh -o installer.sh
-sudo bash installer.sh install-subscription-page --version 1.2.124
+sudo bash installer.sh install-subscription-page --version 1.2.125
 ```
 
 Поддерживаются Ubuntu 22.04/24.04/26.04 LTS и Linux amd64/arm64. При `install-panel` скрипт отдельно спрашивает, нужен ли сайт подписки. Локальная панель подключается через Docker-сеть и ограниченный токен; удалённая — по HTTPS.

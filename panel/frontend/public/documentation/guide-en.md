@@ -257,7 +257,7 @@ Selecting multiple nodes shows the changed fields in confirmation. Before switch
 
 ### Changing an active port
 
-Each port-plan binding selects a port, profile and inbound. Compatible changes are applied through the core while preserving existing connections. A real port, transport or incompatible active-listener change requires a separate port and tag, or an explicit restart that may interrupt connections. A rejection does not trigger a hidden restart. The original technical error is shown verbatim. Updating the container or core binary may interrupt connections.
+Compatible changes apply through the core without restarting its process. From Node 1.1.21, an ordinary profile update with the exact native port-or-transport rejection validates the configuration and automatically restarts Xray only. Failed startup restores the previous private checkpoint and working configuration. Connections may briefly drop. Timeouts, unknown replies and damaged checkpoints do not authorize automatic restart. Strict requireLiveApply and managed port plans retain their contract: such a rejection never becomes a hidden full restart. Updating the container or core binary can also interrupt connections.
 
 ### Fields and controls
 
@@ -565,7 +565,7 @@ Enable, disable and delete return after the database commit; node policy deliver
 - **Host traffic multiplier**: Usage multiplier: with a value of 2, transferring 1 GiB counts as 2 GiB. An empty host value inherits from tags.
 - **Reset traffic every**: Number of days or months between usage resets for this quota. Select the unit beside the value. Zero disables automatic resets.
 - **Automatic SNI and shortId regeneration**: SNI rotates through the pool, shortId is regenerated, nodes restart automatically
-- **Available after subscription expires or is disabled**: Allows this host to be delivered for an expired or disabled subscription. Useful for a fallback connection; the host’s own restrictions are checked separately.
+- **Available while subscription access is inactive**: Allows this host for expired, disabled or frozen subscriptions and exhausted overall quotas. Squad permissions, device blocks and the host’s own limits still apply.
 - **Unavailable during an active subscription**: Delivers the host only for inactive subscriptions. Enable “Always available” first; active subscriptions will not show this host.
 - **Tags**: Object label array. Host tags also connect enabled policies; saving an empty array clears labels.
 - **Internal Squads**: Squads granting user inbound access. On a host this is a separate squad include/exclude restriction.
@@ -796,6 +796,10 @@ When combining subscription status and HWID is enabled, an expired or disabled s
 New devices denied is handled separately. If registration is denied for a new device and its subscription is also expired or disabled, the reason placed higher in the list is shown. Moving registration denial above expiry therefore shows the registration message. These two reasons are not combined. An already registered, allowed device keeps access when the other access conditions are met.
 
 Traffic quota exhaustion, the maximum device count and missing HWID support have separate messages outside this list. Reordering changes subscription messages; restrictions and access checks still apply. Presentation depends on the client.
+
+### Inactive access and freezing
+
+Hosts enabled for inactive subscription access are available for EXPIRED, DISABLED, FROZEN and LIMITED, and for an ACTIVE account whose time has expired. The additional option hides them while the subscription is active. Squad permissions, device blocks and host-specific limits still apply. Configure the FROZEN block and its position in remark order under custom remarks. {{FREE_HOST}} inserts permitted hosts at that line; it cannot bypass an HWID block. External squads may override wording and order. Older settings gain default frozen wording without replacing saved messages.
 
 ### Multiple subscription links
 

@@ -9,7 +9,7 @@ import {
 } from '@remnawave/backend-contract'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { PiClockCountdown, PiClockUser, PiListChecks, PiProhibit } from 'react-icons/pi'
+import { PiClockCountdown, PiClockUser, PiListChecks, PiProhibit, PiSnowflake } from 'react-icons/pi'
 import { TbDevices2, TbListLetters, TbX } from 'react-icons/tb'
 import Masonry from 'react-layout-masonry'
 
@@ -132,6 +132,7 @@ export const SubscriptionUserRemarksCardWidget = (props: IProps) => {
         const expiredFiltered = filterEmptyStrings(remarks.expired)
         const limitedFiltered = filterEmptyStrings(remarks.limited)
         const disabledFiltered = filterEmptyStrings(remarks.disabled)
+        const frozenFiltered = filterEmptyStrings(remarks.frozen)
         const emptyHostsFiltered = filterEmptyStrings(remarks.emptyHosts)
         const HWIDMaxDevicesExceededFiltered = filterEmptyStrings(remarks.HWIDMaxDevicesExceeded)
         const HWIDNotSupportedFiltered = filterEmptyStrings(remarks.HWIDNotSupported)
@@ -144,6 +145,7 @@ export const SubscriptionUserRemarksCardWidget = (props: IProps) => {
             expiredFiltered[0] === '' ||
             limitedFiltered[0] === '' ||
             disabledFiltered[0] === '' ||
+            frozenFiltered[0] === '' ||
             HWIDMaxDevicesExceededFiltered[0] === '' ||
             HWIDNotSupportedFiltered[0] === '' ||
             emptyHostsFiltered[0] === ''
@@ -173,6 +175,7 @@ export const SubscriptionUserRemarksCardWidget = (props: IProps) => {
                     expiredUsers: expiredFiltered,
                     limitedUsers: limitedFiltered,
                     disabledUsers: disabledFiltered,
+                    frozenUsers: frozenFiltered,
                     emptyHosts: emptyHostsFiltered,
                     HWIDMaxDevicesExceeded: HWIDMaxDevicesExceededFiltered,
                     HWIDNotSupported: HWIDNotSupportedFiltered,
@@ -296,6 +299,14 @@ export const SubscriptionUserRemarksCardWidget = (props: IProps) => {
                                     initialRemarks={remarks.disabled}
                                     onChange={updateDisabledRemarks}
                                     title={`${t('common.field.user-status')}: DISABLED`}
+                                />
+
+                                <RemarksManager
+                                    icon={<PiSnowflake size="24px" />}
+                                    iconColor="blue"
+                                    initialRemarks={remarks.frozen}
+                                    onChange={(value) => setRemarks((prev) => ({ ...prev, frozen: value }))}
+                                    title={`${t('common.field.user-status')}: FROZEN`}
                                 />
 
                                 <RemarksManager

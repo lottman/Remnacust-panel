@@ -32311,17 +32311,19 @@
                           "default": [
                             "EXPIRED",
                             "DISABLED",
+                            "FROZEN",
                             "HWID_REGISTRATION_BLOCKED",
                             "HWID_BLOCKED"
                           ],
                           "minItems": 3,
-                          "maxItems": 4,
+                          "maxItems": 5,
                           "type": "array",
                           "items": {
                             "type": "string",
                             "enum": [
                               "EXPIRED",
                               "DISABLED",
+                              "FROZEN",
                               "HWID_BLOCKED",
                               "HWID_REGISTRATION_BLOCKED"
                             ]
@@ -32368,6 +32370,18 @@
                         },
                         "disabledUsers": {
                           "minItems": 1,
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "frozenUsers": {
+                          "default": [
+                            "❄ Subscription frozen",
+                            "Contact support"
+                          ],
+                          "minItems": 1,
+                          "maxItems": 24,
                           "type": "array",
                           "items": {
                             "type": "string"
@@ -32639,17 +32653,19 @@
                     "default": [
                       "EXPIRED",
                       "DISABLED",
+                      "FROZEN",
                       "HWID_REGISTRATION_BLOCKED",
                       "HWID_BLOCKED"
                     ],
                     "minItems": 3,
-                    "maxItems": 4,
+                    "maxItems": 5,
                     "type": "array",
                     "items": {
                       "type": "string",
                       "enum": [
                         "EXPIRED",
                         "DISABLED",
+                        "FROZEN",
                         "HWID_BLOCKED",
                         "HWID_REGISTRATION_BLOCKED"
                       ]
@@ -32696,6 +32712,18 @@
                   },
                   "disabledUsers": {
                     "minItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "frozenUsers": {
+                    "default": [
+                      "❄ Subscription frozen",
+                      "Contact support"
+                    ],
+                    "minItems": 1,
+                    "maxItems": 24,
                     "type": "array",
                     "items": {
                       "type": "string"
@@ -32974,17 +33002,19 @@
                     "default": [
                       "EXPIRED",
                       "DISABLED",
+                      "FROZEN",
                       "HWID_REGISTRATION_BLOCKED",
                       "HWID_BLOCKED"
                     ],
                     "minItems": 3,
-                    "maxItems": 4,
+                    "maxItems": 5,
                     "type": "array",
                     "items": {
                       "type": "string",
                       "enum": [
                         "EXPIRED",
                         "DISABLED",
+                        "FROZEN",
                         "HWID_BLOCKED",
                         "HWID_REGISTRATION_BLOCKED"
                       ]
@@ -33031,6 +33061,18 @@
                   },
                   "disabledUsers": {
                     "minItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "frozenUsers": {
+                    "default": [
+                      "❄ Subscription frozen",
+                      "Contact support"
+                    ],
+                    "minItems": 1,
+                    "maxItems": 24,
                     "type": "array",
                     "items": {
                       "type": "string"
@@ -33267,17 +33309,19 @@
                 "default": [
                   "EXPIRED",
                   "DISABLED",
+                  "FROZEN",
                   "HWID_REGISTRATION_BLOCKED",
                   "HWID_BLOCKED"
                 ],
                 "minItems": 3,
-                "maxItems": 4,
+                "maxItems": 5,
                 "type": "array",
                 "items": {
                   "type": "string",
                   "enum": [
                     "EXPIRED",
                     "DISABLED",
+                    "FROZEN",
                     "HWID_BLOCKED",
                     "HWID_REGISTRATION_BLOCKED"
                   ]
@@ -33324,6 +33368,18 @@
               },
               "disabledUsers": {
                 "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "frozenUsers": {
+                "default": [
+                  "❄ Subscription frozen",
+                  "Contact support"
+                ],
+                "minItems": 1,
+                "maxItems": 24,
                 "type": "array",
                 "items": {
                   "type": "string"
@@ -33561,17 +33617,19 @@
                     "default": [
                       "EXPIRED",
                       "DISABLED",
+                      "FROZEN",
                       "HWID_REGISTRATION_BLOCKED",
                       "HWID_BLOCKED"
                     ],
                     "minItems": 3,
-                    "maxItems": 4,
+                    "maxItems": 5,
                     "type": "array",
                     "items": {
                       "type": "string",
                       "enum": [
                         "EXPIRED",
                         "DISABLED",
+                        "FROZEN",
                         "HWID_BLOCKED",
                         "HWID_REGISTRATION_BLOCKED"
                       ]
@@ -33618,6 +33676,18 @@
                   },
                   "disabledUsers": {
                     "minItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "frozenUsers": {
+                    "default": [
+                      "❄ Subscription frozen",
+                      "Contact support"
+                    ],
+                    "minItems": 1,
+                    "maxItems": 24,
                     "type": "array",
                     "items": {
                       "type": "string"
@@ -33920,17 +33990,19 @@
                           "default": [
                             "EXPIRED",
                             "DISABLED",
+                            "FROZEN",
                             "HWID_REGISTRATION_BLOCKED",
                             "HWID_BLOCKED"
                           ],
                           "minItems": 3,
-                          "maxItems": 4,
+                          "maxItems": 5,
                           "type": "array",
                           "items": {
                             "type": "string",
                             "enum": [
                               "EXPIRED",
                               "DISABLED",
+                              "FROZEN",
                               "HWID_BLOCKED",
                               "HWID_REGISTRATION_BLOCKED"
                             ]
@@ -33977,6 +34049,18 @@
                         },
                         "disabledUsers": {
                           "minItems": 1,
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "frozenUsers": {
+                          "default": [
+                            "❄ Subscription frozen",
+                            "Contact support"
+                          ],
+                          "minItems": 1,
+                          "maxItems": 24,
                           "type": "array",
                           "items": {
                             "type": "string"
@@ -45874,17 +45958,19 @@
                     "default": [
                       "EXPIRED",
                       "DISABLED",
+                      "FROZEN",
                       "HWID_REGISTRATION_BLOCKED",
                       "HWID_BLOCKED"
                     ],
                     "minItems": 3,
-                    "maxItems": 4,
+                    "maxItems": 5,
                     "type": "array",
                     "items": {
                       "type": "string",
                       "enum": [
                         "EXPIRED",
                         "DISABLED",
+                        "FROZEN",
                         "HWID_BLOCKED",
                         "HWID_REGISTRATION_BLOCKED"
                       ]
@@ -45931,6 +46017,18 @@
                   },
                   "disabledUsers": {
                     "minItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "frozenUsers": {
+                    "default": [
+                      "❄ Subscription frozen",
+                      "Contact support"
+                    ],
+                    "minItems": 1,
+                    "maxItems": 24,
                     "type": "array",
                     "items": {
                       "type": "string"
@@ -46451,17 +46549,19 @@
                 "default": [
                   "EXPIRED",
                   "DISABLED",
+                  "FROZEN",
                   "HWID_REGISTRATION_BLOCKED",
                   "HWID_BLOCKED"
                 ],
                 "minItems": 3,
-                "maxItems": 4,
+                "maxItems": 5,
                 "type": "array",
                 "items": {
                   "type": "string",
                   "enum": [
                     "EXPIRED",
                     "DISABLED",
+                    "FROZEN",
                     "HWID_BLOCKED",
                     "HWID_REGISTRATION_BLOCKED"
                   ]
@@ -46508,6 +46608,18 @@
               },
               "disabledUsers": {
                 "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "frozenUsers": {
+                "default": [
+                  "❄ Subscription frozen",
+                  "Contact support"
+                ],
+                "minItems": 1,
+                "maxItems": 24,
                 "type": "array",
                 "items": {
                   "type": "string"
@@ -47001,17 +47113,19 @@
                     "default": [
                       "EXPIRED",
                       "DISABLED",
+                      "FROZEN",
                       "HWID_REGISTRATION_BLOCKED",
                       "HWID_BLOCKED"
                     ],
                     "minItems": 3,
-                    "maxItems": 4,
+                    "maxItems": 5,
                     "type": "array",
                     "items": {
                       "type": "string",
                       "enum": [
                         "EXPIRED",
                         "DISABLED",
+                        "FROZEN",
                         "HWID_BLOCKED",
                         "HWID_REGISTRATION_BLOCKED"
                       ]
@@ -47058,6 +47172,18 @@
                   },
                   "disabledUsers": {
                     "minItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "frozenUsers": {
+                    "default": [
+                      "❄ Subscription frozen",
+                      "Contact support"
+                    ],
+                    "minItems": 1,
+                    "maxItems": 24,
                     "type": "array",
                     "items": {
                       "type": "string"

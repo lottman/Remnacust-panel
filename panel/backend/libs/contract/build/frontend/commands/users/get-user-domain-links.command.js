@@ -8,24 +8,30 @@ const models_1 = require("../../models");
 const subscription_domain_schema_1 = require("../../models/subscription-domain.schema");
 const params = zod_1.z.object({ userId: models_1.numberParamSchema });
 const domainQuery = zod_1.z.object({ domainUuid: zod_1.z.uuid().optional() }).strict();
-const linksResponse = zod_1.z.object({ response: zod_1.z.object({
+const linksResponse = zod_1.z.object({
+    response: zod_1.z.object({
         primaryDomainUuid: zod_1.z.uuid(),
-        links: zod_1.z.array(zod_1.z.object({
+        links: zod_1.z
+            .array(zod_1.z.object({
             domainUuid: zod_1.z.uuid(),
             name: zod_1.z.string(),
             domain: zod_1.z.string(),
             kind: zod_1.z.enum(['PRIMARY', 'CDN']),
             url: zod_1.z.url(),
             isSelected: zod_1.z.boolean(),
-        })).max(subscription_domain_schema_1.MAX_CDN_PER_PRIMARY + 1),
-    }) });
+        }))
+            .max(subscription_domain_schema_1.MAX_CDN_PER_PRIMARY + 1),
+    }),
+});
 var GetUserDomainLinksCommand;
 (function (GetUserDomainLinksCommand) {
     GetUserDomainLinksCommand.url = api_1.REST_API.USERS.SUBSCRIPTION_LINKS;
     GetUserDomainLinksCommand.TSQ_url = GetUserDomainLinksCommand.url(':userId');
     GetUserDomainLinksCommand.endpointDetails = (0, constants_1.getEndpointDetails)(api_1.USERS_ROUTES.SUBSCRIPTION_LINKS(':userId'), 'get', 'Get user subscription links for the primary domain and its CDNs', { scope: 'subscription-links', kind: 'read' });
     GetUserDomainLinksCommand.RequestParamSchema = params;
-    GetUserDomainLinksCommand.RequestQuerySchema = domainQuery.extend({ kind: zod_1.z.enum(['PRIMARY', 'CDN']).optional() });
+    GetUserDomainLinksCommand.RequestQuerySchema = domainQuery.extend({
+        kind: zod_1.z.enum(['PRIMARY', 'CDN']).optional(),
+    });
     GetUserDomainLinksCommand.ResponseSchema = linksResponse;
 })(GetUserDomainLinksCommand || (exports.GetUserDomainLinksCommand = GetUserDomainLinksCommand = {}));
 var GetUserPrimaryDomainLinkCommand;

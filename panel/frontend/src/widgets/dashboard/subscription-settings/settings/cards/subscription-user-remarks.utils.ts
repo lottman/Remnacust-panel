@@ -19,6 +19,7 @@ export const computeRemarks = (
         expired: processRemarks(settings.customRemarks.expiredUsers),
         limited: processRemarks(settings.customRemarks.limitedUsers),
         disabled: processRemarks(settings.customRemarks.disabledUsers),
+        frozen: processRemarks(settings.customRemarks.frozenUsers ?? DEFAULT_SUBSCRIPTION_REMARKS.frozenUsers),
         emptyHosts: processRemarks(settings.customRemarks.emptyHosts),
         HWIDMaxDevicesExceeded: processRemarks(settings.customRemarks.HWIDMaxDevicesExceeded),
         HWIDNotSupported: processRemarks(settings.customRemarks.HWIDNotSupported),

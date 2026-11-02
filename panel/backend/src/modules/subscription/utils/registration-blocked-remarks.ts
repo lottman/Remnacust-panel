@@ -5,10 +5,11 @@ export function registrationBlockedRemarks(
     user: { status: string; expireAt: Date },
     settings: { customRemarks: TCustomRemarks },
 ): string[] {
-    if (user.status === 'FROZEN') return ['Subscription frozen'];
     const remarks = settings.customRemarks;
     const status =
-        user.status === 'DISABLED'
+        user.status === 'FROZEN'
+            ? 'FROZEN'
+            : user.status === 'DISABLED'
             ? 'DISABLED'
             : user.status === 'EXPIRED' || user.expireAt <= new Date()
               ? 'EXPIRED'
@@ -18,9 +19,12 @@ export function registrationBlockedRemarks(
     ];
     if (!order.includes('HWID_REGISTRATION_BLOCKED'))
         order.splice(2, 0, 'HWID_REGISTRATION_BLOCKED');
+    if (!order.includes('FROZEN')) order.splice(Math.max(0, order.indexOf('HWID_REGISTRATION_BLOCKED')), 0, 'FROZEN');
     const showStatus = status && order.indexOf(status) < order.indexOf('HWID_REGISTRATION_BLOCKED');
     const selected = showStatus
-        ? status === 'DISABLED'
+        ? status === 'FROZEN'
+            ? remarks.frozenUsers ?? ['Subscription frozen']
+            : status === 'DISABLED'
             ? remarks.disabledUsers
             : remarks.expiredUsers
         : remarks.HWIDRegistrationBlocked;
@@ -29,7 +33,9 @@ export function registrationBlockedRemarks(
         ? safe
         : [
               showStatus
-                  ? status === 'DISABLED'
+                  ? status === 'FROZEN'
+                      ? 'Subscription frozen'
+                      : status === 'DISABLED'
                       ? 'User is disabled'
                       : 'Subscription expired'
                   : 'New device registration is disabled',

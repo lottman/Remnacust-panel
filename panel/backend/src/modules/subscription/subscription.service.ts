@@ -192,10 +192,7 @@ export class SubscriptionService {
             const subscriptionSettings = srrContext.subscriptionSettings;
 
             const subscriptionInactive =
-                user.response.status === USERS_STATUS.FROZEN ||
-                user.response.status === USERS_STATUS.DISABLED ||
-                user.response.status === USERS_STATUS.EXPIRED ||
-                user.response.expireAt <= new Date();
+                user.response.status !== USERS_STATUS.ACTIVE || user.response.expireAt <= new Date();
 
             if (hwidHeaders) {
                 const device = await this.queryBus.execute(
@@ -387,11 +384,7 @@ export class SubscriptionService {
             }
 
             const subscriptionEnded =
-                user.response.status === USERS_STATUS.FROZEN ||
-                user.response.status === USERS_STATUS.EXPIRED ||
-                user.response.status === USERS_STATUS.DISABLED ||
-                (user.response.status === USERS_STATUS.ACTIVE &&
-                    user.response.expireAt <= new Date());
+                user.response.status !== USERS_STATUS.ACTIVE || user.response.expireAt <= new Date();
             const presentationHosts = hosts.response.filter((host) =>
                 subscriptionEnded ? host.alwaysAvailable : !host.onlyWhenInactive,
             );
@@ -1172,19 +1165,22 @@ export class SubscriptionService {
         user: UserEntity,
         settings: SubscriptionSettingsEntity,
     ): string[] {
-        if (user.status === USERS_STATUS.FROZEN) return ['Subscription frozen'];
         const hwidRemarks = (settings.customRemarks.HWIDBlocked ?? []).filter((remark) => {
             const value = remark.trim();
             return isTextRemark(value);
         });
         const status =
-            user.status === USERS_STATUS.DISABLED
+            user.status === USERS_STATUS.FROZEN
+                ? 'FROZEN'
+                : user.status === USERS_STATUS.DISABLED
                 ? 'DISABLED'
                 : user.status === USERS_STATUS.EXPIRED || user.expireAt <= new Date()
                   ? 'EXPIRED'
                   : null;
         const statusRemarks = settings.isShowCustomRemarks
-            ? status === 'DISABLED'
+            ? status === 'FROZEN'
+                ? settings.customRemarks.frozenUsers ?? ['Subscription frozen']
+                : status === 'DISABLED'
                 ? settings.customRemarks.disabledUsers
                 : status === 'EXPIRED'
                   ? settings.customRemarks.expiredUsers
@@ -1288,7 +1284,7 @@ export class SubscriptionService {
                         EXPIRED: settings.customRemarks.expiredUsers,
                         LIMITED: settings.customRemarks.limitedUsers,
                         DISABLED: settings.customRemarks.disabledUsers,
-                        FROZEN: ['Subscription frozen'],
+                        FROZEN: settings.customRemarks.frozenUsers ?? ['Subscription frozen'],
                     } as Record<string, string[]>
                 )[user.status];
             if (source || extraRemarks.some((remark) => remark.trim())) {

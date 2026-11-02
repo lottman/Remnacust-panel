@@ -9,7 +9,7 @@ import {
 import { RemarksManager } from '@widgets/dashboard/subscription-settings/settings/cards/managers/remarks-manager.widget'
 import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { PiClockCountdown, PiClockUser, PiListChecks, PiProhibit } from 'react-icons/pi'
+import { PiClockCountdown, PiClockUser, PiListChecks, PiProhibit, PiSnowflake } from 'react-icons/pi'
 import { TbDeviceFloppy, TbDevices2, TbListLetters, TbX } from 'react-icons/tb'
 
 import { queryClient } from '@shared/api'
@@ -35,6 +35,7 @@ export const ExternalSquadsCustomRemarksTabWidget = (props: IProps) => {
         expired: DEFAULT_SUBSCRIPTION_REMARKS.expiredUsers,
         limited: DEFAULT_SUBSCRIPTION_REMARKS.limitedUsers,
         disabled: DEFAULT_SUBSCRIPTION_REMARKS.disabledUsers,
+        frozen: DEFAULT_SUBSCRIPTION_REMARKS.frozenUsers,
         emptyHosts: DEFAULT_SUBSCRIPTION_REMARKS.emptyHosts,
         HWIDMaxDevicesExceeded: DEFAULT_SUBSCRIPTION_REMARKS.HWIDMaxDevicesExceeded,
         HWIDNotSupported: DEFAULT_SUBSCRIPTION_REMARKS.HWIDNotSupported
@@ -46,6 +47,7 @@ export const ExternalSquadsCustomRemarksTabWidget = (props: IProps) => {
         expired: defaultRemarks.expired,
         limited: defaultRemarks.limited,
         disabled: defaultRemarks.disabled,
+        frozen: defaultRemarks.frozen,
         emptyHosts: defaultRemarks.emptyHosts,
         HWIDMaxDevicesExceeded: defaultRemarks.HWIDMaxDevicesExceeded,
         HWIDNotSupported: defaultRemarks.HWIDNotSupported
@@ -73,6 +75,7 @@ export const ExternalSquadsCustomRemarksTabWidget = (props: IProps) => {
                 expired: processRemarks(currentRemarks.expiredUsers),
                 limited: processRemarks(currentRemarks.limitedUsers),
                 disabled: processRemarks(currentRemarks.disabledUsers),
+                frozen: processRemarks(currentRemarks.frozenUsers ?? DEFAULT_SUBSCRIPTION_REMARKS.frozenUsers),
                 emptyHosts: processRemarks(currentRemarks.emptyHosts),
                 HWIDMaxDevicesExceeded: processRemarks(currentRemarks.HWIDMaxDevicesExceeded),
                 HWIDNotSupported: processRemarks(currentRemarks.HWIDNotSupported)
@@ -83,6 +86,7 @@ export const ExternalSquadsCustomRemarksTabWidget = (props: IProps) => {
                 expired: defaultRemarks.expired,
                 limited: defaultRemarks.limited,
                 disabled: defaultRemarks.disabled,
+                frozen: defaultRemarks.frozen,
                 emptyHosts: defaultRemarks.emptyHosts,
                 HWIDMaxDevicesExceeded: defaultRemarks.HWIDMaxDevicesExceeded,
                 HWIDNotSupported: defaultRemarks.HWIDNotSupported
@@ -167,6 +171,7 @@ export const ExternalSquadsCustomRemarksTabWidget = (props: IProps) => {
         const expiredFiltered = filterEmptyStrings(remarks.expired)
         const limitedFiltered = filterEmptyStrings(remarks.limited)
         const disabledFiltered = filterEmptyStrings(remarks.disabled)
+        const frozenFiltered = filterEmptyStrings(remarks.frozen)
         const emptyHostsFiltered = filterEmptyStrings(remarks.emptyHosts)
         const HWIDMaxDevicesExceededFiltered = filterEmptyStrings(remarks.HWIDMaxDevicesExceeded)
         const HWIDNotSupportedFiltered = filterEmptyStrings(remarks.HWIDNotSupported)
@@ -181,6 +186,7 @@ export const ExternalSquadsCustomRemarksTabWidget = (props: IProps) => {
             expiredFiltered[0] === '' ||
             limitedFiltered[0] === '' ||
             disabledFiltered[0] === '' ||
+            frozenFiltered[0] === '' ||
             HWIDMaxDevicesExceededFiltered[0] === '' ||
             HWIDNotSupportedFiltered[0] === '' ||
             emptyHostsFiltered[0] === ''
@@ -210,6 +216,7 @@ export const ExternalSquadsCustomRemarksTabWidget = (props: IProps) => {
                     expiredUsers: expiredFiltered,
                     limitedUsers: limitedFiltered,
                     disabledUsers: disabledFiltered,
+                    frozenUsers: frozenFiltered,
                     emptyHosts: emptyHostsFiltered,
                     HWIDMaxDevicesExceeded: HWIDMaxDevicesExceededFiltered,
                     HWIDNotSupported: HWIDNotSupportedFiltered,
@@ -344,6 +351,14 @@ export const ExternalSquadsCustomRemarksTabWidget = (props: IProps) => {
                                 initialRemarks={remarks.disabled}
                                 onChange={updateDisabledRemarks}
                                 title={`${t('common.field.user-status')}: DISABLED`}
+                            />
+
+                            <RemarksManager
+                                icon={<PiSnowflake size="24px" />}
+                                iconColor="blue"
+                                initialRemarks={remarks.frozen}
+                                onChange={(value) => setRemarks((prev) => ({ ...prev, frozen: value }))}
+                                title={`${t('common.field.user-status')}: FROZEN`}
                             />
 
                             <RemarksManager

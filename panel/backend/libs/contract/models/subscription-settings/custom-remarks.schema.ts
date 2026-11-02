@@ -5,6 +5,7 @@ export const DEFAULT_SUBSCRIPTION_REMARKS = {
     expiredUsers: ['⌛ Subscription expired', 'Contact support'],
     limitedUsers: ['🚧 Subscription limited', 'Contact support'],
     disabledUsers: ['🚫 Subscription disabled', 'Contact support'],
+    frozenUsers: ['❄ Subscription frozen', 'Contact support'],
     emptyHosts: ['→ Remnacust', '→ No hosts found', '→ Check Hosts tab', '→ Check Internal Squads tab'],
     HWIDMaxDevicesExceeded: ['Limit of devices reached'],
     HWIDNotSupported: ['App not supported'],
@@ -27,14 +28,15 @@ export const CustomRemarksSchema = z.object({
     alwaysAvailableHostsPosition: z.enum(['before', 'after']).optional(),
     combineSubscriptionAndHwidRemarks: z.boolean().default(true),
     subscriptionAndHwidRemarkOrder: z
-        .array(z.enum(['EXPIRED', 'DISABLED', 'HWID_BLOCKED', 'HWID_REGISTRATION_BLOCKED']))
-        .min(3).max(4)
+        .array(z.enum(['EXPIRED', 'DISABLED', 'FROZEN', 'HWID_BLOCKED', 'HWID_REGISTRATION_BLOCKED']))
+        .min(3).max(5)
         .refine((order) => new Set(order).size === order.length && ['EXPIRED','DISABLED','HWID_BLOCKED'].every(x=>order.includes(x as typeof order[number])), 'Remark order values must be unique and complete')
-        .default(['EXPIRED', 'DISABLED', 'HWID_REGISTRATION_BLOCKED', 'HWID_BLOCKED']),
+        .default(['EXPIRED', 'DISABLED', 'FROZEN', 'HWID_REGISTRATION_BLOCKED', 'HWID_BLOCKED']),
     action: SubscriptionActionSchema.nullable().optional(),
     expiredUsers: z.array(z.string()).min(1),
     limitedUsers: z.array(z.string()).min(1),
     disabledUsers: z.array(z.string()).min(1),
+    frozenUsers: z.array(z.string()).min(1).max(24).default(() => [...DEFAULT_SUBSCRIPTION_REMARKS.frozenUsers]),
     emptyHosts: z.array(z.string()).min(1),
     HWIDMaxDevicesExceeded: z.array(z.string()).min(1),
     HWIDNotSupported: z.array(z.string()).min(1),

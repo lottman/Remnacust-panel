@@ -101,12 +101,7 @@ export class ResolveProxyConfigService {
             );
         }
 
-        const subscriptionEnded =
-            user.status === USERS_STATUS.FROZEN ||
-            user.status === USERS_STATUS.EXPIRED ||
-            user.status === USERS_STATUS.DISABLED ||
-            (user.status === USERS_STATUS.ACTIVE && user.expireAt <= new Date());
-        const inactive = user.status !== USERS_STATUS.ACTIVE || subscriptionEnded;
+        const inactive = user.status !== USERS_STATUS.ACTIVE || user.expireAt <= new Date();
         const blocked = !!(
             fallbackOptions?.showHwidMaxDeviceRemarks ||
             fallbackOptions?.showHwidNotSupportedRemarks ||
@@ -114,7 +109,7 @@ export class ResolveProxyConfigService {
             fallbackOptions?.showHwidRegistrationBlockedRemarks ||
             fallbackOptions?.respondWithRemarks?.length
         );
-        options.hosts = subscriptionEnded
+        options.hosts = inactive
             ? options.hosts.filter((host) => host.alwaysAvailable)
             : options.hosts.filter((host) => !host.onlyWhenInactive);
 
@@ -220,18 +215,21 @@ export class ResolveProxyConfigService {
         fallbackOptions: IResolveProxyConfigOptions['fallbackOptions'],
         hostCount: number,
     ): string[] | null {
-        if (user.status === USERS_STATUS.FROZEN) return ['Subscription frozen'];
         if (fallbackOptions?.showHwidRegistrationBlockedRemarks) {
             return registrationBlockedRemarks(user, settings);
         }
         const status =
-            user.status === USERS_STATUS.DISABLED
+            user.status === USERS_STATUS.FROZEN
+                ? 'FROZEN'
+                : user.status === USERS_STATUS.DISABLED
                 ? 'DISABLED'
                 : user.status === USERS_STATUS.EXPIRED || user.expireAt <= new Date()
                   ? 'EXPIRED'
                   : null;
         const statusRemarks = settings.isShowCustomRemarks
-            ? status === 'DISABLED'
+            ? status === 'FROZEN'
+                ? settings.customRemarks.frozenUsers ?? ['Subscription frozen']
+                : status === 'DISABLED'
                 ? settings.customRemarks.disabledUsers
                 : status === 'EXPIRED'
                   ? settings.customRemarks.expiredUsers

@@ -78,5 +78,8 @@ exports.SubscriptionDomainSchema = zod_1.z.object({
     usersCount: zod_1.z.number().int().nonnegative(),
     aliasesCount: zod_1.z.number().int().nonnegative(),
     publicBaseUrl: zod_1.z.string().url(),
-    requestHeaderName: zod_1.z.string().regex(/^X-[a-f0-9]{24}$/).nullable(),
+    requestHeaderName: zod_1.z
+        .string()
+        .regex(/^X-[a-f0-9]{24}$/)
+        .nullable(),
 });

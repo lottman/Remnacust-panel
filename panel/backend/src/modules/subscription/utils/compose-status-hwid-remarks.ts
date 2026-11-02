@@ -1,11 +1,11 @@
 import { TCustomRemarks } from '@libs/contracts/models/subscription-settings/custom-remarks.schema';
 
-export type TCombinedRemarkStatus = 'EXPIRED' | 'DISABLED' | 'HWID_BLOCKED';
+export type TCombinedRemarkStatus = 'EXPIRED' | 'DISABLED' | 'FROZEN' | 'HWID_BLOCKED';
 
-const DEFAULT_ORDER: TCombinedRemarkStatus[] = ['EXPIRED', 'DISABLED', 'HWID_BLOCKED'];
+const DEFAULT_ORDER: TCombinedRemarkStatus[] = ['EXPIRED', 'DISABLED', 'FROZEN', 'HWID_BLOCKED'];
 
 export function composeStatusAndHwidRemarks(
-    status: 'EXPIRED' | 'DISABLED' | null,
+    status: 'EXPIRED' | 'DISABLED' | 'FROZEN' | null,
     statusRemarks: string[],
     hwidRemarks: string[],
     settings: TCustomRemarks,
@@ -15,11 +15,13 @@ export function composeStatusAndHwidRemarks(
     }
 
     const order = settings.subscriptionAndHwidRemarkOrder?.length
-        ? settings.subscriptionAndHwidRemarkOrder
-        : DEFAULT_ORDER;
+        ? [...settings.subscriptionAndHwidRemarkOrder]
+        : [...DEFAULT_ORDER];
+    if (!order.includes('FROZEN')) order.splice(Math.max(0, order.indexOf('HWID_BLOCKED')), 0, 'FROZEN');
     const groups: Record<TCombinedRemarkStatus, string[]> = {
         EXPIRED: status === 'EXPIRED' ? statusRemarks : [],
         DISABLED: status === 'DISABLED' ? statusRemarks : [],
+        FROZEN: status === 'FROZEN' ? statusRemarks : [],
         HWID_BLOCKED: hwidRemarks,
     };
 

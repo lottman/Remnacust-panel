@@ -57,6 +57,53 @@ test('plain CDN links translate a registered prefix while retaining the entered 
     });
 });
 
+test('ordinary and CDN domains preserve browser, app, explicit-format and deny response rules', async () => {
+    const constants = require('../libs/contract/build/backend/constants');
+    const bounded = load(path.join(__dirname, '../src/common/utils/bounded-regex.ts'));
+    const { ResponseRulesMatcherService } = load(path.join(__dirname, '../src/modules/subscription-response-rules/services/response-rules-matcher.service.ts'), {
+        '@libs/contracts/constants': constants, '@common/utils/bounded-regex': bounded,
+    });
+    const matcher = new ResponseRulesMatcherService();
+    const rules = { rules: [
+        { name: 'Browser Subscription', enabled: true, operator: 'AND', conditions: [{ headerName: 'accept', operator: 'CONTAINS', value: 'text/html', caseSensitive: true }], responseType: 'BROWSER' },
+        { name: 'Fallback Base64', enabled: true, operator: 'AND', conditions: [], responseType: 'XRAY_BASE64' },
+    ] };
+    try {
+        for (const cdn of [false, true]) {
+            const value = { uuid, publicBaseUrl: 'https://cdn.example.test', requestHeaderName: neutralName };
+            for (const [agent, accept, format, expected] of [
+                ['Mozilla/5.0', 'text/html', undefined, 'BROWSER'],
+                ['Happ/6.2.0', '*/*', undefined, 'XRAY_BASE64'],
+                ['INCY/2.6.2/iOS', 'application/json', undefined, 'XRAY_BASE64'],
+                ['Happ/6.2.0', '*/*', 'json', 'XRAY_JSON'],
+                ['INCY/2.6.2/iOS', 'application/json', 'json', 'XRAY_JSON'],
+                ['Mihomo/1.19', '*/*', 'mihomo', 'MIHOMO'],
+                ['sing-box/1.12', '*/*', 'singbox', 'SINGBOX'],
+            ]) {
+                const req = { method: 'GET', url: '/shortuuid' + (format ? '/' + format : ''), headers: {
+                    host: 'canonical.example.test', 'user-agent': agent, accept, ...(cdn ? { [neutralName]: uuid } : {}),
+                } };
+                let called = false;
+                await page(async () => value)(req, response(), async () => {
+                    called = true;
+                    assert.equal(req.headers['user-agent'], agent);
+                    assert.equal(req.headers.accept, accept);
+                    assert.deepEqual(context.currentSubscriptionDomain(), cdn ? value : undefined);
+                    assert.equal((await matcher.matchRules(rules, req.headers, format)).responseType, expected);
+                });
+                assert.equal(called, true);
+                assert.equal(context.currentSubscriptionDomain(), undefined);
+            }
+        }
+        const denied = { rules: [{ enabled: true, operator: 'AND', conditions: [], responseType: 'BLOCK' }, ...rules.rules] };
+        const req = { method: 'GET', url: '/shortuuid', headers: { [neutralName]: uuid, 'user-agent': 'Happ/6.2.0' } };
+        await page(async () => ({ uuid, publicBaseUrl: 'https://cdn.example.test', requestHeaderName: neutralName }))(req, response(), async () => {
+            assert.equal((await matcher.matchRules(denied, req.headers)).responseType, 'BLOCK');
+            assert.equal((await matcher.matchRules({ ...rules, settings: { disableSubscriptionAccessByPath: true } }, req.headers, 'json')).responseType, 'BLOCK');
+        });
+    } finally { bounded.configuredRegex.close(); }
+});
+
 test('public resolver keeps legacy metadata for old pages and negotiates plain URLs for new pages', async () => {
     const { SubscriptionDomainGatewayController } = load(path.join(__dirname, '../src/modules/subscription-domains/subscription-domain-gateway.controller.ts'), {
         './subscription-domains.service': {},

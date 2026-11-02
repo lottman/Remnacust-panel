@@ -1506,7 +1506,8 @@
       "remark-order": "Remark order",
       "subscription-expired": "Subscription expired",
       "subscription-disabled": "Subscription disabled",
-      "hwid-blocked": "Device blocked (HWID)"
+      "hwid-blocked": "Device blocked (HWID)",
+      "subscription-frozen": "Subscription frozen"
     }
   },
   "multi-select-nodes": {
@@ -2625,10 +2626,10 @@
     "sni-pool-42869d6": "SNI pool",
     "regenerate-shortid-5b4336d": "Regenerate shortId",
     "last-rotation-ffd71b1": "Last rotation: ",
-    "available-after-subscription-expires-or-is-disabled-61afc39": "Available after subscription expires or is disabled",
+    "available-after-subscription-expires-or-is-disabled-61afc39": "Available while subscription access is inactive",
     "can-share-an-inbound-with-ordinary-hosts-access-uses-separate--1881b29": "Can share an inbound with ordinary hosts. Access uses separate host credentials; requires a node and Xray with host isolation.",
     "unavailable-during-an-active-subscription-43ed8ab": "Unavailable during an active subscription",
-    "only-for-expired-or-disabled-subscriptions-squad-access-restri-c5bbce7": "Only for expired or disabled subscriptions. Squad access restrictions still apply.",
+    "only-for-expired-or-disabled-subscriptions-squad-access-restri-c5bbce7": "Only while access is inactive: expired, disabled, frozen or quota exhausted. Squad access restrictions still apply.",
     "carrier-271c535": "Carrier",
     "room-911ea89": "Room",
     "encryption-key-16b3c9d": "Encryption key",
@@ -2673,8 +2674,8 @@
     "recap-31056c3": "Recap",
     "loading-dc38088": "Loading",
     "build-info-642ae0c": "Build Info",
-    "access-after-subscription-expiry-is-enabled-52c699c": "Access after subscription expiry is enabled",
-    "after-subscription-expiry-66a7704": "After subscription expiry",
+    "access-after-subscription-expiry-is-enabled-52c699c": "Access while the subscription is inactive is enabled",
+    "after-subscription-expiry-66a7704": "When access is inactive",
     "message-324c53a": "Import users into “",
     "message-7e4abe1": "Export squad users to a file",
     "message-0268a2c": "Import users from a file into the squad",

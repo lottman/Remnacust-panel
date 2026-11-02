@@ -292,6 +292,20 @@ async function main() {
             "SELECT column_name FROM information_schema.columns WHERE table_name IN ('hosts','xera_host_tag_limits') AND column_name='total_traffic_limit_bytes'",
         );
         assert.equal(removed.length, 0, 'aggregate volume quota must not remain in the data model');
+        const rollbackInactiveFixture = new Error('rollback inactive host fixture');
+        try {
+            await prisma.$transaction(async tx => {
+                for (const status of ['FROZEN', 'LIMITED', 'DISABLED', 'EXPIRED']) {
+                    await tx.$executeRawUnsafe("UPDATE users SET status='ACTIVE',expire_at=now()+interval '2 days' WHERE id=901");
+                    await tx.$executeRawUnsafe('UPDATE users SET status=$1 WHERE id=901', status);
+                    await tx.$executeRawUnsafe("UPDATE hosts SET always_available=true,only_when_inactive=true WHERE uuid='11111111-1111-4111-8111-111111111111'");
+                    assert.equal((await tx.$queryRawUnsafe("SELECT xera_host_user_allowed(901,'11111111-1111-4111-8111-111111111111') AS allowed"))[0].allowed, true, status);
+                    await tx.$executeRawUnsafe("UPDATE hosts SET always_available=false,only_when_inactive=false WHERE uuid='11111111-1111-4111-8111-111111111111'");
+                    assert.equal((await tx.$queryRawUnsafe("SELECT xera_host_user_allowed(901,'11111111-1111-4111-8111-111111111111') AS allowed"))[0].allowed, false, status + ' must not grant ordinary hosts');
+                }
+                throw rollbackInactiveFixture;
+            });
+        } catch (error) { if (error !== rollbackInactiveFixture) throw error; }
         await prisma.$executeRawUnsafe("UPDATE users SET status='EXPIRED' WHERE id=901");
         assert.equal(await access.synchronizeUser(901n), true);
         assert.deepEqual(

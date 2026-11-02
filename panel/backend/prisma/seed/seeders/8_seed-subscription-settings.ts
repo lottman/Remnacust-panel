@@ -11,7 +11,7 @@ export async function seedSubscriptionSettings(prisma: PrismaClient) {
     const customRemarks = {
         ...DEFAULT_SUBSCRIPTION_REMARKS,
         combineSubscriptionAndHwidRemarks: true,
-        subscriptionAndHwidRemarkOrder: ['EXPIRED', 'DISABLED', 'HWID_BLOCKED'],
+        subscriptionAndHwidRemarkOrder: ['EXPIRED', 'DISABLED', 'FROZEN', 'HWID_REGISTRATION_BLOCKED', 'HWID_BLOCKED'],
     } satisfies TCustomRemarks;
 
     const existingConfig = await prisma.subscriptionSettings.findFirst();
@@ -36,6 +36,7 @@ export async function seedSubscriptionSettings(prisma: PrismaClient) {
                 !('HWIDBlocked' in existingRemarks) ||
                 !('hostTrafficLimit' in existingRemarks) ||
                 !('hostTrafficPaused' in existingRemarks) ||
+                !('frozenUsers' in existingRemarks) ||
                 !('combineSubscriptionAndHwidRemarks' in existingRemarks) ||
                 !('subscriptionAndHwidRemarkOrder' in existingRemarks);
 

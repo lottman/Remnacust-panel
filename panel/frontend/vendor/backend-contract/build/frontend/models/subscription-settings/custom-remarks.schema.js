@@ -10,6 +10,7 @@ exports.DEFAULT_SUBSCRIPTION_REMARKS = {
     expiredUsers: ['⌛ Subscription expired', 'Contact support'],
     limitedUsers: ['🚧 Subscription limited', 'Contact support'],
     disabledUsers: ['🚫 Subscription disabled', 'Contact support'],
+    frozenUsers: ['❄ Subscription frozen', 'Contact support'],
     emptyHosts: ['→ Remnacust', '→ No hosts found', '→ Check Hosts tab', '→ Check Internal Squads tab'],
     HWIDMaxDevicesExceeded: ['Limit of devices reached'],
     HWIDNotSupported: ['App not supported'],
@@ -30,14 +31,15 @@ exports.CustomRemarksSchema = zod_1.default.object({
     alwaysAvailableHostsPosition: zod_1.default.enum(['before', 'after']).optional(),
     combineSubscriptionAndHwidRemarks: zod_1.default.boolean().default(true),
     subscriptionAndHwidRemarkOrder: zod_1.default
-        .array(zod_1.default.enum(['EXPIRED', 'DISABLED', 'HWID_BLOCKED', 'HWID_REGISTRATION_BLOCKED']))
-        .min(3).max(4)
+        .array(zod_1.default.enum(['EXPIRED', 'DISABLED', 'FROZEN', 'HWID_BLOCKED', 'HWID_REGISTRATION_BLOCKED']))
+        .min(3).max(5)
         .refine((order) => new Set(order).size === order.length && ['EXPIRED', 'DISABLED', 'HWID_BLOCKED'].every(x => order.includes(x)), 'Remark order values must be unique and complete')
-        .default(['EXPIRED', 'DISABLED', 'HWID_REGISTRATION_BLOCKED', 'HWID_BLOCKED']),
+        .default(['EXPIRED', 'DISABLED', 'FROZEN', 'HWID_REGISTRATION_BLOCKED', 'HWID_BLOCKED']),
     action: exports.SubscriptionActionSchema.nullable().optional(),
     expiredUsers: zod_1.default.array(zod_1.default.string()).min(1),
     limitedUsers: zod_1.default.array(zod_1.default.string()).min(1),
     disabledUsers: zod_1.default.array(zod_1.default.string()).min(1),
+    frozenUsers: zod_1.default.array(zod_1.default.string()).min(1).max(24).default(() => [...exports.DEFAULT_SUBSCRIPTION_REMARKS.frozenUsers]),
     emptyHosts: zod_1.default.array(zod_1.default.string()).min(1),
     HWIDMaxDevicesExceeded: zod_1.default.array(zod_1.default.string()).min(1),
     HWIDNotSupported: zod_1.default.array(zod_1.default.string()).min(1),

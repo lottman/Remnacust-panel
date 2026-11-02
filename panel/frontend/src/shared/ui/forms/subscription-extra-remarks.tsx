@@ -10,7 +10,7 @@ export interface ExtraRemarks {
     alwaysAvailableHostsPosition?: 'before' | 'after'
     combineSubscriptionAndHwidRemarks?: boolean
     subscriptionAndHwidRemarkOrder?: Array<
-        'EXPIRED' | 'DISABLED' | 'HWID_BLOCKED' | 'HWID_REGISTRATION_BLOCKED'
+        'EXPIRED' | 'DISABLED' | 'FROZEN' | 'HWID_BLOCKED' | 'HWID_REGISTRATION_BLOCKED'
     >
     action?: { text: string; buttonText: string; url: string } | null
 }
@@ -28,6 +28,7 @@ export function SubscriptionExtraRemarks({
     const defaultOrder: NonNullable<ExtraRemarks['subscriptionAndHwidRemarkOrder']> = [
         'EXPIRED',
         'DISABLED',
+        'FROZEN',
         'HWID_REGISTRATION_BLOCKED',
         'HWID_BLOCKED'
     ]
@@ -36,10 +37,13 @@ export function SubscriptionExtraRemarks({
         : defaultOrder
     if (!order.includes('HWID_REGISTRATION_BLOCKED'))
         order.splice(2, 0, 'HWID_REGISTRATION_BLOCKED')
+    if (!order.includes('FROZEN'))
+        order.splice(Math.max(0, order.indexOf('HWID_REGISTRATION_BLOCKED')), 0, 'FROZEN')
     const statusLabels = {
         HWID_REGISTRATION_BLOCKED: uiText('new-devices-denied-standalone-dcc8096'),
         EXPIRED: t('subscription-user-remarks-card.widget.subscription-expired'),
         DISABLED: t('subscription-user-remarks-card.widget.subscription-disabled'),
+        FROZEN: t('subscription-user-remarks-card.widget.subscription-frozen'),
         HWID_BLOCKED: t('subscription-user-remarks-card.widget.hwid-blocked')
     } as const
 

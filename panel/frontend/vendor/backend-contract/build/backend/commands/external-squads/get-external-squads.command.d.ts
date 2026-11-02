@@ -51,6 +51,7 @@ export declare namespace GetExternalSquadsCommand {
                     subscriptionAndHwidRemarkOrder: z.ZodDefault<z.ZodArray<z.ZodEnum<{
                         DISABLED: "DISABLED";
                         EXPIRED: "EXPIRED";
+                        FROZEN: "FROZEN";
                         HWID_BLOCKED: "HWID_BLOCKED";
                         HWID_REGISTRATION_BLOCKED: "HWID_REGISTRATION_BLOCKED";
                     }>>>;
@@ -62,6 +63,7 @@ export declare namespace GetExternalSquadsCommand {
                     expiredUsers: z.ZodArray<z.ZodString>;
                     limitedUsers: z.ZodArray<z.ZodString>;
                     disabledUsers: z.ZodArray<z.ZodString>;
+                    frozenUsers: z.ZodDefault<z.ZodArray<z.ZodString>>;
                     emptyHosts: z.ZodArray<z.ZodString>;
                     HWIDMaxDevicesExceeded: z.ZodArray<z.ZodString>;
                     HWIDNotSupported: z.ZodArray<z.ZodString>;
@@ -103,10 +105,11 @@ export declare namespace GetExternalSquadsCommand {
                 } | null;
                 customRemarks: {
                     combineSubscriptionAndHwidRemarks: boolean;
-                    subscriptionAndHwidRemarkOrder: ("DISABLED" | "EXPIRED" | "HWID_BLOCKED" | "HWID_REGISTRATION_BLOCKED")[];
+                    subscriptionAndHwidRemarkOrder: ("DISABLED" | "EXPIRED" | "FROZEN" | "HWID_BLOCKED" | "HWID_REGISTRATION_BLOCKED")[];
                     expiredUsers: string[];
                     limitedUsers: string[];
                     disabledUsers: string[];
+                    frozenUsers: string[];
                     emptyHosts: string[];
                     HWIDMaxDevicesExceeded: string[];
                     HWIDNotSupported: string[];
@@ -153,10 +156,11 @@ export declare namespace GetExternalSquadsCommand {
                 } | null;
                 customRemarks: {
                     combineSubscriptionAndHwidRemarks: boolean;
-                    subscriptionAndHwidRemarkOrder: ("DISABLED" | "EXPIRED" | "HWID_BLOCKED" | "HWID_REGISTRATION_BLOCKED")[];
+                    subscriptionAndHwidRemarkOrder: ("DISABLED" | "EXPIRED" | "FROZEN" | "HWID_BLOCKED" | "HWID_REGISTRATION_BLOCKED")[];
                     expiredUsers: string[];
                     limitedUsers: string[];
                     disabledUsers: string[];
+                    frozenUsers: string[];
                     emptyHosts: string[];
                     HWIDMaxDevicesExceeded: string[];
                     HWIDNotSupported: string[];

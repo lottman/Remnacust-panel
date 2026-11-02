@@ -13,11 +13,15 @@ var ListSubscriptionDomainsCommand;
         scope: 'list',
         kind: 'read',
     });
-    ListSubscriptionDomainsCommand.RequestQuerySchema = zod_1.z.object({
+    ListSubscriptionDomainsCommand.RequestQuerySchema = zod_1.z
+        .object({
         kind: zod_1.z.enum(['PRIMARY', 'CDN']).optional(),
         parentUuid: zod_1.z.uuid().optional(),
-    }).strict().refine(value => !(value.kind === 'PRIMARY' && value.parentUuid), {
-        message: 'A parent filter applies only to CDN domains', path: ['parentUuid'],
+    })
+        .strict()
+        .refine((value) => !(value.kind === 'PRIMARY' && value.parentUuid), {
+        message: 'A parent filter applies only to CDN domains',
+        path: ['parentUuid'],
     });
     ListSubscriptionDomainsCommand.ResponseSchema = zod_1.z.object({
         response: zod_1.z.array(subscription_domain_schema_1.SubscriptionDomainSchema),

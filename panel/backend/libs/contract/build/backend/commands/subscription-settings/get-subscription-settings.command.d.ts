@@ -17,6 +17,7 @@ export declare namespace GetSubscriptionSettingsCommand {
                 subscriptionAndHwidRemarkOrder: z.ZodDefault<z.ZodArray<z.ZodEnum<{
                     DISABLED: "DISABLED";
                     EXPIRED: "EXPIRED";
+                    FROZEN: "FROZEN";
                     HWID_BLOCKED: "HWID_BLOCKED";
                     HWID_REGISTRATION_BLOCKED: "HWID_REGISTRATION_BLOCKED";
                 }>>>;
@@ -28,6 +29,7 @@ export declare namespace GetSubscriptionSettingsCommand {
                 expiredUsers: z.ZodArray<z.ZodString>;
                 limitedUsers: z.ZodArray<z.ZodString>;
                 disabledUsers: z.ZodArray<z.ZodString>;
+                frozenUsers: z.ZodDefault<z.ZodArray<z.ZodString>>;
                 emptyHosts: z.ZodArray<z.ZodString>;
                 HWIDMaxDevicesExceeded: z.ZodArray<z.ZodString>;
                 HWIDNotSupported: z.ZodArray<z.ZodString>;

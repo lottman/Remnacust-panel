@@ -75,6 +75,14 @@ export const panelUpdateStateSchema = z.object({
     progress: updateProgressSchema.nullable().optional(),
 });
 const CONTROL = '/run/remnacust-control';
+const maintenanceLogSchema = z.object({
+    filename: z
+        .string()
+        .regex(/^[a-z0-9-]+\.log$/)
+        .max(180),
+    content: z.string().max(4 * 1024 * 1024),
+    truncated: z.boolean(),
+});
 const unavailable = {
     available: false,
     installedVersion: null,
@@ -150,6 +158,14 @@ export class PanelUpdateService {
         return this.control('/pages', undefined, subscriptionPagesSchema);
     }
 
+    async log(jobId: string, pageId?: string) {
+        return this.control(
+            pageId ? `/logs/page/${pageId}/${jobId}` : `/logs/panel/${jobId}`,
+            undefined,
+            maintenanceLogSchema,
+        );
+    }
+
     async subscriptionPageAction(data: {
         pageId: string;
         operation: 'start' | 'stop' | 'restart' | 'upgrade';
@@ -184,7 +200,14 @@ export class PanelUpdateService {
                     const chunks: Buffer[] = [];
                     res.on('data', (chunk: Buffer) => {
                         bytes += chunk.length;
-                        if (bytes > (path.startsWith('/pages') ? 65536 : 16384))
+                        if (
+                            bytes >
+                            (path.startsWith('/logs/')
+                                ? 8 * 1024 * 1024
+                                : path.startsWith('/pages')
+                                  ? 65536
+                                  : 16384)
+                        )
                             req.destroy(new Error('Response too large'));
                         else chunks.push(chunk);
                     });

@@ -1,3 +1,5 @@
+import type { Response } from 'express';
+
 import { z } from 'zod';
 
 import {
@@ -10,6 +12,8 @@ import {
     Header,
     HttpCode,
     Logger,
+    Query,
+    Res,
 } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
 
@@ -44,6 +48,30 @@ export class PanelUpdateController {
     @Header('Cache-Control', 'no-store')
     async status() {
         return { response: await this.updates.status() };
+    }
+
+    @AdminOnlyEndpoint()
+    @Get('log')
+    async log(@Query() query: unknown, @Res() response: Response) {
+        const parsed = z
+            .object({
+                jobId: z.string().uuid(),
+                pageId: z
+                    .string()
+                    .regex(/^[a-f0-9]{24}$/)
+                    .optional(),
+            })
+            .strict()
+            .safeParse(query);
+        if (!parsed.success) throw new BadRequestException('INVALID_LOG_REQUEST');
+        const log = await this.updates.log(parsed.data.jobId, parsed.data.pageId);
+        return response
+            .status(200)
+            .attachment(log.filename)
+            .type('text/plain; charset=utf-8')
+            .set('Cache-Control', 'no-store')
+            .set('X-Content-Type-Options', 'nosniff')
+            .send(log.content);
     }
 
     @AdminOnlyEndpoint()

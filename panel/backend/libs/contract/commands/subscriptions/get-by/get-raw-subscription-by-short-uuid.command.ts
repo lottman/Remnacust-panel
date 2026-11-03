@@ -27,25 +27,39 @@ export namespace GetRawSubscriptionByShortUuidCommand {
     });
 
     export const ResponseSchema = z.object({
-        response: z.object({
-            user: ExtendedUsersSchema,
-            convertedUserInfo: z.object({
-                daysLeft: z.number(),
-                trafficLimit: z.string(),
-                trafficUsed: z.string(),
-                lifetimeTrafficUsed: z.string(),
-                hwidCheckup: z
-                    .object({
-                        subscriptionAllowed: z.boolean(),
-                        maxDeviceReached: z.boolean(),
-                        hwidNotSupported: z.boolean(),
-                        limitBypassed: z.boolean(),
-                    })
-                    .nullable(),
+        response: z
+            .object({
+                user: ExtendedUsersSchema.extend({
+                    vlessUuid: ExtendedUsersSchema.shape.vlessUuid.or(z.literal('')),
+                }),
+                convertedUserInfo: z.object({
+                    daysLeft: z.number(),
+                    trafficLimit: z.string(),
+                    trafficUsed: z.string(),
+                    lifetimeTrafficUsed: z.string(),
+                    hwidCheckup: z
+                        .object({
+                            subscriptionAllowed: z.boolean(),
+                            maxDeviceReached: z.boolean(),
+                            hwidNotSupported: z.boolean(),
+                            limitBypassed: z.boolean(),
+                        })
+                        .nullable(),
+                }),
+                headers: z.record(z.string(), z.string().optional()),
+                resolvedProxyConfigs: z.array(ResolvedProxyConfigSchema),
+            })
+            .superRefine((value, context) => {
+                if (
+                    value.user.vlessUuid === '' &&
+                    value.convertedUserInfo.hwidCheckup?.subscriptionAllowed !== false
+                )
+                    context.addIssue({
+                        code: 'custom',
+                        path: ['user', 'vlessUuid'],
+                        message: 'Missing authorized user key',
+                    });
             }),
-            headers: z.record(z.string(), z.string().optional()),
-            resolvedProxyConfigs: z.array(ResolvedProxyConfigSchema),
-        }),
     });
 
     export type RequestParam = z.infer<typeof RequestParamSchema>;

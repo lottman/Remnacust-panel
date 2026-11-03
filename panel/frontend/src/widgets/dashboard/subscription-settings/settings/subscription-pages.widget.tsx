@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { TbWorld } from 'react-icons/tb'
 
 import { instance } from '@shared/api/axios'
+import { MaintenanceLogDownload } from '@shared/ui/panel-update-gate/maintenance-log-download'
 import { SectionCard } from '@shared/ui/section-card'
 import { SettingsCardShared } from '@shared/ui/settings-card'
 
@@ -20,6 +21,7 @@ type PageInstance = {
     companion: boolean
     managed?: boolean
     job: null | {
+        requestId: string
         phase: 'queued' | 'running' | 'completed' | 'failed'
         operation: Operation
         error: string | null
@@ -155,6 +157,12 @@ function ManagedSubscriptionPagesWidget() {
                                         </Text>
                                     )}
                                     <Group wrap="wrap">
+                                        {page.job?.logPath && (
+                                            <MaintenanceLogDownload
+                                                jobId={page.job.requestId}
+                                                pageId={page.id}
+                                            />
+                                        )}
                                         {(['start', 'stop', 'restart', 'upgrade'] as const).map(
                                             (operation) => (
                                                 <Button

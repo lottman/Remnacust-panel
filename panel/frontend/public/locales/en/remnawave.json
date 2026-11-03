@@ -2589,6 +2589,8 @@
     "block-selected-destinations-b979531": "Block selected destinations",
     "add-destination-48b7df1": "Add destination",
     "address-and-ping-help-2b2063f": "Address and ping help",
+    "allowed-probe-url": "Latency check URL",
+    "allowed-probe-help": "Use this URL for HTTP ping in your client. Happ with a Provider ID receives a shared allowed URL automatically; configure it manually in INCY. The website must respond to the selected check method.",
     "destination-presets-27cd6c9": "Destination presets",
     "could-not-load-the-form-data-please-retry-7278c1c": "Could not load the form data. Please retry.",
     "assign-a-tag-to-this-host-first-636effb": "Assign a tag to this host first.",
@@ -3278,7 +3280,8 @@
     "estimateHint": "Time is estimated from a previous successful update. Until that is available, the remaining stages are shown.",
     "journal": "Update journal",
     "downloadJournal": "Download journal",
-    "journalHint": "The latest 24 step events are shown. Raw technical output remains in the private update log on the server.",
+    "journalHint": "The latest 24 events are shown here. Download journal saves the technical output with secrets removed. Large downloads contain the last 1 MiB; the complete private file remains on the server until the next operation for this component.",
+    "logDownloadFailed": "Could not download the log. Retry when the panel is reachable or open the displayed server file. Update the installer service if it is outdated.",
     "stages": {
       "checking": "Checking release integrity",
       "download": "Downloading images",

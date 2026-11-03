@@ -20031,9 +20031,9 @@
     }
   },
   "info": {
-    "title": "Remnacust API v1.1.7.90",
+    "title": "Remnacust API v1.1.7.91",
     "description": "\nRemnacust manages Xray users, nodes, configuration profiles and subscriptions.\n\n## Resources\n* https://t.me/lottman\n* https://github.com/lottman/Remnacust-panel\n",
-    "version": "1.1.7.90",
+    "version": "1.1.7.91",
     "contact": {},
     "license": {
       "name": "AGPL-3.0",
@@ -26872,9 +26872,19 @@
                     "type": "string"
                   },
                   "vlessUuid": {
-                    "type": "string",
-                    "format": "uuid",
-                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          ""
+                        ]
+                      }
+                    ]
                   },
                   "ssPassword": {
                     "type": "string"

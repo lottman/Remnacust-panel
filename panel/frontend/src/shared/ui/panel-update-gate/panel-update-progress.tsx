@@ -1,8 +1,10 @@
-import { Alert, Badge, Button, Group, Progress, ScrollArea, Stack, Text } from '@mantine/core'
+import { Alert, Badge, Group, Progress, ScrollArea, Stack, Text } from '@mantine/core'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import type { PanelUpdateStatus } from '@entities/dashboard/panel-update/panel-update'
+
+import { MaintenanceLogDownload } from './maintenance-log-download'
 
 export function formatUpdateDuration(seconds: number) {
     const value = Math.max(0, Math.floor(seconds))
@@ -45,31 +47,6 @@ export function PanelUpdateProgress({
     const extra = !failed && status?.active ? Math.max(0, (now - receivedAt) / 1000) : 0
     const estimated = progress?.estimatedRemainingSeconds
     const remaining = estimated == null ? null : Math.max(0, estimated - extra)
-    const download = () => {
-        const file = new Blob(
-            [
-                JSON.stringify(
-                    {
-                        jobId: status?.jobId,
-                        targetVersion: status?.targetVersion,
-                        phase: status?.phase,
-                        error: status?.error,
-                        logPath: status?.logPath,
-                        progress
-                    },
-                    null,
-                    2
-                )
-            ],
-            { type: 'application/json' }
-        )
-        const url = URL.createObjectURL(file)
-        const link = document.createElement('a')
-        link.href = url
-        link.download = `panel-update-${status?.jobId ?? 'pending'}.json`
-        link.click()
-        window.setTimeout(() => URL.revokeObjectURL(url), 1000)
-    }
     return (
         <Stack gap="md">
             <Text size="sm" role="status" aria-live="polite">
@@ -132,9 +109,10 @@ export function PanelUpdateProgress({
                         <Text fw={600} size="sm">
                             {t('panelUpdate.journal')}
                         </Text>
-                        <Button variant="subtle" size="compact-xs" onClick={download}>
-                            {t('panelUpdate.downloadJournal')}
-                        </Button>
+                        <MaintenanceLogDownload
+                            jobId={status?.jobId}
+                            disabled={!status?.logPath || !reachable}
+                        />
                     </Group>
                     <ScrollArea.Autosize
                         mah={220}

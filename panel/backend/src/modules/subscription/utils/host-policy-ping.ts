@@ -1,17 +1,33 @@
-// Happ's documented app-management setting requires a real Provider ID.
-// TCP measures reachability of the server/CDN; it does not assert VPN authorization.
+import { allowedProbeUrl } from '../../../common/host-policy/allowed-probe';
+
 export function applyHostPolicyPing(
     headers: Record<string, string | undefined>,
-    hosts: { domainRules?: unknown }[],
+    hosts: { domainRules?: unknown; isHidden?: boolean; isDisabled?: boolean }[],
 ): void {
+    const visible = hosts.filter((host) => !host.isHidden && !host.isDisabled);
     const provider = Object.entries(headers).find(([key]) => key.toLowerCase() === 'provider-id');
-    if (!provider?.[1]?.trim() || !hosts.some((host) => {
-        const rules = host.domainRules as { mode?: string } | null;
-        return rules?.mode === 'ALLOW_ONLY' || rules?.mode === 'DENY';
-    })) return;
-    // Avoid duplicate case-insensitive HTTP fields from custom response headers.
+    if (
+        !provider?.[1]?.trim() ||
+        !visible.some((host) => {
+            const rules = host.domainRules as { mode?: string } | null;
+            return rules?.mode === 'ALLOW_ONLY' || rules?.mode === 'DENY';
+        })
+    )
+        return;
+    const currentUrl = Object.entries(headers)
+        .reverse()
+        .find(([key]) => key.toLowerCase() === 'check-url-via-proxy')?.[1];
+    const currentType = Object.entries(headers)
+        .reverse()
+        .find(([key]) => key.toLowerCase() === 'ping-type')?.[1];
+    if (currentType === 'tcp' || currentType === 'icmp') return;
+    const url = allowedProbeUrl(
+        visible.map((host) => host.domainRules as Parameters<typeof allowedProbeUrl>[0][number]),
+        currentUrl,
+    );
     for (const key of Object.keys(headers)) {
-        if (key.toLowerCase() === 'ping-type') delete headers[key];
+        if (['ping-type', 'check-url-via-proxy'].includes(key.toLowerCase())) delete headers[key];
     }
-    headers['ping-type'] = 'tcp';
+    headers['ping-type'] = url ? (currentType === 'proxy' ? 'proxy' : 'proxy-head') : 'tcp';
+    if (url) headers['check-url-via-proxy'] = url;
 }

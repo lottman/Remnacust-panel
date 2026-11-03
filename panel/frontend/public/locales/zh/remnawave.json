@@ -2570,6 +2570,8 @@
     "block-selected-destinations-b979531": "阻止所选目标",
     "add-destination-48b7df1": "添加目标",
     "address-and-ping-help-2b2063f": "地址和延迟测试帮助",
+    "allowed-probe-url": "延迟检测 URL",
+    "allowed-probe-help": "在客户端中将此 URL 用于 HTTP 检测。配有 Provider ID 的 Happ 会自动收到共同允许的地址；INCY 需要手动设置。网站必须响应所选检测方法。",
     "destination-presets-27cd6c9": "目标预设",
     "could-not-load-the-form-data-please-retry-7278c1c": "无法加载表单数据。请重试。",
     "assign-a-tag-to-this-host-first-636effb": "请先为此主机分配标签。",
@@ -3278,7 +3280,8 @@
     "estimateHint": "时间根据上一次成功更新估算；尚无记录时显示剩余阶段数。",
     "journal": "更新日志",
     "downloadJournal": "下载日志",
-    "journalHint": "显示最近 24 条阶段事件。完整技术输出保留在服务器的私有更新日志中。",
+    "journalHint": "此处显示最近 24 条事件。“下载日志”保存已移除机密信息的技术输出。大文件仅下载最后 1 MiB；完整私有文件保留在服务器上，直到该组件的下一次操作。",
+    "logDownloadFailed": "无法下载日志。请在面板恢复连接后重试，或打开显示的服务器文件。如果安装服务版本过旧，请先更新。",
     "stages": {
       "checking": "验证发布完整性",
       "download": "下载镜像",

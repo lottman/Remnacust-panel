@@ -3,11 +3,15 @@
     flex-direction: column;
     min-width: 0;
 }
-.footer {
+.controls {
     position: sticky;
     bottom: 0;
     z-index: 60;
+    background-color: var(--mantine-color-body);
     box-shadow: 0 -6px 14px color-mix(in srgb, var(--mantine-color-body) 85%, transparent);
+}
+.footer {
+    position: relative;
 }
 .tabsList {
     position: static;
@@ -32,6 +36,8 @@
 
 .validationMessage {
     flex-shrink: 0;
+    max-height: min(32vh, 240px);
+    overflow-y: auto;
 }
 
 .editorWrapper {

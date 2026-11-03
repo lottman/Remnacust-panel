@@ -123,7 +123,9 @@ export function SubscriptionTemplateEditorWidget(props: Props) {
         requestAnimationFrame(() => {
             const model = editorRef.current?.getModel()
             if (!model) return
-            const path = (draft.error ?? '').split('.').map((part) => /^\d+$/.test(part) ? Number(part) : part)
+            const path = (draft.error ?? '')
+                .split('.')
+                .map((part) => (/^\d+$/.test(part) ? Number(part) : part))
             const tree = parseTree(value)
             const node = tree ? findNodeAtLocation(tree, path) : undefined
             const position = model.getPositionAt(node?.offset ?? 0)
@@ -132,7 +134,10 @@ export function SubscriptionTemplateEditorWidget(props: Props) {
             editorRef.current?.focus()
         })
     }
-    const issueLocation = /^(remnawave\.injectHosts|routing\.balancers|remnawave\.assignments)\.(\d+)/.exec(draft.error ?? '')
+    const issueLocation =
+        /^(remnawave\.injectHosts|routing\.balancers|remnawave\.assignments)\.(\d+)/.exec(
+            draft.error ?? ''
+        )
 
     return (
         <Box className={clsx(styles.container, isFullscreen && fullscreenClasses.overlay)}>
@@ -263,59 +268,79 @@ export function SubscriptionTemplateEditorWidget(props: Props) {
                     )}
                 </Tabs.Panel>
             </Tabs>
-            {draft.error && (
-                <Alert mt="md" color="yellow" title={t('template-draft.warning')}>
-                    {issueLocation && (
-                        <Box fw={600} mb={4}>{t(
-                            issueLocation[1] === 'remnawave.injectHosts' ? 'autoselect.issue-pool' :
-                            issueLocation[1] === 'routing.balancers' ? 'autoselect.issue-balancer' : 'autoselect.issue-assignment',
-                            { number: Number(issueLocation[2]) + 1 }
-                        )}</Box>
-                    )}
-                    <Button variant="subtle" size="compact-sm" onClick={revealIssue} title={t('autoselect.reveal-issue')}><span dir="ltr">{draft.error}</span></Button>
-                    <br />
-                    {t(
-                        draft.error.endsWith('.tolerance')
-                            ? 'template-draft.tolerance-help'
-                            : draft.error.endsWith('.tagPrefix') ? 'autoselect.prefix-conflict-help' : 'template-draft.warning-help'
-                    )}
-                </Alert>
-            )}
-            {template.draftContent !== undefined && template.draftContent !== null && (
-                <Alert mt="md" color="yellow" title={t('template-draft.saved-title')}>
-                    {t('template-draft.saved-help')}
-                </Alert>
-            )}
-
-            {!isFullscreen && (
-                <EditorFooter className={styles.footer} ref={footerRef} attached={activeTab === 'code'}>
-                    {activeTab === 'code' && (
-                        <FullscreenToggleButton
-                            floating={false}
-                            isFullscreen={isFullscreen}
-                            onToggle={toggleFullscreen}
-                            size={36}
-                        />
-                    )}
-
-                    <TemplateEditorActionsFeature
-                        editorRef={editorRef}
-                        editorType={editorType}
-                        template={template}
-                        getValue={() => valueRef.current}
-                        showEditorTools={activeTab === 'code'}
-                    />
-                    {activeTab !== 'code' && (
+            <Box ref={footerRef} className={styles.controls}>
+                {draft.error && (
+                    <Alert
+                        className={styles.validationMessage}
+                        color="yellow"
+                        title={t('template-draft.warning')}
+                    >
+                        {issueLocation && (
+                            <Box fw={600} mb={4}>
+                                {t(
+                                    issueLocation[1] === 'remnawave.injectHosts'
+                                        ? 'autoselect.issue-pool'
+                                        : issueLocation[1] === 'routing.balancers'
+                                          ? 'autoselect.issue-balancer'
+                                          : 'autoselect.issue-assignment',
+                                    { number: Number(issueLocation[2]) + 1 }
+                                )}
+                            </Box>
+                        )}
                         <Button
-                            variant="default"
-                            disabled={value === baseline}
-                            onClick={() => setDraft(baseline)}
+                            variant="subtle"
+                            size="compact-sm"
+                            onClick={revealIssue}
+                            title={t('autoselect.reveal-issue')}
                         >
-                            {t('client-template.reset-draft')}
+                            <span dir="ltr">{draft.error}</span>
                         </Button>
-                    )}
-                </EditorFooter>
-            )}
+                        <br />
+                        {t(
+                            draft.error.endsWith('.tolerance')
+                                ? 'template-draft.tolerance-help'
+                                : draft.error.endsWith('.tagPrefix')
+                                  ? 'autoselect.prefix-conflict-help'
+                                  : 'template-draft.warning-help'
+                        )}
+                    </Alert>
+                )}
+                {template.draftContent !== undefined && template.draftContent !== null && (
+                    <Alert mt="md" color="yellow" title={t('template-draft.saved-title')}>
+                        {t('template-draft.saved-help')}
+                    </Alert>
+                )}
+
+                {!isFullscreen && (
+                    <EditorFooter className={styles.footer} attached={activeTab === 'code'}>
+                        {activeTab === 'code' && (
+                            <FullscreenToggleButton
+                                floating={false}
+                                isFullscreen={isFullscreen}
+                                onToggle={toggleFullscreen}
+                                size={36}
+                            />
+                        )}
+
+                        <TemplateEditorActionsFeature
+                            editorRef={editorRef}
+                            editorType={editorType}
+                            template={template}
+                            getValue={() => valueRef.current}
+                            showEditorTools={activeTab === 'code'}
+                        />
+                        {activeTab !== 'code' && (
+                            <Button
+                                variant="default"
+                                disabled={value === baseline}
+                                onClick={() => setDraft(baseline)}
+                            >
+                                {t('client-template.reset-draft')}
+                            </Button>
+                        )}
+                    </EditorFooter>
+                )}
+            </Box>
         </Box>
     )
 }

@@ -536,6 +536,10 @@ If the panel loses contact with a node, an authorized host remains in the subscr
 
 Select hosts, choose the fields to update and check the recipients. Selecting the tags field and leaving it empty clears tags; leaving the field unselected preserves existing tags. Record order determines subscription order except where shuffling is enabled. After changing an inbound, visibility or squad, refresh the subscription in a client and check that the intended connection is present.
 
+### Restricted host latency
+
+An HTTP check must reach an allowed website through the host itself. In Allow only mode, the form shows a copyable URL for the first allowed domain. For Happ with a real Provider ID, the panel selects a common allowed URL for all delivered visible hosts, preserving a suitable configured URL and HTTP method. Explicit TCP and ICMP choices are unchanged. When no shared domain exists or only IP/CIDR destinations are allowed, it falls back to TCP; TCP confirms server reachability, not VPN authorization. In INCY, choose HTTP/INCY ping and this URL in subscription settings: ordinary HTTP headers cannot set its probe URL; automatic configuration requires INCY’s own Premium API. Website permissions are not widened and the check never goes through DIRECT. The website must respond to the selected HTTP method; redirects to a denied domain remain blocked.
+
 ### Dynamic device bandwidth
 
 The user speed in Mbps is a shared ceiling for all their connections on this host. Active device keys share it by bytes served: one device uses available capacity; when another sends traffic, capacity is redistributed. Idle devices reserve nothing. The device speed limit caps all connections of its private key, combining upload and download. With a 20 Mbps user ceiling and a 15 Mbps device ceiling, one active device gets up to 15 Mbps; two continuously demanding devices can share 20 Mbps, roughly 10 Mbps each. These are ceilings, not guaranteed network rates. A configured host or tag shared ceiling is divided first among users, then their devices; opening more flows does not increase the share. Without a configured shared ceiling the core does not know the physical channel capacity.
@@ -800,6 +804,10 @@ When combining subscription status and HWID is enabled, an expired or disabled s
 New devices denied is handled separately. If registration is denied for a new device and its subscription is also expired or disabled, the reason placed higher in the list is shown. Moving registration denial above expiry therefore shows the registration message. These two reasons are not combined. An already registered, allowed device keeps access when the other access conditions are met.
 
 Traffic quota exhaustion, the maximum device count and missing HWID support have separate messages outside this list. Reordering changes subscription messages; restrictions and access checks still apply. Presentation depends on the client.
+
+### Technical update log
+
+Download journal in the panel update dialog and subscription page operations downloads real technical output rather than a status JSON. Only a panel administrator can download it for the current job ID; API tokens cannot. Passwords and tokens are removed from the downloaded copy. Large files return the last 1 MiB with a truncation notice; the complete private file remains on the server until the next operation for that component. If the panel is temporarily unreachable, retry after reconnection or open the displayed server path. Requires panel 1.1.7.91 and installer service 1.2.129. remnacust-panel-update.service starts the local API at boot and only starts updates on an administrator request.
 
 ### Inactive access and freezing
 

@@ -17,6 +17,7 @@ export class PanelUpdateInterceptor implements NestInterceptor {
             ![
                 '/api/system/update/status',
                 '/api/system/update/start',
+                '/api/system/update/log',
                 '/api/system/metadata',
             ].includes(path)
         ) {

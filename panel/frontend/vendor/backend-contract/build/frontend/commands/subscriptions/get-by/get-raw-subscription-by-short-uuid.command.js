@@ -20,8 +20,11 @@ var GetRawSubscriptionByShortUuidCommand;
             .prefault('false'),
     });
     GetRawSubscriptionByShortUuidCommand.ResponseSchema = zod_1.z.object({
-        response: zod_1.z.object({
-            user: models_1.ExtendedUsersSchema,
+        response: zod_1.z
+            .object({
+            user: models_1.ExtendedUsersSchema.extend({
+                vlessUuid: models_1.ExtendedUsersSchema.shape.vlessUuid.or(zod_1.z.literal('')),
+            }),
             convertedUserInfo: zod_1.z.object({
                 daysLeft: zod_1.z.number(),
                 trafficLimit: zod_1.z.string(),
@@ -38,6 +41,15 @@ var GetRawSubscriptionByShortUuidCommand;
             }),
             headers: zod_1.z.record(zod_1.z.string(), zod_1.z.string().optional()),
             resolvedProxyConfigs: zod_1.z.array(models_1.ResolvedProxyConfigSchema),
+        })
+            .superRefine((value, context) => {
+            if (value.user.vlessUuid === '' &&
+                value.convertedUserInfo.hwidCheckup?.subscriptionAllowed !== false)
+                context.addIssue({
+                    code: 'custom',
+                    path: ['user', 'vlessUuid'],
+                    message: 'Missing authorized user key',
+                });
         }),
     });
 })(GetRawSubscriptionByShortUuidCommand || (exports.GetRawSubscriptionByShortUuidCommand = GetRawSubscriptionByShortUuidCommand = {}));

@@ -41,7 +41,6 @@ export declare namespace GetRawSubscriptionByShortUuidCommand {
                 subscriptionDomainUuid: z.ZodOptional<z.ZodNullable<z.ZodUUID>>;
                 externalSquadUuid: z.ZodNullable<z.ZodUUID>;
                 trojanPassword: z.ZodString;
-                vlessUuid: z.ZodGUID;
                 ssPassword: z.ZodString;
                 lastTriggeredThreshold: z.ZodInt;
                 subRevokedAt: z.ZodNullable<z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>>;
@@ -72,6 +71,7 @@ export declare namespace GetRawSubscriptionByShortUuidCommand {
                     firstConnectedAt: z.ZodNullable<z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>>;
                     lastConnectedNodeUuid: z.ZodNullable<z.ZodUUID>;
                 }, z.core.$strip>;
+                vlessUuid: z.ZodUnion<[z.ZodGUID, z.ZodLiteral<"">]>;
             }, z.core.$strip>;
             convertedUserInfo: z.ZodObject<{
                 daysLeft: z.ZodNumber;

@@ -108,7 +108,7 @@ test('update endpoints are panel-only and reject API-token roles and untrusted i
         },
     });
     const guard = new RolesGuard(new Reflector());
-    for (const method of ['status', 'start']) {
+    for (const method of ['status', 'start', 'log']) {
         const requestContext = (role) => ({
             ...context(role, '/api/system/update/' + method),
             getHandler: () => PanelUpdateController.prototype[method],
@@ -126,6 +126,7 @@ test('update endpoints are panel-only and reject API-token roles and untrusted i
                 starts++;
                 return { jobId: 'test' };
             },
+            log: async () => ({ filename: 'panel-update-fixture.log', content: 'actual diagnostic output\n', truncated: false }),
         },
         { check: async () => { continuityChecks++; throw Error('unavailable node'); } },
     );
@@ -141,6 +142,19 @@ test('update endpoints are panel-only and reject API-token roles and untrusted i
     await controller.start(valid);
     assert.equal(starts, 1);
     assert.equal(continuityChecks, 0, 'node availability must not delay or prevent requesting an update');
+    for (const query of [{}, { jobId: '../etc/shadow' }, { jobId: valid.requestId, pageId: '../panel' }, { jobId: valid.requestId, path: '/etc/shadow' }])
+        await assert.rejects(controller.log(query, {}));
+    const headers = {};
+    const response = {
+        status: () => response,
+        attachment: name => { headers.filename = name; return response; },
+        type: value => { headers.type = value; return response; },
+        set: (key, value) => { headers[key] = value; return response; },
+        send: value => value,
+    };
+    assert.equal(await controller.log({ jobId: valid.requestId }, response), 'actual diagnostic output\n');
+    assert.equal(headers['Cache-Control'], 'no-store');
+    assert.equal(headers.type, 'text/plain; charset=utf-8');
 });
 
 test('the update service authenticates on its private socket and does not cache stale idle state over an accepted job', async () => {
@@ -206,6 +220,11 @@ test('the update service authenticates on its private socket and does not cache 
     calls[0].respond(idle);
     assert.equal((await pendingStatus).active, true);
     assert.equal(await service.isActive(), true);
+    const download = service.log(active.jobId);
+    const content = 'actual diagnostic output\n'.repeat(4000);
+    assert.equal(calls[2].options.path, '/logs/panel/' + active.jobId);
+    calls[2].respond({ filename: 'panel-update-' + active.jobId + '.log', content, truncated: false });
+    assert.equal((await download).content, content);
 });
 
 test('subscription page administration rejects API tokens, commands, paths and unknown fields', async () => {

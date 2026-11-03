@@ -65,6 +65,12 @@ sudo python3 ../Remnacust-installer/tests/test_node_firewall.py --network
 
 They exercise real nftables input/forward filtering, preserved SSH and outbound replies, and quota boundary transitions. Backend tests cover host membership, explicit balancer assignments, template copies, source/port validation, shell injection, reviewed apply and read-only subscription preview. Redis tests cover leases, retries and stale ACKs.
 
+## Downloading update diagnostics
+
+Panel 1.1.7.91 and installer service 1.2.129 provide an authenticated technical log download for panel updates and subscription page operations. The browser button downloads `.log` output, not a JSON status summary. Only an interactive panel administrator can access the current job; API tokens cannot use this endpoint. Passwords and tokens are redacted from the download. Downloads are limited to the latest 1 MiB, with a truncation notice. The complete original remains in the root-only log directory until the next operation for that component or page.
+
+`remnacust-panel-update.service` starts the local control API at boot. It does not automatically install a release when the server restarts. An explicit authenticated update request starts a separate worker. An interrupted worker is reported as failed rather than automatically repeating the operation.
+
 # Frozen subscriptions
 
 Freeze a user to pause normal access and retain the exact remaining subscription lifetime. Activation resumes the saved remainder; an exhausted quota or zero remaining lifetime does not grant access. Extending a frozen subscription adds time, and editing its expiry sets the remainder from the time of that edit. Scheduled traffic resets still run. Bulk status changes synchronize device access through the per-user queue. The API reports `frozenAt`, `frozenRemainingMs`, and a projected `expireAt` for frozen users; export/import preserves the remaining duration. A periodic database rewrite is not required.

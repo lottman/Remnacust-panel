@@ -15,6 +15,7 @@ fixture='${base}'
 mkdir -p "$fixture/bin" "$fixture/empty" "$fixture/nonempty"
 trap 'rm -rf -- "$fixture"' EXIT
 export fixture
+export REMNACUST_ROOT="$fixture/root"
 printf 'occupied' > "$fixture/nonempty/file"
 ln -s "$fixture/empty" "$fixture/link"
 printf '%s' '${Buffer.from(metadata).toString('base64')}' | base64 -d > "$fixture/release.json"

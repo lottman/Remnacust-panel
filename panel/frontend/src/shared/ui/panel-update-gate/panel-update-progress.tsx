@@ -54,6 +54,7 @@ export function PanelUpdateProgress({
                         targetVersion: status?.targetVersion,
                         phase: status?.phase,
                         error: status?.error,
+                        logPath: status?.logPath,
                         progress
                     },
                     null,
@@ -82,6 +83,11 @@ export function PanelUpdateProgress({
                       ? t(`panelUpdate.stages.${progress.stage}`)
                       : t('panelUpdate.checking')}
             </Text>
+            {status?.logPath && (
+                <Text size="xs" c="dimmed" style={{ overflowWrap: 'anywhere' }}>
+                    {t('panelUpdate.privateLog', { path: status.logPath })}
+                </Text>
+            )}
             {!reachable && !failed && <Alert color="blue">{t('panelUpdate.reconnecting')}</Alert>}
             {progress ? (
                 <>

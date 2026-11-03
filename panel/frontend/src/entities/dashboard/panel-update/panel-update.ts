@@ -46,6 +46,7 @@ export const panelUpdateSchema = z.object({
     jobId: z.string().uuid().nullable(),
     targetVersion: z.string().nullable(),
     error: z.string().nullable(),
+    logPath: z.string().max(2048).nullable().optional(),
     progress: updateProgressSchema.nullable().optional()
 })
 export type PanelUpdateStatus = z.infer<typeof panelUpdateSchema>
@@ -167,7 +168,10 @@ export const usePanelUpdateStore = create<{
             )
             get().accept(panelUpdateSchema.parse(result.data.response))
         } catch (error) {
-            if (isAxiosError(error) && error.response?.data?.errorCode === 'NODE_CONTINUITY_NOT_READY') {
+            if (
+                isAxiosError(error) &&
+                error.response?.data?.errorCode === 'NODE_CONTINUITY_NOT_READY'
+            ) {
                 get().dismiss()
             }
             throw error

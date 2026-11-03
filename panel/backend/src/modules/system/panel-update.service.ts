@@ -25,6 +25,7 @@ export const subscriptionPagesSchema = z.object({
                         operation: z.enum(['start', 'stop', 'restart', 'upgrade']),
                         phase: z.enum(['queued', 'running', 'completed', 'failed']),
                         error: z.string().max(64).nullable(),
+                        logPath: z.string().max(2048).nullable().optional(),
                     })
                     .nullable(),
             }),
@@ -70,6 +71,7 @@ export const panelUpdateStateSchema = z.object({
     jobId: z.string().uuid().nullable(),
     targetVersion: z.string().nullable(),
     error: z.string().nullable(),
+    logPath: z.string().max(2048).nullable().optional(),
     progress: updateProgressSchema.nullable().optional(),
 });
 const CONTROL = '/run/remnacust-control';

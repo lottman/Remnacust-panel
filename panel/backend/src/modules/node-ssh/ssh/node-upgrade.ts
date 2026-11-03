@@ -60,9 +60,41 @@ directory=$(realpath -- "$directory")
 command -v curl >/dev/null || fail dependencies
 command -v python3 >/dev/null || fail dependencies
 command -v docker >/dev/null || fail dependencies
+command -v flock >/dev/null || fail dependencies
 work=$(mktemp -d -t remnacust-node-upgrade.XXXXXXXX)
 failure=download
-trap 'rc=$?; if ((rc)); then printf "REMNACUST_NODE_UPGRADE_ERROR:%s\n" "$failure"; fi; rm -rf -- "$work"' EXIT
+trap 'rc=$?; rm -rf -- "$work"; exit "$rc"' EXIT
+log_root=$(printenv REMNACUST_ROOT) || log_root=/opt/remnacust
+log_root="$log_root/logs"
+[[ ! -L "$log_root" ]] || fail directory
+install -d -m 0700 "$log_root"
+[[ ! -L "$log_root/.node-maintenance.lock" ]] || fail directory
+exec 7>"$log_root/.node-maintenance.lock"
+flock -n 7 || fail installer
+log=$(mktemp "$log_root/.node-maintenance.XXXXXXXX")
+chmod 0600 "$log"
+mv -fT -- "$log" "$log_root/node-maintenance.log"
+log="$log_root/node-maintenance.log"
+printf '[%s] START node maintenance\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$log"
+printf 'Detailed maintenance log: %s\n' "$log"
+exec 6>&2
+exec 2> >(tee -a -- "$log" >&6)
+log_pid=$!
+finish() {
+    local rc=$?
+    trap - EXIT
+    set +e
+    printf '[%s] FINISH exit=%s phase=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$rc" "$failure" >> "$log"
+    exec 2>&6 6>&-
+    wait "$log_pid"
+    if ((rc)); then printf 'REMNACUST_NODE_UPGRADE_ERROR:%s\nDetailed maintenance log: %s\n' "$failure" "$log"; fi
+    rm -rf -- "$work"
+    exit "$rc"
+}
+trap finish EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+trap 'exit 129' HUP
 printf '\nREMNACUST_NODE_UPGRADE_PHASE:downloading\n'
 download() { curl -fsSL --proto '=https' --proto-redir '=https' --connect-timeout 15 --max-time 900 --retry 2 "$1" -o "$2"; }
 download https://api.github.com/repos/lottman/Remnacust-installer/releases/latest "$work/release.json"

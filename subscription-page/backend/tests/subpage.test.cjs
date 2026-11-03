@@ -14,6 +14,24 @@ function response() {
     res.cookie = (...args) => res.cookies.push(args);res.socket = {destroy:()=>{res.destroyed=true;}};
     return res;
 }
+test('ten thousand page completions and synchronous errors preserve the request budget', () => {
+    const { dynamicRequestBudget } = load(path.join(__dirname, '../src/common/middlewares/request-budget.middleware.ts'));
+    const budget = dynamicRequestBudget(1);
+    for (let index = 0; index < 10000; index++) {
+        const res = response();
+        let accepted = false;
+        if (index % 3 === 0) {
+            assert.throws(() => budget({ path: '/subscription' }, res, () => { throw new Error('fixture'); }), /fixture/);
+        } else {
+            budget({ path: '/subscription' }, res, () => { accepted = true; });
+            assert(accepted);
+            res.emit(index % 2 ? 'close' : 'finish');
+        }
+        res.emit('close');
+        res.emit('finish');
+        assert.equal(res.listenerCount('close') + res.listenerCount('finish'), 0);
+    }
+});
 const { SubscriptionService } = load(path.join(__dirname,'../src/modules/subscription/subscription.service.ts'),axiosMocks);
 
 test('proxy keeps upstream bytes and subscription headers but never caches personalized data', async () => {

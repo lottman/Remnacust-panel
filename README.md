@@ -23,18 +23,22 @@ docker compose up -d --no-build --pull never
 
 `restart` не перечитывает `.env`: после изменения окружения контейнеры нужно пересоздать. Сохраняйте исходный `APP_SECRET`, ключ ноды и реквизиты БД. Копии находятся в `backups/`, журналы — в `logs/`; новые рабочие папки с датами при каждом обновлении не создаются. Перенос старой структуры: `sudo remnacust normalize-layout --component panel` или `--component node`.
 
+## Журналы обновления
+
+Подробные журналы CLI: `/opt/remnacust/logs/installer-panel.log`, `installer-node.log`, `installer-subscription-page.log`. Ошибка показывает путь. Следующее действие того же компонента заменяет его журнал; статус и диагностика используют отдельный файл. Обновление из панели сохраняет `panel-update-<ID>.log`, управление страницей — `page-<ID страницы>-<ID задачи>.log`. Каталог доступен только root; не публикуйте его через reverse proxy.
+
 ## Текущий стабильный комплект
 
-Актуально на 2 ноября 2026 года. Версии компонентов имеют отдельную нумерацию.
+Актуально на 3 ноября 2026 года. Версии компонентов имеют отдельную нумерацию.
 
 | Компонент | Версия | Основа |
 | --- | --- | --- |
-| Панель и страница подписки | [1.1.7.89](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.89) | Remnawave backend/frontend 3.4.7, Subscription Page 8.0.1 |
-| Установщик и Docker-комплект | [1.2.127](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.127) | Готовые образы Linux amd64/arm64 |
+| Панель и страница подписки | [1.1.7.90](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.90) | Remnawave backend/frontend 3.4.7, Subscription Page 8.0.1 |
+| Установщик и Docker-комплект | [1.2.128](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.128) | Готовые образы Linux amd64/arm64 |
 | Агент ноды | [1.1.21](https://github.com/lottman/Remnacust-node/releases/tag/v1.1.21) | Remnawave Node 3.4.3 |
 | Core и валидатор конфигурации | [1.1.12](https://github.com/lottman/Remnacust-core/releases/tag/v1.1.12) | Опубликованный стабильный Xray v26.10.31 |
 
-Обновление панели не заменяет ядро удалённых нод. Для новых возможностей ядра обновляйте ноду или её Core через штатное управление. Подробности: [совместимость](docs/COMPATIBILITY.md), [последние изменения](docs/releases/1.1.7.89.md).
+Обновление панели не заменяет ядро удалённых нод. Для новых возможностей ядра обновляйте ноду или её Core через штатное управление. Подробности: [совместимость](docs/COMPATIBILITY.md), [последние изменения](docs/releases/1.1.7.90.md).
 
 ![Главная Remnacust](panel/assets/overview.png)
 
@@ -49,7 +53,7 @@ curl -fsSL --proto '=https' --proto-redir '=https' https://github.com/lottman/Re
 sudo bash installer.sh install-panel
 ```
 
-Скрипт спросит версию, домен, способ HTTPS и установку сайта подписки. Для закреплённого комплекта используйте `--version 1.2.127`. Домен подтверждается отдельно; обязательные пустые ответы запрашиваются повторно. Для своего reverse proxy есть `--proxy existing`. После запуска создайте администратора в панели.
+Скрипт спросит версию, домен, способ HTTPS и установку сайта подписки. Для закреплённого комплекта используйте `--version 1.2.128`. Домен подтверждается отдельно; обязательные пустые ответы запрашиваются повторно. Для своего reverse proxy есть `--proxy existing`. После запуска создайте администратора в панели.
 
 Отдельный сайт устанавливается командой `sudo remnacust install-subscription-page`; к нему можно подключить локальную либо удалённую панель с ограниченным API-токеном. [Руководство установщика](https://github.com/lottman/Remnacust-installer#readme), [документация сайта](subscription-page/README.md).
 

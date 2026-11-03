@@ -23,6 +23,7 @@ type PageInstance = {
         phase: 'queued' | 'running' | 'completed' | 'failed'
         operation: Operation
         error: string | null
+        logPath?: string | null
     }
 }
 const key = ['local-subscription-pages'] as const
@@ -141,6 +142,17 @@ function ManagedSubscriptionPagesWidget() {
                                     )}
                                     {page.job?.phase === 'failed' && (
                                         <Alert color="red">{t('subscription-pages.failed')}</Alert>
+                                    )}
+                                    {page.job?.logPath && (
+                                        <Text
+                                            size="xs"
+                                            c="dimmed"
+                                            style={{ overflowWrap: 'anywhere' }}
+                                        >
+                                            {t('panelUpdate.privateLog', {
+                                                path: page.job.logPath
+                                            })}
+                                        </Text>
                                     )}
                                     <Group wrap="wrap">
                                         {(['start', 'stop', 'restart', 'upgrade'] as const).map(

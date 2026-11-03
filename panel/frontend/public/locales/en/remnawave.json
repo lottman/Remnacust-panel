@@ -3293,7 +3293,8 @@
       "running": "In progress",
       "done": "Done",
       "failed": "Failed"
-    }
+    },
+    "privateLog": "Detailed server log: {{path}}. Retained until the next operation."
   },
   "flag-picker": {
     "open": "Choose a flag",

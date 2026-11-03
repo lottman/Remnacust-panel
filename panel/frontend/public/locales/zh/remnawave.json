@@ -3293,7 +3293,8 @@
       "running": "进行中",
       "done": "完成",
       "failed": "失败"
-    }
+    },
+    "privateLog": "服务器详细日志：{{path}}。保留至下一次操作。"
   },
   "flag-picker": {
     "open": "选择国旗",

@@ -31,13 +31,15 @@ name='release.json' if url.endswith('/latest') else url.rsplit('/',1)[1]
 destination.write_bytes((pathlib.Path(os.environ['QA_ROOT'])/name).read_bytes())
 `, { mode: 0o700 });
     const script = nodeUpgradeScript({ t: 'node-upgrade', id: '00000000-0000-4000-8000-000000000001', directory });
-    const run = extra => spawnSync('bash', ['-s'], { input: script, encoding: 'utf8', env: { ...process.env, PATH: bin + ':' + process.env.PATH, QA_ROOT: root, QA_MARKER: marker, ...extra }, timeout: 20000 });
+    const run = extra => spawnSync('bash', ['-s'], { input: script, encoding: 'utf8', env: { ...process.env, REMNACUST_ROOT: root, PATH: bin + ':' + process.env.PATH, QA_ROOT: root, QA_MARKER: marker, ...extra }, timeout: 20000 });
     try {
         assert.equal(spawnSync('bash', ['-n'], { input: script }).status, 0);
         const passed = run(); assert.equal(passed.status, 0, passed.stderr);
         assert.deepEqual(fs.readFileSync(marker, 'utf8').trim().split('\n'), ['upgrade-node', '--directory', directory, '--version', '9.9.9', '--yes']);
         assert.equal(fs.existsSync(path.join(root, 'PWNED')), false);
         assert.equal(run({ QA_EXIT: '19' }).status, 19, 'Installer failure propagates');
+        assert.match(fs.readFileSync(path.join(root, 'logs/node-maintenance.log'), 'utf8'), /FINISH exit=19 phase=installer/);
+        assert.equal(fs.statSync(path.join(root, 'logs/node-maintenance.log')).mode & 0o777, 0o600);
         fs.unlinkSync(marker);
         fs.writeFileSync(path.join(root, 'SHA256SUMS'), '0'.repeat(64) + '  installer.sh\n');
         assert.notEqual(run().status, 0); assert.equal(fs.existsSync(marker), false);

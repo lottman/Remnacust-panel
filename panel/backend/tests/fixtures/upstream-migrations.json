@@ -1,0 +1,1565 @@
+{
+  "repository": "https://github.com/remnawave/backend",
+  "verifiedAt": "2026-11-03",
+  "versions": [
+    {
+      "tag": "3.0.0",
+      "files": [
+        {
+          "name": "20241129132625_init",
+          "gitBlobSha1": "ddf39ff62dc948825e3a211d0d86a74bb57e188e"
+        },
+        {
+          "name": "20241205203645_",
+          "gitBlobSha1": "1ec0f67e383ba1c9b1378fa628f45793fb97f0d3"
+        },
+        {
+          "name": "20241216003610_add_new_field",
+          "gitBlobSha1": "7ecd61ef9c52a378f90d799e85d197ba0bd3e9e6"
+        },
+        {
+          "name": "20241222053036_add_users_online_stat",
+          "gitBlobSha1": "d96ffa337d3e1092d2797e588ccd87b1d9cf2abf"
+        },
+        {
+          "name": "20241225185207_add_node_inbound_exclusions",
+          "gitBlobSha1": "420b4828abdd57212dd3ac05b479e9b828a0d0ce"
+        },
+        {
+          "name": "20250113213322_add_updated_at_to_nodes_user_usage_history",
+          "gitBlobSha1": "8f5a5b5fc688f7fbeed643ebe1a0e269d5a2126a"
+        },
+        {
+          "name": "20250113231728_add_view_position_for_nodes",
+          "gitBlobSha1": "4a700e4879f2f5d37610c73ed4dbf8c33259c15c"
+        },
+        {
+          "name": "20250114013223_add_country_code",
+          "gitBlobSha1": "83749f3e823983d79a5e5d5903e56c6cd09ef338"
+        },
+        {
+          "name": "20250126164718_add_description_field_and_fix_default_values",
+          "gitBlobSha1": "459566852a7cb7cf7a371418c0ac90ddfbf8429e"
+        },
+        {
+          "name": "20250211135916_add_consumption_multiplier",
+          "gitBlobSha1": "eb0c98f68755b940d707bea582ff3301c5cd1438"
+        },
+        {
+          "name": "20250219012541_remove",
+          "gitBlobSha1": "727554fb42663cf550fe81ae005b57f3b4733123"
+        },
+        {
+          "name": "20250219013001_remove_depreacted_limit_strategies",
+          "gitBlobSha1": "5fe72bec44e18ab15f8b5377195b02c40d624254"
+        },
+        {
+          "name": "20250225115627_add_network_and_security_to_inbounds",
+          "gitBlobSha1": "0c62f27739f10e4a52c1d8ddecb8f6a6c0f86136"
+        },
+        {
+          "name": "20250301181855_add_telegram_id_and_email_fields",
+          "gitBlobSha1": "614e42fbca21ebdb29b59701361cb94d6537262c"
+        },
+        {
+          "name": "20250301203122_upgrade_to_v6",
+          "gitBlobSha1": "5fe72bec44e18ab15f8b5377195b02c40d624254"
+        },
+        {
+          "name": "20250302162049_new_auth_system",
+          "gitBlobSha1": "5d0a84ef54e612733f09ea64351e5a819a054116"
+        },
+        {
+          "name": "20250307025906_add_xray_uptime",
+          "gitBlobSha1": "d924a645245598f9389d6b11ce0b1010de73bcfb"
+        },
+        {
+          "name": "20250308020443_add_subscription_templates",
+          "gitBlobSha1": "825353d02851d290fcec584134c112c203d26c9d"
+        },
+        {
+          "name": "20250311232029_add_subscription_settings",
+          "gitBlobSha1": "36e8eb2301a3397d9fdf851bc12db1bdec80efac"
+        },
+        {
+          "name": "20250312014652_add_boolean_value_for_webpage_url",
+          "gitBlobSha1": "26b6bd44e42e1c0db53244dab07ad703f516c484"
+        },
+        {
+          "name": "20250314164711_add_serve_json_at_base_subscription",
+          "gitBlobSha1": "a9184acdbe15308075f2b79fcb450fe296c74fb5"
+        },
+        {
+          "name": "20250314191018_add_username_to_base_subscription",
+          "gitBlobSha1": "4c882a53d238e8ea6e5d0224b6e2f153de4a1788"
+        },
+        {
+          "name": "20250315164331_add_security_layer",
+          "gitBlobSha1": "e5e1c2add5e4caac1dc37042667247fc11c22bb7"
+        },
+        {
+          "name": "20250321173808_add_extra_xhttp",
+          "gitBlobSha1": "9b4860916aefd0a48360af55a6b6096ee6790b05"
+        },
+        {
+          "name": "20250326125917_add_ca_certs",
+          "gitBlobSha1": "904d1343d470dc701f432641c6bbbb5128fb6493"
+        },
+        {
+          "name": "20250403121347_add_is_show_custom_remarks",
+          "gitBlobSha1": "a5615da752fca71c17a9ecd2167ff1778625b5c5"
+        },
+        {
+          "name": "20250404230114_replace_uuid_with_id_in_a_few_tables_drop_uuid_for_active_user_inbounds",
+          "gitBlobSha1": "957b66718531a4910beeb88c3bae892ab853e2bc"
+        },
+        {
+          "name": "20250409201313_add_hwid",
+          "gitBlobSha1": "3cc99f452f47e4dbef1cf849fa8d220517855b16"
+        },
+        {
+          "name": "20250410180959_add_custom_response_headers",
+          "gitBlobSha1": "df511d2dc278e90356a992ed6fc9b52ee9742af0"
+        },
+        {
+          "name": "20250415192807_change_primary_key_on_hwid_user_devices",
+          "gitBlobSha1": "6b6a70d03d05bdf343ec53c5ff6f792631b7d08a"
+        },
+        {
+          "name": "20250505151503_add_user_tag",
+          "gitBlobSha1": "b9580c5197c432eec36307876e052af95ee698bf"
+        },
+        {
+          "name": "20250506222812_add_index_to_nodes_user_usage_history",
+          "gitBlobSha1": "f3c0fe9513c67ae0d6fc6abd5e8c923dac3892cb"
+        },
+        {
+          "name": "20250506224824_add_indexes",
+          "gitBlobSha1": "846845c87001027bee986d2fa3706278082c03e8"
+        },
+        {
+          "name": "20250518181139_add_first_connected_at_and_notification_threshold",
+          "gitBlobSha1": "b32368da45e49f2c126fb6319e87d953e4ddcda0"
+        },
+        {
+          "name": "20250519185746_add_randomize_hosts",
+          "gitBlobSha1": "23eb907aed95b28736556ecedddfebc5339bcfc3"
+        },
+        {
+          "name": "20250612160411_add_last_connected_node_uuid",
+          "gitBlobSha1": "78faa3947ce1ad83e549dc3adc4750b422da1188"
+        },
+        {
+          "name": "20250613022955_add_index_to_user_traffic_history",
+          "gitBlobSha1": "acc40fb2b2633ac774b4b6c91aa995486b83f964"
+        },
+        {
+          "name": "20250619032009_add_squads_and_config_profiles_drop_old_tables",
+          "gitBlobSha1": "9a099049b218786e25a0839518d1d7b95af57358"
+        },
+        {
+          "name": "20250619033003_add_raw_json_to_config_profile_inbounds",
+          "gitBlobSha1": "9e285f15acc408bbf3e63ae830948b411aaf6997"
+        },
+        {
+          "name": "20250620182607_add_infra_related_tables",
+          "gitBlobSha1": "e1d3577c15af306ca76946941a4a1a38c47c917d"
+        },
+        {
+          "name": "20250625141235_add_server_description_to_hosts",
+          "gitBlobSha1": "80c4dedc5f39f15b7a8f99469d20d6fa79cb9a16"
+        },
+        {
+          "name": "20250626184020_change_created_at_in_nodes_user_usage_history",
+          "gitBlobSha1": "6c332408ade19ac1e0232ea9cd6fdf95ef28bdfa"
+        },
+        {
+          "name": "20250706204810_add_node_version_to_nodes",
+          "gitBlobSha1": "c4e628ad6c77682bffada014c17a13429823413c"
+        },
+        {
+          "name": "20250713201057_remove_api_token_description",
+          "gitBlobSha1": "f647f8763b7c303e3c0916bc9b5a77065127ad54"
+        },
+        {
+          "name": "20250730131220_add_mux_to_host",
+          "gitBlobSha1": "c338ccd0b4b53e3239da4c3e43f01a4143c366fc"
+        },
+        {
+          "name": "20250730140727_add_sockopt_params_to_host",
+          "gitBlobSha1": "664596f2f838e75e6223a72a8fa27ac1ecac5d00"
+        },
+        {
+          "name": "20250807224235_remove_unique_from_host",
+          "gitBlobSha1": "45132ccc94c306dbd901c5d5640f9489592bffc8"
+        },
+        {
+          "name": "20250807234256_add_tag_and_is_hidden_properties_to_host",
+          "gitBlobSha1": "ba18ae4b88fb4678f78a488bff330dd4f2d22b7d"
+        },
+        {
+          "name": "20250810143307_override_sni_from_address",
+          "gitBlobSha1": "5c2b78295cf440aa1a3ffcfe25354952541499df"
+        },
+        {
+          "name": "20250817155235_add_vless_route_id",
+          "gitBlobSha1": "b41210d73704910b6c61fc1956c0e61e0234a2b2"
+        },
+        {
+          "name": "20250821172409_add_indexes",
+          "gitBlobSha1": "b6e5ab8ce6a9880caa93168120667333f42d02ef"
+        },
+        {
+          "name": "20250822011918_add_tid",
+          "gitBlobSha1": "de92351fde3b260614dfcdf986188a6d188c37a0"
+        },
+        {
+          "name": "20250913131958_add_subscription_request_history",
+          "gitBlobSha1": "0f8b9151df27b08dff58c552420777c527eb5ee0"
+        },
+        {
+          "name": "20250914181427_add_ais",
+          "gitBlobSha1": "26af035c041b066652f7995053d0a53b6b400a09"
+        },
+        {
+          "name": "20250925101912_add_shuffle_host_and_mihomo_x25519",
+          "gitBlobSha1": "fe4967b2c451e2b372763f401337535a73e9ce7e"
+        },
+        {
+          "name": "20251008222202_add_hosts_to_nodes",
+          "gitBlobSha1": "459386627f851b29724df07e28d0068365049c67"
+        },
+        {
+          "name": "20251016013423_add_snippets",
+          "gitBlobSha1": "7a37e0366f37c16b7258efab57bf4bd5b3e1304f"
+        },
+        {
+          "name": "20251017011159_add_response_rules",
+          "gitBlobSha1": "33518f0729ee8ad14f7388ae0f04627c3ca55601"
+        },
+        {
+          "name": "20251019220002_allow_multiple_sub_templates",
+          "gitBlobSha1": "69d0e7279caef0210249ef633ff3c255d09eb839"
+        },
+        {
+          "name": "20251020051722_add_external_squads",
+          "gitBlobSha1": "f21de7c273b07c4956fcba3b2837518cd1d895ea"
+        },
+        {
+          "name": "20251021150742_add_subscription_settings_to_es",
+          "gitBlobSha1": "c6bc741e10f5afb7cbd0f9360e0a440953b5ffa0"
+        },
+        {
+          "name": "20251023203325_settings_and_passkeys",
+          "gitBlobSha1": "97cda0de5f06d1517dc3328efdcce9d768942929"
+        },
+        {
+          "name": "20251028234406_add_hosts_override_to_es",
+          "gitBlobSha1": "02c9f6e984bf6c491fc81aa936af701d353a7a07"
+        },
+        {
+          "name": "20251105201518_response_headers_es",
+          "gitBlobSha1": "5a243c9adc5c478f6083f0773e06c931ff072096"
+        },
+        {
+          "name": "20251109162118_hwid_settings",
+          "gitBlobSha1": "8c383d7832c99de551014ec7267e085d58514ca2"
+        },
+        {
+          "name": "20251111012403_nuu_index_drop",
+          "gitBlobSha1": "1011db4085519f881df48ecca222fa9ee1112167"
+        },
+        {
+          "name": "20251111214604_refactor_user_usage_history",
+          "gitBlobSha1": "b510fd4f1caffc6003ed16616de2cdb44816c9dc"
+        },
+        {
+          "name": "20251112020636_user_traffic",
+          "gitBlobSha1": "fdeec4f43500454186a6a9164c3b28f4c2e3cf55"
+        },
+        {
+          "name": "20251116151032_add_xray_json_to_host",
+          "gitBlobSha1": "c96ef3effca82ec038dc9eec25b1c1bb0dd77b6e"
+        },
+        {
+          "name": "20251117153032_dnd",
+          "gitBlobSha1": "62d242b3a56f30ba791bae7cf34c9876719209a9"
+        },
+        {
+          "name": "20251118004805_node_tags",
+          "gitBlobSha1": "0889c557c731d28a875fd4f12360e530f05e6873"
+        },
+        {
+          "name": "20251118174347_internal_squad_host_exclusions",
+          "gitBlobSha1": "59e6b10dbd543c052fcbb5e0bc28bf356092b03e"
+        },
+        {
+          "name": "20251120225934_es_custom_remarks",
+          "gitBlobSha1": "ce08e17b027e6bff83bc3444965921d457788d61"
+        },
+        {
+          "name": "20251121001611_unify_custom_remarks",
+          "gitBlobSha1": "2aa96f6692b29f8a7ce47940528b207e2fcff333"
+        },
+        {
+          "name": "20251126082042_drop_add_username_to_base_subscription",
+          "gitBlobSha1": "e7f2fd2c0aaf93f3752204aff14c51ef3b119cec"
+        },
+        {
+          "name": "20251129171418_change_status",
+          "gitBlobSha1": "e30f9288d31b4f8d47d2980e05cf4f71a968c96a"
+        },
+        {
+          "name": "20251129171707_change_pk",
+          "gitBlobSha1": "35faaeac5b077077a37c1dbfed8ea6abb4791f63"
+        },
+        {
+          "name": "20251129180538_stricter_host_columns",
+          "gitBlobSha1": "8a6341f9432d73ca6ddeef57faa64b504023bbd4"
+        },
+        {
+          "name": "20251201172156_drop_unused_columns_in_nodes",
+          "gitBlobSha1": "3e1f0a717f049581fdd9c2a2fb09a6cf4b8efaca"
+        },
+        {
+          "name": "20251201232425_drop_user_traffic_history",
+          "gitBlobSha1": "a58832a1b2beefcb567b97d7ee2c8609edb9f38d"
+        },
+        {
+          "name": "20251202213233_change_uuid_to_id_in_is_memers",
+          "gitBlobSha1": "51be108dd45b470026ea2af7648ad2691f735ddf"
+        },
+        {
+          "name": "20251207150402_blank_sni",
+          "gitBlobSha1": "fdb0ad36c7fcafa0a6ee248541389a90bc871ea7"
+        },
+        {
+          "name": "20251214002858_subpage_configs",
+          "gitBlobSha1": "43ecd8874c752b6a465d0ca074a50266e92a5aab"
+        },
+        {
+          "name": "20251214163118_truncate_configs",
+          "gitBlobSha1": "f3185198cd3b634da675fe0088d08a4724271ace"
+        },
+        {
+          "name": "20251214213514_add_subpage_to_es",
+          "gitBlobSha1": "5df231deac10864f9e222ce665f4e34492d6d0e4"
+        },
+        {
+          "name": "20251215222247_subpage_tr",
+          "gitBlobSha1": "f47acdef9c0ae112fc5cd3a9b1db6c5516eaadde"
+        },
+        {
+          "name": "20251218145003_nodes_index",
+          "gitBlobSha1": "441607d1bdf3cb0f29c75e1d921ae1b3b6e3c9e9"
+        },
+        {
+          "name": "20260107203202_es_custom_remarks",
+          "gitBlobSha1": "d1a77465b5537d9a3eb2cb35004f52a9e295f698"
+        },
+        {
+          "name": "20260225000503_exclude_host_from_subtype",
+          "gitBlobSha1": "c10b7c5aa5d9e6969a836758d8fcf22e21efc264"
+        },
+        {
+          "name": "20260225202645_node_plugins",
+          "gitBlobSha1": "11c659cfad22297a7c056e72154c043e747dc842"
+        },
+        {
+          "name": "20260301142020_tg_oauth2",
+          "gitBlobSha1": "799a9db39a59274da5da1463c5cf4c987dc8a483"
+        },
+        {
+          "name": "20260305150610_user_node_metadata",
+          "gitBlobSha1": "488247461e3c992b18400f164792f18ad4a1e520"
+        },
+        {
+          "name": "20260307201721_torrent_blocker_reports",
+          "gitBlobSha1": "7e1447b24a83146f8d5736b690294ad6317ee3c8"
+        },
+        {
+          "name": "20260312215357_drop_unused_columns",
+          "gitBlobSha1": "dbf3f0669d5c6f71650be6c0c5e71b9dee6674f6"
+        },
+        {
+          "name": "20260315172145_drop_legacy_columns",
+          "gitBlobSha1": "a760f630e7a8ab509502d8b53376c916f984abe1"
+        },
+        {
+          "name": "20260327170528_drop_node_columns",
+          "gitBlobSha1": "493dd8838c0b8354a186970deb352b04bb8d95ce"
+        },
+        {
+          "name": "20260328174929_final_mask_in_host",
+          "gitBlobSha1": "64a07bd84240bb5514e325b83fb296f2e15a7d59"
+        },
+        {
+          "name": "20260407151134_repalce_uuid_with_user_id",
+          "gitBlobSha1": "5acc6f52850507f699b23218ea707909c351e583"
+        },
+        {
+          "name": "20260601044404_remove_allow_insecure",
+          "gitBlobSha1": "aa847ce00549dfc43bd2369c40746c75f93346be"
+        },
+        {
+          "name": "20260601143124_add_verify_peer_cert_by_name",
+          "gitBlobSha1": "010ccf2cebcc63236f54419c6376bd68820769d3"
+        },
+        {
+          "name": "20260602181750_add_mihomo_ip_version",
+          "gitBlobSha1": "2762dc7612dc3ea55bc4639f17131433c34b2c7f"
+        },
+        {
+          "name": "20260604145012_add_node_note",
+          "gitBlobSha1": "9639a4965bd1e394a119ebcfeaece9b459ae5c1b"
+        },
+        {
+          "name": "20260604160914_add_host_tags",
+          "gitBlobSha1": "a5abc50f6cf288b58b5f83679087e5f103d9a632"
+        },
+        {
+          "name": "20260604221858_add_proxy_for_node",
+          "gitBlobSha1": "3ad9c5e33dfe41f2dd4230d64aef737a24de22d9"
+        },
+        {
+          "name": "20260612170542_add_node_consumption_multiplier",
+          "gitBlobSha1": "a97967cfaa0bb661fa9262f3bb522eeec7ae7686"
+        },
+        {
+          "name": "20260614181725_add_index_to_expire_at",
+          "gitBlobSha1": "9361ac677f7baf2d227a55b35b4315f476eb936a"
+        },
+        {
+          "name": "20260620150954_add_api_tokens_scopes",
+          "gitBlobSha1": "70cc7f4dfc66acdcd7029cf299647fdd46041f5b"
+        },
+        {
+          "name": "20260622153610_optional_billing_node",
+          "gitBlobSha1": "3c917f4fec87160d131bca17724d319ec860ecd2"
+        },
+        {
+          "name": "20260625133614_expire_at_for_api_tokens",
+          "gitBlobSha1": "3a640a71007c2eb09dc106efb1d4db66f1e1436c"
+        },
+        {
+          "name": "20260625200256_drop_unused_index",
+          "gitBlobSha1": "055a72aa554b9292a380e6d07741198298a1652c"
+        },
+        {
+          "name": "20260625200309_add_where_index",
+          "gitBlobSha1": "49de2058356fe48d7a536f17b2f1d23cff6a4b4c"
+        },
+        {
+          "name": "20260625200530_add_external_squad_index",
+          "gitBlobSha1": "709eea27137f4d181fa8628dc5b439f79ba92e4e"
+        },
+        {
+          "name": "20260702230159_add_user_id_index_to_hwid_devices",
+          "gitBlobSha1": "e254cb28022a6d49d3674572e44c9f11e7f2ce6c"
+        },
+        {
+          "name": "20260703000112_drop_unused_table",
+          "gitBlobSha1": "f9fc7f0f2fc93459b7b373a7726f26144ebeb839"
+        },
+        {
+          "name": "20260703205426_increase_host_remark_limit",
+          "gitBlobSha1": "0a11332809a8474d77e6508b61c5f8f86ebe1438"
+        },
+        {
+          "name": "20260706144257_drop_default_on_api_tokens",
+          "gitBlobSha1": "8d71cb19c53a4c6791f42dda0bcb8e7093a036bc"
+        },
+        {
+          "name": "20260706192331_change_hwid_datatype",
+          "gitBlobSha1": "9bfc3b883ad34fcc1b58f953b8cfd7170abba7fe"
+        },
+        {
+          "name": "20260710141018_add_nuuh_user_id_created_at_index",
+          "gitBlobSha1": "3c0eaf0a561e37c9a8fbfb484621f4f7b3733052"
+        },
+        {
+          "name": "20260714190723_add_index_to_telegram_id",
+          "gitBlobSha1": "1b89795e7f4da4724c4f7b4783071adcd7c0abdd"
+        },
+        {
+          "name": "20260717190133_es_response_headers",
+          "gitBlobSha1": "afdae449fcbed6b3644fcacc70005b338b32637e"
+        },
+        {
+          "name": "20260717203703_migrate_fields_to_response_headers",
+          "gitBlobSha1": "1e55bdb672988dcbfd2ef50a6f5622d6f2ac6699"
+        },
+        {
+          "name": "20260720124815_rename_column",
+          "gitBlobSha1": "c7fca9791b683f58249144cfd2096f94aa86531a"
+        },
+        {
+          "name": "20260720132335_drop_user_uuid",
+          "gitBlobSha1": "6c83dd6dab5474acd57fea3caaba650bfd9345e9"
+        },
+        {
+          "name": "20260726011328_index_to_users",
+          "gitBlobSha1": "70ddf87c0b8d8e1ec7670cb8604fe857d8f45514"
+        }
+      ]
+    },
+    {
+      "tag": "3.4.3",
+      "files": [
+        {
+          "name": "20241129132625_init",
+          "gitBlobSha1": "ddf39ff62dc948825e3a211d0d86a74bb57e188e"
+        },
+        {
+          "name": "20241205203645_",
+          "gitBlobSha1": "1ec0f67e383ba1c9b1378fa628f45793fb97f0d3"
+        },
+        {
+          "name": "20241216003610_add_new_field",
+          "gitBlobSha1": "7ecd61ef9c52a378f90d799e85d197ba0bd3e9e6"
+        },
+        {
+          "name": "20241222053036_add_users_online_stat",
+          "gitBlobSha1": "d96ffa337d3e1092d2797e588ccd87b1d9cf2abf"
+        },
+        {
+          "name": "20241225185207_add_node_inbound_exclusions",
+          "gitBlobSha1": "420b4828abdd57212dd3ac05b479e9b828a0d0ce"
+        },
+        {
+          "name": "20250113213322_add_updated_at_to_nodes_user_usage_history",
+          "gitBlobSha1": "8f5a5b5fc688f7fbeed643ebe1a0e269d5a2126a"
+        },
+        {
+          "name": "20250113231728_add_view_position_for_nodes",
+          "gitBlobSha1": "4a700e4879f2f5d37610c73ed4dbf8c33259c15c"
+        },
+        {
+          "name": "20250114013223_add_country_code",
+          "gitBlobSha1": "83749f3e823983d79a5e5d5903e56c6cd09ef338"
+        },
+        {
+          "name": "20250126164718_add_description_field_and_fix_default_values",
+          "gitBlobSha1": "459566852a7cb7cf7a371418c0ac90ddfbf8429e"
+        },
+        {
+          "name": "20250211135916_add_consumption_multiplier",
+          "gitBlobSha1": "eb0c98f68755b940d707bea582ff3301c5cd1438"
+        },
+        {
+          "name": "20250219012541_remove",
+          "gitBlobSha1": "727554fb42663cf550fe81ae005b57f3b4733123"
+        },
+        {
+          "name": "20250219013001_remove_depreacted_limit_strategies",
+          "gitBlobSha1": "5fe72bec44e18ab15f8b5377195b02c40d624254"
+        },
+        {
+          "name": "20250225115627_add_network_and_security_to_inbounds",
+          "gitBlobSha1": "0c62f27739f10e4a52c1d8ddecb8f6a6c0f86136"
+        },
+        {
+          "name": "20250301181855_add_telegram_id_and_email_fields",
+          "gitBlobSha1": "614e42fbca21ebdb29b59701361cb94d6537262c"
+        },
+        {
+          "name": "20250301203122_upgrade_to_v6",
+          "gitBlobSha1": "5fe72bec44e18ab15f8b5377195b02c40d624254"
+        },
+        {
+          "name": "20250302162049_new_auth_system",
+          "gitBlobSha1": "5d0a84ef54e612733f09ea64351e5a819a054116"
+        },
+        {
+          "name": "20250307025906_add_xray_uptime",
+          "gitBlobSha1": "d924a645245598f9389d6b11ce0b1010de73bcfb"
+        },
+        {
+          "name": "20250308020443_add_subscription_templates",
+          "gitBlobSha1": "825353d02851d290fcec584134c112c203d26c9d"
+        },
+        {
+          "name": "20250311232029_add_subscription_settings",
+          "gitBlobSha1": "36e8eb2301a3397d9fdf851bc12db1bdec80efac"
+        },
+        {
+          "name": "20250312014652_add_boolean_value_for_webpage_url",
+          "gitBlobSha1": "26b6bd44e42e1c0db53244dab07ad703f516c484"
+        },
+        {
+          "name": "20250314164711_add_serve_json_at_base_subscription",
+          "gitBlobSha1": "a9184acdbe15308075f2b79fcb450fe296c74fb5"
+        },
+        {
+          "name": "20250314191018_add_username_to_base_subscription",
+          "gitBlobSha1": "4c882a53d238e8ea6e5d0224b6e2f153de4a1788"
+        },
+        {
+          "name": "20250315164331_add_security_layer",
+          "gitBlobSha1": "e5e1c2add5e4caac1dc37042667247fc11c22bb7"
+        },
+        {
+          "name": "20250321173808_add_extra_xhttp",
+          "gitBlobSha1": "9b4860916aefd0a48360af55a6b6096ee6790b05"
+        },
+        {
+          "name": "20250326125917_add_ca_certs",
+          "gitBlobSha1": "904d1343d470dc701f432641c6bbbb5128fb6493"
+        },
+        {
+          "name": "20250403121347_add_is_show_custom_remarks",
+          "gitBlobSha1": "a5615da752fca71c17a9ecd2167ff1778625b5c5"
+        },
+        {
+          "name": "20250404230114_replace_uuid_with_id_in_a_few_tables_drop_uuid_for_active_user_inbounds",
+          "gitBlobSha1": "957b66718531a4910beeb88c3bae892ab853e2bc"
+        },
+        {
+          "name": "20250409201313_add_hwid",
+          "gitBlobSha1": "3cc99f452f47e4dbef1cf849fa8d220517855b16"
+        },
+        {
+          "name": "20250410180959_add_custom_response_headers",
+          "gitBlobSha1": "df511d2dc278e90356a992ed6fc9b52ee9742af0"
+        },
+        {
+          "name": "20250415192807_change_primary_key_on_hwid_user_devices",
+          "gitBlobSha1": "6b6a70d03d05bdf343ec53c5ff6f792631b7d08a"
+        },
+        {
+          "name": "20250505151503_add_user_tag",
+          "gitBlobSha1": "b9580c5197c432eec36307876e052af95ee698bf"
+        },
+        {
+          "name": "20250506222812_add_index_to_nodes_user_usage_history",
+          "gitBlobSha1": "f3c0fe9513c67ae0d6fc6abd5e8c923dac3892cb"
+        },
+        {
+          "name": "20250506224824_add_indexes",
+          "gitBlobSha1": "846845c87001027bee986d2fa3706278082c03e8"
+        },
+        {
+          "name": "20250518181139_add_first_connected_at_and_notification_threshold",
+          "gitBlobSha1": "b32368da45e49f2c126fb6319e87d953e4ddcda0"
+        },
+        {
+          "name": "20250519185746_add_randomize_hosts",
+          "gitBlobSha1": "23eb907aed95b28736556ecedddfebc5339bcfc3"
+        },
+        {
+          "name": "20250612160411_add_last_connected_node_uuid",
+          "gitBlobSha1": "78faa3947ce1ad83e549dc3adc4750b422da1188"
+        },
+        {
+          "name": "20250613022955_add_index_to_user_traffic_history",
+          "gitBlobSha1": "acc40fb2b2633ac774b4b6c91aa995486b83f964"
+        },
+        {
+          "name": "20250619032009_add_squads_and_config_profiles_drop_old_tables",
+          "gitBlobSha1": "9a099049b218786e25a0839518d1d7b95af57358"
+        },
+        {
+          "name": "20250619033003_add_raw_json_to_config_profile_inbounds",
+          "gitBlobSha1": "9e285f15acc408bbf3e63ae830948b411aaf6997"
+        },
+        {
+          "name": "20250620182607_add_infra_related_tables",
+          "gitBlobSha1": "e1d3577c15af306ca76946941a4a1a38c47c917d"
+        },
+        {
+          "name": "20250625141235_add_server_description_to_hosts",
+          "gitBlobSha1": "80c4dedc5f39f15b7a8f99469d20d6fa79cb9a16"
+        },
+        {
+          "name": "20250626184020_change_created_at_in_nodes_user_usage_history",
+          "gitBlobSha1": "6c332408ade19ac1e0232ea9cd6fdf95ef28bdfa"
+        },
+        {
+          "name": "20250706204810_add_node_version_to_nodes",
+          "gitBlobSha1": "c4e628ad6c77682bffada014c17a13429823413c"
+        },
+        {
+          "name": "20250713201057_remove_api_token_description",
+          "gitBlobSha1": "f647f8763b7c303e3c0916bc9b5a77065127ad54"
+        },
+        {
+          "name": "20250730131220_add_mux_to_host",
+          "gitBlobSha1": "c338ccd0b4b53e3239da4c3e43f01a4143c366fc"
+        },
+        {
+          "name": "20250730140727_add_sockopt_params_to_host",
+          "gitBlobSha1": "664596f2f838e75e6223a72a8fa27ac1ecac5d00"
+        },
+        {
+          "name": "20250807224235_remove_unique_from_host",
+          "gitBlobSha1": "45132ccc94c306dbd901c5d5640f9489592bffc8"
+        },
+        {
+          "name": "20250807234256_add_tag_and_is_hidden_properties_to_host",
+          "gitBlobSha1": "ba18ae4b88fb4678f78a488bff330dd4f2d22b7d"
+        },
+        {
+          "name": "20250810143307_override_sni_from_address",
+          "gitBlobSha1": "5c2b78295cf440aa1a3ffcfe25354952541499df"
+        },
+        {
+          "name": "20250817155235_add_vless_route_id",
+          "gitBlobSha1": "b41210d73704910b6c61fc1956c0e61e0234a2b2"
+        },
+        {
+          "name": "20250821172409_add_indexes",
+          "gitBlobSha1": "b6e5ab8ce6a9880caa93168120667333f42d02ef"
+        },
+        {
+          "name": "20250822011918_add_tid",
+          "gitBlobSha1": "de92351fde3b260614dfcdf986188a6d188c37a0"
+        },
+        {
+          "name": "20250913131958_add_subscription_request_history",
+          "gitBlobSha1": "0f8b9151df27b08dff58c552420777c527eb5ee0"
+        },
+        {
+          "name": "20250914181427_add_ais",
+          "gitBlobSha1": "26af035c041b066652f7995053d0a53b6b400a09"
+        },
+        {
+          "name": "20250925101912_add_shuffle_host_and_mihomo_x25519",
+          "gitBlobSha1": "fe4967b2c451e2b372763f401337535a73e9ce7e"
+        },
+        {
+          "name": "20251008222202_add_hosts_to_nodes",
+          "gitBlobSha1": "459386627f851b29724df07e28d0068365049c67"
+        },
+        {
+          "name": "20251016013423_add_snippets",
+          "gitBlobSha1": "7a37e0366f37c16b7258efab57bf4bd5b3e1304f"
+        },
+        {
+          "name": "20251017011159_add_response_rules",
+          "gitBlobSha1": "33518f0729ee8ad14f7388ae0f04627c3ca55601"
+        },
+        {
+          "name": "20251019220002_allow_multiple_sub_templates",
+          "gitBlobSha1": "69d0e7279caef0210249ef633ff3c255d09eb839"
+        },
+        {
+          "name": "20251020051722_add_external_squads",
+          "gitBlobSha1": "f21de7c273b07c4956fcba3b2837518cd1d895ea"
+        },
+        {
+          "name": "20251021150742_add_subscription_settings_to_es",
+          "gitBlobSha1": "c6bc741e10f5afb7cbd0f9360e0a440953b5ffa0"
+        },
+        {
+          "name": "20251023203325_settings_and_passkeys",
+          "gitBlobSha1": "97cda0de5f06d1517dc3328efdcce9d768942929"
+        },
+        {
+          "name": "20251028234406_add_hosts_override_to_es",
+          "gitBlobSha1": "02c9f6e984bf6c491fc81aa936af701d353a7a07"
+        },
+        {
+          "name": "20251105201518_response_headers_es",
+          "gitBlobSha1": "5a243c9adc5c478f6083f0773e06c931ff072096"
+        },
+        {
+          "name": "20251109162118_hwid_settings",
+          "gitBlobSha1": "8c383d7832c99de551014ec7267e085d58514ca2"
+        },
+        {
+          "name": "20251111012403_nuu_index_drop",
+          "gitBlobSha1": "1011db4085519f881df48ecca222fa9ee1112167"
+        },
+        {
+          "name": "20251111214604_refactor_user_usage_history",
+          "gitBlobSha1": "b510fd4f1caffc6003ed16616de2cdb44816c9dc"
+        },
+        {
+          "name": "20251112020636_user_traffic",
+          "gitBlobSha1": "fdeec4f43500454186a6a9164c3b28f4c2e3cf55"
+        },
+        {
+          "name": "20251116151032_add_xray_json_to_host",
+          "gitBlobSha1": "c96ef3effca82ec038dc9eec25b1c1bb0dd77b6e"
+        },
+        {
+          "name": "20251117153032_dnd",
+          "gitBlobSha1": "62d242b3a56f30ba791bae7cf34c9876719209a9"
+        },
+        {
+          "name": "20251118004805_node_tags",
+          "gitBlobSha1": "0889c557c731d28a875fd4f12360e530f05e6873"
+        },
+        {
+          "name": "20251118174347_internal_squad_host_exclusions",
+          "gitBlobSha1": "59e6b10dbd543c052fcbb5e0bc28bf356092b03e"
+        },
+        {
+          "name": "20251120225934_es_custom_remarks",
+          "gitBlobSha1": "ce08e17b027e6bff83bc3444965921d457788d61"
+        },
+        {
+          "name": "20251121001611_unify_custom_remarks",
+          "gitBlobSha1": "2aa96f6692b29f8a7ce47940528b207e2fcff333"
+        },
+        {
+          "name": "20251126082042_drop_add_username_to_base_subscription",
+          "gitBlobSha1": "e7f2fd2c0aaf93f3752204aff14c51ef3b119cec"
+        },
+        {
+          "name": "20251129171418_change_status",
+          "gitBlobSha1": "e30f9288d31b4f8d47d2980e05cf4f71a968c96a"
+        },
+        {
+          "name": "20251129171707_change_pk",
+          "gitBlobSha1": "35faaeac5b077077a37c1dbfed8ea6abb4791f63"
+        },
+        {
+          "name": "20251129180538_stricter_host_columns",
+          "gitBlobSha1": "8a6341f9432d73ca6ddeef57faa64b504023bbd4"
+        },
+        {
+          "name": "20251201172156_drop_unused_columns_in_nodes",
+          "gitBlobSha1": "3e1f0a717f049581fdd9c2a2fb09a6cf4b8efaca"
+        },
+        {
+          "name": "20251201232425_drop_user_traffic_history",
+          "gitBlobSha1": "a58832a1b2beefcb567b97d7ee2c8609edb9f38d"
+        },
+        {
+          "name": "20251202213233_change_uuid_to_id_in_is_memers",
+          "gitBlobSha1": "51be108dd45b470026ea2af7648ad2691f735ddf"
+        },
+        {
+          "name": "20251207150402_blank_sni",
+          "gitBlobSha1": "fdb0ad36c7fcafa0a6ee248541389a90bc871ea7"
+        },
+        {
+          "name": "20251214002858_subpage_configs",
+          "gitBlobSha1": "43ecd8874c752b6a465d0ca074a50266e92a5aab"
+        },
+        {
+          "name": "20251214163118_truncate_configs",
+          "gitBlobSha1": "f3185198cd3b634da675fe0088d08a4724271ace"
+        },
+        {
+          "name": "20251214213514_add_subpage_to_es",
+          "gitBlobSha1": "5df231deac10864f9e222ce665f4e34492d6d0e4"
+        },
+        {
+          "name": "20251215222247_subpage_tr",
+          "gitBlobSha1": "f47acdef9c0ae112fc5cd3a9b1db6c5516eaadde"
+        },
+        {
+          "name": "20251218145003_nodes_index",
+          "gitBlobSha1": "441607d1bdf3cb0f29c75e1d921ae1b3b6e3c9e9"
+        },
+        {
+          "name": "20260107203202_es_custom_remarks",
+          "gitBlobSha1": "d1a77465b5537d9a3eb2cb35004f52a9e295f698"
+        },
+        {
+          "name": "20260225000503_exclude_host_from_subtype",
+          "gitBlobSha1": "c10b7c5aa5d9e6969a836758d8fcf22e21efc264"
+        },
+        {
+          "name": "20260225202645_node_plugins",
+          "gitBlobSha1": "11c659cfad22297a7c056e72154c043e747dc842"
+        },
+        {
+          "name": "20260301142020_tg_oauth2",
+          "gitBlobSha1": "799a9db39a59274da5da1463c5cf4c987dc8a483"
+        },
+        {
+          "name": "20260305150610_user_node_metadata",
+          "gitBlobSha1": "488247461e3c992b18400f164792f18ad4a1e520"
+        },
+        {
+          "name": "20260307201721_torrent_blocker_reports",
+          "gitBlobSha1": "7e1447b24a83146f8d5736b690294ad6317ee3c8"
+        },
+        {
+          "name": "20260312215357_drop_unused_columns",
+          "gitBlobSha1": "dbf3f0669d5c6f71650be6c0c5e71b9dee6674f6"
+        },
+        {
+          "name": "20260315172145_drop_legacy_columns",
+          "gitBlobSha1": "a760f630e7a8ab509502d8b53376c916f984abe1"
+        },
+        {
+          "name": "20260327170528_drop_node_columns",
+          "gitBlobSha1": "493dd8838c0b8354a186970deb352b04bb8d95ce"
+        },
+        {
+          "name": "20260328174929_final_mask_in_host",
+          "gitBlobSha1": "64a07bd84240bb5514e325b83fb296f2e15a7d59"
+        },
+        {
+          "name": "20260407151134_repalce_uuid_with_user_id",
+          "gitBlobSha1": "5acc6f52850507f699b23218ea707909c351e583"
+        },
+        {
+          "name": "20260601044404_remove_allow_insecure",
+          "gitBlobSha1": "aa847ce00549dfc43bd2369c40746c75f93346be"
+        },
+        {
+          "name": "20260601143124_add_verify_peer_cert_by_name",
+          "gitBlobSha1": "010ccf2cebcc63236f54419c6376bd68820769d3"
+        },
+        {
+          "name": "20260602181750_add_mihomo_ip_version",
+          "gitBlobSha1": "2762dc7612dc3ea55bc4639f17131433c34b2c7f"
+        },
+        {
+          "name": "20260604145012_add_node_note",
+          "gitBlobSha1": "9639a4965bd1e394a119ebcfeaece9b459ae5c1b"
+        },
+        {
+          "name": "20260604160914_add_host_tags",
+          "gitBlobSha1": "a5abc50f6cf288b58b5f83679087e5f103d9a632"
+        },
+        {
+          "name": "20260604221858_add_proxy_for_node",
+          "gitBlobSha1": "3ad9c5e33dfe41f2dd4230d64aef737a24de22d9"
+        },
+        {
+          "name": "20260612170542_add_node_consumption_multiplier",
+          "gitBlobSha1": "a97967cfaa0bb661fa9262f3bb522eeec7ae7686"
+        },
+        {
+          "name": "20260614181725_add_index_to_expire_at",
+          "gitBlobSha1": "9361ac677f7baf2d227a55b35b4315f476eb936a"
+        },
+        {
+          "name": "20260620150954_add_api_tokens_scopes",
+          "gitBlobSha1": "70cc7f4dfc66acdcd7029cf299647fdd46041f5b"
+        },
+        {
+          "name": "20260622153610_optional_billing_node",
+          "gitBlobSha1": "3c917f4fec87160d131bca17724d319ec860ecd2"
+        },
+        {
+          "name": "20260625133614_expire_at_for_api_tokens",
+          "gitBlobSha1": "3a640a71007c2eb09dc106efb1d4db66f1e1436c"
+        },
+        {
+          "name": "20260625200256_drop_unused_index",
+          "gitBlobSha1": "055a72aa554b9292a380e6d07741198298a1652c"
+        },
+        {
+          "name": "20260625200309_add_where_index",
+          "gitBlobSha1": "49de2058356fe48d7a536f17b2f1d23cff6a4b4c"
+        },
+        {
+          "name": "20260625200530_add_external_squad_index",
+          "gitBlobSha1": "709eea27137f4d181fa8628dc5b439f79ba92e4e"
+        },
+        {
+          "name": "20260702230159_add_user_id_index_to_hwid_devices",
+          "gitBlobSha1": "e254cb28022a6d49d3674572e44c9f11e7f2ce6c"
+        },
+        {
+          "name": "20260703000112_drop_unused_table",
+          "gitBlobSha1": "f9fc7f0f2fc93459b7b373a7726f26144ebeb839"
+        },
+        {
+          "name": "20260703205426_increase_host_remark_limit",
+          "gitBlobSha1": "0a11332809a8474d77e6508b61c5f8f86ebe1438"
+        },
+        {
+          "name": "20260706144257_drop_default_on_api_tokens",
+          "gitBlobSha1": "8d71cb19c53a4c6791f42dda0bcb8e7093a036bc"
+        },
+        {
+          "name": "20260706192331_change_hwid_datatype",
+          "gitBlobSha1": "9bfc3b883ad34fcc1b58f953b8cfd7170abba7fe"
+        },
+        {
+          "name": "20260710141018_add_nuuh_user_id_created_at_index",
+          "gitBlobSha1": "3c0eaf0a561e37c9a8fbfb484621f4f7b3733052"
+        },
+        {
+          "name": "20260714190723_add_index_to_telegram_id",
+          "gitBlobSha1": "1b89795e7f4da4724c4f7b4783071adcd7c0abdd"
+        },
+        {
+          "name": "20260717190133_es_response_headers",
+          "gitBlobSha1": "afdae449fcbed6b3644fcacc70005b338b32637e"
+        },
+        {
+          "name": "20260717203703_migrate_fields_to_response_headers",
+          "gitBlobSha1": "1e55bdb672988dcbfd2ef50a6f5622d6f2ac6699"
+        },
+        {
+          "name": "20260720124815_rename_column",
+          "gitBlobSha1": "c7fca9791b683f58249144cfd2096f94aa86531a"
+        },
+        {
+          "name": "20260720132335_drop_user_uuid",
+          "gitBlobSha1": "6c83dd6dab5474acd57fea3caaba650bfd9345e9"
+        },
+        {
+          "name": "20260726011328_index_to_users",
+          "gitBlobSha1": "70ddf87c0b8d8e1ec7670cb8604fe857d8f45514"
+        },
+        {
+          "name": "20260801175808_srr_info_in_srh",
+          "gitBlobSha1": "8731e4f14b818fabfa420032add420bd72240645"
+        },
+        {
+          "name": "20260806120000_add_node_ips",
+          "gitBlobSha1": "07f19be41804bb663e4555c15b7ac8acabf3cefa"
+        },
+        {
+          "name": "20260811025420_add_host_mapper",
+          "gitBlobSha1": "aefc502af48631b67c90e47e7474a462aac00bbd"
+        },
+        {
+          "name": "20260815012443_add_node_integrations",
+          "gitBlobSha1": "50dd486a51defd9c520df8d642462846d20210c7"
+        },
+        {
+          "name": "20260815170000_add_shared_lists",
+          "gitBlobSha1": "a6f8e121d690c84091e5a43f9bd51adf74b32884"
+        },
+        {
+          "name": "20260822150859_host_exclusion_modes",
+          "gitBlobSha1": "7553cc1c9f122aa591007d0cf7510ce2b6d302a2"
+        },
+        {
+          "name": "20260827222832_add_entity_tags",
+          "gitBlobSha1": "19b692fd6ea0fef21b4a5b4a4846c81864b62eda"
+        }
+      ]
+    },
+    {
+      "tag": "3.4.8",
+      "files": [
+        {
+          "name": "20241129132625_init",
+          "gitBlobSha1": "ddf39ff62dc948825e3a211d0d86a74bb57e188e"
+        },
+        {
+          "name": "20241205203645_",
+          "gitBlobSha1": "1ec0f67e383ba1c9b1378fa628f45793fb97f0d3"
+        },
+        {
+          "name": "20241216003610_add_new_field",
+          "gitBlobSha1": "7ecd61ef9c52a378f90d799e85d197ba0bd3e9e6"
+        },
+        {
+          "name": "20241222053036_add_users_online_stat",
+          "gitBlobSha1": "d96ffa337d3e1092d2797e588ccd87b1d9cf2abf"
+        },
+        {
+          "name": "20241225185207_add_node_inbound_exclusions",
+          "gitBlobSha1": "420b4828abdd57212dd3ac05b479e9b828a0d0ce"
+        },
+        {
+          "name": "20250113213322_add_updated_at_to_nodes_user_usage_history",
+          "gitBlobSha1": "8f5a5b5fc688f7fbeed643ebe1a0e269d5a2126a"
+        },
+        {
+          "name": "20250113231728_add_view_position_for_nodes",
+          "gitBlobSha1": "4a700e4879f2f5d37610c73ed4dbf8c33259c15c"
+        },
+        {
+          "name": "20250114013223_add_country_code",
+          "gitBlobSha1": "83749f3e823983d79a5e5d5903e56c6cd09ef338"
+        },
+        {
+          "name": "20250126164718_add_description_field_and_fix_default_values",
+          "gitBlobSha1": "459566852a7cb7cf7a371418c0ac90ddfbf8429e"
+        },
+        {
+          "name": "20250211135916_add_consumption_multiplier",
+          "gitBlobSha1": "eb0c98f68755b940d707bea582ff3301c5cd1438"
+        },
+        {
+          "name": "20250219012541_remove",
+          "gitBlobSha1": "727554fb42663cf550fe81ae005b57f3b4733123"
+        },
+        {
+          "name": "20250219013001_remove_depreacted_limit_strategies",
+          "gitBlobSha1": "5fe72bec44e18ab15f8b5377195b02c40d624254"
+        },
+        {
+          "name": "20250225115627_add_network_and_security_to_inbounds",
+          "gitBlobSha1": "0c62f27739f10e4a52c1d8ddecb8f6a6c0f86136"
+        },
+        {
+          "name": "20250301181855_add_telegram_id_and_email_fields",
+          "gitBlobSha1": "614e42fbca21ebdb29b59701361cb94d6537262c"
+        },
+        {
+          "name": "20250301203122_upgrade_to_v6",
+          "gitBlobSha1": "5fe72bec44e18ab15f8b5377195b02c40d624254"
+        },
+        {
+          "name": "20250302162049_new_auth_system",
+          "gitBlobSha1": "5d0a84ef54e612733f09ea64351e5a819a054116"
+        },
+        {
+          "name": "20250307025906_add_xray_uptime",
+          "gitBlobSha1": "d924a645245598f9389d6b11ce0b1010de73bcfb"
+        },
+        {
+          "name": "20250308020443_add_subscription_templates",
+          "gitBlobSha1": "825353d02851d290fcec584134c112c203d26c9d"
+        },
+        {
+          "name": "20250311232029_add_subscription_settings",
+          "gitBlobSha1": "36e8eb2301a3397d9fdf851bc12db1bdec80efac"
+        },
+        {
+          "name": "20250312014652_add_boolean_value_for_webpage_url",
+          "gitBlobSha1": "26b6bd44e42e1c0db53244dab07ad703f516c484"
+        },
+        {
+          "name": "20250314164711_add_serve_json_at_base_subscription",
+          "gitBlobSha1": "a9184acdbe15308075f2b79fcb450fe296c74fb5"
+        },
+        {
+          "name": "20250314191018_add_username_to_base_subscription",
+          "gitBlobSha1": "4c882a53d238e8ea6e5d0224b6e2f153de4a1788"
+        },
+        {
+          "name": "20250315164331_add_security_layer",
+          "gitBlobSha1": "e5e1c2add5e4caac1dc37042667247fc11c22bb7"
+        },
+        {
+          "name": "20250321173808_add_extra_xhttp",
+          "gitBlobSha1": "9b4860916aefd0a48360af55a6b6096ee6790b05"
+        },
+        {
+          "name": "20250326125917_add_ca_certs",
+          "gitBlobSha1": "904d1343d470dc701f432641c6bbbb5128fb6493"
+        },
+        {
+          "name": "20250403121347_add_is_show_custom_remarks",
+          "gitBlobSha1": "a5615da752fca71c17a9ecd2167ff1778625b5c5"
+        },
+        {
+          "name": "20250404230114_replace_uuid_with_id_in_a_few_tables_drop_uuid_for_active_user_inbounds",
+          "gitBlobSha1": "957b66718531a4910beeb88c3bae892ab853e2bc"
+        },
+        {
+          "name": "20250409201313_add_hwid",
+          "gitBlobSha1": "3cc99f452f47e4dbef1cf849fa8d220517855b16"
+        },
+        {
+          "name": "20250410180959_add_custom_response_headers",
+          "gitBlobSha1": "df511d2dc278e90356a992ed6fc9b52ee9742af0"
+        },
+        {
+          "name": "20250415192807_change_primary_key_on_hwid_user_devices",
+          "gitBlobSha1": "6b6a70d03d05bdf343ec53c5ff6f792631b7d08a"
+        },
+        {
+          "name": "20250505151503_add_user_tag",
+          "gitBlobSha1": "b9580c5197c432eec36307876e052af95ee698bf"
+        },
+        {
+          "name": "20250506222812_add_index_to_nodes_user_usage_history",
+          "gitBlobSha1": "f3c0fe9513c67ae0d6fc6abd5e8c923dac3892cb"
+        },
+        {
+          "name": "20250506224824_add_indexes",
+          "gitBlobSha1": "846845c87001027bee986d2fa3706278082c03e8"
+        },
+        {
+          "name": "20250518181139_add_first_connected_at_and_notification_threshold",
+          "gitBlobSha1": "b32368da45e49f2c126fb6319e87d953e4ddcda0"
+        },
+        {
+          "name": "20250519185746_add_randomize_hosts",
+          "gitBlobSha1": "23eb907aed95b28736556ecedddfebc5339bcfc3"
+        },
+        {
+          "name": "20250612160411_add_last_connected_node_uuid",
+          "gitBlobSha1": "78faa3947ce1ad83e549dc3adc4750b422da1188"
+        },
+        {
+          "name": "20250613022955_add_index_to_user_traffic_history",
+          "gitBlobSha1": "acc40fb2b2633ac774b4b6c91aa995486b83f964"
+        },
+        {
+          "name": "20250619032009_add_squads_and_config_profiles_drop_old_tables",
+          "gitBlobSha1": "9a099049b218786e25a0839518d1d7b95af57358"
+        },
+        {
+          "name": "20250619033003_add_raw_json_to_config_profile_inbounds",
+          "gitBlobSha1": "9e285f15acc408bbf3e63ae830948b411aaf6997"
+        },
+        {
+          "name": "20250620182607_add_infra_related_tables",
+          "gitBlobSha1": "e1d3577c15af306ca76946941a4a1a38c47c917d"
+        },
+        {
+          "name": "20250625141235_add_server_description_to_hosts",
+          "gitBlobSha1": "80c4dedc5f39f15b7a8f99469d20d6fa79cb9a16"
+        },
+        {
+          "name": "20250626184020_change_created_at_in_nodes_user_usage_history",
+          "gitBlobSha1": "6c332408ade19ac1e0232ea9cd6fdf95ef28bdfa"
+        },
+        {
+          "name": "20250706204810_add_node_version_to_nodes",
+          "gitBlobSha1": "c4e628ad6c77682bffada014c17a13429823413c"
+        },
+        {
+          "name": "20250713201057_remove_api_token_description",
+          "gitBlobSha1": "f647f8763b7c303e3c0916bc9b5a77065127ad54"
+        },
+        {
+          "name": "20250730131220_add_mux_to_host",
+          "gitBlobSha1": "c338ccd0b4b53e3239da4c3e43f01a4143c366fc"
+        },
+        {
+          "name": "20250730140727_add_sockopt_params_to_host",
+          "gitBlobSha1": "664596f2f838e75e6223a72a8fa27ac1ecac5d00"
+        },
+        {
+          "name": "20250807224235_remove_unique_from_host",
+          "gitBlobSha1": "45132ccc94c306dbd901c5d5640f9489592bffc8"
+        },
+        {
+          "name": "20250807234256_add_tag_and_is_hidden_properties_to_host",
+          "gitBlobSha1": "ba18ae4b88fb4678f78a488bff330dd4f2d22b7d"
+        },
+        {
+          "name": "20250810143307_override_sni_from_address",
+          "gitBlobSha1": "5c2b78295cf440aa1a3ffcfe25354952541499df"
+        },
+        {
+          "name": "20250817155235_add_vless_route_id",
+          "gitBlobSha1": "b41210d73704910b6c61fc1956c0e61e0234a2b2"
+        },
+        {
+          "name": "20250821172409_add_indexes",
+          "gitBlobSha1": "b6e5ab8ce6a9880caa93168120667333f42d02ef"
+        },
+        {
+          "name": "20250822011918_add_tid",
+          "gitBlobSha1": "de92351fde3b260614dfcdf986188a6d188c37a0"
+        },
+        {
+          "name": "20250913131958_add_subscription_request_history",
+          "gitBlobSha1": "0f8b9151df27b08dff58c552420777c527eb5ee0"
+        },
+        {
+          "name": "20250914181427_add_ais",
+          "gitBlobSha1": "26af035c041b066652f7995053d0a53b6b400a09"
+        },
+        {
+          "name": "20250925101912_add_shuffle_host_and_mihomo_x25519",
+          "gitBlobSha1": "fe4967b2c451e2b372763f401337535a73e9ce7e"
+        },
+        {
+          "name": "20251008222202_add_hosts_to_nodes",
+          "gitBlobSha1": "459386627f851b29724df07e28d0068365049c67"
+        },
+        {
+          "name": "20251016013423_add_snippets",
+          "gitBlobSha1": "7a37e0366f37c16b7258efab57bf4bd5b3e1304f"
+        },
+        {
+          "name": "20251017011159_add_response_rules",
+          "gitBlobSha1": "33518f0729ee8ad14f7388ae0f04627c3ca55601"
+        },
+        {
+          "name": "20251019220002_allow_multiple_sub_templates",
+          "gitBlobSha1": "69d0e7279caef0210249ef633ff3c255d09eb839"
+        },
+        {
+          "name": "20251020051722_add_external_squads",
+          "gitBlobSha1": "f21de7c273b07c4956fcba3b2837518cd1d895ea"
+        },
+        {
+          "name": "20251021150742_add_subscription_settings_to_es",
+          "gitBlobSha1": "c6bc741e10f5afb7cbd0f9360e0a440953b5ffa0"
+        },
+        {
+          "name": "20251023203325_settings_and_passkeys",
+          "gitBlobSha1": "97cda0de5f06d1517dc3328efdcce9d768942929"
+        },
+        {
+          "name": "20251028234406_add_hosts_override_to_es",
+          "gitBlobSha1": "02c9f6e984bf6c491fc81aa936af701d353a7a07"
+        },
+        {
+          "name": "20251105201518_response_headers_es",
+          "gitBlobSha1": "5a243c9adc5c478f6083f0773e06c931ff072096"
+        },
+        {
+          "name": "20251109162118_hwid_settings",
+          "gitBlobSha1": "8c383d7832c99de551014ec7267e085d58514ca2"
+        },
+        {
+          "name": "20251111012403_nuu_index_drop",
+          "gitBlobSha1": "1011db4085519f881df48ecca222fa9ee1112167"
+        },
+        {
+          "name": "20251111214604_refactor_user_usage_history",
+          "gitBlobSha1": "b510fd4f1caffc6003ed16616de2cdb44816c9dc"
+        },
+        {
+          "name": "20251112020636_user_traffic",
+          "gitBlobSha1": "fdeec4f43500454186a6a9164c3b28f4c2e3cf55"
+        },
+        {
+          "name": "20251116151032_add_xray_json_to_host",
+          "gitBlobSha1": "c96ef3effca82ec038dc9eec25b1c1bb0dd77b6e"
+        },
+        {
+          "name": "20251117153032_dnd",
+          "gitBlobSha1": "62d242b3a56f30ba791bae7cf34c9876719209a9"
+        },
+        {
+          "name": "20251118004805_node_tags",
+          "gitBlobSha1": "0889c557c731d28a875fd4f12360e530f05e6873"
+        },
+        {
+          "name": "20251118174347_internal_squad_host_exclusions",
+          "gitBlobSha1": "59e6b10dbd543c052fcbb5e0bc28bf356092b03e"
+        },
+        {
+          "name": "20251120225934_es_custom_remarks",
+          "gitBlobSha1": "ce08e17b027e6bff83bc3444965921d457788d61"
+        },
+        {
+          "name": "20251121001611_unify_custom_remarks",
+          "gitBlobSha1": "2aa96f6692b29f8a7ce47940528b207e2fcff333"
+        },
+        {
+          "name": "20251126082042_drop_add_username_to_base_subscription",
+          "gitBlobSha1": "e7f2fd2c0aaf93f3752204aff14c51ef3b119cec"
+        },
+        {
+          "name": "20251129171418_change_status",
+          "gitBlobSha1": "e30f9288d31b4f8d47d2980e05cf4f71a968c96a"
+        },
+        {
+          "name": "20251129171707_change_pk",
+          "gitBlobSha1": "35faaeac5b077077a37c1dbfed8ea6abb4791f63"
+        },
+        {
+          "name": "20251129180538_stricter_host_columns",
+          "gitBlobSha1": "8a6341f9432d73ca6ddeef57faa64b504023bbd4"
+        },
+        {
+          "name": "20251201172156_drop_unused_columns_in_nodes",
+          "gitBlobSha1": "3e1f0a717f049581fdd9c2a2fb09a6cf4b8efaca"
+        },
+        {
+          "name": "20251201232425_drop_user_traffic_history",
+          "gitBlobSha1": "a58832a1b2beefcb567b97d7ee2c8609edb9f38d"
+        },
+        {
+          "name": "20251202213233_change_uuid_to_id_in_is_memers",
+          "gitBlobSha1": "51be108dd45b470026ea2af7648ad2691f735ddf"
+        },
+        {
+          "name": "20251207150402_blank_sni",
+          "gitBlobSha1": "fdb0ad36c7fcafa0a6ee248541389a90bc871ea7"
+        },
+        {
+          "name": "20251214002858_subpage_configs",
+          "gitBlobSha1": "43ecd8874c752b6a465d0ca074a50266e92a5aab"
+        },
+        {
+          "name": "20251214163118_truncate_configs",
+          "gitBlobSha1": "f3185198cd3b634da675fe0088d08a4724271ace"
+        },
+        {
+          "name": "20251214213514_add_subpage_to_es",
+          "gitBlobSha1": "5df231deac10864f9e222ce665f4e34492d6d0e4"
+        },
+        {
+          "name": "20251215222247_subpage_tr",
+          "gitBlobSha1": "f47acdef9c0ae112fc5cd3a9b1db6c5516eaadde"
+        },
+        {
+          "name": "20251218145003_nodes_index",
+          "gitBlobSha1": "441607d1bdf3cb0f29c75e1d921ae1b3b6e3c9e9"
+        },
+        {
+          "name": "20260107203202_es_custom_remarks",
+          "gitBlobSha1": "d1a77465b5537d9a3eb2cb35004f52a9e295f698"
+        },
+        {
+          "name": "20260225000503_exclude_host_from_subtype",
+          "gitBlobSha1": "c10b7c5aa5d9e6969a836758d8fcf22e21efc264"
+        },
+        {
+          "name": "20260225202645_node_plugins",
+          "gitBlobSha1": "11c659cfad22297a7c056e72154c043e747dc842"
+        },
+        {
+          "name": "20260301142020_tg_oauth2",
+          "gitBlobSha1": "799a9db39a59274da5da1463c5cf4c987dc8a483"
+        },
+        {
+          "name": "20260305150610_user_node_metadata",
+          "gitBlobSha1": "488247461e3c992b18400f164792f18ad4a1e520"
+        },
+        {
+          "name": "20260307201721_torrent_blocker_reports",
+          "gitBlobSha1": "7e1447b24a83146f8d5736b690294ad6317ee3c8"
+        },
+        {
+          "name": "20260312215357_drop_unused_columns",
+          "gitBlobSha1": "dbf3f0669d5c6f71650be6c0c5e71b9dee6674f6"
+        },
+        {
+          "name": "20260315172145_drop_legacy_columns",
+          "gitBlobSha1": "a760f630e7a8ab509502d8b53376c916f984abe1"
+        },
+        {
+          "name": "20260327170528_drop_node_columns",
+          "gitBlobSha1": "493dd8838c0b8354a186970deb352b04bb8d95ce"
+        },
+        {
+          "name": "20260328174929_final_mask_in_host",
+          "gitBlobSha1": "64a07bd84240bb5514e325b83fb296f2e15a7d59"
+        },
+        {
+          "name": "20260407151134_repalce_uuid_with_user_id",
+          "gitBlobSha1": "5acc6f52850507f699b23218ea707909c351e583"
+        },
+        {
+          "name": "20260601044404_remove_allow_insecure",
+          "gitBlobSha1": "aa847ce00549dfc43bd2369c40746c75f93346be"
+        },
+        {
+          "name": "20260601143124_add_verify_peer_cert_by_name",
+          "gitBlobSha1": "010ccf2cebcc63236f54419c6376bd68820769d3"
+        },
+        {
+          "name": "20260602181750_add_mihomo_ip_version",
+          "gitBlobSha1": "2762dc7612dc3ea55bc4639f17131433c34b2c7f"
+        },
+        {
+          "name": "20260604145012_add_node_note",
+          "gitBlobSha1": "9639a4965bd1e394a119ebcfeaece9b459ae5c1b"
+        },
+        {
+          "name": "20260604160914_add_host_tags",
+          "gitBlobSha1": "a5abc50f6cf288b58b5f83679087e5f103d9a632"
+        },
+        {
+          "name": "20260604221858_add_proxy_for_node",
+          "gitBlobSha1": "3ad9c5e33dfe41f2dd4230d64aef737a24de22d9"
+        },
+        {
+          "name": "20260612170542_add_node_consumption_multiplier",
+          "gitBlobSha1": "a97967cfaa0bb661fa9262f3bb522eeec7ae7686"
+        },
+        {
+          "name": "20260614181725_add_index_to_expire_at",
+          "gitBlobSha1": "9361ac677f7baf2d227a55b35b4315f476eb936a"
+        },
+        {
+          "name": "20260620150954_add_api_tokens_scopes",
+          "gitBlobSha1": "70cc7f4dfc66acdcd7029cf299647fdd46041f5b"
+        },
+        {
+          "name": "20260622153610_optional_billing_node",
+          "gitBlobSha1": "3c917f4fec87160d131bca17724d319ec860ecd2"
+        },
+        {
+          "name": "20260625133614_expire_at_for_api_tokens",
+          "gitBlobSha1": "3a640a71007c2eb09dc106efb1d4db66f1e1436c"
+        },
+        {
+          "name": "20260625200256_drop_unused_index",
+          "gitBlobSha1": "055a72aa554b9292a380e6d07741198298a1652c"
+        },
+        {
+          "name": "20260625200309_add_where_index",
+          "gitBlobSha1": "49de2058356fe48d7a536f17b2f1d23cff6a4b4c"
+        },
+        {
+          "name": "20260625200530_add_external_squad_index",
+          "gitBlobSha1": "709eea27137f4d181fa8628dc5b439f79ba92e4e"
+        },
+        {
+          "name": "20260702230159_add_user_id_index_to_hwid_devices",
+          "gitBlobSha1": "e254cb28022a6d49d3674572e44c9f11e7f2ce6c"
+        },
+        {
+          "name": "20260703000112_drop_unused_table",
+          "gitBlobSha1": "f9fc7f0f2fc93459b7b373a7726f26144ebeb839"
+        },
+        {
+          "name": "20260703205426_increase_host_remark_limit",
+          "gitBlobSha1": "0a11332809a8474d77e6508b61c5f8f86ebe1438"
+        },
+        {
+          "name": "20260706144257_drop_default_on_api_tokens",
+          "gitBlobSha1": "8d71cb19c53a4c6791f42dda0bcb8e7093a036bc"
+        },
+        {
+          "name": "20260706192331_change_hwid_datatype",
+          "gitBlobSha1": "9bfc3b883ad34fcc1b58f953b8cfd7170abba7fe"
+        },
+        {
+          "name": "20260710141018_add_nuuh_user_id_created_at_index",
+          "gitBlobSha1": "3c0eaf0a561e37c9a8fbfb484621f4f7b3733052"
+        },
+        {
+          "name": "20260714190723_add_index_to_telegram_id",
+          "gitBlobSha1": "1b89795e7f4da4724c4f7b4783071adcd7c0abdd"
+        },
+        {
+          "name": "20260717190133_es_response_headers",
+          "gitBlobSha1": "afdae449fcbed6b3644fcacc70005b338b32637e"
+        },
+        {
+          "name": "20260717203703_migrate_fields_to_response_headers",
+          "gitBlobSha1": "1e55bdb672988dcbfd2ef50a6f5622d6f2ac6699"
+        },
+        {
+          "name": "20260720124815_rename_column",
+          "gitBlobSha1": "c7fca9791b683f58249144cfd2096f94aa86531a"
+        },
+        {
+          "name": "20260720132335_drop_user_uuid",
+          "gitBlobSha1": "6c83dd6dab5474acd57fea3caaba650bfd9345e9"
+        },
+        {
+          "name": "20260726011328_index_to_users",
+          "gitBlobSha1": "70ddf87c0b8d8e1ec7670cb8604fe857d8f45514"
+        },
+        {
+          "name": "20260801175808_srr_info_in_srh",
+          "gitBlobSha1": "8731e4f14b818fabfa420032add420bd72240645"
+        },
+        {
+          "name": "20260806120000_add_node_ips",
+          "gitBlobSha1": "07f19be41804bb663e4555c15b7ac8acabf3cefa"
+        },
+        {
+          "name": "20260811025420_add_host_mapper",
+          "gitBlobSha1": "aefc502af48631b67c90e47e7474a462aac00bbd"
+        },
+        {
+          "name": "20260815012443_add_node_integrations",
+          "gitBlobSha1": "50dd486a51defd9c520df8d642462846d20210c7"
+        },
+        {
+          "name": "20260815170000_add_shared_lists",
+          "gitBlobSha1": "a6f8e121d690c84091e5a43f9bd51adf74b32884"
+        },
+        {
+          "name": "20260822150859_host_exclusion_modes",
+          "gitBlobSha1": "7553cc1c9f122aa591007d0cf7510ce2b6d302a2"
+        },
+        {
+          "name": "20260827222832_add_entity_tags",
+          "gitBlobSha1": "19b692fd6ea0fef21b4a5b4a4846c81864b62eda"
+        }
+      ]
+    }
+  ]
+}

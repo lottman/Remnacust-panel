@@ -32,6 +32,10 @@ A connection requires a working node, an active profile inbound, an available ho
 
 After saving, check the updated values in the detail view. If a connection still uses the previous settings, check node status and logs, then refresh the subscription in the client.
 
+### Maintenance logs and long-running service
+
+Detailed CLI logs are /opt/remnacust/logs/installer-panel.log, installer-node.log and installer-subscription-page.log. Status checks use a separate log and retain the last update log. The next action for the same component replaces its previous log; a parallel invocation cannot erase an active log. Browser panel updates retain panel-update-<ID>.log, page operations retain page-<page ID>-<job ID>.log, and SSH node maintenance retains node-maintenance.log on that node. Failures show the path. Logs are root-only and never part of public subscriptions. Input and secret tracing are not recorded. APT confirmation is automatic; configuration questions remain interactive over SSH. Configuration caches are bounded by count and size; oversized entries bypass the local cache but remain available from the source. Completion, errors and disconnects release capacity when work settles. Original SQL histories match published Remnawave 3.0.0, 3.4.3 and 3.4.8; unknown or modified history stops migration before application changes.
+
 ### Nodes while the panel is offline
 
 A node with a confirmed autonomous policy continues serving saved keys without the panel, including XHTTP through a CDN pointing directly at the node. Access expiry, quotas, speeds and rules remain enforced locally. Exhausted credit or expiry still denies access. New users, renewals and blocks arrive after reconnection. Before stopping applications, the installer checks node autonomy. Unconfirmed readiness produces a warning and the update continues without an extra flag. Panel-dependent nodes may temporarily lose connectivity. Legacy policy without local reserves expires after 90 seconds; simply disabling that deadline is unsafe. Manual docker compose down bypasses the check and also stops a node or proxy in the same project.

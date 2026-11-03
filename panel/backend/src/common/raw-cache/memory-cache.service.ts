@@ -11,6 +11,8 @@ export class MemoryCacheService implements OnModuleInit, OnModuleDestroy {
 
     private readonly cache = new LRUCache<string, object | string>({
         max: 1000,
+        maxSize: 32 * 1024 * 1024,
+        maxEntrySize: 4 * 1024 * 1024,
         ttl: 30 * 60 * 1000,
     });
 
@@ -41,7 +43,14 @@ export class MemoryCacheService implements OnModuleInit, OnModuleDestroy {
     }
 
     set(key: string, value: object | string, ttlMs?: number): void {
-        this.cache.set(key, value, ttlMs ? { ttl: ttlMs } : undefined);
+        try {
+            const serialized = typeof value === 'string' ? value : JSON.stringify(value);
+            if (serialized === undefined) return;
+            const size = Math.max(1, 2 * (key.length + serialized.length));
+            this.cache.set(key, value, { size, ...(ttlMs ? { ttl: ttlMs } : {}) });
+        } catch {
+            this.cache.delete(key);
+        }
     }
 
     async invalidate(key: string): Promise<void> {

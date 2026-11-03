@@ -214,7 +214,7 @@ export class XrayJsonGeneratorService {
 
         try {
             const templateContent = (params.subscriptionInactive
-                ? {}
+                ? { inbounds: [] }
                 : await this.subscriptionTemplateService.getCachedTemplateByType(
                       'XRAY_JSON',
                       overrideTemplateName,

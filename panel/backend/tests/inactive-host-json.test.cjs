@@ -31,6 +31,7 @@ test('inactive JSON delivers an exception without preparing shared or assigned g
     for (const extended of [false, true]) {
         const [config] = JSON.parse(await generator.generateConfig({ hosts: [host()], isExtendedClient: extended, subscriptionInactive: true }));
         assert.equal(config.remarks, 'Support');
+        assert.deepEqual(config.inbounds, [], 'INCY must recognize this as a full config and retain host routing');
         assert.equal(config.outbounds[0].settings.vnext[0].address, 'support.example.test');
         assert.equal(config.outbounds[0].streamSettings.security, 'tls');
         assert.deepEqual(config.routing.rules, [

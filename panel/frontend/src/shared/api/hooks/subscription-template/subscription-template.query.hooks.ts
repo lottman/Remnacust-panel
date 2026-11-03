@@ -39,7 +39,7 @@ export const useGetSubscriptionTemplates = createGetQueryHook({
     responseSchema: GetSubscriptionTemplatesCommand.ResponseSchema,
     getQueryKey: () => subscriptionTemplateQueryKeys.getSubscriptionTemplates.queryKey,
     rQueryParams: {
-        refetchOnMount: false,
+        refetchOnMount: true,
         staleTime: sToMs(30)
     },
     errorHandler: (error) => errorHandler(error, 'Get Subscription Templates')

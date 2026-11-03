@@ -11,6 +11,8 @@ import i18next from 'i18next'
 import { translateMutationMessage } from '@shared/utils/translate-mutation-message'
 
 import { createMutationHook } from '../../tsq-helpers'
+import { cacheCreatedTemplate } from './subscription-template-cache'
+import { subscriptionTemplateQueryKeys } from './subscription-template.query.hooks'
 
 export const useUpdateSubscriptionTemplate = createMutationHook({
     endpoint: UpdateSubscriptionTemplateCommand.TSQ_url,
@@ -56,7 +58,12 @@ export const useCreateSubscriptionTemplate = createMutationHook({
     responseSchema: CreateSubscriptionTemplateCommand.ResponseSchema,
     requestMethod: CreateSubscriptionTemplateCommand.endpointDetails.REQUEST_METHOD,
     rMutationParams: {
-        onSuccess: () => {
+        onSuccess: async (data, _variables, _context, client) => {
+            await cacheCreatedTemplate(
+                client,
+                subscriptionTemplateQueryKeys.getSubscriptionTemplates.queryKey,
+                data
+            )
             notifications.show({
                 title: i18next.t('common.message.success'),
                 message: translateMutationMessage('Subscription template created successfully'),

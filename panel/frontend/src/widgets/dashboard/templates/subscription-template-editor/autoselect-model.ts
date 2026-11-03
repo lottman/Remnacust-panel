@@ -154,11 +154,12 @@ export function autoselectGroups(config: JsonObject): AutoselectGroup[] {
     const result: AutoselectGroup[] = []
     const linked = (poolIndex: number, balancerIndex: number) => {
         const prefix = pools[poolIndex].tagPrefix
+        const balance = balancers[balancerIndex]
+        const selectors: string[] = balance.selector ?? []
         return (
             !!prefix &&
-            (balancers[balancerIndex].selector ?? []).some((selector: string) =>
-                prefix.startsWith(selector)
-            )
+            (selectors.some((selector) => prefix.startsWith(selector)) ||
+                (!selectors.length && [prefix, `balance-${prefix}`].includes(balance.tag)))
         )
     }
     while (remainingPools.size || remainingBalancers.size) {
@@ -242,6 +243,9 @@ function append(text: string, path: string[], value: unknown): string {
 export function newPrefix(config: JsonObject): string {
     const used = new Set([
         ...poolsOf(config).map((pool) => pool.tagPrefix),
+        ...(config.routing?.balancers ?? []).flatMap((balance: JsonObject) =>
+            (balance.selector ?? []).filter(Boolean)
+        ),
         ...(Array.isArray(config.outbounds)
             ? config.outbounds.map((item: JsonObject) => item.tag)
             : [])
@@ -368,6 +372,22 @@ export function addBalancer(text: string, prefix: string, strategy = 'leastPing'
         throw new Error('routing-object')
     const existing = config.routing?.balancers ?? []
     if (!Array.isArray(existing)) throw new Error('balancers-array')
+    if (
+        existing.some((balance: JsonObject) =>
+            (balance.selector ?? []).some((selector: string) => prefix.startsWith(selector))
+        )
+    )
+        return text
+    const incomplete = existing.findIndex(
+        (balance: JsonObject) =>
+            !balance.selector?.length && [prefix, `balance-${prefix}`].includes(balance.tag)
+    )
+    if (incomplete >= 0)
+        return observerFor(
+            editTemplate(text, ['routing', 'balancers', incomplete, 'selector'], [prefix]),
+            [prefix],
+            existing[incomplete].strategy?.type ?? 'random'
+        )
     let tag = 'balance-' + prefix
     for (let index = 2; existing.some((item: JsonObject) => item.tag === tag); index++)
         tag = `balance-${prefix}-${index}`

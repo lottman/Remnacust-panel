@@ -138,6 +138,41 @@ test('unlinked pools and manual balancers remain visible exactly once in unified
  assert.deepEqual(m.autoselectGroups({}),[]);
  assert.deepEqual(m.autoselectGroups({remnawave:{injectHosts:[{tagPrefix:'p',selector:{type:'tags',values:[]}}]},routing:{balancers:[{tag:'manual',selector:['x']}]}}),[{pools:[0],balancers:[]},{pools:[],balancers:[0]}]);
 });
+
+test('adding the same pool balancer twice leaves one card and identical JSON', () => {
+ const source=JSON.stringify({remnawave:{injectHosts:[{tagPrefix:'p',selector:{type:'tags',values:['EU']}}]}});
+ const first=m.addBalancer(source,'p');
+ const second=m.addBalancer(first,'p');
+ assert.equal(second,first);
+ assert.deepEqual(m.autoselectGroups(m.parseTemplate(second)),[{pools:[0],balancers:[0]}]);
+ assert.equal(m.parseTemplate(second).routing.rules.length,1);
+});
+
+test('an unfinished named balancer stays in its source card and is repaired in place', () => {
+ for(const tag of ['p','balance-p']) {
+  const balance={tag,selector:[],strategy:{type:'leastLoad',settings:{tolerance:0.3}},fallbackTag:'manual'};
+  const source={remnawave:{injectHosts:[{tagPrefix:'p',selector:{type:'tags',values:['EU']}}]},routing:{balancers:[balance],rules:[{domain:['example.test'],balancerTag:tag}]}};
+  assert.deepEqual(m.autoselectGroups(source),[{pools:[0],balancers:[0]}]);
+  const repaired=m.parseTemplate(m.addBalancer(JSON.stringify(source),'p'));
+  assert.deepEqual(repaired.routing.balancers,[{...balance,selector:['p']}]);
+  assert.deepEqual(repaired.routing.rules,source.routing.rules);
+  assert.deepEqual(m.autoselectGroups(repaired),[{pools:[0],balancers:[0]}]);
+ }
+});
+
+test('a shared prefix balancer is reused without changing manually authored routing', () => {
+ const source=JSON.stringify({remnawave:{injectHosts:[{tagPrefix:'p-eu',selector:{type:'tags',values:['EU']}}]},routing:{balancers:[{tag:'custom',selector:['p'],strategy:{type:'roundRobin'}}]}});
+ assert.equal(m.addBalancer(source,'p-eu'),source);
+});
+
+test('creating a new autoselect never attaches a pool to an unrelated manual selector', () => {
+ const source={routing:{balancers:[{tag:'manual',selector:['auto'],strategy:{type:'roundRobin'}}]}};
+ const next=m.parseTemplate(m.addPool(JSON.stringify(source)));
+ assert.equal(next.routing.balancers.length,2);
+ assert.deepEqual(next.routing.balancers[0],source.routing.balancers[0]);
+ assert.equal(m.autoselectGroups(next).length,2);
+ assert.ok(!next.remnawave.injectHosts[0].tagPrefix.startsWith('auto'));
+});
 test('partial JSON supplies live host/tag values and mode completions before the selector is valid',()=>{
  const hosts=[{uuid:'10000000-0000-4000-8000-000000000001',remark:'Netherlands',tags:['NL']},{uuid:'10000000-0000-4000-8000-000000000002',remark:'Germany',tags:['DE','NL']}];
  const suggestions=(fragment)=>{const text='{ "remnawave": {"injectHosts": ['+fragment;return injectorCompletionValues(text,text.length,hosts)};

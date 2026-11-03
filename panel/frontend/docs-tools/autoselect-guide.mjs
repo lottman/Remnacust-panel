@@ -4,19 +4,19 @@ const sections = [
         [
             [
                 'Автовыбор в коде и интерфейсе',
-                'В редакторе Xray JSON вкладки Редактирование и Автовыбор используют общий черновик. Изменение существующего пула или балансера сразу меняет соответствующий JSON. Новый пул добавляет injectHosts, балансер, правило маршрутизации и наблюдение для leastPing или leastLoad. Остальные аутбаунды, правила и настройки сохраняются. Справа отображаются отличия от последнего сохранения; на телефоне список расположен под формой. Сохранение применяет корректный черновик; текст с ошибками сохраняется на сервере с предупреждением и доступен в истории.'
+                'В редакторе Xray JSON вкладки Редактирование и Автовыбор используют общий черновик. Изменение существующего пула или балансера сразу меняет соответствующий JSON. Новый пул добавляет injectHosts, балансер, правило маршрутизации и наблюдение для leastPing или leastLoad. Повторное добавление балансера того же пула не создаёт вторую карточку. Незавершённый балансер с именем пула дополняется на месте. Созданные и скопированные шаблоны сразу появляются в списке. Остальные аутбаунды, правила и настройки сохраняются. Справа отображаются отличия от последнего сохранения; на телефоне список расположен под формой. Сохранение применяет корректный черновик; текст с ошибками сохраняется на сервере с предупреждением и доступен в истории.'
             ],
             [
                 'Autoselect in code and UI',
-                'The Xray JSON Editing and Autoselect tabs share one draft. Editing an existing pool or balancer immediately updates its JSON. A new pool adds injectHosts, a balancer, routing and observation for leastPing or leastLoad. Other outbounds, rules and settings remain intact. The changes panel compares against the last save; on phones it appears below the form. Save publishes a valid draft; text with errors is saved on the server with warnings and remains available in history.'
+                'The Xray JSON Editing and Autoselect tabs share one draft. Editing an existing pool or balancer immediately updates its JSON. A new pool adds injectHosts, a balancer, routing and observation for leastPing or leastLoad. Adding a balancer for the same pool again does not create a second card. An unfinished balancer named after its pool is completed in place. Created and copied templates appear in the list immediately. Other outbounds, rules and settings remain intact. The changes panel compares against the last save; on phones it appears below the form. Save publishes a valid draft; text with errors is saved on the server with warnings and remains available in history.'
             ],
             [
                 'انتخاب خودکار در کد و رابط',
-                'زبانه‌های ویرایش و انتخاب خودکار Xray JSON یک پیش‌نویس مشترک دارند. تغییر مجموعه یا متعادل‌کنندهٔ موجود بلافاصله JSON مربوط را تغییر می‌دهد. مجموعهٔ جدید injectHosts، متعادل‌کننده، مسیریابی و پایش leastPing یا leastLoad را اضافه می‌کند. خروجی‌ها، قوانین و تنظیمات دیگر حفظ می‌شوند. تغییرات نسبت به آخرین ذخیره در کنار فرم و روی تلفن زیر فرم دیده می‌شود. ذخیره پیش‌نویس معتبر را اعمال می‌کند؛ متن دارای خطا روی سرور با هشدار ذخیره و در تاریخچه نگه داشته می‌شود.'
+                'زبانه‌های ویرایش و انتخاب خودکار Xray JSON یک پیش‌نویس مشترک دارند. تغییر مجموعه یا متعادل‌کنندهٔ موجود بلافاصله JSON مربوط را تغییر می‌دهد. مجموعهٔ جدید injectHosts، متعادل‌کننده، مسیریابی و پایش leastPing یا leastLoad را اضافه می‌کند. افزودن دوبارهٔ متعادل‌کننده برای همان مجموعه کارت دوم ایجاد نمی‌کند. متعادل‌کنندهٔ ناقص هم‌نام مجموعه در همان محل تکمیل می‌شود. قالب‌های ایجادشده و کپی‌شده بلافاصله در فهرست ظاهر می‌شوند. خروجی‌ها، قوانین و تنظیمات دیگر حفظ می‌شوند. تغییرات نسبت به آخرین ذخیره در کنار فرم و روی تلفن زیر فرم دیده می‌شود. ذخیره پیش‌نویس معتبر را اعمال می‌کند؛ متن دارای خطا روی سرور با هشدار ذخیره و در تاریخچه نگه داشته می‌شود.'
             ],
             [
                 '代码和界面中的自动选择',
-                'Xray JSON 的编辑和自动选择标签页共享同一草稿。修改现有池或均衡器会立即更新对应 JSON。新池添加 injectHosts、均衡器、路由及 leastPing 或 leastLoad 所需的观测。其他出站、规则和设置保留。更改面板与上次保存内容比较，在手机上位于表单下方。保存会应用有效草稿；含错误的文本会带警告保存在服务器和历史记录中。'
+                'Xray JSON 的编辑和自动选择标签页共享同一草稿。修改现有池或均衡器会立即更新对应 JSON。新池添加 injectHosts、均衡器、路由及 leastPing 或 leastLoad 所需的观测。再次为同一池添加均衡器不会创建第二张卡片。与池同名的未完成均衡器会在原位置补全。创建和复制的模板会立即出现在列表中。其他出站、规则和设置保留。更改面板与上次保存内容比较，在手机上位于表单下方。保存会应用有效草稿；含错误的文本会带警告保存在服务器和历史记录中。'
             ]
         ]
     ],

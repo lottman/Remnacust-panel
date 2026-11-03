@@ -7,8 +7,6 @@ import {
 import { t } from 'i18next'
 import { generatePath, NavigateFunction } from 'react-router'
 
-import { queryClient } from '@shared/api'
-import { QueryKeys } from '@shared/api/hooks/keys-factory'
 import { useCreateSubscriptionTemplate } from '@shared/api/hooks/subscription-template/subscription-template.mutation.hooks'
 import { ROUTES } from '@shared/constants/routes'
 import { useUiText } from '@shared/i18n/interface-text'
@@ -25,12 +23,6 @@ export const CreateTemplateContent = (props: IProps) => {
 
     const { templateType, onClose, navigate, sourceTemplate } = props
 
-    const handleUpdate = async () => {
-        await queryClient.refetchQueries({
-            queryKey: QueryKeys.subscriptionTemplate.getSubscriptionTemplates.queryKey
-        })
-    }
-
     const nameField = useField<CreateSubscriptionTemplateCommand.RequestBody['name']>({
         initialValue: sourceTemplate ? `${sourceTemplate.name.slice(0, 240)} copy` : '',
         validateOnChange: true,
@@ -46,7 +38,6 @@ export const CreateTemplateContent = (props: IProps) => {
             onSuccess: (data) => {
                 onClose()
 
-                handleUpdate()
                 navigate(
                     generatePath(ROUTES.DASHBOARD.TEMPLATES.TEMPLATE_EDITOR, {
                         type: data.templateType,
@@ -71,7 +62,11 @@ export const CreateTemplateContent = (props: IProps) => {
             }}
         >
             <Stack gap="md">
-                {sourceTemplate && <Text size="sm" c="dimmed">{t('template-copy.help')}</Text>}
+                {sourceTemplate && (
+                    <Text size="sm" c="dimmed">
+                        {t('template-copy.help')}
+                    </Text>
+                )}
                 <TextInput
                     data-autofocus
                     label={t('header-action-buttons.feature.template-name')}
@@ -84,7 +79,12 @@ export const CreateTemplateContent = (props: IProps) => {
                         {t('common.action.cancel')}
                     </Button>
 
-                    <Button color="teal" loading={isPending} disabled={!!nameField.error || nameField.getValue().trim().length < 2} type="submit">
+                    <Button
+                        color="teal"
+                        loading={isPending}
+                        disabled={!!nameField.error || nameField.getValue().trim().length < 2}
+                        type="submit"
+                    >
                         {t(sourceTemplate ? 'template-copy.action' : 'common.action.create')}
                     </Button>
                 </Group>

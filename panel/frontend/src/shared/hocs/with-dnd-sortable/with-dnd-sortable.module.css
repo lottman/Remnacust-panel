@@ -6,7 +6,10 @@
     z-index: 1;
     position: absolute;
     border-radius: 8px;
-    transition: color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
+    transition:
+        color 160ms ease,
+        background-color 160ms ease,
+        box-shadow 160ms ease;
 }
 
 .dragHandle:hover {
@@ -57,11 +60,8 @@
 }
 
 .dragHandleInlineEnd {
-    top: 50%;
+    top: 0;
+    bottom: 0;
     right: 8px;
-    transform: translateY(-50%);
-}
-
-.dragHandleInlineEnd:active {
-    transform: translateY(-50%) scale(0.95);
+    margin-block: auto;
 }

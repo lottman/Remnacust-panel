@@ -1,8 +1,9 @@
-type Template = { uuid: string; templateJson: object | null };
+type Template = { uuid: string; name?: string; templateJson: object | null };
+export type XrayTemplateVariant = { key: string; name: string; template: object };
 type Assignments = {
-    hosts: Map<string, object>;
-    tags: Map<string, object>;
-    rank: Map<object, number>;
+    hosts: Map<string, XrayTemplateVariant[]>;
+    tags: Map<string, XrayTemplateVariant[]>;
+    rank: Map<XrayTemplateVariant, number>;
 };
 type Assignment = { hosts?: string[]; tags?: string[]; balancerTag?: string };
 type Config = Record<string, any>;
@@ -40,12 +41,27 @@ export function recipientXrayTemplate(
     host: { uuid: string; tags: string[] },
     content: object | null,
 ): object | null {
-    if (!content) return null;
+    return recipientXrayTemplates(host, content)[0]?.template ?? null;
+}
+
+export function recipientXrayTemplates(
+    host: { uuid: string; tags: string[] },
+    content: object | null,
+): XrayTemplateVariant[] {
+    if (!content) return [];
     const assignments = entries(content);
-    const match =
-        assignments.find((entry) => entry.hosts?.includes(host.uuid)) ??
-        assignments.find((entry) => entry.tags?.some((tag) => host.tags.includes(tag)));
-    return rulesForBalancer(content, match?.balancerTag);
+    const direct = assignments.filter((entry) => entry.hosts?.includes(host.uuid));
+    const matches = direct.length
+        ? direct
+        : assignments.filter((entry) => entry.tags?.some((tag) => host.tags.includes(tag)));
+    const selected: Assignment[] = matches.length ? matches : [{}];
+    const seen = new Set<string>();
+    return selected.flatMap((entry) => {
+        const key = entry.balancerTag ?? '';
+        if (seen.has(key)) return [];
+        seen.add(key);
+        return [{ key, name: key, template: rulesForBalancer(content, entry.balancerTag) }];
+    });
 }
 
 // Rows arrive in template order. Explicit host configuration remains highest priority.
@@ -55,14 +71,22 @@ export function indexXrayTemplateAssignments(templates: Template[]): Assignments
         const content = template.templateJson as Config | null;
         if (!content) continue;
         for (const assignment of entries(content)) {
-            const selected = rulesForBalancer(content, assignment.balancerTag);
+            const selected = {
+                key: template.uuid + ':' + (assignment.balancerTag ?? ''),
+                name:
+                    [template.name, assignment.balancerTag].filter(Boolean).join(' · ') ||
+                    template.uuid.slice(0, 8),
+                template: rulesForBalancer(content, assignment.balancerTag),
+            };
             result.rank.set(selected, result.rank.size);
             for (const field of ['hosts', 'tags'] as const) {
                 const values = assignment[field];
                 if (!Array.isArray(values)) continue;
                 for (const value of values) {
-                    if (typeof value === 'string' && !result[field].has(value))
-                        result[field].set(value, selected);
+                    if (typeof value !== 'string') continue;
+                    const matches = result[field].get(value) ?? [];
+                    if (!matches.some((match) => match.key === selected.key))
+                        result[field].set(value, [...matches, selected]);
                 }
             }
         }
@@ -74,11 +98,25 @@ export function assignedXrayTemplate(
     host: { uuid: string; tags: string[] },
     index: Assignments,
 ): object | null {
+    return assignedXrayTemplates(host, index)[0]?.template ?? null;
+}
+
+export function assignedXrayTemplates(
+    host: { uuid: string; tags: string[] },
+    index: Assignments,
+): XrayTemplateVariant[] {
     const direct = index.hosts.get(host.uuid);
-    if (direct) return direct;
+    if (direct?.length) return direct;
     const matches = host.tags.flatMap((tag) => {
         const template = index.tags.get(tag);
-        return template ? [template] : [];
+        return template ?? [];
     });
-    return matches.sort((left, right) => index.rank.get(left)! - index.rank.get(right)!)[0] ?? null;
+    const seen = new Set<string>();
+    return matches
+        .sort((left, right) => index.rank.get(left)! - index.rank.get(right)!)
+        .filter((match) => {
+            if (seen.has(match.key)) return false;
+            seen.add(match.key);
+            return true;
+        });
 }

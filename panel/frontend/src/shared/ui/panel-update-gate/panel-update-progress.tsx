@@ -54,7 +54,9 @@ export function PanelUpdateProgress({
                     ? t(
                           status?.error === 'RELEASE_NOT_READY'
                               ? 'panelUpdate.releaseNotReady'
-                              : 'panelUpdate.failureHint'
+                              : status?.error === 'SYSTEM_PACKAGES_REQUIRE_INPUT'
+                                ? 'panelUpdate.packagesRequireInput'
+                                : 'panelUpdate.failureHint'
                       )
                     : progress
                       ? t(`panelUpdate.stages.${progress.stage}`)
@@ -111,6 +113,7 @@ export function PanelUpdateProgress({
                         </Text>
                         <MaintenanceLogDownload
                             jobId={status?.jobId}
+                            completed={failed}
                             disabled={!status?.logPath || !reachable}
                         />
                     </Group>

@@ -1,15 +1,19 @@
+import type { XrayTemplateVariant } from '../utils/xray-template-assignments';
+
 import { HostsEntity } from './hosts.entity';
 
 type HostWithRawInboundConstructorData = {
     rawInbound: object | null;
     inboundTag: string;
     xrayJsonTemplate: object | null;
+    xrayJsonVariants?: XrayTemplateVariant[];
 } & ConstructorParameters<typeof HostsEntity>[0];
 
 export class HostWithRawInbound extends HostsEntity {
     public rawInbound: object | null;
     public inboundTag: string;
     public xrayJsonTemplate: object | null;
+    public xrayJsonVariants?: XrayTemplateVariant[];
     public usedBytes: number | bigint | string | null;
     public ambiguousTraffic = false;
     public trafficPaused = false;
@@ -32,5 +36,6 @@ export class HostWithRawInbound extends HostsEntity {
         this.rawInbound = data.rawInbound;
         this.inboundTag = data.inboundTag;
         this.xrayJsonTemplate = data.xrayJsonTemplate;
+        this.xrayJsonVariants = data.xrayJsonVariants;
     }
 }

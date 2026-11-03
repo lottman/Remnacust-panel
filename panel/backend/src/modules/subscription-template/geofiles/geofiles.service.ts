@@ -15,6 +15,7 @@ import {
 import { TypedConfigService } from '@common/config/app-config/typed-config.service';
 import { PrismaService } from '@common/database/prisma.service';
 
+import { BoundedWorkQueue } from '../../../common/utils/bounded-work-queue';
 import { requestGeofileBase } from '../../../common/utils/geofile-request-context';
 import { ClientPoolError } from '../generators/client-pool';
 import { SubscriptionTemplateRepository } from '../repositories/subscription-template.repository';
@@ -60,8 +61,10 @@ export class GeofilesService {
     private compiling = 0;
     private readonly compiled = new Map<string, DatRules>();
     private readonly compilingByKey = new Map<string, Promise<DatRules>>();
+    private readonly compileQueue = new BoundedWorkQueue(2, 32);
     private readonly bundled = new Map<string, Buffer>();
     private readonly bundlingByKey = new Map<string, Promise<Buffer>>();
+    private readonly bundleQueue = new BoundedWorkQueue(2, 32);
     private bundling = 0;
     private readonly defaultBase: string;
     private get base(): string {
@@ -247,7 +250,7 @@ export class GeofilesService {
             new Set(ids).size !== ids.length
         )
             throw new Error('geofile-bundle');
-        const files = [];
+        const files: StoredGeofile[] = [];
         let bytes = 0;
         for (const id of ids) {
             const file = this.activeFile(await this.fileById(id));
@@ -269,9 +272,8 @@ export class GeofilesService {
         }
         const pending = this.bundlingByKey.get(key);
         if (pending) return pending;
-        if (this.bundling >= 2) throw new ServiceUnavailableException('geofile-busy');
-        this.bundling++;
-        const operation = (async () => {
+        const submitted = this.bundleQueue.submit(async () => {
+            this.bundling++;
             try {
                 const sources = [];
                 for (const file of files)
@@ -294,9 +296,10 @@ export class GeofilesService {
                 return data;
             } finally {
                 this.bundling--;
-                this.bundlingByKey.delete(key);
             }
-        })();
+        });
+        if (!submitted) throw new ServiceUnavailableException('geofile-busy');
+        const operation = submitted.finally(() => this.bundlingByKey.delete(key));
         this.bundlingByKey.set(key, operation);
         return operation;
     }
@@ -431,9 +434,8 @@ export class GeofilesService {
         if (cached) return cached;
         const pending = this.compilingByKey.get(key);
         if (pending) return pending;
-        if (this.compiling >= 2) throw new ServiceUnavailableException('geofile-busy');
-        this.compiling++;
-        const operation = (async () => {
+        const submitted = this.compileQueue.submit(async () => {
+            this.compiling++;
             try {
                 const rules = compileDat(
                     await this.readActive(file),
@@ -447,9 +449,10 @@ export class GeofilesService {
                 return rules;
             } finally {
                 this.compiling--;
-                this.compilingByKey.delete(key);
             }
-        })();
+        });
+        if (!submitted) throw new ServiceUnavailableException('geofile-busy');
+        const operation = submitted.finally(() => this.compilingByKey.delete(key));
         this.compilingByKey.set(key, operation);
         return operation;
     }

@@ -787,6 +787,7 @@ export class ResolveProxyConfigService {
                     ? Buffer.from(inputHost.serverDescription).toString('base64')
                     : null,
                 xrayJsonTemplate: inputHost.xrayJsonTemplate,
+                xrayJsonVariants: inputHost.xrayJsonVariants,
                 mapper: inputHost.mapper,
             },
             metadata: {

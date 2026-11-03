@@ -620,7 +620,6 @@ export function validationPath(config: JsonObject): string | null {
         )
             return `remnawave.injectHosts.${index}.tagPrefix`
     }
-    const assignedHosts = new Set<string>()
     const assignedBalancers = new Set<string>()
     for (const [index, assignment] of (config.remnawave?.assignments ?? []).entries()) {
         if (
@@ -631,10 +630,6 @@ export function validationPath(config: JsonObject): string | null {
         )
             return `remnawave.assignments.${index}.balancerTag`
         assignedBalancers.add(assignment.balancerTag)
-        for (const host of assignment.hosts ?? []) {
-            if (assignedHosts.has(host)) return `remnawave.assignments.${index}.hosts`
-            assignedHosts.add(host)
-        }
     }
     for (const [index, pool] of poolsOf(config).entries()) {
         if (['tagRegex', 'remarkRegex'].includes(pool.selector.type)) {

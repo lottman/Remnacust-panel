@@ -321,11 +321,11 @@ export class HostsRepository implements ICrud<HostsEntity> {
     }
 
     public async getAssignedXrayTemplates(): Promise<
-        Array<{ uuid: string; templateJson: object | null }>
+        Array<{ uuid: string; name: string; templateJson: object | null }>
     > {
         const result = await this.qb.kysely
             .selectFrom('subscriptionTemplates')
-            .select(['uuid', 'templateJson'])
+            .select(['uuid', 'name', 'templateJson'])
             .where('templateType', '=', 'XRAY_JSON')
             .where(
                 sql<boolean>`(template_json->'remnawave'->'assignTo' IS NOT NULL OR template_json->'remnawave'->'assignments' IS NOT NULL)`,
@@ -333,7 +333,7 @@ export class HostsRepository implements ICrud<HostsEntity> {
             .orderBy('viewPosition', 'asc')
             .orderBy('uuid', 'asc')
             .execute();
-        return result as Array<{ uuid: string; templateJson: object | null }>;
+        return result as Array<{ uuid: string; name: string; templateJson: object | null }>;
     }
 
     public async getTemplatesByUuids(uuids: string[]) {

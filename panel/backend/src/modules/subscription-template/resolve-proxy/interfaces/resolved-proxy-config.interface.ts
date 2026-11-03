@@ -249,6 +249,7 @@ export type ResolvedProxyConfig = {
         mihomoIpVersion: TMihomoIpVersion | null;
         serverDescription: string | null;
         xrayJsonTemplate: object | null;
+        xrayJsonVariants?: { key: string; name: string; template: object }[];
         mapper: THostMapper;
     };
 

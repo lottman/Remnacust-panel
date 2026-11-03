@@ -389,6 +389,7 @@ export class AxiosService implements OnModuleInit, OnModuleDestroy {
             const response = await this.axiosInstance.request<Buffer>({
                 method: 'GET',
                 signal,
+                timeout: 30_000,
                 url: basePath,
                 responseType: 'arraybuffer',
                 headers: {

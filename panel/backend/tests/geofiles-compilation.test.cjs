@@ -22,15 +22,37 @@ test('simultaneous subscriptions share one compilation instead of failing the th
 test('different compilations remain bounded and failed work can be retried', async () => {
     const s = service(); const releases = [];
     s.readActive = () => new Promise(r => releases.push(() => r(geosite)));
-    const first = s.compile(file, ['example']);
-    const second = s.compile({ ...file, sha256: 'b'.repeat(64) }, ['example']);
-    await assert.rejects(s.compile({ ...file, sha256: 'c'.repeat(64) }, ['example']), /geofile-busy/);
-    releases.forEach(r => r()); await Promise.all([first, second]);
-    const changed = { ...file, sha256: 'd'.repeat(64) }; let reads = 0;
+    const jobs = Array.from({length:32},(_,i)=>s.compile({...file,sha256:i.toString(16).padStart(64,'0')},['example']));
+    assert.equal(releases.length,2);
+    await assert.rejects(s.compile({ ...file, sha256: 'f'.repeat(64) }, ['example']), /geofile-busy/);
+    s.readActive=async()=>geosite;
+    releases.forEach(r => r()); await Promise.all(jobs);
+    assert.equal(s.compilingByKey.size,0); assert.equal(s.compiling,0);
+    const changed = { ...file, sha256: 'e'.repeat(64) }; let reads = 0;
     s.readActive = async () => { if (++reads === 1) throw Error('temporary read failure'); return geosite; };
     await assert.rejects(s.compile(changed, ['example']), /temporary read failure/);
     assert.equal(s.compilingByKey.size, 0); assert.equal(s.compiling, 0);
     assert((await s.compile(changed, ['example'])).domains.length > 0); assert.equal(reads, 2);
+});
+
+test('distinct cold bundles wait for bounded capacity, coalesce queued requests and recover from errors', async () => {
+ const s=service(), releases=[];let active=0,peak=0,reads=0;
+ s.fileById=async id=>({...file,id,size:geosite.length});s.activeFile=f=>f;
+ s.readActive=async()=>{reads++;peak=Math.max(peak,++active);await new Promise(r=>releases.push(r));active--;return geosite;};
+ const ids=Array.from({length:32},(_,i)=>i.toString(16).padStart(34,'0'));
+ const jobs=ids.map(id=>s.bundleContent('geosite',[id]));
+ const duplicate=s.bundleContent('geosite',[ids[20]]);
+ while(releases.length<2)await new Promise(r=>setImmediate(r));
+ await assert.rejects(s.bundleContent('geosite',['f'.repeat(34)]),/geofile-busy/);
+ assert.equal(peak,2);assert.equal(reads,2);
+ for(let i=0;i<32;i++) {while(!releases[i])await new Promise(r=>setImmediate(r));releases[i]();}
+ const results=await Promise.all(jobs);assert.equal(await duplicate,results[20]);
+ assert.equal(reads,32);assert.equal(peak,2);assert.equal(s.bundling,0);assert.equal(s.bundlingByKey.size,0);
+ s.readActive=async()=>{throw Error('read failed');};
+ await assert.rejects(s.bundleContent('geosite',['e'.repeat(34)]),/read failed/);
+ assert.equal(s.bundlingByKey.size,0);
+ s.readActive=async()=>geosite;
+ assert((await s.bundleContent('geosite',['e'.repeat(34)])).length>0);
 });
 
 test('selection validation and inline rules use separate cache entries', async () => {

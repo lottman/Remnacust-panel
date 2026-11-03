@@ -5,7 +5,7 @@ const load = require('./load-typescript.cjs');
 const path = require('node:path');
 const { selectInjectHosts } = source('modules/subscription-template/generators/inject-host-selection.ts');
 const { InjectHostsEntrySchema, RemnawaveInjectorSchema } = load(path.join(__dirname, '../libs/contract/models/xray-json-advanced/remnawave-injector.schema.ts'));
-const { indexXrayTemplateAssignments, assignedXrayTemplate, recipientXrayTemplate } = source('modules/hosts/utils/xray-template-assignments.ts');
+const { indexXrayTemplateAssignments, assignedXrayTemplate, recipientXrayTemplate, assignedXrayTemplates, recipientXrayTemplates } = source('modules/hosts/utils/xray-template-assignments.ts');
 const { XrayJsonGeneratorService } = source('modules/subscription-template/generators/xray-json.generator.service.ts', {
     './inject-host-selection': { selectInjectHosts }, '../host-mapper': { applyHostMapper: value => value },
     '@common/utils/bounded-regex': { configuredRegex: { test: async (pattern,value) => new RegExp(pattern).test(value) } },
@@ -82,6 +82,59 @@ test('template assignments prefer recipient UUID, then template order for tags, 
     assert.equal(assignedXrayTemplate({ uuid: id(10), tags: ['YC', 'VK'] }, index), first);
     assert.equal(assignedXrayTemplate({ uuid: id(11), tags: ['YC'] }, index), second);
     assert.equal(assignedXrayTemplate({ uuid: id(12), tags: [] }, index), null);
+});
+
+test('ten balancers on one recipient produce ten profiles while pool sources remain unique', async () => {
+ const tags=Array.from({length:10},(_,i)=>'balance-'+i);
+ const template={outbounds:[],remnawave:{injectHosts:[{mode:'all',selectFrom:'ALL',tagPrefix:'p',selector:{type:'uuids',values:[id(1),id(1)]}}],assignments:tags.map(balancerTag=>({balancerTag,hosts:[id(0)]}))},routing:{balancers:tags.map(tag=>({tag,selector:['p'],strategy:{type:'random'}})),rules:[{type:'field',domain:['example.test'],outboundTag:'direct'},{network:'tcp,udp',balancerTag:tags[0]}]}};
+ template.outbounds.push({tag:'direct',protocol:'freedom'});
+ const original=structuredClone(template);
+ const recipient=host(0),candidate=host(1);
+ recipient.clientOverrides.xrayJsonVariants=assignedXrayTemplates({uuid:id(0),tags:[]},indexXrayTemplateAssignments([{uuid:id(8),name:'Shared',templateJson:template}]));
+ recipient.clientOverrides.xrayJsonTemplate=recipient.clientOverrides.xrayJsonVariants[0].template;
+ const generator=new XrayJsonGeneratorService({getCachedTemplateByType:async()=>({outbounds:[]})});
+ const profiles=JSON.parse(await generator.generateConfig({hosts:[recipient,candidate],isExtendedClient:false}));
+ assert.equal(profiles.length,10);
+ assert.equal(new Set(profiles.map(p=>p.remarks)).size,10);
+ assert.deepEqual(profiles.map(p=>p.routing.rules.find(r=>r.network==='tcp,udp').balancerTag),tags);
+ for(const p of profiles){const out=p.outbounds.filter(o=>o.protocol==='vless');assert.equal(out.length,1);assert.equal(out[0].settings.vnext[0].users[0].id,id(9999));assert.equal(out[0].settings.vnext[0].address,'1.example.test')}
+ const denied=JSON.parse(await generator.generateConfig({hosts:[recipient],isExtendedClient:false}));
+ assert.deepEqual(denied,[],'filtered or quota-limited sources cannot reappear through another assignment');
+ const forced=JSON.parse(await generator.generateConfig({hosts:[recipient],isExtendedClient:false,ignoreHostXrayJsonTemplate:true}));
+ assert.equal(forced.length,1,'a response rule can explicitly override all host assignments');
+ assert.deepEqual(template,original);
+});
+
+test('multiple exact host assignments override tag fallbacks and repeated tags do not duplicate profiles',()=>{
+ const make=(label,assignments)=>({uuid:label,name:label,templateJson:{remnawave:{assignments},routing:{balancers:assignments.map(x=>({tag:x.balancerTag,selector:['p']}))}}});
+ const a=make(id(8),[{balancerTag:'one',hosts:[id(0)],tags:['A','B']},{balancerTag:'two',hosts:[id(0)]}]);
+ const b=make(id(9),[{balancerTag:'other',hosts:[id(0)]},{balancerTag:'fallback',tags:['A']}]);
+ const index=indexXrayTemplateAssignments([a,b]);
+ assert.equal(assignedXrayTemplates({uuid:id(0),tags:['A','B']},index).length,3);
+ assert.equal(assignedXrayTemplates({uuid:id(1),tags:['A','B']},index).length,2);
+ assert.equal(recipientXrayTemplates({uuid:id(0),tags:['A']},a.templateJson).length,2);
+});
+
+test('host resolution keeps one quota identity and all assigned variants with original speed and tag limits',async()=>{
+ const assignmentModule=source('modules/hosts/utils/xray-template-assignments.ts');
+ const {GetHostsForUserHandler}=source('modules/hosts/queries/get-hosts-for-user/get-hosts-for-user.handler.ts',{
+  '../../utils/xray-template-assignments':assignmentModule,
+  './get-hosts-for-user.query':{GetHostsForUserQuery:class{}},
+  '@common/types':{ok:response=>({isOk:true,response}),fail:error=>{throw error}},
+  '@libs/contracts/constants':{CACHE_KEYS:{},CACHE_KEYS_TTL:{},ERRORS:{}},
+  '@modules/hosts/entities/host-with-inbound-tag.entity':{HostWithRawInbound:class{constructor(value){Object.assign(this,value)}}}
+ });
+ const template={routing:{balancers:Array.from({length:10},(_,i)=>({tag:'b'+i,selector:['p']}))},remnawave:{assignments:Array.from({length:10},(_,i)=>({balancerTag:'b'+i,hosts:[id(0)]}))}};
+ const original={uuid:id(0),tags:['LIMIT'],configProfileInboundUuid:id(1),xrayJsonTemplateUuid:null,speedLimitMbps:20,deviceSpeedLimitMbps:5,userTrafficLimitBytes:1000n,effectiveLimitBytes:500n,usedBytes:500n};
+ let reads=0;
+ const handler=new GetHostsForUserHandler({findActiveHostsByUserId:async()=>[original],getAssignedXrayTemplates:async()=>[{uuid:id(8),name:'Multi',templateJson:template}]},{usageForUser:async()=>[{tag:'LIMIT',speedLimitMbps:10,limitBytes:'100',usedBytes:'100',ambiguous:false,paused:false}]},{cachedByKeys:async()=>++reads===1?new Map([[id(1),{rawInbound:{protocol:'vless'},tag:'inbound'}]]):new Map()});
+ const {response}=await handler.execute({userId:1n});
+ assert.equal(response.length,1);assert.equal(response[0].xrayJsonVariants.length,10);
+ assert.equal(response[0].uuid,original.uuid);assert.equal(response[0].usedBytes,500n);
+ assert.equal(response[0].effectiveLimitBytes,500n);assert.equal(response[0].speedLimitMbps,20);
+ assert.equal(response[0].deviceSpeedLimitMbps,5);assert.equal(response[0].tagTrafficLimits[0].usedBytes,100n);
+ const {isHostTrafficLimited}=source('modules/hosts/utils/host-traffic-limit.ts');
+ assert.equal(isHostTrafficLimited(response[0]),true);
 });
 
 

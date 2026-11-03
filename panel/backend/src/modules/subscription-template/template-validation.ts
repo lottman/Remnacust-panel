@@ -46,7 +46,6 @@ export function xrayTemplateWarnings(config: Record<string, any>): string[] {
                     }
                 }
             }
-            const assignedHosts = new Set<string>();
             const assignedBalancers = new Set<string>();
             for (const [index, assignment] of (result.data.assignments ?? []).entries()) {
                 if (
@@ -57,11 +56,6 @@ export function xrayTemplateWarnings(config: Record<string, any>): string[] {
                 )
                     warnings.push(`remnawave.assignments.${index}.balancerTag`);
                 assignedBalancers.add(assignment.balancerTag);
-                for (const host of assignment.hosts ?? []) {
-                    if (assignedHosts.has(host))
-                        warnings.push(`remnawave.assignments.${index}.hosts`);
-                    assignedHosts.add(host);
-                }
             }
         }
     }

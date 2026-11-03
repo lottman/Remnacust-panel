@@ -46,6 +46,11 @@ export class GeofilesController {
         )
             throw new NotFoundException();
         const abort = new AbortController();
+        const requestedTag = request.headers['if-none-match'];
+        const conditionalTag =
+            typeof requestedTag === 'string' && /^"[a-f0-9]{64}"$/.test(requestedTag)
+                ? requestedTag
+                : undefined;
         const disconnected = () => {
             if (!response.writableFinished) abort.abort();
         };
@@ -64,11 +69,22 @@ export class GeofilesController {
                     maxRedirects: 0,
                     signal: abort.signal,
                     timeout: 30_000,
-                    headers: { 'Accept-Encoding': 'identity' },
+                    headers: { 'Accept-Encoding': 'identity', 'If-None-Match': conditionalTag },
                     decompress: false,
-                    validateStatus: (status) => status === 200,
+                    validateStatus: (status) => status === 200 || status === 304,
                 },
             );
+            const upstreamTag = upstream.headers.etag;
+            const etag =
+                typeof upstreamTag === 'string' && /^"[a-f0-9]{64}"$/.test(upstreamTag)
+                    ? upstreamTag
+                    : undefined;
+            if (etag) response.set('ETag', etag);
+            if (upstream.status === 304 || (conditionalTag && conditionalTag === etag)) {
+                upstream.data.destroy();
+                response.set('Cache-Control', 'public, max-age=0, must-revalidate');
+                return response.status(304).end();
+            }
             const size = Number(upstream.headers['content-length']);
             if (!Number.isSafeInteger(size) || size < 1 || size > 64 * 1024 * 1024) {
                 upstream.data.destroy();

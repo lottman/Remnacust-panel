@@ -161,6 +161,9 @@ function ManagedSubscriptionPagesWidget() {
                                             <MaintenanceLogDownload
                                                 jobId={page.job.requestId}
                                                 pageId={page.id}
+                                                completed={['failed', 'completed'].includes(
+                                                    page.job.phase
+                                                )}
                                             />
                                         )}
                                         {(['start', 'stop', 'restart', 'upgrade'] as const).map(

@@ -150,6 +150,31 @@ test('real HTTP transport reuses connections, proxies device formats and refuses
     }
 });
 
+test('cold subscription waits for node acknowledgement beyond ten seconds and still cancels disconnected clients', async () => {
+    let requests=0;
+    const upstream=http.createServer((req,res)=>{
+        requests++;
+        const timer=setTimeout(()=>res.end('[{"outbounds":[]}]'),10_200);
+        res.on('close',()=>clearTimeout(timer));
+    });
+    await new Promise(resolve=>upstream.listen(0,'127.0.0.1',resolve));
+    const values={REMNAWAVE_PANEL_URL:`http://127.0.0.1:${upstream.address().port}/`,REMNAWAVE_API_TOKEN:'fixture'};
+    const service=new AxiosService({getOrThrow:key=>values[key],get:key=>values[key]});
+    try {
+        const result=await service.getSubscription('192.0.2.1','cold',{});
+        assert.equal(result.subscription.toString(),'[{"outbounds":[]}]');
+        assert.equal(service.axiosInstance.defaults.timeout,10_000);
+        const controller=new AbortController();
+        const pending=service.getSubscription('192.0.2.1','cancelled',{},false,undefined,controller.signal);
+        while(requests<2)await new Promise(r=>setImmediate(r));
+        controller.abort();
+        await assert.rejects(pending,/UPSTREAM_SUBSCRIPTION_UNAVAILABLE/);
+    } finally {
+        service.onModuleDestroy();
+        await new Promise(resolve=>upstream.close(resolve));
+    }
+});
+
 test('device routes keep the credential in the backend path, reject malformed input and never render account HTML', async () => {
     const noop = () => () => {};
     const { SubscriptionController } = load(

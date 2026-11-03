@@ -165,6 +165,13 @@ test('a shared prefix balancer is reused without changing manually authored rout
  assert.equal(m.addBalancer(source,'p-eu'),source);
 });
 
+test('one recipient host may be assigned to ten different balancers in code',()=>{
+ const host='10000000-0000-4000-8000-000000000001';
+ const tags=Array.from({length:10},(_,i)=>'balance-'+i);
+ const config={remnawave:{assignments:tags.map(balancerTag=>({balancerTag,hosts:[host]}))},routing:{balancers:tags.map(tag=>({tag,selector:['p'],strategy:{type:'random'}}))}};
+ assert.equal(m.validationPath(config),null);
+});
+
 test('creating a new autoselect never attaches a pool to an unrelated manual selector', () => {
  const source={routing:{balancers:[{tag:'manual',selector:['auto'],strategy:{type:'roundRobin'}}]}};
  const next=m.parseTemplate(m.addPool(JSON.stringify(source)));

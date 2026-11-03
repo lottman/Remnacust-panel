@@ -232,58 +232,71 @@ export class XrayJsonGeneratorService {
             };
             const regexDeadline = Date.now() + 1000;
 
-            for (const host of hosts) {
-                if (host.metadata.isHidden) continue;
-                if (host.metadata.excludeFromSubscriptionTypes.includes('XRAY_JSON')) continue;
-
-                const selectedTemplate =
+            for (const source of hosts) {
+                if (source.metadata.isHidden) continue;
+                if (source.metadata.excludeFromSubscriptionTypes.includes('XRAY_JSON')) continue;
+                const variants =
                     params.subscriptionInactive || ignoreHostXrayJsonTemplate
-                        ? templateContent
-                        : ((host.clientOverrides.xrayJsonTemplate as XrayJsonConfig) ??
-                          templateContent);
-                const baseTemplate =
-                    selectedTemplate === templateContent || !('remnacust' in selectedTemplate)
-                        ? selectedTemplate
-                        : ((await this.subscriptionTemplateService.prepareClientTemplate(
-                              selectedTemplate as unknown as Record<string, unknown>,
-                              'XRAY_JSON',
-                              params.geofileDelivery,
-                          )) as unknown as XrayJsonConfig);
+                        ? undefined
+                        : source.clientOverrides.xrayJsonVariants;
+                for (const variant of variants?.length ? variants : [null]) {
+                    const host = variant
+                        ? {
+                              ...source,
+                              finalRemark: `${source.finalRemark} · ${variant.name || variant.key}`,
+                          }
+                        : source;
 
-                if (
-                    baseTemplate.remnawave &&
-                    (baseTemplate.remnawave.injectHosts !== undefined ||
-                        baseTemplate.remnawave.addVirtualHostAsOutbound)
-                ) {
-                    const injected = await this.applyRemnawaveInjector(
-                        baseTemplate,
+                    const selectedTemplate =
+                        params.subscriptionInactive || ignoreHostXrayJsonTemplate
+                            ? templateContent
+                            : ((variant?.template as XrayJsonConfig) ??
+                              (host.clientOverrides.xrayJsonTemplate as XrayJsonConfig) ??
+                              templateContent);
+                    const baseTemplate =
+                        selectedTemplate === templateContent || !('remnacust' in selectedTemplate)
+                            ? selectedTemplate
+                            : ((await this.subscriptionTemplateService.prepareClientTemplate(
+                                  selectedTemplate as unknown as Record<string, unknown>,
+                                  'XRAY_JSON',
+                                  params.geofileDelivery,
+                              )) as unknown as XrayJsonConfig);
+
+                    if (
+                        baseTemplate.remnawave &&
+                        (baseTemplate.remnawave.injectHosts !== undefined ||
+                            baseTemplate.remnawave.addVirtualHostAsOutbound)
+                    ) {
+                        const injected = await this.applyRemnawaveInjector(
+                            baseTemplate,
+                            host,
+                            hosts,
+                            isExtendedClient,
+                            regexDeadline,
+                        );
+                        if (injected) append(injected);
+                        continue;
+                    }
+
+                    const outboundConfig = this.buildOutboundConfig(host, isExtendedClient);
+                    if (!outboundConfig) continue;
+
+                    const templateOutbounds = [...(baseTemplate.outbounds ?? [])];
+                    const routing = this.buildDomainRulesRouting(
                         host,
-                        hosts,
-                        isExtendedClient,
-                        regexDeadline,
+                        templateOutbounds,
+                        baseTemplate.routing,
                     );
-                    if (injected) append(injected);
-                    continue;
+
+                    const { remnawave: _injector, ...clientTemplate } = baseTemplate;
+                    append({
+                        ...clientTemplate,
+                        outbounds: [...outboundConfig.outbounds, ...templateOutbounds],
+                        ...(routing ? { routing } : {}),
+                        remarks: outboundConfig.remarks,
+                        meta: outboundConfig.meta,
+                    });
                 }
-
-                const outboundConfig = this.buildOutboundConfig(host, isExtendedClient);
-                if (!outboundConfig) continue;
-
-                const templateOutbounds = [...(baseTemplate.outbounds ?? [])];
-                const routing = this.buildDomainRulesRouting(
-                    host,
-                    templateOutbounds,
-                    baseTemplate.routing,
-                );
-
-                const { remnawave: _injector, ...clientTemplate } = baseTemplate;
-                append({
-                    ...clientTemplate,
-                    outbounds: [...outboundConfig.outbounds, ...templateOutbounds],
-                    ...(routing ? { routing } : {}),
-                    remarks: outboundConfig.remarks,
-                    meta: outboundConfig.meta,
-                });
             }
 
             return `[${configs.join(',')}]`;

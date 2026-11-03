@@ -65,3 +65,22 @@ test('frozen remarks follow configured priority against HWID blocks and registra
     assert.deepEqual(registration.registrationBlockedRemarks(frozen, { customRemarks }), ['Paused']);
     assert.deepEqual(compose.composeStatusAndHwidRemarks('FROZEN', ['Paused'], ['Blocked'], customRemarks), ['Paused', 'Blocked']);
 });
+
+test('inactive status never disguises a device limit or unsupported HWID as an empty subscription', async () => {
+    const resolver = new ResolveProxyConfigService({ getOrThrow: () => 'sub.example.test' }, { prepare: async () => { throw Error('denied devices must not get keys'); } });
+    for (const status of ['FROZEN', 'EXPIRED', 'DISABLED', 'LIMITED']) {
+        const user = { id: 42n, status, expireAt: new Date(Date.now() + 86400000) };
+        const remarks = ['Saved status', '{{FREE_HOST}}'];
+        const settings = { isShowCustomRemarks: true, customRemarks: { ...schema.DEFAULT_SUBSCRIPTION_REMARKS,
+            frozenUsers: remarks, expiredUsers: remarks, disabledUsers: remarks, limitedUsers: remarks,
+            HWIDMaxDevicesExceeded: ['Saved device limit'], HWIDNotSupported: ['Saved HWID warning'] } };
+        for (const [flag, warning] of [['showHwidMaxDeviceRemarks', 'Saved device limit'], ['showHwidNotSupportedRemarks', 'Saved HWID warning']]) {
+            for (const combine of [true, false]) {
+                settings.customRemarks.combineSubscriptionAndHwidRemarks = combine;
+                const configs = await resolver.resolveProxyConfig({ user, subscriptionSettings: settings, hosts: [], fallbackOptions: { [flag]: true } });
+                assert.deepEqual(configs.map(c => c.finalRemark), combine ? ['Saved status', warning] : [warning], `${status}: ${flag}`);
+                assert(configs.every(c => c.address === '0.0.0.0' && c.port === 1));
+            }
+        }
+    }
+});

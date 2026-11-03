@@ -222,20 +222,20 @@ export class ResolveProxyConfigService {
             user.status === USERS_STATUS.FROZEN
                 ? 'FROZEN'
                 : user.status === USERS_STATUS.DISABLED
-                ? 'DISABLED'
-                : user.status === USERS_STATUS.EXPIRED || user.expireAt <= new Date()
-                  ? 'EXPIRED'
-                  : null;
+                  ? 'DISABLED'
+                  : user.status === USERS_STATUS.EXPIRED || user.expireAt <= new Date()
+                    ? 'EXPIRED'
+                    : null;
         const statusRemarks = settings.isShowCustomRemarks
             ? status === 'FROZEN'
-                ? settings.customRemarks.frozenUsers ?? ['Subscription frozen']
+                ? (settings.customRemarks.frozenUsers ?? ['Subscription frozen'])
                 : status === 'DISABLED'
-                ? settings.customRemarks.disabledUsers
-                : status === 'EXPIRED'
-                  ? settings.customRemarks.expiredUsers
-                  : user.status === USERS_STATUS.LIMITED
-                    ? settings.customRemarks.limitedUsers
-                    : []
+                  ? settings.customRemarks.disabledUsers
+                  : status === 'EXPIRED'
+                    ? settings.customRemarks.expiredUsers
+                    : user.status === USERS_STATUS.LIMITED
+                      ? settings.customRemarks.limitedUsers
+                      : []
             : [];
         const effectiveStatusRemarks =
             status === 'DISABLED' &&
@@ -243,6 +243,21 @@ export class ResolveProxyConfigService {
             !statusRemarks.some((remark) => remark.trim())
                 ? ['User is disabled']
                 : statusRemarks;
+
+        if (
+            settings.isShowCustomRemarks &&
+            (fallbackOptions?.showHwidMaxDeviceRemarks ||
+                fallbackOptions?.showHwidNotSupportedRemarks)
+        ) {
+            const denial = fallbackOptions.showHwidMaxDeviceRemarks
+                ? settings.customRemarks.HWIDMaxDevicesExceeded
+                : settings.customRemarks.HWIDNotSupported;
+            const messages =
+                settings.customRemarks.combineSubscriptionAndHwidRemarks === false
+                    ? denial
+                    : [...effectiveStatusRemarks, ...denial];
+            return [...new Set(messages.filter((remark) => remark.trim() !== '{{FREE_HOST}}'))];
+        }
 
         if (user.status === USERS_STATUS.LIMITED && statusRemarks.some((remark) => remark.trim())) {
             return statusRemarks;

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
 import { RawCacheService } from '@common/raw-cache';
+import { USERS_STATUS } from '@libs/contracts/constants';
 
 import { SUBSCRIPTION_CONFIG_TYPES } from './constants/config-types';
 import { ClashGeneratorService } from './generators/clash.generator.service';
@@ -125,6 +126,8 @@ export class RenderTemplatesService {
                         isExtendedClient: srrContext.isExtendedClient,
                         overrideTemplateName: srrContext.overrideTemplateName,
                         ignoreHostXrayJsonTemplate: srrContext.ignoreHostXrayJsonTemplate,
+                        subscriptionInactive:
+                            user.status !== USERS_STATUS.ACTIVE || user.expireAt <= new Date(),
                         geofileDelivery,
                     });
                 const output = await automaticXrayDelivery({

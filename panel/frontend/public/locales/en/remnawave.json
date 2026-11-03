@@ -2627,7 +2627,7 @@
     "regenerate-shortid-5b4336d": "Regenerate shortId",
     "last-rotation-ffd71b1": "Last rotation: ",
     "available-after-subscription-expires-or-is-disabled-61afc39": "Available while subscription access is inactive",
-    "can-share-an-inbound-with-ordinary-hosts-access-uses-separate--1881b29": "The inbound must belong to the user’s internal squad. {{FREE_HOST}} sets the subscription position and does not grant access. A shared inbound requires host isolation support in the node and core.",
+    "can-share-an-inbound-with-ordinary-hosts-access-uses-separate--1881b29": "The inbound must belong to the user’s internal squad. {{FREE_HOST}} sets the subscription position and does not grant access. A shared inbound requires host isolation support in the node and core. Inactive JSON does not use shared templates or geofiles. Happ and INCY occupy separate device slots.",
     "unavailable-during-an-active-subscription-43ed8ab": "Unavailable during an active subscription",
     "only-for-expired-or-disabled-subscriptions-squad-access-restri-c5bbce7": "Only while access is inactive: expired, disabled, frozen or quota exhausted. Squad access restrictions still apply.",
     "carrier-271c535": "Carrier",

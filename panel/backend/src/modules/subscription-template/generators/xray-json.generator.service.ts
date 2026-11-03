@@ -1,3 +1,5 @@
+import { isIP } from 'node:net';
+
 import { Injectable, Logger } from '@nestjs/common';
 
 import { isNonEmptyObject } from '@common/utils';
@@ -211,11 +213,13 @@ export class XrayJsonGeneratorService {
         } = params;
 
         try {
-            const templateContent = (await this.subscriptionTemplateService.getCachedTemplateByType(
-                'XRAY_JSON',
-                overrideTemplateName,
-                params.geofileDelivery,
-            )) as unknown as XrayJsonConfig;
+            const templateContent = (params.subscriptionInactive
+                ? {}
+                : await this.subscriptionTemplateService.getCachedTemplateByType(
+                      'XRAY_JSON',
+                      overrideTemplateName,
+                      params.geofileDelivery,
+                  )) as unknown as XrayJsonConfig;
 
             const configs: string[] = [];
             let outputBytes = 2;
@@ -232,10 +236,11 @@ export class XrayJsonGeneratorService {
                 if (host.metadata.isHidden) continue;
                 if (host.metadata.excludeFromSubscriptionTypes.includes('XRAY_JSON')) continue;
 
-                const selectedTemplate = ignoreHostXrayJsonTemplate
-                    ? templateContent
-                    : ((host.clientOverrides.xrayJsonTemplate as XrayJsonConfig) ??
-                      templateContent);
+                const selectedTemplate =
+                    params.subscriptionInactive || ignoreHostXrayJsonTemplate
+                        ? templateContent
+                        : ((host.clientOverrides.xrayJsonTemplate as XrayJsonConfig) ??
+                          templateContent);
                 const baseTemplate =
                     selectedTemplate === templateContent || !('remnacust' in selectedTemplate)
                         ? selectedTemplate
@@ -303,10 +308,15 @@ export class XrayJsonGeneratorService {
         ) {
             return undefined;
         }
-        const domains = rules.domains.filter(
+        const destinations = rules.domains.filter(
             (domain): domain is string => typeof domain === 'string' && domain.trim().length > 0,
         );
-        if (domains.length === 0) return undefined;
+        if (destinations.length === 0) return undefined;
+        const isIp = (value: string) => isIP(value.split('/')[0]) !== 0;
+        const domains = destinations
+            .filter((value) => !isIp(value))
+            .map((value) => (/^(?:domain|full):/.test(value) ? value : `domain:${value}`));
+        const ips = destinations.filter(isIp);
 
         let blockTag = 'block';
         while (
@@ -323,7 +333,8 @@ export class XrayJsonGeneratorService {
                 ...templateRouting,
                 // Host restrictions take priority; unrelated template/geofile routing remains effective.
                 rules: [
-                    { domain: domains, outboundTag: blockTag },
+                    ...(domains.length ? [{ domain: domains, outboundTag: blockTag }] : []),
+                    ...(ips.length ? [{ ip: ips, outboundTag: blockTag }] : []),
                     ...(templateRouting?.rules ?? []),
                 ],
             };
@@ -333,7 +344,8 @@ export class XrayJsonGeneratorService {
             domainStrategy: 'IPIfNonMatch',
             // ALLOW_ONLY is a restrictive override; appending manual rules could bypass its deny rule.
             rules: [
-                { domain: domains, outboundTag: 'proxy' },
+                ...(domains.length ? [{ domain: domains, outboundTag: 'proxy' }] : []),
+                ...(ips.length ? [{ ip: ips, outboundTag: 'proxy' }] : []),
                 { network: 'tcp,udp', outboundTag: blockTag },
             ],
         };

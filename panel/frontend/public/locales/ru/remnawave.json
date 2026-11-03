@@ -2627,7 +2627,7 @@
     "regenerate-shortid-5b4336d": "Перегенерировать shortId",
     "last-rotation-ffd71b1": "Последняя ротация: ",
     "available-after-subscription-expires-or-is-disabled-61afc39": "Доступен при неактивной подписке",
-    "can-share-an-inbound-with-ordinary-hosts-access-uses-separate--1881b29": "Inbound должен быть во внутреннем скваде пользователя. {{FREE_HOST}} задаёт место в подписке и не выдаёт права. Общий inbound требует поддержки изоляции хостов нодой и ядром.",
+    "can-share-an-inbound-with-ordinary-hosts-access-uses-separate--1881b29": "Inbound должен быть во внутреннем скваде пользователя. {{FREE_HOST}} задаёт место в подписке и не выдаёт права. Общий inbound требует поддержки изоляции хостов нодой и ядром. При неактивной подписке JSON не использует общие шаблоны и геофайлы. Happ и INCY занимают разные места в лимите устройств.",
     "unavailable-during-an-active-subscription-43ed8ab": "Недоступен при активной подписке",
     "only-for-expired-or-disabled-subscriptions-squad-access-restri-c5bbce7": "Только при неактивном доступе: срок истёк, подписка отключена, заморожена или достигнут лимит. Ограничения сквадов сохраняются.",
     "carrier-271c535": "Сервис связи",

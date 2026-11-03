@@ -2608,7 +2608,7 @@
     "regenerate-shortid-5b4336d": "重新生成 shortId",
     "last-rotation-ffd71b1": "上次轮换：",
     "available-after-subscription-expires-or-is-disabled-61afc39": "订阅访问未启用时可用",
-    "can-share-an-inbound-with-ordinary-hosts-access-uses-separate--1881b29": "入站必须属于用户的内部组。{{FREE_HOST}} 只指定订阅位置，不授予权限。共享入站要求节点和核心支持主机隔离。",
+    "can-share-an-inbound-with-ordinary-hosts-access-uses-separate--1881b29": "入站必须属于用户的内部组。{{FREE_HOST}} 只指定订阅位置，不授予权限。共享入站要求节点和核心支持主机隔离。未激活订阅的 JSON 不使用共享模板或地理文件。Happ 和 INCY 各占一个设备名额。",
     "unavailable-during-an-active-subscription-43ed8ab": "有效订阅期间不可用",
     "only-for-expired-or-disabled-subscriptions-squad-access-restri-c5bbce7": "仅在访问未启用时显示：已过期、已停用、已冻结或配额耗尽。组访问限制仍然生效。",
     "carrier-271c535": "运营商",

@@ -20,6 +20,7 @@ const { validateGeofile, geofileFields } = load(
 );
 const { RenderTemplatesService } = load(path.join(root, 'render-templates.service.ts'), {
     ...modules,
+    '@libs/contracts/constants': require('../libs/contract/build/backend/constants'),
     '@common/raw-cache': {},
     './constants/config-types': {
         SUBSCRIPTION_CONFIG_TYPES: { XRAY_JSON: { CONTENT_TYPE: 'application/json' } },

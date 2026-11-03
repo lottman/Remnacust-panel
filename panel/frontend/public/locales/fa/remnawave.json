@@ -2608,7 +2608,7 @@
     "regenerate-shortid-5b4336d": "تولید مجدد shortId",
     "last-rotation-ffd71b1": "آخرین چرخش: ",
     "available-after-subscription-expires-or-is-disabled-61afc39": "در زمان غیرفعال بودن دسترسی اشتراک در دسترس است",
-    "can-share-an-inbound-with-ordinary-hosts-access-uses-separate--1881b29": "ورودی باید در گروه داخلی کاربر باشد. {{FREE_HOST}} فقط جایگاه را تعیین می‌کند و مجوز نمی‌دهد. ورودی مشترک به پشتیبانی جداسازی میزبان در نود و هسته نیاز دارد.",
+    "can-share-an-inbound-with-ordinary-hosts-access-uses-separate--1881b29": "ورودی باید در گروه داخلی کاربر باشد. {{FREE_HOST}} فقط جایگاه را تعیین می‌کند و مجوز نمی‌دهد. ورودی مشترک به پشتیبانی جداسازی میزبان در نود و هسته نیاز دارد. JSON اشتراک غیرفعال از قالب و فایل جغرافیایی مشترک استفاده نمی‌کند. Happ و INCY جایگاه جدا در سقف دستگاه دارند.",
     "unavailable-during-an-active-subscription-43ed8ab": "در طول اشتراک فعال در دسترس نیست",
     "only-for-expired-or-disabled-subscriptions-squad-access-restri-c5bbce7": "فقط هنگام غیرفعال بودن دسترسی: انقضا، غیرفعال‌سازی، انجماد یا پایان سهمیه. محدودیت‌های دسترسی گروه همچنان برقرارند.",
     "carrier-271c535": "اپراتور",

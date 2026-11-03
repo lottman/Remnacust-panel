@@ -73,5 +73,6 @@ export interface IGenerateConfigParams {
     isExtendedClient: boolean;
     overrideTemplateName?: string;
     ignoreHostXrayJsonTemplate?: boolean;
+    subscriptionInactive?: boolean;
     geofileDelivery?: XrayGeofileDelivery;
 }

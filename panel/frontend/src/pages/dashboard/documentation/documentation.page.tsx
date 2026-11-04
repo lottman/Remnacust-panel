@@ -91,6 +91,9 @@ function CopyCode({ text }: { text: string }) {
 export function DocumentationPage({ mode = 'guide' }: { mode?: 'guide' | 'api' | 'versions' }) {
     const [params] = useSearchParams()
     const { hash } = useLocation()
+    if (mode === 'guide' && params.get('article') === 'support') {
+        return <Navigate replace to={ROUTES.DASHBOARD.SUPPORT} />
+    }
     if (params.get('tab') === 'versions') {
         const next = new URLSearchParams(params)
         next.delete('tab')
@@ -431,9 +434,10 @@ function DocumentationContentPage({ mode }: { mode: 'guide' | 'api' }) {
                                             <Box key={category.id} mb="md">
                                                 <Text
                                                     className={classes.category}
-                                                    size="xs"
-                                                    c="dimmed"
-                                                    fw={600}
+                                                    component="h2"
+                                                    data-active={
+                                                        category.id === articleMeta?.category
+                                                    }
                                                 >
                                                     {category[language]}
                                                 </Text>
@@ -447,13 +451,17 @@ function DocumentationContentPage({ mode }: { mode: 'guide' | 'api' }) {
                                                                 ? 'page'
                                                                 : undefined
                                                         }
-                                                        to={{
-                                                            pathname: location.pathname,
-                                                            search: selectionSearch(
-                                                                'article',
-                                                                item.id
-                                                            )
-                                                        }}
+                                                        to={
+                                                            item.id === 'support'
+                                                                ? ROUTES.DASHBOARD.SUPPORT
+                                                                : {
+                                                                      pathname: location.pathname,
+                                                                      search: selectionSearch(
+                                                                          'article',
+                                                                          item.id
+                                                                      )
+                                                                  }
+                                                        }
                                                     >
                                                         {item.title}
                                                     </Link>

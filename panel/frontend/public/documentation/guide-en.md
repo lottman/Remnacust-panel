@@ -1227,7 +1227,7 @@ An external squad can override a template for a group. Response rules select how
 
 ### Addresses and networks
 
-Open “Support the project” in the additional options menu. The page lists Gram on TON, Solana, TRC20 on TRON, Litecoin, Ethereum and Bitcoin addresses. Find the required network in the list and click Copy. Check the full address in your wallet before sending; the currency and network must match the selected network.
+Choose “Support the project” in the documentation contents to open the addresses page directly. It is also available in the additional options menu. The page lists Gram on TON, Solana, TRC20 on TRON, Litecoin, Ethereum and Bitcoin addresses. Find the required network in the list and click Copy. Check the full address in your wallet before sending; the currency and network must match the selected network.
 
 ### How the page works
 

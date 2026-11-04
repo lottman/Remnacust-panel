@@ -1227,7 +1227,7 @@ UNIX 值为秒而非毫秒。缺少 LAST_TRAFFIC_RESET_AT_UNIX 或 NEXT_TRAFFIC_
 
 ### 地址与网络
 
-在更多选项菜单中打开“支持项目”。页面列出 TON 网络的 Gram、Solana、TRON 网络的 TRC20、Litecoin、Ethereum 和 Bitcoin 地址。在列表中找到对应网络并点击复制。转账前在钱包中核对完整地址，币种和网络必须与所选网络一致。
+在文档目录中选择“支持项目”即可直接打开地址页面。也可从更多选项菜单进入。页面列出 TON 网络的 Gram、Solana、TRON 网络的 TRC20、Litecoin、Ethereum 和 Bitcoin 地址。在列表中找到对应网络并点击复制。转账前在钱包中核对完整地址，币种和网络必须与所选网络一致。
 
 ### 页面的功能
 

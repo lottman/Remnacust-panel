@@ -198,19 +198,19 @@ export const supportGuide = {
             id: 'support-1',
             ru: {
                 title: 'Адреса и сети',
-                body: 'Откройте «Поддержать проект» в меню дополнительных возможностей. На странице находятся адреса Gram в сети TON, Solana, TRC20 в сети TRON, Litecoin, Ethereum и Bitcoin. Найдите нужную сеть в списке и нажмите «Копировать». Проверьте полный адрес в своём кошельке перед переводом; имя валюты и сеть должны соответствовать выбранной сети.'
+                body: 'В оглавлении документации нажмите «Поддержать проект» — сразу откроется страница с адресами. Она также доступна в меню дополнительных возможностей. На странице находятся адреса Gram в сети TON, Solana, TRC20 в сети TRON, Litecoin, Ethereum и Bitcoin. Найдите нужную сеть в списке и нажмите «Копировать». Проверьте полный адрес в своём кошельке перед переводом; имя валюты и сеть должны соответствовать выбранной сети.'
             },
             en: {
                 title: 'Addresses and networks',
-                body: 'Open “Support the project” in the additional options menu. The page lists Gram on TON, Solana, TRC20 on TRON, Litecoin, Ethereum and Bitcoin addresses. Find the required network in the list and click Copy. Check the full address in your wallet before sending; the currency and network must match the selected network.'
+                body: 'Choose “Support the project” in the documentation contents to open the addresses page directly. It is also available in the additional options menu. The page lists Gram on TON, Solana, TRC20 on TRON, Litecoin, Ethereum and Bitcoin addresses. Find the required network in the list and click Copy. Check the full address in your wallet before sending; the currency and network must match the selected network.'
             },
             fa: {
                 title: 'آدرس‌ها و شبکه‌ها',
-                body: '«حمایت از پروژه» را در منوی امکانات بیشتر باز کنید. صفحه آدرس‌های Gram در TON، Solana، TRC20 در TRON، Litecoin، Ethereum و Bitcoin را نشان می‌دهد. شبکه موردنظر را در فهرست پیدا کنید و «کپی» را بزنید. پیش از ارسال، آدرس کامل را در کیف پول بررسی کنید؛ ارز و شبکه باید با شبکه انتخاب‌شده یکسان باشند.'
+                body: 'در فهرست مستندات «حمایت از پروژه» را انتخاب کنید تا مستقیم به صفحه آدرس‌ها بروید. این صفحه در منوی امکانات بیشتر نیز در دسترس است. صفحه آدرس‌های Gram در TON، Solana، TRC20 در TRON، Litecoin، Ethereum و Bitcoin را نشان می‌دهد. شبکه موردنظر را در فهرست پیدا کنید و «کپی» را بزنید. پیش از ارسال، آدرس کامل را در کیف پول بررسی کنید؛ ارز و شبکه باید با شبکه انتخاب‌شده یکسان باشند.'
             },
             zh: {
                 title: '地址与网络',
-                body: '在更多选项菜单中打开“支持项目”。页面列出 TON 网络的 Gram、Solana、TRON 网络的 TRC20、Litecoin、Ethereum 和 Bitcoin 地址。在列表中找到对应网络并点击复制。转账前在钱包中核对完整地址，币种和网络必须与所选网络一致。'
+                body: '在文档目录中选择“支持项目”即可直接打开地址页面。也可从更多选项菜单进入。页面列出 TON 网络的 Gram、Solana、TRON 网络的 TRC20、Litecoin、Ethereum 和 Bitcoin 地址。在列表中找到对应网络并点击复制。转账前在钱包中核对完整地址，币种和网络必须与所选网络一致。'
             }
         },
         {

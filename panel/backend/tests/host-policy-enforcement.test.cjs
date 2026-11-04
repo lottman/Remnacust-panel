@@ -24,7 +24,7 @@ function fixture(usage = [], paused = []) {
         },
     );
     const calls = [];
-    const capabilities = {};
+    const capabilities = { supported: true };
     const missing = new Set();
     const db = { kysely: { transaction: () => ({ execute: (fn) => fn({}) }) } };
     const service = new HostPolicyService(

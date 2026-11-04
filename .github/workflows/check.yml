@@ -121,11 +121,25 @@ jobs:
       - name: Check hidden connection key visibility with PostgreSQL
         run: node tests/subpage-config-visibility.database.integration.cjs
       - name: Compare batch identity authorization against scalar access rules with PostgreSQL
-        run: node tests/identity-access-database.integration.cjs && node tests/inbound-access-database.integration.cjs && node tests/subscription-load-database.integration.cjs
+        run: node tests/identity-access-database.integration.cjs && node tests/inbound-access-database.integration.cjs && node tests/access-expiry-timezone.database.integration.cjs && node tests/subscription-load-database.integration.cjs
       - name: Check template history, restore and upgrade preservation with PostgreSQL
         run: node tests/template-history-database.integration.cjs
         env:
           TEMPLATE_HISTORY_TEST_DATABASE_URL: postgresql://postgres@127.0.0.1:55439/postgres
+      - name: Verify bounded receipt commits and batched quota epochs with PostgreSQL
+        run: |
+          node - <<'NODE'
+          const {PrismaClient}=require('@prisma/client');
+          const database=new PrismaClient({datasourceUrl:'postgresql://postgres@127.0.0.1:55439/postgres'});
+          (async()=>{try{
+            await database.$executeRawUnsafe('CREATE DATABASE remnacust_test_host_usage_batch');
+            await database.$executeRawUnsafe('CREATE DATABASE remnacust_test_quota_policy_batch');
+          }finally{await database.$disconnect();}})().catch(error=>{console.error(error);process.exitCode=1;});
+          NODE
+          DATABASE_URL=postgresql://postgres@127.0.0.1:55439/remnacust_test_host_usage_batch DIRECT_URL=postgresql://postgres@127.0.0.1:55439/remnacust_test_host_usage_batch npm run migrate:deploy
+          HOST_USAGE_PROGRESS_TEST_DATABASE_URL=postgresql://postgres@127.0.0.1:55439/remnacust_test_host_usage_batch node tests/host-usage-progress.database.integration.cjs
+          DATABASE_URL=postgresql://postgres@127.0.0.1:55439/remnacust_test_quota_policy_batch DIRECT_URL=postgresql://postgres@127.0.0.1:55439/remnacust_test_quota_policy_batch npm run migrate:deploy
+          QUOTA_POLICY_BATCH_TEST_DATABASE_URL=postgresql://postgres@127.0.0.1:55439/remnacust_test_quota_policy_batch node tests/quota-policy-batching-database.integration.cjs
       - name: Restore compact database backup and verify retained credentials
         run: node tests/backup-dump-database.integration.cjs
       - name: Check durable quota reservation issuance in a separate empty database

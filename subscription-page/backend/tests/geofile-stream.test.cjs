@@ -36,3 +36,39 @@ test('real public DAT stream exceeds the JSON budget without truncation and matc
   assert.equal(service.axiosInstance.defaults.maxContentLength,16*1024*1024,'JSON remains bounded separately');
  }finally{service.onModuleDestroy();await Promise.all([close(gateway),close(upstream)]);}
 });
+
+test('slow DAT downloads cannot occupy the connections needed by page metadata and subscriptions', async () => {
+ const held=new Set();
+ const upstream=http.createServer((req,res)=>{
+  if(req.url.includes('/geofiles/')){
+   held.add(res);res.on('close',()=>held.delete(res));
+   res.writeHead(200,{'Content-Length':1024*1024});res.write(Buffer.from([1]));return;
+  }
+  if(req.url.includes('/info/'))return res.end(JSON.stringify({response:{isFound:true}}));
+  res.end('[{"outbounds":[]}]');
+ });await listen(upstream);
+ const service=new AxiosService({getOrThrow:key=>key==='REMNAWAVE_PANEL_URL'?`http://127.0.0.1:${upstream.address().port}`:'fixture',get:()=>undefined});
+ const controller=new GeofilesController(service);
+ const gateway=http.createServer((req,res)=>{
+  res.set=(headers,value)=>{for(const[k,v]of Object.entries(typeof headers==='string'?{[headers]:value}:headers))res.setHeader(k,v);return res;};
+  res.status=code=>{res.statusCode=code;return res;};
+  void controller.download('a'.repeat(34),'b'.repeat(64)+'.dat',undefined,req,res).catch(()=>res.end());
+ });await listen(gateway);
+ const agent=(service.geofileAxiosInstance??service.axiosInstance).defaults.httpAgent;
+ const abort=new AbortController();
+ const downloads=Array.from({length:agent.maxSockets},()=>global.fetch(`http://127.0.0.1:${gateway.address().port}/file`,{signal:abort.signal}).then(r=>r.arrayBuffer()).catch(()=>null));
+ let timer;
+ try{
+  const deadline=Date.now()+5000;
+  while(held.size<agent.maxSockets&&Date.now()<deadline)await new Promise(r=>setTimeout(r,10));
+  assert.equal(held.size,agent.maxSockets,'fixture saturates the actual DAT connection pool');
+  const pending=Promise.all(Array.from({length:80},()=>Promise.all([service.getSubscriptionInfo('192.0.2.1','fixture',abort.signal),service.getSubscription('192.0.2.1','fixture',{},false,undefined,abort.signal)])));
+  const result=await Promise.race([pending,new Promise(resolve=>{timer=setTimeout(()=>resolve(null),3000);})]);
+  assert(result,'DAT streams starved page metadata and subscription requests');
+  for(const [info,subscription] of result){assert.equal(info.isOk,true);assert.equal(subscription.subscription.toString(),'[{"outbounds":[]}]');}
+ }finally{
+  clearTimeout(timer);abort.abort();for(const res of held)res.destroy();service.onModuleDestroy();
+  await Promise.allSettled(downloads);gateway.closeAllConnections();upstream.closeAllConnections();
+  await Promise.all([close(gateway),close(upstream)]);
+ }
+});

@@ -105,7 +105,7 @@ test('real HTTP binary upload, admin-only roles, public byte stream and in-use d
             {
                 provide: UpstreamAxios,
                 useValue: {
-                    axiosInstance: require('axios').create({ baseURL: base, proxy: false }),
+                    geofileAxiosInstance: require('axios').create({ baseURL: base, proxy: false }),
                 },
             },
         ],
@@ -356,7 +356,7 @@ test('signed category subsets survive the real subscription-page proxy and rejec
   Module({controllers:[PublicGeofilesController],providers:[{provide:GeofilesService,useValue:files}]})(SubsetModule);
   app=await NestFactory.create(SubsetModule,{logger:false});app.setGlobalPrefix('api');await app.listen(0,'127.0.0.1');
   class SubsetProxy {}
-  Module({controllers:[SubscriptionPageGeofiles],providers:[{provide:UpstreamAxios,useValue:{axiosInstance:require('axios').create({baseURL:await app.getUrl(),proxy:false})}}]})(SubsetProxy);
+  Module({controllers:[SubscriptionPageGeofiles],providers:[{provide:UpstreamAxios,useValue:{geofileAxiosInstance:require('axios').create({baseURL:await app.getUrl(),proxy:false})}}]})(SubsetProxy);
   proxy=await NestFactory.create(SubsetProxy,{logger:false});await proxy.listen(0,'127.0.0.1');
   const issued=new URL(await files.bundleUrl('geosite',[item.id],{[item.id]:['example']}));
   assert.match(issued.pathname,/\/bundles\/m-[a-f0-9]{64}\//);
@@ -393,7 +393,7 @@ test('transient upstream failures cannot become cached missing geofiles or leak 
  });
  await new Promise(resolve=>upstream.listen(0,'127.0.0.1',resolve));
  class AvailabilityProxy {}
- Module({controllers:[SubscriptionPageGeofiles],providers:[{provide:UpstreamAxios,useValue:{axiosInstance:require('axios').create({baseURL:'http://127.0.0.1:'+upstream.address().port,proxy:false})}}]})(AvailabilityProxy);
+ Module({controllers:[SubscriptionPageGeofiles],providers:[{provide:UpstreamAxios,useValue:{geofileAxiosInstance:require('axios').create({baseURL:'http://127.0.0.1:'+upstream.address().port,proxy:false})}}]})(AvailabilityProxy);
  const app=await NestFactory.create(AvailabilityProxy,{logger:false});await app.listen(0,'127.0.0.1');
  try {
   const url=(await app.getUrl())+'/geofiles/'+'a'.repeat(34)+'/latest.dat';

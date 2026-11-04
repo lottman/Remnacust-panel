@@ -29,7 +29,7 @@ const journal=new UsageJournalService({getOrThrow:()=>url});
     assert.equal(await billing.replayPending(),0);assert.equal(await used(),before+9007199254740993n);
     const config={getOrThrow:key=>key==='USER_USAGE_IGNORE_BELOW_BYTES'?0n:true};
     const axios={getUsersStats:()=>assert.fail('Known restored data must not reset a remote counter')};
-    const native=new DurableUsageService(db,axios,tx,config),hosts=new HostUsageService(db,{hgetallParsed:async()=>({})},tx);
+    const native=new DurableUsageService(db,axios,tx,config),hosts=new HostUsageService(db,{createPipeline:()=>({hscan(){},exec:async()=>[[null,['0',[]]]]})},tx);
     const legacy=new LegacyUsageService(db,axios,tx,native,hosts,journal);
     const node={nodeUuid:'cdcdcdcd-cdcd-4dcd-8dcd-cdcdcdcdcdcd',nodeId:903n,opts:{address:'127.0.0.1',port:1,proxyUrl:null},multiplier:'1000000000'};
     const previous=(await prisma.$queryRaw`SELECT uncertain_since FROM xera_legacy_usage_streams WHERE node_uuid=${node.nodeUuid}::uuid`)[0].uncertain_since;

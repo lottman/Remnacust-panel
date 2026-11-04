@@ -565,7 +565,7 @@ for (const version of ['1.0.0', '1.6.4', '2.6.1', '3.4.1'])
             collectReports: async () => assert.fail('legacy nodes have no plugin reports'),
         };
         const cache = { delMany: async () => {}, setMany: async () => {}, get: async () => null, set: async () => {} };
-        const policies = { syncNode: async () => {} };
+        const policies = { syncNode: async () => {}, withCompatibilitySnapshot: async (_roots, work) => work() };
         const configurations = new NodeConfigurationService(
             service,
             queues,
@@ -643,7 +643,7 @@ function pendingFixture() {
         startXray:async(payload,node)=>{starts.push({payload,node});return result.ok({isStarted:true,error:null,nodeInformation:{version:'1.0.0'},version:'test'})},
         getSystemStats:async()=>available&&running?result.ok({xrayInfo,system:null}):{isOk:false,message:'Core statistics unavailable'},
     };
-    const policies={syncNode:async node=>{if(failures.has(node.uuid))throw Object.assign(Error('unsupported host policy; secret must not leak'),{code:'HOST_POLICY_NOT_APPLIED'})}};
+    const policies={withCompatibilitySnapshot:async (_roots,work)=>work(),syncNode:async node=>{if(failures.has(node.uuid))throw Object.assign(Error('unsupported host policy; secret must not leak'),{code:'HOST_POLICY_NOT_APPLIED'})}};
     const queues={queues:{startNode:{pause:async()=>{},resume:async()=>{}},startAllNodes:{pause:async()=>{},resume:async()=>{}}},
         startNode:async payload=>queued.push(payload)};
     const configurations=new NodeConfigurationService(axios,queues,queryBus,{emit:()=>{}},commandBus,cache,policies,{acquire:async()=>null});
@@ -1022,4 +1022,214 @@ test('standalone plugin updates for port-managed nodes use the same owned execut
         {execute:async query=>{assert.equal(query.constructor.name,'GetPortPlanNodeUuidsQuery');return ['managed'];}},
         {},{apply:async payload=>calls.push(payload)});
     await processor.handleSyncNodePlugins({data:{nodeUuid:'managed'}});assert.deepEqual(calls,[{nodeUuid:'managed'}]);
+});
+
+function discoveryFixture() {
+    const f=pendingFixture();f.failures.clear();
+    const H='11111111-1111-4111-8111-111111111111';
+    for(const node of f.nodes)node.activeInbounds=[{uuid:'shared',tag:'vless',protocol:'vless'}];
+    const inventory=f.nodes.map(node=>({...node,inbounds:['shared']}));
+    const values=new Map(),posts=[],probes=new Map();
+    let revision=0,active=0,peak=0,transaction=false,nativeGate=null,allGate=null;
+    const context=new (require('node:async_hooks').AsyncLocalStorage)();
+    const inTransaction=()=>transaction||context.getStore()===true;
+    const sql=(parts)=>({execute:async()=>{
+        const text=parts.join('');
+        if(text.includes('FROM nodes n LEFT JOIN config_profile_inbounds_to_nodes b'))return {rows:inventory};
+        if(text.includes('pg_try_advisory_xact_lock'))return {rows:[{acquired:true}]};
+        if(text.includes('xera_next_host_policy_revision'))return {rows:[{revision:String(++revision)}]};
+        if(text.includes('FROM hosts h LEFT JOIN config_profile_inbounds'))return {rows:[{
+            uuid:H,inboundUuid:'shared',inboundTag:'vless',profileUuid:'profile',tags:[],nodes:[],
+            boundNodes:inventory.filter(n=>n.inbounds.includes('shared')).map(n=>n.uuid),issued:true,managed:false,userLimit:null,userSpeed:0,
+            deviceSpeed:0,totalSpeed:0,trafficMultiplier:null,anchor:new Date(0),resetValue:0,resetUnit:'DAYS',
+        }]};
+        if(text.includes('SELECT a.*'))return {rows:[{userId:'1',hostUuid:H,allowed:true,profileUuid:'profile',
+            inboundTag:'vless',hwid:null,parent:uuid,expireAt:new Date('2099-01-01')}]};
+        return {rows:[]};
+    }});sql.join=value=>value;
+    const {HostPolicyService}=load(path.join(__dirname,'../src/common/host-policy/host-policy.service.ts'),{
+        kysely:{sql},'@common/database':{},'@common/axios':{},'@common/raw-cache':{},
+        '@common/config/app-config/typed-config.service':{},
+        '@common/utils/host-identity':load(path.join(__dirname,'../src/common/utils/host-identity.ts')),
+    });
+    const caps={version:'xera-host-policy-v2',supported:true,policyRevisionsSupported:true,
+        policyRevision:'0',routedDeviceSpeedLimitsSupported:true};
+    const axios={hostPolicy:async(node,document)=>{
+        assert.equal(inTransaction(),false);
+        if(document){posts.push({node:node.uuid,document});return result.ok({version:caps.version,applied:true});}
+        probes.set(node.uuid,(probes.get(node.uuid)??0)+1);peak=Math.max(peak,++active);
+        try{if(allGate)await allGate;return node.uuid==='ordinary'?{isOk:false,code:'NODE_HTTP_404'}:result.ok(caps);}
+        finally{active--;}
+    },getNodeHealth:async()=>{
+        assert.equal(inTransaction(),false);if(nativeGate)await nativeGate;
+        return result.ok({nodeVersion:'2.5.1',isAlive:true,xrayInternalStatusCached:true});
+    }};
+    const service=new HostPolicyService({kysely:{}},axios,{get:async key=>values.get(key)??null,
+        set:async(key,value)=>values.set(key,value),del:async key=>values.delete(key)},
+        {getOrThrow:()=> 'discovery-fixture'},
+        {isTransactionActive:inTransaction,withTransaction:async(_options,work)=>context.run(true,work)});
+    const {HostAccessService}=require('./upstream-filter-fixture.cjs').source('common/host-policy/host-access.service.ts',{
+        '@common/utils/bounded-work-queue':load(path.join(__dirname,'../src/common/utils/bounded-work-queue.ts')),
+    });
+    const access=new HostAccessService({},service,{});
+    Object.assign(f.policies,{syncNode:service.syncNode.bind(service),
+        withCompatibilitySnapshot:service.withCompatibilitySnapshot.bind(service)});
+    return {...f,service,access,inventory,posts,probes,values,deliveryValues:f.values,caps,policyAxios:axios,
+        active:()=>active,peak:()=>peak,setNativeGate:value=>{nativeGate=value;},setAllGate:value=>{allGate=value;},
+        setTransaction:value=>{transaction=value;}};
+}
+
+test('cold bulk discovery finishes before policy and config; both retain the same shared-inbound snapshot',async()=>{
+    const f=discoveryFixture();let release;
+    f.setNativeGate(new Promise(resolve=>{release=resolve;}));
+    const execute=f.queryBus.execute;
+    let prepared=false;
+    f.queryBus.execute=async query=>{
+        if(query.constructor.name==='GetPreparedConfigWithUsersQuery'){
+            for(const [key,value] of f.values)if(value?.native)f.values.set(key,{...f.caps,checkedAt:Date.now()});
+            f.service.legacyInventory=undefined;
+            assert.deepEqual(await f.access.configIdentities('profile'),[]);
+            assert((await f.service.legacyInbounds()).has('shared'));
+            prepared=true;
+        }
+        return execute(query);
+    };
+    const run=f.bulk.process({name:'start-profile',data:{profileUuid:'profile'}});
+    for(let attempt=0;attempt<100&&!f.probes.has('ordinary');attempt++)await new Promise(resolve=>setImmediate(resolve));
+    assert(f.probes.has('pending'));
+    assert(f.probes.has('ordinary'));
+    assert.equal(f.posts.length,0);
+    assert.equal(f.configReads(),0);
+    assert.equal(f.starts.length,0);
+    release();await run;
+    assert.equal(prepared,true);
+    assert.equal(f.starts.length,2);
+    assert.deepEqual(f.posts.map(p=>p.node),['pending']);
+    assert.deepEqual(f.posts[0].document.protectedInbounds,[]);
+    assert.equal((await f.service.legacyInbounds()).has('shared'),false);
+});
+
+test('single-node preflight discovers native shared-inbound peers before its custom policy',async()=>{
+    const f=discoveryFixture();let release;
+    f.setNativeGate(new Promise(resolve=>{release=resolve;}));
+    const run=f.single.process({name:'start-node',data:{nodeUuid:'pending'}});
+    for(let attempt=0;attempt<100&&!f.probes.has('ordinary');attempt++)await new Promise(resolve=>setImmediate(resolve));
+    assert(f.probes.has('ordinary'));assert.equal(f.posts.length,0);assert.equal(f.configReads(),0);
+    release();await run;
+    assert.equal(f.starts.length,1);
+    assert.deepEqual(f.posts[0].document.protectedInbounds,[]);
+});
+
+test('dependent discovery is bounded, coalesced and excludes unrelated nodes',async()=>{
+    const f=discoveryFixture();f.inventory.splice(0,f.inventory.length,
+        ...Array.from({length:17},(_,i)=>({...opts,uuid:'peer-'+i,inbounds:['shared']})),
+        {...opts,uuid:'unrelated',inbounds:['isolated']});
+    let release;f.setAllGate(new Promise(resolve=>{release=resolve;}));
+    const runs=Array.from({length:12},()=>f.service.withCompatibilitySnapshot(['peer-0'],async()=>{}));
+    for(let attempt=0;attempt<100&&f.active()<3;attempt++)await new Promise(resolve=>setImmediate(resolve));
+    assert.equal(f.active(),3);assert.equal(f.peak(),3);
+    release();await Promise.all(runs);
+    assert.equal(f.probes.size,17);
+    assert([...f.probes.values()].every(count=>count===1));
+    assert.equal(f.probes.has('unrelated'),false);
+    assert.equal(f.service.discoveries.size,0);
+});
+
+test('unknown or failed discovery never enters policy/config work and can retry',async()=>{
+    for(const response of [{isOk:false,code:'ECONNRESET'},result.ok({}),{isOk:false,code:'NODE_HTTP_404'}]){
+        const f=discoveryFixture();let entered=false;
+        f.policyAxios.hostPolicy=async()=>response;
+        f.policyAxios.getNodeHealth=async()=>result.ok({nodeVersion:'unknown'});
+        await assert.rejects(f.service.withCompatibilitySnapshot(['pending'],async()=>{entered=true;}));
+        assert.equal(entered,false);assert.equal(f.posts.length,0);
+        assert.equal(f.service.discoveries.size,0);
+        assert.equal([...f.values.values()].some(value=>value?.native===true),false);
+        f.policyAxios.hostPolicy=async()=>result.ok(f.caps);
+        await f.service.withCompatibilitySnapshot(['pending'],async()=>{entered=true;});
+        assert.equal(entered,true);
+    }
+    const f=discoveryFixture();f.setTransaction(true);
+    await assert.rejects(f.service.withCompatibilitySnapshot(['pending'],async()=>{}),/outside SQL transactions/);
+    assert.equal(f.probes.size,0);
+});
+
+test('queued node synchronization never merges callers from different compatibility snapshots',async()=>{
+    const f=discoveryFixture();let release;
+    const gate=new Promise(resolve=>{release=resolve;});
+    const blockers=Array.from({length:3},()=>f.service.nodeWork.submit(()=>gate));
+    const first=f.service.withCompatibilitySnapshot(['pending'],()=>f.service.syncNode(f.nodes[0]));
+    for(let attempt=0;attempt<100&&f.service.nodeSynchronizations.size<1;attempt++)await new Promise(resolve=>setImmediate(resolve));
+    assert.equal(f.service.nodeSynchronizations.size,1);
+    for(const [key,value] of f.values)if(value?.native)f.values.set(key,{...f.caps,checkedAt:Date.now()});
+    const second=f.service.withCompatibilitySnapshot(['pending'],()=>f.service.syncNode(f.nodes[0]));
+    for(let attempt=0;attempt<100&&f.service.nodeSynchronizations.size<2;attempt++)await new Promise(resolve=>setImmediate(resolve));
+    assert.equal(f.service.nodeSynchronizations.size,2);
+    release();await Promise.all([...blockers,first,second]);
+    assert.equal(f.posts.length,2);
+    assert.deepEqual(f.posts[0].document.protectedInbounds,[]);
+    assert.deepEqual(f.posts[1].document.protectedInbounds,['vless']);
+    assert.equal(f.service.nodeSynchronizations.size,0);
+});
+
+test('a changed target capability after discovery refuses policy delivery',async()=>{
+    const f=discoveryFixture();
+    await f.service.withCompatibilitySnapshot(['pending'],async()=>{
+        for(const [key,value] of f.values)if(value?.supported===true)f.values.set(key,{...value,supported:false});
+        await assert.rejects(f.service.syncNode(f.nodes[0]),/compatibility changed after discovery/);
+        assert.equal(f.posts.length,0);
+    });
+});
+
+test('an offline isolated bulk root does not block an independent healthy root',async()=>{
+    const f=discoveryFixture();
+    f.inventory[1].inbounds=['isolated'];f.nodes[1].activeInbounds=[{uuid:'isolated',tag:'vless',protocol:'vless'}];
+    const policy=f.policyAxios.hostPolicy;
+    f.policyAxios.hostPolicy=async(node,document)=>node.uuid==='ordinary'?{isOk:false,code:'ECONNRESET'}:policy(node,document);
+    await f.bulk.process({name:'start-profile',data:{profileUuid:'profile'}});
+    assert.equal(f.starts.length,1);
+    assert.equal(f.starts[0].payload.internals.metadata.uuid,'pending');
+    assert(f.updates.some(update=>update.uuid==='ordinary'&&update.lastStatusMessage?.includes('HOST_POLICY_PENDING')));
+    assert.equal(f.posts.some(post=>post.node==='ordinary'),false);
+});
+
+test('an unknown shared peer blocks only its affected component and never reuses stale native fallback',async()=>{
+    const f=discoveryFixture();
+    f.inventory[1].inbounds=['isolated'];f.nodes[1].activeInbounds=[{uuid:'isolated',tag:'vless',protocol:'vless'}];
+    const offline={...opts,uuid:'offline-peer',inbounds:['shared']};f.inventory.push(offline);
+    const hash=require('node:crypto').createHash('sha256').update(JSON.stringify([offline.address,offline.port,offline.proxyUrl])).digest('hex');
+    f.values.set('xera:host-policy:capabilities:v2:offline-peer:'+hash,{native:true,supported:false,checkedAt:Date.now()-61000});
+    const policy=f.policyAxios.hostPolicy;
+    f.policyAxios.hostPolicy=async(node,document)=>node.uuid==='offline-peer'?{isOk:false,code:'ECONNRESET'}:policy(node,document);
+    await f.bulk.process({name:'start-profile',data:{profileUuid:'profile'}});
+    assert.equal(f.starts.length,1);
+    assert.equal(f.starts[0].payload.internals.metadata.uuid,'ordinary');
+    assert.equal(f.posts.some(post=>post.node==='pending'),false);
+    assert(f.updates.some(update=>update.uuid==='pending'&&update.lastStatusMessage?.includes('HOST_POLICY_PENDING')));
+});
+
+test('single preflight failure records its discovery cause and retry without changing delivery ownership or connectivity',async()=>{
+    const f=discoveryFixture();const policy=f.policyAxios.hostPolicy;
+    f.policyAxios.hostPolicy=async(node,document)=>node.uuid==='ordinary'?{isOk:false,code:'ECONNRESET'}:policy(node,document);
+    await f.single.process({name:'start-node',data:{nodeUuid:'pending'}});
+    assert.equal(f.starts.length,0);assert.equal(f.configReads(),0);
+    const update=f.updates.find(value=>value.lastStatusMessage?.includes('HOST_POLICY_PENDING'));
+    assert(update);assert.match(update.lastStatusMessage,/ordinary.*capabilities unavailable/);
+    assert.equal(Object.hasOwn(update,'isConnected'),false);
+    assert.equal(Object.hasOwn(update,'isConnecting'),false);
+    assert.equal(f.nodes[0].isConnected,true);
+    assert(f.deliveryValues.get('remnacust:host-policy:retry:pending')>Date.now());
+});
+
+test('discovery budget stops scheduling new peers and unavailable roots cannot send policy',async()=>{
+    const f=discoveryFixture();f.inventory.splice(0,f.inventory.length,
+        ...Array.from({length:8},(_,i)=>({...opts,uuid:'budget-'+i,inbounds:['shared']})));
+    const originalNow=Date.now;let now=originalNow(),calls=0;
+    Date.now=()=>now;
+    f.policyAxios.hostPolicy=async()=>{calls++;now+=15000;return result.ok(f.caps);};
+    try{
+        await f.service.withCompatibilitySnapshot(['budget-0','budget-7'],async()=>{
+            await assert.rejects(f.service.syncNode(f.inventory[7]),/discovery budget exhausted/);
+        },true);
+        assert.equal(calls,3);assert.equal(f.posts.length,0);
+    }finally{Date.now=originalNow;}
 });

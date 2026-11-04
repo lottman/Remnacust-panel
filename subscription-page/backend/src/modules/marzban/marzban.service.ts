@@ -98,10 +98,9 @@ export class MarzbanService {
         if (!this.marzbanSecretKeys.length) return null;
 
         const token = marzbanLink;
-        this.logger.debug(`Verifying token: ${token}`);
 
         if (!token || token.length < 10) {
-            this.logger.debug(`Token too short: ${token}`);
+            this.logger.debug('Marzban link is too short');
             return null;
         }
 
@@ -109,7 +108,7 @@ export class MarzbanService {
             const result = await this.decodeMarzbanLink(marzbanLink, key);
             if (result) return result;
 
-            this.logger.debug(`Decoding Marzban link failed with key: ${key}`);
+            this.logger.debug('Decoding Marzban link failed');
         }
 
         this.logger.debug(`Decoding Marzban link failed with all keys`);
@@ -141,27 +140,25 @@ export class MarzbanService {
                     return null;
                 }
 
-                this.logger.debug(`JWT verified successfully, ${JSON.stringify(payload)}`);
+                this.logger.debug('JWT verified successfully');
 
                 return {
                     username: payload.sub,
                     createdAt: jwtCreatedAt,
                 };
-            } catch (err) {
-                this.logger.debug(`JWT verification failed: ${err}`);
+            } catch {
+                this.logger.debug('JWT verification failed');
             }
         }
 
         const uToken = token.slice(0, token.length - 10);
         const uSignature = token.slice(token.length - 10);
 
-        this.logger.debug(`Token parts: base: ${uToken}, signature: ${uSignature}`);
-
         let decoded: string;
         try {
             decoded = Buffer.from(uToken, 'base64url').toString();
-        } catch (err) {
-            this.logger.debug(`Base64 decode error: ${err}`);
+        } catch {
+            this.logger.debug('Base64 decode error');
             return null;
         }
 
@@ -171,8 +168,6 @@ export class MarzbanService {
 
         const expectedSignature = Buffer.from(digest).toString('base64url').slice(0, 10);
 
-        this.logger.debug(`Expected signature: ${expectedSignature}, actual: ${uSignature}`);
-
         if (uSignature !== expectedSignature) {
             this.logger.debug('Signature mismatch');
             return null;
@@ -180,7 +175,7 @@ export class MarzbanService {
 
         const parts = decoded.split(',');
         if (parts.length < 2) {
-            this.logger.debug(`Invalid token format: ${decoded}`);
+            this.logger.debug('Invalid Marzban link format');
             return null;
         }
 
@@ -188,7 +183,7 @@ export class MarzbanService {
         const createdAtInt = parseInt(parts[1], 10);
 
         if (isNaN(createdAtInt)) {
-            this.logger.debug(`Invalid created_at timestamp: ${parts[1]}`);
+            this.logger.debug('Invalid created_at timestamp');
             return null;
         }
 
@@ -198,7 +193,7 @@ export class MarzbanService {
             return null;
         }
 
-        this.logger.debug(`Token decoded. Username: ${username}, createdAt: ${createdAt}`);
+        this.logger.debug('Marzban link decoded');
 
         return {
             username,
@@ -215,9 +210,7 @@ export class MarzbanService {
 
         const validFromDate = new Date(validFrom);
         if (createdAt < validFromDate) {
-            this.logger.debug(
-                `createdAt JWT: ${createdAt.toISOString()} is before validFrom: ${validFromDate.toISOString()}`,
-            );
+            this.logger.debug('Subscription createdAt is before validFrom');
 
             this.logger.warn(
                 `${JSON.stringify({ username, createdAt })} – subscription createdAt is before validFrom`,

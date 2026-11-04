@@ -12,6 +12,12 @@ import { RawCacheService } from '@common/raw-cache';
 import { TResult } from '@common/types';
 import { parseHostIdentity } from '@common/utils/host-identity';
 
+type PendingUsage = {
+    day: string;
+    records: { userId: string; hostUuid: string; bytes: string }[];
+};
+const RECEIPTS_PER_TRANSACTION = 8;
+
 @Injectable()
 export class HostUsageService {
     constructor(
@@ -25,23 +31,37 @@ export class HostUsageService {
     ): Promise<void> {
         this.requireStandalone();
         await this.assertBillingAllowed();
-        const key = await this.stage(nodeId, users);
-        const receipts = await this.transactions.withTransaction({ timeout: 30000 }, () =>
-            this.applyPending(nodeId, key),
-        );
-        await this.acknowledge(key, receipts);
+        await this.stage(nodeId, users);
+        await this.drain(nodeId);
     }
 
     async drain(nodeId: bigint): Promise<void> {
         this.requireStandalone();
         const key = `xera:host-usage:pending:${nodeId}`;
-        const receipts = await this.transactions.withTransaction({ timeout: 30000 }, async () => {
-            await sql`SELECT 1 FROM pg_advisory_xact_lock(hashtextextended(${nodeId.toString()},20261016))`.execute(
-                this.db.kysely,
+        for (;;) {
+            await this.assertBillingAllowed();
+            let pending = await this.pending(key);
+            if (!pending.length) {
+                await this.transactions.withTransaction({ timeout: 30000 }, async () => {
+                    await sql`SELECT 1 FROM pg_advisory_xact_lock(hashtextextended(${nodeId.toString()},20261016))`.execute(
+                        this.db.kysely,
+                    );
+                    await this.assertBillingAllowed();
+                });
+                pending = await this.pending(key);
+                if (!pending.length) return;
+            }
+            const receipts = await this.transactions.withTransaction(
+                { timeout: 30000 },
+                async () => {
+                    await sql`SELECT 1 FROM pg_advisory_xact_lock(hashtextextended(${nodeId.toString()},20261016))`.execute(
+                        this.db.kysely,
+                    );
+                    return this.applyPending(nodeId, pending);
+                },
             );
-            return this.applyPending(nodeId, key);
-        });
-        await this.acknowledge(key, receipts);
+            await this.acknowledge(key, receipts);
+        }
     }
 
     async collect(
@@ -67,13 +87,16 @@ export class HostUsageService {
             const requestedAt = Number(clock.rows[0].requestedAt);
             const result = await read();
             if (!result.isOk) return { result, requestedAt, key: '', receipts: [] as string[] };
-            const key = await this.stage(nodeId, result.response.users);
-            const receipts = await this.applyPending(nodeId, key);
-            return { result, requestedAt, key, receipts };
+            const staged = await this.stage(nodeId, result.response.users);
+            const receipts = await this.applyPending(nodeId, staged.pending);
+            return { result, requestedAt, key: staged.key, receipts };
         });
         // Never delete a Redis receipt inside the SQL transaction. A commit
         // failure must leave the sample available for an idempotent replay.
-        if (collected.key) await this.acknowledge(collected.key, collected.receipts);
+        if (collected.key) {
+            await this.acknowledge(collected.key, collected.receipts);
+            await this.drain(nodeId);
+        }
         return { result: collected.result, requestedAt: collected.requestedAt };
     }
 
@@ -109,24 +132,44 @@ export class HostUsageService {
             });
         }
         const key = `xera:host-usage:pending:${nodeId}`;
-        if (records.size)
-            await this.cache.hsetJson(key, randomUUID(), {
+        const pending: [string, PendingUsage][] = [];
+        if (records.size) {
+            const receipt = randomUUID();
+            const batch = {
                 day: new Date().toISOString().slice(0, 10),
                 records: [...records.values()].map((r) => ({ ...r, bytes: r.bytes.toString() })),
-            });
-        return key;
+            };
+            await this.cache.hsetJson(key, receipt, batch);
+            pending.push([receipt, batch]);
+        }
+        return { key, pending };
     }
 
-    private async applyPending(nodeId: bigint, key: string) {
+    private async pending(key: string): Promise<[string, PendingUsage][]> {
+        let cursor = '0';
+        do {
+            const pipe = this.cache.createPipeline();
+            pipe.hscan(key, cursor, 'COUNT', RECEIPTS_PER_TRANSACTION);
+            const result = await pipe.exec();
+            if (!result || result.length !== 1 || result[0][0])
+                throw new Error('Cannot read pending host usage samples');
+            const page = result[0][1] as [string, string[]];
+            cursor = page[0];
+            const pending = new Map<string, PendingUsage>();
+            for (
+                let index = 0;
+                index < page[1].length && pending.size < RECEIPTS_PER_TRANSACTION;
+                index += 2
+            )
+                pending.set(page[1][index], JSON.parse(page[1][index + 1]) as PendingUsage);
+            if (pending.size) return [...pending];
+        } while (cursor !== '0');
+        return [];
+    }
+
+    private async applyPending(nodeId: bigint, pending: [string, PendingUsage][]) {
         await this.assertBillingAllowed();
-        const pending =
-            (await this.cache.hgetallParsed<
-                Record<
-                    string,
-                    { day: string; records: { userId: string; hostUuid: string; bytes: string }[] }
-                >
-            >(key)) ?? {};
-        for (const [receipt, batch] of Object.entries(pending)) {
+        for (const [receipt, batch] of pending) {
             const tx = this.db.kysely;
             const accepted = await sql<{
                 id: string;
@@ -153,7 +196,7 @@ export class HostUsageService {
                     total_bytes=xera_host_quota_usage.total_bytes+excluded.total_bytes`.execute(tx);
             }
         }
-        return Object.keys(pending);
+        return pending.map(([receipt]) => receipt);
     }
 
     private async acknowledge(key: string, receipts: string[]) {

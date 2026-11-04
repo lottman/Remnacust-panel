@@ -73,48 +73,55 @@ BEGIN
 END $test$;
 ROLLBACK;
 `;
-const result = databaseUrl
-    ? spawnSync(
-          'docker',
-          [
-              'run',
-              '--rm',
-              '-i',
-              '--network',
-              'host',
-              'mirror.gcr.io/library/postgres:17.6',
-              'psql',
-              databaseUrl,
-              '-X',
-              '-v',
-              'ON_ERROR_STOP=1',
-          ],
-          { input, encoding: 'utf8', timeout: 60000 },
-      )
-    : spawnSync(
-          'wsl.exe',
-          [
-              '-d',
-              'Ubuntu-24.04',
-              '-u',
-              'root',
-              '--',
-              'docker',
-              'exec',
-              '-i',
-              process.env.FROZEN_TEST_CONTAINER,
-              'psql',
-              '-X',
-              '-v',
-              'ON_ERROR_STOP=1',
-              '-U',
-              'postgres',
-              '-d',
-              'postgres',
-          ],
-          { input, encoding: 'utf8', timeout: 60000 },
-      );
-assert.equal(result.status, 0, result.stderr || result.stdout);
+const result =
+    databaseUrl && process.env.FROZEN_TEST_PSQL_BIN
+        ? spawnSync(
+              process.env.FROZEN_TEST_PSQL_BIN,
+              [databaseUrl, '-X', '-v', 'ON_ERROR_STOP=1'],
+              { input, encoding: 'utf8', timeout: 60000 },
+          )
+        : databaseUrl
+          ? spawnSync(
+                'docker',
+                [
+                    'run',
+                    '--rm',
+                    '-i',
+                    '--network',
+                    'host',
+                    'mirror.gcr.io/library/postgres:17.6',
+                    'psql',
+                    databaseUrl,
+                    '-X',
+                    '-v',
+                    'ON_ERROR_STOP=1',
+                ],
+                { input, encoding: 'utf8', timeout: 60000 },
+            )
+          : spawnSync(
+                'wsl.exe',
+                [
+                    '-d',
+                    'Ubuntu-24.04',
+                    '-u',
+                    'root',
+                    '--',
+                    'docker',
+                    'exec',
+                    '-i',
+                    process.env.FROZEN_TEST_CONTAINER,
+                    'psql',
+                    '-X',
+                    '-v',
+                    'ON_ERROR_STOP=1',
+                    '-U',
+                    'postgres',
+                    '-d',
+                    'postgres',
+                ],
+                { input, encoding: 'utf8', timeout: 60000 },
+            );
+assert.equal(result.status, 0, result.error?.message || result.stderr || result.stdout);
 console.log(
     'PASS real PostgreSQL: frozen clock, repeated freeze, extension, resume, zero lifetime, quota and non-UTC timezone',
 );

@@ -2,6 +2,8 @@ import { RequestHandler } from 'express';
 
 export function dynamicRequestBudget(maximum = 128): RequestHandler {
     let active = 0;
+    let geofiles = 0;
+    const maximumGeofiles = Math.min(16, Math.floor(maximum / 2));
     return (req, res, next) => {
         const ip = req.socket?.remoteAddress;
         if (
@@ -12,18 +14,21 @@ export function dynamicRequestBudget(maximum = 128): RequestHandler {
             return next();
         if (req.path.startsWith('/assets/') && !req.path.startsWith('/assets/.app-config'))
             return next();
-        if (active >= maximum) {
+        const geofile = /(?:^|\/)geofiles(?:\/|$)/i.test(req.path);
+        if (active >= maximum || (geofile && geofiles >= maximumGeofiles)) {
             res.set('Cache-Control', 'private, no-store');
             res.set('Retry-After', '2');
             res.status(503).send('Subscription service is busy. Please retry.');
             return;
         }
         active++;
+        if (geofile) geofiles++;
         let released = false;
         const release = () => {
             if (released) return;
             released = true;
             active--;
+            if (geofile) geofiles--;
             res.off('finish', release);
             res.off('close', release);
         };

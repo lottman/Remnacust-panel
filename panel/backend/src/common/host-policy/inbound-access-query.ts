@@ -27,8 +27,8 @@ export function inboundAccessQuery(
         SELECT DISTINCT c.user_id,c.inbound_uuid FROM candidates c JOIN users u ON u.id=c.user_id
         LEFT JOIN inbound_modes m ON m.inbound_uuid=c.inbound_uuid
         LEFT JOIN exceptions e ON e.user_id=c.user_id AND e.inbound_uuid=c.inbound_uuid
-        WHERE (u.status='ACTIVE' AND u.expire_at>now() AND NOT COALESCE(m.inactive_only,false))
-            OR ((u.status IN ('EXPIRED','DISABLED') OR (u.status='ACTIVE' AND u.expire_at<=now()))
+        WHERE (u.status='ACTIVE' AND u.expire_at>(now() AT TIME ZONE 'UTC') AND NOT COALESCE(m.inactive_only,false))
+            OR ((u.status IN ('EXPIRED','DISABLED') OR (u.status='ACTIVE' AND u.expire_at<=(now() AT TIME ZONE 'UTC')))
                 AND e.user_id IS NOT NULL
                 ${legacy.length ? sql`AND c.inbound_uuid NOT IN (${sql.join(legacy.map((id) => sql`${id}::uuid`))})` : sql``})`;
 }

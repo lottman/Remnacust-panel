@@ -4,19 +4,19 @@ const sections = [
         [
             [
                 'Запуск и параллельные запросы',
-                'После запуска панели разные сборки геофайлов ожидают ограниченную очередь: до двух задач одновременно и до 32 принятых задач для каждой операции. Одинаковые запросы разделяют одну сборку. Кэш DAT ограничен 16 наборами и 32 MiB. Страница подписки ждёт ответ панели до 30 секунд и отменяет запрос при отключении клиента; ошибки доступа не кешируются.'
+                'После запуска панели разные сборки геофайлов ожидают ограниченную очередь: до двух задач одновременно и до 32 принятых задач для каждой операции. Одинаковые запросы разделяют одну сборку. Кэш DAT ограничен 16 наборами и 32 MiB. Страница подписки ждёт ответ панели до 30 секунд и отменяет запрос при отключении клиента; ошибки доступа не кешируются. DAT скачиваются через отдельный пул из восьми соединений. Один процесс страницы принимает до 16 скачиваний, включая ожидающие: медленные файлы не занимают соединения запросов страницы и конфигураций. При перегрузке возвращается 503 с Retry-After: 2; повторите запрос позже.'
             ],
             [
                 'Startup and concurrent requests',
-                'After panel startup, different geofile builds wait in a bounded queue: two active tasks and up to 32 accepted tasks per operation. Identical requests share one build. The DAT cache retains at most 16 bundles and 32 MiB. The subscription page waits up to 30 seconds for the panel and cancels the request when the client disconnects; access failures are not cached.'
+                'After panel startup, different geofile builds wait in a bounded queue: two active tasks and up to 32 accepted tasks per operation. Identical requests share one build. The DAT cache retains at most 16 bundles and 32 MiB. The subscription page waits up to 30 seconds for the panel and cancels the request when the client disconnects; access failures are not cached. DAT downloads use a separate eight-connection pool. Each page process accepts up to 16 downloads including waiting requests, so slow files do not occupy page and configuration request connections. Overload returns 503 with Retry-After: 2; retry later.'
             ],
             [
                 'راه‌اندازی و درخواست‌های هم‌زمان',
-                'پس از راه‌اندازی پنل، ساخت فایل‌های متفاوت در صف محدود منتظر می‌ماند: دو کار فعال و حداکثر ۳۲ کار پذیرفته‌شده برای هر عملیات. درخواست‌های یکسان یک ساخت مشترک دارند. کش DAT حداکثر ۱۶ مجموعه و ۳۲ MiB نگه می‌دارد. صفحه اشتراک تا ۳۰ ثانیه منتظر پنل می‌ماند و با قطع کلاینت درخواست را لغو می‌کند؛ خطاهای دسترسی کش نمی‌شوند.'
+                'پس از راه‌اندازی پنل، ساخت فایل‌های متفاوت در صف محدود منتظر می‌ماند: دو کار فعال و حداکثر ۳۲ کار پذیرفته‌شده برای هر عملیات. درخواست‌های یکسان یک ساخت مشترک دارند. کش DAT حداکثر ۱۶ مجموعه و ۳۲ MiB نگه می‌دارد. صفحه اشتراک تا ۳۰ ثانیه منتظر پنل می‌ماند و با قطع کلاینت درخواست را لغو می‌کند؛ خطاهای دسترسی کش نمی‌شوند. دانلود DAT از مخزن مستقل هشت اتصال استفاده می‌کند. هر فرایند صفحه حداکثر ۱۶ دانلود شامل درخواست‌های منتظر می‌پذیرد؛ فایل‌های کند اتصال درخواست‌های صفحه و پیکربندی را اشغال نمی‌کنند. هنگام بار زیاد، پاسخ 503 با Retry-After: 2 برمی‌گردد؛ بعداً دوباره تلاش کنید.'
             ],
             [
                 '启动与并发请求',
-                '面板启动后，不同地理文件构建在有界队列中等待：每项操作最多同时运行两个任务、接受 32 个任务。相同请求共享一次构建。DAT 缓存最多保留 16 个集合和 32 MiB。订阅页面最多等待面板 30 秒，客户端断开时取消请求；访问失败不会被缓存。'
+                '面板启动后，不同地理文件构建在有界队列中等待：每项操作最多同时运行两个任务、接受 32 个任务。相同请求共享一次构建。DAT 缓存最多保留 16 个集合和 32 MiB。订阅页面最多等待面板 30 秒，客户端断开时取消请求；访问失败不会被缓存。DAT 下载使用独立的八连接池。每个页面进程最多接受 16 个下载请求（包括等待中的请求），慢速文件不会占用页面和配置请求的连接。过载时返回 503 和 Retry-After: 2，请稍后重试。'
             ]
         ]
     ],

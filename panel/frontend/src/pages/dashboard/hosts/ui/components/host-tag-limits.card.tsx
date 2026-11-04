@@ -126,7 +126,8 @@ export function HostTagLimitsCard({ tags }: { tags: string[] }) {
                                                         label: {
                                                             display: 'block',
                                                             minWidth: 0,
-                                                            textAlign: 'start'
+                                                            textAlign: 'start',
+                                                            textBoxTrim: 'none'
                                                         }
                                                     }}
                                                 >

@@ -58,7 +58,7 @@ export class GeofilesController {
         let upstream: AxiosResponse<Readable> | undefined;
         try {
             // Fixed trusted upstream; neither target URL nor headers come from the client.
-            upstream = await this.axios.axiosInstance.get<Readable>(
+            upstream = await this.axios.geofileAxiosInstance.get<Readable>(
                 `/api/sub/geofiles/${id}/${filename}`,
                 {
                     responseType: 'stream',

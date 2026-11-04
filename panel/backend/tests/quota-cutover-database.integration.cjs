@@ -35,7 +35,7 @@ const axios={getUsersStats:()=>{legacyCalls++;assert.fail('No destructive legacy
     return {isOk:true,response:{stream:I,sequence:request.sequence,acknowledged:true}};
 }};
 const durable=new DurableUsageService(db,axios,transactions,{getOrThrow:key=>key==='USER_USAGE_IGNORE_BELOW_BYTES'?0n:true});
-const hostUsage=new HostUsageService(db,{hgetallParsed:async()=>({})},transactions);
+const hostUsage=new HostUsageService(db,{createPipeline:()=>({hscan(){},exec:async()=>[[null,['0',[]]]]})},transactions);
 // This fixture is already fenced; any attempt to start a new legacy reset fails.
 const legacy=new LegacyUsageService(db,axios,transactions,durable,hostUsage,{prepare:()=>assert.fail('No legacy capture after fence'),capture:()=>assert.fail('No legacy capture after fence'),markUncertain:()=>assert.fail('No unfinished request in this fixture')});
 const billing=new LegacyBillingService(db,transactions,{fireUserEventBulk:async()=>{}});

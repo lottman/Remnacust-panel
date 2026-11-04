@@ -213,7 +213,7 @@ test('an unavailable custom node cannot be mistaken for a native legacy node', a
     service.axios.getNodeHealth = () => { throw Error('a network error is not compatibility evidence'); };
     service.scopes = async () => ({ hosts: [{ uuid: 'host', inboundUuid: 'in', boundNodes: [node.uuid], nodes: [] }],
         groups: [], identities: [], protectedInboundIds: new Set(['in']) });
-    await assert.rejects(service.syncNode(node), { code: 'HOST_POLICY_NOT_APPLIED' });
+    await assert.rejects(service.syncNode(node), /host policy capabilities unavailable/);
 });
 test('background policy failure is logged and a later request can retry',async()=>{
     const {service}=fixture();const errors=[];let attempts=0;

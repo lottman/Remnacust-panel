@@ -13,7 +13,7 @@ function fixture() {
     const controls=[];
     const grants=[];
     let paused=false;
-    const sql=(parts,...values)=>({execute:async()=>{
+    const sql=(parts,...values)=>({parameters:values,execute:async()=>{
         const text=parts.join('');
         if(text.includes('INSERT INTO xera_quota_node_epochs')) {writes.push(values); return {rows:[]};}
         if(text.includes('FROM xera_quota_reserves'))return {rows:grants};
@@ -23,6 +23,7 @@ function fixture() {
         if(text.includes('FROM xera_limit_scopes'))return {rows:[{paused}]};
         throw Error('Unexpected SQL: '+text);
     }});
+    sql.join=values=>values;
     const module=load(path.join(__dirname,'../src/common/host-policy/quota-policy.ts'),{kysely:{sql}});
     const host={uuid:H,tags:['beta','alpha'],boundNodes:[N],nodes:[],trafficMultiplier:null,
         alwaysAvailable:false,onlyWhenInactive:false};
@@ -83,4 +84,31 @@ test('fence source fingerprints ignore SQL ordering and unrelated raw config but
     assert.equal(f.module.quotaSourceFingerprint(f.state,N),before);
     f.identity.allowed=false;
     assert.notEqual(f.module.quotaSourceFingerprint(f.state,N),before);
+});
+
+test('grant deliveries use bounded batches and retain every owner binding',async()=>{
+    const f=fixture();
+    for(let i=0;i<1201;i++)f.grants.push({id:require('node:crypto').randomUUID(),instance:I,owner:String(1000+i),
+        ceiling:String(i+1),expiresAt:new Date('2099-01-02T00:00:00Z'),epoch:'55555555-5555-4555-8555-555555555555',window:new Date('2026-10-15')});
+    await f.render();
+    assert.deepEqual(f.writes.map(values=>values[0].length),[500,500,201,500,500,201]);
+    for(const key of ['host:'+H,'tag:alpha']){
+        assert.equal(Object.keys(f.body.groups[key].reserves).length,1201);
+        for(const grant of f.grants)assert.equal(f.body.groups[key].reserves[grant.owner].id,grant.id);
+    }
+    const rows=f.writes.flatMap(values=>values[0].map(value=>value.parameters));
+    assert.equal(rows.length,2402);
+    assert(rows.every(row=>row[4]===N&&row[5]===I&&row[7]==='17'));
+});
+
+test('duplicate owners and a late instance mismatch fail before writing a group batch',async()=>{
+    for(const reason of ['duplicate','instance']){
+        const f=fixture();
+        for(let i=0;i<501;i++)f.grants.push({id:require('node:crypto').randomUUID(),instance:I,owner:String(1000+i),
+            ceiling:'123',expiresAt:new Date('2099-01-02T00:00:00Z'),epoch:'55555555-5555-4555-8555-555555555555',window:new Date('2026-10-15')});
+        if(reason==='duplicate')f.grants[500].owner=f.grants[0].owner;
+        else f.grants[500].instance='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+        await assert.rejects(f.render(),/More than one|instance changed/);
+        assert.equal(f.writes.length,0);
+    }
 });

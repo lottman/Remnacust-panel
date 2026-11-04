@@ -634,6 +634,10 @@ Tag quota combines a user’s usage across participating hosts. A tag per-user b
 
 Tag settings affect associated hosts with the corresponding quota, user-speed or shared-speed switch enabled. The device-speed inheritance switch is also independent. Check participating hosts and restrictions before saving. Open “Limits” for recipients and personal exceptions.
 
+### Traffic accounting and quota batches
+
+Pending traffic commits at most eight receipts per transaction. A receipt may contain several users. Redis acknowledgements are removed after PostgreSQL commits, and retries do not charge usage twice. Fresh counter collection remains locked until its result is saved. Quota epochs are written in batches of up to 500 rows within the revision transaction. The coordinator commits funding and its cursor per owner, checks the generation and renews its lease between scopes. The budget is checked between owners; one owner with many scopes may take longer than 20 seconds.
+
 ### Device speed from tags
 
 A tag device ceiling applies independently on each host with “Apply device speed limit from tags” enabled. It is independent of tag quota, user speed and shared speed. The strictest applicable ceiling wins; 0 disables only the corresponding ceiling. Update node and core to support remnacust-device-speed-v1. An incompatible node cannot confirm the new limit. Across multiple bound nodes, the configured ceiling is conservatively divided so their sum cannot exceed it; spare capacity is not transferred between nodes. HWID enrolls a distinct private key. Copies of one key count as one device; applications without distinct keys cannot identify physical devices separately. Local rules remain active while the panel is unavailable.
@@ -725,7 +729,7 @@ There is no manual delivery switch. All selected geofiles are first converted to
 
 ### Startup and concurrent requests
 
-After panel startup, different geofile builds wait in a bounded queue: two active tasks and up to 32 accepted tasks per operation. Identical requests share one build. The DAT cache retains at most 16 bundles and 32 MiB. The subscription page waits up to 30 seconds for the panel and cancels the request when the client disconnects; access failures are not cached.
+After panel startup, different geofile builds wait in a bounded queue: two active tasks and up to 32 accepted tasks per operation. Identical requests share one build. The DAT cache retains at most 16 bundles and 32 MiB. The subscription page waits up to 30 seconds for the panel and cancels the request when the client disconnects; access failures are not cached. DAT downloads use a separate eight-connection pool. Each page process accepts up to 16 downloads including waiting requests, so slow files do not occupy page and configuration request connections. Overload returns 503 with Retry-After: 2; retry later.
 
 ### Removing a geofile from a template
 
@@ -813,9 +817,17 @@ New devices denied is handled separately. If registration is denied for a new de
 
 Traffic quota exhaustion, the maximum device count and missing HWID support have separate messages outside this list. Reordering changes subscription messages; restrictions and access checks still apply. Presentation depends on the client.
 
+### First start of a mixed node fleet
+
+Before preparing policy and credentials, the panel discovers capabilities of the node and peers sharing its inbounds. Discovery runs outside SQL transactions with bounded concurrency and time. Policy and configuration use the same compatibility snapshot. An unavailable node delays only affected inbounds; independent healthy nodes continue starting. Unknown compatibility keeps the previous configuration and schedules a retry. A network failure never classifies a node as native Remnawave or removes restrictions.
+
+### Access lifetime and devices: UTC
+
+Access expiry and selected device timestamps use UTC independently of the PostgreSQL timezone. The update migrates access functions without changing stored dates, frozen lifetime or quotas. If a device is blocked or registered again after the list is opened, a stale bulk deletion preserves it.
+
 ### Subscription performance and compatibility
 
-Panel 1.1.7.95 checks issued identities and bulk configuration users using SQL sets while preserving expiry, status, squads, HWID blocks and key rotation. Node preflight precedes expensive configuration compilation; limit pauses are read in one query per node. Updates coalesce, at most three nodes synchronize per process, and a busy advisory lock is retried outside the transaction. A confirmed native Remnawave node receives a baseline configuration: new host restrictions, destination rules and inactive-user exceptions are disabled on its inbounds. A custom node sharing such an inbound uses the same compatible baseline credentials; isolated compatible inbounds retain extensions. Older custom cores without autoselect recipient accounting use ordinary pool-server credentials and limits. Upgrade Node/Core and refresh the client subscription for separate recipient accounting. The panel displays compatibility mode. An unknown node or network failure alone never disables restrictions. Existing quota reserves and financial fences are not erased by a downgrade. Older subscription-page APIs remain compatible, and pages hiding connection keys skip unused link generation. No new .env variables or migrations are required.
+Panel 1.1.7.95 checks issued identities and bulk configuration users using SQL sets while preserving expiry, status, squads, HWID blocks and key rotation. Node preflight precedes expensive configuration compilation; limit pauses are read in one query per node. Updates coalesce, at most three nodes synchronize per process, and a busy advisory lock is retried outside the transaction. A confirmed native Remnawave node receives a baseline configuration: new host restrictions, destination rules and inactive-user exceptions are disabled on its inbounds. A custom node sharing such an inbound uses the same compatible baseline credentials; isolated compatible inbounds retain extensions. Older custom cores without autoselect recipient accounting use ordinary pool-server credentials and limits. Upgrade Node/Core and refresh the client subscription for separate recipient accounting. The panel displays compatibility mode. An unknown node or network failure alone never disables restrictions. Existing quota reserves and financial fences are not erased by a downgrade. Older subscription-page APIs remain compatible, and pages hiding connection keys skip unused link generation. This mode needs no new .env variables; the UTC access-expiry migration is described separately.
 
 ### Technical update log
 

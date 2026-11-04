@@ -33,13 +33,15 @@ function fixture() {
         },
         hgetallParsed: async () => pending,
         createPipeline: () => {
-            let id;
+            let id, scan = false;
             return {
+                hscan: () => { scan = true; },
                 hdel: (_key, value) => {
                     id = value;
                 },
                 exec: async () => {
                     assert.equal(active, false, 'Redis acknowledgement must follow SQL commit');
+                    if (scan) return [[null, ['0', Object.entries(pending).flatMap(([key, value]) => [key, JSON.stringify(value)])]]];
                     events.push('ack');
                     delete pending[id];
                     return [[null, 1]];
@@ -102,7 +104,7 @@ test('destructive stats reads hold the node lock through commit and acknowledge 
         return sample;
     });
     assert.equal(result.requestedAt, 1792000000000);
-    assert.deepEqual(f.events, ['lock', 'read', 'stage', 'write', 'commit', 'ack']);
+    assert.deepEqual(f.events, ['lock', 'read', 'stage', 'write', 'commit', 'ack', 'lock', 'commit']);
     assert.deepEqual(f.pending, {});
 });
 
@@ -124,7 +126,7 @@ test('failed SQL commit preserves the staged sample for replay instead of deleti
     f.failCommit(false);
     await f.service.record(1n, []);
     assert.deepEqual(f.pending, {});
-    assert.deepEqual(f.events.slice(-3), ['write', 'commit', 'ack']);
+    assert.deepEqual(f.events.slice(-5), ['write', 'commit', 'ack', 'lock', 'commit']);
     const writes = f.events.filter((event) => event === 'write').length;
     await f.service.record(1n, []);
     assert.equal(f.events.filter((event) => event === 'write').length, writes);

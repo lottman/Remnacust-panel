@@ -10,6 +10,8 @@ import {
     Logger,
 } from '@nestjs/common';
 
+import { httpLogPath } from '@common/utils/http-log-path';
+
 import { HttpExceptionWithErrorCodeType } from './http-exeception-with-error-code.type';
 
 @Catch(HttpExceptionWithErrorCodeType, ZodValidationException)
@@ -41,7 +43,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
             this.logger.error({
                 timestamp: new Date().toISOString(),
                 code: errorCode,
-                path: request.url,
+                path: httpLogPath(request.url),
                 message: '[ZodValidationException] ' + JSON.stringify(exception.getResponse()),
             });
 
@@ -52,7 +54,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
                 this.logger.error({
                     timestamp: new Date().toISOString(),
                     code: errorCode,
-                    path: request.url,
+                    path: httpLogPath(request.url),
                     message: errorMessage,
                 });
             }

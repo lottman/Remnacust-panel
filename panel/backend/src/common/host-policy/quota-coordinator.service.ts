@@ -48,6 +48,7 @@ type Node = INodeConnectionOpts & {
 type Target = { kind: 'USER' | 'HOST' | 'TAG'; key: string; owner: string; nodes: string[] };
 type PreflightEvidence = { core: string; instance: string | null };
 const PREFLIGHT_EVIDENCE_MAX_AGE_MS = 20000;
+const TICK_BUDGET_MS = 20000;
 const uuid = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/;
 const connectionHash = (node: Pick<Node, 'address' | 'port' | 'proxyUrl'>) =>
     createHash('sha256')
@@ -200,12 +201,12 @@ export class QuotaCoordinatorService {
         try {
             // Work stays bounded even for a large fleet. All network calls are
             // outside SQL transactions; another scheduler can resume committed phases.
-            const started = performance.now();
-            for (let round = 0; round < 8 && performance.now() - started < 20000; round++) {
+            const deadline = performance.now() + TICK_BUDGET_MS;
+            for (let round = 0; round < 8 && performance.now() < deadline; round++) {
                 const state = (await this.state())!,
                     nodes = await this.nodes();
                 if (state.phase === 'RECOVERY') return true;
-                const advanced = await this.step(owner, state, nodes);
+                const advanced = await this.step(owner, state, nodes, deadline);
                 if (!advanced) break;
             }
             return true;
@@ -214,7 +215,10 @@ export class QuotaCoordinatorService {
                 error instanceof CoordinationError
                     ? error
                     : new CoordinationError('COORDINATOR_RETRY_REQUIRED');
-            if (failure.code !== 'COORDINATOR_LEASE_LOST') {
+            if (
+                failure.code !== 'COORDINATOR_LEASE_LOST' &&
+                failure.code !== 'COORDINATOR_GENERATION_CHANGED'
+            ) {
                 await this.write(owner, async () => {
                     await sql`UPDATE xera_quota_coordinator SET error_code=${failure.code},updated_at=now() WHERE id=1`.execute(
                         this.db.kysely,
@@ -272,7 +276,12 @@ export class QuotaCoordinatorService {
         return selected;
     }
 
-    private async step(owner: string, state: Coordinator, nodes: Node[]): Promise<boolean> {
+    private async step(
+        owner: string,
+        state: Coordinator,
+        nodes: Node[],
+        deadline = performance.now() + TICK_BUDGET_MS,
+    ): Promise<boolean> {
         if (state.phase === 'PREFLIGHT') return this.preflight(owner, state, nodes);
         const current = nodes.map((node) => node.uuid).sort(),
             registered = [...state.roster].sort();
@@ -373,7 +382,7 @@ export class QuotaCoordinatorService {
             return true;
         }
         if (state.phase === 'ALLOCATING') {
-            if (await this.fund(owner, state, nodes)) return true;
+            if (await this.fund(owner, state, nodes, deadline)) return true;
             for (const node of pending) {
                 const source = quotaSourceFingerprint(
                     await this.policies.scopes(undefined, node.uuid, true),
@@ -450,7 +459,7 @@ export class QuotaCoordinatorService {
             // transitions above can still progress while delivery retries.
             if (delivery.length)
                 return results.some((result) => result.status === 'fulfilled' && result.value);
-            const funded = await this.fund(owner, state, nodes);
+            const funded = await this.fund(owner, state, nodes, deadline);
             if (!funded)
                 await this.write(owner, async () => {
                     await sql`UPDATE xera_quota_coordinator SET allocation_cursor=0 WHERE id=1`.execute(
@@ -620,7 +629,33 @@ export class QuotaCoordinatorService {
         return true;
     }
 
-    private async fund(owner: string, state: Coordinator, nodes: Node[]): Promise<boolean> {
+    private async allocationWrite<T>(
+        owner: string,
+        state: Coordinator,
+        action: () => Promise<T>,
+    ): Promise<T> {
+        return this.write(owner, async () => {
+            const current = await this.state();
+            if (
+                current?.generation !== state.generation ||
+                current.phase !== state.phase ||
+                current.cursor !== state.cursor
+            )
+                throw new CoordinationError('COORDINATOR_GENERATION_CHANGED');
+            await sql`UPDATE xera_quota_coordinator SET lease_until=clock_timestamp()+interval '90 seconds' WHERE id=1`.execute(
+                this.db.kysely,
+            );
+            return action();
+        });
+    }
+
+    private async fund(
+        owner: string,
+        state: Coordinator,
+        nodes: Node[],
+        deadline = performance.now() + TICK_BUDGET_MS,
+    ): Promise<boolean> {
+        if (performance.now() >= deadline) return true;
         const selected = (
             await sql<{
                 id: string;
@@ -683,32 +718,45 @@ export class QuotaCoordinatorService {
             );
         if (targets.rows.length > 10000)
             throw new CoordinationError('OWNER_SCOPE_ROSTER_TOO_LARGE');
-        const fundable: Target[] = [];
+        const byOwner = new Map<string, Target[]>();
         for (const target of targets.rows) {
-            if (
-                state.phase !== 'ACTIVE' ||
-                (await this.transitions.reconcile(target, target.nodes))
-            )
-                if (target.nodes.length) fundable.push(target);
+            const scopes = byOwner.get(target.owner) ?? [];
+            scopes.push(target);
+            byOwner.set(target.owner, scopes);
         }
         const instances = Object.fromEntries(ready.map((node) => [node.uuid, node.instance!]));
-        await this.write(owner, async () => {
-            for (let offset = 0; offset < fundable.length; offset += 500) {
-                const batch = fundable.slice(offset, offset + 500).map((target) => ({
-                    ...target,
-                    instances: Object.fromEntries(
-                        target.nodes.map((node) => [node, instances[node]]),
-                    ),
-                }));
-                await sql`SELECT xera_fund_quota_targets(${JSON.stringify(batch)}::jsonb)`.execute(
+        let cursor = state.cursor;
+        for (const selectedOwner of selected) {
+            if (cursor !== state.cursor && performance.now() >= deadline) break;
+            const expected = { ...state, cursor };
+            const fundable: Target[] = [];
+            for (const target of byOwner.get(selectedOwner.id) ?? []) {
+                await this.allocationWrite(owner, expected, async () => {});
+                if (
+                    state.phase !== 'ACTIVE' ||
+                    (await this.transitions.reconcile(target, target.nodes))
+                )
+                    if (target.nodes.length) fundable.push(target);
+            }
+            await this.allocationWrite(owner, expected, async () => {
+                for (let offset = 0; offset < fundable.length; offset += 500) {
+                    const batch = fundable.slice(offset, offset + 500).map((target) => ({
+                        ...target,
+                        instances: Object.fromEntries(
+                            target.nodes.map((node) => [node, instances[node]]),
+                        ),
+                    }));
+                    await sql`SELECT xera_fund_quota_targets(${JSON.stringify(batch)}::jsonb)`.execute(
+                        this.db.kysely,
+                    );
+                }
+                await sql`UPDATE xera_quota_coordinator SET allocation_cursor=${selectedOwner.id}::bigint,error_code=NULL,updated_at=now() WHERE id=1`.execute(
                     this.db.kysely,
                 );
-            }
-            await sql`UPDATE xera_quota_coordinator SET allocation_cursor=${selected.at(-1)!.id}::bigint,error_code=NULL,updated_at=now() WHERE id=1`.execute(
-                this.db.kysely,
-            );
-        });
-        this.policies.requestSync();
+            });
+            cursor = selectedOwner.id;
+            this.policies.requestSync();
+        }
         return true;
     }
 }

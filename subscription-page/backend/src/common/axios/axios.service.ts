@@ -1,3 +1,5 @@
+import type { SubscriptionDomainContext } from '../utils/subscription-domain-context';
+
 import axios, { AxiosError, AxiosInstance, RawAxiosResponseHeaders } from 'axios';
 import { Agent as HttpAgent, type IncomingHttpHeaders } from 'node:http';
 import { Agent as HttpsAgent } from 'node:https';
@@ -19,22 +21,25 @@ import {
 
 import { TypedConfigService } from '@common/config/app-config';
 import { IGNORED_HEADERS } from '@common/constants';
-import { isCdnSelectorHeader } from '../utils/cdn-request-header';
 
 import { ICommandResponse } from '../types/command-response.type';
-import { subscriptionRequestHeaders } from './subscription-request-headers';
-import type { SubscriptionDomainContext } from '../utils/subscription-domain-context';
+import { isCdnSelectorHeader } from '../utils/cdn-request-header';
 import { publicGeofileOrigin } from '../utils/public-geofile-origin';
+import { subscriptionRequestHeaders } from './subscription-request-headers';
 
 @Injectable()
 export class AxiosService implements OnModuleInit, OnModuleDestroy {
     private readonly logger = new Logger(AxiosService.name);
     private subpageVersion = __RW_SUBPAGE_VERSION__;
     private readonly privatePanelUrl: URL;
-    private readonly publicDomains = new Map<string, { value: SubscriptionDomainContext; until: number }>();
+    private readonly publicDomains = new Map<
+        string,
+        { value: SubscriptionDomainContext; until: number }
+    >();
     private readonly pendingDomains = new Map<string, Promise<SubscriptionDomainContext>>();
 
     public axiosInstance: AxiosInstance;
+    public readonly geofileAxiosInstance: AxiosInstance;
     private readonly httpAgent = new HttpAgent({
         keepAlive: true,
         maxSockets: 32,
@@ -46,6 +51,18 @@ export class AxiosService implements OnModuleInit, OnModuleDestroy {
         maxSockets: 32,
         maxFreeSockets: 8,
         timeout: 10_000,
+    });
+    private readonly geofileHttpAgent = new HttpAgent({
+        keepAlive: true,
+        maxSockets: 8,
+        maxFreeSockets: 2,
+        timeout: 30_000,
+    });
+    private readonly geofileHttpsAgent = new HttpsAgent({
+        keepAlive: true,
+        maxSockets: 8,
+        maxFreeSockets: 2,
+        timeout: 30_000,
     });
 
     constructor(private readonly configService: TypedConfigService) {
@@ -94,11 +111,18 @@ export class AxiosService implements OnModuleInit, OnModuleDestroy {
         if (egamesCookie) {
             this.axiosInstance.defaults.headers.common['Cookie'] = egamesCookie;
         }
+        this.geofileAxiosInstance = axios.create({
+            ...this.axiosInstance.defaults,
+            httpAgent: this.geofileHttpAgent,
+            httpsAgent: this.geofileHttpsAgent,
+        });
     }
 
     onModuleDestroy(): void {
         this.httpAgent.destroy();
         this.httpsAgent.destroy();
+        this.geofileHttpAgent.destroy();
+        this.geofileHttpsAgent.destroy();
     }
 
     async onModuleInit(): Promise<void> {
@@ -327,39 +351,66 @@ export class AxiosService implements OnModuleInit, OnModuleDestroy {
         if (pending) return pending;
         if (this.pendingDomains.size >= 128)
             throw new Error('Subscription domain is temporarily unavailable');
-        const request = this.axiosInstance.get(`api/sub/domains/${uuid}/resolve`, {
-            params: { version: '2' },
-            maxContentLength: 4096,
-            headers: { 'Cache-Control': 'no-cache', 'Accept-Encoding': 'identity' },
-        }).then(response => {
-            const data = response.data?.response;
-            if (data?.uuid !== uuid || typeof data.publicBaseUrl !== 'string' || data.publicBaseUrl.length > 600)
-                throw new Error('Invalid subscription domain response');
-            const url = new URL(data.publicBaseUrl);
-            const legacySuffix = `/cdn/${uuid}`;
-            const publicPath = (url.pathname.endsWith(legacySuffix)
-                ? url.pathname.slice(0, -legacySuffix.length)
-                : url.pathname).replace(/\/$/, '');
-            if (url.protocol !== 'https:' || url.username || url.password || url.search || url.hash ||
-                publicGeofileOrigin(url.host) !== url.origin ||
-                !/^(?:\/[A-Za-z0-9._~-]+)*$/.test(publicPath) ||
-                publicPath.split('/').some(part => part === '.' || part === '..') ||
-                this.containsPrivatePanelAddress(data.publicBaseUrl))
-                throw new Error('Invalid subscription domain response');
-            if (data.requestHeaderName !== undefined &&
-                (typeof data.requestHeaderName !== 'string' || !/^X-[a-f0-9]{24}$/.test(data.requestHeaderName)))
-                throw new Error('Invalid subscription domain response');
-            const value = { uuid, publicBaseUrl: url.origin + publicPath,
-                ...(data.requestHeaderName ? { requestHeaderName: data.requestHeaderName } : {}) };
-            this.publicDomains.delete(uuid);
-            this.publicDomains.set(uuid, { value, until: Date.now() + 5000 });
-            if (this.publicDomains.size > 128) this.publicDomains.delete(this.publicDomains.keys().next().value!);
-            return value;
-        }).catch(error => {
-            throw Object.assign(new Error('Subscription domain is unavailable'), {
-                status: axios.isAxiosError(error) && error.response?.status === 404 ? 404 : 503,
+        const request = this.axiosInstance
+            .get(`api/sub/domains/${uuid}/resolve`, {
+                params: { version: '2' },
+                maxContentLength: 4096,
+                headers: { 'Cache-Control': 'no-cache', 'Accept-Encoding': 'identity' },
+            })
+            .then((response) => {
+                const data = response.data?.response;
+                if (
+                    data?.uuid !== uuid ||
+                    typeof data.publicBaseUrl !== 'string' ||
+                    data.publicBaseUrl.length > 600
+                )
+                    throw new Error('Invalid subscription domain response');
+                const url = new URL(data.publicBaseUrl);
+                const legacySuffix = `/cdn/${uuid}`;
+                const publicPath = (
+                    url.pathname.endsWith(legacySuffix)
+                        ? url.pathname.slice(0, -legacySuffix.length)
+                        : url.pathname
+                ).replace(/\/$/, '');
+                if (
+                    url.protocol !== 'https:' ||
+                    url.username ||
+                    url.password ||
+                    url.search ||
+                    url.hash ||
+                    publicGeofileOrigin(url.host) !== url.origin ||
+                    !/^(?:\/[A-Za-z0-9._~-]+)*$/.test(publicPath) ||
+                    publicPath.split('/').some((part) => part === '.' || part === '..') ||
+                    this.containsPrivatePanelAddress(data.publicBaseUrl)
+                )
+                    throw new Error('Invalid subscription domain response');
+                if (
+                    data.requestHeaderName !== undefined &&
+                    (typeof data.requestHeaderName !== 'string' ||
+                        !/^X-[a-f0-9]{24}$/.test(data.requestHeaderName))
+                )
+                    throw new Error('Invalid subscription domain response');
+                const value = {
+                    uuid,
+                    publicBaseUrl: url.origin + publicPath,
+                    ...(data.requestHeaderName
+                        ? { requestHeaderName: data.requestHeaderName }
+                        : {}),
+                };
+                this.publicDomains.delete(uuid);
+                this.publicDomains.set(uuid, { value, until: Date.now() + 5000 });
+                if (this.publicDomains.size > 128)
+                    this.publicDomains.delete(this.publicDomains.keys().next().value!);
+                return value;
+            })
+            .catch((error) => {
+                throw Object.assign(new Error('Subscription domain is unavailable'), {
+                    status: axios.isAxiosError(error) && error.response?.status === 404 ? 404 : 503,
+                });
+            })
+            .finally(() => {
+                this.pendingDomains.delete(uuid);
             });
-        }).finally(() => { this.pendingDomains.delete(uuid); });
         this.pendingDomains.set(uuid, request);
         return request;
     }
@@ -401,9 +452,10 @@ export class AxiosService implements OnModuleInit, OnModuleDestroy {
                     Pragma: 'no-cache',
                     Expires: '0',
                     [REMNAWAVE_REAL_IP_HEADER]: clientIp,
-                    Authorization: geofileOrigin || domainUuid
-                        ? `Bearer ${this.configService.getOrThrow('REMNAWAVE_API_TOKEN')}`
-                        : undefined,
+                    Authorization:
+                        geofileOrigin || domainUuid
+                            ? `Bearer ${this.configService.getOrThrow('REMNAWAVE_API_TOKEN')}`
+                            : undefined,
                     'x-remnacust-geofile-origin': geofileOrigin,
                     'x-remnacust-subscription-domain': domainUuid,
                 },
@@ -412,7 +464,8 @@ export class AxiosService implements OnModuleInit, OnModuleDestroy {
             const responseHeaders = Object.fromEntries(
                 Object.entries(response.headers).filter(
                     ([key, value]) =>
-                        !IGNORED_HEADERS.has(key) && !isCdnSelectorHeader(key) &&
+                        !IGNORED_HEADERS.has(key) &&
+                        !isCdnSelectorHeader(key) &&
                         !this.containsPrivatePanelAddress(String(value)),
                 ),
             );

@@ -35,7 +35,7 @@ const {HostUsageService}=load(path.join(__dirname,'../src/common/host-policy/hos
 const {UsageJournalService}=load(path.join(__dirname,'../src/common/host-policy/usage-journal.service.ts'),baseMocks);
 const journal=new UsageJournalService({getOrThrow:()=>url});
 const pendingHosts={};
-const hostUsage=new HostUsageService(db,{hgetallParsed:async()=>({...pendingHosts}),createPipeline:()=>{let id;return {hdel:(_key,value)=>id=value,exec:async()=>{delete pendingHosts[id];return [[null,1]];}};}},transactions);
+const hostUsage=new HostUsageService(db,{createPipeline:()=>{let id,scan=false;return {hscan:()=>{scan=true;},hdel:(_key,value)=>id=value,exec:async()=>{if(scan)return [[null,['0',Object.entries(pendingHosts).flatMap(([key,value])=>[key,JSON.stringify(value)])]]];delete pendingHosts[id];return [[null,1]];}};}},transactions);
 const service=new LegacyUsageService(db,axios,transactions,biller,hostUsage,journal);
 const effect=async(receipt,value)=>{outbox.push({receipt,value});if(failEffects){failEffects=false;throw Error('notification outage');}};
 const collect=(overrides={})=>service.collect({...node,...overrides},effect);

@@ -16,7 +16,7 @@ test('traffic uses bounded SQL batches instead of one query per user-host pair',
  });
  const pending={};
  const cache={hsetJson:async(k,id,value)=>pending[id]=value,hgetallParsed:async()=>pending,createPipeline:()=>{
-  let id;return {hdel:(k,value)=>id=value,exec:async()=>{delete pending[id];return [[null,1]]}};
+  let id,scan=false;return {hscan:()=>{scan=true;},hdel:(k,value)=>id=value,exec:async()=>{if(scan)return [[null,['0',Object.entries(pending).flatMap(([key,value])=>[key,JSON.stringify(value)])]]];delete pending[id];return [[null,1]]}};
  }};
  const service=new HostUsageService({kysely:{}},cache,{isTransactionActive:()=>false,withTransaction:async(opts,fn)=>fn()});
  const rows=Array.from({length:1201},(_,i)=>({username:`${i+1}~${'a'.repeat(24)}~h${'b'.repeat(32)}`,uplink:2,downlink:3}));

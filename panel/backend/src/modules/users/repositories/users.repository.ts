@@ -1243,7 +1243,7 @@ export class UsersRepository {
                         ])
                         .whereRef('internalSquadMembers.userId', '=', 'users.id')
                         .where(sql<boolean>`(
-                            (${sql.ref('users.status')} = 'ACTIVE' AND ${sql.ref('users.expireAt')} > now()
+                            (${sql.ref('users.status')} = 'ACTIVE' AND ${sql.ref('users.expireAt')} > (now() AT TIME ZONE 'UTC')
                                 AND NOT era_inbound_only_when_inactive(${sql.ref('users.id')}, ${sql.ref('configProfileInbounds.uuid')}))
                             OR (era_host_subscription_allowed(${sql.ref('users.id')}, ${sql.ref('configProfileInbounds.uuid')})
                                 ${legacyInboundIds.size ? sql`AND ${sql.ref('configProfileInbounds.uuid')} NOT IN (${sql.join([...legacyInboundIds].map((value) => sql`${value}::uuid`))})` : sql``})
@@ -1304,7 +1304,7 @@ export class UsersRepository {
                         ])
                         .whereRef('internalSquadMembers.userId', '=', 'users.id')
                         .where(sql<boolean>`(
-                            (${sql.ref('users.status')} = 'ACTIVE' AND ${sql.ref('users.expireAt')} > now()
+                            (${sql.ref('users.status')} = 'ACTIVE' AND ${sql.ref('users.expireAt')} > (now() AT TIME ZONE 'UTC')
                                 AND NOT era_inbound_only_when_inactive(${sql.ref('users.id')}, ${sql.ref('configProfileInbounds.uuid')}))
                             OR (era_host_subscription_allowed(${sql.ref('users.id')}, ${sql.ref('configProfileInbounds.uuid')})
                                 ${legacyInboundIds.size ? sql`AND ${sql.ref('configProfileInbounds.uuid')} NOT IN (${sql.join([...legacyInboundIds].map((value) => sql`${value}::uuid`))})` : sql``})

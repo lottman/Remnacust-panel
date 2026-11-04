@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
-const { spawnSync } = require('node:child_process');
+const { spawn } = require('node:child_process');
 const load = require('./load-typescript.cjs');
 const constants = require('../libs/contract/build/backend/constants');
 const bounded = load(path.join(__dirname, '../src/common/utils/bounded-regex.ts'));
@@ -54,7 +54,7 @@ test('case-insensitive regex preserves escapes and evaluates only with the i fla
     );
 });
 
-test('a hostile header cannot leave the main API thread inside regex backtracking', () => {
+test('a hostile header cannot leave the main API thread inside regex backtracking', async () => {
     const fixture = `
         const load = require(${JSON.stringify(path.join(__dirname, 'load-typescript.cjs'))});
         const constants = require(${JSON.stringify(path.join(__dirname, '../libs/contract/build/backend/constants'))});
@@ -66,7 +66,7 @@ test('a hostile header cannot leave the main API thread inside regex backtrackin
             ),
         )},
             { '@libs/contracts/constants': constants, '@common/utils/bounded-regex': bounded });
-        (async () => {
+        process.once('message', () => { (async () => {
             let responsive = false;
             setTimeout(() => responsive = true, 10);
             const result = await new ResponseRulesMatcherService().matchRules(
@@ -74,19 +74,60 @@ test('a hostile header cannot leave the main API thread inside regex backtrackin
             if (!responsive || result.responseType !== 'BLOCK') throw new Error('Unsafe regex must fail closed without blocking timers');
             await bounded.configuredRegex.close();
             console.log('bounded');
-        })().catch(() => process.exitCode = 1);
+        })().catch(() => process.exitCode = 1).finally(() => process.disconnect()); });
+        process.send('ready');
     `;
-    const result = spawnSync(process.execPath, ['-e', fixture], {
-        timeout: 3000,
-        encoding: 'utf8',
+    const child = spawn(process.execPath, ['-e', fixture], {
+        stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
+        windowsHide: true,
     });
-    assert.equal(
-        result.error?.code,
-        undefined,
-        'the isolated reproduction exceeded its hard timeout',
-    );
-    assert.equal(result.status, 0, result.stderr);
-    assert.match(result.stdout, /bounded/);
+    let phase = 'startup',
+        timedOut = false,
+        stdout = '',
+        stderr = '';
+    const expire = () => {
+        timedOut = true;
+        child.kill('SIGKILL');
+    };
+    let timer = setTimeout(expire, 30000);
+    child.stdout.on('data', (data) => {
+        stdout = (stdout + data).slice(-65536);
+    });
+    child.stderr.on('data', (data) => {
+        stderr = (stderr + data).slice(-65536);
+    });
+    try {
+        await new Promise((resolve, reject) => {
+            child.once('error', reject);
+            child.once('message', (message) => {
+                if (message !== 'ready') {
+                    child.kill('SIGKILL');
+                    reject(new Error('Missing regex fixture readiness'));
+                    return;
+                }
+                clearTimeout(timer);
+                phase = 'evaluation';
+                timer = setTimeout(expire, 3000);
+                child.send('run', (error) => {
+                    if (error) reject(error);
+                });
+            });
+            child.once('close', (code, signal) => {
+                try {
+                    assert.equal(timedOut, false, `Regex fixture exceeded its ${phase} timeout`);
+                    assert.equal(phase, 'evaluation');
+                    assert.equal(code, 0, stderr || `Regex fixture exited with ${signal}`);
+                    assert.match(stdout, /bounded/);
+                    resolve();
+                } catch (error) {
+                    reject(error);
+                }
+            });
+        });
+    } finally {
+        clearTimeout(timer);
+        if (child.exitCode === null && child.signalCode === null) child.kill('SIGKILL');
+    }
 });
 
 test('invalid and oversized expressions fail closed before a permissive fallback', async () => {

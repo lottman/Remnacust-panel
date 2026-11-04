@@ -1,6 +1,7 @@
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { sql } from 'kysely';
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { createHash } from 'node:crypto';
 
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
@@ -44,6 +45,7 @@ import {
 } from './quota-registration';
 
 export const HOST_POLICY_VERSION = 'xera-host-policy-v2';
+const HOST_POLICY_DISCOVERY_BUDGET_MS = 30000;
 type HostPolicyCapabilities = {
     checkedAt?: number;
     native?: boolean;
@@ -71,6 +73,14 @@ type HostPolicyCapabilities = {
     quotaRecoveryPolicyBindingsRequired?: boolean;
     quotaRecoveryPolicyBindingsSupported?: boolean;
 };
+type CompatibilitySnapshot = {
+    key: string;
+    roots: Set<string>;
+    inbounds: Set<string>;
+    routed: Set<string>;
+    capabilities: Map<string, { connection: string; value: HostPolicyCapabilities }>;
+    unavailable: Map<string, Error>;
+};
 export { normalizeDestinationRule as normalizePolicyDomain } from './destination-rule';
 @Injectable()
 export class HostPolicyService {
@@ -79,6 +89,9 @@ export class HostPolicyService {
     private connectedSynchronization: Promise<void> | null = null;
     private synchronizeAgain = false;
     private readonly nodeWork = new BoundedWorkQueue(3, 256);
+    private readonly discoveryWork = new BoundedWorkQueue(3, 256);
+    private readonly discoveries = new Map<string, Promise<HostPolicyCapabilities>>();
+    private readonly compatibility = new AsyncLocalStorage<CompatibilitySnapshot | undefined>();
     private legacyInventory?: { until: number; inbounds: Set<string>; routed: Set<string> };
     private legacyInventoryPending?: Promise<Set<string>>;
     private readonly nodeSynchronizations = new Map<
@@ -113,6 +126,8 @@ export class HostPolicyService {
         );
     }
     legacyInbounds(): Promise<Set<string>> {
+        const snapshot = this.compatibility.getStore();
+        if (snapshot) return Promise.resolve(snapshot.inbounds);
         if (this.legacyInventory && this.legacyInventory.until > Date.now())
             return Promise.resolve(this.legacyInventory.inbounds);
         if (this.legacyInventoryPending) return this.legacyInventoryPending;
@@ -152,6 +167,282 @@ export class HostPolicyService {
                 this.legacyInventoryPending = undefined;
             });
         return this.legacyInventoryPending;
+    }
+    async withCompatibilitySnapshot<T>(
+        roots: readonly string[],
+        work: () => Promise<T>,
+        allowPartial = false,
+    ): Promise<T> {
+        if (this.transactions.isTransactionActive())
+            throw new Error('Node capability discovery must run outside SQL transactions');
+        const current = this.compatibility.getStore();
+        if (current) {
+            if (!roots.every((uuid) => current.roots.has(uuid)))
+                throw this.discoveryFailure(
+                    'Host policy compatibility snapshot does not cover this node',
+                );
+            for (const uuid of roots) {
+                const failure = current.unavailable.get(uuid);
+                if (failure && !allowPartial) throw failure;
+            }
+            return work();
+        }
+        let snapshot: CompatibilitySnapshot;
+        try {
+            snapshot = await this.prepareCompatibilitySnapshot(roots);
+        } catch (error) {
+            throw this.discoveryFailure(
+                error instanceof Error ? error.message : 'Host policy node inventory unavailable',
+            );
+        }
+        for (const uuid of roots) {
+            const failure = snapshot.unavailable.get(uuid);
+            if (failure && !allowPartial) throw failure;
+        }
+        return this.compatibility.run(snapshot, work);
+    }
+    private discoveryFailure(message: string): Error {
+        return Object.assign(new Error(message), { code: 'HOST_POLICY_DISCOVERY_FAILED' });
+    }
+    private async prepareCompatibilitySnapshot(
+        roots: readonly string[],
+    ): Promise<CompatibilitySnapshot> {
+        const nodes = await sql<INodeConnectionOpts & { uuid: string; inbounds: string[] }>`
+            SELECT n.uuid,n.address,n.port,n.proxy_url AS "proxyUrl",
+                COALESCE(array_agg(b.config_profile_inbound_uuid) FILTER(WHERE b.config_profile_inbound_uuid IS NOT NULL),'{}'::uuid[]) AS inbounds
+            FROM nodes n LEFT JOIN config_profile_inbounds_to_nodes b ON b.node_uuid=n.uuid
+            WHERE NOT n.is_disabled GROUP BY n.uuid ORDER BY n.uuid LIMIT 10001`.execute(
+            this.db.kysely,
+        );
+        if (nodes.rows.length > 10000) throw new Error('Host policy node inventory exceeds limit');
+        const rootIds = new Set(roots);
+        const nodesById = new Map(nodes.rows.map((node) => [node.uuid, node]));
+        const missing = roots.filter((uuid) => !nodesById.has(uuid));
+        const inbounds = new Set(
+            nodes.rows.filter((node) => rootIds.has(node.uuid)).flatMap((node) => node.inbounds),
+        );
+        const dependencies = nodes.rows.filter(
+            (node) => rootIds.has(node.uuid) || node.inbounds.some((id) => inbounds.has(id)),
+        );
+        const capabilities = new Map<
+            string,
+            { connection: string; value: HostPolicyCapabilities }
+        >();
+        const failures = new Map<string, Error>();
+        const deadline = Date.now() + HOST_POLICY_DISCOVERY_BUDGET_MS;
+        for (let offset = 0; offset < dependencies.length; offset += 3)
+            await Promise.all(
+                dependencies.slice(offset, offset + 3).map(async (node) => {
+                    let timer: ReturnType<typeof setTimeout> | undefined;
+                    try {
+                        const remaining = deadline - Date.now();
+                        if (remaining <= 0)
+                            throw new Error('Capability discovery budget exhausted');
+                        const value = await Promise.race([
+                            this.discoverCapabilities(node),
+                            new Promise<never>((_resolve, reject) => {
+                                timer = setTimeout(
+                                    () =>
+                                        reject(new Error('Capability discovery budget exhausted')),
+                                    remaining,
+                                );
+                            }),
+                        ]);
+                        capabilities.set(node.uuid, {
+                            connection: this.connectionKey(node),
+                            value,
+                        });
+                    } catch (error) {
+                        failures.set(
+                            node.uuid,
+                            this.discoveryFailure(
+                                `Node ${node.uuid}: ${error instanceof Error ? error.message : 'capabilities unavailable'}`,
+                            ),
+                        );
+                    } finally {
+                        if (timer) clearTimeout(timer);
+                    }
+                }),
+            );
+        const unavailable = new Map<string, Error>(
+            missing.map((uuid) => [
+                uuid,
+                this.discoveryFailure(
+                    `Node ${uuid}: host policy node inventory changed before discovery`,
+                ),
+            ]),
+        );
+        const failedInbounds = new Map<string, Error>();
+        for (const [uuid, failure] of failures)
+            for (const inbound of nodesById.get(uuid)?.inbounds ?? [])
+                failedInbounds.set(inbound, failure);
+        for (const uuid of rootIds) {
+            const failure =
+                failures.get(uuid) ??
+                nodesById
+                    .get(uuid)
+                    ?.inbounds.map((inbound) => failedInbounds.get(inbound))
+                    .find((value) => value !== undefined);
+            if (failure) unavailable.set(uuid, failure);
+        }
+        const legacy = new Set<string>();
+        const routed = new Set<string>();
+        for (let offset = 0; offset < nodes.rows.length; offset += 64)
+            await Promise.all(
+                nodes.rows.slice(offset, offset + 64).map(async (node) => {
+                    const value =
+                        capabilities.get(node.uuid)?.value ??
+                        (failures.has(node.uuid)
+                            ? undefined
+                            : await this.cache.get<HostPolicyCapabilities>(
+                                  this.capabilityKey(node),
+                              ));
+                    if (value?.native === true)
+                        for (const inbound of node.inbounds) legacy.add(inbound);
+                    if (
+                        value?.native === true ||
+                        (value?.version === HOST_POLICY_VERSION &&
+                            value.supported === true &&
+                            value.routedDeviceSpeedLimitsSupported !== true)
+                    )
+                        for (const inbound of node.inbounds) routed.add(inbound);
+                }),
+            );
+        const snapshot: CompatibilitySnapshot = {
+            key: createHash('sha256')
+                .update(
+                    JSON.stringify([
+                        [...legacy].sort(),
+                        [...routed].sort(),
+                        [...capabilities]
+                            .sort(([left], [right]) => left.localeCompare(right))
+                            .map(([uuid, value]) => [
+                                uuid,
+                                value.connection,
+                                value.value.native === true,
+                                value.value.version,
+                                value.value.supported,
+                                value.value.routedDeviceSpeedLimitsSupported,
+                            ]),
+                    ]),
+                )
+                .digest('hex'),
+            roots: rootIds,
+            inbounds: legacy,
+            routed,
+            capabilities,
+            unavailable,
+        };
+        return snapshot;
+    }
+    private connectionKey(node: INodeConnectionOpts): string {
+        return createHash('sha256')
+            .update(JSON.stringify([node.address, node.port, node.proxyUrl]))
+            .digest('hex');
+    }
+    private capabilityKey(node: INodeConnectionOpts & { uuid: string }): string {
+        return `xera:host-policy:capabilities:v2:${node.uuid}:${this.connectionKey(node)}`;
+    }
+    private async discoverCapabilities(
+        node: INodeConnectionOpts & { uuid: string },
+        force = false,
+        network?: (duration: number) => void,
+    ): Promise<HostPolicyCapabilities> {
+        if (this.transactions.isTransactionActive())
+            throw new Error('Node capability discovery must run outside SQL transactions');
+        const key = this.capabilityKey(node);
+        const cached = await this.cache.get<HostPolicyCapabilities>(key);
+        if (
+            !force &&
+            cached &&
+            (cached.native === true
+                ? cached.supported === false
+                : typeof cached.version === 'string' && typeof cached.supported === 'boolean') &&
+            typeof cached.checkedAt === 'number' &&
+            Date.now() - cached.checkedAt >= 0 &&
+            Date.now() - cached.checkedAt < 60000
+        )
+            return cached;
+        const pending = this.discoveries.get(key);
+        if (pending) return pending;
+        const discovery = this.discoveryWork.submit(async () => {
+            const started = performance.now();
+            const status = await this.axios
+                .hostPolicy<HostPolicyCapabilities>(node)
+                .finally(() => network?.(performance.now() - started));
+            let value: HostPolicyCapabilities;
+            if (
+                status.isOk &&
+                status.response &&
+                typeof status.response === 'object' &&
+                !Array.isArray(status.response) &&
+                typeof status.response.version === 'string' &&
+                typeof status.response.supported === 'boolean'
+            ) {
+                const response = status.response;
+                value = {
+                    native: false,
+                    checkedAt: Date.now(),
+                    version: response.version,
+                    supported: response.supported,
+                    destinationRulesSupported: response.destinationRulesSupported,
+                    deviceSpeedLimitsSupported: response.deviceSpeedLimitsSupported,
+                    routedDeviceSpeedLimitsSupported: response.routedDeviceSpeedLimitsSupported,
+                    policyRevisionsSupported: response.policyRevisionsSupported,
+                    policyRevision: response.policyRevision,
+                    offlineReserves: response.offlineReserves,
+                    quotaReservesSupported: response.quotaReservesSupported,
+                    quotaRegistrationsSupported: response.quotaRegistrationsSupported,
+                    quotaWatermarksSupported: response.quotaWatermarksSupported,
+                    quotaJournalSequence: response.quotaJournalSequence,
+                    quotaFencesSupported: response.quotaFencesSupported,
+                    quotaInstanceId: response.quotaInstanceId,
+                    coreIncarnationSupported: response.coreIncarnationSupported,
+                    usageReceiptsSupported: response.usageReceiptsSupported,
+                    userQuotaReservesSupported: response.userQuotaReservesSupported,
+                    unreservedUsageSupported: response.unreservedUsageSupported,
+                    userQuotaRequired: response.userQuotaRequired,
+                    coreProcessId: response.coreProcessId,
+                    quotaRecovery: response.quotaRecovery,
+                    quotaRecoveryPolicyBindingsRequired:
+                        response.quotaRecoveryPolicyBindingsRequired,
+                    quotaRecoveryPolicyBindingsSupported:
+                        response.quotaRecoveryPolicyBindingsSupported,
+                };
+            } else if (
+                !status.isOk &&
+                ['NODE_HTTP_404', 'NODE_HTTP_405'].includes(status.code ?? '')
+            ) {
+                const healthStarted = performance.now();
+                const health = await this.axios
+                    .getNodeHealth(node)
+                    .finally(() => network?.(performance.now() - healthStarted));
+                if (
+                    !health.isOk ||
+                    typeof health.response.nodeVersion !== 'string' ||
+                    !/^v?\d+\.\d+\.\d+(?:[-+][\w.-]+)?$/.test(health.response.nodeVersion) ||
+                    health.response.nodeVersion.toLowerCase().includes('remnacust')
+                )
+                    throw new Error(
+                        `Node ${node.uuid}: native compatibility could not be verified`,
+                    );
+                value = { native: true, supported: false, checkedAt: Date.now() };
+            } else throw new Error(`Node ${node.uuid}: host policy capabilities unavailable`);
+            await this.cache.set(key, value, 86400);
+            await this.legacyInventoryPending;
+            this.legacyInventory = undefined;
+            return value;
+        });
+        if (!discovery)
+            throw Object.assign(new Error('Node capability discovery queue is full'), {
+                code: 'HOST_POLICY_BUSY',
+            });
+        this.discoveries.set(key, discovery);
+        try {
+            return await discovery;
+        } finally {
+            if (this.discoveries.get(key) === discovery) this.discoveries.delete(key);
+        }
     }
     async scopes(
         userId?: bigint,
@@ -204,7 +495,10 @@ export class HostPolicyService {
             ),
         ]);
         const legacyInboundIds = await this.legacyInbounds();
-        const legacyRouteInbounds = this.legacyInventory?.routed ?? legacyInboundIds;
+        const legacyRouteInbounds =
+            this.compatibility.getStore()?.routed ??
+            this.legacyInventory?.routed ??
+            legacyInboundIds;
         const hostById = new Map(hosts.rows.map((host) => [host.uuid, host]));
         const policyHosts = attachAutoselectRoutes(
             hosts.rows,
@@ -322,7 +616,16 @@ export class HostPolicyService {
             return Promise.reject(
                 new Error('Host policy synchronization must run after SQL commit'),
             );
-        const key = JSON.stringify([node.uuid, node.address, node.port, node.proxyUrl]);
+        const snapshot = this.compatibility.getStore();
+        const unavailable = snapshot?.unavailable.get(node.uuid);
+        if (unavailable) return Promise.reject(unavailable);
+        const key = JSON.stringify([
+            node.uuid,
+            node.address,
+            node.port,
+            node.proxyUrl,
+            snapshot?.key,
+        ]);
         let entry = this.nodeSynchronizations.get(key);
         if (!entry) {
             entry = { requested: 0, queued: false, waiters: [] };
@@ -342,28 +645,30 @@ export class HostPolicyService {
             if (current.queued) return;
             current.queued = true;
             const queued = this.nodeWork.submit(() =>
-                Promise.resolve().then(async () => {
-                    const target = current.requested;
-                    const deadline = Date.now() + 8000;
-                    for (;;) {
-                        try {
-                            await this.applyNodePolicy(node);
-                            return target;
-                        } catch (error) {
-                            if (
-                                !error ||
-                                typeof error !== 'object' ||
-                                !('code' in error) ||
-                                error.code !== 'HOST_POLICY_BUSY' ||
-                                Date.now() >= deadline
-                            )
-                                throw error;
-                            await new Promise((resolve) =>
-                                setTimeout(resolve, 100 + Math.floor(Math.random() * 100)),
-                            );
+                this.compatibility.run(snapshot, () =>
+                    Promise.resolve().then(async () => {
+                        const target = current.requested;
+                        const deadline = Date.now() + 8000;
+                        for (;;) {
+                            try {
+                                await this.applyNodePolicy(node);
+                                return target;
+                            } catch (error) {
+                                if (
+                                    !error ||
+                                    typeof error !== 'object' ||
+                                    !('code' in error) ||
+                                    error.code !== 'HOST_POLICY_BUSY' ||
+                                    Date.now() >= deadline
+                                )
+                                    throw error;
+                                await new Promise((resolve) =>
+                                    setTimeout(resolve, 100 + Math.floor(Math.random() * 100)),
+                                );
+                            }
                         }
-                    }
-                }),
+                    }),
+                ),
             );
             const fail = (error: unknown) => {
                 this.nodeSynchronizations.delete(key);
@@ -423,66 +728,23 @@ export class HostPolicyService {
         try {
             let quotaMode = await quotaNodeMode(this.db, node.uuid);
             let quotaSource = '';
-            let nativeNode = false;
-            let capabilities = await this.cache.get<HostPolicyCapabilities>(capabilityKey);
-            nativeNode = capabilities?.native === true;
+            const capabilities = await this.discoverCapabilities(node, !!quotaMode, (duration) => {
+                networkMs += duration;
+            });
+            const nativeNode = capabilities.native === true;
+            const expected = this.compatibility.getStore()?.capabilities.get(node.uuid);
             if (
-                quotaMode ||
-                !capabilities ||
-                typeof capabilities !== 'object' ||
-                Array.isArray(capabilities) ||
-                typeof capabilities.checkedAt !== 'number' ||
-                Date.now() - capabilities.checkedAt >= 60000
-            ) {
-                const status = await sendPolicy<HostPolicyCapabilities>();
-                if (status.isOk) {
-                    nativeNode = false;
-                    const value = status.response;
-                    capabilities = {
-                        checkedAt: Date.now(),
-                        version: value.version,
-                        supported: value.supported,
-                        destinationRulesSupported: value.destinationRulesSupported,
-                        deviceSpeedLimitsSupported: value.deviceSpeedLimitsSupported,
-                        routedDeviceSpeedLimitsSupported: value.routedDeviceSpeedLimitsSupported,
-                        policyRevisionsSupported: value.policyRevisionsSupported,
-                        policyRevision: value.policyRevision,
-                        offlineReserves: value.offlineReserves,
-                        quotaReservesSupported: value.quotaReservesSupported,
-                        quotaRegistrationsSupported: value.quotaRegistrationsSupported,
-                        quotaWatermarksSupported: value.quotaWatermarksSupported,
-                        quotaJournalSequence: value.quotaJournalSequence,
-                        quotaFencesSupported: value.quotaFencesSupported,
-                        quotaInstanceId: value.quotaInstanceId,
-                        coreIncarnationSupported: value.coreIncarnationSupported,
-                        usageReceiptsSupported: value.usageReceiptsSupported,
-                        userQuotaReservesSupported: value.userQuotaReservesSupported,
-                        unreservedUsageSupported: value.unreservedUsageSupported,
-                        userQuotaRequired: value.userQuotaRequired,
-                        coreProcessId: value.coreProcessId,
-                        quotaRecovery: value.quotaRecovery,
-                        quotaRecoveryPolicyBindingsRequired:
-                            value.quotaRecoveryPolicyBindingsRequired,
-                        quotaRecoveryPolicyBindingsSupported:
-                            value.quotaRecoveryPolicyBindingsSupported,
-                    };
-                    await this.cache.set(capabilityKey, capabilities, 86400);
-                    await this.legacyInventoryPending;
-                    this.legacyInventory = undefined;
-                } else if (['NODE_HTTP_404', 'NODE_HTTP_405'].includes(status.code ?? '')) {
-                    const health = await this.axios.getNodeHealth(node);
-                    nativeNode =
-                        health.isOk &&
-                        /^v?\d+\.\d+\.\d+(?:[-+][\w.-]+)?$/.test(health.response.nodeVersion) &&
-                        !health.response.nodeVersion.toLowerCase().includes('remnacust');
-                    if (nativeNode) {
-                        capabilities = { native: true, supported: false, checkedAt: Date.now() };
-                        await this.cache.set(capabilityKey, capabilities, 86400);
-                        await this.legacyInventoryPending;
-                        this.legacyInventory = undefined;
-                    }
-                }
-            }
+                expected &&
+                (expected.connection !== connection ||
+                    (expected.value.native === true) !== nativeNode ||
+                    expected.value.supported !== capabilities.supported ||
+                    expected.value.version !== capabilities.version ||
+                    expected.value.routedDeviceSpeedLimitsSupported !==
+                        capabilities.routedDeviceSpeedLimitsSupported)
+            )
+                throw new Error(
+                    `Node ${node.uuid}: host policy compatibility changed after discovery`,
+                );
             await this.cache.set(
                 `remnacust:node-compatibility:${node.uuid}`,
                 nativeNode
@@ -709,7 +971,7 @@ export class HostPolicyService {
                         const key = kind === 'HOST' ? group.key.slice(5) : group.key.slice(4);
                         let blockAll = pausedScopes.has(group.key);
                         let blockedOwners: Record<string, boolean> = {};
-                        if (BigInt(group.userLimit ?? 0) > 0n) {
+                        if (!quotaMode && BigInt(group.userLimit ?? 0) > 0n) {
                             const usage = await sql<{
                                 userId: string;
                                 used: string;

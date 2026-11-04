@@ -151,6 +151,26 @@ test('unknown routes respond with a noncacheable 404 rather than resetting the c
     const res=response();new NotFoundExceptionFilter().catch({}, {switchToHttp:()=>({getResponse:()=>res})});
     assert.equal(res.code,404);assert.equal(res.headers['Cache-Control'],'private, no-store');assert(!res.destroyed);
 });
+
+test('DAT overload reserves capacity for page and subscription requests and releases slots once', () => {
+    const {dynamicRequestBudget}=load(path.join(__dirname,'../src/common/middlewares/request-budget.middleware.ts'));
+    const budget=dynamicRequestBudget(4),files=[response(),response()];let accepted=0;
+    budget({path:'/geofiles/id/file.dat'},files[0],()=>accepted++);
+    budget({path:'/prefix/cdn/id/Geofiles/id/file.dat'},files[1],()=>accepted++);
+    const busy=response();budget({path:'/geofiles/id/file.dat'},busy,()=>accepted++);
+    assert.equal(busy.code,503);assert.equal(busy.headers['Retry-After'],'2');
+    const page=response(),subscription=response();
+    budget({path:'/user'},page,()=>accepted++);budget({path:'/user/json'},subscription,()=>accepted++);
+    assert.equal(accepted,4);
+    files[0].emit('close');files[0].emit('finish');
+    const next=response();budget({path:'/geofiles/id/file.dat'},next,()=>accepted++);assert.equal(accepted,5);
+    for(const res of [files[1],page,subscription,next]){res.emit('finish');res.emit('close');}
+    for(let i=0;i<1000;i++){
+        const res=response();budget({path:'/geofiles/id/file.dat'},res,()=>accepted++);res.emit('finish');
+        assert.equal(res.listenerCount('finish')+res.listenerCount('close'),0);
+    }
+    assert.equal(accepted,1005);
+});
 test('local health checks remain available under load without exposing a remote bypass', () => {
     const {dynamicRequestBudget}=load(path.join(__dirname,'../src/common/middlewares/request-budget.middleware.ts'));
     const budget=dynamicRequestBudget(0);let accepted=0;

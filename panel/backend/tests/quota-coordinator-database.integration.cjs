@@ -3,6 +3,7 @@ const {PrismaClient}=require('@prisma/client');const {TransactionHost}=require('
 const {PrismaTxDriver}=require('../node_modules/@kastov/nestjs-prisma-kysely/build/drivers/prisma-tx.driver.js');
 const url=process.env.QUOTA_COORDINATOR_TEST_DATABASE_URL;assert.ok(url);const parsed=new URL(url);
 assert.equal(parsed.hostname,'127.0.0.1');assert.equal(parsed.port,'55439');assert.match(parsed.pathname,/^\/remnacust_coordinator_test(?:_codex_[0-9]{14})?$/);
+assert.equal(parsed.protocol,'postgresql:');assert.equal(parsed.username,'postgres');assert.equal(parsed.password,'');assert.equal(parsed.search,'');assert.equal(parsed.hash,'');
 const prisma=new PrismaClient({datasourceUrl:url});
 let rejectCommit=false;
 const tx=new TransactionHost({defaultTxOptions:{},getFallbackInstance:()=>prisma,wrapWithTransaction:(opts,fn,set)=>prisma.$transaction(async client=>{set(client);const result=await fn();if(rejectCommit){rejectCommit=false;throw Error('Simulated commit failure');}return result;},opts)});

@@ -109,12 +109,14 @@ async function main() {
         },
         hgetallParsed: async (key) => pending[key] ?? {},
         createPipeline: () => {
-            let remove;
+            let remove, scan;
             return {
+                hscan: (key) => { scan = key; },
                 hdel: (key, id) => {
                     remove = () => delete pending[key][id];
                 },
                 exec: async () => {
+                    if (scan) return [[null, ['0', Object.entries(pending[scan] ?? {}).flatMap(([id, value]) => [id, JSON.stringify(value)])]]];
                     if (failAck) return [[new Error('connection lost')]];
                     remove();
                     return [[null, 1]];

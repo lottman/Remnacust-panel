@@ -162,9 +162,16 @@ export async function renderQuotaPolicy(
                 ceiling: grant.ceiling,
                 expiresAt: grant.expiresAt.getTime(),
             };
+        }
+        for (let offset = 0; offset < grants.rows.length; offset += 500) {
+            const values = grants.rows.slice(offset, offset + 500).map(
+                (
+                    grant,
+                ) => sql`(${kind},${key},${grant.owner}::bigint,${grant.window}::date,${node}::uuid,
+                    ${mode.instance}::uuid,${grant.epoch}::uuid,${revision}::bigint)`,
+            );
             await sql`INSERT INTO xera_quota_node_epochs(kind,key,user_id,window_start,node_uuid,instance_uuid,desired_epoch,desired_revision)
-                VALUES(${kind},${key},${grant.owner}::bigint,${grant.window}::date,${node}::uuid,
-                    ${mode.instance}::uuid,${grant.epoch}::uuid,${revision}::bigint)
+                VALUES ${sql.join(values)}
                 ON CONFLICT(kind,key,user_id,window_start,node_uuid) DO UPDATE SET
                     instance_uuid=excluded.instance_uuid,desired_epoch=excluded.desired_epoch,
                     desired_revision=excluded.desired_revision,updated_at=now()

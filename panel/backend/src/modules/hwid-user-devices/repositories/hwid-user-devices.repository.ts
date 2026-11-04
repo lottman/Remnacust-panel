@@ -177,7 +177,7 @@ export class HwidUserDevicesRepository implements Omit<
             .$executeRaw`SELECT pg_advisory_xact_lock(${HWID_LOCK_PREFIX + userId})`;
         const snapshots = devices.map(
             (device) =>
-                sql`(${device.hwid},${device.createdAt}::timestamp,${device.updatedAt}::timestamp)`,
+                sql`(${device.hwid},${device.createdAt}::timestamptz AT TIME ZONE 'UTC',${device.updatedAt}::timestamptz AT TIME ZONE 'UTC')`,
         );
         const result = await sql<{ hwid: string }>`WITH removed AS (
             DELETE FROM hwid_user_devices d USING (VALUES ${sql.join(snapshots)}) AS requested(hwid,created_at,updated_at)
@@ -247,7 +247,7 @@ export class HwidUserDevicesRepository implements Omit<
         await this.prisma.tx
             .$executeRaw`SELECT pg_advisory_xact_lock(${HWID_LOCK_PREFIX + userId})`;
         const result = await sql`UPDATE hwid_user_devices SET blocked=${blocked},
-            updated_at=GREATEST(date_trunc('milliseconds',clock_timestamp())::timestamp,updated_at+interval '1 millisecond')
+            updated_at=GREATEST(date_trunc('milliseconds',clock_timestamp() AT TIME ZONE 'UTC'),updated_at+interval '1 millisecond')
             WHERE hwid=${hwid} AND user_id=${userId} RETURNING hwid`.execute(this.qb.kysely);
         if (!result.rows.length) throw new NotFoundException('Device not found');
         await this.queueReconciliation(userId, hwid);

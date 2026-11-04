@@ -29,7 +29,7 @@ test('quota recovery HTTP operations require a current browser administrator and
     const roles=fixture.load('src/common/guards/roles/roles.guard.ts');
     const scopes=fixture.load('src/common/guards/scopes/scopes.guard.ts');
     const exception=fixture.load('src/common/exception/http-exeception-with-error-code.type.ts');
-    const filter=load(file('common/exception/http-exception.filter.ts'),{'./http-exeception-with-error-code.type':exception});
+    const filter=load(file('common/exception/http-exception.filter.ts'),{'./http-exeception-with-error-code.type':exception,'@common/utils/http-log-path':load(file('common/utils/http-log-path.ts'))});
     class Recovery{}
     class Receipts{}
     class Legacy{}

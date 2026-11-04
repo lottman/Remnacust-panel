@@ -11,8 +11,8 @@ export function hostUserAccessQuery(candidates: RawBuilder<unknown>, entitledOnl
             entitledOnly
                 ? sql``
                 : sql`AND NOT h.is_disabled
-          AND ((u.status='ACTIVE' AND u.expire_at>now() AND NOT h.only_when_inactive)
+          AND ((u.status='ACTIVE' AND u.expire_at>(now() AT TIME ZONE 'UTC') AND NOT h.only_when_inactive)
             OR (h.always_available AND (u.status IN ('EXPIRED','DISABLED','FROZEN','LIMITED')
-                OR (u.status='ACTIVE' AND u.expire_at<=now()))))`
+                OR (u.status='ACTIVE' AND u.expire_at<=(now() AT TIME ZONE 'UTC')))))`
         }`;
 }

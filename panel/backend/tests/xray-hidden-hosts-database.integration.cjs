@@ -22,6 +22,9 @@ const common = {
     '@common/utils/bounded-work-queue': source('common/utils/bounded-work-queue.ts'),
     '@common/utils/settle-concurrent': source('common/utils/settle-concurrent.ts'),
     './host-policy-scopes': source('common/host-policy/host-policy-scopes.ts'),
+    './autoselect-route-policy': source('common/host-policy/autoselect-route-policy.ts', {
+        './destination-rule': source('common/host-policy/destination-rule.ts'),
+    }),
     './quota-policy': source('common/host-policy/quota-policy.ts'),
     './destination-rule': source('common/host-policy/destination-rule.ts'),
 };

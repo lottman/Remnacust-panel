@@ -101,7 +101,7 @@ async function main() {
         plugins: [new CustomCamelCasePlugin({ excludeColumns: JSON_COLUMNS })],
     }) };
     const axios = {
-        hostPolicy: async () => ({ isOk: true, response: { version: 'xera-host-policy-v2', applied: true } }),
+        hostPolicy: async () => ({ isOk: true, response: { version: 'xera-host-policy-v2', supported: true, applied: true } }),
         addUser: async () => ({ isOk: true, response: { success: true } }),
         deleteUser: async () => ({ isOk: true, response: { success: true, deviceRevocationSupported: true } }),
     };

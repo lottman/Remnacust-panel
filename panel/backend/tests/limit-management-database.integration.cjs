@@ -118,7 +118,7 @@ async function main(){
   await act('PAUSE',{type:'SQUAD',squadType:'EXTERNAL',squadUuid:ES});
   assert.equal((await state('TAG','alpha',902)).paused,true);
   await act('RESUME',specific);assert.equal((await state('TAG','alpha',901)).paused,false);assert.equal((await state('TAG','alpha',902)).paused,true);
-  const policies=[];const policy=new HostPolicyService(db,{hostPolicy:async(node,payload)=>{if(payload)policies.push(payload);return {isOk:true,response:{version:'xera-host-policy-v2',applied:true}}}},require('./host-policy-cache.cjs')(),{getOrThrow:()=> 'test-only'},transactions);
+  const policies=[];const policy=new HostPolicyService(db,{hostPolicy:async(node,payload)=>{if(payload)policies.push(payload);return {isOk:true,response:{version:'xera-host-policy-v2',supported:true,applied:true}}}},require('./host-policy-cache.cjs')(),{getOrThrow:()=> 'test-only'},transactions);
   await policy.syncNode({uuid:'cccccccc-cccc-4ccc-8ccc-cccccccccccc'});
   assert.deepEqual(policies.at(-1).groups['tag:alpha'].blockedOwners,{'902':true});
   assert(policies.at(-1).hosts[H.replaceAll('-','')].groups.includes('tag:alpha'));

@@ -1,6 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 
+import { HostAccessService } from '@common/host-policy/host-access.service';
 import { fail, ok, TResult } from '@common/types';
 import { ERRORS } from '@libs/contracts/constants';
 
@@ -15,13 +16,19 @@ export class GetUserWithResolvedInboundsHandler implements IQueryHandler<
     TResult<UserWithResolvedInboundEntity>
 > {
     private readonly logger = new Logger(GetUserWithResolvedInboundsHandler.name);
-    constructor(private readonly usersRepository: UsersRepository) {}
+    constructor(
+        private readonly usersRepository: UsersRepository,
+        private readonly hostAccess: HostAccessService,
+    ) {}
 
     async execute(
         query: GetUserWithResolvedInboundsQuery,
     ): Promise<TResult<UserWithResolvedInboundEntity>> {
         try {
-            const user = await this.usersRepository.getUserWithResolvedInbounds(query.userId);
+            const user = await this.usersRepository.getUserWithResolvedInbounds(
+                query.userId,
+                await this.hostAccess.legacyInbounds(),
+            );
 
             if (!user) {
                 return fail(ERRORS.USER_NOT_FOUND);

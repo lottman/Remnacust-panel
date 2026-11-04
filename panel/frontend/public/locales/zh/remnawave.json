@@ -3927,7 +3927,10 @@
     "certificates": "无法准备配置证书。请检查 PEM 格式、大小以及证书和密钥文件的访问权限。",
     "users": "无法准备配置用户。请检查面板日志和数据库可用性。",
     "devices": "无法准备设备凭据。请检查面板日志和数据库可用性。",
-    "identities": "无法准备主机凭据。请检查面板日志和主机访问设置。"
+    "identities": "无法准备主机凭据。请检查面板日志和主机访问设置。",
+    "compatibilityTitle": "兼容模式",
+    "nativeCompatibility": "原生 Remnawave 节点仍可提供普通连接。该节点使用的入站不启用主机限额、目标规则和非活跃用户的特殊访问。这些功能需要兼容的 Node/Core。",
+    "legacyAutoselect": "旧版核心：自动选择使用池内服务器的普通凭据和限额，不支持接收主机的独立配额归属。请升级 Node/Core 并刷新客户端订阅以启用该功能。"
   },
   "connectionKeys": {
     "active": "启用",

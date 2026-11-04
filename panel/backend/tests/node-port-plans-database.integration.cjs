@@ -39,7 +39,7 @@ const queries={execute:async query=>{
     if(query instanceof preparedQuery.GetPreparedConfigWithUsersQuery){calls.push({profile:query.configProfileUuid,inbounds:query.activeInbounds.map(i=>i.uuid)});if(beforePrepared){const action=beforePrepared;beforePrepared=null;await action();}return preparer.execute(query);}
     throw Error('Unexpected query');
 }};
-const preparer=new GetPreparedConfigWithUsersHandler(users,queries,{configIdentities:async()=>[]},{enabled:false});preparer.logger={debug(){},error(error){console.error(error);}};
+const preparer=new GetPreparedConfigWithUsersHandler(users,queries,{legacyInbounds:async()=>new Set(),configIdentities:async()=>[]},{enabled:false});preparer.logger={debug(){},error(error){console.error(error);}};
 const planModel=source('modules/nodes/profile-port-plan.ts');
 const listenerModel=source('modules/nodes/port-listener-networks.ts',{'./profile-port-plan':planModel});
 const graphModel=source('modules/nodes/profile-graph-plan.ts',{'./profile-port-plan':planModel,'./port-listener-networks':listenerModel});

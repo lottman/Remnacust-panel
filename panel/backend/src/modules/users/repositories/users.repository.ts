@@ -19,6 +19,7 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import { TxKyselyService } from '@common/database/tx-kysely.service';
 import { getKyselyUuid, paginateQuery } from '@common/helpers/kysely';
+import { inboundAccessQuery } from '@common/host-policy/inbound-access-query';
 import { frozenDateEdit } from '@common/utils/frozen-user-lifetime';
 import { formatExecutionTime, getTime } from '@common/utils/get-elapsed-time';
 
@@ -779,6 +780,7 @@ export class UsersRepository {
 
     public async *getUsersForConfigStream(
         activeInbounds: ConfigProfileInboundEntity[],
+        legacyInboundIds: ReadonlySet<string> = new Set(),
     ): AsyncGenerator<UserForConfigEntity[]> {
         const BATCH_SIZE = 100_000;
         let lastTId: bigint | null = null;
@@ -799,11 +801,20 @@ export class UsersRepository {
                     'configProfileInbounds.uuid',
                     'internalSquadInbounds.inboundUuid',
                 )
-                .where(sql<boolean>`(
-                    (${sql.ref('users.status')} = 'ACTIVE' AND ${sql.ref('users.expireAt')} > now()
-                        AND NOT era_inbound_only_when_inactive(${sql.ref('users.id')}, ${sql.ref('configProfileInbounds.uuid')}))
-                    OR era_host_subscription_allowed(${sql.ref('users.id')}, ${sql.ref('configProfileInbounds.uuid')})
-                )`)
+                .innerJoin(
+                    sql<{ user_id: bigint; inbound_uuid: string }>`(${inboundAccessQuery(
+                        sql`SELECT DISTINCT sm.user_id,si.inbound_uuid
+                        FROM internal_squad_members sm JOIN internal_squad_inbounds si
+                          ON si.internal_squad_uuid=sm.internal_squad_uuid
+                        WHERE si.inbound_uuid=ANY(${activeInbounds.map((inbound) => inbound.uuid)}::uuid[])
+                          ${lastTId === null ? sql`` : sql`AND sm.user_id>${lastTId}`}`,
+                        [...legacyInboundIds],
+                    )})`.as('access'),
+                    (join) =>
+                        join
+                            .onRef('access.user_id', '=', 'users.id')
+                            .onRef('access.inbound_uuid', '=', 'configProfileInbounds.uuid'),
+                )
                 .$if(lastTId !== null, (qb) => qb.where('users.id', '>', lastTId!))
                 .where(
                     'internalSquadInbounds.inboundUuid',
@@ -1192,6 +1203,7 @@ export class UsersRepository {
 
     public async getUserWithResolvedInbounds(
         id: bigint,
+        legacyInboundIds: ReadonlySet<string> = new Set(),
     ): Promise<UserWithResolvedInboundEntity | null> {
         const result = await this.qb.kysely
             .selectFrom('users')
@@ -1233,7 +1245,8 @@ export class UsersRepository {
                         .where(sql<boolean>`(
                             (${sql.ref('users.status')} = 'ACTIVE' AND ${sql.ref('users.expireAt')} > now()
                                 AND NOT era_inbound_only_when_inactive(${sql.ref('users.id')}, ${sql.ref('configProfileInbounds.uuid')}))
-                            OR era_host_subscription_allowed(${sql.ref('users.id')}, ${sql.ref('configProfileInbounds.uuid')})
+                            OR (era_host_subscription_allowed(${sql.ref('users.id')}, ${sql.ref('configProfileInbounds.uuid')})
+                                ${legacyInboundIds.size ? sql`AND ${sql.ref('configProfileInbounds.uuid')} NOT IN (${sql.join([...legacyInboundIds].map((value) => sql`${value}::uuid`))})` : sql``})
                         )`),
                 )
                     .$notNull()
@@ -1251,6 +1264,7 @@ export class UsersRepository {
 
     public async getUsersWithResolvedInbounds(
         ids: bigint[],
+        legacyInboundIds: ReadonlySet<string> = new Set(),
     ): Promise<UserWithResolvedInboundEntity[]> {
         const result = await this.qb.kysely
             .selectFrom('users')
@@ -1292,7 +1306,8 @@ export class UsersRepository {
                         .where(sql<boolean>`(
                             (${sql.ref('users.status')} = 'ACTIVE' AND ${sql.ref('users.expireAt')} > now()
                                 AND NOT era_inbound_only_when_inactive(${sql.ref('users.id')}, ${sql.ref('configProfileInbounds.uuid')}))
-                            OR era_host_subscription_allowed(${sql.ref('users.id')}, ${sql.ref('configProfileInbounds.uuid')})
+                            OR (era_host_subscription_allowed(${sql.ref('users.id')}, ${sql.ref('configProfileInbounds.uuid')})
+                                ${legacyInboundIds.size ? sql`AND ${sql.ref('configProfileInbounds.uuid')} NOT IN (${sql.join([...legacyInboundIds].map((value) => sql`${value}::uuid`))})` : sql``})
                         )`),
                 )
                     .$notNull()

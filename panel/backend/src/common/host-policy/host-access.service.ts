@@ -60,6 +60,14 @@ export class HostAccessService {
         const state = await this.policies.scopes(user.id, undefined, false, { identities: false });
         const policyHosts = new Map(state.hosts.map((host) => [host.uuid, host]));
         const result = new Map<string, UserEntity | null>();
+        for (const host of hosts) {
+            if (
+                host.configProfileInboundUuid &&
+                state.legacyInboundIds?.has(host.configProfileInboundUuid) &&
+                (user.status !== 'ACTIVE' || user.expireAt <= new Date())
+            )
+                result.set(host.uuid, null);
+        }
         const protectedHosts = hosts.filter(
             (h) =>
                 h.configProfileInboundUuid &&
@@ -237,6 +245,13 @@ export class HostAccessService {
         const result = new Map<string, UserEntity | null>(sources.map((host) => [host.uuid, null]));
         if (!sources.length) return result;
         if (sources.length > 1000) throw new Error('Too many autoselect sources');
+        if (
+            (await this.policies.routedIdentitySupport([
+                ...sources.map((host) => host.uuid),
+                ownerUuid,
+            ])) === false
+        )
+            return this.prepare(user, sources);
         const context = user.hostIdentityContext ?? { hwid: null, parentVlessUuid: user.vlessUuid };
         const aliases = new Map(
             sources.map((host) => [host.uuid, autoselectRouteUuid(ownerUuid, host.uuid)]),
@@ -292,13 +307,25 @@ export class HostAccessService {
 
     async configIdentities(profileUuid: string) {
         const state = await this.policies.scopes(undefined, undefined, false, { profileUuid });
+        const compatibleHosts = new Set(
+            state.hosts
+                .filter((host) => !state.legacyInboundIds?.has(host.inboundUuid ?? ''))
+                .map((host) => host.uuid),
+        );
         return state.identities
-            .filter((k) => k.allowed && k.profileUuid === profileUuid)
+            .filter(
+                (k) =>
+                    k.allowed && k.profileUuid === profileUuid && compatibleHosts.has(k.hostUuid),
+            )
             .map((k) => ({
                 ...this.policies.keys(k),
                 id: this.policies.keys(k).username,
                 tags: [k.inboundTag],
             }));
+    }
+
+    async legacyInbounds(): Promise<Set<string>> {
+        return this.policies.legacyInbounds();
     }
 
     async synchronizeUser(
@@ -317,9 +344,11 @@ export class HostAccessService {
         requestedHosts?: readonly string[],
     ): Promise<HostSyncResult> {
         const state = await this.policies.scopes(userId);
+        const hostsById = new Map(state.hosts.map((host) => [host.uuid, host]));
         const identities = state.identities.filter(
             (k) =>
                 k.userId === userId.toString() &&
+                !state.legacyInboundIds?.has(hostsById.get(k.hostUuid)?.inboundUuid ?? '') &&
                 (!requestedHosts || requestedHosts.includes(k.hostUuid)) &&
                 (hwid === undefined ||
                     k.hwid === hwid ||
@@ -330,7 +359,6 @@ export class HostAccessService {
             .selectFrom('nodes')
             .select(['uuid', 'address', 'port', 'proxyUrl', 'isConnected', 'isDisabled'])
             .execute();
-        const hostsById = new Map(state.hosts.map((host) => [host.uuid, host]));
         const results = await settleConcurrent(nodes, 8, async (node) => {
             let success = true;
             const readyHosts = new Set<string>();

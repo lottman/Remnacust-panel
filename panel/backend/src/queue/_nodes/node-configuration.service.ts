@@ -255,6 +255,34 @@ export class NodeConfigurationService {
                 );
             }
 
+            await lease?.assert();
+            const policy = await syncHostPolicyForStart(
+                node,
+                this.hostPolicies,
+                this.axios,
+                this.rawCacheService,
+            );
+            await lease?.assert();
+            if (!policy.ready) {
+                if (lease) {
+                    confirmedRunning = policy.running;
+                    throw new Error(policy.message);
+                }
+                await executeCommand(
+                    new UpdateNodeCommand({
+                        uuid: node.uuid,
+                        isConnected: policy.running,
+                        isConnecting: false,
+                        lastStatusMessage: policy.message,
+                        lastStatusChange: new Date(),
+                    }),
+                );
+                this.logger.warn(
+                    `Node ${node.uuid}: host policy pending; running=${policy.running}`,
+                );
+                return;
+            }
+
             const startTime = getTime();
             if (!node.activeConfigProfileUuid)
                 throw new Error('No active configuration profile is assigned');
@@ -288,34 +316,6 @@ export class NodeConfigurationService {
             );
 
             const reqStartTime = getTime();
-
-            await lease?.assert();
-            const policy = await syncHostPolicyForStart(
-                node,
-                this.hostPolicies,
-                this.axios,
-                this.rawCacheService,
-            );
-            await lease?.assert();
-            if (!policy.ready) {
-                if (lease) {
-                    confirmedRunning = policy.running;
-                    throw new Error(policy.message);
-                }
-                await executeCommand(
-                    new UpdateNodeCommand({
-                        uuid: node.uuid,
-                        isConnected: policy.running,
-                        isConnecting: false,
-                        lastStatusMessage: policy.message,
-                        lastStatusChange: new Date(),
-                    }),
-                );
-                this.logger.warn(
-                    `Node ${node.uuid}: host policy pending; running=${policy.running}`,
-                );
-                return;
-            }
 
             await lease?.assert();
             startRequested = true;
@@ -433,7 +433,12 @@ export class NodeConfigurationService {
                 new UpdateNodeCommand({
                     uuid: node.uuid,
                     isConnected: nodeResponse.isStarted,
-                    lastStatusMessage: nodeResponse.error ?? null,
+                    lastStatusMessage:
+                        nodeResponse.error ??
+                        (await this.rawCacheService.get<string>(
+                            `remnacust:node-compatibility:${node.uuid}`,
+                        )) ??
+                        null,
                     lastStatusChange: new Date(),
                     isConnecting: false,
                 }),

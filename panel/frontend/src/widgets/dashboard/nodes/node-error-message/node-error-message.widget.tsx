@@ -6,7 +6,11 @@ import { ErrorMessageBlock } from '@shared/ui/error-message-block'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SectionCard } from '@shared/ui/section-card'
 import { getNodeErrorMessage } from '@shared/utils/node-error-message'
-import { nodeNeedsCustomUpgrade, nodePolicyIsPending } from '@shared/utils/node-policy-status'
+import {
+    nodeNeedsCustomUpgrade,
+    nodePolicyIsPending,
+    nodeUsesCompatibility
+} from '@shared/utils/node-policy-status'
 
 import { IProps } from './interfaces'
 
@@ -20,41 +24,60 @@ export const NodeErrorMessageWidget = (props: IProps) => {
     }
     const policyPending = nodePolicyIsPending(node.lastStatusMessage)
     const upgradeRequired = nodeNeedsCustomUpgrade(node.lastStatusMessage)
+    const compatibility = nodeUsesCompatibility(node.lastStatusMessage)
     const explanation = getNodeErrorMessage(node.lastStatusMessage, t)
 
     return (
         <SectionCard.Root>
             <SectionCard.Section>
                 <BaseOverlayHeader
-                    iconColor={upgradeRequired ? 'violet' : policyPending ? 'yellow' : 'red'}
+                    iconColor={
+                        compatibility
+                            ? 'blue'
+                            : upgradeRequired
+                              ? 'violet'
+                              : policyPending
+                                ? 'yellow'
+                                : 'red'
+                    }
                     IconComponent={TbAlertTriangle}
                     iconVariant="soft"
                     title={t(
-                        upgradeRequired
-                            ? 'xera-node-health.upgrade-required-title'
-                            : policyPending
-                              ? 'xera-node-health.policy-pending-title'
-                              : 'common.message.last-error-message'
+                        compatibility
+                            ? 'nodeErrors.compatibilityTitle'
+                            : upgradeRequired
+                              ? 'xera-node-health.upgrade-required-title'
+                              : policyPending
+                                ? 'xera-node-health.policy-pending-title'
+                                : 'common.message.last-error-message'
                     )}
                     titleOrder={5}
                 />
             </SectionCard.Section>
 
             <SectionCard.Section>
-                {explanation !== node.lastStatusMessage && (
+                {!compatibility && explanation !== node.lastStatusMessage && (
                     <Text size="sm" mb="sm">
                         {explanation}
                     </Text>
                 )}
                 <ErrorMessageBlock
                     message={
-                        upgradeRequired
-                            ? t('xera-node-health.upgrade-required-message')
-                            : policyPending
-                              ? t('xera-node-health.policy-pending-message')
-                              : node.lastStatusMessage
+                        compatibility
+                            ? explanation
+                            : upgradeRequired
+                              ? t('xera-node-health.upgrade-required-message')
+                              : policyPending
+                                ? t('xera-node-health.policy-pending-message')
+                                : node.lastStatusMessage
                     }
-                    tone={upgradeRequired ? 'upgrade' : policyPending ? 'warning' : 'error'}
+                    tone={
+                        upgradeRequired
+                            ? 'upgrade'
+                            : compatibility || policyPending
+                              ? 'warning'
+                              : 'error'
+                    }
                 />
             </SectionCard.Section>
         </SectionCard.Root>

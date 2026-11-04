@@ -56,6 +56,7 @@ export type PolicySnapshot = {
     groups: PolicyGroup[];
     identities: PolicyIdentity[];
     protectedInboundIds: Set<string>;
+    legacyInboundIds?: Set<string>;
     users?: PolicyUser[];
     consumptionMultiplier?: string;
 };

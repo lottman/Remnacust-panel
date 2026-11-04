@@ -906,7 +906,7 @@ test('failed host policy keeps a confirmed running node online and never sends u
     assert.equal(f.nodes[0].isConnected,true);assert.equal(f.nodes[0].isConnecting,false);
     assert.match(f.nodes[0].lastStatusMessage,/^\[HOST_POLICY_UPGRADE_REQUIRED\]/);
     assert(!f.nodes[0].lastStatusMessage.includes('secret'));
-    assert.equal(f.starts.length,0);assert.equal(f.configReads(),1);
+    assert.equal(f.starts.length,0);assert.equal(f.configReads(),0,'A rejected preflight must not build and enumerate every user');
     assert(f.values.has('remnacust:host-policy:retry:pending'));
 });
 
@@ -923,6 +923,14 @@ test('bulk startup isolates a policy failure without changing its config or bloc
     assert.equal(f.nodes[0].isConnected,true);assert.match(f.nodes[0].lastStatusMessage,/HOST_POLICY_UPGRADE_REQUIRED/);
     assert.equal(f.starts.length,1);assert.equal(f.starts[0].payload.internals.metadata.uuid,'ordinary');
     assert.equal(f.nodes[1].lastStatusMessage,null);
+});
+
+test('bulk startup rejects an entirely blocked cohort before enumerating profile users',async()=>{
+    const f=pendingFixture();f.failures.add('ordinary');
+    await f.bulk.process({name:'start-profile',data:{profileUuid:'profile'}});
+    assert.equal(f.configReads(),0);
+    assert.equal(f.starts.length,0);
+    assert(f.nodes.every(node=>node.isConnected && !node.isConnecting));
 });
 
 test('health retries pending configuration at its deadline and clears the warning after successful apply',async()=>{

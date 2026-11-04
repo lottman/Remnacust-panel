@@ -27,6 +27,7 @@ import {
     PolicyUser,
 } from './host-policy.types';
 import { identityAccessQuery } from './identity-access-query';
+import { legacyAutoselectPolicy } from './legacy-autoselect-policy';
 import { observeQuotaCheckpoint, renderQuotaCheckpoint } from './quota-journal-checkpoint';
 import {
     quotaNodeMode,
@@ -44,6 +45,8 @@ import {
 
 export const HOST_POLICY_VERSION = 'xera-host-policy-v2';
 type HostPolicyCapabilities = {
+    checkedAt?: number;
+    native?: boolean;
     version?: string;
     supported?: boolean;
     destinationRulesSupported?: boolean;
@@ -76,9 +79,19 @@ export class HostPolicyService {
     private connectedSynchronization: Promise<void> | null = null;
     private synchronizeAgain = false;
     private readonly nodeWork = new BoundedWorkQueue(3, 256);
+    private legacyInventory?: { until: number; inbounds: Set<string>; routed: Set<string> };
+    private legacyInventoryPending?: Promise<Set<string>>;
     private readonly nodeSynchronizations = new Map<
         string,
-        { pending: boolean; promise: Promise<void> }
+        {
+            requested: number;
+            queued: boolean;
+            waiters: {
+                generation: number;
+                resolve: () => void;
+                reject: (error: unknown) => void;
+            }[];
+        }
     >();
     constructor(
         private readonly db: TxKyselyService,
@@ -98,6 +111,47 @@ export class HostPolicyService {
             row.parent,
             row.quotaHostUuid ?? row.hostUuid,
         );
+    }
+    legacyInbounds(): Promise<Set<string>> {
+        if (this.legacyInventory && this.legacyInventory.until > Date.now())
+            return Promise.resolve(this.legacyInventory.inbounds);
+        if (this.legacyInventoryPending) return this.legacyInventoryPending;
+        this.legacyInventoryPending = Promise.resolve()
+            .then(async () => {
+                const nodes = await sql<
+                    INodeConnectionOpts & { uuid: string; inbounds: string[] }
+                >`SELECT n.uuid,n.address,n.port,n.proxy_url AS "proxyUrl",
+                COALESCE(array_agg(b.config_profile_inbound_uuid) FILTER(WHERE b.config_profile_inbound_uuid IS NOT NULL),'{}'::uuid[]) AS inbounds
+                FROM nodes n LEFT JOIN config_profile_inbounds_to_nodes b ON b.node_uuid=n.uuid
+                WHERE NOT n.is_disabled GROUP BY n.uuid`.execute(this.db.kysely);
+                const inbounds = new Set<string>();
+                const routed = new Set<string>();
+                await Promise.all(
+                    nodes.rows.map(async (node) => {
+                        const connection = createHash('sha256')
+                            .update(JSON.stringify([node.address, node.port, node.proxyUrl]))
+                            .digest('hex');
+                        const capability = await this.cache.get<HostPolicyCapabilities>(
+                            `xera:host-policy:capabilities:v2:${node.uuid}:${connection}`,
+                        );
+                        const native = capability?.native === true;
+                        if (native) for (const inbound of node.inbounds) inbounds.add(inbound);
+                        if (
+                            native ||
+                            (capability?.version === HOST_POLICY_VERSION &&
+                                capability.supported === true &&
+                                capability.routedDeviceSpeedLimitsSupported !== true)
+                        )
+                            for (const inbound of node.inbounds) routed.add(inbound);
+                    }),
+                );
+                this.legacyInventory = { until: Date.now() + 1000, inbounds, routed };
+                return inbounds;
+            })
+            .finally(() => {
+                this.legacyInventoryPending = undefined;
+            });
+        return this.legacyInventoryPending;
     }
     async scopes(
         userId?: bigint,
@@ -149,8 +203,23 @@ export class HostPolicyService {
                 this.db.kysely,
             ),
         ]);
-        const policyHosts = attachAutoselectRoutes(hosts.rows, routes.rows);
-        const groups = buildPolicyGroups(policyHosts, tags.rows);
+        const legacyInboundIds = await this.legacyInbounds();
+        const legacyRouteInbounds = this.legacyInventory?.routed ?? legacyInboundIds;
+        const hostById = new Map(hosts.rows.map((host) => [host.uuid, host]));
+        const policyHosts = attachAutoselectRoutes(
+            hosts.rows,
+            routes.rows.filter(
+                (route) =>
+                    !legacyRouteInbounds.has(hostById.get(route.ownerUuid)?.inboundUuid ?? '') &&
+                    !legacyRouteInbounds.has(
+                        hostById.get(route.sourceUuid ?? '')?.inboundUuid ?? '',
+                    ),
+            ),
+        );
+        const groups = buildPolicyGroups(
+            policyHosts.filter((host) => !legacyInboundIds.has(host.inboundUuid ?? '')),
+            tags.rows,
+        );
         const protectedInboundIds = new Set(
             hosts.rows
                 .filter(
@@ -170,13 +239,16 @@ export class HostPolicyService {
                             h.useTagTotalSpeedLimit !== false) &&
                             tags.rows.some((t) => h.tags.includes(t.tag))),
                 )
-                .flatMap((h) => (h.inboundUuid ? [h.inboundUuid] : [])),
+                .flatMap((h) =>
+                    h.inboundUuid && !legacyInboundIds.has(h.inboundUuid) ? [h.inboundUuid] : [],
+                ),
         );
         const snapshot: PolicySnapshot = {
             hosts: policyHosts,
             groups,
             identities: identities.rows,
             protectedInboundIds,
+            legacyInboundIds,
         };
         if (userQuota) {
             if (!nodeUuid) throw new Error('Global quota snapshot requires a node');
@@ -205,59 +277,121 @@ export class HostPolicyService {
         }
         return snapshot;
     }
+    async routedIdentitySupport(hostUuids: string[]): Promise<boolean | undefined> {
+        if (!hostUuids.length) return undefined;
+        const nodes = await sql<
+            INodeConnectionOpts & { uuid: string }
+        >`SELECT DISTINCT n.uuid,n.address,n.port,n.proxy_url AS "proxyUrl"
+            FROM nodes n JOIN config_profile_inbounds_to_nodes b ON b.node_uuid=n.uuid
+            JOIN hosts h ON h.config_profile_inbound_uuid=b.config_profile_inbound_uuid
+            WHERE h.uuid=ANY(${hostUuids}::uuid[]) AND NOT n.is_disabled
+              AND (NOT EXISTS(SELECT 1 FROM hosts_to_nodes hn WHERE hn.host_uuid=h.uuid)
+                OR EXISTS(SELECT 1 FROM hosts_to_nodes hn WHERE hn.host_uuid=h.uuid AND hn.node_uuid=n.uuid))`.execute(
+            this.db.kysely,
+        );
+        const values = await Promise.all(
+            nodes.rows.map(async (node) => {
+                const connection = createHash('sha256')
+                    .update(JSON.stringify([node.address, node.port, node.proxyUrl]))
+                    .digest('hex');
+                return this.cache.get<HostPolicyCapabilities>(
+                    `xera:host-policy:capabilities:v2:${node.uuid}:${connection}`,
+                );
+            }),
+        );
+        if (
+            values.some(
+                (value) =>
+                    value?.native ||
+                    (value?.version === HOST_POLICY_VERSION &&
+                        value.supported === true &&
+                        value.routedDeviceSpeedLimitsSupported !== true),
+            )
+        )
+            return false;
+        return values.length &&
+            values.every(
+                (value) =>
+                    value?.supported === true && value.routedDeviceSpeedLimitsSupported === true,
+            )
+            ? true
+            : undefined;
+    }
     syncNode(node: INodeConnectionOpts & { uuid: string }): Promise<void> {
         if (this.transactions.isTransactionActive())
             return Promise.reject(
                 new Error('Host policy synchronization must run after SQL commit'),
             );
         const key = JSON.stringify([node.uuid, node.address, node.port, node.proxyUrl]);
-        const current = this.nodeSynchronizations.get(key);
-        if (current) {
-            current.pending = true;
-            return current.promise;
+        let entry = this.nodeSynchronizations.get(key);
+        if (!entry) {
+            entry = { requested: 0, queued: false, waiters: [] };
+            this.nodeSynchronizations.set(key, entry);
         }
-        const entry = { pending: true, promise: Promise.resolve() };
-        const queued = this.nodeWork.submit(() =>
-            Promise.resolve().then(async () => {
-                try {
-                    do {
-                        entry.pending = false;
-                        const deadline = Date.now() + 8000;
-                        for (;;) {
-                            try {
-                                await this.applyNodePolicy(node);
-                                break;
-                            } catch (error) {
-                                if (
-                                    !error ||
-                                    typeof error !== 'object' ||
-                                    !('code' in error) ||
-                                    error.code !== 'HOST_POLICY_BUSY' ||
-                                    Date.now() >= deadline
-                                )
-                                    throw error;
-                                await new Promise((resolve) =>
-                                    setTimeout(resolve, 100 + Math.floor(Math.random() * 100)),
-                                );
-                            }
-                        }
-                    } while (entry.pending);
-                } finally {
-                    if (this.nodeSynchronizations.get(key) === entry)
-                        this.nodeSynchronizations.delete(key);
-                }
-            }),
-        );
-        if (!queued)
+        if (entry.waiters.length >= 1000)
             return Promise.reject(
-                Object.assign(
-                    new Error('Host policy work queue is full; synchronization will retry'),
-                    { code: 'HOST_POLICY_BUSY' },
-                ),
+                Object.assign(new Error('Host policy waiters are full'), {
+                    code: 'HOST_POLICY_BUSY',
+                }),
             );
-        entry.promise = queued;
-        this.nodeSynchronizations.set(key, entry);
-        return entry.promise;
+        const current = entry;
+        const promise = new Promise<void>((resolve, reject) => {
+            current.waiters.push({ generation: ++current.requested, resolve, reject });
+        });
+        const schedule = () => {
+            if (current.queued) return;
+            current.queued = true;
+            const queued = this.nodeWork.submit(() =>
+                Promise.resolve().then(async () => {
+                    const target = current.requested;
+                    const deadline = Date.now() + 8000;
+                    for (;;) {
+                        try {
+                            await this.applyNodePolicy(node);
+                            return target;
+                        } catch (error) {
+                            if (
+                                !error ||
+                                typeof error !== 'object' ||
+                                !('code' in error) ||
+                                error.code !== 'HOST_POLICY_BUSY' ||
+                                Date.now() >= deadline
+                            )
+                                throw error;
+                            await new Promise((resolve) =>
+                                setTimeout(resolve, 100 + Math.floor(Math.random() * 100)),
+                            );
+                        }
+                    }
+                }),
+            );
+            const fail = (error: unknown) => {
+                this.nodeSynchronizations.delete(key);
+                for (const waiter of current.waiters.splice(0)) waiter.reject(error);
+            };
+            if (!queued) {
+                fail(
+                    Object.assign(
+                        new Error('Host policy work queue is full; synchronization will retry'),
+                        { code: 'HOST_POLICY_BUSY' },
+                    ),
+                );
+                return;
+            }
+            void queued.then((target) => {
+                const completed = current.waiters.filter((waiter) => waiter.generation <= target);
+                current.waiters = current.waiters.filter((waiter) => waiter.generation > target);
+                if (current.waiters.length) {
+                    queueMicrotask(() => {
+                        current.queued = false;
+                        schedule();
+                    });
+                } else this.nodeSynchronizations.delete(key);
+                for (const waiter of completed) waiter.resolve();
+            }, fail);
+        };
+        schedule();
+        return promise;
     }
     private async applyNodePolicy(
         node: INodeConnectionOpts & { uuid: string },
@@ -291,16 +425,21 @@ export class HostPolicyService {
             let quotaSource = '';
             let nativeNode = false;
             let capabilities = await this.cache.get<HostPolicyCapabilities>(capabilityKey);
+            nativeNode = capabilities?.native === true;
             if (
                 quotaMode ||
                 !capabilities ||
                 typeof capabilities !== 'object' ||
-                Array.isArray(capabilities)
+                Array.isArray(capabilities) ||
+                typeof capabilities.checkedAt !== 'number' ||
+                Date.now() - capabilities.checkedAt >= 60000
             ) {
                 const status = await sendPolicy<HostPolicyCapabilities>();
                 if (status.isOk) {
+                    nativeNode = false;
                     const value = status.response;
                     capabilities = {
+                        checkedAt: Date.now(),
                         version: value.version,
                         supported: value.supported,
                         destinationRulesSupported: value.destinationRulesSupported,
@@ -327,15 +466,33 @@ export class HostPolicyService {
                         quotaRecoveryPolicyBindingsSupported:
                             value.quotaRecoveryPolicyBindingsSupported,
                     };
-                    await this.cache.set(capabilityKey, capabilities, 60);
+                    await this.cache.set(capabilityKey, capabilities, 86400);
+                    await this.legacyInventoryPending;
+                    this.legacyInventory = undefined;
                 } else if (['NODE_HTTP_404', 'NODE_HTTP_405'].includes(status.code ?? '')) {
                     const health = await this.axios.getNodeHealth(node);
                     nativeNode =
                         health.isOk &&
                         /^v?\d+\.\d+\.\d+(?:[-+][\w.-]+)?$/.test(health.response.nodeVersion) &&
                         !health.response.nodeVersion.toLowerCase().includes('remnacust');
+                    if (nativeNode) {
+                        capabilities = { native: true, supported: false, checkedAt: Date.now() };
+                        await this.cache.set(capabilityKey, capabilities, 86400);
+                        await this.legacyInventoryPending;
+                        this.legacyInventory = undefined;
+                    }
                 }
             }
+            await this.cache.set(
+                `remnacust:node-compatibility:${node.uuid}`,
+                nativeNode
+                    ? '[NODE_NATIVE_COMPATIBILITY]'
+                    : capabilities?.supported === true &&
+                        capabilities.routedDeviceSpeedLimitsSupported !== true
+                      ? '[NODE_LEGACY_AUTOSELECT]'
+                      : null,
+                120,
+            );
             if (capabilities?.offlineReserves && !quotaMode)
                 throw Object.assign(
                     new Error(
@@ -375,7 +532,15 @@ export class HostPolicyService {
                     }
                     return result.response;
                 } catch (error) {
-                    await this.cache.del(capabilityKey).catch(() => undefined);
+                    await (
+                        capabilities && typeof capabilities === 'object'
+                            ? this.cache.set(
+                                  capabilityKey,
+                                  { ...capabilities, checkedAt: 0 },
+                                  86400,
+                              )
+                            : this.cache.del(capabilityKey)
+                    ).catch(() => undefined);
                     throw error;
                 }
             };
@@ -440,6 +605,8 @@ export class HostPolicyService {
                     let state = await this.scopes(undefined, node.uuid, quotaMode?.userQuota, {
                         identities: !deferredIdentities,
                     });
+                    if (!capabilities?.routedDeviceSpeedLimitsSupported)
+                        state = legacyAutoselectPolicy(state);
                     const protectedHosts = state.hosts.filter(
                         (h) =>
                             h.inboundUuid &&
@@ -502,33 +669,45 @@ export class HostPolicyService {
                             `Node ${node.uuid}: update node and core before applying device speed limits`,
                         );
                     }
-                    if (
-                        !capabilities?.routedDeviceSpeedLimitsSupported &&
-                        protectedHosts.some((host) => host.quotaHostUuid)
-                    )
-                        throw new Error(
-                            `Node ${node.uuid}: update node and core before applying autoselect quota ownership`,
-                        );
-                    if (deferredIdentities)
+                    if (deferredIdentities) {
                         state = await this.scopes(undefined, node.uuid, quotaMode?.userQuota);
+                        if (!capabilities?.routedDeviceSpeedLimitsSupported)
+                            state = legacyAutoselectPolicy(state);
+                    }
+                    const nodeGroups = state.groups.filter((g) => g.nodeUuids.includes(node.uuid));
+                    const scopeKeys = nodeGroups
+                        .filter((g) => g.key.startsWith('host:') || g.key.startsWith('tag:'))
+                        .map((g) => g.key);
+                    const controls = scopeKeys.length
+                        ? await sql<{ scope: string; userId: string | null }>`
+                            SELECT lower(kind)||':'||key AS scope,NULL::text AS "userId"
+                            FROM xera_limit_scopes
+                            WHERE lower(kind)||':'||key=ANY(${scopeKeys}::text[]) AND paused
+                            UNION ALL
+                            SELECT lower(kind)||':'||key AS scope,user_id::text AS "userId"
+                            FROM xera_limit_user_adjustments
+                            WHERE lower(kind)||':'||key=ANY(${scopeKeys}::text[]) AND paused
+                        `.execute(this.db.kysely)
+                        : { rows: [] };
+                    const pausedScopes = new Set<string>();
+                    const pausedUsers = new Map<string, string[]>();
+                    for (const row of controls.rows) {
+                        if (row.userId === null) pausedScopes.add(row.scope);
+                        else
+                            pausedUsers.set(row.scope, [
+                                ...(pausedUsers.get(row.scope) ?? []),
+                                row.userId,
+                            ]);
+                    }
                     const groups: Record<string, unknown> = {};
-                    for (const group of state.groups.filter((g) =>
-                        g.nodeUuids.includes(node.uuid),
-                    )) {
+                    for (const group of nodeGroups) {
                         const kind = group.key.startsWith('host:')
                             ? 'HOST'
                             : group.key.startsWith('tag:')
                               ? 'TAG'
                               : null;
                         const key = kind === 'HOST' ? group.key.slice(5) : group.key.slice(4);
-                        const control = kind
-                            ? await sql<{
-                                  paused: boolean;
-                              }>`SELECT paused FROM xera_limit_scopes WHERE kind=${kind} AND key=${key}`.execute(
-                                  this.db.kysely,
-                              )
-                            : null;
-                        let blockAll = control?.rows[0]?.paused ?? false;
+                        let blockAll = pausedScopes.has(group.key);
                         let blockedOwners: Record<string, boolean> = {};
                         if (BigInt(group.userLimit ?? 0) > 0n) {
                             const usage = await sql<{
@@ -560,14 +739,8 @@ export class HostPolicyService {
                             );
                             blockAll ||= fresh.some((v) => !v);
                         }
-                        if (kind) {
-                            const paused = await sql<{
-                                userId: string;
-                            }>`SELECT user_id::text AS "userId" FROM xera_limit_user_adjustments WHERE kind=${kind} AND key=${key} AND paused`.execute(
-                                this.db.kysely,
-                            );
-                            for (const row of paused.rows) blockedOwners[row.userId] = true;
-                        }
+                        for (const userId of pausedUsers.get(group.key) ?? [])
+                            blockedOwners[userId] = true;
                         const divide = (speed: number | null) =>
                             speed
                                 ? Math.max(1, Math.floor((speed * 125000) / group.nodeUuids.length))

@@ -159,6 +159,8 @@ async function main() {
             { getOrThrow: () => 'test-secret' },
             transactions,
         );
+        await require('./legacy-node-database.cjs')({ prisma, service,
+            access: new HostAccessService(db, service, axios), cache, axios, calls });
         let releaseLock, locked;
         const lockHeld = new Promise(resolve => { locked = resolve; });
         const lockRelease = new Promise(resolve => { releaseLock = resolve; });

@@ -121,7 +121,7 @@ jobs:
       - name: Check hidden connection key visibility with PostgreSQL
         run: node tests/subpage-config-visibility.database.integration.cjs
       - name: Compare batch identity authorization against scalar access rules with PostgreSQL
-        run: node tests/identity-access-database.integration.cjs
+        run: node tests/identity-access-database.integration.cjs && node tests/inbound-access-database.integration.cjs && node tests/subscription-load-database.integration.cjs
       - name: Check template history, restore and upgrade preservation with PostgreSQL
         run: node tests/template-history-database.integration.cjs
         env:

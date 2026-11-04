@@ -153,6 +153,44 @@ test('a large node fleet cannot occupy every database connection with policy wor
     assert.equal(service.nodeSynchronizations.size, 0);
 });
 
+test('repeated hot-node mutations yield queue slots to the rest of a 32-node fleet', async () => {
+    const { service, node } = fixture();
+    const events = [], followups = [];
+    let release;
+    const gate = new Promise(resolve => { release = resolve; });
+    service.applyNodePolicy = async target => {
+        events.push(target.uuid);
+        if (events.length <= 3) await gate;
+    };
+    const first = Array.from({ length: 3 }, (_, i) => service.syncNode({ ...node, uuid: 'hot-' + i }));
+    await new Promise(resolve => setImmediate(resolve));
+    const cold = Array.from({ length: 29 }, (_, i) => service.syncNode({ ...node, uuid: 'cold-' + i }));
+    for (let round = 0; round < 100; round++)
+        for (let i = 0; i < 3; i++) followups.push(service.syncNode({ ...node, uuid: 'hot-' + i }));
+    release();
+    await Promise.all([...first, ...cold, ...followups]);
+    assert.equal(events.length, 35);
+    assert(events.slice(3, 32).every(id => id.startsWith('cold-')),
+        'a follow-up must join the FIFO tail instead of retaining one of the three active slots');
+    assert.equal(service.nodeSynchronizations.size, 0);
+});
+
+test('a successful caller does not wait indefinitely for later mutations', async () => {
+    const { service, node } = fixture();
+    let releaseFirst, releaseSecond, passes = 0;
+    const firstGate = new Promise(resolve => { releaseFirst = resolve; });
+    const secondGate = new Promise(resolve => { releaseSecond = resolve; });
+    service.applyNodePolicy = async () => { if (++passes === 1) await firstGate; else await secondGate; };
+    const first = service.syncNode(node);
+    await new Promise(resolve => setImmediate(resolve));
+    const second = service.syncNode(node);
+    releaseFirst();
+    await Promise.race([first, new Promise((_, reject) => setTimeout(() => reject(Error('first caller starved')), 2000))]);
+    releaseSecond();
+    await second;
+    assert.equal(passes, 2);
+});
+
 test('native Remnawave nodes accept basic configurations but never bypass saved host restrictions', async () => {
     for (const restricted of [false, true]) {
         const { service, node, state } = fixture();

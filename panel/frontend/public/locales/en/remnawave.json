@@ -3927,7 +3927,10 @@
     "certificates": "Profile certificates could not be prepared. Check PEM format, size and access to certificate and key files.",
     "users": "Profile users could not be prepared. Check the panel log and database availability.",
     "devices": "Device credentials could not be prepared. Check the panel log and database availability.",
-    "identities": "Host credentials could not be prepared. Check the panel log and host access settings."
+    "identities": "Host credentials could not be prepared. Check the panel log and host access settings.",
+    "compatibilityTitle": "Compatibility mode",
+    "nativeCompatibility": "Native Remnawave node: ordinary connections remain available. Host limits, destination rules and special inactive-user access are disabled on inbounds used by this node. Compatible Node/Core are required for those features.",
+    "legacyAutoselect": "Legacy core: autoselect uses ordinary pool-server credentials and limits. Separate recipient quota ownership is unavailable. Upgrade Node/Core and refresh the client subscription to enable it."
   },
   "connectionKeys": {
     "active": "Active",

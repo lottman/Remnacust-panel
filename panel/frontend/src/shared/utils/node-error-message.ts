@@ -12,6 +12,8 @@ const stages = {
 
 /** Translate known diagnostics; keep unknown messages available for investigation. */
 export function getNodeErrorMessage(message: string, t: TFunction): string {
+    if (message === '[NODE_NATIVE_COMPATIBILITY]') return t('nodeErrors.nativeCompatibility')
+    if (message === '[NODE_LEGACY_AUTOSELECT]') return t('nodeErrors.legacyAutoselect')
     const preparation = /^Node configuration preparation failed \[([a-z]+)\]$/.exec(message)
     if (preparation && Object.hasOwn(stages, preparation[1])) {
         return t(stages[preparation[1] as keyof typeof stages])

@@ -71,7 +71,11 @@ export class GetPreparedConfigWithUsersHandler implements IQueryHandler<
             config.leaveInbounds(activeInboundsTags);
 
             stage = 'users';
-            const usersStream = this.usersRepository.getUsersForConfigStream(activeInbounds);
+            const legacyInboundIds = await this.hostAccess.legacyInbounds();
+            const usersStream = this.usersRepository.getUsersForConfigStream(
+                activeInbounds,
+                legacyInboundIds,
+            );
 
             for await (const userBatch of usersStream) {
                 if (!this.deviceAccess.enabled) {

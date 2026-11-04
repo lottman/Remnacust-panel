@@ -107,10 +107,43 @@ export class StartAllNodesByProfileQueueProcessor extends WorkerHost {
                     node.activeConfigProfileUuid === payload.profileUuid,
             );
 
+            const eligibleNodes = new Set<string>();
+            await pMap(
+                legacyNodes,
+                async (node) => {
+                    if (!node.activeInbounds.length) return;
+                    const policy = await syncHostPolicyForStart(
+                        node,
+                        this.hostPolicies,
+                        this.axios,
+                        this.rawCacheService,
+                    );
+                    if (!policy.ready) {
+                        await this.commandBus.execute(
+                            new UpdateNodeCommand({
+                                uuid: node.uuid,
+                                isConnected: policy.running,
+                                isConnecting: false,
+                                lastStatusChange: new Date(),
+                                lastStatusMessage: policy.message,
+                            }),
+                        );
+                        this.logger.warn(
+                            `Node ${node.uuid}: host policy pending; running=${policy.running}`,
+                        );
+                        return;
+                    }
+
+                    eligibleNodes.add(node.uuid);
+                },
+                { concurrency: 3 },
+            );
+
             const activeInboundsOnNodes = new Map<string, ConfigProfileInboundEntity>();
             const activeNodeTags = new Map<string, string[]>();
 
             for (const node of legacyNodes) {
+                if (node.activeInbounds.length && !eligibleNodes.has(node.uuid)) continue;
                 await this.rawCacheService.delMany([
                     CACHE_KEYS.NODE_SYSTEM_STATS(node.uuid),
                     CACHE_KEYS.NODE_USERS_ONLINE(node.uuid),
@@ -312,28 +345,6 @@ export class StartAllNodesByProfileQueueProcessor extends WorkerHost {
                     (inbound) => activeNodeInboundsTags.has(inbound.tag),
                 );
 
-                const policy = await syncHostPolicyForStart(
-                    node,
-                    this.hostPolicies,
-                    this.axios,
-                    this.rawCacheService,
-                );
-                if (!policy.ready) {
-                    await this.commandBus.execute(
-                        new UpdateNodeCommand({
-                            uuid: node.uuid,
-                            isConnected: policy.running,
-                            isConnecting: false,
-                            lastStatusChange: new Date(),
-                            lastStatusMessage: policy.message,
-                        }),
-                    );
-                    this.logger.warn(
-                        `Node ${node.uuid}: host policy pending; running=${policy.running}`,
-                    );
-                    return;
-                }
-
                 const startXrayResponse = await this.axios.startXray(
                     {
                         xrayConfig: {
@@ -413,7 +424,12 @@ export class StartAllNodesByProfileQueueProcessor extends WorkerHost {
                             new UpdateNodeCommand({
                                 uuid: node.uuid,
                                 isConnected: nodeResponse.isStarted,
-                                lastStatusMessage: nodeResponse.error ?? null,
+                                lastStatusMessage:
+                                    nodeResponse.error ??
+                                    (await this.rawCacheService.get<string>(
+                                        `remnacust:node-compatibility:${node.uuid}`,
+                                    )) ??
+                                    null,
                                 lastStatusChange: new Date(),
                                 isConnecting: false,
                             }),

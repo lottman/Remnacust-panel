@@ -34,7 +34,7 @@ function setup(failure){
             const kind=query instanceof ProfileQuery?'profile':'snippets';
             return failure===kind?{isOk:false,code:'A123',message:'Public '+kind+' error'}:{isOk:true,response:kind==='profile'?{config:{}}:[]};
         }},
-        {configIdentities:async()=>{if(failure==='identities')throw new Error('database');return []}},
+        {legacyInbounds:async()=>new Set(),configIdentities:async()=>{if(failure==='identities')throw new Error('database');return []}},
         {enabled:true,devicesForConfig:async()=>{if(failure==='devices')throw new Error('database');return []},credentials(){assert.fail('empty fixture has no credentials')}});
     handler.logger={error(){},debug(){}};
     return {handler,order};

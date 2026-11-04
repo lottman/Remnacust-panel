@@ -20,6 +20,8 @@ const common = {
     '@common/utils/host-identity': source('common/utils/host-identity.ts'),
     '@common/utils/flow': flow,
     '@common/utils/bounded-work-queue': source('common/utils/bounded-work-queue.ts'),
+    '../utils/bounded-work-queue': source('common/utils/bounded-work-queue.ts'),
+    './identity-access-query': load(path.join(__dirname, '../src/common/host-policy/identity-access-query.ts')),
     '@common/utils/settle-concurrent': source('common/utils/settle-concurrent.ts'),
     './host-policy-scopes': source('common/host-policy/host-policy-scopes.ts'),
     './autoselect-route-policy': source('common/host-policy/autoselect-route-policy.ts', {

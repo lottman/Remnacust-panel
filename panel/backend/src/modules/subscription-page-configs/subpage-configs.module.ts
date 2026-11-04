@@ -14,6 +14,6 @@ import { SubscriptionPageConfigService } from './subpage-configs.service';
         SubscriptionPageConfigRepository,
         SubscriptionPageConfigConverter,
     ],
-    exports: [],
+    exports: [SubscriptionPageConfigService],
 })
 export class SubscriptionPageConfigModule {}

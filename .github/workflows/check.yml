@@ -118,6 +118,10 @@ jobs:
         run: node tests/xray-hidden-hosts-database.integration.cjs
         env:
           XRAY_INJECTION_TEST_DATABASE_URL: postgresql://postgres@127.0.0.1:55439/postgres
+      - name: Check hidden connection key visibility with PostgreSQL
+        run: node tests/subpage-config-visibility.database.integration.cjs
+      - name: Compare batch identity authorization against scalar access rules with PostgreSQL
+        run: node tests/identity-access-database.integration.cjs
       - name: Check template history, restore and upgrade preservation with PostgreSQL
         run: node tests/template-history-database.integration.cjs
         env:

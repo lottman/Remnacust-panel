@@ -18,6 +18,7 @@ import { UserEntity } from '@modules/users/entities/user.entity';
 
 import { autoselectRouteUuid } from './autoselect-route-policy';
 import { HostPolicyService } from './host-policy.service';
+import { identityAccessQuery } from './identity-access-query';
 
 type HostSyncResult = { allSynchronized: boolean; readyHosts: Set<string> };
 
@@ -28,18 +29,35 @@ export class HostAccessService {
     private readonly synchronizedUntil = new Map<string, number>();
     private readonly background = new BoundedWorkQueue(4, 1000);
     private lastQueueWarning = 0;
+    private readonly nodeWarnings = new Map<string, { at: number; suppressed: number }>();
     constructor(
         private readonly db: TxKyselyService,
         private readonly policies: HostPolicyService,
         private readonly axios: AxiosService,
     ) {}
 
+    private warnNode(node: string, operation: string, code: string, elapsed = 0): void {
+        const key = JSON.stringify([node, operation, code]);
+        const previous = this.nodeWarnings.get(key);
+        const now = Date.now();
+        if (process.env.XERA_SYNC_DIAGNOSTICS !== 'true' && previous && now - previous.at < 10000) {
+            previous.suppressed++;
+            return;
+        }
+        if (this.nodeWarnings.size >= 1000)
+            this.nodeWarnings.delete(this.nodeWarnings.keys().next().value!);
+        this.nodeWarnings.set(key, { at: now, suppressed: 0 });
+        this.logger.warn(
+            `Host sync node=${node} operation=${operation} code=${code} durationMs=${elapsed} suppressed=${previous?.suppressed ?? 0}`,
+        );
+    }
+
     async prepare(
         user: UserEntity,
         hosts: { uuid: string; configProfileInboundUuid: string | null }[],
         quotaOwnerUuid?: string,
     ): Promise<Map<string, UserEntity | null>> {
-        const state = await this.policies.scopes(user.id);
+        const state = await this.policies.scopes(user.id, undefined, false, { identities: false });
         const policyHosts = new Map(state.hosts.map((host) => [host.uuid, host]));
         const result = new Map<string, UserEntity | null>();
         const protectedHosts = hosts.filter(
@@ -199,10 +217,13 @@ export class HostAccessService {
         const result = await sql<{
             hostUuid: string;
             allowed: boolean;
-        }>`SELECT h.id AS "hostUuid", xera_subscription_identity_allowed(${userId},h.id,${hwid},${parent}::uuid) AS allowed
-            FROM (VALUES ${sql.join(hostIds.map((id) => sql`(${id}::uuid)`))}) AS h(id)`.execute(
-            this.db.kysely,
-        );
+        }>`SELECT a."hostUuid" AS "hostUuid",a.allowed FROM (${identityAccessQuery(sql`
+            SELECT ${userId}::bigint AS user_id,h.id AS host_uuid,
+                COALESCE(r.owner_host_uuid,h.id) AS owner_uuid,
+                COALESCE(r.source_host_uuid,h.id) AS source_uuid,
+                ${hwid}::text AS hwid,${parent}::uuid AS parent
+            FROM (VALUES ${sql.join(hostIds.map((id) => sql`(${id}::uuid)`))}) AS h(id)
+            LEFT JOIN xera_autoselect_routes r ON r.uuid=h.id`)}) a`.execute(this.db.kysely);
         return new Set(
             result.rows.filter((row) => row.allowed === true).map((row) => row.hostUuid),
         );
@@ -220,11 +241,14 @@ export class HostAccessService {
         const aliases = new Map(
             sources.map((host) => [host.uuid, autoselectRouteUuid(ownerUuid, host.uuid)]),
         );
-        const allowed = await sql<{ uuid: string }>`SELECT h.uuid FROM hosts h
-            WHERE h.uuid=ANY(${[...aliases.keys()]}::uuid[])
-              AND xera_host_identity_allowed(${user.id},${ownerUuid}::uuid,${context.hwid},${context.parentVlessUuid}::uuid)
-              AND xera_host_user_allowed(${user.id},h.uuid)`.execute(this.db.kysely);
-        const permitted = new Set(allowed.rows.map((host) => host.uuid));
+        const allowed =
+            await identityAccessQuery(sql`SELECT ${user.id}::bigint AS user_id,h.uuid AS host_uuid,
+            ${ownerUuid}::uuid AS owner_uuid,h.uuid AS source_uuid,${context.hwid}::text AS hwid,
+            ${context.parentVlessUuid}::uuid AS parent FROM hosts h
+            WHERE h.uuid=ANY(${[...aliases.keys()]}::uuid[])`).execute(this.db.kysely);
+        const permitted = new Set(
+            allowed.rows.filter((host) => host.allowed).map((host) => host.hostUuid),
+        );
         const selected = sources.filter((host) => permitted.has(host.uuid));
         if (!selected.length) return result;
         if (context.preview) {
@@ -249,9 +273,7 @@ export class HostAccessService {
         );
         await sql`INSERT INTO xera_autoselect_routes(uuid,owner_host_uuid,source_host_uuid)
             SELECT value.id,value.owner,value.source FROM (VALUES ${sql.join(values)}) AS value(id,owner,source)
-            WHERE xera_host_identity_allowed(${user.id},value.owner,${context.hwid},${context.parentVlessUuid}::uuid)
-              AND xera_host_user_allowed(${user.id},value.source)
-              AND NOT EXISTS(SELECT 1 FROM hosts h WHERE h.uuid=value.id)
+            WHERE NOT EXISTS(SELECT 1 FROM hosts h WHERE h.uuid=value.id)
             ON CONFLICT(uuid) DO UPDATE SET source_host_uuid=excluded.source_host_uuid
             WHERE xera_autoselect_routes.owner_host_uuid=excluded.owner_host_uuid
               AND xera_autoselect_routes.source_host_uuid IS NULL`.execute(this.db.kysely);
@@ -269,7 +291,7 @@ export class HostAccessService {
     }
 
     async configIdentities(profileUuid: string) {
-        const state = await this.policies.scopes();
+        const state = await this.policies.scopes(undefined, undefined, false, { profileUuid });
         return state.identities
             .filter((k) => k.allowed && k.profileUuid === profileUuid)
             .map((k) => ({
@@ -321,7 +343,7 @@ export class HostAccessService {
             );
             if (!relevant.length || node.isDisabled) return { success: true, readyHosts };
             if (!node.isConnected) {
-                this.logger.warn(`Host sync node=${node.uuid} operation=connect code=NODE_OFFLINE`);
+                this.warnNode(node.uuid, 'connect', 'NODE_OFFLINE');
                 return { success: false, readyHosts };
             }
             const started = performance.now();
@@ -431,14 +453,20 @@ export class HostAccessService {
                             readyHosts.add(allowed[i].hostUuid);
                     }
                 }
-            } catch {
-                this.logger.warn(
-                    `Host sync node=${node.uuid} operation=${operation} code=SYNC_FAILED durationMs=${Math.round(performance.now() - started)}`,
-                );
+            } catch (error) {
+                const code =
+                    error &&
+                    typeof error === 'object' &&
+                    'code' in error &&
+                    typeof error.code === 'string' &&
+                    /^[A-Z0-9_]{1,64}$/.test(error.code)
+                        ? error.code
+                        : 'SYNC_FAILED';
+                this.warnNode(node.uuid, operation, code, Math.round(performance.now() - started));
                 success = false;
             } finally {
                 const elapsed = Math.round(performance.now() - started);
-                if (process.env.XERA_SYNC_DIAGNOSTICS === 'true' || elapsed >= 1000 || !success)
+                if (process.env.XERA_SYNC_DIAGNOSTICS === 'true' || (success && elapsed >= 1000))
                     this.logger.log(
                         `Host sync node=${node.uuid} identities=${relevant.length} success=${success} durationMs=${elapsed}`,
                     );

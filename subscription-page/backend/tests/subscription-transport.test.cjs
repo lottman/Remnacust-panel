@@ -37,6 +37,20 @@ test('subscription metadata cannot replace gateway credentials or forward hop-by
     );
 });
 
+test('page information shares the subscription deadline and preserves cancellation', async () => {
+    const service = new AxiosService({ getOrThrow: key => ({ REMNAWAVE_PANEL_URL: 'https://panel.example.test/', REMNAWAVE_API_TOKEN: 'fixture' })[key], get: () => undefined });
+    const controller = new AbortController();
+    let captured;
+    service.axiosInstance.request = async options => { captured = options; return { data: { response: { isFound: true } } }; };
+    try {
+        const result = await service.getSubscriptionInfo('192.0.2.1', 'fixture', controller.signal);
+        assert.equal(result.isOk, true);
+        assert.equal(captured.timeout, 30_000);
+        assert.equal(captured.signal, controller.signal);
+        assert.equal(service.axiosInstance.defaults.timeout, 10_000);
+    } finally { service.onModuleDestroy(); }
+});
+
 test('real HTTP transport reuses connections, proxies device formats and refuses credential redirects', async () => {
     const requests = [];
     let connections = 0,

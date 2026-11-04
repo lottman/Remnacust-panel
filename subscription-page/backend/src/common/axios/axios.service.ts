@@ -263,6 +263,7 @@ export class AxiosService implements OnModuleInit, OnModuleDestroy {
             const response =
                 await this.axiosInstance.request<GetSubscriptionInfoByShortUuidCommand.Response>({
                     method: GetSubscriptionInfoByShortUuidCommand.endpointDetails.REQUEST_METHOD,
+                    timeout: 30_000,
                     signal,
                     url: GetSubscriptionInfoByShortUuidCommand.url(encodeURIComponent(shortUuid)),
                     headers: {

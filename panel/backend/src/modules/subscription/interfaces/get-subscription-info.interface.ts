@@ -9,6 +9,7 @@ export interface IGetSubscriptionInfo {
         uniqueFieldKey: 'username' | 'shortUuid' | 'id';
     };
     authenticated?: boolean;
+    subscriptionPageRequest?: boolean;
     subscriptionSettingsRaw?: SubscriptionSettingsEntity;
     overrides?: {
         subscriptionSettings: SubscriptionSettingsEntity;

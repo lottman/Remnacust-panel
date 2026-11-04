@@ -3,6 +3,7 @@ import { Response } from 'express';
 import {
     Controller,
     Get,
+    Headers,
     HttpStatus,
     Param,
     Res,
@@ -82,6 +83,8 @@ export class SubscriptionController {
     })
     async getSubscriptionInfoByShortUuid(
         @Param() param: GetSubscriptionInfoParamDto,
+        @Headers('x-subpage-version') subpageVersion?: string,
+        @Headers('user-agent') userAgent?: string,
     ): Promise<GetSubscriptionInfoResponseDto> {
         const result = await this.subscriptionService.getSubscriptionInfo({
             searchBy: {
@@ -89,6 +92,10 @@ export class SubscriptionController {
                 uniqueFieldKey: 'shortUuid',
             },
             authenticated: false,
+            subscriptionPageRequest:
+                typeof subpageVersion === 'string' &&
+                subpageVersion.length > 0 &&
+                userAgent === 'Remnawave Subscription Page',
         });
 
         const data = errorHandler(result);

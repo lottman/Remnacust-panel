@@ -19,6 +19,14 @@ export class SubscriptionPageConfigRepository implements ICrud<SubscriptionPageC
         private readonly qb: TxKyselyService,
     ) {}
 
+    public async connectionKeysMayBeVisible(): Promise<boolean> {
+        const result = await sql<{ visible: boolean }>`
+            SELECT COALESCE(bool_or(config #> '{baseSettings,showConnectionKeys}'
+                IS DISTINCT FROM 'false'::jsonb), true) AS visible
+            FROM subscription_page_config`.execute(this.qb.kysely);
+        return result.rows[0]?.visible !== false;
+    }
+
     public async create(
         entity: SubscriptionPageConfigEntity,
     ): Promise<SubscriptionPageConfigEntity> {

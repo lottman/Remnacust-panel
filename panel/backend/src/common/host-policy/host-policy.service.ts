@@ -12,6 +12,7 @@ import { TxKyselyService } from '@common/database';
 import { RawCacheService } from '@common/raw-cache';
 import { hostCredentials } from '@common/utils/host-identity';
 
+import { BoundedWorkQueue } from '../utils/bounded-work-queue';
 import { attachAutoselectRoutes, type AutoselectRoute } from './autoselect-route-policy';
 import {
     normalizeDestinationRule as normalizePolicyDomain,
@@ -25,6 +26,7 @@ import {
     PolicySnapshot,
     PolicyUser,
 } from './host-policy.types';
+import { identityAccessQuery } from './identity-access-query';
 import { observeQuotaCheckpoint, renderQuotaCheckpoint } from './quota-journal-checkpoint';
 import {
     quotaNodeMode,
@@ -73,6 +75,11 @@ export class HostPolicyService {
     private readonly secret: string;
     private connectedSynchronization: Promise<void> | null = null;
     private synchronizeAgain = false;
+    private readonly nodeWork = new BoundedWorkQueue(3, 256);
+    private readonly nodeSynchronizations = new Map<
+        string,
+        { pending: boolean; promise: Promise<void> }
+    >();
     constructor(
         private readonly db: TxKyselyService,
         private readonly axios: AxiosService,
@@ -92,7 +99,12 @@ export class HostPolicyService {
             row.quotaHostUuid ?? row.hostUuid,
         );
     }
-    async scopes(userId?: bigint, nodeUuid?: string, userQuota = false): Promise<PolicySnapshot> {
+    async scopes(
+        userId?: bigint,
+        nodeUuid?: string,
+        userQuota = false,
+        options: { identities?: boolean; profileUuid?: string } = {},
+    ): Promise<PolicySnapshot> {
         const [hosts, tags, identities, routes] = await Promise.all([
             sql<PolicyHost>`SELECT h.uuid,h.tags,h.config_profile_inbound_uuid AS "inboundUuid",i.tag AS "inboundTag",i.profile_uuid AS "profileUuid",
     h.always_available AS "alwaysAvailable",h.only_when_inactive AS "onlyWhenInactive",
@@ -112,23 +124,26 @@ export class HostPolicyService {
     reset_value AS "resetValue",reset_unit AS "resetUnit" FROM xera_host_tag_limits`.execute(
                 this.db.kysely,
             ),
-            sql<PolicyIdentity>`SELECT k.user_id::text AS "userId",u.expire_at AS "expireAt",k.host_uuid AS "hostUuid",NULL::uuid AS "quotaHostUuid",k.hwid,k.parent_vless_uuid AS parent,
-    xera_host_identity_allowed(k.user_id,k.host_uuid,k.hwid,k.parent_vless_uuid) AS allowed,
-    i.raw_inbound,i.tag AS "inboundTag",i.profile_uuid AS "profileUuid"
-    FROM xera_host_identities k JOIN users u ON u.id=k.user_id JOIN hosts h ON h.uuid=k.host_uuid JOIN config_profile_inbounds i ON i.uuid=h.config_profile_inbound_uuid
+            options.identities === false
+                ? Promise.resolve({ rows: [] as PolicyIdentity[] })
+                : sql<PolicyIdentity>`SELECT a.*,u.expire_at AS "expireAt",i.raw_inbound,i.tag AS "inboundTag",i.profile_uuid AS "profileUuid"
+    FROM (${identityAccessQuery(sql`SELECT k.user_id,k.host_uuid,k.host_uuid AS owner_uuid,k.host_uuid AS source_uuid,k.hwid,k.parent_vless_uuid AS parent
+    FROM xera_host_identities k JOIN hosts h ON h.uuid=k.host_uuid JOIN config_profile_inbounds i ON i.uuid=h.config_profile_inbound_uuid
     WHERE 1=1 ${userId === undefined ? sql`` : sql`AND k.user_id=${userId}`}
+    ${options.profileUuid === undefined ? sql`` : sql`AND i.profile_uuid=${options.profileUuid}::uuid`}
     ${nodeUuid === undefined ? sql`` : sql`AND EXISTS(SELECT 1 FROM config_profile_inbounds_to_nodes n WHERE n.config_profile_inbound_uuid=i.uuid AND n.node_uuid=${nodeUuid}::uuid)`}
     UNION ALL
-    SELECT k.user_id::text AS "userId",u.expire_at AS "expireAt",r.uuid AS "hostUuid",r.owner_host_uuid AS "quotaHostUuid",k.hwid,k.parent_vless_uuid AS parent,
-      xera_subscription_identity_allowed(k.user_id,r.uuid,k.hwid,k.parent_vless_uuid) AS allowed,
-      i.raw_inbound,i.tag AS "inboundTag",i.profile_uuid AS "profileUuid"
-    FROM xera_autoselect_identities k JOIN users u ON u.id=k.user_id
+    SELECT k.user_id,r.uuid,r.owner_host_uuid,r.source_host_uuid,k.hwid,k.parent_vless_uuid
+    FROM xera_autoselect_identities k
       JOIN xera_autoselect_routes r ON r.uuid=k.route_uuid JOIN hosts h ON h.uuid=r.source_host_uuid
       JOIN config_profile_inbounds i ON i.uuid=h.config_profile_inbound_uuid
     WHERE 1=1 ${userId === undefined ? sql`` : sql`AND k.user_id=${userId}`}
-    ${nodeUuid === undefined ? sql`` : sql`AND EXISTS(SELECT 1 FROM config_profile_inbounds_to_nodes n WHERE n.config_profile_inbound_uuid=i.uuid AND n.node_uuid=${nodeUuid}::uuid)`}`.execute(
-                this.db.kysely,
-            ),
+    ${options.profileUuid === undefined ? sql`` : sql`AND i.profile_uuid=${options.profileUuid}::uuid`}
+    ${nodeUuid === undefined ? sql`` : sql`AND EXISTS(SELECT 1 FROM config_profile_inbounds_to_nodes n WHERE n.config_profile_inbound_uuid=i.uuid AND n.node_uuid=${nodeUuid}::uuid)`}`)}) a
+    JOIN users u ON u.id=a."userId"::bigint
+    LEFT JOIN xera_autoselect_routes r ON r.uuid=a."hostUuid"
+    JOIN hosts h ON h.uuid=COALESCE(r.source_host_uuid,a."hostUuid")
+    JOIN config_profile_inbounds i ON i.uuid=h.config_profile_inbound_uuid`.execute(this.db.kysely),
             sql<AutoselectRoute>`SELECT uuid,owner_host_uuid AS "ownerUuid",source_host_uuid AS "sourceUuid"
                 FROM xera_autoselect_routes WHERE source_host_uuid IS NOT NULL`.execute(
                 this.db.kysely,
@@ -190,7 +205,61 @@ export class HostPolicyService {
         }
         return snapshot;
     }
-    async syncNode(
+    syncNode(node: INodeConnectionOpts & { uuid: string }): Promise<void> {
+        if (this.transactions.isTransactionActive())
+            return Promise.reject(
+                new Error('Host policy synchronization must run after SQL commit'),
+            );
+        const key = JSON.stringify([node.uuid, node.address, node.port, node.proxyUrl]);
+        const current = this.nodeSynchronizations.get(key);
+        if (current) {
+            current.pending = true;
+            return current.promise;
+        }
+        const entry = { pending: true, promise: Promise.resolve() };
+        const queued = this.nodeWork.submit(() =>
+            Promise.resolve().then(async () => {
+                try {
+                    do {
+                        entry.pending = false;
+                        const deadline = Date.now() + 8000;
+                        for (;;) {
+                            try {
+                                await this.applyNodePolicy(node);
+                                break;
+                            } catch (error) {
+                                if (
+                                    !error ||
+                                    typeof error !== 'object' ||
+                                    !('code' in error) ||
+                                    error.code !== 'HOST_POLICY_BUSY' ||
+                                    Date.now() >= deadline
+                                )
+                                    throw error;
+                                await new Promise((resolve) =>
+                                    setTimeout(resolve, 100 + Math.floor(Math.random() * 100)),
+                                );
+                            }
+                        }
+                    } while (entry.pending);
+                } finally {
+                    if (this.nodeSynchronizations.get(key) === entry)
+                        this.nodeSynchronizations.delete(key);
+                }
+            }),
+        );
+        if (!queued)
+            return Promise.reject(
+                Object.assign(
+                    new Error('Host policy work queue is full; synchronization will retry'),
+                    { code: 'HOST_POLICY_BUSY' },
+                ),
+            );
+        entry.promise = queued;
+        this.nodeSynchronizations.set(key, entry);
+        return entry.promise;
+    }
+    private async applyNodePolicy(
         node: INodeConnectionOpts & { uuid: string },
         registrationPass = 0,
     ): Promise<void> {
@@ -220,6 +289,7 @@ export class HostPolicyService {
         try {
             let quotaMode = await quotaNodeMode(this.db, node.uuid);
             let quotaSource = '';
+            let nativeNode = false;
             let capabilities = await this.cache.get<HostPolicyCapabilities>(capabilityKey);
             if (
                 quotaMode ||
@@ -258,6 +328,12 @@ export class HostPolicyService {
                             value.quotaRecoveryPolicyBindingsSupported,
                     };
                     await this.cache.set(capabilityKey, capabilities, 60);
+                } else if (['NODE_HTTP_404', 'NODE_HTTP_405'].includes(status.code ?? '')) {
+                    const health = await this.axios.getNodeHealth(node);
+                    nativeNode =
+                        health.isOk &&
+                        /^v?\d+\.\d+\.\d+(?:[-+][\w.-]+)?$/.test(health.response.nodeVersion) &&
+                        !health.response.nodeVersion.toLowerCase().includes('remnacust');
                 }
             }
             if (capabilities?.offlineReserves && !quotaMode)
@@ -307,9 +383,18 @@ export class HostPolicyService {
             const prepared = await this.transactions
                 .withTransaction({ timeout: 30000 }, async () => {
                     const tx = this.db.kysely;
-                    await sql`SELECT 1 FROM pg_advisory_xact_lock(hashtextextended(${node.uuid},20260927))`.execute(
+                    const ownership = await sql<{
+                        acquired: boolean;
+                    }>`SELECT pg_try_advisory_xact_lock(hashtextextended(${node.uuid},20260927)) AS acquired`.execute(
                         tx,
                     );
+                    if (ownership.rows[0]?.acquired !== true)
+                        throw Object.assign(
+                            new Error(
+                                `Node ${node.uuid}: host policy synchronization is already running`,
+                            ),
+                            { code: 'HOST_POLICY_BUSY' },
+                        );
                     lockedAt = performance.now();
                     networkAtLock = networkMs;
                     // Receipt commits take this row before per-scope billing
@@ -350,13 +435,55 @@ export class HostPolicyService {
                         throw new Error(
                             `Node ${node.uuid}: global quotas require native reserves and durable usage receipts`,
                         );
-                    const state = await this.scopes(undefined, node.uuid, quotaMode?.userQuota);
+                    const deferredIdentities =
+                        nativeNode || !capabilities?.routedDeviceSpeedLimitsSupported;
+                    let state = await this.scopes(undefined, node.uuid, quotaMode?.userQuota, {
+                        identities: !deferredIdentities,
+                    });
                     const protectedHosts = state.hosts.filter(
                         (h) =>
                             h.inboundUuid &&
                             (h.quotaHostUuid || state.protectedInboundIds.has(h.inboundUuid)) &&
                             h.boundNodes.includes(node.uuid),
                     );
+                    if (nativeNode && !quotaMode) {
+                        const groups = state.groups.filter((group) =>
+                            group.nodeUuids.includes(node.uuid),
+                        );
+                        const required =
+                            protectedHosts.some(
+                                (host) =>
+                                    host.alwaysAvailable ||
+                                    host.onlyWhenInactive ||
+                                    (host.domains && host.domains.mode !== 'OFF'),
+                            ) ||
+                            groups.some(
+                                (group) =>
+                                    BigInt(group.userLimit ?? 0) > 0n ||
+                                    (group.userSpeed ?? 0) > 0 ||
+                                    (group.deviceSpeed ?? 0) > 0 ||
+                                    (group.totalSpeed ?? 0) > 0 ||
+                                    group.trafficMultiplier !== 1,
+                            );
+                        const keys = groups
+                            .map((group) => group.key)
+                            .filter((key) => key.startsWith('host:') || key.startsWith('tag:'));
+                        const controls = keys.length
+                            ? await sql`SELECT 1 FROM xera_limit_scopes s
+                            WHERE (lower(s.kind)||':'||s.key)=ANY(${keys}::text[]) AND s.paused
+                            UNION ALL SELECT 1 FROM xera_limit_user_adjustments a
+                            WHERE (lower(a.kind)||':'||a.key)=ANY(${keys}::text[]) AND a.paused LIMIT 1`.execute(
+                                  tx,
+                              )
+                            : { rows: [] };
+                        if (!required && !controls.rows.length) return;
+                        throw Object.assign(
+                            new Error(
+                                `Node ${node.uuid}: configured host restrictions require host-policy-v2 support`,
+                            ),
+                            { code: 'HOST_POLICY_NOT_APPLIED' },
+                        );
+                    }
                     if (!protectedHosts.length) {
                         if (
                             !capabilities?.supported ||
@@ -382,6 +509,8 @@ export class HostPolicyService {
                         throw new Error(
                             `Node ${node.uuid}: update node and core before applying autoselect quota ownership`,
                         );
+                    if (deferredIdentities)
+                        state = await this.scopes(undefined, node.uuid, quotaMode?.userQuota);
                     const groups: Record<string, unknown> = {};
                     for (const group of state.groups.filter((g) =>
                         g.nodeUuids.includes(node.uuid),
@@ -697,7 +826,7 @@ export class HostPolicyService {
                                 new Error('Quota registration batch is pending; retry delivery'),
                                 { code: 'QUOTA_REGISTRATION_PENDING' },
                             );
-                        await this.syncNode(node, registrationPass + 1);
+                        await this.applyNodePolicy(node, registrationPass + 1);
                     }
                 }
             }

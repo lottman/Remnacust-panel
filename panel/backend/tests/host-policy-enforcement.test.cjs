@@ -6,7 +6,7 @@ const scopes = load(path.join(__dirname, '../src/common/host-policy/host-policy-
 const identity = load(path.join(__dirname, '../src/common/utils/host-identity.ts'));
 function fixture(usage = [], paused = []) {
     const sql = (parts) => ({
-        execute: async () => ({ rows: parts.join('').includes('xera_limit_state') ? usage.map(row => ({effectiveLimit:'100', ...row})) : parts.join('').includes('AND paused') ? paused.map(userId=>({userId})) : [] }),
+        execute: async () => ({ rows: parts.join('').includes('pg_try_advisory_xact_lock') ? [{ acquired: true }] : parts.join('').includes('xera_limit_state') ? usage.map(row => ({effectiveLimit:'100', ...row})) : parts.join('').includes('AND paused') ? paused.map(userId=>({userId})) : [] }),
     });
     sql.join = (v) => v;
     const { HostPolicyService, normalizePolicyDomain } = load(

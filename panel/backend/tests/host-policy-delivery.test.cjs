@@ -20,6 +20,8 @@ function fixture(revisionAware = true) {
     };
     const sql = (parts, ...values) => ({
         execute: async () => {
+            if (parts.join('').includes('pg_try_advisory_xact_lock'))
+                return { rows: [{ acquired: state.lockAvailable !== false }] };
             if (parts.join('').includes('xera_next_host_policy_revision')) {
                 state.seen.push(values);
                 return { rows: [{ revision: '42' }] };
@@ -100,6 +102,80 @@ test('a burst before a fleet scan starts is served by a single pass',async()=>{
     service.synchronizeConnectedNodes=async()=>{passes++;};
     await Promise.all(Array.from({length:100},()=>service.syncConnected()));
     assert.equal(passes,1);
+});
+
+test('node refreshes serialize locally and a change during delivery receives a new snapshot', async () => {
+    const { service, node } = fixture();
+    let release, passes = 0, active = 0, peak = 0;
+    const gate = new Promise(resolve => { release = resolve; });
+    service.applyNodePolicy = async () => {
+        peak = Math.max(peak, ++active);
+        if (++passes === 1) await gate;
+        active--;
+    };
+    const first = service.syncNode(node);
+    await Promise.resolve();
+    const concurrent = Array.from({ length: 100 }, () => service.syncNode(node));
+    assert.equal(passes, 1);
+    release();
+    await Promise.all([first, ...concurrent]);
+    assert.equal(peak, 1);
+    assert.equal(passes, 2);
+    assert.equal(service.nodeSynchronizations.size, 0);
+});
+
+test('an occupied distributed policy lock refuses work without building a snapshot or posting policy', async () => {
+    const { service, node, state } = fixture();
+    state.lockAvailable = false;
+    service.scopes = () => { throw Error('a losing worker must not scan identities'); };
+    await assert.rejects(service.applyNodePolicy(node), { code: 'HOST_POLICY_BUSY' });
+    assert.equal(state.events.some(event => Array.isArray(event) && event[0] === 'send'), false);
+    state.lockAvailable = true;
+    service.scopes = async () => ({ hosts: [], groups: [], identities: [], protectedInboundIds: new Set() });
+    await service.syncNode(node);
+});
+
+test('a large node fleet cannot occupy every database connection with policy work', async () => {
+    const { service, node } = fixture();
+    let release, active = 0, peak = 0;
+    const gate = new Promise(resolve => { release = resolve; });
+    service.applyNodePolicy = async () => {
+        peak = Math.max(peak, ++active);
+        await gate;
+        active--;
+    };
+    const requests = Array.from({ length: 32 }, (_, index) => service.syncNode({ ...node, uuid: 'node-' + index }));
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(active, 3);
+    release();
+    await Promise.all(requests);
+    assert.equal(peak, 3);
+    assert.equal(service.nodeSynchronizations.size, 0);
+});
+
+test('native Remnawave nodes accept basic configurations but never bypass saved host restrictions', async () => {
+    for (const restricted of [false, true]) {
+        const { service, node, state } = fixture();
+        service.axios.hostPolicy = async () => ({ isOk: false, code: 'NODE_HTTP_404' });
+        service.axios.getNodeHealth = async () => ({ isOk: true, response: { nodeVersion: '2.5.1' } });
+        service.scopes = async (_user, _node, _quota, options) => {
+            assert.equal(options.identities, false);
+            return { hosts: [{ uuid: 'host', inboundUuid: 'in', boundNodes: [node.uuid], domains: restricted ? { mode: 'ALLOW_ONLY' } : null }],
+                groups: [], identities: [], protectedInboundIds: new Set(['in']) };
+        };
+        if (restricted) await assert.rejects(service.syncNode(node), { code: 'HOST_POLICY_NOT_APPLIED' });
+        else await service.syncNode(node);
+        assert.equal(state.events.some(event => Array.isArray(event) && event[0] === 'send'), false);
+    }
+});
+
+test('an unavailable custom node cannot be mistaken for a native legacy node', async () => {
+    const { service, node } = fixture();
+    service.axios.hostPolicy = async () => ({ isOk: false, code: 'ECONNRESET' });
+    service.axios.getNodeHealth = () => { throw Error('a network error is not compatibility evidence'); };
+    service.scopes = async () => ({ hosts: [{ uuid: 'host', inboundUuid: 'in', boundNodes: [node.uuid], nodes: [] }],
+        groups: [], identities: [], protectedInboundIds: new Set(['in']) });
+    await assert.rejects(service.syncNode(node), { code: 'HOST_POLICY_NOT_APPLIED' });
 });
 test('background policy failure is logged and a later request can retry',async()=>{
     const {service}=fixture();const errors=[];let attempts=0;

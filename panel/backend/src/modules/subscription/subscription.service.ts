@@ -31,6 +31,7 @@ import { DeviceAccessService } from '@modules/hwid-user-devices/device-access.se
 import { HwidUserDeviceEntity } from '@modules/hwid-user-devices/entities/hwid-user-device.entity';
 import { CheckHwidExistsQuery } from '@modules/hwid-user-devices/queries/check-hwid-exists/check-hwid-exists.query';
 import { GetUserDevicesQuery } from '@modules/hwid-user-devices/queries/get-user-devices.query';
+import { SubscriptionPageConfigService } from '@modules/subscription-page-configs/subpage-configs.service';
 import type { ISRRContext } from '@modules/subscription-response-rules/interfaces';
 import { ResponseRulesMatcherService } from '@modules/subscription-response-rules/services/response-rules-matcher.service';
 import { SubscriptionSettingsEntity } from '@modules/subscription-settings/entities/subscription-settings.entity';
@@ -89,6 +90,7 @@ export class SubscriptionService {
         private readonly usersQueuesService: UsersQueuesService,
         private readonly srrMatcher: ResponseRulesMatcherService,
         private readonly deviceAccess: DeviceAccessService,
+        private readonly subpageConfigs: SubscriptionPageConfigService,
     ) {
         this.subPublicDomain = this.configService.getOrThrow('SUB_PUBLIC_DOMAIN');
     }
@@ -970,6 +972,8 @@ export class SubscriptionService {
             const ssConfLinks: Record<string, string> = {};
 
             if (
+                (!params.subscriptionPageRequest ||
+                    (await this.subpageConfigs.connectionKeysMayBeVisible())) &&
                 (!settings.hwidSettings.enabled || authenticated) &&
                 (!this.deviceAccess.enabled ||
                     !(await this.deviceAccess.hasBlockedDevice(userEntity.id)))

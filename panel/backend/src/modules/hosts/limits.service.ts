@@ -12,6 +12,7 @@ import {
 import { TxKyselyService } from '@common/database';
 import { HostPolicyService } from '@common/host-policy/host-policy.service';
 
+import { hostUserAccessQuery } from '../../common/host-policy/host-user-access-query';
 import { HostsService } from './hosts.service';
 import { limitScopesQuery, LimitScope } from './limit-scopes.query';
 import { LimitSelection, limitSelectionPredicate } from './limit-selection';
@@ -215,13 +216,16 @@ export class LimitsService {
                 pausedUsers: number;
                 exhaustedUsers: number;
             }>`
-            WITH matched AS MATERIALIZED (
+            WITH allowed_users AS MATERIALIZED (
+                SELECT DISTINCT a.user_id FROM (${hostUserAccessQuery(sql`SELECT u.id AS user_id,h.uuid AS host_uuid FROM users u CROSS JOIN hosts h
+                    WHERE ((${kind}='HOST' AND h.uuid::text=${key}) OR (${kind}='TAG' AND ${key}=ANY(h.tags) AND h.use_tag_traffic_limit))`)}) a
+            ), matched AS MATERIALIZED (
                 SELECT u.id::text AS id,u.short_uuid AS "shortUuid",u.username,u.email,u.telegram_id::text AS "telegramId",u.status,
                 to_char(CASE WHEN u.status='FROZEN' THEN (statement_timestamp() AT TIME ZONE 'UTC') + greatest(u.expire_at-u.frozen_at, interval '0 seconds') ELSE u.expire_at END,'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS "expireAt",
                 CASE WHEN u.status='FROZEN' THEN (extract(epoch FROM greatest(u.expire_at-u.frozen_at, interval '0 seconds'))*1000)::bigint ELSE NULL END AS "frozenRemainingMs",u.tag,
                 q.used_bytes::text AS "usedBytes",q.base_limit::text AS "baseLimitBytes",q.bonus_bytes::text AS "bonusBytes",q.effective_limit::text AS "limitBytes",q.paused,
                 COALESCE((SELECT a.unlimited FROM xera_limit_user_adjustments a WHERE a.kind=${kind} AND a.key=${key} AND a.user_id=u.id),false) AS unlimited,
-                EXISTS(SELECT 1 FROM hosts h WHERE ((${kind}='HOST' AND h.uuid::text=${key}) OR (${kind}='TAG' AND ${key}=ANY(h.tags) AND h.use_tag_traffic_limit)) AND xera_host_user_allowed(u.id,h.uuid)) AS "accessNow"
+                EXISTS(SELECT 1 FROM allowed_users a WHERE a.user_id=u.id) AS "accessNow"
                 FROM users u CROSS JOIN LATERAL xera_limit_state(${kind},${key},u.id) q WHERE ${where}
             ), filtered AS MATERIALIZED (
                 SELECT * FROM matched WHERE ${state}='ALL'

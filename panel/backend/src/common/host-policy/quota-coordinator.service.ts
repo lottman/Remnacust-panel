@@ -11,6 +11,7 @@ import { TxKyselyService } from '@common/database';
 
 import { DurableUsageService, UsageNode } from './durable-usage.service';
 import { HostPolicyService, HOST_POLICY_VERSION } from './host-policy.service';
+import { hostUserAccessQuery } from './host-user-access-query';
 import { QuotaCutoverService } from './quota-cutover.service';
 import { quotaRestoreState } from './quota-journal-checkpoint';
 import { quotaSourceFingerprint } from './quota-policy';
@@ -634,6 +635,8 @@ export class QuotaCoordinatorService {
         if (!ready.length) return false;
         const targets =
             await sql<Target>`WITH owners AS (SELECT id,traffic_limit_bytes FROM users WHERE id=ANY(${ids}::bigint[])),
+          entitled AS MATERIALIZED (${hostUserAccessQuery(sql`SELECT o.id AS user_id,h.uuid AS host_uuid FROM owners o CROSS JOIN hosts h`, true)}),
+          available AS MATERIALIZED (${hostUserAccessQuery(sql`SELECT o.id AS user_id,h.uuid AS host_uuid FROM owners o CROSS JOIN hosts h`)}),
           user_nodes AS (
             SELECT m.user_id AS owner,b.node_uuid FROM internal_squad_members m JOIN internal_squad_inbounds i USING(internal_squad_uuid)
               JOIN config_profile_inbounds_to_nodes b ON b.config_profile_inbound_uuid=i.inbound_uuid WHERE m.user_id=ANY(${ids}::bigint[])
@@ -644,17 +647,18 @@ export class QuotaCoordinatorService {
                 ON b.config_profile_inbound_uuid=h.config_profile_inbound_uuid WHERE k.user_id=ANY(${ids}::bigint[])
           ), host_nodes AS (
             SELECT o.id AS owner,h.uuid,h.tags,h.user_traffic_limit_bytes,h.use_tag_traffic_limit,b.node_uuid
-              FROM owners o JOIN hosts h ON xera_host_user_entitled(o.id,h.uuid)
+              FROM owners o JOIN entitled e ON e.user_id=o.id JOIN hosts h ON h.uuid=e.host_uuid
               JOIN config_profile_inbounds_to_nodes b ON b.config_profile_inbound_uuid=h.config_profile_inbound_uuid
               WHERE b.node_uuid=ANY(${nodeIds}::uuid[]) AND
                 (NOT EXISTS(SELECT 1 FROM hosts_to_nodes hn WHERE hn.host_uuid=h.uuid) OR
                  EXISTS(SELECT 1 FROM hosts_to_nodes hn WHERE hn.host_uuid=h.uuid AND hn.node_uuid=b.node_uuid))
             UNION
             SELECT o.id,h.uuid,h.tags,h.user_traffic_limit_bytes,h.use_tag_traffic_limit,b.node_uuid
-              FROM owners o JOIN xera_autoselect_routes r ON xera_host_user_entitled(o.id,r.owner_host_uuid)
+              FROM owners o JOIN entitled e ON e.user_id=o.id JOIN xera_autoselect_routes r ON r.owner_host_uuid=e.host_uuid
               JOIN hosts h ON h.uuid=r.owner_host_uuid JOIN hosts s ON s.uuid=r.source_host_uuid
               JOIN config_profile_inbounds_to_nodes b ON b.config_profile_inbound_uuid=s.config_profile_inbound_uuid
-              WHERE b.node_uuid=ANY(${nodeIds}::uuid[]) AND xera_host_user_allowed(o.id,s.uuid)
+              WHERE b.node_uuid=ANY(${nodeIds}::uuid[])
+                AND EXISTS(SELECT 1 FROM available a WHERE a.user_id=o.id AND a.host_uuid=s.uuid)
                 AND EXISTS(SELECT 1 FROM xera_autoselect_identities k WHERE k.route_uuid=r.uuid AND k.user_id=o.id)
                 AND (NOT EXISTS(SELECT 1 FROM hosts_to_nodes hn WHERE hn.host_uuid=s.uuid) OR
                      EXISTS(SELECT 1 FROM hosts_to_nodes hn WHERE hn.host_uuid=s.uuid AND hn.node_uuid=b.node_uuid))

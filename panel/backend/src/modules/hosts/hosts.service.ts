@@ -729,7 +729,7 @@ export class HostsService {
         const bindings = await this.hostsRepository.policyBindings();
         const protectedInbounds = new Set(
             policyHosts
-                .filter((h) => requiresHostPolicy(h, limits))
+                .filter((h) => requiresHostPolicy({ ...h, managed: false }, limits))
                 .map((h) => h.configProfileInboundUuid),
         );
         for (const host of hosts) {

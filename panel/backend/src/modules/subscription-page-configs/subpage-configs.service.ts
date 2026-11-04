@@ -27,6 +27,10 @@ export class SubscriptionPageConfigService {
         private readonly subscriptionPageConfigRepository: SubscriptionPageConfigRepository,
     ) {}
 
+    public async connectionKeysMayBeVisible(): Promise<boolean> {
+        return this.subscriptionPageConfigRepository.connectionKeysMayBeVisible();
+    }
+
     public async getAllConfigs(): Promise<TResult<GetSubscriptionPageConfigsResponseModel>> {
         try {
             const configs = await this.subscriptionPageConfigRepository.getAllConfigs(false);

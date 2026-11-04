@@ -159,6 +159,22 @@ async function main() {
             { getOrThrow: () => 'test-secret' },
             transactions,
         );
+        let releaseLock, locked;
+        const lockHeld = new Promise(resolve => { locked = resolve; });
+        const lockRelease = new Promise(resolve => { releaseLock = resolve; });
+        const competitor = prisma.$transaction(async tx => {
+            await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended('cccccccc-cccc-4ccc-8ccc-cccccccccccc',20260927))::text`;
+            locked();
+            await lockRelease;
+        }, { timeout: 15000 });
+        await lockHeld;
+        try {
+            await assert.rejects(service.applyNodePolicy({ uuid: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', address: '127.0.0.1', port: 2222 }),
+                { code: 'HOST_POLICY_BUSY' });
+        } finally {
+            releaseLock();
+            await competitor;
+        }
         let state = await service.scopes();
         assert.equal(state.hosts.length, 2);
         assert(state.protectedInboundIds.has('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'));

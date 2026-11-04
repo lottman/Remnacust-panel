@@ -1,5 +1,7 @@
 export type PolicyHost = {
     uuid: string;
+    quotaHostUuid?: string;
+    sourceHostUuid?: string;
     tags: string[];
     inboundUuid: string | null;
     inboundTag: string | null;
@@ -26,6 +28,7 @@ export type PolicyHost = {
 };
 export type PolicyIdentity = {
     userId: string;
+    quotaHostUuid?: string | null;
     expireAt?: Date;
     hostUuid: string;
     hwid: string | null;

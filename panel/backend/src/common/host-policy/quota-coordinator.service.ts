@@ -639,6 +639,9 @@ export class QuotaCoordinatorService {
               JOIN config_profile_inbounds_to_nodes b ON b.config_profile_inbound_uuid=i.inbound_uuid WHERE m.user_id=ANY(${ids}::bigint[])
             UNION SELECT k.user_id,b.node_uuid FROM xera_host_identities k JOIN hosts h ON h.uuid=k.host_uuid
               JOIN config_profile_inbounds_to_nodes b ON b.config_profile_inbound_uuid=h.config_profile_inbound_uuid WHERE k.user_id=ANY(${ids}::bigint[])
+            UNION SELECT k.user_id,b.node_uuid FROM xera_autoselect_identities k JOIN xera_autoselect_routes r ON r.uuid=k.route_uuid
+              JOIN hosts h ON h.uuid=r.source_host_uuid JOIN config_profile_inbounds_to_nodes b
+                ON b.config_profile_inbound_uuid=h.config_profile_inbound_uuid WHERE k.user_id=ANY(${ids}::bigint[])
           ), host_nodes AS (
             SELECT o.id AS owner,h.uuid,h.tags,h.user_traffic_limit_bytes,h.use_tag_traffic_limit,b.node_uuid
               FROM owners o JOIN hosts h ON xera_host_user_entitled(o.id,h.uuid)
@@ -646,6 +649,15 @@ export class QuotaCoordinatorService {
               WHERE b.node_uuid=ANY(${nodeIds}::uuid[]) AND
                 (NOT EXISTS(SELECT 1 FROM hosts_to_nodes hn WHERE hn.host_uuid=h.uuid) OR
                  EXISTS(SELECT 1 FROM hosts_to_nodes hn WHERE hn.host_uuid=h.uuid AND hn.node_uuid=b.node_uuid))
+            UNION
+            SELECT o.id,h.uuid,h.tags,h.user_traffic_limit_bytes,h.use_tag_traffic_limit,b.node_uuid
+              FROM owners o JOIN xera_autoselect_routes r ON xera_host_user_entitled(o.id,r.owner_host_uuid)
+              JOIN hosts h ON h.uuid=r.owner_host_uuid JOIN hosts s ON s.uuid=r.source_host_uuid
+              JOIN config_profile_inbounds_to_nodes b ON b.config_profile_inbound_uuid=s.config_profile_inbound_uuid
+              WHERE b.node_uuid=ANY(${nodeIds}::uuid[]) AND xera_host_user_allowed(o.id,s.uuid)
+                AND EXISTS(SELECT 1 FROM xera_autoselect_identities k WHERE k.route_uuid=r.uuid AND k.user_id=o.id)
+                AND (NOT EXISTS(SELECT 1 FROM hosts_to_nodes hn WHERE hn.host_uuid=s.uuid) OR
+                     EXISTS(SELECT 1 FROM hosts_to_nodes hn WHERE hn.host_uuid=s.uuid AND hn.node_uuid=b.node_uuid))
           ), targets AS (
             SELECT 'USER'::text AS kind,'global'::text AS key,o.id AS owner,u.node_uuid FROM owners o JOIN user_nodes u ON u.owner=o.id
               WHERE o.traffic_limit_bytes>0 AND u.node_uuid=ANY(${nodeIds}::uuid[])

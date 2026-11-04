@@ -107,6 +107,9 @@ export function TemplateAssignmentPanel({
             <Text size="xs" c="dimmed">
                 {t('autoselect.recipients-empty-help')}
             </Text>
+            <Text size="xs" c="dimmed">
+                {t('autoselect.recipient-limits')}
+            </Text>
         </Stack>
     )
 }

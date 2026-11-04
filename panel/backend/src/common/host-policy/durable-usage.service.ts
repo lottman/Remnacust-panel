@@ -378,8 +378,10 @@ export class DurableUsageService {
                         sql`(${row.owner}::bigint,${row.host}::uuid,${row.bytes.toString()}::bigint)`,
                 );
             await sql`INSERT INTO xera_host_quota_usage(user_id,host_uuid,node_id,total_bytes,created_at)
-                SELECT d.owner,d.host,${node.nodeId},d.bytes,${day}::date FROM (VALUES ${sql.join(values)}) AS d(owner,host,bytes)
-                JOIN users u ON u.id=d.owner JOIN hosts h ON h.uuid=d.host
+                SELECT d.owner,h.uuid,${node.nodeId},sum(d.bytes)::bigint,${day}::date FROM (VALUES ${sql.join(values)}) AS d(owner,host,bytes)
+                LEFT JOIN xera_autoselect_routes route ON route.uuid=d.host
+                JOIN users u ON u.id=d.owner JOIN hosts h ON h.uuid=COALESCE(route.owner_host_uuid,d.host)
+                GROUP BY d.owner,h.uuid
                 ON CONFLICT(user_id,host_uuid,node_id,created_at) DO UPDATE SET total_bytes=xera_host_quota_usage.total_bytes+excluded.total_bytes`.execute(
                 this.db.kysely,
             );

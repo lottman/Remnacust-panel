@@ -70,6 +70,9 @@ export interface XrayJsonConfig {
 
 export interface IGenerateConfigParams {
     hosts: ResolvedProxyConfig[];
+    autoselectCandidates?: () => Promise<ResolvedProxyConfig[]>;
+    autoselectSelections?: Map<string, ResolvedProxyConfig[]>;
+    bindAutoselect?: (ownerUuid: string, sourceUuids: string[]) => Promise<ResolvedProxyConfig[]>;
     isExtendedClient: boolean;
     overrideTemplateName?: string;
     ignoreHostXrayJsonTemplate?: boolean;

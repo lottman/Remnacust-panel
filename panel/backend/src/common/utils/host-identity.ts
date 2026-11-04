@@ -20,9 +20,11 @@ export function hostCredentials(
     hostUuid: string,
     hwid: string | null,
     parentVlessUuid: string,
+    deviceScopeUuid = hostUuid,
 ) {
     if (
         !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(hostUuid) ||
+        !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(deviceScopeUuid) ||
         userId <= 0n
     )
         throw new Error('Invalid host credential scope');
@@ -34,7 +36,7 @@ export function hostCredentials(
                     'xera-host-identity-v1',
                     purpose,
                     userId.toString(),
-                    host,
+                    purpose === 'email' ? deviceScopeUuid.toLowerCase() : host,
                     hwid,
                     parentVlessUuid.toLowerCase(),
                 ]),

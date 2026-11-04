@@ -46,16 +46,17 @@ test('the base JSON setting upgrades app fallback on either domain and preserves
     }
 });
 
-test('host and tag quotas are applied before every autoselect variant, without duplicate accounting',async()=>{
+test('recipient quotas gate profiles while limited pool candidates remain available for separate accounting',async()=>{
  const variants=Array.from({length:10},(_,i)=>({key:'balance-'+i,name:'balance-'+i,template:{}}));
  for(const policy of [{usedBytes:100n,effectiveLimitBytes:100n},{trafficPaused:true},{tagTrafficLimits:[{limitBytes:100n,usedBytes:100n}]},{tagTrafficLimits:[{ambiguous:true}]},{tagTrafficLimits:[{paused:true}]}]){
   const host={uuid:'shared-source',tags:['limited'],alwaysAvailable:false,onlyWhenInactive:false,excludeFromSubscriptionTypes:[],xrayJsonVariants:variants,tagTrafficLimits:[],...policy};
   const recipient={...host,uuid:'recipient',tags:[],usedBytes:0n,effectiveLimitBytes:0n,tagTrafficLimits:[],trafficPaused:false};
   const settings={hwidSettings:{enabled:false},customRemarks:{},randomizeHosts:false};
   const user={id:42n,status:'ACTIVE',expireAt:new Date(Date.now()+86400000),shortUuid:'fixture'};
-  const service=Object.create(SubscriptionService.prototype);let queries=0,rendered;
-  Object.assign(service,{logger:{error:error=>{throw error}},queryBus:{execute:async()=>({isOk:true,response:queries++?[host,recipient]:user})},deviceAccess:{enabled:false,registrationDenied:async()=>false},applyMaybeExternalSquadOverrides:async()=>({subscriptionSettings:settings}),checkAndUpsertHwidUserDevice:async()=>{},updateAndReportSubscriptionRequest:async()=>{},getUserProfileHeadersInfo:()=>({}),renderSubscription:async({hosts})=>{rendered=hosts;return{subscription:'[]',contentType:'application/json'}}});
+  const service=Object.create(SubscriptionService.prototype);let queries=0,rendered,candidates;
+  Object.assign(service,{logger:{error:error=>{throw error}},queryBus:{execute:async()=>({isOk:true,response:queries++?[host,recipient]:user})},deviceAccess:{enabled:false,registrationDenied:async()=>false},applyMaybeExternalSquadOverrides:async()=>({subscriptionSettings:settings}),checkAndUpsertHwidUserDevice:async()=>{},updateAndReportSubscriptionRequest:async()=>{},getUserProfileHeadersInfo:()=>({}),renderSubscription:async({hosts,autoselectHosts})=>{rendered=hosts;candidates=autoselectHosts;return{subscription:'[]',contentType:'application/json'}}});
   await service.getSubscriptionByShortUuid({matchedResponseType:'XRAY_JSON',subscriptionSettings:settings},'fixture');
   assert.deepEqual(rendered.map(h=>h.uuid),['recipient']);assert.equal(rendered[0].xrayJsonVariants.length,10);
+  assert.deepEqual(candidates.map(h=>h.uuid),['shared-source','recipient']);
  }
 });

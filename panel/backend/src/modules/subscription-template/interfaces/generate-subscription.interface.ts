@@ -10,6 +10,7 @@ export interface IGenerateSubscription {
     srrContext: ISRRContext;
     user: UserEntity;
     hosts: HostWithRawInbound[];
+    autoselectHosts?: HostWithRawInbound[];
     hostsOverrides?: ExternalSquadEntity['hostOverrides'];
     fallbackOptions?: {
         showHwidMaxDeviceRemarks?: boolean;

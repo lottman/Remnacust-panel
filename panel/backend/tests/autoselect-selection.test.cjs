@@ -152,3 +152,59 @@ test('regex and recipient-tag selectors support random and UUID groups after eli
   assert.deepEqual((await generator.resolveHosts(grouped,'HIDDEN',recipient,candidates,Date.now()+10000)).map(h=>h.metadata.uuid),[id(1),id(4)]);
  }
 });
+
+test('autoselect can use a quota-limited source only with recipient-scoped credentials', async () => {
+    const owner = host(0),
+        source = host(1);
+    source.clientOverrides.selectionOnly = true;
+    const template = {
+        outbounds: [],
+        remnawave: {
+            injectHosts: [
+                {
+                    mode: 'all',
+                    selectFrom: 'ALL',
+                    tagPrefix: 'p',
+                    selector: { type: 'uuids', values: [id(1)] },
+                },
+            ],
+        },
+        routing: {
+            balancers: [{ tag: 'b', selector: ['p'], strategy: { type: 'random' } }],
+            rules: [{ network: 'tcp,udp', balancerTag: 'b' }],
+        },
+    };
+    owner.clientOverrides.xrayJsonTemplate = template;
+    const generator = new XrayJsonGeneratorService({
+        getCachedTemplateByType: async () => ({ outbounds: [] }),
+    });
+    let calls = 0;
+    const options = {
+        hosts: [owner],
+        isExtendedClient: false,
+        autoselectCandidates: async () => [source],
+        autoselectSelections: new Map(),
+        bindAutoselect: async (ownerUuid, ids) => {
+            calls++;
+            assert.equal(ownerUuid, id(0));
+            assert.deepEqual(ids, [id(1)]);
+            return [
+                {
+                    ...source,
+                    clientOverrides: { ...source.clientOverrides, selectionOnly: undefined },
+                    protocolOptions: { ...source.protocolOptions, id: id(9998) },
+                },
+            ];
+        },
+    };
+    for (let attempt = 0; attempt < 2; attempt++) {
+        const profiles = JSON.parse(await generator.generateConfig(options));
+        assert.equal(profiles.length, 1);
+        assert.equal(profiles[0].outbounds[0].settings.vnext[0].users[0].id, id(9998));
+    }
+    assert.equal(calls, 2);
+    await assert.rejects(
+        generator.generateConfig({ ...options, bindAutoselect: undefined }),
+        /unbound-autoselect-source/,
+    );
+});

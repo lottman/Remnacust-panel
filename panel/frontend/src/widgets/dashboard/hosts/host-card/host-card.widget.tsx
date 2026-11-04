@@ -329,55 +329,62 @@ export const HostCardWidget = memo(function HostCardWidget(props: IProps) {
                         <Group
                             gap="sm"
                             miw={0}
-                            className={classes.clippedInfo}
+                            className={classes.titleDetails}
                             justify="flex-start"
                             style={{ flexShrink: 1 }}
-                            wrap="nowrap"
+                            wrap="wrap"
                         >
-                            {!isHostActive && (
-                                <ThemeIcon
-                                    aria-hidden
-                                    color="gray"
-                                    size="md"
-                                    style={{ flexShrink: 0 }}
-                                    variant="soft"
-                                >
-                                    <PiProhibit size={16} />
-                                </ThemeIcon>
-                            )}
+                            <Group
+                                className={classes.headerIdentity}
+                                gap="sm"
+                                miw={0}
+                                wrap="nowrap"
+                            >
+                                {!isHostActive && (
+                                    <ThemeIcon
+                                        aria-hidden
+                                        color="gray"
+                                        size="md"
+                                        style={{ flexShrink: 0 }}
+                                        variant="soft"
+                                    >
+                                        <PiProhibit size={16} />
+                                    </ThemeIcon>
+                                )}
 
-                            {isHostActive && item.isHidden && (
-                                <ThemeIcon
-                                    aria-hidden
-                                    color="violet"
-                                    size="md"
-                                    style={{ flexShrink: 0 }}
-                                    variant="soft"
-                                >
-                                    <TbEyeOff size={16} />
-                                </ThemeIcon>
-                            )}
+                                {isHostActive && item.isHidden && (
+                                    <ThemeIcon
+                                        aria-hidden
+                                        color="violet"
+                                        size="md"
+                                        style={{ flexShrink: 0 }}
+                                        variant="soft"
+                                    >
+                                        <TbEyeOff size={16} />
+                                    </ThemeIcon>
+                                )}
 
-                            {isHostActive && !item.isHidden && (
-                                <ThemeIcon
-                                    aria-hidden
-                                    color="teal"
-                                    size="md"
-                                    style={{ flexShrink: 0 }}
-                                    variant="soft"
-                                >
-                                    <PiPulse size={16} />
-                                </ThemeIcon>
-                            )}
+                                {isHostActive && !item.isHidden && (
+                                    <ThemeIcon
+                                        aria-hidden
+                                        color="teal"
+                                        size="md"
+                                        style={{ flexShrink: 0 }}
+                                        variant="soft"
+                                    >
+                                        <PiPulse size={16} />
+                                    </ThemeIcon>
+                                )}
 
-                            <Text className={classes.headerName} fw={600} truncate>
-                                {item.remark}
-                            </Text>
-                            <ProviderTags providers={providers} tags={[]} />
+                                <Text className={classes.headerName} fw={600} truncate>
+                                    {item.remark}
+                                </Text>
+                                <ProviderTags providers={providers} tags={[]} />
+                            </Group>
+                            <Box className={classes.headerTags}>
+                                <ProviderTags providers={[]} tags={item.tags} />
+                            </Box>
                         </Group>
-                        <Box className={classes.headerTags}>
-                            <ProviderTags providers={[]} tags={item.tags} />
-                        </Box>
                         <Text
                             c="dimmed"
                             className={classes.hostAddress}

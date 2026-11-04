@@ -273,6 +273,12 @@ export class XrayJsonGeneratorService {
                             hosts,
                             isExtendedClient,
                             regexDeadline,
+                            params.autoselectCandidates
+                                ? await params.autoselectCandidates()
+                                : undefined,
+                            params.bindAutoselect,
+                            params.autoselectSelections,
+                            variant?.key ?? 'default',
                         );
                         if (injected) append(injected);
                         continue;
@@ -396,6 +402,8 @@ export class XrayJsonGeneratorService {
     }
 
     private buildOutbound(host: ResolvedProxyConfig, tag: string): Outbound {
+        if (host.clientOverrides.selectionOnly)
+            throw new ClientPoolError('unbound-autoselect-source');
         const outbound: Outbound = {
             tag,
             protocol: host.protocol,
@@ -595,6 +603,10 @@ export class XrayJsonGeneratorService {
         allHosts: ResolvedProxyConfig[],
         isExtendedClient: boolean,
         deadline: number,
+        candidates?: ResolvedProxyConfig[],
+        bindAutoselect?: IGenerateConfigParams['bindAutoselect'],
+        selections?: IGenerateConfigParams['autoselectSelections'],
+        selectionScope = 'default',
     ): Promise<XrayJsonConfig | null> {
         const { remnawave: injector, ...template } = baseTemplate;
         if (!injector) return null;
@@ -603,14 +615,28 @@ export class XrayJsonGeneratorService {
         const injectedOutbounds = injector.addVirtualHostAsOutbound
             ? [this.buildOutbound(host, 'proxy')]
             : [];
-        for (const entry of injector.injectHosts ?? []) {
-            const selected = await this.resolveHosts(
-                entry,
-                entry.selectFrom,
-                host,
-                allHosts,
-                deadline,
-            );
+        for (const [index, entry] of (injector.injectHosts ?? []).entries()) {
+            const selectionKey = JSON.stringify([host.metadata.uuid, selectionScope, index]);
+            let selected =
+                selections?.get(selectionKey) ??
+                (await this.resolveHosts(
+                    entry,
+                    entry.selectFrom,
+                    host,
+                    candidates ?? allHosts,
+                    deadline,
+                ));
+            selections?.set(selectionKey, selected);
+            if (bindAutoselect && selected.length) {
+                const resolved = await bindAutoselect(
+                    host.metadata.uuid,
+                    selected.map((source) => source.metadata.uuid),
+                );
+                const byId = new Map(resolved.map((source) => [source.metadata.uuid, source]));
+                selected = selected.flatMap((source) =>
+                    byId.has(source.metadata.uuid) ? [byId.get(source.metadata.uuid)!] : [],
+                );
+            }
             // A new bounded pool with no eligible member must not emit an invalid balancer
             // or silently fall back to the recipient's placeholder address.
             if (entry.mode && selected.length === 0) return null;

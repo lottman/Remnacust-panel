@@ -3364,7 +3364,7 @@
     "assignment-help": "Select the hosts or tags that receive this template. These recipients are separate from the servers inside the pool; assignment does not grant access to a server.",
     "assignment-hosts": "Recipient hosts",
     "assignment-tags": "Recipient tags",
-    "assignment-priority": "Priority: explicit host template, host assignments, tag assignments, default template. Multiple autoselects at the same priority produce separate profiles; source hosts and limits remain shared.",
+    "assignment-priority": "Priority: explicit host template, host assignments, tag assignments, default template. Multiple autoselects for one recipient produce separate profiles and share that recipient’s limits.",
     "probes": "Connection probes",
     "probes-help": "Latency, stability and priority strategies need probes. Existing settings are preserved; pool prefixes are added to selectors.",
     "probe-url": "Probe URL",
@@ -3448,7 +3448,8 @@
     "pool-hosts-help": "Servers the client will choose between.",
     "priority-summary": "The client uses the first available server in order. Switching affects new connections.",
     "assignment-mode": "Assign by",
-    "assignment-mixed": "This existing assignment contains both hosts and tags. Choose one mode to keep its list and remove the other."
+    "assignment-mixed": "This existing assignment contains both hosts and tags. Choose one mode to keep its list and remove the other.",
+    "recipient-limits": "Quota and speed are configured on the recipient host. Autoselect does not debit pool members or inherit their speed limits. Multiple autoselects for one recipient share its allowance. Without recipient limits or enabled recipient tag limits, autoselect has no host-level ceiling. The account quota still applies."
   },
   "template-history": {
     "title": "History",

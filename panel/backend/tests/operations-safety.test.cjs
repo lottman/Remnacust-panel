@@ -98,7 +98,7 @@ test('host credential preview never inserts identities or synchronizes live node
         },
     );
     service.policies = {
-        scopes: async () => ({ protectedInboundIds: new Set([U]) }),
+        scopes: async () => ({ hosts: [{ uuid: U }], protectedInboundIds: new Set([U]) }),
         keys: () => ({ vlessUuid: 'scoped-fixture-key' }),
     };
     let allowed = new Set([U]);

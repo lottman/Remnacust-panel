@@ -40,7 +40,7 @@ test('frozen, expired, disabled and limited users receive only permitted excepti
             prepared = hosts;
             return new Map(hosts.map(host => [host.uuid, { ...user, vlessUuid: 'scoped-exception' }]));
         } });
-        resolver.buildResolvedProxyConfig = ({ inputHost, user }) => ({ finalRemark: inputHost.remark, credential: user.vlessUuid });
+        resolver.buildResolvedProxyConfig = ({ inputHost, user }) => ({ finalRemark: inputHost.remark, credential: user.vlessUuid, clientOverrides: {} });
         const hosts = [
             { uuid: 'normal', remark: 'Normal', tags: [], tagTrafficLimits: [], alwaysAvailable: false, onlyWhenInactive: false, rawInbound: {} },
             { uuid: 'exception', remark: 'Support', tags: [], tagTrafficLimits: [], alwaysAvailable: true, onlyWhenInactive: true, rawInbound: {} },

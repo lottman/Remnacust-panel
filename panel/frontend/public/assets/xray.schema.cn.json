@@ -9499,6 +9499,6 @@
     "version": "v26.10.31",
     "commit": "a4a3dff5b20c2faae567b742c172c7b95e75c083",
     "patchCommit": null,
-    "coreVersion": "1.1.12"
+    "coreVersion": "1.1.13"
   }
 }

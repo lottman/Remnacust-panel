@@ -144,9 +144,11 @@ export class HostUsageService {
                             sql`(${record.userId}::bigint,${record.hostUuid}::uuid,${record.bytes}::bigint)`,
                     );
                 await sql`INSERT INTO xera_host_quota_usage(user_id,host_uuid,node_id,total_bytes,created_at)
-                    SELECT sample.user_id,sample.host_uuid,${nodeId},sample.bytes,${batch.day}::date
+                    SELECT sample.user_id,h.uuid,${nodeId},sum(sample.bytes)::bigint,${batch.day}::date
                     FROM (VALUES ${sql.join(values)}) AS sample(user_id,host_uuid,bytes)
-                    JOIN users u ON u.id=sample.user_id JOIN hosts h ON h.uuid=sample.host_uuid
+                    LEFT JOIN xera_autoselect_routes route ON route.uuid=sample.host_uuid
+                    JOIN users u ON u.id=sample.user_id JOIN hosts h ON h.uuid=COALESCE(route.owner_host_uuid,sample.host_uuid)
+                    GROUP BY sample.user_id,h.uuid
                     ON CONFLICT(user_id,host_uuid,node_id,created_at) DO UPDATE SET
                     total_bytes=xera_host_quota_usage.total_bytes+excluded.total_bytes`.execute(tx);
             }

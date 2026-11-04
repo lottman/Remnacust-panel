@@ -56,6 +56,8 @@ import { override, toNonEmptyRecord } from './utils';
 export interface IResolveProxyConfigOptions {
     subscriptionSettings: SubscriptionSettingsEntity | null;
     hosts: HostWithRawInbound[];
+    selectionOnly?: boolean;
+    quotaOwnerHost?: HostWithRawInbound;
     user: UserEntity;
     hostsOverrides?: ExternalSquadEntity['hostOverrides'];
     fallbackOptions?: {
@@ -93,7 +95,8 @@ export class ResolveProxyConfigService {
             return [];
         }
 
-        options.hosts = options.hosts.filter((host) => !isHostTrafficLimited(host));
+        if (!options.selectionOnly && !options.quotaOwnerHost)
+            options.hosts = options.hosts.filter((host) => !isHostTrafficLimited(host));
 
         if (excludeHostsByTags) {
             options.hosts = options.hosts.filter(
@@ -127,7 +130,11 @@ export class ResolveProxyConfigService {
 
         let hosts = this.applyShuffle(options.hosts);
 
-        const hostUsers = await this.hostAccess.prepare(user, hosts);
+        const hostUsers = options.selectionOnly
+            ? new Map<string, UserEntity | null>()
+            : options.quotaOwnerHost
+              ? await this.hostAccess.prepareAutoselect(user, options.quotaOwnerHost.uuid, hosts)
+              : await this.hostAccess.prepare(user, hosts);
         hosts = hosts.filter((host) => hostUsers.get(host.uuid) !== null);
         const rawInbounds = hosts.map((h) => h.rawInbound);
         const [publicKeyMap, mldsa65PublicKeyMap, encryptionMap] = await Promise.all([
@@ -139,7 +146,12 @@ export class ResolveProxyConfigService {
         const knownRemarks = new Map<string, number>();
         const resolvedProxyConfigs: ResolvedProxyConfig[] = [];
 
-        for (const inputHost of hosts) {
+        for (const originalHost of hosts) {
+            const inputHost = { ...originalHost } as HostWithRawInbound;
+            if (options.quotaOwnerHost) {
+                inputHost.speedLimitMbps = options.quotaOwnerHost.speedLimitMbps;
+                inputHost.deviceSpeedLimitMbps = options.quotaOwnerHost.deviceSpeedLimitMbps;
+            }
             this.applyHostOverrides(inputHost, hostsOverrides);
             const userValueMap = TemplateEngine.createUserValueMap(
                 user,
@@ -165,6 +177,8 @@ export class ResolveProxyConfigService {
             });
 
             if (resolvedProxyConfig) {
+                resolvedProxyConfig.clientOverrides.hostScoped = hostUsers.has(inputHost.uuid);
+                if (options.selectionOnly) resolvedProxyConfig.clientOverrides.selectionOnly = true;
                 resolvedProxyConfigs.push(resolvedProxyConfig);
             }
         }

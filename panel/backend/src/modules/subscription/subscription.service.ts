@@ -1,8 +1,6 @@
 import dayjs from 'dayjs';
 import _ from 'lodash';
 import pMap from 'p-map';
-import { subscriptionUserUrl } from '../../common/utils/subscription-domain-url';
-import { currentGeofileOrigin } from '../../common/utils/geofile-request-context';
 
 import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
@@ -51,6 +49,8 @@ import { GetUsersWithPaginationQuery } from '@modules/users/queries/get-users-wi
 
 import { UsersQueuesService } from '@queue/_users/users-queues.service';
 
+import { currentGeofileOrigin } from '../../common/utils/geofile-request-context';
+import { subscriptionUserUrl } from '../../common/utils/subscription-domain-url';
 import { GetHostsForUserQuery } from '../hosts/queries/get-hosts-for-user';
 import { GetSubscriptionsQueryDto } from './dto';
 import {
@@ -193,7 +193,8 @@ export class SubscriptionService {
             const subscriptionSettings = srrContext.subscriptionSettings;
 
             const subscriptionInactive =
-                user.response.status !== USERS_STATUS.ACTIVE || user.response.expireAt <= new Date();
+                user.response.status !== USERS_STATUS.ACTIVE ||
+                user.response.expireAt <= new Date();
 
             if (hwidHeaders) {
                 const device = await this.queryBus.execute(
@@ -385,7 +386,8 @@ export class SubscriptionService {
             }
 
             const subscriptionEnded =
-                user.response.status !== USERS_STATUS.ACTIVE || user.response.expireAt <= new Date();
+                user.response.status !== USERS_STATUS.ACTIVE ||
+                user.response.expireAt <= new Date();
             const presentationHosts = hosts.response.filter((host) =>
                 subscriptionEnded ? host.alwaysAvailable : !host.onlyWhenInactive,
             );
@@ -433,6 +435,10 @@ export class SubscriptionService {
             const subscription = await this.renderSubscription({
                 srrContext,
                 user: renderUser,
+                autoselectHosts:
+                    srrContext.matchedResponseType === 'XRAY_JSON' && !subscriptionEnded
+                        ? presentationHosts
+                        : undefined,
                 onResolvedHosts: preview
                     ? (hostUuids) => {
                           preview.resolvedHostCount = hostUuids.length;
@@ -493,7 +499,11 @@ export class SubscriptionService {
             const requestOrigin = currentGeofileOrigin();
             const deviceSubscriptionUrl = requestOrigin
                 ? `${requestOrigin}/${shortUuid}`
-                : subscriptionUserUrl(user.response.subscriptionDomain, this.subPublicDomain, shortUuid);
+                : subscriptionUserUrl(
+                      user.response.subscriptionDomain,
+                      this.subPublicDomain,
+                      shortUuid,
+                  );
             return new SubscriptionWithConfigResponse({
                 headers: {
                     ...headers,
@@ -1010,7 +1020,11 @@ export class SubscriptionService {
             },
             links,
             ssConfLinks,
-            subscriptionUrl: subscriptionUserUrl(user.subscriptionDomain, this.subPublicDomain, user.shortUuid),
+            subscriptionUrl: subscriptionUserUrl(
+                user.subscriptionDomain,
+                this.subPublicDomain,
+                user.shortUuid,
+            ),
         });
     }
 
@@ -1190,18 +1204,18 @@ export class SubscriptionService {
             user.status === USERS_STATUS.FROZEN
                 ? 'FROZEN'
                 : user.status === USERS_STATUS.DISABLED
-                ? 'DISABLED'
-                : user.status === USERS_STATUS.EXPIRED || user.expireAt <= new Date()
-                  ? 'EXPIRED'
-                  : null;
+                  ? 'DISABLED'
+                  : user.status === USERS_STATUS.EXPIRED || user.expireAt <= new Date()
+                    ? 'EXPIRED'
+                    : null;
         const statusRemarks = settings.isShowCustomRemarks
             ? status === 'FROZEN'
-                ? settings.customRemarks.frozenUsers ?? ['Subscription frozen']
+                ? (settings.customRemarks.frozenUsers ?? ['Subscription frozen'])
                 : status === 'DISABLED'
-                ? settings.customRemarks.disabledUsers
-                : status === 'EXPIRED'
-                  ? settings.customRemarks.expiredUsers
-                  : []
+                  ? settings.customRemarks.disabledUsers
+                  : status === 'EXPIRED'
+                    ? settings.customRemarks.expiredUsers
+                    : []
             : [];
         const effectiveStatusRemarks =
             status === 'DISABLED' &&

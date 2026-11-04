@@ -12,6 +12,7 @@ import { TxKyselyService } from '@common/database';
 import { RawCacheService } from '@common/raw-cache';
 import { hostCredentials } from '@common/utils/host-identity';
 
+import { attachAutoselectRoutes, type AutoselectRoute } from './autoselect-route-policy';
 import {
     normalizeDestinationRule as normalizePolicyDomain,
     isIpDestinationRule,
@@ -45,6 +46,7 @@ type HostPolicyCapabilities = {
     supported?: boolean;
     destinationRulesSupported?: boolean;
     deviceSpeedLimitsSupported?: boolean;
+    routedDeviceSpeedLimitsSupported?: boolean;
     policyRevisionsSupported?: boolean;
     policyRevision?: string;
     offlineReserves?: string | null;
@@ -80,11 +82,18 @@ export class HostPolicyService {
     ) {
         this.secret = config.getOrThrow('APP_SECRET');
     }
-    keys(row: Pick<PolicyIdentity, 'userId' | 'hostUuid' | 'hwid' | 'parent'>) {
-        return hostCredentials(this.secret, BigInt(row.userId), row.hostUuid, row.hwid, row.parent);
+    keys(row: Pick<PolicyIdentity, 'userId' | 'hostUuid' | 'hwid' | 'parent' | 'quotaHostUuid'>) {
+        return hostCredentials(
+            this.secret,
+            BigInt(row.userId),
+            row.hostUuid,
+            row.hwid,
+            row.parent,
+            row.quotaHostUuid ?? row.hostUuid,
+        );
     }
     async scopes(userId?: bigint, nodeUuid?: string, userQuota = false): Promise<PolicySnapshot> {
-        const [hosts, tags, identities] = await Promise.all([
+        const [hosts, tags, identities, routes] = await Promise.all([
             sql<PolicyHost>`SELECT h.uuid,h.tags,h.config_profile_inbound_uuid AS "inboundUuid",i.tag AS "inboundTag",i.profile_uuid AS "profileUuid",
     h.always_available AS "alwaysAvailable",h.only_when_inactive AS "onlyWhenInactive",
     h.user_traffic_limit_bytes::text AS "userLimit",h.traffic_multiplier AS "trafficMultiplier",
@@ -103,16 +112,30 @@ export class HostPolicyService {
     reset_value AS "resetValue",reset_unit AS "resetUnit" FROM xera_host_tag_limits`.execute(
                 this.db.kysely,
             ),
-            sql<PolicyIdentity>`SELECT k.user_id::text AS "userId",u.expire_at AS "expireAt",k.host_uuid AS "hostUuid",k.hwid,k.parent_vless_uuid AS parent,
+            sql<PolicyIdentity>`SELECT k.user_id::text AS "userId",u.expire_at AS "expireAt",k.host_uuid AS "hostUuid",NULL::uuid AS "quotaHostUuid",k.hwid,k.parent_vless_uuid AS parent,
     xera_host_identity_allowed(k.user_id,k.host_uuid,k.hwid,k.parent_vless_uuid) AS allowed,
     i.raw_inbound,i.tag AS "inboundTag",i.profile_uuid AS "profileUuid"
     FROM xera_host_identities k JOIN users u ON u.id=k.user_id JOIN hosts h ON h.uuid=k.host_uuid JOIN config_profile_inbounds i ON i.uuid=h.config_profile_inbound_uuid
     WHERE 1=1 ${userId === undefined ? sql`` : sql`AND k.user_id=${userId}`}
+    ${nodeUuid === undefined ? sql`` : sql`AND EXISTS(SELECT 1 FROM config_profile_inbounds_to_nodes n WHERE n.config_profile_inbound_uuid=i.uuid AND n.node_uuid=${nodeUuid}::uuid)`}
+    UNION ALL
+    SELECT k.user_id::text AS "userId",u.expire_at AS "expireAt",r.uuid AS "hostUuid",r.owner_host_uuid AS "quotaHostUuid",k.hwid,k.parent_vless_uuid AS parent,
+      xera_subscription_identity_allowed(k.user_id,r.uuid,k.hwid,k.parent_vless_uuid) AS allowed,
+      i.raw_inbound,i.tag AS "inboundTag",i.profile_uuid AS "profileUuid"
+    FROM xera_autoselect_identities k JOIN users u ON u.id=k.user_id
+      JOIN xera_autoselect_routes r ON r.uuid=k.route_uuid JOIN hosts h ON h.uuid=r.source_host_uuid
+      JOIN config_profile_inbounds i ON i.uuid=h.config_profile_inbound_uuid
+    WHERE 1=1 ${userId === undefined ? sql`` : sql`AND k.user_id=${userId}`}
     ${nodeUuid === undefined ? sql`` : sql`AND EXISTS(SELECT 1 FROM config_profile_inbounds_to_nodes n WHERE n.config_profile_inbound_uuid=i.uuid AND n.node_uuid=${nodeUuid}::uuid)`}`.execute(
                 this.db.kysely,
             ),
+            sql<AutoselectRoute>`SELECT uuid,owner_host_uuid AS "ownerUuid",source_host_uuid AS "sourceUuid"
+                FROM xera_autoselect_routes WHERE source_host_uuid IS NOT NULL`.execute(
+                this.db.kysely,
+            ),
         ]);
-        const groups = buildPolicyGroups(hosts.rows, tags.rows);
+        const policyHosts = attachAutoselectRoutes(hosts.rows, routes.rows);
+        const groups = buildPolicyGroups(policyHosts, tags.rows);
         const protectedInboundIds = new Set(
             hosts.rows
                 .filter(
@@ -135,7 +158,7 @@ export class HostPolicyService {
                 .flatMap((h) => (h.inboundUuid ? [h.inboundUuid] : [])),
         );
         const snapshot: PolicySnapshot = {
-            hosts: hosts.rows,
+            hosts: policyHosts,
             groups,
             identities: identities.rows,
             protectedInboundIds,
@@ -150,6 +173,10 @@ export class HostPolicyService {
                         WHERE m.user_id=u.id AND n.node_uuid=${nodeUuid}::uuid)
                     OR EXISTS(SELECT 1 FROM xera_host_identities k JOIN hosts h ON h.uuid=k.host_uuid
                         JOIN config_profile_inbounds_to_nodes n ON n.config_profile_inbound_uuid=h.config_profile_inbound_uuid
+                        WHERE k.user_id=u.id AND n.node_uuid=${nodeUuid}::uuid)
+                    OR EXISTS(SELECT 1 FROM xera_autoselect_identities k JOIN xera_autoselect_routes r ON r.uuid=k.route_uuid
+                        JOIN hosts h ON h.uuid=r.source_host_uuid JOIN config_profile_inbounds_to_nodes n
+                          ON n.config_profile_inbound_uuid=h.config_profile_inbound_uuid
                         WHERE k.user_id=u.id AND n.node_uuid=${nodeUuid}::uuid)
                     ORDER BY u.id`.execute(this.db.kysely),
                 sql<{
@@ -208,6 +235,7 @@ export class HostPolicyService {
                         supported: value.supported,
                         destinationRulesSupported: value.destinationRulesSupported,
                         deviceSpeedLimitsSupported: value.deviceSpeedLimitsSupported,
+                        routedDeviceSpeedLimitsSupported: value.routedDeviceSpeedLimitsSupported,
                         policyRevisionsSupported: value.policyRevisionsSupported,
                         policyRevision: value.policyRevision,
                         offlineReserves: value.offlineReserves,
@@ -326,7 +354,7 @@ export class HostPolicyService {
                     const protectedHosts = state.hosts.filter(
                         (h) =>
                             h.inboundUuid &&
-                            state.protectedInboundIds.has(h.inboundUuid) &&
+                            (h.quotaHostUuid || state.protectedInboundIds.has(h.inboundUuid)) &&
                             h.boundNodes.includes(node.uuid),
                     );
                     if (!protectedHosts.length) {
@@ -347,6 +375,13 @@ export class HostPolicyService {
                             `Node ${node.uuid}: update node and core before applying device speed limits`,
                         );
                     }
+                    if (
+                        !capabilities?.routedDeviceSpeedLimitsSupported &&
+                        protectedHosts.some((host) => host.quotaHostUuid)
+                    )
+                        throw new Error(
+                            `Node ${node.uuid}: update node and core before applying autoselect quota ownership`,
+                        );
                     const groups: Record<string, unknown> = {};
                     for (const group of state.groups.filter((g) =>
                         g.nodeUuids.includes(node.uuid),
@@ -470,7 +505,16 @@ export class HostPolicyService {
                     }
                     const body = {
                         version: HOST_POLICY_VERSION,
-                        protectedInbounds: [...new Set(protectedHosts.map((h) => h.inboundTag))],
+                        ...(protectedHosts.some((host) => host.quotaHostUuid)
+                            ? { routedIdentities: true }
+                            : {}),
+                        protectedInbounds: [
+                            ...new Set(
+                                protectedHosts
+                                    .filter((h) => state.protectedInboundIds.has(h.inboundUuid!))
+                                    .map((h) => h.inboundTag),
+                            ),
+                        ],
                         hosts,
                         groups,
                     };

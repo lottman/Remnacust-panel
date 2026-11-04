@@ -244,6 +244,8 @@ export type ResolvedProxyConfig = {
     mux: Record<string, unknown> | null;
 
     clientOverrides: {
+        selectionOnly?: true;
+        hostScoped?: boolean;
         shuffleHost: boolean;
         mihomoX25519: boolean;
         mihomoIpVersion: TMihomoIpVersion | null;

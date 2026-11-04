@@ -108,6 +108,7 @@ test('subscription renderer omits unavailable protected hosts and never substitu
     resolver.buildResolvedProxyConfig = ({ inputHost, user }) => ({
         host: inputHost.uuid,
         key: user.vlessUuid,
+        clientOverrides: {},
     });
     const hosts = ['offline', 'online', 'ordinary'].map((uuid) => ({
         uuid,
@@ -116,8 +117,8 @@ test('subscription renderer omits unavailable protected hosts and never substitu
     }));
     const configs = await resolver.resolveProxyConfig({ user, hosts, subscriptionSettings: {} });
     assert.deepEqual(configs, [
-        { host: 'online', key: 'scoped' },
-        { host: 'ordinary', key: 'parent' },
+        { host: 'online', key: 'scoped', clientOverrides: { hostScoped: true } },
+        { host: 'ordinary', key: 'parent', clientOverrides: { hostScoped: false } },
     ]);
 });
 test('panel rejects a protocol/transport mismatch and missing TLS before dispatching to nodes', () => {

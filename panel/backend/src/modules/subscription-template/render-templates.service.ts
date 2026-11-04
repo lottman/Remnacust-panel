@@ -37,7 +37,7 @@ export class RenderTemplatesService {
     }> {
         const { srrContext, user, hosts, hostsOverrides, fallbackOptions } = params;
 
-        const formattedHosts = await this.resolveProxyConfigService.resolveProxyConfig({
+        let formattedHosts = await this.resolveProxyConfigService.resolveProxyConfig({
             subscriptionSettings: srrContext.subscriptionSettings,
             hosts,
             user,
@@ -120,9 +120,58 @@ export class RenderTemplatesService {
                     (key) => key.toLowerCase() === 'routing',
                 );
                 const client = xrayGeofileClient(srrContext.userAgent);
-                const generate = (geofileDelivery?: XrayGeofileDelivery) =>
+                const candidateOptions = {
+                    subscriptionSettings: srrContext.subscriptionSettings,
+                    hosts: params.autoselectHosts ?? hosts,
+                    user,
+                    hostsOverrides,
+                    fallbackOptions,
+                    excludeHostsByTags: srrContext.excludeHostsByTags,
+                };
+                let candidates: Promise<ResolvedProxyConfig[]> | undefined;
+                const autoselectCandidates = () =>
+                    (candidates ??= this.resolveProxyConfigService.resolveProxyConfig({
+                        ...candidateOptions,
+                        selectionOnly: true,
+                    }));
+                const autoselectSelections = new Map<string, ResolvedProxyConfig[]>();
+                let refreshCredentials = false;
+                const bound = new Map<string, Promise<ResolvedProxyConfig[]>>();
+                const bindAutoselect = (ownerUuid: string, sourceUuids: string[]) => {
+                    const owner = hosts.find((host) => host.uuid === ownerUuid);
+                    if (!owner) return Promise.resolve([]);
+                    const key = JSON.stringify([ownerUuid, [...sourceUuids].sort()]);
+                    if (!bound.has(key)) {
+                        const selected = new Set(sourceUuids);
+                        const inbounds = new Set(
+                            candidateOptions.hosts
+                                .filter((host) => selected.has(host.uuid))
+                                .map((host) => host.configProfileInboundUuid),
+                        );
+                        refreshCredentials ||= formattedHosts.some(
+                            (host) =>
+                                !host.clientOverrides.hostScoped &&
+                                inbounds.has(host.metadata.configProfileInboundUuid),
+                        );
+                        bound.set(
+                            key,
+                            this.resolveProxyConfigService.resolveProxyConfig({
+                                ...candidateOptions,
+                                hosts: candidateOptions.hosts.filter((host) =>
+                                    selected.has(host.uuid),
+                                ),
+                                quotaOwnerHost: owner,
+                            }),
+                        );
+                    }
+                    return bound.get(key)!;
+                };
+                const renderXray = (geofileDelivery?: XrayGeofileDelivery) =>
                     this.xrayJsonGeneratorService.generateConfig({
                         hosts: formattedHosts,
+                        autoselectCandidates,
+                        autoselectSelections,
+                        bindAutoselect,
                         isExtendedClient: srrContext.isExtendedClient,
                         overrideTemplateName: srrContext.overrideTemplateName,
                         ignoreHostXrayJsonTemplate: srrContext.ignoreHostXrayJsonTemplate,
@@ -130,6 +179,31 @@ export class RenderTemplatesService {
                             user.status !== USERS_STATUS.ACTIVE || user.expireAt <= new Date(),
                         geofileDelivery,
                     });
+                const generate = async (geofileDelivery?: XrayGeofileDelivery) => {
+                    let output = await renderXray(geofileDelivery);
+                    if (refreshCredentials) {
+                        refreshCredentials = false;
+                        formattedHosts = await this.resolveProxyConfigService.resolveProxyConfig({
+                            ...candidateOptions,
+                            hosts,
+                        });
+                        params.onResolvedHosts?.(
+                            formattedHosts
+                                .filter(
+                                    (host) =>
+                                        host.metadata.uuid !==
+                                            '00000000-0000-0000-0000-000000000000' &&
+                                        !host.metadata.isDisabled &&
+                                        !host.metadata.excludeFromSubscriptionTypes.includes(
+                                            'XRAY_JSON',
+                                        ),
+                                )
+                                .map((host) => host.metadata.uuid),
+                        );
+                        output = await renderXray(geofileDelivery);
+                    }
+                    return output;
+                };
                 const output = await automaticXrayDelivery({
                     client,
                     manualRouting: hasRouting,

@@ -16,6 +16,7 @@ import { settleConcurrent } from '@common/utils/settle-concurrent';
 
 import { UserEntity } from '@modules/users/entities/user.entity';
 
+import { autoselectRouteUuid } from './autoselect-route-policy';
 import { HostPolicyService } from './host-policy.service';
 
 type HostSyncResult = { allSynchronized: boolean; readyHosts: Set<string> };
@@ -36,13 +37,17 @@ export class HostAccessService {
     async prepare(
         user: UserEntity,
         hosts: { uuid: string; configProfileInboundUuid: string | null }[],
+        quotaOwnerUuid?: string,
     ): Promise<Map<string, UserEntity | null>> {
         const state = await this.policies.scopes(user.id);
+        const policyHosts = new Map(state.hosts.map((host) => [host.uuid, host]));
         const result = new Map<string, UserEntity | null>();
         const protectedHosts = hosts.filter(
             (h) =>
                 h.configProfileInboundUuid &&
-                state.protectedInboundIds.has(h.configProfileInboundUuid),
+                (!quotaOwnerUuid || policyHosts.get(h.uuid)?.quotaHostUuid === quotaOwnerUuid) &&
+                (state.protectedInboundIds.has(h.configProfileInboundUuid) ||
+                    policyHosts.get(h.uuid)?.quotaHostUuid),
         );
         if (!protectedHosts.length) return result;
         // Explicit null prevents the renderer from substituting unrestricted credentials.
@@ -71,6 +76,7 @@ export class HostAccessService {
                 const keys = this.policies.keys({
                     userId: user.id.toString(),
                     hostUuid: id,
+                    quotaHostUuid: policyHosts.get(id)?.quotaHostUuid,
                     hwid: context.hwid,
                     parent: context.parentVlessUuid,
                 });
@@ -81,16 +87,35 @@ export class HostAccessService {
             }
             return result;
         }
-        const records = hostIds.map(
-            (id) =>
-                sql`(${user.id},${id}::uuid,${context.hwid ?? ''},${context.hwid},${context.parentVlessUuid}::uuid)`,
+        const routeIds = new Set(
+            state.hosts.filter((host) => host.quotaHostUuid).map((host) => host.uuid),
         );
-        await sql`INSERT INTO xera_host_identities(user_id,host_uuid,device_key,hwid,parent_vless_uuid)
+        const records = hostIds
+            .filter((id) => !routeIds.has(id))
+            .map(
+                (id) =>
+                    sql`(${user.id},${id}::uuid,${context.hwid ?? ''},${context.hwid},${context.parentVlessUuid}::uuid)`,
+            );
+        if (records.length)
+            await sql`INSERT INTO xera_host_identities(user_id,host_uuid,device_key,hwid,parent_vless_uuid)
             VALUES ${sql.join(records)}
             ON CONFLICT(user_id,host_uuid,device_key) DO UPDATE SET parent_vless_uuid=excluded.parent_vless_uuid
             WHERE xera_host_identities.parent_vless_uuid IS DISTINCT FROM excluded.parent_vless_uuid`.execute(
-            this.db.kysely,
-        );
+                this.db.kysely,
+            );
+        const routed = hostIds
+            .filter((id) => routeIds.has(id))
+            .map(
+                (id) =>
+                    sql`(${user.id},${id}::uuid,${context.hwid ?? ''},${context.hwid},${context.parentVlessUuid}::uuid)`,
+            );
+        if (routed.length)
+            await sql`INSERT INTO xera_autoselect_identities(user_id,route_uuid,device_key,hwid,parent_vless_uuid)
+            VALUES ${sql.join(routed)}
+            ON CONFLICT(user_id,route_uuid,device_key) DO UPDATE SET parent_vless_uuid=excluded.parent_vless_uuid
+            WHERE xera_autoselect_identities.parent_vless_uuid IS DISTINCT FROM excluded.parent_vless_uuid`.execute(
+                this.db.kysely,
+            );
         // Coalesce only overlapping preparations of the exact same credentials/hosts.
         // Every waiter still validates current permissions after synchronization.
         const flightKey = JSON.stringify([
@@ -156,6 +181,7 @@ export class HostAccessService {
             const keys = this.policies.keys({
                 userId: user.id.toString(),
                 hostUuid: id,
+                quotaHostUuid: policyHosts.get(id)?.quotaHostUuid,
                 hwid: context.hwid,
                 parent: context.parentVlessUuid,
             });
@@ -173,13 +199,73 @@ export class HostAccessService {
         const result = await sql<{
             hostUuid: string;
             allowed: boolean;
-        }>`SELECT h.id AS "hostUuid", xera_host_identity_allowed(${userId},h.id,${hwid},${parent}::uuid) AS allowed
+        }>`SELECT h.id AS "hostUuid", xera_subscription_identity_allowed(${userId},h.id,${hwid},${parent}::uuid) AS allowed
             FROM (VALUES ${sql.join(hostIds.map((id) => sql`(${id}::uuid)`))}) AS h(id)`.execute(
             this.db.kysely,
         );
         return new Set(
             result.rows.filter((row) => row.allowed === true).map((row) => row.hostUuid),
         );
+    }
+
+    async prepareAutoselect(
+        user: UserEntity,
+        ownerUuid: string,
+        sources: { uuid: string; configProfileInboundUuid: string | null }[],
+    ): Promise<Map<string, UserEntity | null>> {
+        const result = new Map<string, UserEntity | null>(sources.map((host) => [host.uuid, null]));
+        if (!sources.length) return result;
+        if (sources.length > 1000) throw new Error('Too many autoselect sources');
+        const context = user.hostIdentityContext ?? { hwid: null, parentVlessUuid: user.vlessUuid };
+        const aliases = new Map(
+            sources.map((host) => [host.uuid, autoselectRouteUuid(ownerUuid, host.uuid)]),
+        );
+        const allowed = await sql<{ uuid: string }>`SELECT h.uuid FROM hosts h
+            WHERE h.uuid=ANY(${[...aliases.keys()]}::uuid[])
+              AND xera_host_identity_allowed(${user.id},${ownerUuid}::uuid,${context.hwid},${context.parentVlessUuid}::uuid)
+              AND xera_host_user_allowed(${user.id},h.uuid)`.execute(this.db.kysely);
+        const permitted = new Set(allowed.rows.map((host) => host.uuid));
+        const selected = sources.filter((host) => permitted.has(host.uuid));
+        if (!selected.length) return result;
+        if (context.preview) {
+            for (const source of selected) {
+                const keys = this.policies.keys({
+                    userId: user.id.toString(),
+                    hostUuid: aliases.get(source.uuid)!,
+                    quotaHostUuid: ownerUuid,
+                    hwid: context.hwid,
+                    parent: context.parentVlessUuid,
+                });
+                result.set(
+                    source.uuid,
+                    Object.assign(Object.create(Object.getPrototypeOf(user)), user, keys),
+                );
+            }
+            return result;
+        }
+        const values = selected.map(
+            (source) =>
+                sql`(${aliases.get(source.uuid)}::uuid,${ownerUuid}::uuid,${source.uuid}::uuid)`,
+        );
+        await sql`INSERT INTO xera_autoselect_routes(uuid,owner_host_uuid,source_host_uuid)
+            SELECT value.id,value.owner,value.source FROM (VALUES ${sql.join(values)}) AS value(id,owner,source)
+            WHERE xera_host_identity_allowed(${user.id},value.owner,${context.hwid},${context.parentVlessUuid}::uuid)
+              AND xera_host_user_allowed(${user.id},value.source)
+              AND NOT EXISTS(SELECT 1 FROM hosts h WHERE h.uuid=value.id)
+            ON CONFLICT(uuid) DO UPDATE SET source_host_uuid=excluded.source_host_uuid
+            WHERE xera_autoselect_routes.owner_host_uuid=excluded.owner_host_uuid
+              AND xera_autoselect_routes.source_host_uuid IS NULL`.execute(this.db.kysely);
+        const prepared = await this.prepare(
+            user,
+            selected.map((source) => ({
+                uuid: aliases.get(source.uuid)!,
+                configProfileInboundUuid: source.configProfileInboundUuid,
+            })),
+            ownerUuid,
+        );
+        for (const source of selected)
+            result.set(source.uuid, prepared.get(aliases.get(source.uuid)!) ?? null);
+        return result;
     }
 
     async configIdentities(profileUuid: string) {

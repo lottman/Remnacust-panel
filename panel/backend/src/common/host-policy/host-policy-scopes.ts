@@ -1,13 +1,22 @@
 import { PolicyGroup, PolicyHost, PolicyTag } from './host-policy.types';
 
 export function buildPolicyGroups(hosts: PolicyHost[], tags: PolicyTag[]): PolicyGroup[] {
-    const nodes = (host: PolicyHost) =>
+    const directNodes = (host: PolicyHost) =>
         host.nodes.length
             ? host.boundNodes.filter((id) => host.nodes.includes(id))
             : host.boundNodes;
-    const groups: PolicyGroup[] = hosts.map((host) => ({
+    const owners = hosts.filter((host) => !host.quotaHostUuid);
+    const bindings = new Map(owners.map((host) => [host.uuid, [host]]));
+    for (const host of hosts) {
+        if (host.quotaHostUuid) bindings.get(host.quotaHostUuid)?.push(host);
+    }
+    const ids = (host: PolicyHost) => (bindings.get(host.uuid) ?? [host]).map((h) => h.uuid);
+    const nodes = (host: PolicyHost) => [
+        ...new Set((bindings.get(host.uuid) ?? [host]).flatMap(directNodes)),
+    ];
+    const groups: PolicyGroup[] = owners.map((host) => ({
         key: `host:${host.uuid}`,
-        hostUuids: [host.uuid],
+        hostUuids: ids(host),
         nodeUuids: nodes(host),
         userLimit: host.userLimit,
         trafficMultiplier: host.trafficMultiplier ?? 1,
@@ -19,7 +28,7 @@ export function buildPolicyGroups(hosts: PolicyHost[], tags: PolicyTag[]): Polic
         resetUnit: host.resetUnit,
     }));
     for (const tag of tags) {
-        const members = hosts.filter((host) => host.tags.includes(tag.tag));
+        const members = owners.filter((host) => host.tags.includes(tag.tag));
         const quotaMembers = members.filter((host) => host.useTagTrafficLimit !== false);
         const totalSpeedMembers = members.filter((host) => host.useTagTotalSpeedLimit !== false);
         // Quotas and shared speed have independent membership. Never attach a
@@ -30,7 +39,7 @@ export function buildPolicyGroups(hosts: PolicyHost[], tags: PolicyTag[]): Polic
             userSpeed: 0,
             deviceSpeed: 0,
             totalSpeed: 0,
-            hostUuids: quotaMembers.map((host) => host.uuid),
+            hostUuids: quotaMembers.flatMap(ids),
             nodeUuids: [...new Set(quotaMembers.flatMap(nodes))],
         });
         if (tag.totalSpeed)
@@ -41,7 +50,7 @@ export function buildPolicyGroups(hosts: PolicyHost[], tags: PolicyTag[]): Polic
                 deviceSpeed: 0,
                 userLimit: null,
                 trafficMultiplier: 1,
-                hostUuids: totalSpeedMembers.map((host) => host.uuid),
+                hostUuids: totalSpeedMembers.flatMap(ids),
                 nodeUuids: [...new Set(totalSpeedMembers.flatMap(nodes))],
             });
         // A tag assigns the same per-user speed to each host independently.
@@ -50,7 +59,7 @@ export function buildPolicyGroups(hosts: PolicyHost[], tags: PolicyTag[]): Polic
                 groups.push({
                     ...tag,
                     key: `tag-host:${tag.tag}:${host.uuid}`,
-                    hostUuids: [host.uuid],
+                    hostUuids: ids(host),
                     nodeUuids: nodes(host),
                     userLimit: null,
                     trafficMultiplier: 1,
@@ -62,7 +71,7 @@ export function buildPolicyGroups(hosts: PolicyHost[], tags: PolicyTag[]): Polic
                 groups.push({
                     ...tag,
                     key: `tag-device:${tag.tag}:${host.uuid}`,
-                    hostUuids: [host.uuid],
+                    hostUuids: ids(host),
                     nodeUuids: nodes(host),
                     userLimit: null,
                     userSpeed: 0,

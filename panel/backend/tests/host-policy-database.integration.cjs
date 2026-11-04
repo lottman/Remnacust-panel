@@ -50,6 +50,20 @@ const { HostAccessService } = load(
         './host-policy.service': { HostPolicyService },
     },
 );
+const { DurableUsageService } = load(
+    path.join(__dirname, '../src/common/host-policy/durable-usage.service.ts'),
+    {
+        ...common,
+        '@common/utils/device-identity': load(
+            path.join(__dirname, '../src/common/utils/device-identity.ts'),
+        ),
+        '@common/utils/nano': load(path.join(__dirname, '../src/common/utils/nano/index.ts')),
+    },
+);
+const { QuotaCoordinatorService } = load(
+    path.join(__dirname, '../src/common/host-policy/quota-coordinator.service.ts'),
+    common,
+);
 const { CustomCamelCasePlugin, JSON_COLUMNS } = load(
     path.join(__dirname, '../src/common/database/camel-case.plugin.ts'),
 );
@@ -113,7 +127,7 @@ async function main() {
         hostPolicy: async (node, policy) => {
             calls.push({ node, policy });
             if (!policy) return {isOk:true,response:{version:'xera-host-policy-v2',supported:true,
-                policyRevisionsSupported:true,policyRevision:'0'}};
+                policyRevisionsSupported:true,deviceSpeedLimitsSupported:true,routedDeviceSpeedLimitsSupported:true,policyRevision:'0'}};
             assert.equal(transactions.isTransactionActive(),false,'Revision delivery must follow the actual Prisma commit');
             assert.match(policy.revision,/^[1-9][0-9]*$/);
             return { isOk: true, response: { version: 'xera-host-policy-v2', applied: true } };
@@ -292,6 +306,8 @@ async function main() {
             "SELECT column_name FROM information_schema.columns WHERE table_name IN ('hosts','xera_host_tag_limits') AND column_name='total_traffic_limit_bytes'",
         );
         assert.equal(removed.length, 0, 'aggregate volume quota must not remain in the data model');
+        await require('./autoselect-quota-database.cjs')({ prisma, service, access, usage, calls, user,
+            db, transactions, DurableUsageService, QuotaCoordinatorService });
         const rollbackInactiveFixture = new Error('rollback inactive host fixture');
         try {
             await prisma.$transaction(async tx => {

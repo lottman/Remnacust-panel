@@ -106,7 +106,7 @@
     "policy-pending-title": "配置等待应用",
     "policy-pending-message": "主机策略未能应用。新配置未发送到节点；正在运行的 Xray 保留原配置。请检查节点和内核是否支持主机隔离 v2。恢复支持后，面板会重试。已配置的限制仍保持启用。",
     "upgrade-required-title": "需要更新节点",
-    "upgrade-required-message": "请将节点更新至包含我们 Xray 的 Remnacust Node 1.1.1。此配置需要主机隔离 v2。更新前，其限制和新连接无法生效。当前运行配置会保留；更新后，面板将自动应用新配置。",
+    "upgrade-required-message": "此配置需要支持主机隔离 v2 的兼容 Remnacust Node 和 Core。请更新两个组件并检查实际运行的 Core 版本。当前配置会保留；确认支持后，面板将重试应用。此要求仅针对该配置，并非要求所有标准 Remnawave 节点都更新。",
     "connecting": "节点连接尚未完成",
     "score-help": "没有确认的连接、活动配置或运行内核的新鲜数据时为 0/100。四项通过的信号各占 25 分。"
   },
@@ -1244,7 +1244,7 @@
   "copy-docker-compose": {
     "widget": {
       "copy-docker-compose-yml": "复制 docker-compose.yml",
-      "local-image-note": "此 Compose 使用本地构建的 Remnacust Node 1.1.1 镜像。请先按照节点指南构建镜像。公共安装脚本会自行生成 Compose 文件。"
+      "local-image-note": "此 Compose 使用本地构建的 Remnacust Node 镜像。请先按节点说明构建；具体能力取决于应用及内置 Core。公共安装器使用预构建镜像，并创建自己的 Compose。"
     }
   },
   "create-node-step-1-connection": {

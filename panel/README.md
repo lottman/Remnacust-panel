@@ -1,91 +1,98 @@
-# Remnacust Panel — установка и разработка
+[Русский](README.md) | [English](README.en.md)
 
-**Панель 1.1.7.87**, основа Remnawave backend/frontend 3.4.7. Полный согласованный комплект — [установщик 1.2.125](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.125), Node 1.1.21 и Core/WASM 1.1.12 на Xray v26.10.31.
+# Remnacust Panel
 
-![Интерфейс](assets/overview.png)
+Панель управления пользователями, нодами и подписками. Для установки на VPS используйте готовые образы через установщик; Node.js и Go на сервере не нужны.
 
-## Установка через скрипт
-
-Поддерживаются Ubuntu 22.04/24.04/26.04 LTS и Linux amd64/arm64. На сервере используются готовые образы, PostgreSQL, Valkey и выбранный reverse proxy.
-
-```bash
-curl -fsSL --proto '=https' --proto-redir '=https' https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh -o installer.sh
-sudo bash installer.sh install-panel --version 1.2.125
-```
-
-Установщик спрашивает домен, HTTPS и необходимость сайта подписки. После запуска создайте администратора. Управление: `sudo remnacust manage-panel`; обновление: `sudo remnacust upgrade-panel`.
-
-Файлы скриптовой установки: `/opt/remnacust/panel/.env` и `/opt/remnacust/panel/docker-compose.yml`. Активные пути перечислены в `/opt/remnacust/FILES.txt`. Исходный `APP_SECRET` и реквизиты БД сохраняются при обновлении. После изменения `.env` нужен `docker compose up -d --no-build --pull never`, а не только `restart`.
-
-## Возможности и ограничения
-
-Пользователи и FROZEN, HWID и персональные ключи, квоты и скорость пользователя/устройства, профили и хосты, автовыбор, геофайлы, сессии, копии БД и ограниченные API-токены описаны в [основном README](../README.md).
-
-Совместимые изменения конфигурации применяются нодой без обязательного перезапуска Xray. Сообщение о постановке задачи в очередь не подтверждает её применение: итог смотрите в состоянии ноды. Смена порта/транспорта работающего listener требует отдельного listener или явного обслуживания. Полная независимость всех глобальных настроек отдельных профилей не заявляется.
-
-GUI и JSON шаблонов используют один черновик и историю. Предупреждение или сохранённый ошибочный черновик не доказывают, что конфигурация пригодна для запуска. Рабочие профили Xray проходят отдельную серверную проверку.
-
-## Установка из исходников
-
-Следующие команды выполняются из корня **Remnacust-panel**, в отдельном окружении разработки. Для production проще использовать установщик.
-
-```bash
-cp panel/backend/.env.sample panel/backend/.env
-chmod 600 panel/backend/.env
-```
-
-Заполните значения до запуска:
-
-| Переменная | Назначение |
+| Стабильный компонент | Версия |
 | --- | --- |
-| `APP_SECRET` | Случайный постоянный секрет панели; нужен для расшифровки сохранённых данных. |
-| `POSTGRES_PASSWORD`, `DATABASE_URL` | Согласованные реквизиты PostgreSQL; пароль в URL должен быть закодирован. |
-| `PANEL_DOMAIN`, `FRONT_END_DOMAIN` | Домен панели и разрешённый origin интерфейса. |
-| `SUB_PUBLIC_DOMAIN` | Публичный адрес подписок, отдельный от приватного адреса backend. |
-| `METRICS_USER`, `METRICS_PASS` | Доступ к метрикам. |
-| `WEBHOOK_SECRET_HEADER` | Секрет проверки webhook, если используются. |
+| [Panel и страница подписки](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.97) | 1.1.7.97 |
+| [Installer / комплект](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.136) | 1.2.136 |
+| [Node](https://github.com/lottman/Remnacust-node/releases/tag/v1.1.22) | 1.1.22 |
+| [Core / WASM](https://github.com/lottman/Remnacust-core/releases/tag/v1.1.13) | 1.1.13 |
 
-`HWID_ENABLED_DEFAULT` относится к первоначальной настройке; обновление сохраняет выбор в БД. Персональные данные устройств требуют включённого `XERA_PERSONAL_SUBSCRIPTIONS` и совместимой ноды/Core.
+## Сервер и порты
 
-При source-сборке передавайте метаданные явно: локальная метка Docker не задаёт версию интерфейса.
+Опубликованный установщик 1.2.136 поддерживает **Ubuntu 22.04/24.04/26.04 LTS**, Linux amd64/arm64. Поддержка Debian 12/13 есть в локальных исходниках, но ещё не опубликована в стабильном установщике.
+
+Для небольшой панели ориентируйтесь на 2 CPU, 2 GiB RAM и 20 GiB диска; рекомендуются 4 CPU и 4 GiB RAM. Под базу, журналы и копии нужен дополнительный запас по мере роста нагрузки. Нужны root, домен, доступ к пакетным репозиториям и скачиванию образов.
+
+| Порт | Назначение |
+| --- | --- |
+| TCP 443 | Публичный HTTPS панели и подписок через reverse proxy. |
+| TCP 80 | HTTP/перенаправление и HTTP-01, если выбран этот способ получения сертификата. |
+| TCP 3000 | Backend по умолчанию; только loopback или приватная Docker-сеть. |
+| TCP 3001 | Health/metrics; не открывайте в интернет. |
+| TCP 3010 | Отдельная страница подписки по умолчанию; только за proxy. |
+
+Оставьте доступ к SSH на вашем порту. PostgreSQL и Valkey не должны быть публичными; внутренние порты сервисов не являются портами подключения VPN-клиентов к нодам.
+
+## Установка готовых образов
 
 ```bash
-REVISION=$(git rev-parse HEAD)
-docker build -f panel/Dockerfile \
-  --build-arg __RW_METADATA_VERSION=1.1.7.87 \
-  --build-arg __RW_METADATA_GIT_BACKEND_COMMIT="$REVISION" \
-  --build-arg __RW_METADATA_GIT_FRONTEND_COMMIT="$REVISION" \
-  --build-arg __RW_METADATA_GIT_BRANCH=local \
-  --label org.opencontainers.image.version=1.1.7.87 \
-  --label org.opencontainers.image.revision="$REVISION" \
-  -t remnacust-panel:local .
+curl -fsSL --proto '=https' --proto-redir '=https' https://github.com/lottman/Remnacust-installer/releases/download/v1.2.136/installer.sh -o installer.sh
+sudo bash installer.sh install-panel --version 1.2.136
 ```
 
-Для запуска подготовьте собственный Compose с этим образом, PostgreSQL и Valkey либо используйте source-Compose `panel/backend/docker-compose-prod.yml` с его секцией `build`. Сохраните постоянные тома. HTTPS proxy направляется на loopback-порт backend; БД, кеш и метрики не должны становиться публичными сервисами. Установщик дополнительно создаёт службу управления, реестр установок и синхронизацию `.env`; одна source-сборка их не устанавливает.
+Укажите домен и HTTPS; сайт подписки установщик предлагает отдельно. После запуска создайте администратора. Основные команды:
+
+```bash
+sudo remnacust manage-panel
+sudo remnacust upgrade-panel
+```
+
+Задайте A-запись домена на сервер; AAAA добавляйте только при работающем IPv6. HTTPS proxy должен направлять запросы к приватному backend. Для отдельного сайта используйте [инструкцию страницы подписки](../subscription-page/README.md).
+
+## Окружение и постоянные файлы
+
+Рабочая установка: `/opt/remnacust/panel/.env` и `/opt/remnacust/panel/docker-compose.yml`. Фактические пути, включая дополнительные экземпляры, смотрите в `/opt/remnacust/FILES.txt`.
+
+| Параметр | Что сохранить или настроить |
+| --- | --- |
+| `APP_SECRET` | Исходный постоянный секрет панели. Не заменяйте при обновлении. |
+| `DATABASE_URL`, реквизиты PostgreSQL | Согласованные параметры вашей базы, не значения из примера. |
+| `PANEL_DOMAIN`, `FRONT_END_DOMAIN` | Домен панели и разрешённый origin интерфейса. |
+| `SUB_PUBLIC_DOMAIN` | Публичный домен подписок, не приватный адрес API. |
+| `METRICS_USER`, `METRICS_PASS` | Собственные реквизиты доступа к метрикам. |
+
+Не публикуйте `.env`, ключи и токены. После изменения окружения пересоздайте контейнеры:
+
+```bash
+cd /opt/remnacust/panel
+docker compose config --quiet
+docker compose up -d --no-build --pull never
+```
+
+Обычный `restart` не перечитывает `.env`. Не удаляйте том PostgreSQL и том копий при обновлении.
 
 ## Первое подключение
 
 1. Создайте профиль Xray с inbound и уникальным tag.
-2. Добавьте ноду и установите агент с выданным ключом.
+2. Добавьте ноду и установите агент с выданными панелью параметрами.
 3. Назначьте профиль ноде и включите inbound.
 4. Разрешите inbound во внутреннем скваде.
 5. Создайте хост с внешним адресом и клиентским портом.
-6. Добавьте активного пользователя в сквад и импортируйте его подписку.
+6. Добавьте активного пользователя в сквад и проверьте подписку в клиенте.
 
-API-порт ноды и порты inbound выполняют разные задачи. Для автовыбора назначьте конкретный балансер хосту-получателю, а серверы для выбора задайте в составе пула.
+Для геофайлов Happ/INCY нужна полная Xray JSON-подписка: `/json` либо основной URL с настроенной выдачей JSON. Набор URI/base64-ссылок не переносит всю маршрутизацию. См. [геофайлы](../docs/GEOFILES.md) и [автовыбор](../docs/XRAY-AUTOSELECT.md).
 
-## Обновление и копии БД
+## Обновление, копии и диагностика
 
-API, фоновые обработчики и scheduler обновляются согласованно. Перед миграциями сохраняйте БД, `.env`, TLS и конфигурацию proxy. Скриптовая установка: `sudo remnacust upgrade-panel`; отдельная страница: `sudo remnacust upgrade-subscription-page --page-id ID`.
+Перед обновлением сохраните БД, `.env`, TLS и конфигурацию proxy; важные копии храните вне сервера. Встроенный ZIP защищён паролем и содержит PostgreSQL custom-format dump. Он не заменяет копию всех файлов установки. Сохраните пароль копий отдельно от `APP_SECRET`: [восстановление и проверки](../docs/BACKUPS.md).
 
-Встроенная ZIP-копия содержит зашифрованный PostgreSQL dump, а не файлы всего сервера. Его бинарный формат восстанавливают средствами PostgreSQL; это не plaintext SQL. [Копии](../docs/BACKUPS.md) · [Совместимость баз](../docs/DATABASE-COMPATIBILITY.md).
+```bash
+cd /opt/remnacust/panel
+docker compose ps
+docker compose logs --tail 100
+sudo less /opt/remnacust/logs/installer-panel.log
+```
 
-## Разработка и документация
+При недоступности интерфейса проверьте контейнеры, proxy, DNS и сертификат. При 503 подписки — здоровье backend, БД, Valkey и доступность ноды. Постановка задания в очередь ещё не подтверждает применение конфигурации: проверьте итоговый статус ноды. Перед передачей журналов удалите секреты и персональные ссылки.
 
-- [Backend](backend/README.md): Node.js 24, Prisma, серверные проверки и OpenAPI.
-- [Frontend](frontend/README.md): интерфейс, локализация, документация и WASM.
-- [Сборка и проверки](../docs/BUILDING.md).
-- [Геофайлы](../docs/GEOFILES.md), [автовыбор](../docs/XRAY-AUTOSELECT.md), [лимиты](../docs/HOST-LIMITS.md).
-- [API](../docs/API.md), [OpenAPI](backend/openapi.json), [руководство RU](frontend/public/documentation/guide-ru.md), [EN](frontend/public/documentation/guide-en.md), [FA](frontend/public/documentation/guide-fa.md), [ZH](frontend/public/documentation/guide-zh.md).
+## Разработка
 
-Backend и frontend сохраняют собственные файлы `LICENCE`; авторство перечислено в [NOTICE.md](../NOTICE.md).
+Для source-сборки нужны Node.js 24, Docker Engine/Compose v2 и отдельная тестовая БД. Это другой режим, не обновление установленной панели из checkout.
+
+[Backend](backend/README.md) · [Frontend](frontend/README.md) · [Сборка и проверки](../docs/BUILDING.md) · [API](../docs/API.md) · [Руководство](frontend/public/documentation/guide-ru.md).
+
+Сохраняются [лицензии](../NOTICE.md) upstream-компонентов и AGPL-3.0.

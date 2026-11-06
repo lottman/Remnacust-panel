@@ -1,31 +1,62 @@
+[Русский](README.md) | [English](README.en.md)
+
 # Remnacust Backend
 
-**Версия 1.1.7.87**, основа Remnawave 3.4.7. NestJS API, фоновые обработчики и scheduler используют PostgreSQL, Valkey и общую контрактную библиотеку [libs/contract](libs/contract).
+Версия **1.1.7.97**. API, фоновые обработчики и scheduler панели. Для обычной установки используйте [готовые образы](../README.md); этот каталог предназначен для разработки.
 
-## Разработка
+## Что требуется
 
-Нужен Node.js 24. Из этого каталога:
+Node.js 24, отдельные PostgreSQL и Valkey, тестовый `.env`. Требования к серверу и приватным портам: [инструкция панели](../README.md#сервер-и-порты). Версии и перенос базы описаны в [совместимости БД](../../docs/DATABASE-COMPATIBILITY.md).
+
+Из этого каталога:
 
 ```bash
+cp .env.sample .env
+chmod 600 .env
 npm ci
 npm run migrate:generate
+npm run build --prefix libs/contract
+```
+
+До запуска заполните `.env`: собственные `APP_SECRET`, `DATABASE_URL`, параметры Valkey, домены и реквизиты метрик. Примеры секретов не подходят для установки. Для frontend dev-примера задайте `APP_PORT=3003`; в готовом образе backend по умолчанию использует 3000. Health/metrics по умолчанию находятся на приватном 3001.
+
+В source-Compose Valkey использует Unix socket. Если ваш тестовый Valkey доступен по TCP, уберите `REDIS_SOCKET` и задайте `REDIS_HOST`/`REDIS_PORT`. Не подставляйте рабочую БД в команды разработки.
+
+## Запуск и проверки
+
+На подготовленной тестовой базе примените миграции, затем запустите процессы в отдельных терминалах:
+
+```bash
+npm run migrate:deploy
+npm run dev
+```
+
+```bash
+npm run dev:worker
+```
+
+```bash
+npm run dev:scheduler
+```
+
+Держите только один scheduler. Сборщик в dev-режиме сам запускает соответствующий процесс.
+
+```bash
 npm run typecheck
 node --test tests/*.test.cjs
 npm run build
 ```
 
-Для runtime подготовьте `.env` по [.env.sample](.env.sample) и отдельную тестовую БД. В скриптовой production-установке окружение находится в `/opt/remnacust/panel/.env`, а не в checkout. [Установка и метаданные образа](../README.md).
+Для полного набора тестов установите также frontend-зависимости: `npm ci --prefix ../frontend`. Часть интеграционных тестов требует Linux, PostgreSQL/Valkey и соседние исходники Node. Сервисы и переменные перечислены в [CI](../../.github/workflows/check.yml). Успешный typecheck не заменяет эти интеграционные проверки.
 
-Часть интеграционных проверок требует Linux, PostgreSQL/Valkey и соседний checkout Node; точные сервисы и переменные перечислены в [Source checks](../../.github/workflows/check.yml). Не запускайте интеграционные сценарии на рабочей БД.
+## Контракты, файлы и диагностика
 
-## Контракт и зависимости
+`npm ci` применяет проверенные dependency patches из [patches](patches/README.md). После `--ignore-scripts` выполните `node scripts/apply-dependency-patches.cjs` вручную. Генерация OpenAPI на Linux: `npm run generate:openapi`; документацию frontend обновляйте только после обновления backend-спецификации.
 
-На Linux `npm run generate:openapi` обновляет [openapi.json](openapi.json). После изменения контракта пересоздайте справочник frontend через `npm run docs:generate` в `panel/frontend` и выполните `npm run docs:check`. Сохранённый backend OpenAPI и публичная копия должны совпадать.
+PEM-файлы, которые читает панель, размещайте внутри `/var/lib/remnawave`; путь к сертификату только на ноде не означает наличие этого файла на сервере панели. Сохраняйте постоянные файлы и том копий при пересоздании контейнеров.
 
-`npm ci` применяет только проверенные патчи зависимостей из [patches](patches/README.md). При установке с `--ignore-scripts` запустите `node scripts/apply-dependency-patches.cjs` отдельно.
+В установленной панели окружение находится в `/opt/remnacust/panel/.env`. После его изменения нужен `docker compose up -d --no-build --pull never` из каталога установки. Для диагностики используйте `docker compose ps`, `docker compose logs --tail 100` и `/opt/remnacust/logs/installer-panel.log`.
 
-## Текущие возможности
+Для отдельной страницы достаточно четырёх прав токена: `system:metadata`, `subscriptions:subpage-config`, `subscription-page-configs:get`, `subscription-page-configs:list`. Не используйте токен администратора вместо этого набора; [настройка страницы](../../subscription-page/README.md).
 
-Поддерживаются FROZEN, персональные устройства, лимиты хостов/тегов, автосборка геоправил и DAT, домены подписок и отдельные права на обычные/CDN-ссылки. Ревизия профиля Happ/INCY стабильна при неизменившихся данных и хранится атомарно в Valkey/Redis. Ручной заголовок маршрутизации не перезаписывается автоматически.
-
-[README проекта](../../README.md) · [API и права](../../docs/API.md) · [Сборка](../../docs/BUILDING.md) · [Лицензия AGPL-3.0](LICENCE).
+[Сборка Docker](../../docs/BUILDING.md) · [API](../../docs/API.md) · [Копии](../../docs/BACKUPS.md) · [Лицензия AGPL-3.0](LICENCE).

@@ -106,7 +106,7 @@
     "policy-pending-title": "Configuration pending",
     "policy-pending-message": "Host policies could not be applied. The new configuration was not sent to the node; a running Xray keeps its previous configuration. Check host isolation v2 support in the node and core. The panel will retry once support is restored. The configured limits remain enabled.",
     "upgrade-required-title": "Node update required",
-    "upgrade-required-message": "Update the node to Remnacust Node 1.1.1 with our Xray. This profile requires host isolation v2. Its limits and new connections will not work until the update. The running configuration is kept; after updating, the panel will apply the new one automatically.",
+    "upgrade-required-message": "This profile requires compatible Remnacust Node and Core with host isolation v2 support. Update both components and check the running Core version. The current configuration is retained; the panel retries application after support is confirmed. This requirement applies to this profile, not every standard Remnawave node.",
     "connecting": "Node connection is still pending",
     "score-help": "Without a confirmed connection, active profile or fresh running-core data: 0/100. Each of the four passing signals contributes 25 points."
   },
@@ -1244,7 +1244,7 @@
   "copy-docker-compose": {
     "widget": {
       "copy-docker-compose-yml": "Copy docker-compose.yml",
-      "local-image-note": "This Compose uses a locally built Remnacust Node 1.1.1 image. Build it using the node instructions first. The public installer creates its own Compose file."
+      "local-image-note": "This Compose uses a locally built Remnacust Node image. Build it using the node instructions first; capabilities depend on the application and bundled Core. The public installer uses prebuilt images and creates its own Compose."
     }
   },
   "create-node-step-1-connection": {

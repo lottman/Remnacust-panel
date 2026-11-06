@@ -107,6 +107,7 @@ export class QueryNodesQueueProcessor extends WorkerHost implements OnApplicatio
                     const ipsListResponse = await this.axios.getIpsList(
                         { userId: job.data.userId.toString() },
                         {
+                            uuid: node.uuid,
                             address: node.address,
                             port: node.port,
                             proxyUrl: node.proxyUrl,
@@ -195,6 +196,7 @@ export class QueryNodesQueueProcessor extends WorkerHost implements OnApplicatio
             }
 
             const result = await this.axios.getUsersIpsList({
+                uuid: nodeResult.response.uuid,
                 address: nodeResult.response.address,
                 port: nodeResult.response.port,
                 proxyUrl: nodeResult.response.proxyUrl,
@@ -244,6 +246,7 @@ export class QueryNodesQueueProcessor extends WorkerHost implements OnApplicatio
             const result = await this.axios.getGeocheck(
                 { ip, interface: networkInterface },
                 {
+                    uuid: nodeResult.response.uuid,
                     address: nodeResult.response.address,
                     port: nodeResult.response.port,
                     proxyUrl: nodeResult.response.proxyUrl,
@@ -285,6 +288,7 @@ export class QueryNodesQueueProcessor extends WorkerHost implements OnApplicatio
             }
 
             const result = await this.axios.getUsersIpsList({
+                uuid: nodeResult.response.uuid,
                 address: nodeResult.response.address,
                 port: nodeResult.response.port,
                 proxyUrl: nodeResult.response.proxyUrl,

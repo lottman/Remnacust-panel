@@ -197,7 +197,7 @@ export class DeviceAccessService {
                         username: userId.toString(),
                         hashData: { vlessUuid },
                     },
-                    { address: node.address, port: node.port, proxyUrl: node.proxyUrl },
+                    { uuid: node.uuid, address: node.address, port: node.port, proxyUrl: node.proxyUrl },
                 ),
             ),
         );
@@ -260,7 +260,7 @@ export class DeviceAccessService {
                             username: old.username,
                             hashData: { vlessUuid: old.vlessUuid },
                         },
-                        { address: node.address, port: node.port, proxyUrl: node.proxyUrl },
+                        { uuid: node.uuid, address: node.address, port: node.port, proxyUrl: node.proxyUrl },
                     ),
                 );
             }),
@@ -338,7 +338,7 @@ export class DeviceAccessService {
                         username: credentials.username,
                         hashData: { vlessUuid: credentials.vlessUuid },
                     },
-                    { address: node.address, port: node.port, proxyUrl: node.proxyUrl },
+                    { uuid: node.uuid, address: node.address, port: node.port, proxyUrl: node.proxyUrl },
                 ),
             );
             if (!complete && allowOfflineNodes) {
@@ -375,7 +375,7 @@ export class DeviceAccessService {
                         username: credentials.username,
                         hashData: { vlessUuid: credentials.vlessUuid },
                     },
-                    { address: node.address, port: node.port, proxyUrl: node.proxyUrl },
+                    { uuid: node.uuid, address: node.address, port: node.port, proxyUrl: node.proxyUrl },
                 );
                 return (
                     response.isOk &&
@@ -441,7 +441,7 @@ export class DeviceAccessService {
                     hashData: { vlessUuid: credentials.vlessUuid },
                     data,
                 },
-                { address: node.address, port: node.port, proxyUrl: node.proxyUrl },
+                { uuid: node.uuid, address: node.address, port: node.port, proxyUrl: node.proxyUrl },
             );
             return response.isOk && response.response?.success === true;
         });
@@ -469,7 +469,7 @@ export class DeviceAccessService {
                         username: credentials.username,
                         hashData: { vlessUuid: credentials.vlessUuid },
                     },
-                    { address: node.address, port: node.port, proxyUrl: node.proxyUrl },
+                    { uuid: node.uuid, address: node.address, port: node.port, proxyUrl: node.proxyUrl },
                 ),
             );
             return false;

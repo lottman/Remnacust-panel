@@ -77,6 +77,7 @@ export class NodePluginsProcessor extends WorkerHost {
                         plugin: null,
                     },
                     {
+                        uuid: node.uuid,
                         address: node.address,
                         port: node.port,
                         proxyUrl: node.proxyUrl,
@@ -118,6 +119,7 @@ export class NodePluginsProcessor extends WorkerHost {
                     },
                 },
                 {
+                    uuid: node.uuid,
                     address: node.address,
                     port: node.port,
                     proxyUrl: node.proxyUrl,
@@ -155,7 +157,8 @@ export class NodePluginsProcessor extends WorkerHost {
         }>,
     ) {
         try {
-            const { nodeUuid, connectionOpts } = job.data;
+            const { nodeUuid, connectionOpts: queuedConnectionOpts } = job.data;
+            const connectionOpts = { ...queuedConnectionOpts, uuid: nodeUuid };
 
             const response = await this.axios.collectTorrentBlockerReports(connectionOpts);
 

@@ -280,6 +280,7 @@ export class NodePluginService {
                                 ips: dto.command.ips,
                             },
                             node: {
+                                uuid: node.uuid,
                                 address: node.address,
                                 port: node.port,
                                 proxyUrl: node.proxyUrl,
@@ -294,6 +295,7 @@ export class NodePluginService {
                                 ips: dto.command.ips,
                             },
                             node: {
+                                uuid: node.uuid,
                                 address: node.address,
                                 port: node.port,
                                 proxyUrl: node.proxyUrl,
@@ -305,6 +307,7 @@ export class NodePluginService {
                     for (const node of nodes) {
                         await this.nodeQueuesService.recreateTables({
                             node: {
+                                uuid: node.uuid,
                                 address: node.address,
                                 port: node.port,
                                 proxyUrl: node.proxyUrl,

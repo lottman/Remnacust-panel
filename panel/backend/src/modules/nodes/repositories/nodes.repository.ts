@@ -114,6 +114,7 @@ export class NodesRepository implements ICrud<NodesEntity> {
             nodeConsumptionMultiplier: value.nodeConsumptionMultiplier,
             id: value.id,
             connectionOpts: {
+                uuid: value.uuid,
                 address: value.address,
                 port: value.port,
                 proxyUrl: value.proxyUrl,
@@ -133,6 +134,7 @@ export class NodesRepository implements ICrud<NodesEntity> {
             uuid: value.uuid,
             isConnected: value.isConnected,
             connectionOpts: {
+                uuid: value.uuid,
                 address: value.address,
                 port: value.port,
                 proxyUrl: value.proxyUrl,
@@ -165,6 +167,7 @@ export class NodesRepository implements ICrud<NodesEntity> {
         return result.map((value) => ({
             uuid: value.uuid,
             connectionOpts: {
+                uuid: value.uuid,
                 address: value.address,
                 port: value.port,
                 proxyUrl: value.proxyUrl,

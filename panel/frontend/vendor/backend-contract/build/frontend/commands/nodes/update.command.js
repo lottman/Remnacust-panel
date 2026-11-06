@@ -6,6 +6,7 @@ const api_1 = require("../../api");
 const constants_1 = require("../../constants");
 const models_1 = require("../../models");
 const node_response_1 = require("./node.response");
+const socks_proxy_schema_1 = require("../../models/socks-proxy.schema");
 var UpdateNodeCommand;
 (function (UpdateNodeCommand) {
     UpdateNodeCommand.url = api_1.REST_API.NODES.UPDATE;
@@ -20,10 +21,7 @@ var UpdateNodeCommand;
         name: zod_1.z.optional(zod_1.z.string().min(3).max(30)),
         address: zod_1.z.optional(zod_1.z.string().min(2)),
         port: zod_1.z.optional(zod_1.z.number().min(1).max(65535)),
-        proxyUrl: zod_1.z
-            .string()
-            .regex(/^socks5:\/\/(?:[^:@/\s]+(?::[^@/\s]*)?@)?[^:@/\s]+:\d{1,5}$/, 'Expected socks5://[user:pass@]host:port')
-            .nullish(),
+        proxyUrl: socks_proxy_schema_1.SocksProxyUrlSchema.nullish(),
         isTrafficTrackingActive: zod_1.z.optional(zod_1.z.boolean()),
         trafficLimitBytes: zod_1.z.optional(zod_1.z.number().min(0)),
         notifyPercent: zod_1.z.optional(zod_1.z.number().min(0).max(100)),

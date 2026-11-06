@@ -141,6 +141,7 @@ export class AddUserToNodeHandler implements IEventHandler<AddUserToNodeEvent> {
                                 hashData: { vlessUuid: event.prevVlessUuid || vlessUuid },
                             },
                             node: {
+                                uuid: node.uuid,
                                 address: node.address,
                                 port: node.port,
                                 proxyUrl: node.proxyUrl,
@@ -169,6 +170,7 @@ export class AddUserToNodeHandler implements IEventHandler<AddUserToNodeEvent> {
                                     hashData: { vlessUuid: identity.vlessUuid },
                                 },
                                 node: {
+                                    uuid: node.uuid,
                                     address: node.address,
                                     port: node.port,
                                     proxyUrl: node.proxyUrl,
@@ -216,6 +218,7 @@ export class AddUserToNodeHandler implements IEventHandler<AddUserToNodeEvent> {
                                 data: personalData,
                             },
                             node: {
+                                uuid: node.uuid,
                                 address: node.address,
                                 port: node.port,
                                 proxyUrl: node.proxyUrl,
@@ -241,6 +244,7 @@ export class AddUserToNodeHandler implements IEventHandler<AddUserToNodeEvent> {
                             },
                         },
                         node: {
+                            uuid: node.uuid,
                             address: node.address,
                             port: node.port,
                             proxyUrl: node.proxyUrl,
@@ -253,6 +257,7 @@ export class AddUserToNodeHandler implements IEventHandler<AddUserToNodeEvent> {
                 await this.nodesQueuesService.addUserToNode({
                     data: filteredData,
                     node: {
+                        uuid: node.uuid,
                         address: node.address,
                         port: node.port,
                         proxyUrl: node.proxyUrl,

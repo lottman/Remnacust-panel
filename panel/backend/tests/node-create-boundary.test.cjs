@@ -86,6 +86,12 @@ test('genuine name/address conflicts remain explicit; existing nodes are never o
         assert.equal((await f.service.createNode(body())).code, expected);
     }
 });
+test('route invalidation failure after committed create preserves successful response', async () => {
+    const f = fixture();
+    f.service.routeRegistry = { invalidate: async () => { throw Error('cache unavailable'); } };
+    const result = await f.service.createNode(body());
+    assert.equal(f.calls.length, 1); assert.equal(result.isOk, true);
+});
 
 test('repository sends one atomic nested write; it does not create inbound links afterwards', async () => {
     const file = path.join(base, 'repositories/nodes.repository.ts');

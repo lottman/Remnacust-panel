@@ -95,6 +95,8 @@ import {
     INodeSystemStatsResponse,
 } from './axios.interfaces';
 import { MtlsSocksProxyAgent } from './mtls-agent';
+import { NodeControlRouteResolver, NodeRouteRegistry, NodeRouteBusyError, normalizeNodeAddress, nodeUsesLegacyHttp, routeFailure,
+    type NodeRouteConfiguration, type ConnectionRoute } from './node-control-route';
 
 const EMPTY_BODY: Readonly<Record<string, never>> = {};
 const MAX_NODE_ERROR_LENGTH = 2000;
@@ -448,13 +450,17 @@ export class AxiosService {
     private mtlsOptions: IMtlsOptions;
     private servername: string | undefined;
     private readonly socksAgentCache = new Map<string, MtlsSocksProxyAgent>();
+    private readonly nodeProxyAgents = new Map<string, string>();
+    private nodeRoutes?: NodeControlRouteResolver;
 
     constructor(
         private readonly commandBus: CommandBus,
         private readonly rawCacheService: RawCacheService,
         private readonly configService: TypedConfigService,
+        private readonly routeRegistry?: NodeRouteRegistry,
     ) {
         this.axiosInstance = axios.create({
+            proxy: false,
             timeout: 45_000,
             // Match the SDK receive ceiling; a compromised node cannot buffer an
             // unlimited HTTP response in the panel, including decompressed bytes.
@@ -509,28 +515,47 @@ export class AxiosService {
         }
     }
 
-    private resolveAgent(proxyUrl: null | string): https.Agent {
+    private resolveAgent(proxyUrl: null | string, owner = 'unregistered'): https.Agent {
+        const key = createHash('sha256').update(JSON.stringify([owner, proxyUrl])).digest('hex');
+        const previous = this.nodeProxyAgents.get(owner);
+        if (previous && previous !== key) {
+            this.socksAgentCache.get(previous)?.destroy();
+            this.socksAgentCache.delete(previous);
+            this.nodeProxyAgents.delete(owner);
+        }
         if (!proxyUrl) {
             return this.axiosInstance.defaults.httpsAgent as https.Agent;
         }
 
-        const cached = this.socksAgentCache.get(proxyUrl);
-        if (cached) return cached;
+        const cached = this.socksAgentCache.get(key);
+        if (cached) {
+            this.socksAgentCache.delete(key);
+            this.socksAgentCache.set(key, cached);
+            return cached;
+        }
 
         const httpsAgent = new MtlsSocksProxyAgent(proxyUrl, this.mtlsOptions, this.servername);
-        this.socksAgentCache.set(proxyUrl, httpsAgent);
+        if (this.socksAgentCache.size >= 128) {
+            const oldest = this.socksAgentCache.keys().next().value!;
+            this.socksAgentCache.get(oldest)?.destroy();
+            this.socksAgentCache.delete(oldest);
+            for (const [node, agent] of this.nodeProxyAgents) if (agent === oldest) this.nodeProxyAgents.delete(node);
+        }
+        this.socksAgentCache.set(key, httpsAgent);
+        this.nodeProxyAgents.set(owner, key);
 
         return httpsAgent;
     }
 
     private getNodeUrl(url: string, path: string, port: null | number): string {
-        const host = isIP(url) === 6 ? `[${url}]` : url;
+        const normalized = normalizeNodeAddress(url);
+        if (!normalized || (port !== null && (!Number.isInteger(port) || port < 1 || port > 65535)))
+            throw new Error('Invalid node API address or port');
+        const host = isIP(normalized) === 6 ? `[${normalized}]` : normalized;
         const authority = port ? `${host}:${port}` : host;
         // Pre-1.5 nodes used HTTP. Never downgrade after a TLS/authentication error.
         // A tunnel endpoint must be explicitly listed by the operator.
-        const legacyHttp = (process.env.REMNACUST_LEGACY_HTTP_NODES ?? '')
-            .split(',')
-            .some((entry) => entry.trim() === authority);
+        const legacyHttp = nodeUsesLegacyHttp(normalized, port);
         return `${legacyHttp ? 'http' : 'https'}://${authority}${path}`;
     }
 
@@ -581,7 +606,10 @@ export class AxiosService {
             recoveryProof,
         } = params;
 
-        const url = this.getNodeUrl(opts.address, path, opts.port);
+        const deadline = Date.now() + (timeout ?? 45_000);
+        let registered: NodeRouteConfiguration | undefined;
+        let selected = opts;
+        let dispatched = false;
         try {
             // API and scheduler processes also send direct node commands. Only
             // processors initialize eagerly; every caller needs the same mTLS/JWT setup.
@@ -592,7 +620,17 @@ export class AxiosService {
                 });
                 await this.initialization;
             }
-            const httpsAgent = this.resolveAgent(opts.proxyUrl);
+            if (this.routeRegistry && !params.routeProbe) {
+                registered = await this.routeRegistry.get(opts);
+                this.nodeRoutes ??= new NodeControlRouteResolver(this.rawCacheService);
+                const shutdown = label === 'STOP XRAY' && path === StopXrayCommand.url;
+                if (registered.isDisabled && !shutdown) throw new Error('Node is disabled');
+                selected = await this.nodeRoutes.select(registered, (candidate, budget) => this.probeRoute(candidate, budget), Math.max(1, deadline - Date.now()), shutdown);
+                if (!(await this.routeRegistry.isCurrent(registered, shutdown)))
+                    throw new Error('Node connection configuration changed before dispatch');
+            }
+            const url = this.getNodeUrl(selected.address, path, selected.port);
+            const httpsAgent = this.resolveAgent(selected.proxyUrl, registered?.uuid ?? opts.uuid ?? `${opts.address}:${opts.port}`);
             let body: unknown = EMPTY_BODY;
             let headers: RawAxiosRequestHeaders | undefined;
 
@@ -622,13 +660,17 @@ export class AxiosService {
 
             // A node cannot redirect the panel's authenticated request to another service.
             const config: AxiosRequestConfig = {
+                proxy: false,
                 headers,
                 httpsAgent,
-                timeout,
+                timeout: Math.max(1, deadline - Date.now()),
+                signal: AbortSignal.timeout(Math.max(1, deadline - Date.now())),
                 maxRedirects: 0,
                 ...(maxResponseBytes === undefined ? {} : { maxContentLength: maxResponseBytes }),
             };
-            if (opts.proxyUrl && url.startsWith('http://')) config.httpAgent = httpsAgent;
+            if (selected.proxyUrl && url.startsWith('http://')) config.httpAgent = httpsAgent;
+            if (Date.now() >= deadline) throw new Error('Node request deadline exceeded before dispatch');
+            dispatched = true;
 
             const response: AxiosResponse<TResponse> =
                 method === 'get'
@@ -646,6 +688,11 @@ export class AxiosService {
             }
             return ok(response.data.response);
         } catch (error) {
+            if (error instanceof NodeRouteBusyError) return { isOk: false, code: 'NODE_ROUTE_BUSY', message: error.message };
+            if (dispatched && registered && this.nodeRoutes && error instanceof AxiosError &&
+                (!error.response || error.response.status === 401 || error.response.status === 403)) {
+                await this.nodeRoutes.failed(registered, selected.address, routeFailure(error.code, error.response?.status)).catch(() => undefined);
+            }
             if (internalError) {
                 return this.failWithInternalError(label, error);
             }
@@ -682,6 +729,33 @@ export class AxiosService {
                 ERRORS.NODE_ERROR_WITH_MSG.withMessage(JSON.stringify(error) ?? 'Unknown error'),
             );
         }
+    }
+
+    private async probeRoute(opts: INodeConnectionOpts, timeout: number) {
+        const deadline = Date.now() + timeout;
+        let result = await this.request<{ response: { isAlive?: unknown; nodeVersion?: unknown } }>({
+            label: 'GET NODE HEALTH', opts, path: GetNodeHealthCheckCommand.url,
+            method: 'get', timeout, routeProbe: true, logAxiosError: false, maxResponseBytes: 65536,
+        });
+        if (!result.isOk && ['NODE_HTTP_404', 'NODE_HTTP_405'].includes(result.code ?? '')) {
+            const legacy = await this.request<{ response: { isRunning?: unknown } }>({
+                label: 'GET LEGACY NODE STATUS', opts, path: '/node/xray/status', method: 'get',
+                timeout: Math.max(1, deadline - Date.now()), routeProbe: true, logAxiosError: false, maxResponseBytes: 65536,
+            });
+            if (!legacy.isOk) return { healthy: false, code: routeFailure(legacy.code,
+                legacy.code?.startsWith('NODE_HTTP_') ? Number(legacy.code.slice(10)) : undefined) };
+            return { healthy: typeof legacy.response?.isRunning === 'boolean', code: 'invalid-response' as const };
+        }
+        if (!result.isOk) return { healthy: false, code: routeFailure(result.code,
+            result.code?.startsWith('NODE_HTTP_') ? Number(result.code.slice(10)) : undefined) };
+        return { healthy: result.response?.isAlive === true, code: 'invalid-response' as const };
+    }
+
+    public async connectionRoute(opts: INodeConnectionOpts): Promise<ConnectionRoute | undefined> {
+        if (!this.routeRegistry) return undefined;
+        const config = await this.routeRegistry.get(opts);
+        this.nodeRoutes ??= new NodeControlRouteResolver(this.rawCacheService);
+        return this.nodeRoutes.diagnostics(config);
     }
 
     /*

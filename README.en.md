@@ -1,6 +1,6 @@
 # Remnacust Panel
 
-Release **Panel/Page 1.1.7.98** belongs to Installer bundle **1.2.137**, with Node **1.1.23** and Core/WASM **1.1.14**. [Changes from 97 to 98](docs/releases/1.1.7.98.md). Installed servers require a separate update.
+Release **Panel/Page 1.1.7.99** belongs to Installer bundle **1.2.138**, with Node **1.1.24** and Core/WASM **1.1.15**. [Changes from 98 to 99](docs/releases/1.1.7.99.md). Installed servers require a separate update.
 
 [Русский](README.md) · [English](README.en.md)
 
@@ -36,10 +36,10 @@ Matching bundle as of **November 6, 2026**. Components use separate version numb
 
 | Component | Current stable release |
 | --- | --- |
-| Panel and subscription website | [1.1.7.98](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.98) |
-| Installer / Docker bundle | [1.2.137](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.137) |
-| Node agent | [1.1.23](https://github.com/lottman/Remnacust-node/releases/tag/v1.1.23) |
-| Core / editor validator | [1.1.14](https://github.com/lottman/Remnacust-core/releases/tag/v1.1.14), Xray v26.10.31 |
+| Panel and subscription website | [1.1.7.99](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.99) |
+| Installer / Docker bundle | [1.2.138](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.138) |
+| Node agent | [1.1.24](https://github.com/lottman/Remnacust-node/releases/tag/v1.1.24) |
+| Core / editor validator | [1.1.15](https://github.com/lottman/Remnacust-core/releases/tag/v1.1.15), Xray v26.10.31 |
 
 Use a matching bundle. Updating the panel does not automatically update remote Node, managed Core or the Linux kernel. Advanced limits depend on confirmed Node/Core capabilities, not just the displayed version. [Compatibility](docs/COMPATIBILITY.md).
 
@@ -57,9 +57,9 @@ When sharing a server, leave headroom for all components. Panel/node requirement
 
 | Software | Requirement |
 | --- | --- |
-| Installer 1.2.137 OS | Ubuntu 22.04 / 24.04 / 26.04 LTS and Debian 12 / 13; Linux amd64 or arm64 |
+| Installer 1.2.138 OS | Ubuntu 22.04 / 24.04 / 26.04 LTS and Debian 12 / 13; Linux amd64 or arm64 |
 | Containers | Docker Engine with a current Docker Compose v2 plugin; legacy `docker-compose` v1 is unsupported |
-| PostgreSQL | Panel 1.1.7.98 tested on 14.24 / 15.19 / 16.15 / 17.11 / 18.6 with 194 migrations |
+| PostgreSQL | 1.1.7.98 matrix: 14.24 / 15.19 / 16.15 / 17.11 / 18.6; 1.1.7.99 retains 194 migrations |
 | Prebuilt-image installation | Root, APT and GitHub/GHCR access, working DNS; no host Node.js or Go needed |
 | Building from source | Node.js 24; Go 1.27.3 separately for Core/editor |
 
@@ -75,7 +75,7 @@ Prepare the panel hostname and DNS records. Use a separate public subscription a
 curl -fsSL --proto '=https' --proto-redir '=https' \
   https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh \
   -o installer.sh
-sudo bash installer.sh install-panel --version 1.2.137
+sudo bash installer.sh install-panel --version 1.2.138
 ```
 
 The installer asks for the domain, HTTPS method and whether to install the subscription website. Create an administrator after startup. Use `--proxy existing` for your own reverse proxy. Installer prompts currently use Russian; command names are unchanged. [Installer guide](https://github.com/lottman/Remnacust-installer/blob/main/README.en.md).
@@ -126,7 +126,7 @@ If a subscription temporarily fails to load, check logs, panel reachability, web
 - [Backups](docs/BACKUPS.md) · [User migration](docs/USER-MIGRATION.md) · [Node updates](docs/UPDATE-PROGRESS-AND-NODE-HEALTH.md).
 - [Development/building](docs/BUILDING.md) · [Subscription website](subscription-page/README.en.md) · [Release history](docs/releases).
 
-Release 1.1.7.98 includes database diagnostics, statistics/quota optimizations and security fixes; installer 1.2.137 supports Debian 12/13. [Release changes](docs/releases/1.1.7.98.md). Updating the README does not replace installed software.
+Release 1.1.7.99 adds node control address fallback, safe SOCKS5 diagnostics and API proxy credential redaction. Installer 1.2.138 separates release checking, component updates and OS maintenance. [Release changes](docs/releases/1.1.7.99.md). Updating the README does not replace installed software.
 
 ## License and support
 

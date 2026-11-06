@@ -40,7 +40,8 @@ export class RecordNodeUsageQueueProcessor extends WorkerHost {
 
     async process(job: Job<IRecordNodeUsagePayload>) {
         try {
-            const { nodeUuid, connectionOpts, nodeConsumptionMultiplier } = job.data;
+            const { nodeUuid, connectionOpts: queuedConnectionOpts, nodeConsumptionMultiplier } = job.data;
+            const connectionOpts = { ...queuedConnectionOpts, uuid: nodeUuid };
 
             const combinedStats = await this.axios.getCombinedStats(
                 {

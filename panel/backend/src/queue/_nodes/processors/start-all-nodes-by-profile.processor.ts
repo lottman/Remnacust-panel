@@ -305,6 +305,7 @@ export class StartAllNodesByProfileQueueProcessor extends WorkerHost {
 
                         let pluginsSupported = true;
                         const xrayStatusResponse = await this.axios.getNodeHealth({
+                            uuid: node.uuid,
                             address: node.address,
                             port: node.port,
                             proxyUrl: node.proxyUrl,
@@ -367,6 +368,7 @@ export class StartAllNodesByProfileQueueProcessor extends WorkerHost {
                                     plugin,
                                 },
                                 {
+                                    uuid: node.uuid,
                                     address: node.address,
                                     port: node.port,
                                     proxyUrl: node.proxyUrl,
@@ -443,6 +445,7 @@ export class StartAllNodesByProfileQueueProcessor extends WorkerHost {
                                 },
                             },
                             {
+                                uuid: node.uuid,
                                 address: node.address,
                                 port: node.port,
                                 proxyUrl: node.proxyUrl,

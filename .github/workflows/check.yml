@@ -81,8 +81,8 @@ jobs:
         env:
           REMNACUST_AUTOPROBE_CORE: ${{ runner.temp }}/remnacust-response-time-core
         run: |
-          curl --fail --location --proto '=https' --proto-redir '=https' --max-filesize 201326592 https://github.com/lottman/Remnacust-core/releases/download/v1.1.14/remnacust-core-1.1.14-linux-amd64 -o "$REMNACUST_AUTOPROBE_CORE"
-          printf '5e43412ed657e08db14e1234d5a6d6ffada9487a60513c945eb3119fb261f8b2  %s\n' "$REMNACUST_AUTOPROBE_CORE" | sha256sum -c
+          curl --fail --location --proto '=https' --proto-redir '=https' --max-filesize 201326592 https://github.com/lottman/Remnacust-core/releases/download/v1.1.15/remnacust-core-1.1.15-linux-amd64 -o "$REMNACUST_AUTOPROBE_CORE"
+          printf 'ab19e2235154200d676bf93daa5a822fa106e72d4d8a2611a390a3ce8a24ec99  %s\n' "$REMNACUST_AUTOPROBE_CORE" | sha256sum -c
           chmod 755 "$REMNACUST_AUTOPROBE_CORE"
           node tests/autoselect-http-probe.integration.cjs
           node tests/autoselect-http-probe.integration.cjs --burst

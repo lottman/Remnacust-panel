@@ -1776,7 +1776,7 @@
       "nothing-found": "Nothing found...",
       "select-plugin": "Select plugin",
       "proxy-url": "Proxy URL",
-      "proxy-url-description": "Optional. If provided, internal API connection from panel to node will be proxied through this proxy."
+      "proxy-url-description": "SOCKS5 is for the panel → node control API, not VPN traffic. Leave empty for a direct connection. A configured proxy failure never falls back to direct; changing the node IP cannot fix an unavailable shared proxy. The URL is masked and can be revealed and edited."
     }
   },
   "node-plugin-card": {
@@ -4086,6 +4086,28 @@
     "clone-progress": "Cloning: {{done}} / {{total}}"
   },
   "operations": {
+    "routeAttempts": "Attempts in this check",
+    "routeTitle": "Management API route",
+    "routeStatus_authenticated": "API answered",
+    "routeStatus_unavailable": "Unavailable",
+    "routeStatus_disabled": "Node disabled",
+    "routeStatus_unverified": "No fresh confirmation",
+    "routeProxy": "Via configured SOCKS5",
+    "routeDirect": "Direct connection",
+    "routeCheckedAt": "Checked: {{time}}",
+    "routeStale": "Route freshness is unconfirmed. Run the check again.",
+    "routeTrust": "Only administrator-configured addresses of this node are used. Shared TLS/JWT does not prove a unique UUID: the API check cannot distinguish another node with the same trust.",
+    "routeProxyFailure": "All addresses use the same SOCKS5. Changing the IP cannot fix a failed shared proxy; there is no direct bypass.",
+    "routeAttempt_authenticated": "API answered",
+    "routeAttempt_failed": "Failed",
+    "routeAttempt_skipped": "Skipped",
+    "routeInvalid": "The response has no valid route status. A working connection is not confirmed.",
+    "result_proxy": "Check the configured SOCKS5. Its failure never triggers a direct bypass.",
+    "result_identity_mismatch": "The address is unconfirmed. Check the administrator-configured node addresses.",
+    "result_identity_unavailable": "The target is unconfirmed. Check the administrator-configured node addresses.",
+    "result_invalid_response": "The management API returned an unexpected response.",
+    "result_cooldown": "The address recently failed; a short pause applies before retrying.",
+    "result_busy": "Probe capacity is busy. Run diagnostics again later.",
     "diagnostics": "Connection diagnostics",
     "checkConnection": "Check connection",
     "diagnosticsScope": "Checks run from the panel server. This verifies the management connection and Xray response, not VPN reachability from every client network.",

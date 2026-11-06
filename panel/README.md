@@ -2,20 +2,20 @@
 
 # Remnacust Panel
 
-Выпуск **Panel/Page 1.1.7.98** входит в комплект Installer **1.2.137** с Node **1.1.23** и Core/WASM **1.1.14**. [Изменения 97 → 98](../docs/releases/1.1.7.98.md). Обновление установленного сервера выполняется отдельно.
+Выпуск **Panel/Page 1.1.7.99** входит в комплект Installer **1.2.138** с Node **1.1.24** и Core/WASM **1.1.15**. [Изменения 98 → 99](../docs/releases/1.1.7.99.md). Обновление установленного сервера выполняется отдельно.
 
 Панель управления пользователями, нодами и подписками. Для установки на VPS используйте готовые образы через установщик; Node.js и Go на сервере не нужны.
 
 | Стабильный компонент | Версия |
 | --- | --- |
-| [Panel и страница подписки](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.98) | 1.1.7.98 |
-| [Installer / комплект](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.137) | 1.2.137 |
-| [Node](https://github.com/lottman/Remnacust-node/releases/tag/v1.1.23) | 1.1.23 |
-| [Core / WASM](https://github.com/lottman/Remnacust-core/releases/tag/v1.1.14) | 1.1.14 |
+| [Panel и страница подписки](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.99) | 1.1.7.99 |
+| [Installer / комплект](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.138) | 1.2.138 |
+| [Node](https://github.com/lottman/Remnacust-node/releases/tag/v1.1.24) | 1.1.24 |
+| [Core / WASM](https://github.com/lottman/Remnacust-core/releases/tag/v1.1.15) | 1.1.15 |
 
 ## Сервер и порты
 
-Установщик 1.2.137 поддерживает **Ubuntu 22.04/24.04/26.04 LTS и Debian 12/13**, Linux amd64/arm64.
+Установщик 1.2.138 поддерживает **Ubuntu 22.04/24.04/26.04 LTS и Debian 12/13**, Linux amd64/arm64.
 
 Для небольшой панели ориентируйтесь на 2 CPU, 2 GiB RAM и 20 GiB диска; рекомендуются 4 CPU и 4 GiB RAM. Под базу, журналы и копии нужен дополнительный запас по мере роста нагрузки. Нужны root, домен, доступ к пакетным репозиториям и скачиванию образов.
 
@@ -32,8 +32,8 @@
 ## Установка готовых образов
 
 ```bash
-curl -fsSL --proto '=https' --proto-redir '=https' https://github.com/lottman/Remnacust-installer/releases/download/v1.2.137/installer.sh -o installer.sh
-sudo bash installer.sh install-panel --version 1.2.137
+curl -fsSL --proto '=https' --proto-redir '=https' https://github.com/lottman/Remnacust-installer/releases/download/v1.2.138/installer.sh -o installer.sh
+sudo bash installer.sh install-panel --version 1.2.138
 ```
 
 Укажите домен и HTTPS; сайт подписки установщик предлагает отдельно. После запуска создайте администратора. Основные команды:

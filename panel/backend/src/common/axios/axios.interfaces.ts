@@ -1,4 +1,5 @@
 export interface INodeRequestOpts {
+    routeProbe?: boolean;
     label: string;
     opts: INodeConnectionOpts;
     path: string;
@@ -35,6 +36,7 @@ export type INodeSystemStatsResponse = Omit<
 };
 
 export interface INodeConnectionOpts {
+    uuid?: string;
     address: string;
     port: number | null;
     proxyUrl: string | null;

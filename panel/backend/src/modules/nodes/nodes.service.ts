@@ -8,6 +8,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { fail, ok, TResult } from '@common/types';
 import { atLeastOneDefined, mapDefined, wrapBigInt } from '@common/utils';
 import { toNano } from '@common/utils/nano';
+import { NodeRouteRegistryService } from '@common/axios/node-route-registry.service';
 
 import { NodeEvent } from '@integration-modules/notifications/interfaces';
 
@@ -39,7 +40,13 @@ export class NodesService {
         private readonly queryBus: QueryBus,
         private readonly commandBus: CommandBus,
         private readonly nodesSystemCacheService: NodesSystemCacheService,
+        private readonly routeRegistry?: NodeRouteRegistryService,
     ) {}
+
+    private async invalidateRoutesAfterCommit(): Promise<void> {
+        try { await this.routeRegistry?.invalidate(); }
+        catch { this.logger.warn('Node saved; route cache refresh will retry'); }
+    }
 
     public async createNode(body: CreateNodeBodyDto): Promise<TResult<NodeResponseModel>> {
         try {
@@ -76,10 +83,10 @@ export class NodesService {
                 nodeEntity,
                 [...new Set(configProfile.activeInbounds)],
             );
-
             // Creation is committed. An unavailable queue/cache must not turn it
             // into a failed create response and invite a duplicate-name retry.
             try {
+                await this.invalidateRoutesAfterCommit();
                 await this.nodesQueuesService.startNode({ nodeUuid: result.uuid });
             } catch {
                 this.logger.warn(`Node ${result.uuid} created; startup queue unavailable. Health checks will retry.`);
@@ -289,6 +296,7 @@ export class NodesService {
                 nodeConsumptionMultiplier: mapDefined(nodeData.nodeConsumptionMultiplier, toNano),
                 activeConfigProfileUuid: configProfile?.activeConfigProfileUuid,
             });
+            await this.invalidateRoutesAfterCommit();
 
             if (!result) {
                 return fail(ERRORS.UPDATE_NODE_ERROR);
@@ -361,6 +369,7 @@ export class NodesService {
                     lastStatusMessage: null,
                     lastStatusChange: new Date(),
                 });
+                await this.invalidateRoutesAfterCommit();
 
                 if (!result) {
                     return fail(ERRORS.ENABLE_NODE_ERROR);
@@ -378,6 +387,7 @@ export class NodesService {
                 uuid: node.uuid,
                 isDisabled: false,
             });
+            await this.invalidateRoutesAfterCommit();
 
             if (!result) {
                 return fail(ERRORS.ENABLE_NODE_ERROR);
@@ -425,6 +435,7 @@ export class NodesService {
                 lastStatusMessage: null,
                 lastStatusChange: new Date(),
             });
+            await this.invalidateRoutesAfterCommit();
 
             if (!result) {
                 return fail(ERRORS.DISABLE_NODE_ERROR);
@@ -513,6 +524,7 @@ export class NodesService {
             await this.nodesRepository.updateMany(uuids, {
                 activeConfigProfileUuid: configProfile.activeConfigProfileUuid,
             });
+            await this.invalidateRoutesAfterCommit();
 
             await this.nodesRepository.removeInboundsFromNodes(uuids);
 
@@ -574,6 +586,7 @@ export class NodesService {
             };
 
             await this.nodesRepository.updateMany(uuids, fieldsToUpdate);
+            await this.invalidateRoutesAfterCommit();
 
             if (fieldsToUpdate.activePluginUuid !== undefined) {
                 await this.nodesQueuesService.syncNodePluginsBulk(

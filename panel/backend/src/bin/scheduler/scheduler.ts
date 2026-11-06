@@ -3,7 +3,7 @@
 };
 import 'zod/compile';
 
-process.title = 'rw-scheduler';
+process.title = 'rc-scheduler';
 
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';

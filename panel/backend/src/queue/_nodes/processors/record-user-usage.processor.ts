@@ -37,6 +37,7 @@ export class RecordUserUsageQueueProcessor extends WorkerHost {
                 nodeUuid,
                 nodeId: BigInt(nodeId),
                 opts: {
+                    uuid: nodeUuid,
                     address: connectionOpts.address,
                     port: connectionOpts.port,
                     proxyUrl: connectionOpts.proxyUrl,

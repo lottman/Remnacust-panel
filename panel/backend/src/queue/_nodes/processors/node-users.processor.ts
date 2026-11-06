@@ -36,6 +36,7 @@ export class NodeUsersQueueProcessor extends WorkerHost {
         try {
             const { data, node } = job.data;
             const result = await this.axios.addUser(data, {
+                uuid: node.uuid,
                 address: node.address,
                 port: node.port,
                 proxyUrl: node.proxyUrl,
@@ -59,6 +60,7 @@ export class NodeUsersQueueProcessor extends WorkerHost {
             const { data, node } = job.data;
 
             const result = await this.axios.deleteUser(data, {
+                uuid: node.uuid,
                 address: node.address,
                 port: node.port,
                 proxyUrl: node.proxyUrl,

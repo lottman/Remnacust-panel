@@ -108,6 +108,7 @@ export class ConnectionsService {
                                 userIds: dto.dropBy.userIds.map((userId) => userId.toString()),
                             },
                             node: {
+                                uuid: node.uuid,
                                 address: node.address,
                                 port: node.port,
                                 proxyUrl: node.proxyUrl,
@@ -123,6 +124,7 @@ export class ConnectionsService {
                                 ips: dto.dropBy.ipAddresses,
                             },
                             node: {
+                                uuid: node.uuid,
                                 address: node.address,
                                 port: node.port,
                                 proxyUrl: node.proxyUrl,

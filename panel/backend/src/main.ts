@@ -3,7 +3,7 @@
 };
 import 'zod/compile';
 
-process.title = 'rw-api';
+process.title = 'rc-api';
 
 import { BACKEND_TOOLS_ROOT, ROOT } from '@contract/api';
 import dayjs from 'dayjs';

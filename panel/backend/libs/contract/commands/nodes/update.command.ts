@@ -4,6 +4,7 @@ import { NODES_ROUTES, REST_API } from '../../api';
 import { getEndpointDetails } from '../../constants';
 import { NodeIpsSchema, NodesSchema } from '../../models';
 import { NodeResponseSchema } from './node.response';
+import { SocksProxyUrlSchema } from '../../models/socks-proxy.schema';
 
 export namespace UpdateNodeCommand {
     export const url = REST_API.NODES.UPDATE;
@@ -20,13 +21,7 @@ export namespace UpdateNodeCommand {
         name: z.optional(z.string().min(3).max(30)),
         address: z.optional(z.string().min(2)),
         port: z.optional(z.number().min(1).max(65535)),
-        proxyUrl: z
-            .string()
-            .regex(
-                /^socks5:\/\/(?:[^:@/\s]+(?::[^@/\s]*)?@)?[^:@/\s]+:\d{1,5}$/,
-                'Expected socks5://[user:pass@]host:port',
-            )
-            .nullish(),
+        proxyUrl: SocksProxyUrlSchema.nullish(),
         isTrafficTrackingActive: z.optional(z.boolean()),
         trafficLimitBytes: z.optional(z.number().min(0)),
         notifyPercent: z.optional(z.number().min(0).max(100)),

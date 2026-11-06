@@ -42,14 +42,16 @@ export class NodeDiagnosticsService {
             );
         const startedAt = Date.now();
         const checks: Check[] = [];
+        let routeBusy = false;
         if (node.isDisabled) checks.push({ id: 'connection', status: 'skipped', code: 'disabled' });
         else {
             const result = await this.axios.getSystemStats(node);
+            routeBusy = !result.isOk && result.code === 'NODE_ROUTE_BUSY';
             if (!result.isOk)
                 checks.push({
                     id: 'connection',
-                    status: 'failed',
-                    code: transportFailure(result.message ?? ''),
+                    status: result.code === 'NODE_ROUTE_BUSY' ? 'warning' : 'failed',
+                    code: result.code === 'NODE_ROUTE_BUSY' ? 'busy' : transportFailure(result.message ?? ''),
                 });
             else {
                 checks.push({ id: 'connection', status: 'passed', code: 'authenticated' });
@@ -101,6 +103,8 @@ export class NodeDiagnosticsService {
                 code: 'configurationUnavailable',
             });
         }
+        const route = await this.axios.connectionRoute?.(node)?.catch(() => undefined);
+        const connectionRoute = routeBusy && route ? { ...route, status: 'unverified' as const, activeAddress: null } : route;
         return {
             nodeUuid: uuid,
             checkedAt: new Date().toISOString(),
@@ -108,6 +112,7 @@ export class NodeDiagnosticsService {
             checks,
             alertMutedUntil: await this.cache.get<number>(`remnacust:node-alert-mute:${uuid}`),
             scope: 'management-and-runtime' as const,
+            connectionRoute,
         };
     }
 

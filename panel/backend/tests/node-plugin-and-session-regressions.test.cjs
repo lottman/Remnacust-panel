@@ -19,14 +19,56 @@ const { QueryNodesQueueProcessor } = mocked(path.join(root, 'queue/_nodes/proces
 const nodes = ['A', 'B'].map((name, i) => ({ uuid: `00000000-0000-4000-8000-00000000000${i}`, name, address: name, port: 443, countryCode: 'US' }));
 async function scan(responses, selected = nodes) {
     const progress = [];
+    const targets = [];
     const worker = new QueryNodesQueueProcessor({ getIpsList: async (_data, opts) => {
+        targets.push(opts);
         const result = responses[opts.address];
         if (result instanceof Error) throw result;
         return result;
     } }, { execute: async () => ({ isOk: true, response: selected }) }, {}, { getOrThrow: () => false });
     const result = await worker.process({ name: 'scan', data: { userId: 42 }, updateProgress: async p => progress.push(p) });
-    return { result, progress };
+    return { result, progress, targets };
 }
+
+test('session polls retain each selected UUID even when endpoint addresses coincide', async () => {
+    const selected = nodes.map(node => ({ ...node, address: 'shared.invalid', proxyUrl: null }));
+    const { result, targets } = await scan({ 'shared.invalid': { isOk: true, response: { ips: [] } } }, selected);
+    assert.equal(result.success, true);
+    assert.deepEqual(targets.map(target => target.uuid).sort(), selected.map(node => node.uuid).sort());
+    assert(targets.every(target => target.address === 'shared.invalid' && target.port === 443));
+});
+
+test('queued user mutations preserve their original node UUID at dispatch', async () => {
+    const { NodeUsersQueueProcessor } = mocked(path.join(root, 'queue/_nodes/processors/node-users.processor.ts'), {
+        '@queue/queue.enum': { QUEUES_NAMES: { NODES: { USERS: 'test' } } },
+        '../constants/nodes-job-name.constant': { NODES_JOB_NAMES: { ADD_USER_TO_NODE: 'add', REMOVE_USER_FROM_NODE: 'remove' } },
+    });
+    const calls = [];
+    const capture = async (_data, opts) => { calls.push(opts); return { isOk: true }; };
+    const worker = new NodeUsersQueueProcessor({ addUser: capture, deleteUser: capture });
+    for (const name of ['add', 'remove']) await worker.process({ name, data: {
+        node: { uuid: nodes[0].uuid, address: 'reassigned.invalid', port: 2222, proxyUrl: null }, data: {},
+    } });
+    assert.equal(calls.length, 2);
+    assert(calls.every(opts => opts.uuid === nodes[0].uuid && opts.address === 'reassigned.invalid'));
+});
+
+test('destructive usage reads bind to the queued node UUID rather than a stale endpoint UUID', async () => {
+    const { RecordNodeUsageQueueProcessor } = mocked(path.join(root, 'queue/_nodes/processors/record-node-usage.processor.ts'), {
+        '@queue/queue.enum': { QUEUES_NAMES: { NODES: { RECORD_NODE_USAGE: 'test' } } },
+        '../constants/nodes-job-name.constant': { NODES_JOB_NAMES: { RECORD_NODE_USAGE: 'usage' } },
+    });
+    const calls = [];
+    const worker = new RecordNodeUsageQueueProcessor({}, { getCombinedStats: async (body, opts) => {
+        calls.push({ body, opts }); return { isOk: false };
+    } }, {});
+    for (const uuid of [undefined, nodes[1].uuid]) await worker.process({ data: {
+        nodeUuid: nodes[0].uuid, nodeConsumptionMultiplier: '1',
+        connectionOpts: { uuid, address: 'reassigned.invalid', port: 2222, proxyUrl: null },
+    } });
+    assert.equal(calls.length, 2);
+    assert(calls.every(({ body, opts }) => body.reset === true && opts.uuid === nodes[0].uuid));
+});
 test('all failed session polls fail instead of claiming no connections', async () => {
     const { result, progress } = await scan({ A: { isOk: false }, B: new Error('timeout') });
     assert.equal(result.success, false);

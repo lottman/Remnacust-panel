@@ -2,21 +2,21 @@
 
 # Remnacust Subscription Page
 
-Страница подписки **1.1.7.98** показывает пользователю состояние и инструкции, а VPN-приложению передаёт конфигурацию с панели. Её можно установить отдельно, без переустановки панели.
+Страница подписки **1.1.7.99** показывает пользователю состояние и инструкции, а VPN-приложению передаёт конфигурацию с панели. Её можно установить отдельно, без переустановки панели.
 
-Комплект 1.2.137 включает Panel/Page 1.1.7.98, Node 1.1.23 и Core/WASM 1.1.14. [Изменения выпуска](../docs/releases/1.1.7.98.md).
+Комплект 1.2.138 включает Panel/Page 1.1.7.99, Node 1.1.24 и Core/WASM 1.1.15. [Изменения выпуска](../docs/releases/1.1.7.99.md).
 
 ## Сервер и установка
 
-Стабильный [Installer 1.2.137](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.137) использует готовые образы и поддерживает Ubuntu 22.04/24.04/26.04 LTS и Debian 12/13, Linux amd64/arm64.
+Стабильный [Installer 1.2.138](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.138) использует готовые образы и поддерживает Ubuntu 22.04/24.04/26.04 LTS и Debian 12/13, Linux amd64/arm64.
 
 Для отдельной страницы можно начать с **1 CPU и 1 GiB RAM**. Точный минимум памяти не измерен; это начальная рекомендация, не гарантия для любого числа подписчиков, одновременных загрузок и размеров конфигураций. Оставьте место под Docker-образ и журналы. Если рядом работает панель с БД, используйте [требования панели](../panel/README.md#сервер-и-порты).
 
 Нужны домен, HTTPS proxy и доступ от страницы к API панели. Публичный HTTPS — TCP 443; TCP 80 нужен для HTTP/HTTP-01, если выбран этот способ. Порт приложения 3010 по умолчанию оставляйте на loopback или в приватной сети.
 
 ```bash
-curl -fsSL --proto '=https' --proto-redir '=https' https://github.com/lottman/Remnacust-installer/releases/download/v1.2.137/installer.sh -o installer.sh
-sudo bash installer.sh install-subscription-page --version 1.2.137
+curl -fsSL --proto '=https' --proto-redir '=https' https://github.com/lottman/Remnacust-installer/releases/download/v1.2.138/installer.sh -o installer.sh
+sudo bash installer.sh install-subscription-page --version 1.2.138
 ```
 
 Укажите адрес backend панели и ограниченный API-токен. Токен вводится скрыто; для автоматизации поддерживается `--panel-token-file /root/subscription-token` с правами `0600`. Не передавайте значение токена в командной строке.

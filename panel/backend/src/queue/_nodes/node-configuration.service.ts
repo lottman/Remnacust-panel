@@ -152,6 +152,7 @@ export class NodeConfigurationService {
                 );
 
                 const xrayStatusResponse = await this.axios.getNodeHealth({
+                    uuid: node.uuid,
                     address: node.address,
                     port: node.port,
                     proxyUrl: node.proxyUrl,
@@ -265,6 +266,7 @@ export class NodeConfigurationService {
                                 : {}),
                         },
                         {
+                            uuid: node.uuid,
                             address: node.address,
                             port: node.port,
                             proxyUrl: node.proxyUrl,
@@ -418,6 +420,7 @@ export class NodeConfigurationService {
                         },
                     },
                     {
+                        uuid: node.uuid,
                         address: node.address,
                         port: node.port,
                         proxyUrl: node.proxyUrl,

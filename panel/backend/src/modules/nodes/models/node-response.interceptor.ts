@@ -19,6 +19,7 @@ export class NodeResponseInterceptor implements NestInterceptor {
                     if (!(node instanceof NodeResponseModel)) return node;
                     return {
                         ...node,
+                        proxyUrl: null,
                         configProfile: {
                             ...node.configProfile,
                             activeInbounds: node.configProfile.activeInbounds.map((inbound) => ({

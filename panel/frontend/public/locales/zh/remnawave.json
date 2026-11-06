@@ -1776,7 +1776,7 @@
       "nothing-found": "未找到结果…",
       "select-plugin": "选择插件",
       "proxy-url": "代理 URL",
-      "proxy-url-description": "可选。设置后，面板到节点的内部 API 连接将通过此代理。"
+      "proxy-url-description": "SOCKS5 仅用于面板到节点的管理 API，不代理 VPN 流量。留空表示直连。已配置的代理故障时不会回退到直连；切换节点 IP 无法修复不可用的共用代理。URL 默认隐藏，可显示并编辑。"
     }
   },
   "node-plugin-card": {
@@ -4086,6 +4086,28 @@
     "clone-progress": "正在克隆：{{done}} / {{total}}"
   },
   "operations": {
+    "routeAttempts": "本次检查的尝试",
+    "routeTitle": "管理 API 路由",
+    "routeStatus_authenticated": "API 已响应",
+    "routeStatus_unavailable": "不可用",
+    "routeStatus_disabled": "节点已禁用",
+    "routeStatus_unverified": "无最新确认",
+    "routeProxy": "通过已配置的 SOCKS5",
+    "routeDirect": "直连",
+    "routeCheckedAt": "检查时间：{{time}}",
+    "routeStale": "路由的新鲜度未确认。请重新检查。",
+    "routeTrust": "仅使用管理员明确配置的同一节点地址。共用 TLS/JWT 不能证明唯一 UUID；API 检查无法区分具有相同信任关系的另一节点。",
+    "routeProxyFailure": "所有地址均使用同一个 SOCKS5。切换 IP 无法修复共用代理故障，也不会改为直连。",
+    "routeAttempt_authenticated": "API 已响应",
+    "routeAttempt_failed": "失败",
+    "routeAttempt_skipped": "已跳过",
+    "routeInvalid": "响应中没有有效的路由状态，尚未确认连接可用。",
+    "result_proxy": "请检查已配置的 SOCKS5。代理故障时不会绕过代理直连。",
+    "result_identity_mismatch": "地址未确认。请检查管理员配置的节点地址。",
+    "result_identity_unavailable": "目标未确认。请检查管理员配置的节点地址。",
+    "result_invalid_response": "管理 API 返回了意外响应。",
+    "result_cooldown": "该地址最近检查失败，请短暂等待后重试。",
+    "result_busy": "检查容量已满，请稍后重新诊断。",
     "diagnostics": "连接诊断",
     "checkConnection": "检查连接",
     "diagnosticsScope": "检查从面板服务器发起，验证管理连接和 Xray 响应，不能代表所有客户端网络的 VPN 可达性。",

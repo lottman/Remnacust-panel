@@ -43,7 +43,8 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
     }
     async process(job: Job<INodeHealthCheckPayload>) {
         try {
-            const { nodeUuid, isConnected, connectionOpts } = job.data;
+            const { nodeUuid, isConnected, connectionOpts: queuedConnectionOpts } = job.data;
+            const connectionOpts = { ...queuedConnectionOpts, uuid: nodeUuid };
             const observedAt = job.timestamp ?? Date.now();
 
             const attemptsLimit = 2;
@@ -53,6 +54,7 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
 
             while (attempts < attemptsLimit) {
                 const statResult = await this.axios.getSystemStats(connectionOpts);
+                if (!statResult.isOk && statResult.code === 'NODE_ROUTE_BUSY') return;
 
                 switch (statResult.isOk) {
                     case true:

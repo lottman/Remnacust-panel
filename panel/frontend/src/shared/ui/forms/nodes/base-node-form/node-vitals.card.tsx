@@ -4,6 +4,7 @@ import {
     Group,
     MultiSelect,
     NumberInput,
+    PasswordInput,
     Select,
     Stack,
     Text,
@@ -230,13 +231,18 @@ export const NodeVitalsCard = <
                             }}
                         />
 
-                        <TextInput
+                        <PasswordInput
                             key={form.key('proxyUrl')}
                             label={t('node-vitals.card.proxy-url')}
                             {...form.getInputProps('proxyUrl')}
                             description={t('node-vitals.card.proxy-url-description')}
                             leftSection={<TbNetwork size={16} />}
                             placeholder="socks5://user:pass@address:port"
+                            autoComplete="off"
+                            visibilityToggleFocusable
+                            visibilityToggleButtonProps={{
+                                'aria-label': t('design-ui.toggle-password')
+                            }}
                         />
                     </Stack>
                 </SectionCard.Section>

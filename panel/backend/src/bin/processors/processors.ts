@@ -3,7 +3,7 @@
 };
 import 'zod/compile';
 
-process.title = 'rw-processor';
+process.title = 'rc-processor';
 
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';

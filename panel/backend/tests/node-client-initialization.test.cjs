@@ -9,6 +9,7 @@ const output = ts.transpileModule(fs.readFileSync(path.join(__dirname, '../src/c
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, experimentalDecorators: true, esModuleInterop: true },
 }).outputText;
 new Function('require', 'module', 'exports', output)((id) => {
+    if (id === './node-control-route') return require('./load-typescript.cjs')(path.join(__dirname, '../src/common/axios/node-control-route.ts'));
     if (id === '../host-policy/quota-recovery-release' || id === '../host-policy/quota-recovery-fence') return require('./load-typescript.cjs')(path.resolve(__dirname, '../src/common/host-policy',id.split('/').pop()+'.ts'));
     if (id === '../host-policy/recovery-quiescence') return require('./load-typescript.cjs')(path.resolve(__dirname,'../src/common/host-policy/recovery-quiescence.ts'));
     if (id === '../host-policy/recovery-usage-sample') return require('./load-typescript.cjs')(path.resolve(__dirname,'../src/common/host-policy/recovery-usage-sample.ts'));
@@ -68,7 +69,7 @@ test('durable receipt requests retain mTLS/JWT and a dedicated decoded response 
     const service=new AxiosService({execute:async()=>jwt},{},config);
     service.axiosInstance.post=async(url,body,options)=>{
         assert.equal(new URL(url).pathname,'/node/xray/usage-receipts');assert.deepEqual(body,{action:'sample'});
-        assert.ok(options.httpsAgent);assert.equal(options.maxRedirects,0);assert.equal(options.timeout,18000);assert.equal(options.maxContentLength,16*1024*1024);
+        assert.ok(options.httpsAgent);assert.equal(options.maxRedirects,0);assert.ok(options.timeout > 0 && options.timeout <= 18000);assert.equal(options.maxContentLength,16*1024*1024);
         assert.equal(service.axiosInstance.defaults.headers.common.Authorization,'Bearer test-token');
         return {data:{response:{sequence:'7'}}};
     };

@@ -64,6 +64,7 @@ export class StopNodeProcessor extends WorkerHost {
                 }
                 await assert();
                 const stopped = await this.axios.stopXray({
+                    uuid: node.uuid,
                     address: node.address,
                     port: node.port,
                     proxyUrl: node.proxyUrl,

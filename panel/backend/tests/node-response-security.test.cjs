@@ -49,7 +49,7 @@ function nodeResponse() {
         rawInbound: Object.freeze({ streamSettings: { realitySettings: { privateKey: 'synthetic-private-key' } } }),
     });
     const node = new NodeResponseModel({
-        uuid, id: 1n, name: 'Fixture', address: '192.0.2.1', port: 443, proxyUrl: null,
+        uuid, id: 1n, name: 'Fixture', address: '192.0.2.1', port: 443, proxyUrl: 'socks5://fixture-user:synthetic-secret@proxy.example:1080',
         isConnected: true, isConnecting: false, isDisabled: false, lastStatusChange: null, lastStatusMessage: null,
         isTrafficTrackingActive: false, trafficResetDay: null, trafficLimitBytes: 0n, trafficUsedBytes: 0n,
         notifyPercent: null, note: null, consumptionMultiplier: 1n, nodeConsumptionMultiplier: 1n,
@@ -101,7 +101,20 @@ test('unrecognized identities cannot obtain raw inbound configuration', async ()
     for (const user of [undefined, {}, { role: 'unknown' }]) {
         const result = await apply({ response: nodeResponse() }, user);
         assert.equal(result.response.configProfile.activeInbounds[0].rawInbound, null);
+        assert.equal(result.response.proxyUrl, null);
     }
+});
+test('API node responses redact proxy credentials without mutating the admin configuration', async () => {
+    const source = nodeResponse();
+    for (const body of [{ response: source }, { response: [source] }]) {
+        const result = await apply(body, { role: contract.ROLE.API });
+        assert.doesNotMatch(JSON.stringify(result), /fixture-user|synthetic-secret|proxy\.example/);
+        const sanitized = Array.isArray(result.response) ? result.response[0] : result.response;
+        assert.equal(sanitized.proxyUrl, null);
+    }
+    assert.equal((await apply({ response: source }, { role: contract.ROLE.ADMIN })).response.proxyUrl,
+        'socks5://fixture-user:synthetic-secret@proxy.example:1080');
+    assert.equal(source.proxyUrl, 'socks5://fixture-user:synthetic-secret@proxy.example:1080');
 });
 test('unrelated payloads, empty lists, no-content responses and handler errors retain their behavior', async () => {
     for (const body of [undefined, null, { response: [] }, { response: { tags: ['fixture'] } }]) {

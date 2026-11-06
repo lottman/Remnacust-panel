@@ -128,7 +128,7 @@ export class NodesQueuesService implements OnApplicationBootstrap {
                     data: {
                         nodeUuid: node.uuid,
                         isConnected: node.isConnected,
-                        connectionOpts: node.connectionOpts,
+                        connectionOpts: { ...node.connectionOpts, uuid: node.uuid },
                     } satisfies INodeHealthCheckPayload,
                     opts: {
                         jobId: `${NODES_JOB_NAMES.NODE_HEALTH_CHECK}-${node.uuid}`,

@@ -290,6 +290,26 @@ const manifest = {
                 fa: 'افزونه postStart برای اعلان شروع هسته',
                 zh: 'postStart 内核启动通知插件'
             }
+        },
+        {
+            commit: 'b400234c9be4f1cd9cab26a046298cd162af9e44',
+            date: '2026-11-02',
+            description: {
+                ru: 'Исправление обработки вредоносных HTTP-запросов в sirv из Remnawave 3.4.8',
+                en: 'Hostile HTTP request handling fix for sirv from Remnawave 3.4.8',
+                fa: 'اصلاح پردازش درخواست HTTP مخرب در sirv از Remnawave 3.4.8',
+                zh: '移植 Remnawave 3.4.8 的 sirv 恶意 HTTP 请求处理修复'
+            }
+        },
+        {
+            commit: '51a321810ed07a5bcef1e80e40f5b1c4e46efe98',
+            date: '2026-11-02',
+            description: {
+                ru: 'Ограничение чтения файлов сертификатов из Remnawave 3.4.8',
+                en: 'Certificate file read restriction from Remnawave 3.4.8',
+                fa: 'محدودسازی خواندن فایل گواهی از Remnawave 3.4.8',
+                zh: '移植 Remnawave 3.4.8 的证书文件读取限制'
+            }
         }
     ],
     upstreamBackendCommit: '52321390ac4efe04a610811446d87335f1d10a93',

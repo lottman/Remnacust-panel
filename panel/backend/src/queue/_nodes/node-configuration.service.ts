@@ -24,6 +24,7 @@ import { mergeNodeIntegrations } from '@modules/node-integrations/utils';
 import { GetPluginByUuidQuery } from '@modules/node-plugins/queries/get-plugin-by-uuid';
 import { RecordPortPlanResultCommand } from '@modules/nodes/commands/record-port-plan-result';
 import { UpdateNodeCommand } from '@modules/nodes/commands/update-node';
+import type { NodesEntity } from '@modules/nodes/entities/nodes.entity';
 import { PortPlanPreparationError } from '@modules/nodes/profile-port-plan';
 import { GetDeviceStateRevisionQuery } from '@modules/nodes/queries/get-device-state-revision';
 import { GetNodeByUuidQuery } from '@modules/nodes/queries/get-node-by-uuid';
@@ -39,6 +40,9 @@ import {
     PortPlanLeaseService,
     PortPlanLease,
     PortPlanLeaseLostError,
+    NodeDeliveryLostError,
+    NodeDeliveryRetryableError,
+    isRetryableNodeFailure,
 } from './port-plan-lease.service';
 
 @Injectable()
@@ -57,6 +61,15 @@ export class NodeConfigurationService {
     ) {}
 
     async apply(payload: { nodeUuid: string; force?: boolean }) {
+        return this.leases.withLifecycle(payload.nodeUuid, (assert) =>
+            this.applyOwned(payload, assert),
+        );
+    }
+
+    private async applyOwned(
+        payload: { nodeUuid: string; force?: boolean },
+        assertOwnership: () => Promise<void>,
+    ) {
         let confirmedRunning = false;
         let startRequested = false;
         let portPlan: PreparedNodePorts | null = null;
@@ -69,10 +82,17 @@ export class NodeConfigurationService {
             lease,
         });
         let accepted = false;
-        const executeCommand = <R>(command: Command<R>): Promise<R> =>
-            lease
-                ? lease.commit(() => this.commandBus.execute(command))
-                : this.commandBus.execute(command);
+        let deliveryNode: NodesEntity | undefined;
+        const executeCommand = async <R>(command: Command<R>): Promise<R> => {
+            await assertOwnership();
+            if (!deliveryNode) throw new NodeDeliveryLostError('Node state is unavailable');
+            if (lease) return lease.commit(() => this.commandBus.execute(command), deliveryNode);
+            const result = await this.leases.commitLifecycleStatus(deliveryNode, () =>
+                this.commandBus.execute(command),
+            );
+            if (result === undefined) throw new NodeDeliveryLostError('Node desired state changed');
+            return result;
+        };
         try {
             const { nodeUuid, force } = payload;
 
@@ -84,13 +104,13 @@ export class NodeConfigurationService {
             }
 
             const { response: node } = nodeCheckup;
+            deliveryNode = node;
 
             if (node.isDisabled) return;
             return await this.hostPolicies.withCompatibilitySnapshot([node.uuid], async () => {
                 const claimed = await this.leases.acquire(node.uuid);
                 if (claimed === 'busy') return;
                 lease = claimed;
-                if (!lease && node.isConnecting) return;
                 accepted = true;
 
                 await this.rawCacheService.delMany([
@@ -138,7 +158,12 @@ export class NodeConfigurationService {
                 });
 
                 if (!xrayStatusResponse.isOk) {
-                    if (lease) throw new Error('Node health check failed; delivery will retry');
+                    if (lease)
+                        throw isRetryableNodeFailure(xrayStatusResponse)
+                            ? new NodeDeliveryRetryableError(
+                                  'Node health check failed; delivery will retry',
+                              )
+                            : new Error('Node health check failed');
                     await executeCommand(
                         new UpdateNodeCommand({
                             uuid: node.uuid,
@@ -152,7 +177,10 @@ export class NodeConfigurationService {
                     this.logger.error(
                         `Pre-check failed. Node: ${node.uuid} – ${node.address}:${node.port}, error: ${xrayStatusResponse.message}`,
                     );
-
+                    if (isRetryableNodeFailure(xrayStatusResponse))
+                        throw new NodeDeliveryRetryableError(
+                            'Node health check failed; delivery will retry',
+                        );
                     return;
                 }
                 confirmedRunning =
@@ -249,7 +277,11 @@ export class NodeConfigurationService {
                         (!syncNodePluginsResponse.isOk ||
                             !syncNodePluginsResponse.response.accepted)
                     )
-                        throw new Error('Node plugin preparation was not accepted');
+                        throw isRetryableNodeFailure(syncNodePluginsResponse)
+                            ? new NodeDeliveryRetryableError(
+                                  'Node plugin request failed; delivery will retry',
+                              )
+                            : new Error('Node plugin preparation was not accepted');
                     if (!syncNodePluginsResponse.isOk) {
                         await executeCommand(
                             new UpdateNodeCommand({
@@ -264,6 +296,10 @@ export class NodeConfigurationService {
                         this.logger.error(
                             `Failed to sync node plugins: ${syncNodePluginsResponse.message}`,
                         );
+                        if (isRetryableNodeFailure(syncNodePluginsResponse))
+                            throw new NodeDeliveryRetryableError(
+                                'Node plugin request failed; delivery will retry',
+                            );
                         return;
                     }
                 } else if (node.activePluginUuid) {
@@ -335,6 +371,17 @@ export class NodeConfigurationService {
                 const reqStartTime = getTime();
 
                 await lease?.assert();
+                await assertOwnership();
+                const currentNode = await this.queryBus.execute(new GetNodeByUuidQuery(node.uuid));
+                if (
+                    !currentNode.isOk ||
+                    currentNode.response.isDisabled ||
+                    currentNode.response.activeConfigProfileUuid !== node.activeConfigProfileUuid ||
+                    currentNode.response.address !== node.address ||
+                    currentNode.response.port !== node.port ||
+                    currentNode.response.proxyUrl !== node.proxyUrl
+                )
+                    throw new NodeDeliveryLostError('Node desired state changed before delivery');
                 startRequested = true;
                 const startNodeResult = await this.axios.startXray(
                     {
@@ -399,6 +446,11 @@ export class NodeConfigurationService {
                         }),
                     );
 
+                    if (isRetryableNodeFailure(startNodeResult))
+                        throw new NodeDeliveryRetryableError(
+                            startNodeResult.message ??
+                                'Node start request failed; delivery will retry',
+                        );
                     return;
                 }
 
@@ -476,6 +528,7 @@ export class NodeConfigurationService {
                 return;
             });
         } catch (error) {
+            if (error instanceof NodeDeliveryLostError) throw error;
             const delivery = deliveryState();
             if (
                 !accepted &&
@@ -541,6 +594,8 @@ export class NodeConfigurationService {
                 this.logger.warn(`Node ${payload.nodeUuid}: failure result could not be committed`);
             }
             this.logger.error(`Error handling "${NODES_JOB_NAMES.START_NODE}" job: ${error}`);
+            if (error instanceof NodeDeliveryRetryableError || isRetryableNodeFailure(error))
+                throw error;
         } finally {
             const delivery = deliveryState();
             if (delivery.lease)

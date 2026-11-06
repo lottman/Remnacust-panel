@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next'
 import { TbArrowsShuffle, TbCode, TbDatabaseImport, TbHistory } from 'react-icons/tb'
 
 import { usePseudoFullscreen, useViewportFillHeight } from '@shared/hooks'
+import { useEditorRecovery } from '@shared/hooks/use-editor-recovery'
 import { fullscreenClasses, FullscreenToggleButton } from '@shared/ui'
 import { CodeEditor, editorClasses, EditorFooter } from '@shared/ui/code-editor'
 import { preventBackScroll } from '@shared/utils/misc'
@@ -40,6 +41,16 @@ interface Props {
     template: GetSubscriptionTemplateCommand.Response['response']
 }
 
+function templateSource(template: Props['template'], editorType: Props['editorType']): string {
+    if (template.draftContent !== undefined && template.draftContent !== null)
+        return template.draftContent
+    if (editorType === 'yaml')
+        return template.encodedTemplateYaml
+            ? new TextDecoder().decode(decode(template.encodedTemplateYaml))
+            : ''
+    return JSON.stringify(template.templateJson, null, 2)
+}
+
 export function SubscriptionTemplateEditorWidget(props: Props) {
     const { editorType, hosts, template } = props
     const { t } = useTranslation()
@@ -55,21 +66,17 @@ export function SubscriptionTemplateEditorWidget(props: Props) {
     const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null)
     const monacoRef = useRef<Monaco | null>(null)
 
-    const baseline = useMemo(() => {
-        if (template.draftContent !== undefined && template.draftContent !== null)
-            return template.draftContent
-        if (editorType === 'yaml') {
-            return template.encodedTemplateYaml
-                ? new TextDecoder().decode(decode(template.encodedTemplateYaml))
-                : ''
-        }
-        return JSON.stringify(template.templateJson, null, 2)
-    }, [editorType, template.templateJson, template.encodedTemplateYaml, template.draftContent])
+    const baseline = useMemo(
+        () => templateSource(template, editorType),
+        [editorType, template.templateJson, template.encodedTemplateYaml, template.draftContent]
+    )
+    const recovery = useEditorRecovery({ kind: 'template', id: template.uuid, baseline })
     const [value, setValue] = useState(() => baseline)
     const valueRef = useRef(value)
     const setDraft = (next: string) => {
         valueRef.current = next
         setValue(next)
+        recovery.track(next)
     }
     const draft = useMemo(() => {
         try {
@@ -118,12 +125,16 @@ export function SubscriptionTemplateEditorWidget(props: Props) {
         }
     }, [])
 
+    const hasSavedDraft = template.draftContent !== undefined && template.draftContent !== null
+    const isDisplayedSavedDraft = hasSavedDraft && value === template.draftContent
+    const warningPath =
+        (isDisplayedSavedDraft ? template.validationWarnings?.[0] : undefined) ?? draft.error
     const revealIssue = () => {
         setActiveTab('code')
         requestAnimationFrame(() => {
             const model = editorRef.current?.getModel()
             if (!model) return
-            const path = (draft.error ?? '')
+            const path = (warningPath ?? '')
                 .split('.')
                 .map((part) => (/^\d+$/.test(part) ? Number(part) : part))
             const tree = parseTree(value)
@@ -136,7 +147,7 @@ export function SubscriptionTemplateEditorWidget(props: Props) {
     }
     const issueLocation =
         /^(remnawave\.injectHosts|routing\.balancers|remnawave\.assignments)\.(\d+)/.exec(
-            draft.error ?? ''
+            warningPath ?? ''
         )
 
     return (
@@ -260,6 +271,7 @@ export function SubscriptionTemplateEditorWidget(props: Props) {
                             language={editorType}
                             draft={value}
                             baseline={baseline}
+                            recovery={recovery}
                             onRestore={(code) => {
                                 setDraft(code)
                                 setActiveTab('code')
@@ -269,11 +281,15 @@ export function SubscriptionTemplateEditorWidget(props: Props) {
                 </Tabs.Panel>
             </Tabs>
             <Box ref={footerRef} className={styles.controls}>
-                {draft.error && (
+                {(warningPath || isDisplayedSavedDraft) && (
                     <Alert
                         className={styles.validationMessage}
                         color="yellow"
-                        title={t('template-draft.warning')}
+                        title={t(
+                            isDisplayedSavedDraft
+                                ? 'template-draft.saved-title'
+                                : 'template-draft.warning'
+                        )}
                     >
                         {issueLocation && (
                             <Box fw={600} mb={4}>
@@ -287,30 +303,28 @@ export function SubscriptionTemplateEditorWidget(props: Props) {
                                 )}
                             </Box>
                         )}
-                        <Button
-                            variant="subtle"
-                            size="compact-sm"
-                            onClick={revealIssue}
-                            title={t('autoselect.reveal-issue')}
-                        >
-                            <span dir="ltr">{draft.error}</span>
-                        </Button>
-                        <br />
+                        {warningPath && (
+                            <Button
+                                variant="subtle"
+                                size="compact-sm"
+                                onClick={revealIssue}
+                                title={t('autoselect.reveal-issue')}
+                            >
+                                <span dir="ltr">{warningPath}</span>
+                            </Button>
+                        )}
+                        {warningPath && <br />}
                         {t(
-                            draft.error.endsWith('.tolerance')
-                                ? 'template-draft.tolerance-help'
-                                : draft.error.endsWith('.tagPrefix')
-                                  ? 'autoselect.prefix-conflict-help'
-                                  : 'template-draft.warning-help'
+                            isDisplayedSavedDraft
+                                ? 'template-draft.saved-help'
+                                : warningPath?.endsWith('.tolerance')
+                                  ? 'template-draft.tolerance-help'
+                                  : warningPath?.endsWith('.tagPrefix')
+                                    ? 'autoselect.prefix-conflict-help'
+                                    : 'template-draft.warning-help'
                         )}
                     </Alert>
                 )}
-                {template.draftContent !== undefined && template.draftContent !== null && (
-                    <Alert mt="md" color="yellow" title={t('template-draft.saved-title')}>
-                        {t('template-draft.saved-help')}
-                    </Alert>
-                )}
-
                 {!isFullscreen && (
                     <EditorFooter className={styles.footer} attached={activeTab === 'code'}>
                         {activeTab === 'code' && (
@@ -328,6 +342,14 @@ export function SubscriptionTemplateEditorWidget(props: Props) {
                             template={template}
                             getValue={() => valueRef.current}
                             showEditorTools={activeTab === 'code'}
+                            onSaved={async (data, submitted) => {
+                                const next = templateSource(data, editorType)
+                                await recovery.saved(next, submitted).catch(() => {})
+                                if (valueRef.current === submitted) {
+                                    valueRef.current = next
+                                    setValue(next)
+                                }
+                            }}
                         />
                         {activeTab !== 'code' && (
                             <Button

@@ -437,6 +437,730 @@
           }
         ]
       }
+    },
+    {
+      "name": "Xera HTTP bounded server HTTP2 settings",
+      "config": {
+        "inbounds": [
+          {
+            "port": 4443,
+            "protocol": "vless",
+            "settings": {
+              "decryption": "none",
+              "clients": []
+            },
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "path": "/test",
+                "mode": "auto",
+                "h2Params": {
+                  "MaxConcurrentStreams": 128,
+                  "MaxReadFrameSize": 65536
+                }
+              }
+            }
+          }
+        ],
+        "outbounds": [
+          {
+            "protocol": "freedom"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct empty padding method",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "xPaddingMethod": ""
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra empty padding method",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "xPaddingMethod": ""
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct tokenish padding",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "xPaddingMethod": "tokenish"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra tokenish padding",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "xPaddingMethod": "tokenish"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct all options",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "host": "example.test",
+                "path": "/research",
+                "headers": {
+                  "User-Agent": "Research"
+                },
+                "xPaddingBytes": "128-64",
+                "xPaddingKey": "p",
+                "xPaddingHeader": "X-Pad",
+                "xPaddingPlacement": "queryInHeader",
+                "xPaddingMethod": "tokenish",
+                "uplinkHTTPMethod": "POST",
+                "sessionIDPlacement": "query",
+                "sessionIDKey": "session",
+                "sessionIDTable": "Base62",
+                "sessionIDLength": 24,
+                "seqPlacement": "query",
+                "seqKey": "sequence",
+                "uplinkDataPlacement": "body",
+                "uplinkDataKey": "X-Data",
+                "uplinkChunkSize": "1024-4096",
+                "scMaxEachPostBytes": 1048576,
+                "scMinPostsIntervalMs": -1,
+                "scMaxBufferedPosts": 65536,
+                "scStreamUpServerSecs": "0-30",
+                "serverMaxBufferedBytes": 1048576,
+                "serverMaxSessions": 65536,
+                "serverMaxHeaderBytes": 1048576,
+                "xmux": {
+                  "maxConnections": 2,
+                  "maxConcurrency": 0,
+                  "cMaxReuseTimes": 1,
+                  "hMaxRequestTimes": "600-900",
+                  "hMaxReusableSecs": 604800,
+                  "hKeepAlivePeriod": -1
+                },
+                "customDownlinkPadding": {
+                  "header": "X-Research",
+                  "token": "synthetic_fixture_token_0123456789",
+                  "bytes": "0-1024",
+                  "blockBytes": "16384-1024",
+                  "budgetPercent": 100,
+                  "burstBytes": 1048576,
+                  "uplink": true
+                },
+                "h2Params": {
+                  "MaxConcurrentStreams": 4096,
+                  "MaxReadFrameSize": 16777215,
+                  "MaxDecoderHeaderTableSize": 4194303,
+                  "MaxEncoderHeaderTableSize": 4194303,
+                  "MaxReceiveBufferPerConnection": 65536,
+                  "MaxReceiveBufferPerStream": 4194303,
+                  "SendPingTimeout": 86400000000000,
+                  "PingTimeout": 0,
+                  "WriteByteTimeout": 1,
+                  "PermitProhibitedCipherSuites": false,
+                  "StrictMaxConcurrentRequests": false,
+                  "CountError": null
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra all options",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "host": "example.test",
+                  "path": "/research",
+                  "headers": {
+                    "User-Agent": "Research"
+                  },
+                  "xPaddingBytes": "128-64",
+                  "xPaddingKey": "p",
+                  "xPaddingHeader": "X-Pad",
+                  "xPaddingPlacement": "queryInHeader",
+                  "xPaddingMethod": "tokenish",
+                  "uplinkHTTPMethod": "POST",
+                  "sessionIDPlacement": "query",
+                  "sessionIDKey": "session",
+                  "sessionIDTable": "Base62",
+                  "sessionIDLength": 24,
+                  "seqPlacement": "query",
+                  "seqKey": "sequence",
+                  "uplinkDataPlacement": "body",
+                  "uplinkDataKey": "X-Data",
+                  "uplinkChunkSize": "1024-4096",
+                  "scMaxEachPostBytes": 1048576,
+                  "scMinPostsIntervalMs": -1,
+                  "scMaxBufferedPosts": 65536,
+                  "scStreamUpServerSecs": "0-30",
+                  "serverMaxBufferedBytes": 1048576,
+                  "serverMaxSessions": 65536,
+                  "serverMaxHeaderBytes": 1048576,
+                  "xmux": {
+                    "maxConnections": 2,
+                    "maxConcurrency": 0,
+                    "cMaxReuseTimes": 1,
+                    "hMaxRequestTimes": "600-900",
+                    "hMaxReusableSecs": 604800,
+                    "hKeepAlivePeriod": -1
+                  },
+                  "customDownlinkPadding": {
+                    "header": "X-Research",
+                    "token": "synthetic_fixture_token_0123456789",
+                    "bytes": "0-1024",
+                    "blockBytes": "16384-1024",
+                    "budgetPercent": 100,
+                    "burstBytes": 1048576,
+                    "uplink": true
+                  },
+                  "h2Params": {
+                    "MaxConcurrentStreams": 4096,
+                    "MaxReadFrameSize": 16777215,
+                    "MaxDecoderHeaderTableSize": 4194303,
+                    "MaxEncoderHeaderTableSize": 4194303,
+                    "MaxReceiveBufferPerConnection": 65536,
+                    "MaxReceiveBufferPerStream": 4194303,
+                    "SendPingTimeout": 86400000000000,
+                    "PingTimeout": 0,
+                    "WriteByteTimeout": 1,
+                    "PermitProhibitedCipherSuites": false,
+                    "StrictMaxConcurrentRequests": false,
+                    "CountError": null
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct range defaults",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "xPaddingBytes": "",
+                "sessionIDLength": 0,
+                "uplinkChunkSize": "0-0"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra range defaults",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "xPaddingBytes": "",
+                  "sessionIDLength": 0,
+                  "uplinkChunkSize": "0-0"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct minimal padding",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "customDownlinkPadding": {
+                  "header": "X-Research",
+                  "token": "synthetic_fixture_token_0123456789"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra minimal padding",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "customDownlinkPadding": {
+                    "header": "X-Research",
+                    "token": "synthetic_fixture_token_0123456789"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct zero budget padding",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "customDownlinkPadding": {
+                  "header": "X-Research",
+                  "token": "synthetic_fixture_token_0123456789",
+                  "bytes": 0,
+                  "blockBytes": 1024,
+                  "budgetPercent": 0,
+                  "burstBytes": 0
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra zero budget padding",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "customDownlinkPadding": {
+                    "header": "X-Research",
+                    "token": "synthetic_fixture_token_0123456789",
+                    "bytes": 0,
+                    "blockBytes": 1024,
+                    "budgetPercent": 0,
+                    "burstBytes": 0
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct download stream",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "downloadSettings": {
+                  "address": "example.test",
+                  "port": 443,
+                  "network": "xera-http",
+                  "xeraHttpSettings": {}
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra download stream",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "downloadSettings": {
+                    "address": "example.test",
+                    "port": 443,
+                    "network": "xera-http",
+                    "xeraHttpSettings": {}
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct download alias",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "downloadSettings": {
+                  "address": "example.test",
+                  "port": 443,
+                  "network": "xera",
+                  "xeraHttpSettings": {}
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra download alias",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "downloadSettings": {
+                    "address": "example.test",
+                    "port": 443,
+                    "network": "xera",
+                    "xeraHttpSettings": {}
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct download method precedence",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "downloadSettings": {
+                  "address": "example.test",
+                  "port": 443,
+                  "network": "tcp",
+                  "xeraHttpSettings": {},
+                  "method": "xera"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra download method precedence",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "downloadSettings": {
+                    "address": "example.test",
+                    "port": 443,
+                    "network": "tcp",
+                    "xeraHttpSettings": {},
+                    "method": "xera"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct null download",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "downloadSettings": null
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra null download",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "downloadSettings": null
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct keepalive default",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "xmux": {
+                  "hKeepAlivePeriod": 0
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra keepalive default",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "xmux": {
+                    "hKeepAlivePeriod": 0
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct keepalive maximum",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "xmux": {
+                  "hKeepAlivePeriod": 604800
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra keepalive maximum",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "xmux": {
+                    "hKeepAlivePeriod": 604800
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra null",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "extra": null
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra replaces options",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "xPaddingBytes": 65537,
+                "h2Params": {
+                  "MadeUp": 1
+                },
+                "extra": {}
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra mode ignored",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "mode": "ignored",
+                  "uplinkDataPlacement": "header"
+                }
+              }
+            }
+          }
+        ]
+      }
     }
   ],
   "invalid": [
@@ -734,6 +1458,2152 @@
         "outbounds": [
           {
             "protocol": "freedom"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera HTTP removed padding switch",
+      "config": {
+        "inbounds": [
+          {
+            "port": 4443,
+            "protocol": "vless",
+            "settings": {
+              "decryption": "none",
+              "clients": []
+            },
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "path": "/test",
+                "mode": "auto",
+                "xPaddingObfsMode": false
+              }
+            }
+          }
+        ],
+        "outbounds": [
+          {
+            "protocol": "freedom"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera HTTP removed repeat padding",
+      "config": {
+        "inbounds": [
+          {
+            "port": 4443,
+            "protocol": "vless",
+            "settings": {
+              "decryption": "none",
+              "clients": []
+            },
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "path": "/test",
+                "mode": "auto",
+                "xPaddingMethod": "repeat-x"
+              }
+            }
+          }
+        ],
+        "outbounds": [
+          {
+            "protocol": "freedom"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera HTTP unknown HTTP2 option",
+      "config": {
+        "inbounds": [
+          {
+            "port": 4443,
+            "protocol": "vless",
+            "settings": {
+              "decryption": "none",
+              "clients": []
+            },
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "path": "/test",
+                "mode": "auto",
+                "h2Params": {
+                  "UnknownOption": 1
+                }
+              }
+            }
+          }
+        ],
+        "outbounds": [
+          {
+            "protocol": "freedom"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera HTTP prohibited HTTP2 ciphers",
+      "config": {
+        "inbounds": [
+          {
+            "port": 4443,
+            "protocol": "vless",
+            "settings": {
+              "decryption": "none",
+              "clients": []
+            },
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "path": "/test",
+                "mode": "auto",
+                "h2Params": {
+                  "PermitProhibitedCipherSuites": true
+                }
+              }
+            }
+          }
+        ],
+        "outbounds": [
+          {
+            "protocol": "freedom"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct removed grpc marker",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "noGRPCHeader": false
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra removed grpc marker",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "noGRPCHeader": false
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct removed sse marker",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "noSSEHeader": true
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra removed sse marker",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "noSSEHeader": true
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct removed padding switch",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "xPaddingObfsMode": false
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra removed padding switch",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "xPaddingObfsMode": false
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct removed case insensitive switch",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "NOGRPCHEADER": false
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra removed case insensitive switch",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "NOGRPCHEADER": false
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct repeat padding",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "xPaddingMethod": "repeat-x"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra repeat padding",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "xPaddingMethod": "repeat-x"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct padding missing fields",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "customDownlinkPadding": {}
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra padding missing fields",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "customDownlinkPadding": {}
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct padding budget upper",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "customDownlinkPadding": {
+                  "header": "X-Research",
+                  "token": "synthetic_fixture_token_0123456789",
+                  "budgetPercent": 101
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra padding budget upper",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "customDownlinkPadding": {
+                    "header": "X-Research",
+                    "token": "synthetic_fixture_token_0123456789",
+                    "budgetPercent": 101
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct padding budget lower",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "customDownlinkPadding": {
+                  "header": "X-Research",
+                  "token": "synthetic_fixture_token_0123456789",
+                  "budgetPercent": -1
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra padding budget lower",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "customDownlinkPadding": {
+                    "header": "X-Research",
+                    "token": "synthetic_fixture_token_0123456789",
+                    "budgetPercent": -1
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct padding burst upper",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "customDownlinkPadding": {
+                  "header": "X-Research",
+                  "token": "synthetic_fixture_token_0123456789",
+                  "budgetPercent": 1,
+                  "burstBytes": 1048577
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra padding burst upper",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "customDownlinkPadding": {
+                    "header": "X-Research",
+                    "token": "synthetic_fixture_token_0123456789",
+                    "budgetPercent": 1,
+                    "burstBytes": 1048577
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct padding burst without budget",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "customDownlinkPadding": {
+                  "header": "X-Research",
+                  "token": "synthetic_fixture_token_0123456789",
+                  "burstBytes": 1
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra padding burst without budget",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "customDownlinkPadding": {
+                    "header": "X-Research",
+                    "token": "synthetic_fixture_token_0123456789",
+                    "burstBytes": 1
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct padding byte upper",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "customDownlinkPadding": {
+                  "header": "X-Research",
+                  "token": "synthetic_fixture_token_0123456789",
+                  "bytes": "0-1025"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra padding byte upper",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "customDownlinkPadding": {
+                    "header": "X-Research",
+                    "token": "synthetic_fixture_token_0123456789",
+                    "bytes": "0-1025"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct padding block lower",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "customDownlinkPadding": {
+                  "header": "X-Research",
+                  "token": "synthetic_fixture_token_0123456789",
+                  "blockBytes": 1023
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra padding block lower",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "customDownlinkPadding": {
+                    "header": "X-Research",
+                    "token": "synthetic_fixture_token_0123456789",
+                    "blockBytes": 1023
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct padding block upper",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "customDownlinkPadding": {
+                  "header": "X-Research",
+                  "token": "synthetic_fixture_token_0123456789",
+                  "blockBytes": "1024-16385"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra padding block upper",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "customDownlinkPadding": {
+                    "header": "X-Research",
+                    "token": "synthetic_fixture_token_0123456789",
+                    "blockBytes": "1024-16385"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct padding invalid header",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "customDownlinkPadding": {
+                  "header": "User-Agent",
+                  "token": "synthetic_fixture_token_0123456789"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra padding invalid header",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "customDownlinkPadding": {
+                    "header": "User-Agent",
+                    "token": "synthetic_fixture_token_0123456789"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct padding proxy header",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "customDownlinkPadding": {
+                  "header": "X-Forwarded-For",
+                  "token": "synthetic_fixture_token_0123456789"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra padding proxy header",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "customDownlinkPadding": {
+                    "header": "X-Forwarded-For",
+                    "token": "synthetic_fixture_token_0123456789"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct padding invalid token",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "customDownlinkPadding": {
+                  "header": "X-Research",
+                  "token": "short"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra padding invalid token",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "customDownlinkPadding": {
+                    "header": "X-Research",
+                    "token": "short"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct padding uplink placement",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "customDownlinkPadding": {
+                  "header": "X-Research",
+                  "token": "synthetic_fixture_token_0123456789",
+                  "uplink": true
+                },
+                "uplinkDataPlacement": "header"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra padding uplink placement",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "customDownlinkPadding": {
+                    "header": "X-Research",
+                    "token": "synthetic_fixture_token_0123456789",
+                    "uplink": true
+                  },
+                  "uplinkDataPlacement": "header"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct session count upper",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "serverMaxSessions": 65537
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra session count upper",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "serverMaxSessions": 65537
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct server bytes negative",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "serverMaxBufferedBytes": -1
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra server bytes negative",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "serverMaxBufferedBytes": -1
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct header bytes upper",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "serverMaxHeaderBytes": 1048577
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra header bytes upper",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "serverMaxHeaderBytes": 1048577
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct buffered posts upper",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "scMaxBufferedPosts": 65537
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra buffered posts upper",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "scMaxBufferedPosts": 65537
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct padding upper range",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "xPaddingBytes": "1-65537"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra padding upper range",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "xPaddingBytes": "1-65537"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct padding mixed zero range",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "xPaddingBytes": "0-1"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra padding mixed zero range",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "xPaddingBytes": "0-1"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct malformed range",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "xPaddingBytes": "garbage"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra malformed range",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "xPaddingBytes": "garbage"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct uplink chunk upper",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "uplinkChunkSize": 1048577
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra uplink chunk upper",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "uplinkChunkSize": 1048577
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct post bytes upper",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "scMaxEachPostBytes": 16777217
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra post bytes upper",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "scMaxEachPostBytes": 16777217
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct session length upper",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "sessionIDLength": 257
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra session length upper",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "sessionIDLength": 257
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct post interval lower",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "scMinPostsIntervalMs": -2
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra post interval lower",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "scMinPostsIntervalMs": -2
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct xmux connections upper",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "xmux": {
+                  "maxConnections": 257
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra xmux connections upper",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "xmux": {
+                    "maxConnections": 257
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct xmux concurrency upper",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "xmux": {
+                  "maxConcurrency": "0-4097"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra xmux concurrency upper",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "xmux": {
+                    "maxConcurrency": "0-4097"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct xmux request upper",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "xmux": {
+                  "hMaxRequestTimes": 1048577
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra xmux request upper",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "xmux": {
+                    "hMaxRequestTimes": 1048577
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct xmux reuse upper",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "xmux": {
+                  "hMaxReusableSecs": 604801
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra xmux reuse upper",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "xmux": {
+                    "hMaxReusableSecs": 604801
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct xmux mutual exclusion",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "xmux": {
+                  "maxConnections": 1,
+                  "maxConcurrency": 1
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra xmux mutual exclusion",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "xmux": {
+                    "maxConnections": 1,
+                    "maxConcurrency": 1
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct unknown h2 field",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "h2Params": {
+                  "MadeUp": 1
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra unknown h2 field",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "h2Params": {
+                    "MadeUp": 1
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct h2 stream upper",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "h2Params": {
+                  "MaxConcurrentStreams": 4097
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra h2 stream upper",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "h2Params": {
+                    "MaxConcurrentStreams": 4097
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct h2 read frame gap",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "h2Params": {
+                  "MaxReadFrameSize": 16383
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra h2 read frame gap",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "h2Params": {
+                    "MaxReadFrameSize": 16383
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct h2 buffer gap",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "h2Params": {
+                  "MaxReceiveBufferPerConnection": 65535
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra h2 buffer gap",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "h2Params": {
+                    "MaxReceiveBufferPerConnection": 65535
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct h2 timeout upper",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "h2Params": {
+                  "SendPingTimeout": 86400000000001
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra h2 timeout upper",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "h2Params": {
+                    "SendPingTimeout": 86400000000001
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct h2 prohibited ciphers",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "h2Params": {
+                  "PermitProhibitedCipherSuites": true
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra h2 prohibited ciphers",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "h2Params": {
+                    "PermitProhibitedCipherSuites": true
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct h2 transport option",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "h2Params": {
+                  "StrictMaxConcurrentRequests": true
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra h2 transport option",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "h2Params": {
+                    "StrictMaxConcurrentRequests": true
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct h2 null",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "h2Params": null
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra h2 null",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "h2Params": null
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct unknown mode",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "bogus"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct unknown padding placement",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "xPaddingPlacement": "path"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra unknown padding placement",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "xPaddingPlacement": "path"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct unknown session placement",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "sessionIDPlacement": "queryInHeader"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra unknown session placement",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "sessionIDPlacement": "queryInHeader"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct download wrong network",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "downloadSettings": {
+                  "address": "example.test",
+                  "port": 443,
+                  "network": "tcp",
+                  "xeraHttpSettings": {}
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra download wrong network",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "downloadSettings": {
+                    "address": "example.test",
+                    "port": 443,
+                    "network": "tcp",
+                    "xeraHttpSettings": {}
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct download missing address",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "downloadSettings": {
+                  "network": "xera-http",
+                  "port": 443
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra download missing address",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "downloadSettings": {
+                    "network": "xera-http",
+                    "port": 443
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor direct download zero port",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "downloadSettings": {
+                  "address": "example.test",
+                  "port": 0,
+                  "network": "xera-http",
+                  "xeraHttpSettings": {}
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra download zero port",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "packet-up",
+                "extra": {
+                  "downloadSettings": {
+                    "address": "example.test",
+                    "port": 0,
+                    "network": "xera-http",
+                    "xeraHttpSettings": {}
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor extra scalar",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "extra": 42
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor stream-one download",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "stream-one",
+                "downloadSettings": {
+                  "address": "example.test",
+                  "port": 443,
+                  "network": "xera-http",
+                  "xeraHttpSettings": {}
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor stream-one extra download",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "stream-one",
+                "extra": {
+                  "downloadSettings": {
+                    "address": "example.test",
+                    "port": 443,
+                    "network": "xera-http",
+                    "xeraHttpSettings": {}
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor stream-up header payload",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "stream-up",
+                "uplinkDataPlacement": "header"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera editor stream-up extra GET",
+      "editorContract": true,
+      "config": {
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "mode": "stream-up",
+                "extra": {
+                  "uplinkHTTPMethod": "get"
+                }
+              }
+            }
           }
         ]
       }

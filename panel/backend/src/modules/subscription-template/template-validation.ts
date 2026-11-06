@@ -21,7 +21,8 @@ export function xrayTemplateWarnings(config: Record<string, any>): string[] {
                 ? config.outbounds.filter(object).map((outbound) => outbound.tag)
                 : [];
             for (const [index, pool] of pools.entries()) {
-                const prefix = pool.tagPrefix;
+                const prefix =
+                    pool.useHostRemarkAsTag || pool.useHostTagAsTag ? undefined : pool.tagPrefix;
                 if (
                     prefix &&
                     (staticTags.some(
@@ -31,6 +32,8 @@ export function xrayTemplateWarnings(config: Record<string, any>): string[] {
                         pools.some(
                             (other, otherIndex) =>
                                 index !== otherIndex &&
+                                !other.useHostRemarkAsTag &&
+                                !other.useHostTagAsTag &&
                                 other.tagPrefix &&
                                 injectedPrefixesCollide(prefix, other.tagPrefix),
                         ))

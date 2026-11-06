@@ -4,9 +4,10 @@ function harness(){
  const component=new Proxy({__esModule:true},{get:(obj,key)=>key in obj?obj[key]:key});
  const source=fs.readFileSync(path.join(__dirname,'../src/pages/dashboard/config-profiles/components/config-profile-by-uuid.page.component.tsx'),'utf8');
  vm.runInNewContext(ts.transpileModule(source,{compilerOptions:{jsx:ts.JsxEmit.ReactJSX,module:ts.ModuleKind.CommonJS}}).outputText,{exports,require(name){
-  if(name==='react')return {useState(initial){const i=stateCursor++;if(!(i in states))states[i]=initial;return [states[i],v=>states[i]=v]},useRef(initial){const i=refCursor++;return refs[i]??(refs[i]={current:initial})},useCallback:fn=>fn};
+  if(name==='react')return {useState(initial){const i=stateCursor++;if(!(i in states))states[i]=initial;return [states[i],v=>states[i]=v]},useRef(initial){const i=refCursor++;return refs[i]??(refs[i]={current:initial})},useCallback:fn=>fn,useMemo:fn=>fn};
   if(name==='react-i18next')return {useTranslation:()=>({t:key=>key})};
   if(name==='react-router')return {useNavigate:()=>()=>{}};
+  if(name==='@shared/hooks/use-editor-recovery')return {useEditorRecovery:()=>({track(){},saved:async()=>{},entry:null,status:'ready'})};
   if(name==='@shared/i18n/interface-text')return {useUiText:()=>key=>key};
   if(name==='@mantine/core')return {...component,Group:'Group',ActionIcon:'ActionIcon',ActionIconGroup:'ActionIconGroup',Tabs:Object.assign(()=>{}, {List:'List',Tab:'Tab',Panel:'Panel'})};
   if(name==='@shared/constants')return {OPEN_ENTITY:{CONFIG_PROFILE:'profile'},ROUTES:{DASHBOARD:{MANAGEMENT:{CONFIG_PROFILE_CANVAS:'/canvas/:uuid',CONFIG_PROFILES:'/profiles'}}}};

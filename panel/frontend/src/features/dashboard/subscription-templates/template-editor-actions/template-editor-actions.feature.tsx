@@ -3,7 +3,7 @@ import type { editor } from 'monaco-editor'
 import { ActionIcon, Button, Group, Menu } from '@mantine/core'
 import { useClipboard, useDisclosure } from '@mantine/hooks'
 import { GetSubscriptionTemplateCommand } from '@remnawave/backend-contract'
-import { RefObject } from 'react'
+import { RefObject, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiCheckSquareOffset, PiFloppyDisk } from 'react-icons/pi'
 import {
@@ -28,6 +28,10 @@ interface Props {
     template: GetSubscriptionTemplateCommand.Response['response']
     getValue?: () => string
     showEditorTools?: boolean
+    onSaved?: (
+        data: GetSubscriptionTemplateCommand.Response['response'],
+        submitted: string
+    ) => Promise<void>
 }
 
 export function TemplateEditorActionsFeature(props: Props) {
@@ -37,10 +41,17 @@ export function TemplateEditorActionsFeature(props: Props) {
     const isMobile = useIsMobile()
     const clipboard = useClipboard({ timeout: 500 })
     const [opened, handlers] = useDisclosure(false)
+    const submittedValue = useRef('')
 
     const { mutate: updateConfig, isPending: isUpdating } = useUpdateSubscriptionTemplate({
         mutationFns: {
-            onSuccess: (data) => {
+            onSuccess: async (data) => {
+                await queryClient.cancelQueries({
+                    queryKey: QueryKeys.subscriptionTemplate.getSubscriptionTemplate({
+                        uuid: template.uuid
+                    }).queryKey
+                })
+                await props.onSaved?.(data, submittedValue.current)
                 queryClient.setQueryData(
                     QueryKeys.subscriptionTemplate.getSubscriptionTemplate({ uuid: template.uuid })
                         .queryKey,
@@ -64,6 +75,7 @@ export function TemplateEditorActionsFeature(props: Props) {
 
     const handleSave = () => {
         const currentValue = getValue?.() ?? editorRef.current?.getValue() ?? ''
+        submittedValue.current = currentValue
         updateConfig({ variables: { uuid: template.uuid, draftContent: currentValue } })
     }
 

@@ -495,10 +495,13 @@ export class SubscriptionTemplateService {
         name: string = DEFAULT_TEMPLATE_NAME,
         happ?: XrayGeofileDelivery,
     ): Promise<object> {
-        const cached = await this.rawCacheService.get<object>(
-            CACHE_KEYS.SUBSCRIPTION_TEMPLATE(name, type),
-            true,
-        );
+        const cacheKey = CACHE_KEYS.SUBSCRIPTION_TEMPLATE(name, type);
+        let cached: object | null = null;
+        try {
+            cached = await this.rawCacheService.get<object>(cacheKey, true);
+        } catch {
+            this.logger.warn('Subscription template cache read failed');
+        }
 
         if (cached) {
             return this.prepareClientTemplate(cached as Record<string, unknown>, type, happ);
@@ -534,18 +537,18 @@ export class SubscriptionTemplateService {
                 break;
         }
 
-        await this.rawCacheService.set(
-            CACHE_KEYS.SUBSCRIPTION_TEMPLATE(name, type),
-            templateContent,
-            3_600,
-        );
-
         if (!templateContent) {
             this.logger.error(
                 `Template content is null: ${name} ${type}! Database modification detected. Restart Remnawave!`,
             );
 
             throw new Error('Template content is null');
+        }
+
+        try {
+            await this.rawCacheService.set(cacheKey, templateContent, 3_600);
+        } catch {
+            this.logger.warn('Subscription template cache write failed');
         }
 
         return this.prepareClientTemplate(templateContent as Record<string, unknown>, type, happ);

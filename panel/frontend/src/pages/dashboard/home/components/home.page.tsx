@@ -13,6 +13,7 @@ import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { Page } from '@shared/ui/page'
 import { copyScreenshotToClipboard } from '@shared/utils/copy-screenshot.util'
 
+import { DatabaseDiagnosticsWidget } from './database-diagnostics.widget'
 import classes from './home.module.css'
 import { IProps } from './interfaces'
 import {
@@ -83,6 +84,9 @@ export const HomePage = (props: IProps) => {
         <Page title={t('constants.home')}>
             <PageHeaderShared icon={<TbLayoutDashboard size={24} />} title={t('constants.home')} />
             <Stack gap="sm">
+                <div className={classes.section}>
+                    <DatabaseDiagnosticsWidget />
+                </div>
                 {runtimeSummaryMetrics.length > 0 && (
                     <div className={classes.section}>
                         <Title className={classes.title} m="xs" ml={0} order={4}>

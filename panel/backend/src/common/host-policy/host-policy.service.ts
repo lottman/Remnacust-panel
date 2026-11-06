@@ -1265,6 +1265,26 @@ export class HostPolicyService {
                     }
                 }
             }
+            if (
+                !nativeNode &&
+                capabilities.version === HOST_POLICY_VERSION &&
+                capabilities.supported === true &&
+                capabilities.routedDeviceSpeedLimitsSupported === true
+            ) {
+                try {
+                    await sql`UPDATE nodes SET last_status_message=NULL,last_status_change=clock_timestamp()
+                        WHERE uuid=${node.uuid}::uuid AND NOT is_disabled
+                          AND address=${node.address} AND port IS NOT DISTINCT FROM ${node.port}
+                          AND proxy_url IS NOT DISTINCT FROM ${node.proxyUrl ?? null}
+                          AND last_status_message='[NODE_LEGACY_AUTOSELECT]'`.execute(
+                        this.db.kysely,
+                    );
+                } catch {
+                    this.logger.warn(
+                        `Node ${node.uuid}: compatibility notice could not be cleared`,
+                    );
+                }
+            }
         } finally {
             const elapsed = performance.now() - started;
             if (process.env.XERA_SYNC_DIAGNOSTICS === 'true' || elapsed >= 1000)

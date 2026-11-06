@@ -132,7 +132,9 @@ export class SubscriptionService {
                 });
 
                 if (!subscriptionInfo.isOk) {
-                    return new SubscriptionNotFoundResponse();
+                    return subscriptionInfo.code === ERRORS.USER_NOT_FOUND.code
+                        ? new SubscriptionNotFoundResponse()
+                        : new SubscriptionUnavailableResponse();
                 }
 
                 return subscriptionInfo.response;
@@ -150,7 +152,9 @@ export class SubscriptionService {
             );
 
             if (!user.isOk) {
-                return new SubscriptionNotFoundResponse();
+                return user.code === ERRORS.USER_NOT_FOUND.code
+                    ? new SubscriptionNotFoundResponse()
+                    : new SubscriptionUnavailableResponse();
             }
 
             if (personalToken && !this.deviceAccess.enabled)
@@ -202,8 +206,8 @@ export class SubscriptionService {
                 const device = await this.queryBus.execute(
                     new CheckHwidExistsQuery(hwidHeaders.hwid, user.response.id),
                 );
-                if (!device.isOk || (preview && !device.response.exists))
-                    return new SubscriptionNotFoundResponse();
+                if (!device.isOk) return new SubscriptionUnavailableResponse();
+                if (preview && !device.response.exists) return new SubscriptionNotFoundResponse();
                 if (device.response.blocked) {
                     return this.getBlockedHwidSubscription(
                         srrContext,
@@ -384,7 +388,7 @@ export class SubscriptionService {
             );
 
             if (!hosts.isOk) {
-                return new SubscriptionNotFoundResponse();
+                return new SubscriptionUnavailableResponse();
             }
 
             const subscriptionEnded =
@@ -928,7 +932,9 @@ export class SubscriptionService {
                 );
 
                 if (!userResult.isOk) {
-                    return fail(ERRORS.USER_NOT_FOUND);
+                    return userResult.code === ERRORS.USER_NOT_FOUND.code
+                        ? fail(ERRORS.USER_NOT_FOUND)
+                        : fail(ERRORS.INTERNAL_SERVER_ERROR);
                 }
 
                 userEntity = userResult.response;
@@ -981,10 +987,11 @@ export class SubscriptionService {
                 const hostsResponse = await this.queryBus.execute(
                     new GetHostsForUserQuery(userEntity.id, false, false),
                 );
+                if (!hostsResponse.isOk) return fail(ERRORS.INTERNAL_SERVER_ERROR);
 
                 formattedHosts = await this.resolveProxyConfigService.resolveProxyConfig({
                     subscriptionSettings: settings,
-                    hosts: hostsResponse.isOk ? hostsResponse.response : [],
+                    hosts: hostsResponse.response,
                     user: userEntity,
                     hostsOverrides,
                 });
@@ -1032,7 +1039,10 @@ export class SubscriptionService {
         });
     }
 
-    public async getAllSubscriptions(query: GetSubscriptionsQueryDto): Promise<
+    public async getAllSubscriptions(
+        query: GetSubscriptionsQueryDto,
+        signal?: AbortSignal,
+    ): Promise<
         TResult<{
             total: number;
             subscriptions: SubscriptionRawResponse[];
@@ -1061,6 +1071,7 @@ export class SubscriptionService {
             await pMap(
                 users,
                 async (user) => {
+                    if (signal?.aborted) return;
                     const subscriptionInfo = await this.getSubscriptionInfo({
                         userEntity: user,
                         authenticated: true,
@@ -1073,7 +1084,7 @@ export class SubscriptionService {
 
                     subscriptions.push(subscriptionInfo.response);
                 },
-                { concurrency: 70 },
+                { concurrency: 8, stopOnError: false },
             );
 
             return ok({ total, subscriptions });

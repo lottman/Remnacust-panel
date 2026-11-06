@@ -10,6 +10,7 @@ import webfontDownload from 'vite-plugin-webfont-dl'
 import 'dotenv/config'
 
 import { compressedAssets } from './compress-assets'
+import { editorAssetVersions } from './editor-assets.mjs'
 
 const localeVersion = createHash('sha256')
 for (const language of ['en', 'ru', 'fa', 'zh']) {
@@ -163,6 +164,7 @@ export default defineConfig({
         }
     },
     define: {
+        __EDITOR_ASSET_VERSIONS__: JSON.stringify(editorAssetVersions()),
         __LOCALE_VERSION__: JSON.stringify(localeHash),
         __DOMAIN_BACKEND__: JSON.stringify(process.env.DOMAIN_BACKEND || 'example.com').trim(),
         __NODE_ENV__: JSON.stringify(process.env.NODE_ENV).trim(),

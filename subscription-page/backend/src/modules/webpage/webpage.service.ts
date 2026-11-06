@@ -1,6 +1,5 @@
 import ejs from 'ejs';
 import { Request, Response } from 'express';
-import { sendWebpageError } from '@common/utils/webpage-error';
 import { nanoid } from 'nanoid';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -20,6 +19,8 @@ import { AxiosService } from '@common/axios';
 import { TypedConfigService } from '@common/config/app-config';
 import { getAssetsPath, isDevelopment } from '@common/utils';
 import { decryptUuid, encryptUuid } from '@common/utils/crypt-utils';
+import { sendWebpageError } from '@common/utils/webpage-error';
+
 import { currentSubscriptionDomain } from '../../common/utils/subscription-domain-context';
 
 @Injectable()
@@ -187,25 +188,48 @@ export class WebpageService implements OnApplicationBootstrap {
         shortUuid: string,
     ): Promise<void> {
         const abort = new AbortController();
-        const onClose = () => { if (!res.writableEnded) abort.abort(); };
+        const requests: Promise<unknown>[] = [];
+        let disconnected = false;
+        let subscriptionFailed = false;
+        const onClose = () => {
+            if (!res.writableEnded) {
+                disconnected = true;
+                abort.abort();
+            }
+        };
         res.once('close', onClose);
         try {
+            const subscriptionRequest = this.axiosService
+                .getSubscriptionInfo(clientIp, shortUuid, abort.signal)
+                .then((result) => {
+                    if (!result.isOk || !result.response) {
+                        subscriptionFailed = true;
+                        abort.abort();
+                    }
+                    return result;
+                });
+            requests.push(subscriptionRequest);
+            const rulesRequest = this.axiosService
+                .getSubpageConfig(shortUuid, req.headers, abort.signal)
+                .catch((error) => {
+                    if (!subscriptionFailed) throw error;
+                    return undefined;
+                });
+            requests.push(rulesRequest);
             const [subscriptionDataResponse, subpageConfigResponse] = await Promise.all([
-                this.axiosService.getSubscriptionInfo(clientIp, shortUuid, abort.signal),
-                this.axiosService.getSubpageConfig(shortUuid, req.headers, abort.signal),
+                subscriptionRequest,
+                rulesRequest,
             ]);
 
+            if (res.destroyed || disconnected) return;
+
             if (!subscriptionDataResponse.isOk || !subscriptionDataResponse.response) {
-                if (!res.destroyed && !abort.signal.aborted) {
-                    sendWebpageError(req, res, subscriptionDataResponse.status === 404 ? 404 : 503);
-                }
+                sendWebpageError(req, res, subscriptionDataResponse.status === 404 ? 404 : 503);
                 return;
             }
 
-            if (!subpageConfigResponse.isOk || !subpageConfigResponse.response) {
-                if (!res.destroyed && !abort.signal.aborted) {
-                    sendWebpageError(req, res, subpageConfigResponse.status === 404 ? 404 : 503);
-                }
+            if (!subpageConfigResponse?.isOk || !subpageConfigResponse.response) {
+                sendWebpageError(req, res, subpageConfigResponse?.status === 404 ? 404 : 503);
                 return;
             }
 
@@ -221,7 +245,8 @@ export class WebpageService implements OnApplicationBootstrap {
 
             const subscriptionData = subscriptionDataResponse.response;
             const domain = currentSubscriptionDomain();
-            if (domain) subscriptionData.response.subscriptionUrl = `${domain.publicBaseUrl}/${shortUuid}`;
+            if (domain)
+                subscriptionData.response.subscriptionUrl = `${domain.publicBaseUrl}/${shortUuid}`;
 
             if (!baseSettings.showConnectionKeys) {
                 subscriptionData.response.links = [];
@@ -243,7 +268,9 @@ export class WebpageService implements OnApplicationBootstrap {
                 }),
             );
         } catch {
-            if (!res.destroyed && !abort.signal.aborted) {
+            abort.abort();
+            await Promise.allSettled(requests);
+            if (!res.destroyed && !disconnected) {
                 this.logger.error('Unable to render subscription page');
                 sendWebpageError(req, res, 503);
             }

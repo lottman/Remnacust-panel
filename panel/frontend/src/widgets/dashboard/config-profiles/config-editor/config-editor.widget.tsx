@@ -47,9 +47,20 @@ export function ConfigEditorWidget(props: IProps) {
         [configProfile.config]
     )
     const [originalValue, setOriginalValue] = useState(configText)
+    const [editorValue, setEditorValue] = useState(configText)
+    const previousConfig = useRef(configText)
 
     const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null)
     const validationTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+    useEffect(() => {
+        if (previousConfig.current === configText) return
+        previousConfig.current = configText
+        const current = editorRef.current?.getValue() ?? editorValue
+        if (current === originalValue) setEditorValue(configText)
+        setOriginalValue(configText)
+        setHasUnsavedChanges(current !== originalValue && current !== configText)
+    }, [configText, editorValue, originalValue])
 
     const { isFullscreen, toggle: toggleFullscreen } = usePseudoFullscreen()
     const { containerRef: editorWrapperRef, footerRef } = useViewportFillHeight({
@@ -95,8 +106,8 @@ export function ConfigEditorWidget(props: IProps) {
 
     const applyRestoreDraft = () => {
         if (!restoreDraft || !editorRef.current) return
-        const restored = JSON.stringify(restoreDraft.config, null, 2)
-        if (!restored) return
+        const restored = restoreDraft.code ?? JSON.stringify(restoreDraft.config, null, 2)
+        if (typeof restored !== 'string') return
         editorRef.current.setValue(restored)
         setHasUnsavedChanges(restored !== originalValue)
         ConfigValidationFeature.validate(editorRef, setResult, setIsConfigValid, snippetMap)
@@ -230,6 +241,7 @@ export function ConfigEditorWidget(props: IProps) {
                     defaultLanguage="json"
                     loading={<LoaderModalShared mih="100%" />}
                     onChange={(value) => {
+                        setEditorValue(value ?? '')
                         props.onDraftChange?.(value ?? '')
                         if (validationTimer.current) clearTimeout(validationTimer.current)
                         validationTimer.current = setTimeout(() => {
@@ -265,7 +277,7 @@ export function ConfigEditorWidget(props: IProps) {
                         stickyScroll: { enabled: false }
                     }}
                     path={`xray-config://${configProfile.uuid}`}
-                    value={configText}
+                    value={editorValue}
                 />
             </Paper>
 
@@ -289,6 +301,7 @@ export function ConfigEditorWidget(props: IProps) {
                         setIsConfigValid={setIsConfigValid}
                         setOriginalValue={setOriginalValue}
                         setResult={setResult}
+                        onSaved={props.onSaved}
                     />
                 </EditorFooter>
             )}

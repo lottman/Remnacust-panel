@@ -1,4 +1,4 @@
-# Remnacust API 1.1.7.87
+# Remnacust API
 
 Области действия `serverSpeedLimitMbps`, общей скорости и квот хостов/тегов: [HOST-LIMITS.md](HOST-LIMITS.md). Скорость — целые Mbps (Мбит/с), квоты API — байты; поле Brutal `speedLimitMbps` самого хоста не является серверным ограничителем.
 
@@ -9,6 +9,33 @@ Full request/response schemas: [openapi.json](../panel/backend/openapi.json). Th
 ## Authentication and permissions
 
 Send an API token using `Authorization: Bearer TOKEN`. An endpoint marked `api-token` still requires its scope and allowed resource selection. `admin` methods require an administrator session, `public` methods have their own public flow, and `special` methods use the authentication described by OpenAPI. A wildcard token does not bypass admin-only routes. Never put a token in a URL or in client subscription content.
+
+The Home dashboard uses the internal administrator-only `GET /api/system/diagnostics`. It returns a bounded snapshot of connections, active queries, lock waits and idle transactions for the current application role and database. It never returns SQL text, connection addresses or credentials. API tokens, including global `*`, cannot call it; no monitoring grant is added to token presets. Successful samples are shared for 15 seconds per process, failures for five seconds, and responses use `Cache-Control: no-store`. Unknown statistics are explicitly distinguished from measured zero. This internal endpoint is excluded from the generated API-token catalog.
+
+`PATCH /api/config-profiles` requires both `config-profiles:update` and `config-profiles:get`; `PATCH /api/subscription-templates` requires both `subscription-template:update` and `subscription-template:get`. These mutations return the full stored content, so write-only tokens receive 403 before any update, revision, cache invalidation or node synchronization. Existing tokens with only the update grant must add the matching get grant. For each resource, `resource:write` covers update, `resource:read` covers get, and `resource:*` or global `*` covers both. Administrator sessions and response schemas are unchanged. Cloning an existing subscription template also requires its get grant in addition to create.
+
+Node responses retain inbound metadata but return `configProfile.activeInbounds[].rawInbound: null` to API tokens, including wildcard tokens. Administrator responses retain the full inbound configuration.
+
+Mutations that return an existing full user require `users:by-id` in addition to their action grant: `PATCH /api/users` (`users:update`) and `POST /api/users/{userId}/actions/enable`, `/disable`, `/reset-traffic`, `/extend`, `/revoke` (`users:enable`, `users:disable`, `users:reset-traffic`, `users:extend`, `users:revoke-subscription`). `users:read`, `users:*` or global `*` satisfies the read requirement; `users:write`, `users:resolve`, tags and subscription-link read grants do not. This also applies to password-only revocation because its full response retains the existing subscription URL. Existing action-only tokens must add `users:by-id`; the Users management preset already includes it. Creating a user intentionally returns newly generated credentials and does not need an existing-user read grant. User deletion and bulk actions returning no user credentials keep their existing requirements.
+
+`PATCH /api/external-squads` requires `external-squads:update` plus `external-squads:get`. `POST /api/external-squads/actions/reorder` requires `external-squads:reorder` plus `external-squads:list`, because its response contains the full stored settings of all squads. `external-squads:read`, `external-squads:*` or global `*` satisfies these read requirements. Existing update-only or reorder-only tokens must add the matching read grant. Creation, membership actions, tags and deletion keep their existing requirements. All these read checks return 403 before service invocation; administrator sessions and response contracts remain unchanged.
+
+## Temporary subscription failures
+
+Public configuration delivery distinguishes missing subscriptions from transient failures. A failed user, device or host query returns HTTP 503 with `Retry-After: 30`; a genuinely missing user remains HTTP 404. Subscription-info queries also reject host-query failures instead of returning a successful response with missing connection keys. Error responses do not expose the SQL query, credentials or internal panel address.
+
+## Access presets
+
+The token editor offers the following access presets. Applying a preset does not modify existing tokens until the operator saves it.
+
+| Preset | Access |
+| --- | --- |
+| Users | 30 fixed `users:` grants: user reads, creation, updates including FROZEN/ACTIVE, deletion, subscription credentials and links, traffic resets, expiry changes and bulk user actions. No HWID administration, infrastructure, squad/domain catalogs, panel settings, backups or token administration. Select those separately if required. |
+| Subscription page | Only `system:metadata`, `subscriptions:subpage-config`, `subscription-page-configs:get` and `subscription-page-configs:list`. |
+| Read only | Current token-accessible read operations; these can include stored credentials and configurations. It is not an anonymous monitoring role. |
+| Full | Global `*`, including future token-accessible operations. Administrator-only routes remain excluded. |
+
+The editor reports missing read dependencies before token creation or permission updates. It never adds them silently. Existing tokens are not automatically expanded. Resource access restrictions remain in effect in addition to endpoint grants.
 
 ## Subscription domains and CDN
 

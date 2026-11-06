@@ -359,7 +359,7 @@
   "config-editor": {
     "widget": {
       "unsaved-changes": "Unsaved changes",
-      "your-changes-will-be-lost-if-you-leave-this-page-without-saving": "Your changes will be lost if you leave this page without saving.",
+      "your-changes-will-be-lost-if-you-leave-this-page-without-saving": "You are leaving the editor with unsaved changes. Save them to apply them.",
       "leave": "Leave",
       "stay": "Stay"
     }
@@ -2141,6 +2141,7 @@
     "connections-current": "Current"
   },
   "api-token-editor": {
+    "scopes-imported": "Permissions imported: {{count}}",
     "saved": "API token permissions saved",
     "actions": "Actions for token {{name}}",
     "edit-title": "Edit token {{name}}",
@@ -2157,7 +2158,9 @@
     "no-expiry": "No expiration",
     "no-expiry-description": "Valid until deleted. Permission changes take effect immediately.",
     "users-preset": "Users",
-    "users-preset-description": "Users preset: create, update, freeze and resume users, manage traffic, subscription keys and HWID devices. Squad lists are read-only."
+    "users-preset-description": "User operations only, including bulk actions and subscription credentials. No HWID, squad, domain or infrastructure permissions.",
+    "read-required-title": "Read permission required",
+    "read-required-description": "Add the listed read permissions before saving. They are required because the selected operations return stored data."
   },
   "layoutActions": {
     "oneCardPerRow": "One card per row",
@@ -3351,7 +3354,7 @@
     "strategy": "Balancing strategy",
     "strategy-random": "Random connection",
     "strategy-roundRobin": "Round robin",
-    "strategy-leastPing": "Lowest latency",
+    "strategy-leastPing": "Lowest response time (ping + TTFB)",
     "strategy-leastLoad": "Most stable connection",
     "fallback": "Fallback outbound tag",
     "fallback-help": "Used if the balancer cannot select an available outbound. The first injected tag equals its prefix.",
@@ -3366,8 +3369,8 @@
     "assignment-tags": "Recipient tags",
     "assignment-priority": "Priority: explicit host template, host assignments, tag assignments, default template. Multiple autoselects for one recipient produce separate profiles and share that recipient’s limits.",
     "probes": "Connection probes",
-    "probes-help": "Latency, stability and priority strategies need probes. Existing settings are preserved; pool prefixes are added to selectors.",
-    "probe-url": "Probe URL",
+    "probes-help": "Latency, stability and priority strategies use HTTP probes through pool servers. The app refreshes the results; new connections use the current selection. Custom URLs and intervals are preserved.",
+    "probe-url": "HTTP probe URL",
     "probe-interval": "Probe interval",
     "recipient-outbound": "Also add the recipient host as proxy",
     "recipient-help": "When enabled, a separate outbound named “proxy” is also built from the recipient host’s address and connection settings. Enable only for a real working connection with valid TLS/REALITY or VLESS encryption. Leave it off for an “Automatic” placeholder: pool servers and autoselect remain available. Unprotected VLESS may cause Happ iOS to report “failed to build outbound config with tag proxy” / “vless without TLS”. Save the template and refresh the subscription after changing it.",
@@ -3449,7 +3452,9 @@
     "priority-summary": "The client uses the first available server in order. Switching affects new connections.",
     "assignment-mode": "Assign by",
     "assignment-mixed": "This existing assignment contains both hosts and tags. Choose one mode to keep its list and remove the other.",
-    "recipient-limits": "Quota and speed are configured on the recipient host. Autoselect does not debit pool members or inherit their speed limits. Multiple autoselects for one recipient share its allowance. Without recipient limits or enabled recipient tag limits, autoselect has no host-level ceiling. The account quota still applies."
+    "recipient-limits": "Quota and speed are configured on the recipient host. Autoselect does not debit pool members or inherit their speed limits. Multiple autoselects for one recipient share its allowance. Without recipient limits or enabled recipient tag limits, autoselect has no host-level ceiling. The account quota still applies.",
+    "response-time-help": "The app checks the HTTP response through each server: connection setup, TLS for HTTPS, and waiting for the site response. It chooses an available route with the lowest total response time, not ICMP ping or latency measured by the panel.",
+    "probe-url-help": "Use the same small HTTPS response, preferably 204, reachable through every pool server. An unavailable or slow test site affects the selection."
   },
   "template-history": {
     "title": "History",
@@ -3930,7 +3935,7 @@
     "identities": "Host credentials could not be prepared. Check the panel log and host access settings.",
     "compatibilityTitle": "Compatibility mode",
     "nativeCompatibility": "Native Remnawave node: ordinary connections remain available. Host limits, destination rules and special inactive-user access are disabled on inbounds used by this node. Compatible Node/Core are required for those features.",
-    "legacyAutoselect": "Legacy core: autoselect uses ordinary pool-server credentials and limits. Separate recipient quota ownership is unavailable. Upgrade Node/Core and refresh the client subscription to enable it."
+    "legacyAutoselect": "The running Core does not support separate autoselect limits: pool server keys and limits apply. Update Core in Node tasks, then refresh the client subscription."
   },
   "connectionKeys": {
     "active": "Active",
@@ -3944,8 +3949,8 @@
   },
   "client-template": {
     "native-help": "Hosts are selected when the subscription is updated; the app measures latency and availability. GUI and code share one draft.",
-    "strategy-url-test": "Lowest latency",
-    "strategy-urltest": "Lowest latency",
+    "strategy-url-test": "Lowest response time (ping + TTFB)",
+    "strategy-urltest": "Lowest response time (ping + TTFB)",
     "strategy-fallback": "Ordered failover",
     "strategy-load-balance": "Connection balancing",
     "strategy-select": "Manual selection",
@@ -3964,9 +3969,9 @@
   },
   "geofiles": {
     "title": "Geofiles",
-    "help": "Attach multiple rule datasets to the template. Existing settings are preserved; changes apply after saving the template and updating the subscription.",
+    "help": "Attach rule datasets to the template. Changes apply after saving the template and updating the subscription.",
     "library": "File library",
-    "library-help": "One catalog for every template. Files uploaded from your computer, imported by URL and built-in datasets are available here. Attaching a dataset applies rules only after saving.",
+    "library-help": "One catalog shared by all templates. Attached rules apply only after saving the template.",
     "choose": "Existing file",
     "no-compatible": "No compatible files for this template yet",
     "attach": "Attach to template",
@@ -4071,8 +4076,8 @@
   "template-draft": {
     "warning": "Template warnings",
     "warning-help": "Save remains available. Text with errors is saved on the server as a draft; subscriptions keep using the last working version until the errors are fixed and you save again.",
-    "saved-title": "Draft saved with warnings",
-    "saved-help": "Your text is saved on the server and in history. Subscriptions still use the last working version. Fix the warnings and save again to publish the template.",
+    "saved-title": "Draft saved: errors remain",
+    "saved-help": "The text is saved in history. The working version is unchanged. Fix the indicated error and save the template again.",
     "applied-warning-title": "Applied with a warning",
     "applied-warning-help": "Saved and applied. The original numeric tolerance is preserved in the template and subscription JSON. When reading the configuration, Xray clamps values below 0 to 0 and above 1 to 1; it does not rewrite the JSON.",
     "tolerance-help": "tolerance is a failed-probe fraction: 0.01 = 1%, 1 = 100%; 0 disables this check. Finite values outside 0–1 can be saved with a warning. The JSON keeps your value; Xray clamps it internally when reading the configuration."
@@ -4281,5 +4286,32 @@
   },
   "qr-code-builder": {
     "unavailable": "Unable to generate the QR code. Copy the subscription URL or connection key."
+  },
+  "editor-recovery": {
+    "saved-tab": "Saved versions",
+    "unsaved-tab": "Unsaved draft",
+    "help": "The latest unsaved text is kept in this browser for up to 7 days. Load it into the editor and select Save to apply it.",
+    "unavailable": "Could not save a recovery copy in this browser. Check storage access. Keep the editor open until you save or download the text.",
+    "too-large": "The draft exceeds the 8 MiB recovery limit. Save or download the text from the editor.",
+    "stale": "A newer version was saved in another tab. Refresh the editor to use the current text.",
+    "corrupt": "Could not read the recovery copy. Try again or delete the damaged copy.",
+    "empty": "No unsaved drafts.",
+    "updated": "Recovery copy from {{time}}",
+    "baseline": "Saved version",
+    "recovered": "Unsaved text",
+    "discard-title": "Delete the unsaved copy?",
+    "discard-help": "This draft recovery copy will be removed from the browser."
+  },
+  "home-diagnostics": {
+    "title": "Database",
+    "connections": "Application connections",
+    "active-queries": "Active queries",
+    "lock-waits": "Waiting for a lock",
+    "idle-transactions": "Idle transactions",
+    "longest-query": "Longest: {{seconds}} s",
+    "sampled": "Current database role · Sampled at {{time}}",
+    "scope": "Connections of the current role in the panel database.",
+    "unavailable": "Database diagnostics are temporarily unavailable. Other dashboard data remains available.",
+    "partial": "Some statistics are unavailable or collection is disabled. Unknown values are not reported as zero."
   }
 }

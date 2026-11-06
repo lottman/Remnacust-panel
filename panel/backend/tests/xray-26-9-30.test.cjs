@@ -19,6 +19,11 @@ function source(name, overrides = {}) {
     }
     if (Object.hasOwn(mocks, './client-pool'))
         mocks['./client-pool'] = require('./client-pool-fixture.cjs').pool;
+    if (Object.hasOwn(mocks, './subscription-output'))
+        mocks['./subscription-output'] = load(
+            path.join(path.dirname(filename), 'subscription-output.ts'),
+            { './client-pool': require('./client-pool-fixture.cjs').pool },
+        );
     return load(filename, { ...mocks, ...overrides });
 }
 const cipher = source('common/helpers/xray-config/ss-cipher.ts');

@@ -166,5 +166,35 @@
         "after": "Object.defineProperty(destination, key, { value: cloneUnlessOtherwiseSpecified(source[key], options), enumerable: true, configurable: true, writable: true });"
       }
     ]
+  },
+  {
+    "path": "node_modules/sirv/build.js",
+    "beforeSha256": "245cf4a18c3902ba690497a9088e6dcb5d7a9012fd6bd76ecedfad0fcbf6d55d",
+    "afterSha256": "d661a6ec4fcd593367eb8e0e62b42f880a7a4c3aed18d85b9f006b14285ccf22",
+    "changes": [
+      {
+        "before": "const noop = () => {};\n",
+        "after": "const noop = () => {};\n\nconst ANY_EXTN = {\n\ttest(uri) {\n\t\tlet start = uri.lastIndexOf('/') + 1, dot = uri.lastIndexOf('.');\n\t\tif (start === 0 || dot <= start || dot === uri.length - 1) return false;\n\t\treturn /^[A-Za-z\\s\\d~$._-]+$/.test(uri.slice(start, dot)) && /^\\w+$/.test(uri.slice(dot + 1));\n\t}\n};\n"
+      },
+      {
+        "before": "ignores.push(/[/]([A-Za-z\\s\\d~$._-]+\\.\\w+){1,}$/);",
+        "after": "ignores.push(ANY_EXTN);"
+      }
+    ]
+  },
+  {
+    "path": "node_modules/sirv/build.mjs",
+    "beforeSha256": "b5b9c79b302712b2ac0d0ef88ce170588c08f6ad1e6443d47c60996f65c5b0fb",
+    "afterSha256": "ac9e5a1df2ae9d0e98b9f33c66ef40eb4c8a1368d34028cd02d561d03cd0767a",
+    "changes": [
+      {
+        "before": "const noop = () => {};\n",
+        "after": "const noop = () => {};\n\nconst ANY_EXTN = {\n\ttest(uri) {\n\t\tlet start = uri.lastIndexOf('/') + 1, dot = uri.lastIndexOf('.');\n\t\tif (start === 0 || dot <= start || dot === uri.length - 1) return false;\n\t\treturn /^[A-Za-z\\s\\d~$._-]+$/.test(uri.slice(start, dot)) && /^\\w+$/.test(uri.slice(dot + 1));\n\t}\n};\n"
+      },
+      {
+        "before": "ignores.push(/[/]([A-Za-z\\s\\d~$._-]+\\.\\w+){1,}$/);",
+        "after": "ignores.push(ANY_EXTN);"
+      }
+    ]
   }
 ]

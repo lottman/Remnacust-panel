@@ -16,6 +16,7 @@ import {
     renderClientGroups,
     type ClientCandidate,
 } from './client-pool';
+import { boundedSubscriptionOutput, SubscriptionExpansionBudget } from './subscription-output';
 import { getUdpHop } from './udp-hop';
 
 export interface MihomoData {
@@ -190,7 +191,7 @@ export class MihomoGeneratorService {
         } catch (error) {
             if (error instanceof ClientPoolError) throw error;
             this.logger.error('Error generating clash config:', error);
-            return '';
+            throw error;
         }
     }
 
@@ -604,8 +605,12 @@ export class MihomoGeneratorService {
                         : []),
                     ...data.proxies,
                 ],
-                'proxy-groups': await renderClientGroups(sourceGroups, candidates, (custom) =>
-                    this.resolveGroupRemarks(custom, proxyRemarks),
+                'proxy-groups': await renderClientGroups(
+                    sourceGroups,
+                    candidates,
+                    (custom) => this.resolveGroupRemarks(custom, proxyRemarks),
+                    false,
+                    new SubscriptionExpansionBudget('yaml'),
                 ),
             };
 
@@ -614,11 +619,11 @@ export class MihomoGeneratorService {
                 finalConfig['proxy-providers'] = providers;
             }
 
-            return dump(finalConfig);
+            return boundedSubscriptionOutput(dump(finalConfig));
         } catch (error) {
             if (error instanceof ClientPoolError) throw error;
             this.logger.error(`Error rendering yaml config: ${error}`);
-            return '';
+            throw error;
         }
     }
 

@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-11-04T19:32:42.946Z",
-  "backendVersion": "1.1.7.97",
-  "coreVersion": "1.1.13",
-  "nodeVersion": "1.1.22",
+  "generatedAt": "2026-11-06T11:56:11.351Z",
+  "backendVersion": "1.1.7.98",
+  "coreVersion": "1.1.14",
+  "nodeVersion": "1.1.23",
   "upstreamPanelVersion": "3.4.7",
   "upstreamBackendPatches": [
     {
@@ -44,6 +44,26 @@
         "fa": "افزونه postStart برای اعلان شروع هسته",
         "zh": "postStart 内核启动通知插件"
       }
+    },
+    {
+      "commit": "b400234c9be4f1cd9cab26a046298cd162af9e44",
+      "date": "2026-11-02",
+      "description": {
+        "ru": "Исправление обработки вредоносных HTTP-запросов в sirv из Remnawave 3.4.8",
+        "en": "Hostile HTTP request handling fix for sirv from Remnawave 3.4.8",
+        "fa": "اصلاح پردازش درخواست HTTP مخرب در sirv از Remnawave 3.4.8",
+        "zh": "移植 Remnawave 3.4.8 的 sirv 恶意 HTTP 请求处理修复"
+      }
+    },
+    {
+      "commit": "51a321810ed07a5bcef1e80e40f5b1c4e46efe98",
+      "date": "2026-11-02",
+      "description": {
+        "ru": "Ограничение чтения файлов сертификатов из Remnawave 3.4.8",
+        "en": "Certificate file read restriction from Remnawave 3.4.8",
+        "fa": "محدودسازی خواندن فایل گواهی از Remnawave 3.4.8",
+        "zh": "移植 Remnawave 3.4.8 的证书文件读取限制"
+      }
     }
   ],
   "upstreamBackendCommit": "52321390ac4efe04a610811446d87335f1d10a93",
@@ -58,6 +78,6 @@
   "endpoints": 247,
   "apiTokenEndpoints": 219,
   "controls": 237,
-  "sourceFiles": 3857,
-  "specSha256": "f7f2fcb232f06633af61b267675325a9995fa2b2c3e780f068135be6abe04521"
+  "sourceFiles": 3874,
+  "specSha256": "9bed8c3540297f6c22556bd78e7f6b2e1d21a420bd7731cebc3a4cb150d14981"
 }

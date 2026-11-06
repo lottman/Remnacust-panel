@@ -1,4 +1,5 @@
 import { ClientPoolError } from '../generators/client-pool';
+import { assertSubscriptionSize } from '../generators/subscription-output';
 
 // The Apple client formats a full config again before handing it to its core.
 // Reserve room for its inbounds, logging and DNS patches, rather than measuring
@@ -7,7 +8,6 @@ export const INCY_FORMATTED_CONFIG_BUDGET = 900_000;
 export const XRAY_FORMATTED_CONFIG_BUDGET = 900_000;
 export const GEOFILE_INLINE_CONFIG_BUDGET = XRAY_FORMATTED_CONFIG_BUDGET / 10;
 export const GEOFILE_INLINE_RULE_LIMIT = 20_000;
-const MAX_SUBSCRIPTION_BYTES = 16 * 1024 * 1024;
 const MIN_COMPACT_LIST_ENTRIES = 64;
 const STRING_LIST_FIELDS = ['ip', 'domain', 'domains', 'source', 'sourceIP', 'localIP'] as const;
 
@@ -54,8 +54,7 @@ export function xrayRuleEntries(
 
 export function compactIncySubscription(subscription: string, enforceBudget = true): string {
     if (!subscription) return subscription;
-    if (Buffer.byteLength(subscription) > MAX_SUBSCRIPTION_BYTES)
-        throw new ClientPoolError('subscription-size-limit');
+    assertSubscriptionSize(Buffer.byteLength(subscription));
     const configs: unknown = JSON.parse(subscription);
     if (!Array.isArray(configs)) throw new ClientPoolError('incy-configuration-format');
     let changed = false;
@@ -103,8 +102,7 @@ export function xrayProfilesFit(
     maxRuleEntries = Number.POSITIVE_INFINITY,
 ): boolean {
     if (!subscription) return true;
-    if (Buffer.byteLength(subscription) > MAX_SUBSCRIPTION_BYTES)
-        throw new ClientPoolError('subscription-size-limit');
+    assertSubscriptionSize(Buffer.byteLength(subscription));
     const configs: unknown = JSON.parse(subscription);
     return (
         Array.isArray(configs) &&

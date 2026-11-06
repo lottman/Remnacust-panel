@@ -3,6 +3,7 @@ import { Request, Response } from 'express';
 import {
     Body,
     Controller,
+    Header,
     HttpStatus,
     Query,
     Req,
@@ -75,6 +76,7 @@ export class SystemController {
         httpCode: HttpStatus.OK,
         type: GetMetadataResponseDto,
     })
+    @Header('Cache-Control', 'no-store')
     async getMetadata(): Promise<GetMetadataResponseDto> {
         const result = await this.systemService.getMetadata();
 

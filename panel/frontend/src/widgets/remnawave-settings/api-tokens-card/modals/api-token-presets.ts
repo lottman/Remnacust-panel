@@ -1,36 +1,42 @@
 type Resource = { resource: string; endpoints: { key: string; kind: string }[] }
 
-const USER_SUBSCRIPTION_READ_KEYS = new Set([
-    'subscriptions:by-username',
-    'subscriptions:by-short-uuid-protected',
-    'subscriptions:by-id',
-    'subscriptions:raw',
-    'subscriptions:connection-keys'
-])
+export const USER_MANAGEMENT_SCOPES = [
+    'users:subscription-links',
+    'users:subscription-links-primary',
+    'users:subscription-links-cdn',
+    'users:bulk-delete-by-status',
+    'users:bulk-delete',
+    'users:bulk-revoke-subscription',
+    'users:bulk-reset-traffic',
+    'users:bulk-update-users',
+    'users:bulk-update-squads',
+    'users:bulk-extend-expiration-date',
+    'users:bulk-all-update-users',
+    'users:bulk-all-reset-traffic',
+    'users:bulk-all-extend-expiration-date',
+    'users:create',
+    'users:update',
+    'users:delete',
+    'users:list',
+    'users:stream',
+    'users:list-tags',
+    'users:accessible-nodes',
+    'users:subscription-request-history',
+    'users:by-short-uuid',
+    'users:by-id',
+    'users:by-username',
+    'users:revoke-subscription',
+    'users:disable',
+    'users:enable',
+    'users:reset-traffic',
+    'users:extend',
+    'users:resolve'
+] as const
 
-// Endpoint keys keep this preset bounded when unrelated API resources are added.
-export const getUserManagementKeys = (resources: readonly Resource[]): string[] =>
-    resources.flatMap((resource) =>
-        resource.resource === 'users' || resource.resource === 'hwid-user-devices'
-            ? resource.endpoints.map((endpoint) => endpoint.key)
-            : resource.resource === 'internal-squads' || resource.resource === 'external-squads'
-              ? resource.endpoints
-                    .filter((endpoint) => endpoint.kind === 'read')
-                    .map((endpoint) => endpoint.key)
-              : resource.resource === 'subscriptions'
-                ? resource.endpoints
-                      .filter(
-                          (endpoint) =>
-                              endpoint.kind === 'read' &&
-                              USER_SUBSCRIPTION_READ_KEYS.has(endpoint.key)
-                      )
-                      .map((endpoint) => endpoint.key)
-                : resource.resource === 'subscription-domains'
-                  ? resource.endpoints
-                        .filter((endpoint) => endpoint.kind === 'read')
-                        .map((endpoint) => endpoint.key)
-                  : []
-    )
+export const getUserManagementKeys = (resources: readonly Resource[]): string[] => {
+    const available = new Set(resources.flatMap((resource) => resource.endpoints.map(({ key }) => key)))
+    return USER_MANAGEMENT_SCOPES.filter((scope) => available.has(scope))
+}
 
 export const SUBSCRIPTION_PAGE_SCOPES = [
     'subscription-page-configs:list',

@@ -1,7 +1,7 @@
 import { ActionIcon, ActionIconGroup, Group, Tabs, Tooltip } from '@mantine/core'
 import { GetConfigProfileByUuidCommand, GetSnippetsCommand } from '@remnawave/backend-contract'
 import { ConfigEditorWidget } from '@widgets/dashboard/config-profiles/config-editor/config-editor.widget'
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbArrowBackUp, TbCode, TbFile, TbHistory, TbSitemap } from 'react-icons/tb'
 import { useNavigate } from 'react-router'
@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router'
 import { showModal } from '@shared/_modals/show-modal'
 import { HelpActionIconShared } from '@shared/_modals/universal'
 import { OPEN_ENTITY, ROUTES } from '@shared/constants'
+import { useEditorRecovery } from '@shared/hooks/use-editor-recovery'
 import { useUiText } from '@shared/i18n/interface-text'
 import { CopyEntityLinkButton } from '@shared/ui'
 import { Page } from '@shared/ui/page'
@@ -39,10 +40,16 @@ export const ConfigProfileByUuidPageComponent = (props: Props) => {
 
     const { t } = useTranslation()
     const navigate = useNavigate()
+    const baseline = useMemo(
+        () => JSON.stringify(configProfile.config, null, 2) ?? '',
+        [configProfile.config]
+    )
+    const recovery = useEditorRecovery({ kind: 'profile', id: configProfile.uuid, baseline })
     const [tab, setTab] = useState<string | null>('editor')
     const [restoreDraft, setRestoreDraft] = useState<{
         uuid: string
-        config: unknown
+        config?: unknown
+        code?: string
         profileUuid: string
     } | null>(null)
     const draftRef = useRef<{ uuid: string; code: string } | null>(null)
@@ -50,8 +57,9 @@ export const ConfigProfileByUuidPageComponent = (props: Props) => {
     const onDraftChange = useCallback(
         (code: string) => {
             draftRef.current = { uuid: configProfile.uuid, code }
+            recovery.track(code)
         },
-        [configProfile.uuid]
+        [configProfile.uuid, recovery.track]
     )
 
     return (
@@ -150,6 +158,9 @@ export const ConfigProfileByUuidPageComponent = (props: Props) => {
                                     : null
                             }
                             onDraftChange={onDraftChange}
+                            onSaved={(code, submitted) =>
+                                recovery.saved(code, submitted).catch(() => {})
+                            }
                         />
                     </Tabs.Panel>
                     <Tabs.Panel value="history">
@@ -162,6 +173,15 @@ export const ConfigProfileByUuidPageComponent = (props: Props) => {
                                         : (JSON.stringify(configProfile.config, null, 2) ?? '')
                                 }
                                 baseline={JSON.stringify(configProfile.config, null, 2) ?? ''}
+                                recovery={recovery}
+                                onRecover={(code) => {
+                                    setRestoreDraft({
+                                        uuid: crypto.randomUUID(),
+                                        code,
+                                        profileUuid: configProfile.uuid
+                                    })
+                                    setTab('editor')
+                                }}
                                 onRestore={(revision) => {
                                     setRestoreDraft({
                                         ...revision,

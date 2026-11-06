@@ -27,6 +27,7 @@ import { I18nextProvider, useTranslation } from 'react-i18next'
 import { AuthProvider } from '@shared/hocs/auth-provider'
 // import { StrictMode } from 'react'
 import { IsMobileProvider } from '@shared/hocs/is-mobile-provider'
+import { PanelBuildLifecycle } from '@shared/hooks/use-panel-build-lifecycle'
 import { PanelAppearanceProvider } from '@shared/ui/appearance/appearance'
 import { ConnectionStatusOverlay } from '@shared/ui/connection-status-overlay'
 import { LoadingScreen } from '@shared/ui/loading-screen'
@@ -70,6 +71,7 @@ export function App() {
             <QueryClientProvider client={queryClient}>
                 {isDev && <ReactQueryDevtools initialIsOpen={false} />}
                 <AuthProvider>
+                    <PanelBuildLifecycle />
                     <IsMobileProvider>
                         <DirectionProvider>
                             <PanelAppearanceProvider>

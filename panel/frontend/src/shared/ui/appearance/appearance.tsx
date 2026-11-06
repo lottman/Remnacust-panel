@@ -34,11 +34,6 @@ import { useUiText } from '@shared/i18n/interface-text'
 import { HeaderControl } from '@shared/ui/header-buttons/HeaderControl'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 
-import {
-    useLauncherEnabled,
-    useViewPreferencesStoreActions
-} from '@entities/dashboard/view-preferences-store'
-
 import classes from './appearance.module.css'
 import { useIconMotion } from './use-icon-motion'
 
@@ -501,8 +496,6 @@ export function AppearanceControl() {
     const uiText = useUiText()
     const { t } = useTranslation()
 
-    const launcherEnabled = useLauncherEnabled()
-    const { setLauncherEnabled } = useViewPreferencesStoreActions()
     const { appearance, setAppearance, resetAppearance } = usePanelAppearance()
     const [opened, setOpened] = useState(false)
     const label = uiText('theme-settings-697b009')
@@ -648,17 +641,6 @@ export function AppearanceControl() {
                             onChange={(event) =>
                                 setAppearance({ reduceMotion: event.currentTarget.checked })
                             }
-                        />
-                        <Switch
-                            checked={launcherEnabled}
-                            labelPosition="left"
-                            classNames={{
-                                root: classes.preferenceRow,
-                                body: classes.preferenceBody,
-                                label: classes.preferenceLabel
-                            }}
-                            label={uiText('launcher-22614ac')}
-                            onChange={(event) => setLauncherEnabled(event.currentTarget.checked)}
                         />
                     </Stack>
                     <Group justify="flex-end" className={classes.resetRow}>

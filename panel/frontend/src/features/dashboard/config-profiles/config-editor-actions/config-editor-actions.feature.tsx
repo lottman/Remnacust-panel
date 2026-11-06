@@ -51,14 +51,19 @@ export function ConfigEditorActionsFeature(props: Props) {
             onSuccess: async (
                 updatedConfigProfile: UpdateConfigProfileCommand.Response['response']
             ) => {
+                const newValue = JSON.stringify(updatedConfigProfile.config, null, 2)
+                await queryClient.cancelQueries({
+                    queryKey: QueryKeys.configProfiles.getConfigProfile({
+                        uuid: configProfile.uuid
+                    }).queryKey
+                })
+                await props.onSaved?.(newValue, submittedValue.current ?? newValue)
                 await queryClient.refetchQueries({
                     queryKey: QueryKeys.configProfiles.getConfigProfiles.queryKey
                 })
                 await queryClient.invalidateQueries({
                     queryKey: ['config-profile-revisions', configProfile.uuid]
                 })
-
-                const newValue = JSON.stringify(updatedConfigProfile.config, null, 2)
 
                 let changedSinceSave = false
                 if (editorRef.current) {

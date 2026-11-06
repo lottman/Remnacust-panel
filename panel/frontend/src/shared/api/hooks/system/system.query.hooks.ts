@@ -9,8 +9,9 @@ import {
     GetRemnawaveHealthCommand,
     GetStatsCommand
 } from '@remnawave/backend-contract'
-import { keepPreviousData } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 
+import { instance } from '@shared/api/axios'
 import { getUserTimezoneUtil, sToMs } from '@shared/utils/time-utils'
 
 import { createGetQueryHook, errorHandler } from '../../tsq-helpers'
@@ -68,8 +69,9 @@ export const useGetBandwidthStats = createGetQueryHook({
     getQueryKey: () => systemQueryKeys.getBandwidthStats.queryKey,
     rQueryParams: {
         placeholderData: keepPreviousData,
-        staleTime: STALE_TIME,
-        refetchInterval: REFETCH_INTERVAL
+        staleTime: 15_000,
+        refetchInterval: 30_000,
+        refetchIntervalInBackground: false
     },
     queryParams: {
         tz: getUserTimezoneUtil()
@@ -117,17 +119,27 @@ export const useGetNodesMetrics = createGetQueryHook({
     errorHandler: (error) => errorHandler(error, 'Get Nodes Metrics')
 })
 
-export const useGetRemnawaveMetadata = createGetQueryHook({
-    endpoint: GetMetadataCommand.TSQ_url,
-    responseSchema: GetMetadataCommand.ResponseSchema,
-    getQueryKey: () => systemQueryKeys.getRemnawaveMetadata.queryKey,
-    rQueryParams: {
-        placeholderData: keepPreviousData,
-        refetchOnMount: false,
-        staleTime: sToMs(3_600)
-    },
-    errorHandler: (error) => errorHandler(error, 'Get Remnawave Metadata')
-})
+export function useGetRemnawaveMetadata(params?: { rQueryParams?: { enabled?: boolean } }) {
+    return useQuery({
+        queryKey: systemQueryKeys.getRemnawaveMetadata.queryKey,
+        queryFn: async ({ signal }) => {
+            const result = await instance.get(GetMetadataCommand.TSQ_url, {
+                signal,
+                timeout: 8000,
+                headers: { 'Cache-Control': 'no-cache' }
+            })
+            return GetMetadataCommand.ResponseSchema.parse(result.data).response
+        },
+        enabled: params?.rQueryParams?.enabled,
+        staleTime: 0,
+        refetchOnMount: 'always',
+        refetchInterval: 45_000,
+        refetchIntervalInBackground: false,
+        refetchOnWindowFocus: 'always',
+        refetchOnReconnect: 'always',
+        retry: false
+    })
+}
 
 export const useGetRecap = createGetQueryHook({
     endpoint: GetRecapCommand.TSQ_url,

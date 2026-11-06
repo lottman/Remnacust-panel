@@ -3,30 +3,35 @@ const test=require('node:test');
 const path=require('node:path');
 const load=require('../../backend/tests/load-typescript.cjs');
 const fixture=require('../../backend/tests/api-permissions-fixture.cjs');
-const {getUserManagementKeys,SUBSCRIPTION_PAGE_SCOPES,getDomainLinkKeys,domainLinkScopeLabel}=load(path.join(__dirname,'../src/widgets/remnawave-settings/api-tokens-card/modals/api-token-presets.ts'));
+const {getUserManagementKeys,USER_MANAGEMENT_SCOPES,SUBSCRIPTION_PAGE_SCOPES,getDomainLinkKeys,domainLinkScopeLabel}=load(path.join(__dirname,'../src/widgets/remnawave-settings/api-tokens-card/modals/api-token-presets.ts'));
 
-test('user-management preset includes freeze/update and devices but excludes unrelated writes',()=>{
+test('user-management preset grants exactly the reviewed users endpoints and their required reads',()=>{
     const resources=fixture.catalog.getGroupedCatalog().resources;
     const keys=getUserManagementKeys(resources);
     assert.ok(keys.includes('users:update'));
-    assert.ok(keys.includes('subscriptions:connection-keys'));
-    assert.ok(!keys.includes('subscriptions:list'));
-    assert.ok(!keys.includes('subscriptions:subpage-config'));
-    assert.ok(keys.some(key=>key.startsWith('hwid-user-devices:')));
+    assert.equal(keys.length,30);
+    assert.equal(new Set(keys).size,30);
+    assert.deepEqual(keys,[...USER_MANAGEMENT_SCOPES]);
+    assert.ok(keys.includes('users:by-id'));
     assert.ok(!keys.includes('*'));
     assert.deepEqual(fixture.catalog.findInvalidScopes(keys),[]);
-    for(const key of keys) assert.ok(key.startsWith('users:')||key.startsWith('hwid-user-devices:')||resources.some(r=>['internal-squads','external-squads','subscriptions','subscription-domains'].includes(r.resource)&&r.endpoints.some(e=>e.key===key&&e.kind==='read')),key);
-    assert.ok(keys.includes('subscription-domains:list'));
-    assert.ok(keys.includes('subscription-domains:get'));
-    assert.ok(!keys.includes('subscription-domains:create'));
-    assert.ok(!keys.includes('subscription-domains:update'));
-    assert.ok(!keys.includes('subscription-domains:delete'));
+    for(const key of keys) assert.ok(key.startsWith('users:')&&!key.includes('*'),key);
     const endpoint=fixture.endpoints.find(e=>e.method==='PATCH'&&e.url==='/api/users');
     assert.ok(endpoint);assert.equal(fixture.authorize(endpoint,fixture.ROLE.API,keys),true);
     assert.equal(fixture.authorize(endpoint,fixture.ROLE.API,['users:read']),false);
-    for(const resource of resources.filter(r=>!['users','hwid-user-devices','internal-squads','external-squads','subscriptions','subscription-domains'].includes(r.resource))) {
-        assert.ok(resource.endpoints.every(e=>!keys.includes(e.key)),resource.resource);
+    for(const entry of fixture.catalog.getCatalog()) {
+        const route=fixture.endpoints.find(e=>e.method===entry.method&&e.url===entry.path);
+        assert.equal(fixture.authorize(route,fixture.ROLE.API,keys),entry.resource==='users',entry.key);
     }
+});
+
+test('user-management preset never adopts future endpoints and respects the available catalog',()=>{
+    const resources=fixture.catalog.getGroupedCatalog().resources;
+    const future=structuredClone(resources);
+    future.find(resource=>resource.resource==='users').endpoints.push({key:'users:future-operation',kind:'write'});
+    assert.deepEqual(getUserManagementKeys(future),getUserManagementKeys(resources));
+    assert.deepEqual(getUserManagementKeys([{resource:'users',endpoints:[{key:'users:create',kind:'write'}]}]),['users:create']);
+    assert.deepEqual(getUserManagementKeys([]),[]);
 });
 
 test('subscription link presets grant exactly one route and keep ordinary and CDN access separate',()=>{

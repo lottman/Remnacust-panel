@@ -5,7 +5,13 @@ const load = require('./load-typescript.cjs');
 const { pool } = require('./client-pool-fixture.cjs');
 const { compactIncySubscription, xrayProfileFormattedBytes, xrayProfilesFit, INCY_FORMATTED_CONFIG_BUDGET } = load(
     path.join(__dirname, '../src/modules/subscription-template/geofiles/incy-config.ts'),
-    { '../generators/client-pool': pool },
+    {
+        '../generators/client-pool': pool,
+        '../generators/subscription-output': load(
+            path.join(__dirname, '../src/modules/subscription-template/generators/subscription-output.ts'),
+            { './client-pool': pool },
+        ),
+    },
 );
 const networks = Array.from({ length: 26000 }, (_, i) => `100.${i >> 8}.${i & 255}.0/24`);
 

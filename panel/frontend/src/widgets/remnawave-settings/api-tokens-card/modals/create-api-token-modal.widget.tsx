@@ -51,6 +51,7 @@ import {
     domainLinkScopeLabel
 } from './api-token-presets'
 import { ScopeResourceRow } from './scope-resource-row'
+import { getMissingReadRequirements } from './scope-read-dependencies'
 import {
     buildScopes,
     expandScopesToKeys,
@@ -111,6 +112,7 @@ export const CreateApiTokenContentWidget = ({ isMobile, token }: IProps) => {
         }))
         .filter((resource) => resource.endpoints.length > 0)
     const submittedScopes = fullAccess ? ['*'] : buildScopes(resources, selectedEndpoints)
+    const missingReadRequirements = getMissingReadRequirements(submittedScopes)
     const unknownScopes = (token?.scopes ?? []).filter(
         (scope) =>
             scope !== '*' &&
@@ -243,7 +245,7 @@ export const CreateApiTokenContentWidget = ({ isMobile, token }: IProps) => {
             setSelectedEndpoints(new Set(expandScopesToKeys(resources, parsed as string[])))
             notifications.show({
                 title: uiText('scopes-pasted-a6e9e16'),
-                message: `Imported ${parsed.length} scope(s) from clipboard`,
+                message: t('api-token-editor.scopes-imported', { count: parsed.length }),
                 color: 'teal'
             })
         } catch {
@@ -256,6 +258,7 @@ export const CreateApiTokenContentWidget = ({ isMobile, token }: IProps) => {
     }
 
     const handleSubmit = () => {
+        if (!canCreate) return
         if (token) {
             updateApiToken({
                 route: { uuid: token.uuid },
@@ -288,6 +291,7 @@ export const CreateApiTokenContentWidget = ({ isMobile, token }: IProps) => {
         !isLoading &&
         !isError &&
         Boolean(scopesData) &&
+        missingReadRequirements.length === 0 &&
         !isPending &&
         !isUpdating
 
@@ -429,6 +433,26 @@ export const CreateApiTokenContentWidget = ({ isMobile, token }: IProps) => {
             {initialized && unknownScopes.length > 0 && (
                 <Alert color="yellow">
                     {t('api-token-editor.obsolete-scopes')} {unknownScopes.join(', ')}
+                </Alert>
+            )}
+            {missingReadRequirements.length > 0 && (
+                <Alert
+                    color="yellow"
+                    title={t('api-token-editor.read-required-title', {
+                        defaultValue: 'Read permission required'
+                    })}
+                >
+                    <Text size="sm">
+                        {t('api-token-editor.read-required-description', {
+                            defaultValue:
+                                'Add the listed read permissions before saving. They are required because the selected operations return stored data.'
+                        })}
+                    </Text>
+                    {missingReadRequirements.map(({ scope, requiredScope }) => (
+                        <Text ff="monospace" key={scope} size="xs">
+                            {scope} → {requiredScope}
+                        </Text>
+                    ))}
                 </Alert>
             )}
             <TextInput

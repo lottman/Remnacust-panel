@@ -7,6 +7,7 @@ export interface IProps {
     isWasmRestarting: boolean
     onRestartWasm: () => void
     snippets: GetSnippetsCommand.Response['response']
-    restoreDraft?: { uuid: string; config: unknown } | null
+    restoreDraft?: { uuid: string; config?: unknown; code?: string } | null
     onDraftChange?: (code: string) => void
+    onSaved?: (code: string, submitted: string) => Promise<void>
 }

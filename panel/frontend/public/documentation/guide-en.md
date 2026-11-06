@@ -32,6 +32,10 @@ A connection requires a working node, an active profile inbound, an available ho
 
 After saving, check the updated values in the detail view. If a connection still uses the previous settings, check node status and logs, then refresh the subscription in the client.
 
+### A day without the panel
+
+Autonomous policy does not stop merely because the panel is unreachable. A planned day requires an applied policy, persistent volumes, valid credentials and enough local credit for every user, host and tag limit. A user’s total remaining quota is distributed across nodes and is not the credit of each node. Subscription expiry, exhausted credit and quota-period boundaries still deny access. The panel must fund the next period after a reset; the current implementation does not fund it offline. CDN, DNS, proxy and node certificates must remain independent. Recreating a container requires persistent state directories. A core loaded through CUSTOM_CORE_URL also needs its source to be reachable. Blocks or freezes changed during the outage arrive after reconnection. A maintenance readiness check proves current state, not a guaranteed day of traffic.
+
 ### Maintenance logs and long-running service
 
 Detailed CLI logs are /opt/remnacust/logs/installer-panel.log, installer-node.log and installer-subscription-page.log. Status checks use a separate log and retain the last update log. The next action for the same component replaces its previous log; a parallel invocation cannot erase an active log. Browser panel updates retain panel-update-<ID>.log, page operations retain page-<page ID>-<job ID>.log, and SSH node maintenance retains node-maintenance.log on that node. Failures show the path. Logs are root-only and never part of public subscriptions. Input and secret tracing are not recorded. APT confirmation is automatic; configuration questions remain interactive over SSH. Configuration caches are bounded by count and size; oversized entries bypass the local cache but remain available from the source. Completion, errors and disconnects release capacity when work settles. Original SQL histories match published Remnawave 3.0.0, 3.4.3 and 3.4.8; unknown or modified history stops migration before application changes.
@@ -43,6 +47,16 @@ A node with a confirmed autonomous policy continues serving saved keys without t
 ### Update progress and logs
 
 Panel updates show eight stages, elapsed time and the last 24 events. Remaining time is estimated only when a previous operation supplies timing data; otherwise remaining stages are shown. Closing the tab does not cancel the update. The service pins a fresh installer release before checking and installing it; a newer verified panel may supersede an outdated notification target. Successful updates keep current, previous and container-used images while removing redundant component images. The panel does not receive the Docker socket.
+
+### Browser refresh after an update
+
+After the build changes, open administrator tabs check the panel version and reload automatically. Data caches, view preferences and table state reset. Authentication, saved templates, history, the SSH vault and pending maintenance intents are preserved. An in-flight mutation is not interrupted. Visible tabs check every 45 seconds and when revisited; an unavailable panel is checked again after recovery. Server settings and user data are not cleared. Tabs from releases without this check need one initial page refresh. The upcoming update persists a local profile/template draft before reloading. If persistence fails, automatic reload is cancelled. Recovery is available in “History → Unsaved draft” and is never applied without your choice. Older open tabs without recovery can still lose text; copy it first.
+
+### Supported operating systems and PostgreSQL
+
+Released installer 1.2.136 supports Ubuntu 22.04/24.04/26.04 LTS. Debian support and the PostgreSQL matrix below belong to the upcoming unreleased update. The current installer source accepts Ubuntu 22.04/24.04/26.04 LTS and Debian 12/13, amd64/arm64. Docker uses the official repository for the installed distribution. Interim Ubuntu releases and derivative distributions are not accepted automatically. The amd64 matrix checks real userspace, Bash, Python, OpenSSL and unit workflows; it does not replace kernel boot, systemd, firewall or arm64 tests.
+
+All 194 migrations, quota, expiry and diagnostics scenarios were checked on PostgreSQL 14.24/15.19/16.15/17.11/18.6 as a non-superuser database owner. For new installations, choose a supported major version with current fixes. PostgreSQL 14 support ends on November 12, 2026; PostgreSQL 13 was not tested and is end-of-life. Major upgrades require a separate pg_upgrade or dump/restore. Do not open an old data volume with a new major image; verify the migration on a copy first.
 
 ## First working connection
 
@@ -78,6 +92,12 @@ Home shows transferred traffic, current bandwidth, online users and nodes, accou
 ### Panel diagnostics
 
 Open a status card for details. If data has not appeared, wait for loading or refresh. A spinning icon indicates that the request is still in progress.
+
+### Database diagnostics
+
+Home shows application connections, active queries, lock waits and idle transactions. The snapshot covers only the current role and panel database; the diagnostics query excludes itself. SQL text, addresses and keys are not shown. An administrator session is required; API tokens cannot use this endpoint. Unknown statistics appear as “—”, not zero. A diagnostics failure leaves the other Home sections working.
+
+The interface polls every 30 seconds in a visible tab; the server coalesces concurrent requests and retains a sample for 15 seconds per process. Total traffic charts also use a bounded 15-second snapshot. This display cache does not change access checks, quotas or blocks. Rising wait counts or query times call for log and SQL-plan inspection; a connection count alone does not prove overload.
 
 ## Creating and editing users
 
@@ -221,6 +241,18 @@ In card view, nodes can be dragged with a tag selected. Only visible nodes are r
 ### Fields and accounting
 
 Name, country, tags and provider describe infrastructure. The profile and inbound list determine active services. A node consumption multiplier changes user traffic accounting and is not a bandwidth cap. Traffic tracking, monthly threshold, reset day and node notifications concern server usage rather than an individual user quota.
+
+### Paused start queue
+
+Applying a profile in bulk does not pause the global start queue; operations are coordinated per node. An existing manual pause or one left by an older update is not automatically resumed. If jobs remain paused, confirm that maintenance is complete and resume the queue in Bull Board. Restarting the panel must not override an intentional administrative pause.
+
+### Recovery after a core crash
+
+After a confirmed crash of a compatible core, the agent restores the last private configuration without the panel. A working process is left running; unknown status or busy management defers the check. Administrative pause and quota checks remain enforced. Automatic attempts are limited to three recoveries per hour of the agent process. A further crash after that limit or a recovery error stops retries; check the log, correct the cause and explicitly start a new process. Hot application of settings does not reset the attempt budget. A corrupt journal is never cleared. Both Node and Core builds must include this fix; updating only the panel does not replace them.
+
+### Confirming node commands
+
+Start and stop operations for one node run sequentially. An outdated command must not overwrite a newer state or connection address. An unconfirmed stop retains its error and is retried up to five times, 30 seconds apart. A node disabled by an administrator is never automatically enabled after failure. Check connectivity and the log, then retry the action. An unavailable node can still be deleted from the panel. Bulk profile jobs run one at a time while retaining shared configuration preparation. Updating the Node image preserves the previously selected managed Core. Check the running version in Node tasks and update Core separately if needed, then refresh the client subscription. An outdated autoselect-limit warning clears after support and successful policy application are confirmed; a failed check never removes restrictions.
 
 ### Installation and certificates
 
@@ -388,6 +420,18 @@ A profile contains the complete Xray configuration. Create it with uniquely tagg
 
 Cloning creates a separate profile for experiments; editing the original can affect every assigned node. Server validation is independent of editor validation. Check node health after applying and avoid static accounts in place of panel-managed accounts.
 
+### Recovering unsaved edits
+
+In profile and subscription-template editors, open History → Unsaved draft. This contains the most recent local text, including incomplete JSON or YAML. Compare it with the saved version, choose Load into editor, then save normally. Nothing is applied automatically.
+
+A successful save removes its temporary copy. Edits typed while that request is pending remain recoverable. A failed save does not delete the copy. Delete in this tab removes only the local draft.
+
+Copies are separated by administrator and document. They are available only in this browser on this panel origin, for up to seven days and 8 MiB per document. Clearing site data removes them. Text is encrypted in IndexedDB; this does not protect an open administrator session. Storage restrictions or exceeded limits are shown as errors. Before a forced interface refresh, the interface waits for draft persistence. A browser crash can lose recent keystrokes that have not yet been written.
+
+### Certificate files
+
+If the panel needs to read a PEM file while preparing configuration, mount it read-only under /var/lib/remnawave and use that path. Reads outside this directory, including symlink escapes, are denied. Ordinary text files, FIFOs and PEM files over 128 KiB are rejected. This applies to files read by the panel; it does not relocate node certificates or configure node HTTPS automatically.
+
 ### X25519 password and private key
 
 The generator shows two values: Private key for the server and Password (public key) for the REALITY client. For X25519, password and publicKey identify the same bytes, so no duplicate field is shown. Copy all contains privateKey and password. Do not distribute the private key to clients.
@@ -468,6 +512,8 @@ Upload in headers or cookies and GET require explicit packet-up. Match path, hos
 
 Behind an HTTP proxy, check the route, headers, request-body limits and timeouts. Streaming modes require forwarding request bodies before completion and unbuffered responses. REALITY needs the protected connection to reach the core; ordinary CDN TLS termination does not replace it. If the proxy cannot forward a mode, test packet-up on a separate host.
 
+stream-auto remains available: it selects a mode from HTTP/REALITY and downloadSettings; it does not measure DPI, latency or buffering, and does not change an open stream after a network error.
+
 ### Additional traffic padding
 
 customDownlinkPadding adds random bytes to transmitted blocks and increases traffic usage. Start without it. When enabled, set matching header and token values on both sides: header must start with X- and contain 3–64 characters; token must contain 16–128 base64url characters. Avoid reserved proxy headers. bytes accepts 0–1024 and blockBytes 1024–16384; budgetPercent caps overhead (up to 100%), burstBytes is the initial allowance (up to 1 MiB), and uplink enables upload padding. These settings do not replace TLS/REALITY or guarantee that a connection bypasses blocking.
@@ -483,6 +529,48 @@ Validate JSON in the editor and save the profile. Database persistence and appli
 To migrate from XHTTP, clone the profile and host and keep the working configuration. Change streamSettings.network from xhttp to xera-http in the intended inbound and move verified xhttpSettings options to xeraHttpSettings. Do not change protocol, UUID, port or TLS/REALITY without a separate reason. Do not retain both settings blocks in the same variant. Renaming alone cannot give a standard XHTTP core Xera support: check both cores and the configuration the client actually imported. Start with the previous path and host, mode: "auto" and no new extensions. Verify connection, upload, download, reconnection and node logs before switching other users. To revert, use the saved XHTTP profile and refresh the subscription.
 
 For a parallel test, use a separate node or a free port. Two inbounds must not listen on the same address and port at the same time.
+
+### New wire profile and HTTP/2
+
+Update the client and server cores together. Remove xPaddingObfsMode, noGRPCHeader, noSSEHeader and xPaddingMethod: "repeat-x": these settings are rejected. Tokenish padding always applies to requests and accepted transport responses. Padding, session and sequence placement must match on both peers; legacy locations are not searched. uplinkHTTPMethod must also match. OPTIONS carrying Access-Control-Request-Method and Origin is a browser preflight; OPTIONS without that header can carry upload data.
+
+h2Params configures the HTTP/2 server, for example {"MaxConcurrentStreams":128,"MaxReadFrameSize":65536}. Unknown fields, prohibited ciphers and invalid sizes are rejected; timeouts are numeric nanoseconds. This does not configure a browser fingerprint for the HTTP/2 client.
+
+Headers follow the TLS ClientHello family; explicit values take priority. Unrecognized requests receive the same ordinary 404 response before session allocation or body reads. Padding and these responses do not replace TLS/REALITY or VLESS. uTLS does not mimic the entire browser HTTP/2/QUIC stack. An ISP cannot read HTTP inside HTTPS, but a CDN terminating TLS can. DPI indistinguishability is not guaranteed: comparative measurements on the target network are required.
+
+Transport HTTP header names must start with X-, contain 3–64 characters and avoid proxy headers. Session, sequence and padding keys sharing a placement must be distinct. Invalid or conflicting settings are rejected before starting the listener.
+
+Tokenish padding is now generated in one pass from random Base62 symbols with an exact HPACK Huffman-encoded size, without a deterministic repair suffix. This is the size of the padding value, not the complete HTTP request or TLS packet.
+
+When the server enables customDownlinkPadding, every request requires exactly one matching header/token marker and the client verifies the response acknowledgement. Missing, incorrect or repeated markers receive an ordinary 404 before body reads or session allocation; there is no unpadded fallback. Update both ends together. Browser Dialer does not support this extension, so CORS preflights are also rejected for it. Generate token from 32 random bytes encoded as base64url. The marker is shared by the profile and visible to a TLS-terminating CDN and profile users: it does not replace VLESS authorization or stop a participant who already knows it.
+
+### Camouflage limits and measurement
+
+Encryption hides content, but not the server address, packet sizes, directions or timing. Matching HTTP headers alone does not reproduce browser behavior. TLS-in-TLS and The Parrot Is Dead describe limitations; results for other tunnels do not measure our Xera. FRONT studies cover traffic in a Tor model, so its settings cannot be transferred without measurements.
+
+Evaluate passive classification and active requests separately. Compare ordinary HTTPS and Xera captures on the same network across workloads and session lengths; measure false positives, latency, traffic overhead, CPU and memory. H1/H2/H3 functional and race tests establish correctness, not DPI indistinguishability. This local change adds no background requests, artificial delays or live protocol switching.
+
+[TLS-in-TLS, USENIX 2024](https://www.usenix.org/conference/usenixsecurity24/presentation/xue-fingerprinting) · [The Parrot Is Dead](https://dedis.cs.yale.edu/dissent/papers/parrot-abs/) · [FRONT](https://www.usenix.org/conference/usenixsecurity20/presentation/gong) · [Security Engineering, 20.4](https://www.cl.cam.ac.uk/archive/rja14/Papers/SEv3-ch20.pdf)
+
+### Client HTTP/2 wire profile
+
+The new local client path aligns the HTTP/2 opening with the supported Chrome 133 TLS profile: SETTINGS and their order, pseudo-header order, connection window and header compression. It is selected automatically for chrome, hellochrome_133 and an empty fingerprint while the pinned uTLS maps them to Chrome 133. Other versions and families retain the standard H2 path, with no browser-equivalence claim. This change does not alter HTTP/1.1 or HTTP/3.
+
+This is HTTP/2 behavior inside the protected connection, not new encryption. An ISP cannot read SETTINGS inside TLS; a TLS-terminating CDN can. Alignment removes one specific cross-layer mismatch, but does not hide the server address, session duration or application traffic patterns. Full DPI indistinguishability has not been established.
+
+TLS/REALITY, certificate verification, certificate pinning and ALPN checks remain in the existing Xray path. Redirects are not followed, changing HTTP authority in one transport is rejected, and POST requests are not automatically replayed after an error. Request cancellation, closure and connection reuse are supported. Each client transport permits at most four connections and 32 active HTTP requests per direction; waiting requests honor their own cancellation context. No background requests or artificial delays are added.
+
+The path uses pinned fhttp v0.7.3. A loopback test checks the actual transmitted frames, not just configuration values. This is a local change and does not establish that a release has been published.
+
+Before HTTP/2 decoding, response boundaries are checked: frames cannot exceed the advertised 16 KiB; a header block is limited to 512 KiB and 32 frames and must complete within 10 seconds. An invalid CONTINUATION sequence closes the connection. The deadline is cleared after headers complete and does not limit data-transfer duration. This bounds excessive header processing without changing payloads or encryption.
+
+### Checking options in the editor
+
+Node profiles and Xray subscription templates use the same transport schema. Completions also cover extra, customDownlinkPadding, xmux and downloadSettings. The editor checks supported values and bounds; WASM additionally runs the configuration builder. Valid JSON alone does not establish application support.
+
+After changing the core, rebuild the editor and frontend. Schemas, WASM and its JavaScript each receive a content-based URL version, so updated completions do not redownload unchanged WASM.
+
+h2Params and server resource limits stay on the node and are omitted from client subscriptions, including inside extra. Shared transport options and downloadSettings are preserved. xmux.hKeepAlivePeriod is in seconds: 0 selects the default, -1 disables idle probes, and positive values cannot exceed 604800. HTTP header names and values are checked before startup. Set Host through the separate host field.
 
 ## Visual profile canvas
 
@@ -675,6 +763,14 @@ Xray JSON, Mihomo, Stash, Singbox and Clash have separate templates. Choose a fo
 
 Create or select a template for the required format. When renaming it, choose a name not already used by another template of that format. If the name exists, the panel marks the field and explains the error while keeping your input. Before deleting a template, check subscription settings and external squads that use it. After editing, fetch a test user’s subscription and import it into the client: valid JSON or YAML does not verify a connection.
 
+### Selection by total HTTP response time
+
+Lowest response time (ping + TTFB) selects by an HTTP probe through each pool server. Xray uses leastPing with observatory or burstObservatory; Mihomo/Clash/Stash use url-test and sing-box uses urltest. The user app measures the route, not the panel. Timing includes connection setup, TLS for HTTPS and waiting for the HTTP response. It is not separate ICMP ping or a sum of two independently measured values.
+
+For leastPing, the panel supplies a missing observer and enrolls every balancer selector in HTTP checks, including hand-written JSON. Custom URLs, intervals and explicit HTTP methods are preserved. Defaults are https://www.gstatic.com/generate_204 and 30s; burstObservatory uses HEAD, a 5s timeout and sampling 2. HEAD does not download the response body; an explicit burstObservatory GET includes reading the body in its delay. Choose the same small response, preferably 204, reachable through the entire pool. Measuring from the panel cannot bypass a blocked probe site.
+
+After initial measurements, the app refreshes results on its configured interval. New connections use the current selection without refreshing the subscription; existing streams do not move. Burst uses the sample mean; native url-test/urltest tolerance reduces frequent switching. Probe settings and supported values depend on the client core. Probe timeout and fallback configure failure behavior. Pool membership still respects user access and applicable quotas.
+
 ### Autoselect in code and UI
 
 The Xray JSON Editing and Autoselect tabs share one draft. Editing an existing pool or balancer immediately updates its JSON. A new pool adds injectHosts, a balancer, routing and observation for leastPing or leastLoad. Adding a balancer for the same pool again does not create a second card. An unfinished balancer named after its pool is completed in place. Created and copied templates appear in the list immediately. Other outbounds, rules and settings remain intact. The changes panel compares against the last save; on phones it appears below the form. Save publishes a valid draft; text with errors is saved on the server with warnings and remains available in history.
@@ -710,6 +806,14 @@ Priority: first available selects the first working server. For an exact order, 
 ### When to add the recipient host as proxy
 
 Also add the recipient host as proxy maps to remnawave.addVirtualHostAsOutbound. When enabled, the generator additionally builds a separate outbound tagged proxy from the recipient host’s address, port, transport and security settings. Autoselect does not require this switch; it does not enable TLS automatically. Leave it off for an Automatic placeholder representing a balancer. Real injectHosts pool members and the balancer remain in the configuration. Enable it only for a real additional connection supported by the client. A core may reject public VLESS without TLS/REALITY or VLESS encryption; Happ iOS proxy-based checks can report failed to build outbound config with tag proxy / vless without TLS. A successful ordinary test or another device does not validate this extra outbound. Disable the switch for a placeholder, or correct transport and security for a real host. Save the template and update the subscription in the app. The switch does not reconfigure servers or install certificates.
+
+### Temporary delivery errors
+
+A failed user, device or host query does not mean the subscription was deleted. Configuration delivery returns a temporary error asking the client to retry after 30 seconds; a genuinely missing user still returns 404. A failed host query is not reported as a successful empty subscription. If there truly are no available hosts, extra template and quota queries are skipped. For repeated failures, check the log and database connectivity; do not replace a user’s keys to solve a network error.
+
+### Output size and generation errors
+
+A generated subscription is limited to 16 MiB. Sing-box, Mihomo, Stash and Clash group expansion is also bounded during generation with room for escaping and formatting; excessive fanout may be rejected before reaching the exact limit. Reduce the number of groups or their servers. Generation failures return HTTP 503 rather than an empty successful subscription. When the cache is unavailable, templates are read from the database.
 
 ### Saving with warnings
 
@@ -809,7 +913,7 @@ Global HWID rules and fallback values live here; user-specific settings remain o
 
 ### Remark order
 
-Open Subscription settings → the remarks card. Use the up and down arrows to move notification reasons, save the settings, then refresh the subscription in the client. The default order is Subscription expired, Subscription disabled, New devices denied, and Device blocked (HWID). Only messages for applicable reasons are shown. Each reason’s text is edited separately in this card.
+Open Subscription settings → the remarks card. Use the up and down arrows to move notification reasons, save the settings, then refresh the subscription in the client. The default order is Subscription expired, Subscription disabled, Subscription frozen, New devices denied, and Device blocked (HWID). Only messages for applicable reasons are shown. Each reason’s text is edited separately in this card.
 
 When combining subscription status and HWID is enabled, an expired or disabled subscription together with a blocked device produces both message groups in the chosen order. For example, expiry appears before the device block by default; moving HWID above expiry reverses them. With combining disabled, the subscription status message takes priority; an active subscription shows the device block message.
 
@@ -1103,9 +1207,13 @@ Grant access only to the required sections and actions. Read access retrieves da
 
 Share the token only with a trusted integration. If exposed, delete it and create a replacement. The token name helps identify which service uses the access. Access for individual customers is managed by the integration itself.
 
+### Reading private settings through the API
+
+Node API responses exclude raw inbound settings and private keys. Use the profile API with the appropriate permission to read configuration. Updating a profile requires update permission and config-profiles:get; updating a template requires update permission and subscription-template:get because the response contains stored content. Matching :read, :* or * scopes also permit reading. Without read access, the request is rejected before changing data. Updating, enabling, disabling or extending users, resetting their traffic and revoking subscriptions also require users:by-id. Updating an external squad requires external-squads:get; reordering requires external-squads:list. Matching :read and :* grants also apply. Creating a user does not require reading existing keys. Administrator sessions keep their existing behavior.
+
 ### User-management bots and permanent access
 
-The Users preset permits creating, editing, freezing/resuming users, resetting traffic, reading subscription keys and managing HWID devices; internal/external squad lists are read-only. It excludes panel settings, servers, backups and token administration. In the user API, set status FROZEN to freeze and ACTIVE to resume. Required scope: users:update, users:write or users:*. Expired accounts freeze with zero remaining time. When creating a token select No expiration: expiresInDays: null stores expireAt: null and signs a JWT without exp with an explicit permanent marker. No fabricated distant date is used. Every request checks deletion and current scopes in the database. Editing names/permissions preserves token value and expiry; create a replacement and delete the old token to change lifetime. The minimum subscription-page preset contains only system:metadata, subscriptions:subpage-config, subscription-page-configs:get and subscription-page-configs:list. Add users:by-username separately only for enabled Marzban legacy-link compatibility.
+The Users preset permits creating, editing, freezing/resuming users, resetting traffic, reading subscription keys and links, and bulk user operations. It is a fixed list of 30 users-resource scopes; HWID management and squad/domain catalogs require separate selection. It excludes panel settings, servers, backups and token administration. In the user API, set status FROZEN to freeze and ACTIVE to resume. Required scopes: users:update or users:write, plus users:by-id or users:read; users:* covers both. Expired accounts freeze with zero remaining time. When creating a token select No expiration: expiresInDays: null stores expireAt: null and signs a JWT without exp with an explicit permanent marker. No fabricated distant date is used. Every request checks deletion and current scopes in the database. Editing names/permissions preserves token value and expiry; create a replacement and delete the old token to change lifetime. The minimum subscription-page preset contains only system:metadata, subscriptions:subpage-config, subscription-page-configs:get and subscription-page-configs:list. Add users:by-username separately only for enabled Marzban legacy-link compatibility.
 
 ### Fields and controls
 
@@ -1130,15 +1238,13 @@ Starting an update blocks all open panel sessions. The installer checks the rele
 
 The update dialog shows the current stage out of eight, stage completion percentage, elapsed time and stages after the current one. The journal contains the 24 most recent step events and can be downloaded as JSON; full technical output remains in a private server file. Remaining time is estimated from a previous successful update, or remaining stages are shown when no history exists. During an API restart the dialog retains the last confirmed progress until reconnection; expected PANEL_UPDATING errors do not create notifications.
 
-### Launcher and appearance reset
+### Appearance reset
 
-In theme settings, Launcher is grouped with the compact interface and reduced motion switches. It shows or hides the floating quick navigation window. Enable it, open quick link settings and choose the sections you need. Your selection and window position are saved in this browser.
-
-Reset at the bottom restores the default theme, accent, font, density and motion setting. The launcher switch keeps its value; turn the window off separately when needed.
+Reset in theme settings restores the default theme, accent, font, interface density and motion setting. Changes apply immediately and are saved in this browser.
 
 ### Theme settings
 
-Open the palette in the header. Checkmarks identify the selected theme and accent, and the current accent name appears above the palette. Choose a font from the list; interface density, motion and the launcher have switches below. Changes apply immediately and are saved in this browser; no separate Save button is needed. Reset restores the default theme, accent, font, density and motion; the launcher state and position are stored separately.
+Open the palette in the header. Checkmarks identify the selected theme and accent, and the current accent name appears above the palette. Choose a font from the list; interface density and motion have switches below. Changes apply immediately and are saved in this browser; no separate Save button is needed. Reset restores the default theme, accent, font, density and motion.
 
 ## Notifications
 

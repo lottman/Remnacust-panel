@@ -418,10 +418,22 @@ export class ResolveProxyConfigService {
         inputHost: HostWithRawInbound,
     ): XeraHttpTransport {
         const result = structuredClone(settings ?? {});
-        delete result.serverMaxBufferedBytes;
-        delete result.serverMaxSessions;
-        if (inputHost.path !== null) result.path = inputHost.path;
-        if (inputHost.host !== null) result.host = this.resolveRandomizedValue(inputHost.host);
+        const records = [result];
+        if (result.extra && typeof result.extra === 'object' && !Array.isArray(result.extra)) {
+            records.push(result.extra as Record<string, unknown>);
+        }
+        for (const record of records) {
+            for (const key of [
+                'serverMaxBufferedBytes',
+                'serverMaxSessions',
+                'serverMaxHeaderBytes',
+                'h2Params',
+            ]) {
+                delete record[key];
+            }
+        }
+        if (inputHost.path != null) result.path = inputHost.path;
+        if (inputHost.host != null) result.host = this.resolveRandomizedValue(inputHost.host);
         return { transport: 'xera-http', transportOptions: { settings: result } };
     }
 

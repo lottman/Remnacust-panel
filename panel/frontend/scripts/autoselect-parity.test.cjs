@@ -31,6 +31,45 @@ async function xray(config, candidates = hosts) {
         .generateConfig({hosts:candidates,isExtendedClient:false}));
 }
 
+test('unused prefix collisions do not become duplicate outbound tags in the real generator', async () => {
+    for (const mode of ['useHostRemarkAsTag', 'useHostTagAsTag']) {
+        const config = {
+            outbounds: [{ tag: 'direct', protocol: 'freedom' }],
+            remnawave: { injectHosts: [
+                { tagPrefix: 'direct', [mode]: true, selector: { type: 'uuids', values: [id(1)] } },
+                { tagPrefix: 'direct-2', selector: { type: 'uuids', values: [id(2)] } },
+            ] },
+            routing: { balancers: [{ tag: 'auto', selector: ['EU', 'direct-2'],
+                strategy: { type: 'leastLoad', settings: { tolerance: 2 } } }] },
+        };
+        assert.equal(m.validationPath(config), 'routing.balancers.0.strategy.settings.tolerance');
+        const generated = (await xray(config))[0];
+        const tags = generated.outbounds.map(outbound => outbound.tag);
+        assert.deepEqual(tags, [mode === 'useHostRemarkAsTag' ? 'EU-1' : 'EU', 'direct-2', 'direct']);
+        assert.equal(new Set(tags).size, tags.length);
+        assert.equal(generated.routing.balancers[0].strategy.settings.tolerance, 2);
+    }
+});
+
+test('hand-written leastPing receives the same HTTP checks as GUI without an observer block', async () => {
+    const gui = m.parseTemplate(m.addPool('{"outbounds":[]}', [id(1), id(2)]));
+    const code = structuredClone(gui);
+    delete code.observatory;
+    assert.deepEqual(await xray(code), await xray(gui));
+});
+
+test('partial HTTP probe settings preserve their URL and agree between the GUI and generated JSON', async () => {
+    for (const key of ['observatory', 'burstObservatory']) {
+        const input = m.parseTemplate(m.addPool('{"outbounds":[]}', [id(1), id(2)]));
+        delete input.observatory;
+        input[key] = key === 'observatory'
+            ? { probeURL: 'https://allowed.example/probe' }
+            : { pingConfig: { destination: 'https://allowed.example/probe', httpMethod: 'GET' } };
+        const gui = m.parseTemplate(m.observerFor(JSON.stringify(input), ['auto'], 'leastPing'));
+        assert.deepEqual(await xray(input), await xray(gui));
+    }
+});
+
 for (const strategy of ['leastPing','leastLoad','random','roundRobin','priority']) {
     test(`GUI and hand-written JSON deliver the same ${strategy} Xray profile`, async () => {
         let gui = m.addPool('{"outbounds":[]}', [id(2),id(3),id(1)]);

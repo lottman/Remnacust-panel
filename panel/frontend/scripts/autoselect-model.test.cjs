@@ -10,6 +10,20 @@ test('prefix warnings identify the exact pool and allow distinct non-colliding n
  assert.equal(m.validationPath(config(['g','g-2'])),'remnawave.injectHosts.0.tagPrefix');
  const manual=config(['g']);manual.outbounds=[{tag:'g-3'}];assert.equal(m.validationPath(manual),'remnawave.injectHosts.0.tagPrefix');
 });
+test('prefix validation follows the generator naming mode for both sides of a collision', () => {
+    for (const mode of ['useHostRemarkAsTag', 'useHostTagAsTag']) {
+        for (const inactiveFirst of [false, true]) {
+            const inactive = { tagPrefix: 'direct', [mode]: true, selector: { type: 'tags', values: ['EU'] } };
+            const active = { tagPrefix: 'direct-2', selector: { type: 'tags', values: ['RU'] } };
+            const config = { outbounds: [{ tag: 'direct', protocol: 'freedom' }],
+                remnawave: { injectHosts: inactiveFirst ? [inactive, active] : [active, inactive] } };
+            assert.equal(m.validationPath(config), null);
+            inactive[mode] = false;
+            assert.equal(m.validationPath(config), 'remnawave.injectHosts.0.tagPrefix');
+        }
+    }
+});
+
 test('renaming and deleting a balancer updates its recipient assignments without touching another group',()=>{
  const config={routing:{balancers:[{tag:'one',selector:['g']},{tag:'two',selector:['h']}],rules:[]},remnawave:{assignments:[{balancerTag:'one',hosts:[]},{balancerTag:'two',tags:['NL']}]}};
  const renamed=m.parseTemplate(m.renameBalancer(JSON.stringify(config),0,'new'));

@@ -1,4 +1,5 @@
-import { closeSync, constants, fstatSync, openSync, readSync } from 'node:fs';
+import { closeSync, constants, fstatSync, openSync, readSync, realpathSync } from 'node:fs';
+import { sep } from 'node:path';
 
 const MAX_PEM_BYTES = 128 * 1024;
 const PEM_LABELS = new Set([
@@ -22,9 +23,15 @@ export interface IResolvedPemCert {
 }
 
 export function readPemLines(filePath: string): string[] {
+    const realPath = realpathSync(filePath);
+    const allowedDirectory = realpathSync('/var/lib/remnawave');
+    if (!realPath.startsWith(allowedDirectory + sep)) throw new UnsafePemFileError();
     // O_NONBLOCK prevents opening a FIFO from waiting for a writer. Check the
     // opened descriptor, not a path that can change between stat and read.
-    const fd = openSync(filePath, constants.O_RDONLY | (constants.O_NONBLOCK ?? 0));
+    const fd = openSync(
+        realPath,
+        constants.O_RDONLY | (constants.O_NONBLOCK ?? 0) | (constants.O_NOFOLLOW ?? 0),
+    );
     let content: string;
     try {
         const stat = fstatSync(fd);

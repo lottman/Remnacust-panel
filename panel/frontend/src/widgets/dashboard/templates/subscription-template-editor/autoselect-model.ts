@@ -299,13 +299,44 @@ export function observerFor(text: string, prefixes: string[], strategy: string):
                           destination: 'https://www.gstatic.com/generate_204',
                           interval: '30s',
                           timeout: '5s',
-                          sampling: 2
+                          sampling: 2,
+                          httpMethod: 'HEAD'
                       }
                   }
         )
     if (existing.subjectSelector !== undefined && !Array.isArray(existing.subjectSelector))
         throw new Error('observer-selector')
+    if (
+        key === 'burstObservatory' &&
+        existing.pingConfig !== undefined &&
+        (!existing.pingConfig ||
+            typeof existing.pingConfig !== 'object' ||
+            Array.isArray(existing.pingConfig))
+    )
+        throw new Error('observer-object')
     let next = text
+    const defaults =
+        key === 'observatory'
+            ? {
+                  ...(existing.probeURL === undefined
+                      ? { probeUrl: 'https://www.gstatic.com/generate_204' }
+                      : {}),
+                  probeInterval: '30s',
+                  enableConcurrency: true
+              }
+            : {
+                  pingConfig: {
+                      destination: 'https://www.gstatic.com/generate_204',
+                      interval: '30s',
+                      timeout: '5s',
+                      sampling: 2,
+                      httpMethod: 'HEAD',
+                      ...existing.pingConfig
+                  }
+              }
+    for (const [field, value] of Object.entries(defaults))
+        if (existing[field] === undefined || field === 'pingConfig')
+            next = editTemplate(next, [key, field], value)
     const selected: string[] = existing.subjectSelector ?? []
     for (const prefix of prefixes)
         if (!selected.some((value) => prefix.startsWith(value)))
@@ -605,7 +636,7 @@ export function validationPath(config: JsonObject): string | null {
         .map((outbound: JsonObject) => outbound.tag)
         .filter(Boolean)
     for (const [index, pool] of poolsOf(config).entries()) {
-        const prefix = pool.tagPrefix
+        const prefix = pool.useHostRemarkAsTag || pool.useHostTagAsTag ? undefined : pool.tagPrefix
         if (
             prefix &&
             (staticTags.some(
@@ -614,6 +645,8 @@ export function validationPath(config: JsonObject): string | null {
                 poolsOf(config).some(
                     (other, otherIndex) =>
                         index !== otherIndex &&
+                        !other.useHostRemarkAsTag &&
+                        !other.useHostTagAsTag &&
                         other.tagPrefix &&
                         injectedPrefixesCollide(prefix, other.tagPrefix)
                 ))

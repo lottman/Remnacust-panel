@@ -61,7 +61,7 @@ test('ordinary API calls retain links and a page with visible keys retains devic
 test('only the versioned subscription page client opts into the metadata optimization', async () => {
     const noop = () => () => {};
     const { SubscriptionController } = source('modules/subscription/controllers/subscription.controller.ts', {
-        '@nestjs/common': { Controller: noop, Get: noop, Headers: noop, Param: noop, Res: noop,
+        '@nestjs/common': { Controller: noop, Get: noop, Header: noop, Headers: noop, Param: noop, Res: noop,
             UseFilters: noop, UseInterceptors: noop, HttpStatus: { OK: 200 } },
         '@common/decorators/base-endpoint': { Endpoint: noop },
         '@common/decorators/get-srr-context': { GetSrrContext: noop },

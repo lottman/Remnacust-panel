@@ -8,12 +8,14 @@ import {
 } from '@remnawave/backend-contract'
 import axios from 'axios'
 import consola from 'consola'
+import i18next from 'i18next'
 import { getLocation } from 'jsonc-parser'
 import { configureMonacoYaml, MonacoYaml, MonacoYamlOptions, SchemasSettings } from 'monaco-yaml'
 import { app } from 'src/config'
 
 import { translateUiText as uiText } from '@shared/i18n/interface-text'
 import { registerJsonSchema } from '@shared/utils/monaco/json-schema-registry'
+import { loadEditorSchema } from '@shared/utils/monaco/schema-cache'
 
 import { injectorCompletionValues } from './injector-completions'
 import { injectorJsonSchema } from './injector-json-schema'
@@ -177,6 +179,33 @@ export const configureMonaco = async (
                 schema,
                 uri: 'https://subscription-template-schema.json'
             })
+
+            if (templateType === SUBSCRIPTION_TEMPLATE_TYPE.XRAY_JSON) {
+                const xraySchema = await loadEditorSchema<IJsonSchemaDocument>(
+                    i18next.language === 'zh'
+                        ? app.configEditor.jsonSchemaCnUrl
+                        : app.configEditor.jsonSchemaUrl
+                )
+                const definitions = xraySchema.definitions as
+                    | Record<string, IJsonSchemaDocument>
+                    | undefined
+                const root =
+                    typeof xraySchema.$ref === 'string'
+                        ? definitions?.[xraySchema.$ref.replace('#/definitions/', '')]
+                        : xraySchema
+
+                if (!root) throw new Error('Xray schema root is unavailable')
+                root.properties = { ...root.properties, remnawave: true }
+
+                registerJsonSchema({
+                    fileMatch: [
+                        getTemplateModelPath(templateType),
+                        `${getTemplateModelPath(templateType)}/*`
+                    ],
+                    schema: xraySchema,
+                    uri: 'https://subscription-template-xray-schema.json'
+                })
+            }
 
             if (templateType === SUBSCRIPTION_TEMPLATE_TYPE.SINGBOX) {
                 const response = await axios.get<IJsonSchemaDocument>(

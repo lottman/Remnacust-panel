@@ -13,6 +13,7 @@ import {
     renderClientGroups,
     type ClientCandidate,
 } from './client-pool';
+import { boundedSubscriptionOutput, SubscriptionExpansionBudget } from './subscription-output';
 import { getUdpHop } from './udp-hop';
 
 /**
@@ -156,7 +157,7 @@ export class SingBoxGeneratorService {
         } catch (error) {
             if (error instanceof ClientPoolError) throw error;
             this.logger.error(`Error generating sing-box config: ${error}`);
-            return '';
+            throw error;
         }
     }
 
@@ -613,6 +614,7 @@ export class SingBoxGeneratorService {
             .filter((o) => o.type === 'urltest' || urltestTags.includes(o.tag))
             .map((o) => o.tag);
         const finalOutbounds: Record<string, unknown>[] = [];
+        const budget = new SubscriptionExpansionBudget('json');
         for (const outbound of allOutbounds) {
             if (outbound.type === 'selector' || outbound.type === 'urltest') {
                 const groups = await renderClientGroups(
@@ -625,6 +627,7 @@ export class SingBoxGeneratorService {
                               ? urltestTags
                               : selectorTags,
                     true,
+                    budget,
                 );
                 finalOutbounds.push(...groups);
             } else {
@@ -633,6 +636,8 @@ export class SingBoxGeneratorService {
             }
         }
         const { remnawave: _custom, ...cleanTemplate } = template;
-        return JSON.stringify({ ...cleanTemplate, outbounds: finalOutbounds });
+        return boundedSubscriptionOutput(
+            JSON.stringify({ ...cleanTemplate, outbounds: finalOutbounds }),
+        );
     }
 }

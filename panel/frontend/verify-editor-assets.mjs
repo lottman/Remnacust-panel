@@ -2,9 +2,12 @@ import { webcrypto } from 'node:crypto'
 import { readFileSync, statSync } from 'node:fs'
 import { runInThisContext } from 'node:vm'
 
+import { EDITOR_ASSETS } from './editor-assets.mjs'
+import { verifyXeraEditorSchemas } from './tests/helpers/xera-editor-contract.mjs'
+
 const asset = (name) => new URL(`./public/assets/${name}`, import.meta.url)
 
-for (const name of ['main.wasm', 'wasm_exec.js', 'xray.schema.json', 'xray.schema.cn.json']) {
+for (const name of EDITOR_ASSETS) {
     if (statSync(asset(name)).size === 0) throw new Error(`Empty editor asset: ${name}`)
 }
 for (const name of ['xray.schema.json', 'xray.schema.cn.json']) {
@@ -12,10 +15,9 @@ for (const name of ['xray.schema.json', 'xray.schema.cn.json']) {
     if (schema.definitions.TLSObject.properties.allowInsecure) throw new Error('Stale TLS schema')
     if (
         schema['x-remnacust-upstream']?.version !== 'v26.10.31' ||
-        schema['x-remnacust-upstream']?.commit !==
-            'a4a3dff5b20c2faae567b742c172c7b95e75c083' ||
+        schema['x-remnacust-upstream']?.commit !== 'a4a3dff5b20c2faae567b742c172c7b95e75c083' ||
         schema['x-remnacust-upstream']?.patchCommit !== null ||
-        schema['x-remnacust-upstream']?.coreVersion !== '1.1.13'
+        schema['x-remnacust-upstream']?.coreVersion !== '1.1.14'
     )
         throw new Error('Stale config schema')
 }
@@ -49,7 +51,7 @@ if (!globalThis.XrayParseConfig('{invalid json')) {
     throw new Error('Xray WASM accepted invalid JSON')
 }
 
-if (globalThis.XrayGetVersion() !== '1.1.13') {
+if (globalThis.XrayGetVersion() !== '1.1.14') {
     throw new Error(`Stale editor core: ${globalThis.XrayGetVersion()}`)
 }
 const fixtures = JSON.parse(
@@ -64,8 +66,9 @@ for (const fixture of fixtures.invalid) {
         throw new Error(`Editor accepted ${fixture.name}`)
     }
 }
+const schemaCases = await verifyXeraEditorSchemas(fixtures)
 
 console.log(
-    `Editor core 1.1.13 (upstream 26.10.31) and ${fixtures.valid.length + fixtures.invalid.length} configuration fixtures verified`
+    `Editor core 1.1.14 (upstream 26.10.31), ${fixtures.valid.length + fixtures.invalid.length} configuration fixtures and ${schemaCases} Monaco schema cases verified`
 )
 process.exit(0)

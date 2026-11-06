@@ -1,4 +1,4 @@
-import { Body, Controller, HttpStatus, Param, UseFilters, UseGuards } from '@nestjs/common';
+import { Body, Controller, HttpStatus, Param, Req, UseFilters, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiConflictResponse, ApiTags } from '@nestjs/swagger';
 
 import { Endpoint } from '@common/decorators/base-endpoint/base-endpoint';
@@ -9,6 +9,7 @@ import { JwtDefaultGuard } from '@common/guards/jwt-guards/def-jwt-guard';
 import { RolesGuard } from '@common/guards/roles';
 import { ScopesGuard } from '@common/guards/scopes';
 import { errorHandler } from '@common/helpers/error-handler.helper';
+import { requireApiReadScope } from '@common/helpers/require-api-read-scope';
 import { CONTROLLERS_INFO, EXTERNAL_SQUADS_CONTROLLER } from '@libs/contracts/api';
 import {
     AddUsersToExternalSquadCommand,
@@ -25,6 +26,8 @@ import {
     SetExternalSquadTagsCommand,
 } from '@libs/contracts/commands';
 import { ROLE } from '@libs/contracts/constants';
+
+import type { IJWTAuthPayload } from '@modules/auth/interfaces';
 
 import {
     AddUsersToExternalSquadParamDto,
@@ -147,7 +150,13 @@ export class ExternalSquadController {
     })
     async updateExternalSquad(
         @Body() body: UpdateExternalSquadBodyDto,
+        @Req() request: { user: IJWTAuthPayload },
     ): Promise<UpdateExternalSquadResponseDto> {
+        requireApiReadScope(
+            request.user,
+            CONTROLLERS_INFO.EXTERNAL_SQUADS.resource,
+            GetExternalSquadByUuidCommand.endpointDetails.SCOPE!,
+        );
         const result = await this.externalSquadService.updateExternalSquad(body);
 
         const data = errorHandler(result);
@@ -196,7 +205,13 @@ export class ExternalSquadController {
     })
     async reorderExternalSquads(
         @Body() body: ReorderExternalSquadsBodyDto,
+        @Req() request: { user: IJWTAuthPayload },
     ): Promise<ReorderExternalSquadsResponseDto> {
+        requireApiReadScope(
+            request.user,
+            CONTROLLERS_INFO.EXTERNAL_SQUADS.resource,
+            GetExternalSquadsCommand.endpointDetails.SCOPE!,
+        );
         const result = await this.externalSquadService.reorderExternalSquads(body);
 
         const data = errorHandler(result);

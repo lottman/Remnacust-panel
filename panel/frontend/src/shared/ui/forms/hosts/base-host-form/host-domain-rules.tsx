@@ -1,4 +1,4 @@
-import { ActionIcon, Button, Group, Stack, TagsInput, Text, Tooltip } from '@mantine/core'
+import { ActionIcon, Button, Group, Stack, TagsInput, Tooltip } from '@mantine/core'
 import { useState } from 'react'
 import {
     TbBrandOpenai,
@@ -12,8 +12,6 @@ import {
 } from 'react-icons/tb'
 
 import { useUiText } from '@shared/i18n/interface-text'
-import { CopyableFieldShared } from '@shared/ui/copyable-field/copyable-field'
-import { allowedProbeUrl } from '@shared/utils/allowed-probe'
 import { normalizeDestinationRule } from '@shared/utils/destination-rule'
 
 import {
@@ -53,7 +51,6 @@ export function HostDomainRules({
         }
     }
     const hint = uiText('domains-include-subdomains-http-s-urls-ipv4-ipv6-cidr-and-inte-bd63ed5')
-    const probeUrl = mode === 'ALLOW_ONLY' ? allowedProbeUrl([{ mode, domains: value }]) : undefined
     return (
         <Stack gap={8}>
             <TagsInput
@@ -131,14 +128,6 @@ export function HostDomainRules({
                     )
                 })}
             </Group>
-            {probeUrl && (
-                <Stack gap={4}>
-                    <CopyableFieldShared label={uiText('allowed-probe-url')} value={probeUrl} />
-                    <Text size="xs" c="dimmed">
-                        {uiText('allowed-probe-help')}
-                    </Text>
-                </Stack>
-            )}
         </Stack>
     )
 }

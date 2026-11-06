@@ -1,3 +1,5 @@
+import type { SubscriptionExpansionBudget } from './subscription-output';
+
 import { configuredRegex } from '@common/utils/bounded-regex';
 import { InjectHostsEntrySchema, TInjectHostsEntry } from '@libs/contracts/models';
 
@@ -71,7 +73,8 @@ export async function renderClientGroups(
     groups: Record<string, unknown>[],
     candidates: ClientCandidate[],
     legacy: (custom: Record<string, unknown> | undefined) => string[],
-    singbox = false,
+    singbox: boolean,
+    budget: SubscriptionExpansionBudget,
 ): Promise<Record<string, unknown>[]> {
     const deadline = Date.now() + 1000;
     const rendered: Record<string, unknown>[] = [];
@@ -88,13 +91,21 @@ export async function renderClientGroups(
         }
         const key = singbox ? 'outbounds' : 'proxies';
         const existing = Array.isArray(clean[key]) ? (clean[key] as string[]) : [];
-        const names =
-            members === undefined ? [...existing, ...legacy(custom)] : [...existing, ...members];
+        const names: string[] = [];
+        const seen = new Set<string>();
+        const append = (name: string) => {
+            if (seen.has(name)) return;
+            budget.appendMember(name);
+            seen.add(name);
+            names.push(name);
+        };
+        for (const name of existing) append(name);
+        for (const name of members ?? legacy(custom)) append(name);
         if (members !== undefined && !names.length)
             throw new ClientPoolError(
                 `No eligible hosts for client group ${String(group.name ?? group.tag)}`,
             );
-        rendered.push({ ...clean, [key]: [...new Set(names)] });
+        rendered.push({ ...clean, [key]: names });
     }
     return rendered;
 }

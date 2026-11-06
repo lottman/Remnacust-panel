@@ -1,5 +1,5 @@
 import { AdminOnlyEndpoint } from '@common/decorators/admin-only-endpoint';
-import { Body, Controller, HttpStatus, Param, Query, UseFilters, UseGuards } from '@nestjs/common';
+import { Body, Controller, HttpStatus, Param, Query, Req, UseFilters, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 import { TypedConfigService } from '@common/config/app-config';
@@ -11,6 +11,7 @@ import { JwtDefaultGuard } from '@common/guards/jwt-guards/def-jwt-guard';
 import { RolesGuard } from '@common/guards/roles';
 import { ScopesGuard } from '@common/guards/scopes';
 import { errorHandler } from '@common/helpers/error-handler.helper';
+import { requireApiReadScope } from '@common/helpers/require-api-read-scope';
 import { CONTROLLERS_INFO, USERS_CONTROLLER } from '@libs/contracts/api';
 import {
     CreateUserCommand,
@@ -34,6 +35,8 @@ import {
     ImportUsersCommand,
 } from '@libs/contracts/commands';
 import { ROLE } from '@libs/contracts/constants';
+
+import type { IJWTAuthPayload } from '@modules/auth/interfaces';
 
 import {
     CreateUserBodyDto,
@@ -90,6 +93,14 @@ export class UsersController {
         this.subPublicDomain = this.configService.getOrThrow('SUB_PUBLIC_DOMAIN');
     }
 
+    private requireUserRead(user: IJWTAuthPayload): void {
+        requireApiReadScope(
+            user,
+            CONTROLLERS_INFO.USERS.resource,
+            GetUserByIdCommand.endpointDetails.SCOPE!,
+        );
+    }
+
     @AdminOnlyEndpoint()
     @Endpoint({
         command: ExportUsersCommand,
@@ -140,7 +151,11 @@ export class UsersController {
         httpCode: HttpStatus.OK,
         type: UserResponseDto,
     })
-    async updateUser(@Body() body: UpdateUserBodyDto): Promise<UserResponseDto> {
+    async updateUser(
+        @Body() body: UpdateUserBodyDto,
+        @Req() request: { user: IJWTAuthPayload },
+    ): Promise<UserResponseDto> {
+        this.requireUserRead(request.user);
         const result = await this.usersService.updateUser(body);
 
         const data = errorHandler(result);
@@ -326,7 +341,9 @@ export class UsersController {
     async revokeUserSubscription(
         @Param() param: RevokeUserSubscriptionParamDto,
         @Body() body: RevokeUserSubscriptionBodyDto,
+        @Req() request: { user: IJWTAuthPayload },
     ): Promise<UserResponseDto> {
+        this.requireUserRead(request.user);
         const result = await this.usersService.revokeUserSubscription(param.userId, body);
 
         const data = errorHandler(result);
@@ -340,7 +357,11 @@ export class UsersController {
         httpCode: HttpStatus.OK,
         type: UserResponseDto,
     })
-    async disableUser(@Param() param: DisableUserParamDto): Promise<UserResponseDto> {
+    async disableUser(
+        @Param() param: DisableUserParamDto,
+        @Req() request: { user: IJWTAuthPayload },
+    ): Promise<UserResponseDto> {
+        this.requireUserRead(request.user);
         const result = await this.usersService.disableUser(param.userId);
 
         const data = errorHandler(result);
@@ -354,7 +375,11 @@ export class UsersController {
         httpCode: HttpStatus.OK,
         type: UserResponseDto,
     })
-    async enableUser(@Param() param: EnableUserParamDto): Promise<UserResponseDto> {
+    async enableUser(
+        @Param() param: EnableUserParamDto,
+        @Req() request: { user: IJWTAuthPayload },
+    ): Promise<UserResponseDto> {
+        this.requireUserRead(request.user);
         const result = await this.usersService.enableUser(param.userId);
 
         const data = errorHandler(result);
@@ -368,7 +393,11 @@ export class UsersController {
         httpCode: HttpStatus.OK,
         type: UserResponseDto,
     })
-    async resetUserTraffic(@Param() param: ResetUserTrafficParamDto): Promise<UserResponseDto> {
+    async resetUserTraffic(
+        @Param() param: ResetUserTrafficParamDto,
+        @Req() request: { user: IJWTAuthPayload },
+    ): Promise<UserResponseDto> {
+        this.requireUserRead(request.user);
         const result = await this.usersService.resetUserTraffic(param.userId);
 
         const data = errorHandler(result);
@@ -385,7 +414,9 @@ export class UsersController {
     async extendUserExpirationDate(
         @Param() param: ExtendUserParamDto,
         @Body() body: ExtendUserBodyDto,
+        @Req() request: { user: IJWTAuthPayload },
     ): Promise<UserResponseDto> {
+        this.requireUserRead(request.user);
         const result = await this.usersService.extendUserExpirationDate(param.userId, body.days);
 
         const data = errorHandler(result);

@@ -3,7 +3,7 @@
 export function installStaleAssetRecovery() {
     let checking = false
     let reloading = false
-    const key = 'xera:asset-recovery'
+    const key = 'xera:asset-recovery:time'
     const entry = document.querySelector<HTMLScriptElement>('script[type="module"][src]')?.src
     async function recover() {
         if (checking || reloading || !entry || !navigator.onLine) return

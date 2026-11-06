@@ -21,9 +21,19 @@ function source(relative, overrides = {}) {
     }
     if (Object.hasOwn(mocks, './client-pool'))
         mocks['./client-pool'] = require('./client-pool-fixture.cjs').pool;
+    if (Object.hasOwn(mocks, './subscription-output'))
+        mocks['./subscription-output'] = load(
+            path.join(path.dirname(filename), 'subscription-output.ts'),
+            { './client-pool': require('./client-pool-fixture.cjs').pool },
+        );
     if (Object.hasOwn(mocks, './priority-failover'))
         mocks['./priority-failover'] = load(
             path.join(path.dirname(filename), 'priority-failover.ts'),
+            { './client-pool': require('./client-pool-fixture.cjs').pool },
+        );
+    if (Object.hasOwn(mocks, './response-time-probes'))
+        mocks['./response-time-probes'] = load(
+            path.join(path.dirname(filename), 'response-time-probes.ts'),
             { './client-pool': require('./client-pool-fixture.cjs').pool },
         );
     return load(filename, { ...mocks, ...overrides });

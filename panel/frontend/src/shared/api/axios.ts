@@ -66,7 +66,7 @@ instance.interceptors.response.use(
             (!response.config.responseType || response.config.responseType === 'json')
         ) {
             try {
-                response.data = parseApiResponse(response.data)
+                response.data = parseApiResponse(response.data, response.status)
             } catch (error) {
                 return retryRead(error, response.config)
             }

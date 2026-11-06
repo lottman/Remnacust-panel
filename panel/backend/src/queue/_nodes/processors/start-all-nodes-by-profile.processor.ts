@@ -3,7 +3,7 @@ import pMap from 'p-map';
 
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Logger, Scope } from '@nestjs/common';
-import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { Command, CommandBus, QueryBus } from '@nestjs/cqrs';
 
 import { AxiosService } from '@common/axios/axios.service';
 import { HostPolicyService } from '@common/host-policy/host-policy.service';
@@ -26,6 +26,7 @@ import { UpdateNodeCommand } from '@modules/nodes/commands/update-node';
 import { FindNodesByCriteriaQuery } from '@modules/nodes/queries/find-nodes-by-criteria';
 import { nodesUsingProfile } from '@modules/nodes/queries/find-nodes-by-criteria/find-nodes-by-criteria.query';
 import { GetDeviceStateRevisionQuery } from '@modules/nodes/queries/get-device-state-revision';
+import { GetNodeByUuidQuery } from '@modules/nodes/queries/get-node-by-uuid';
 import { GetPortPlanNodeUuidsQuery } from '@modules/nodes/queries/get-port-plan-node-uuids';
 import { GetPreparedConfigWithUsersQuery } from '@modules/users/queries/get-prepared-config-with-users/get-prepared-config-with-users.query';
 
@@ -34,6 +35,11 @@ import { NodesQueuesService } from '@queue/_nodes';
 import { QUEUES_NAMES } from '../../queue.enum';
 import { NODES_JOB_NAMES } from '../constants';
 import { NodeConfigurationService } from '../node-configuration.service';
+import {
+    NodeDeliveryBusyError,
+    NodeDeliveryLostError,
+    PortPlanLeaseService,
+} from '../port-plan-lease.service';
 
 @Processor(
     {
@@ -56,6 +62,7 @@ export class StartAllNodesByProfileQueueProcessor extends WorkerHost {
         private readonly commandBus: CommandBus,
         private readonly rawCacheService: RawCacheService,
         private readonly configurations: NodeConfigurationService,
+        private readonly deliveries: PortPlanLeaseService,
     ) {
         super();
         this.CONCURRENCY = 20;
@@ -77,8 +84,6 @@ export class StartAllNodesByProfileQueueProcessor extends WorkerHost {
         force?: boolean;
     }) {
         try {
-            await this.nodesQueuesService.queues.startNode.pause();
-            await this.nodesQueuesService.queues.startAllNodes.pause();
             const findNodesByCriteriaResult = await this.queryBus.execute(
                 new FindNodesByCriteriaQuery(nodesUsingProfile(payload.profileUuid)),
             );
@@ -101,11 +106,24 @@ export class StartAllNodesByProfileQueueProcessor extends WorkerHost {
                     );
                     await pMap(
                         nodes.filter((node) => managedIds.has(node.uuid)),
-                        (node) =>
-                            this.configurations.apply({
-                                nodeUuid: node.uuid,
-                                force: payload.force,
-                            }),
+                        async (node) => {
+                            try {
+                                await this.configurations.apply({
+                                    nodeUuid: node.uuid,
+                                    force: payload.force,
+                                });
+                            } catch (error) {
+                                if (
+                                    error instanceof NodeDeliveryBusyError ||
+                                    error instanceof NodeDeliveryLostError
+                                ) {
+                                    await this.nodesQueuesService.startNode({
+                                        nodeUuid: node.uuid,
+                                        force: payload.force,
+                                    });
+                                } else throw error;
+                            }
+                        },
                         { concurrency: this.CONCURRENCY },
                     );
                     const legacyNodes = nodes.filter(
@@ -126,15 +144,35 @@ export class StartAllNodesByProfileQueueProcessor extends WorkerHost {
                                 this.rawCacheService,
                             );
                             if (!policy.ready) {
-                                await this.commandBus.execute(
-                                    new UpdateNodeCommand({
-                                        uuid: node.uuid,
-                                        isConnected: policy.running,
-                                        isConnecting: false,
-                                        lastStatusChange: new Date(),
-                                        lastStatusMessage: policy.message,
-                                    }),
-                                );
+                                try {
+                                    await this.deliveries.withLifecycle(
+                                        node.uuid,
+                                        async (assert) => {
+                                            await assert();
+                                            await this.deliveries.commitLifecycleStatus(node, () =>
+                                                this.commandBus.execute(
+                                                    new UpdateNodeCommand({
+                                                        uuid: node.uuid,
+                                                        isConnected: policy.running,
+                                                        isConnecting: false,
+                                                        lastStatusChange: new Date(),
+                                                        lastStatusMessage: policy.message,
+                                                    }),
+                                                ),
+                                            );
+                                        },
+                                    );
+                                } catch (error) {
+                                    if (
+                                        error instanceof NodeDeliveryBusyError ||
+                                        error instanceof NodeDeliveryLostError
+                                    )
+                                        await this.nodesQueuesService.startNode({
+                                            nodeUuid: node.uuid,
+                                            force: payload.force,
+                                        });
+                                    else throw error;
+                                }
                                 this.logger.warn(
                                     `Node ${node.uuid}: host policy pending; running=${policy.running}`,
                                 );
@@ -158,27 +196,10 @@ export class StartAllNodesByProfileQueueProcessor extends WorkerHost {
                         ]);
 
                         if (node.activeInbounds.length === 0) {
-                            this.logger.warn(
-                                `No active inbounds found for node ${node.uuid} with profile ${payload.profileUuid}, disabling and clearing profile from node...`,
-                            );
-
-                            await this.commandBus.execute(
-                                new UpdateNodeCommand({
-                                    uuid: node.uuid,
-                                    isDisabled: true,
-                                    activeConfigProfileUuid: null,
-                                    isConnecting: false,
-                                    isConnected: false,
-                                    lastStatusMessage: null,
-                                    lastStatusChange: new Date(),
-                                }),
-                            );
-
-                            await this.nodesQueuesService.stopNode({
+                            await this.nodesQueuesService.startNode({
                                 nodeUuid: node.uuid,
-                                isNeedToBeDeleted: false,
+                                force: payload.force,
                             });
-
                             continue;
                         }
 
@@ -248,14 +269,28 @@ export class StartAllNodesByProfileQueueProcessor extends WorkerHost {
                         throw new Error(config.message ?? 'Failed to get config');
                     }
 
-                    const startNode = async (node: NodesEntity) => {
+                    const startNode = async (
+                        node: NodesEntity,
+                        assertOwnership: () => Promise<void>,
+                    ) => {
+                        const executeNodeCommand = async <R>(command: Command<R>): Promise<R> => {
+                            await assertOwnership();
+                            const result = await this.deliveries.commitLifecycleStatus(node, () =>
+                                this.commandBus.execute(command),
+                            );
+                            if (result === undefined)
+                                throw new NodeDeliveryLostError(
+                                    'Node desired state changed during bulk delivery',
+                                );
+                            return result;
+                        };
                         const tags = activeNodeTags.get(node.uuid);
 
                         if (!tags) {
                             throw new Error('Failed to get active node inbounds tags');
                         }
                         const activeNodeInboundsTags = new Set(tags);
-                        await this.commandBus.execute(
+                        await executeNodeCommand(
                             new UpdateNodeCommand({
                                 uuid: node.uuid,
                                 isConnecting: true,
@@ -276,7 +311,7 @@ export class StartAllNodesByProfileQueueProcessor extends WorkerHost {
                         });
 
                         if (!xrayStatusResponse.isOk) {
-                            await this.commandBus.execute(
+                            await executeNodeCommand(
                                 new UpdateNodeCommand({
                                     uuid: node.uuid,
                                     lastStatusMessage: xrayStatusResponse.message ?? null,
@@ -339,7 +374,7 @@ export class StartAllNodesByProfileQueueProcessor extends WorkerHost {
                             );
 
                             if (!syncNodePluginsResponse.isOk) {
-                                await this.commandBus.execute(
+                                await executeNodeCommand(
                                     new UpdateNodeCommand({
                                         uuid: node.uuid,
                                         isConnecting: false,
@@ -361,6 +396,22 @@ export class StartAllNodesByProfileQueueProcessor extends WorkerHost {
                                 activeNodeInboundsTags.has(inbound.tag),
                             );
 
+                        await assertOwnership();
+                        const latest = await this.queryBus.execute(
+                            new GetNodeByUuidQuery(node.uuid),
+                        );
+                        if (
+                            !latest.isOk ||
+                            latest.response.isDisabled ||
+                            latest.response.activeConfigProfileUuid !==
+                                node.activeConfigProfileUuid ||
+                            latest.response.address !== node.address ||
+                            latest.response.port !== node.port ||
+                            latest.response.proxyUrl !== node.proxyUrl
+                        )
+                            throw new NodeDeliveryLostError(
+                                'Node desired state changed before bulk delivery',
+                            );
                         const startXrayResponse = await this.axios.startXray(
                             {
                                 xrayConfig: {
@@ -400,7 +451,7 @@ export class StartAllNodesByProfileQueueProcessor extends WorkerHost {
 
                         switch (startXrayResponse.isOk) {
                             case false:
-                                await this.commandBus.execute(
+                                await executeNodeCommand(
                                     new UpdateNodeCommand({
                                         uuid: node.uuid,
                                         lastStatusMessage: startXrayResponse.message ?? null,
@@ -442,7 +493,7 @@ export class StartAllNodesByProfileQueueProcessor extends WorkerHost {
                                     },
                                 ]);
 
-                                await this.commandBus.execute(
+                                await executeNodeCommand(
                                     new UpdateNodeCommand({
                                         uuid: node.uuid,
                                         isConnected: nodeResponse.isStarted,
@@ -463,17 +514,51 @@ export class StartAllNodesByProfileQueueProcessor extends WorkerHost {
 
                     const mapper = async (node: NodesEntity) => {
                         try {
-                            await startNode(node);
+                            await this.deliveries.withLifecycle(node.uuid, async (assert) => {
+                                const current = await this.queryBus.execute(
+                                    new GetNodeByUuidQuery(node.uuid),
+                                );
+                                if (!current.isOk || current.response.isDisabled) return;
+                                if (
+                                    current.response.activeConfigProfileUuid !==
+                                        node.activeConfigProfileUuid ||
+                                    current.response.address !== node.address ||
+                                    current.response.port !== node.port ||
+                                    current.response.proxyUrl !== node.proxyUrl
+                                )
+                                    throw new NodeDeliveryLostError(
+                                        'Node profile or endpoint changed before bulk delivery',
+                                    );
+                                try {
+                                    await startNode(node, assert);
+                                } catch (error) {
+                                    if (error instanceof NodeDeliveryLostError) throw error;
+                                    await assert();
+                                    await this.deliveries.commitLifecycleStatus(node, () =>
+                                        this.commandBus.execute(
+                                            new UpdateNodeCommand({
+                                                uuid: node.uuid,
+                                                isConnecting: false,
+                                                lastStatusMessage:
+                                                    'Node start failed. Check the configuration, assigned plugin and connection.',
+                                                lastStatusChange: new Date(),
+                                            }),
+                                        ),
+                                    );
+                                    throw error;
+                                }
+                            });
                         } catch (error) {
-                            await this.commandBus.execute(
-                                new UpdateNodeCommand({
-                                    uuid: node.uuid,
-                                    isConnecting: false,
-                                    lastStatusMessage:
-                                        'Node start failed. Check the configuration, assigned plugin and connection.',
-                                    lastStatusChange: new Date(),
-                                }),
-                            );
+                            if (
+                                error instanceof NodeDeliveryBusyError ||
+                                error instanceof NodeDeliveryLostError
+                            ) {
+                                await this.nodesQueuesService.startNode({
+                                    nodeUuid: node.uuid,
+                                    force: payload.force,
+                                });
+                                return;
+                            }
                             this.logger.error(`Failed to start node ${node.uuid}: ${error}`);
                         }
                     };
@@ -495,15 +580,6 @@ export class StartAllNodesByProfileQueueProcessor extends WorkerHost {
             this.logger.error(
                 `Error handling "${NODES_JOB_NAMES.START_ALL_BY_PROFILE}" job: ${error}`,
             );
-        } finally {
-            const resumed = await Promise.allSettled([
-                this.nodesQueuesService.queues.startNode.resume(),
-                this.nodesQueuesService.queues.startAllNodes.resume(),
-            ]);
-            for (const result of resumed) {
-                if (result.status === 'rejected')
-                    this.logger.error(`Failed to resume node queue: ${result.reason}`);
-            }
         }
     }
 

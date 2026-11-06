@@ -42,7 +42,7 @@ npm run cb
 Панель поставляется с `panel/backend/src/modules/core-management/core-releases.json`: это закреплённые публичные бинарники для amd64 и arm64, их SHA-256 и коммит исходников. Открытие списка не требует запроса к GitHub. Перед выпуском нового ядра создайте его тег на проверенном коммите и запустите workflow `Publish verified core binaries` в Remnacust-core. После успешных нативных проверок опубликуйте его черновик, затем выполните из корня панели:
 
 ```bash
-python3 panel/backend/scripts/sync-core-catalog.py --tag v1.1.13 --commit 8231934851bdc9e75ee4011ada58a24002404e43
+python3 panel/backend/scripts/sync-core-catalog.py --tag v1.1.14 --commit "${CORE_SOURCE_COMMIT:?set the verified Core 1.1.14 source commit}"
 ```
 
 Скрипт сверяет тег с коммитом, контрольные суммы выпуска и реально скачанные файлы, включая ELF-архитектуру; только после этого записывает каталог. Добавьте JSON в коммит панели. Пакетировщик выпуска проверяет, что первая сборка каталога соответствует закреплённым версии и коммиту ядра в `component-sources.json`.

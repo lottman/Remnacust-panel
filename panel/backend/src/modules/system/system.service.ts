@@ -44,6 +44,7 @@ import { GetUsersRecapQuery } from '@modules/users/queries/get-users-recap';
 import { GetSumByDtRangeQuery } from '../nodes-usage-history/queries/get-sum-by-dt-range';
 import { ShortUserStats } from '../users/interfaces/user-stats.interface';
 import { GetShortUserStatsQuery } from '../users/queries/get-short-user-stats';
+import { DashboardSnapshotCache } from './dashboard-snapshot-cache';
 import { DebugSrrMatcherBodyDto, GetStatsDigestQueryDto, GetStatsQueryDto } from './dtos';
 import { InboundStats, Metric, NodeMetrics, OutboundStats } from './interfaces';
 import {
@@ -70,6 +71,9 @@ const TYPE_ORDER: Record<string, number> = {
 export class SystemService implements OnApplicationBootstrap {
     private readonly logger = new Logger(SystemService.name);
     private rwVersion: string;
+    private readonly bandwidthSnapshots = new DashboardSnapshotCache<
+        TResult<GetBandwidthStatsResponseModel>
+    >(16, 15000, 2500, (value) => value.isOk);
 
     constructor(
         private readonly queryBus: QueryBus,
@@ -192,11 +196,19 @@ export class SystemService implements OnApplicationBootstrap {
         query: GetStatsQueryDto,
     ): Promise<TResult<GetBandwidthStatsResponseModel>> {
         try {
-            let tz = 'UTC';
-            if (query.tz) {
-                tz = query.tz;
-            }
+            const tz = new Intl.DateTimeFormat('en', {
+                timeZone: query.tz || 'UTC',
+            }).resolvedOptions().timeZone;
+            return await this.bandwidthSnapshots.get(tz, () => this.sampleBandwidthStats(tz));
+        } catch {
+            return fail(ERRORS.INTERNAL_SERVER_ERROR);
+        }
+    }
 
+    private async sampleBandwidthStats(
+        tz: string,
+    ): Promise<TResult<GetBandwidthStatsResponseModel>> {
+        try {
             const lastTwoDaysStats = await this.getLastTwoDaysUsage(tz);
             const lastSevenDaysStats = await this.getLastSevenDaysUsage(tz);
             const last30DaysStats = await this.getLast30DaysUsage(tz);

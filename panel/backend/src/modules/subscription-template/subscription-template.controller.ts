@@ -72,6 +72,22 @@ import { SubscriptionTemplateService } from './subscription-template.service';
 export class SubscriptionTemplateController {
     constructor(private readonly subscriptionTemplateService: SubscriptionTemplateService) {}
 
+    private requireTemplateRead(user: IJWTAuthPayload): void {
+        if (user.role === ROLE.ADMIN) return;
+        const resource = CONTROLLERS_INFO.SUBSCRIPTION_TEMPLATE.resource;
+        if (
+            user.role !== ROLE.API ||
+            !user.scopes?.some((scope) =>
+                [
+                    '*',
+                    buildResourceScope(resource),
+                    buildActionScope(resource, 'read'),
+                    buildEndpointScope(resource, GetSubscriptionTemplateCommand.endpointDetails.SCOPE!),
+                ].includes(scope),
+            )
+        ) throw new ForbiddenException();
+    }
+
     @Endpoint({
         command: GetSubscriptionTemplatesTagsCommand,
         httpCode: HttpStatus.OK,
@@ -147,7 +163,11 @@ export class SubscriptionTemplateController {
         command: UpdateSubscriptionTemplateCommand,
         httpCode: HttpStatus.OK,
     })
-    async updateTemplate(@Body() body: UpdateTemplateBodyDto): Promise<UpdateTemplateResponseDto> {
+    async updateTemplate(
+        @Body() body: UpdateTemplateBodyDto,
+        @Req() request: { user: IJWTAuthPayload },
+    ): Promise<UpdateTemplateResponseDto> {
+        this.requireTemplateRead(request.user);
         const result = await this.subscriptionTemplateService.updateTemplate(
             body.uuid,
             body.name?.trim() ?? undefined,
@@ -182,23 +202,7 @@ export class SubscriptionTemplateController {
         @Body() body: CreateSubscriptionTemplateBodyDto,
         @Req() request: { user: IJWTAuthPayload },
     ): Promise<CreateSubscriptionTemplateResponseDto> {
-        if (body.sourceUuid && request.user.role === ROLE.API) {
-            const resource = CONTROLLERS_INFO.SUBSCRIPTION_TEMPLATE.resource;
-            if (
-                !request.user.scopes?.some((scope) =>
-                    [
-                        '*',
-                        buildResourceScope(resource),
-                        buildActionScope(resource, 'read'),
-                        buildEndpointScope(
-                            resource,
-                            GetSubscriptionTemplateCommand.endpointDetails.SCOPE!,
-                        ),
-                    ].includes(scope),
-                )
-            )
-                throw new ForbiddenException();
-        }
+        if (body.sourceUuid) this.requireTemplateRead(request.user);
         const result = await this.subscriptionTemplateService.createTemplate(
             body.name,
             body.templateType,

@@ -10,6 +10,10 @@ import { IGetEnabledNodesPartialResponse } from '@modules/nodes/queries/get-enab
 import { QUEUES_NAMES } from '@queue/queue.enum';
 
 import { NODES_JOB_NAMES } from './constants/nodes-job-name.constant';
+import { PortPlanLeaseService } from './port-plan-lease.service';
+
+const NODE_DELIVERY_ATTEMPTS = 5;
+const NODE_DELIVERY_BACKOFF_MS = 30000;
 import {
     IAddUsersToNodePayload,
     IAddUserToNodePayload,
@@ -51,6 +55,7 @@ export class NodesQueuesService implements OnApplicationBootstrap {
         @InjectQueue(QUEUES_NAMES.NODES.BULK_USERS) private readonly nodeBulkUsersQueue: Queue,
         @InjectQueue(QUEUES_NAMES.NODES.QUERY_NODES) private readonly queryNodesQueue: Queue,
         @InjectQueue(QUEUES_NAMES.NODES.PLUGINS) private readonly nodePluginsQueue: Queue,
+        private readonly deliveries: PortPlanLeaseService,
     ) {}
 
     get queues() {
@@ -81,23 +86,37 @@ export class NodesQueuesService implements OnApplicationBootstrap {
 
         this.logger.log(`${Object.values(this.queues).length} queues are connected.`);
 
-        await this.startAllNodesByProfileQueue.setGlobalConcurrency(3);
+        await this.startAllNodesByProfileQueue.setGlobalConcurrency(1);
         await this.startAllNodesQueue.setGlobalConcurrency(1);
     }
 
     public async startNode(payload: { nodeUuid: string; force?: boolean }) {
         return this.startNodeQueue.add(NODES_JOB_NAMES.START_NODE, payload, {
-            jobId: `${NODES_JOB_NAMES.START_NODE}-${payload.nodeUuid}`,
+            deduplication: {
+                id: `${NODES_JOB_NAMES.START_NODE}-${payload.nodeUuid}`,
+                keepLastIfActive: true,
+            },
+            attempts: NODE_DELIVERY_ATTEMPTS,
+            backoff: { type: 'fixed', delay: NODE_DELIVERY_BACKOFF_MS },
             removeOnComplete: true,
             removeOnFail: true,
         });
     }
 
     public async stopNode(payload: { nodeUuid: string; isNeedToBeDeleted: boolean }) {
-        return this.stopNodeQueue.add(NODES_JOB_NAMES.STOP_NODE, payload, {
-            jobId: `${NODES_JOB_NAMES.STOP_NODE}-${payload.nodeUuid}-${payload.isNeedToBeDeleted}`,
+        const request = await this.deliveries.saveStopRequest(
+            payload.nodeUuid,
+            payload.isNeedToBeDeleted,
+        );
+        return this.stopNodeQueue.add(NODES_JOB_NAMES.STOP_NODE, request, {
+            deduplication: {
+                id: `${NODES_JOB_NAMES.STOP_NODE}-${payload.nodeUuid}`,
+                keepLastIfActive: true,
+            },
+            attempts: NODE_DELIVERY_ATTEMPTS,
+            backoff: { type: 'fixed', delay: NODE_DELIVERY_BACKOFF_MS },
             removeOnComplete: true,
-            removeOnFail: true,
+            removeOnFail: { count: 1000 },
         });
     }
 

@@ -12,10 +12,15 @@ import {
 interface SubscriptionLease {
     closed: boolean;
     pending: number;
+    abort: AbortController;
     releaseIfIdle: () => void;
 }
 
 const leases = new WeakMap<Response, SubscriptionLease>();
+
+export function subscriptionRequestSignal(response: Response): AbortSignal | undefined {
+    return leases.get(response)?.abort.signal;
+}
 
 /** A closed socket does not cancel an already running database or rendering operation. */
 export async function runSubscriptionWork<T>(
@@ -46,32 +51,39 @@ export class SubscriptionBudgetInterceptor implements NestInterceptor {
 }
 
 /** Protect the API/DB pool from a burst of public subscription requests. */
-export function subscriptionBudget(maximum = 64): RequestHandler {
+export function subscriptionBudget(maximum = 64, protectedMaximum = 2): RequestHandler {
     let active = 0;
+    let protectedActive = 0;
     return (req, res, next) => {
         // Express routes are case-insensitive unless explicitly configured otherwise.
-        if (!req.path.toLowerCase().startsWith('/api/sub/')) return next();
-        if (active >= maximum) {
+        const pathname = req.path.toLowerCase();
+        const protectedBulk = req.method === 'GET' && /^\/api\/subscriptions\/?$/.test(pathname);
+        if (!pathname.startsWith('/api/sub/') && !protectedBulk) return next();
+        if (protectedBulk ? protectedActive >= protectedMaximum : active >= maximum) {
             res.set('Cache-Control', 'private, no-store');
             res.set('Retry-After', '2');
             res.status(503).send('Subscription service is busy. Please retry.');
             return;
         }
-        active++;
+        if (protectedBulk) protectedActive++;
+        else active++;
         let released = false;
         const lease: SubscriptionLease = {
             closed: false,
             pending: 0,
+            abort: new AbortController(),
             releaseIfIdle: () => {
                 if (released || !lease.closed || lease.pending !== 0) return;
                 released = true;
-                active--;
+                if (protectedBulk) protectedActive--;
+                else active--;
                 res.off('finish', settle);
                 res.off('close', settle);
             },
         };
         const settle = () => {
             lease.closed = true;
+            lease.abort.abort();
             lease.releaseIfIdle();
         };
         leases.set(res, lease);

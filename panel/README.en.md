@@ -2,18 +2,20 @@
 
 # Remnacust Panel
 
+Release **Panel/Page 1.1.7.98** belongs to Installer bundle **1.2.137**, with Node **1.1.23** and Core/WASM **1.1.14**. [Changes from 97 to 98](../docs/releases/1.1.7.98.md). Installed servers require a separate update.
+
 Manage users, nodes and subscriptions. Use the installer and prebuilt images on a VPS; the server does not need Node.js or Go build tools.
 
 | Stable component | Version |
 | --- | --- |
-| [Panel and subscription page](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.97) | 1.1.7.97 |
-| [Installer / bundle](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.136) | 1.2.136 |
-| [Node](https://github.com/lottman/Remnacust-node/releases/tag/v1.1.22) | 1.1.22 |
-| [Core / WASM](https://github.com/lottman/Remnacust-core/releases/tag/v1.1.13) | 1.1.13 |
+| [Panel and subscription page](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.98) | 1.1.7.98 |
+| [Installer / bundle](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.137) | 1.2.137 |
+| [Node](https://github.com/lottman/Remnacust-node/releases/tag/v1.1.23) | 1.1.23 |
+| [Core / WASM](https://github.com/lottman/Remnacust-core/releases/tag/v1.1.14) | 1.1.14 |
 
 ## Server and ports
 
-Published installer 1.2.136 supports **Ubuntu 22.04/24.04/26.04 LTS**, Linux amd64/arm64. Debian 12/13 support exists in local source changes and has not been published in the stable installer.
+Installer 1.2.137 supports **Ubuntu 22.04/24.04/26.04 LTS and Debian 12/13**, Linux amd64/arm64.
 
 For a small panel, plan for 2 CPU cores, 2 GiB RAM and 20 GiB disk; 4 cores and 4 GiB RAM are recommended. Allow more space for database growth, logs and backups as load increases. Root access, a domain and access to package repositories and image downloads are required.
 
@@ -30,8 +32,8 @@ Keep SSH reachable on your configured port. Do not expose PostgreSQL or Valkey p
 ## Install prebuilt images
 
 ```bash
-curl -fsSL --proto '=https' --proto-redir '=https' https://github.com/lottman/Remnacust-installer/releases/download/v1.2.136/installer.sh -o installer.sh
-sudo bash installer.sh install-panel --version 1.2.136
+curl -fsSL --proto '=https' --proto-redir '=https' https://github.com/lottman/Remnacust-installer/releases/download/v1.2.137/installer.sh -o installer.sh
+sudo bash installer.sh install-panel --version 1.2.137
 ```
 
 Select a domain and HTTPS; the installer offers the subscription page separately. Create an administrator after startup. Main commands:

@@ -32,6 +32,7 @@ export class GetHostsForUserHandler implements IQueryHandler<GetHostsForUserQuer
                 query.returnDisabledHosts,
                 query.returnHiddenHosts,
             );
+            if (hostsEntities.length === 0) return ok([]);
             const [tagUsage, assignedTemplates] = await Promise.all([
                 this.tagLimitsRepository.usageForUser(query.userId),
                 this.hostsRepository.getAssignedXrayTemplates(),

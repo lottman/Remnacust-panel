@@ -14,7 +14,8 @@ const pending = [];
 for (const patch of manifest) {
     const allowedPath =
         /^node_modules\/(nestjs-zod|xray-typed)\/dist\/[\w./-]+$/.test(patch.path) ||
-        /^node_modules\/deepmerge\/(index\.js|dist\/(cjs|umd)\.js)$/.test(patch.path);
+        /^node_modules\/deepmerge\/(index\.js|dist\/(cjs|umd)\.js)$/.test(patch.path) ||
+        /^node_modules\/sirv\/build\.(js|mjs)$/.test(patch.path);
     if (!allowedPath || patch.path.includes('..')) {
         throw new Error('Invalid dependency patch path');
     }

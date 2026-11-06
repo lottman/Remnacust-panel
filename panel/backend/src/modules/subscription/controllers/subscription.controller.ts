@@ -5,6 +5,7 @@ import {
     Get,
     Headers,
     HttpStatus,
+    Header,
     Param,
     Res,
     UseFilters,
@@ -81,6 +82,7 @@ export class SubscriptionController {
         httpCode: HttpStatus.OK,
         type: GetSubscriptionInfoResponseDto,
     })
+    @Header('Cache-Control', 'private, no-store')
     async getSubscriptionInfoByShortUuid(
         @Param() param: GetSubscriptionInfoParamDto,
         @Headers('x-subpage-version') subpageVersion?: string,

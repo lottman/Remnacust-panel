@@ -486,7 +486,7 @@ const processorMocks = {
     'p-map': { __esModule: true, default: async (items, fn) => Promise.all(items.map(fn)) },
 };
 const leaseContract=load(path.join(__dirname,'../src/queue/_nodes/port-plan-lease.service.ts'));
-processorMocks['./port-plan-lease.service']=leaseContract;
+processorMocks['./port-plan-lease.service']=leaseContract;processorMocks['../port-plan-lease.service']=leaseContract;
 const { NodeConfigurationService } = load(
     path.join(__dirname, '../src/queue/_nodes/node-configuration.service.ts'),
     processorMocks,
@@ -555,11 +555,11 @@ for (const version of ['1.0.0', '1.6.4', '2.6.1', '3.4.1'])
                 }
             },
         };
-        let resumed = 0;
+        let queueMutations = 0;
         const queues = {
             queues: {
-                startNode: { pause: async () => {}, resume: async () => resumed++ },
-                startAllNodes: { pause: async () => {}, resume: async () => resumed++ },
+                startNode: { pause: async () => queueMutations++, resume: async () => queueMutations++ },
+                startAllNodes: { pause: async () => queueMutations++, resume: async () => queueMutations++ },
             },
             startNode: async () => {},
             collectReports: async () => assert.fail('legacy nodes have no plugin reports'),
@@ -574,7 +574,7 @@ for (const version of ['1.0.0', '1.6.4', '2.6.1', '3.4.1'])
             commandBus,
             cache,
             policies,
-            {acquire:async()=>null},
+            {acquire:async()=>null,withLifecycle:async(_node,work)=>work(async()=>{}),commitLifecycleStatus:async(_node,work)=>work()},
         );
         const single = new StartNodeProcessor(configurations);
         await single.process({ data: { nodeUuid: uuid } });
@@ -587,10 +587,11 @@ for (const version of ['1.0.0', '1.6.4', '2.6.1', '3.4.1'])
             commandBus,
             cache,
             configurations,
+            configurations.leases,
         );
         await bulk.process({ name: 'start-profile', data: { profileUuid: 'profile' } });
         assert.equal(updates.at(-1).isConnected, true, JSON.stringify(updates));
-        assert.equal(resumed, 2);
+        assert.equal(queueMutations, 0);
         if (!profile.plugins)
             assert.equal(calls.filter((call) => call.route === contract.SyncCommand.url).length, 0);
         const health = new NodeHealthCheckQueueProcessor(
@@ -646,12 +647,12 @@ function pendingFixture() {
     const policies={withCompatibilitySnapshot:async (_roots,work)=>work(),syncNode:async node=>{if(failures.has(node.uuid))throw Object.assign(Error('unsupported host policy; secret must not leak'),{code:'HOST_POLICY_NOT_APPLIED'})}};
     const queues={queues:{startNode:{pause:async()=>{},resume:async()=>{}},startAllNodes:{pause:async()=>{},resume:async()=>{}}},
         startNode:async payload=>queued.push(payload)};
-    const configurations=new NodeConfigurationService(axios,queues,queryBus,{emit:()=>{}},commandBus,cache,policies,{acquire:async()=>null});
+    const configurations=new NodeConfigurationService(axios,queues,queryBus,{emit:()=>{}},commandBus,cache,policies,{acquire:async()=>null,withLifecycle:async(_node,work)=>work(async()=>{}),commitLifecycleStatus:async(_node,work)=>work()});
     return {nodes,values,starts,queued,updates,planResults,failures,axios,policies,queryBus,commandBus,
         setRunning:value=>running=value,setAvailable:value=>available=value,
         configReads:()=>configReads,
         single:new StartNodeProcessor(configurations),
-        bulk:new StartAllNodesByProfileQueueProcessor(axios,policies,queues,queryBus,commandBus,cache,configurations),
+        bulk:new StartAllNodesByProfileQueueProcessor(axios,policies,queues,queryBus,commandBus,cache,configurations,configurations.leases),
         health:new NodeHealthCheckQueueProcessor(commandBus,{emit:()=>{}},axios,queues,cache,{record:async()=>{}}),
     };
 }
@@ -883,6 +884,8 @@ test('bulk startup never starts a node that was just disabled for having no acti
     const stopped=[];
     f.bulk.nodesQueuesService.stopNode=async payload=>stopped.push(payload.nodeUuid);
     await f.bulk.process({name:'start-profile',data:{profileUuid:'profile'}});
+    assert.deepEqual(f.queued.map(item=>item.nodeUuid),['pending']);
+    await f.single.process({data:{nodeUuid:'pending'}});
     assert.deepEqual(stopped,['pending']);
     assert.equal(f.nodes[0].isDisabled,true);
     assert.equal(f.nodes[0].isConnected,false);
@@ -890,15 +893,97 @@ test('bulk startup never starts a node that was just disabled for having no acti
     assert.equal(f.nodes[1].isConnected,true);
 });
 
-test('a failed pause still releases both queues, including when one resume fails',async()=>{
-    const f=pendingFixture();const resumed=[];
-    f.bulk.nodesQueuesService.queues.startAllNodes.pause=async()=>{throw Error('pause failed')};
-    f.bulk.nodesQueuesService.queues.startNode.resume=async()=>{resumed.push('single');throw Error('resume failed')};
-    f.bulk.nodesQueuesService.queues.startAllNodes.resume=async()=>resumed.push('bulk');
-    await f.bulk.process({name:'start-profile',data:{profileUuid:'profile'}});
-    assert.deepEqual(resumed,['single','bulk']);
-    assert.equal(f.starts.length,0);
-    assert(f.nodes.every(node=>!node.isConnecting));
+test('bulk success and preparation failure preserve both running and manually paused queues',async()=>{
+    for(const initiallyPaused of [false,true]) for(const failure of [null,'result','throw']) {
+        const f=pendingFixture();f.failures.clear();const calls=[];
+        const queues=Object.values(f.bulk.nodesQueuesService.queues);
+        for(const queue of queues) {
+            queue.paused=initiallyPaused;
+            queue.pause=async()=>{calls.push('pause');queue.paused=true};
+            queue.resume=async()=>{calls.push('resume');queue.paused=false};
+        }
+        if(failure) f.queryBus.execute=async()=>{
+            if(failure==='throw') throw Error('fixture lookup failed');
+            return result.fail({code:'A001',message:'fixture lookup failed'});
+        };
+        await f.bulk.process({name:'start-profile',data:{profileUuid:'profile'}});
+        assert.deepEqual(calls,[]);
+        assert(queues.every(queue=>queue.paused===initiallyPaused));
+        assert.equal(f.starts.length,failure?0:2);
+    }
+});
+
+for(const Failure of [leaseContract.NodeDeliveryBusyError,leaseContract.NodeDeliveryLostError])
+    test(`managed ${Failure.name} queues a bounded individual retry and preserves the legacy cohort`,async()=>{
+        const f=managedBulkFixture();
+        f.bulk.configurations.apply=async()=>{throw new Failure('fixture contention')};
+        await f.runBulk(true);
+        assert.deepEqual(f.queued,[{nodeUuid:'pending',force:true}]);
+        assert.deepEqual(f.starts.map(item=>item.payload.internals.metadata.uuid),['ordinary']);
+    });
+
+function lifecycleFixture() {
+    const f=pendingFixture();f.failures.clear();const owners=new Map();
+    const deliveries=new leaseContract.PortPlanLeaseService({}, {}, {
+        options:{},
+        sendCommand:command=>{
+            const {name,args}=command;
+            let reply;
+            if(name==='set') {
+                if(owners.has(args[0])) reply=null;
+                else {owners.set(args[0],args[1]);reply='OK';}
+            } else {
+                assert.equal(name,'eval');
+                const [script,,key,owner]=args;
+                reply=owners.get(key)===owner?1:0;
+                if(reply&&!script.includes('PEXPIRE')) owners.delete(key);
+            }
+            command.resolve(reply);return command.promise;
+        },
+    });
+    deliveries.acquire=async()=>null;
+    deliveries.commitLifecycleStatus=async(_node,work)=>work();
+    f.bulk.deliveries=deliveries;
+    f.single.configurations.leases=deliveries;
+    return {...f,owners};
+}
+
+test('a single start cannot overlap a bulk delivery to the same node and can run after its release',async()=>{
+    const f=lifecycleFixture();let entered,release;
+    const began=new Promise(resolve=>{entered=resolve});
+    const gate=new Promise(resolve=>{release=resolve});
+    const startXray=f.axios.startXray;let held=false;
+    f.axios.startXray=async(payload,node)=>{
+        if(payload.internals.metadata.uuid==='pending'&&!held) {held=true;entered();await gate;}
+        return startXray(payload,node);
+    };
+    const bulk=f.bulk.process({name:'start-profile',data:{profileUuid:'profile'}});
+    try {
+        await began;
+        await assert.rejects(f.single.process({data:{nodeUuid:'pending'}}),leaseContract.NodeDeliveryBusyError);
+    } finally {release();await bulk;}
+    await f.single.process({data:{nodeUuid:'pending'}});
+    assert.equal(f.starts.filter(item=>item.payload.internals.metadata.uuid==='pending').length,2);
+    assert.equal(f.owners.size,0);
+});
+
+test('a bulk start contending with a single delivery retries only that node and starts unrelated nodes',async()=>{
+    const f=lifecycleFixture();let entered,release;
+    const began=new Promise(resolve=>{entered=resolve});
+    const gate=new Promise(resolve=>{release=resolve});
+    const startXray=f.axios.startXray;
+    f.axios.startXray=async(payload,node)=>{
+        if(payload.internals.metadata.uuid==='pending') {entered();await gate;}
+        return startXray(payload,node);
+    };
+    const single=f.single.process({data:{nodeUuid:'pending'}});
+    try {
+        await began;
+        await f.bulk.process({name:'start-profile',data:{profileUuid:'profile',force:true}});
+        assert.deepEqual(f.queued,[{nodeUuid:'pending',force:true}]);
+        assert.deepEqual(f.starts.map(item=>item.payload.internals.metadata.uuid),['ordinary']);
+    } finally {release();await single;}
+    assert.equal(f.owners.size,0);
 });
 
 test('failed host policy keeps a confirmed running node online and never sends unchecked credentials',async()=>{
@@ -1232,4 +1317,27 @@ test('discovery budget stops scheduling new peers and unavailable roots cannot s
         },true);
         assert.equal(calls,3);assert.equal(f.posts.length,0);
     }finally{Date.now=originalNow;}
+});
+
+
+test('a stale no-inbounds bulk snapshot queues a fresh apply instead of disabling a restored node',async()=>{
+    const f=pendingFixture();f.failures.clear();const execute=f.queryBus.execute;
+    f.queryBus.execute=async query=>query.constructor.name==='FindNodesByCriteriaQuery'
+        ? result.ok([{...f.nodes[0],activeInbounds:[]},f.nodes[1]]) : execute(query);
+    await f.bulk.process({name:'start-profile',data:{profileUuid:'profile'}});
+    assert.equal(f.nodes[0].isDisabled,undefined);
+    assert.deepEqual(f.queued.map(item=>item.nodeUuid),['pending']);
+    assert.equal(f.updates.some(item=>item.uuid==='pending'&&item.isDisabled===true),false);
+    await f.single.process({data:{nodeUuid:'pending'}});
+    assert.equal(f.starts.length,2);assert.equal(f.nodes[0].isConnected,true);
+});
+
+test('retryable node transport failures reject after status recording; permanent configuration failures do not',async()=>{
+    const f=pendingFixture();f.failures.clear();
+    f.axios.startXray=async()=>({isOk:false,code:'ECONNRESET',message:'connection reset'});
+    await assert.rejects(f.single.process({data:{nodeUuid:'pending'}}),/connection reset/);
+    assert.equal(f.nodes[0].isConnecting,false);assert.match(f.nodes[0].lastStatusMessage,/connection reset/);
+    f.axios.startXray=async()=>({isOk:false,code:'INVALID_CONFIG',message:'invalid user configuration'});
+    await f.single.process({data:{nodeUuid:'pending'}});
+    assert.match(f.nodes[0].lastStatusMessage,/invalid user configuration/);
 });

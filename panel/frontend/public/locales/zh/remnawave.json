@@ -359,7 +359,7 @@
   "config-editor": {
     "widget": {
       "unsaved-changes": "修改未保存",
-      "your-changes-will-be-lost-if-you-leave-this-page-without-saving": "如果您离开此页面而不保存，您的更改将会丢失。",
+      "your-changes-will-be-lost-if-you-leave-this-page-without-saving": "您将离开仍有未保存更改的编辑器。请保存后再应用。",
       "leave": "离开",
       "stay": "留在当前页面"
     }
@@ -3100,6 +3100,7 @@
     "frozen-user-status": "已冻结"
   },
   "api-token-editor": {
+    "scopes-imported": "已导入权限：{{count}}",
     "retry": "重试",
     "saved": "API 令牌权限已保存",
     "actions": "令牌 {{name}} 的操作",
@@ -3116,7 +3117,9 @@
     "no-expiry": "永不过期",
     "no-expiry-description": "删除前一直有效。权限变更立即生效。",
     "users-preset": "用户",
-    "users-preset-description": "用户权限：创建、修改、冻结和恢复用户，管理流量、订阅密钥及 HWID 设备。分组列表仅可读取。"
+    "users-preset-description": "仅限用户操作，包括批量操作和订阅凭据。不授予 HWID、分组、域名或基础设施权限。",
+    "read-required-title": "需要读取权限",
+    "read-required-description": "保存前请添加下列读取权限。所选操作会返回已存储的数据，因此需要这些权限。"
   },
   "limitsUnlimited": {
     "grant": "授予无限流量",
@@ -3351,7 +3354,7 @@
     "strategy": "均衡策略",
     "strategy-random": "随机连接",
     "strategy-roundRobin": "轮询",
-    "strategy-leastPing": "最低延迟",
+    "strategy-leastPing": "最低响应时间（ping + TTFB）",
     "strategy-leastLoad": "最稳定的连接",
     "fallback": "备用出站标签",
     "fallback-help": "均衡器无法选择可用出站时使用。首个注入主机的标签等于前缀。",
@@ -3366,8 +3369,8 @@
     "assignment-tags": "接收对象标签",
     "assignment-priority": "优先级：主机显式模板、主机分配、标签分配、默认模板。同一接收主机的多个自动选择分别生成配置，并共享该接收主机的限额。",
     "probes": "连接探测",
-    "probes-help": "延迟、稳定性和优先级策略需要健康检查。保留现有设置，并将池前缀加入选择器。",
-    "probe-url": "探测地址",
+    "probes-help": "延迟、稳定性和优先级策略通过池内服务器执行 HTTP 探测。应用更新结果，新连接使用当前选择。保留自定义地址和检查间隔。",
+    "probe-url": "HTTP 探测地址",
     "probe-interval": "探测间隔",
     "recipient-outbound": "同时将接收主机添加为 proxy",
     "recipient-help": "启用后，会根据接收主机的地址和连接设置额外创建一个名为“proxy”的出站。仅在该主机是可用的真实连接，并已正确配置 TLS/REALITY 或 VLESS encryption 时启用。对于“自动”占位主机，请保持关闭；池内服务器和自动选择仍会保留。未加密的 VLESS 可能使 Happ iOS 报告“failed to build outbound config with tag proxy”或“vless without TLS”。修改后请保存模板并更新订阅。",
@@ -3449,7 +3452,9 @@
     "priority-summary": "客户端按顺序选择首个可用服务器。切换仅影响新连接。",
     "assignment-mode": "分配依据",
     "assignment-mixed": "此旧分配同时包含主机和标签。请选择一种方式，保留其列表并移除另一列表。",
-    "recipient-limits": "流量与速度限制在接收主机上设置。通过自动选择使用池成员时，不扣除成员主机配额，也不继承其速度限制。同一接收主机的多个自动选择共享额度。未设置接收主机限制且未启用其标签限制时，不设主机级上限。账户总配额仍然生效。"
+    "recipient-limits": "流量与速度限制在接收主机上设置。通过自动选择使用池成员时，不扣除成员主机配额，也不继承其速度限制。同一接收主机的多个自动选择共享额度。未设置接收主机限制且未启用其标签限制时，不设主机级上限。账户总配额仍然生效。",
+    "response-time-help": "应用通过每台服务器检查 HTTP 响应，包括建立连接、HTTPS 的 TLS 和等待网站响应。选择可用且总响应时间最低的路径，不使用 ICMP ping 或面板测得的延迟。",
+    "probe-url-help": "使用所有池内服务器都能访问的同一个小型 HTTPS 响应，最好返回 204。测试网站不可用或响应缓慢会影响选择。"
   },
   "template-history": {
     "title": "历史",
@@ -3930,7 +3935,7 @@
     "identities": "无法准备主机凭据。请检查面板日志和主机访问设置。",
     "compatibilityTitle": "兼容模式",
     "nativeCompatibility": "原生 Remnawave 节点仍可提供普通连接。该节点使用的入站不启用主机限额、目标规则和非活跃用户的特殊访问。这些功能需要兼容的 Node/Core。",
-    "legacyAutoselect": "旧版核心：自动选择使用池内服务器的普通凭据和限额，不支持接收主机的独立配额归属。请升级 Node/Core 并刷新客户端订阅以启用该功能。"
+    "legacyAutoselect": "正在运行的 Core 不支持独立的自动选择限额，当前使用池内服务器的密钥和限额。请在节点任务中更新 Core，然后刷新客户端订阅。"
   },
   "connectionKeys": {
     "active": "启用",
@@ -3944,8 +3949,8 @@
   },
   "client-template": {
     "native-help": "更新订阅时选择主机；延迟和可用性由客户端检测。界面与代码共享同一份草稿。",
-    "strategy-url-test": "最低延迟",
-    "strategy-urltest": "最低延迟",
+    "strategy-url-test": "最低响应时间（ping + TTFB）",
+    "strategy-urltest": "最低响应时间（ping + TTFB）",
     "strategy-fallback": "按顺序故障转移",
     "strategy-load-balance": "连接负载均衡",
     "strategy-select": "手动选择",
@@ -3964,9 +3969,9 @@
   },
   "geofiles": {
     "title": "地理规则文件",
-    "help": "为模板附加多个规则数据集。保留现有设置；保存模板并更新订阅后生效。",
+    "help": "为模板附加规则数据集。保存模板并更新订阅后生效。",
     "library": "文件库",
-    "library-help": "所有模板共用一个目录。本地上传、通过链接导入和内置的数据集均在此选择。添加到模板后，规则仅在保存后生效。",
+    "library-help": "所有模板共用一个目录。附加的规则仅在保存模板后生效。",
     "choose": "已有文件",
     "no-compatible": "此模板尚无兼容文件",
     "attach": "添加到模板",
@@ -4071,8 +4076,8 @@
   "template-draft": {
     "warning": "模板警告",
     "warning-help": "仍可保存。含错误的文本将作为草稿保存在服务器上；在修复错误并再次保存前，订阅继续使用上一份可用版本。",
-    "saved-title": "草稿已保存，存在警告",
-    "saved-help": "文本已保存到服务器和历史记录。订阅仍使用上一份可用版本。修复警告并再次保存后即可应用模板。",
+    "saved-title": "草稿已保存：仍有错误",
+    "saved-help": "文本已保存到历史记录，当前可用版本未改变。请修正指出的错误后再次保存模板。",
     "applied-warning-title": "已应用，存在警告",
     "applied-warning-help": "已保存并应用。原始数值 tolerance 保留在模板与订阅 JSON 中。Xray 读取配置时将小于 0 的值限制为 0、大于 1 的值限制为 1，不会改写 JSON。",
     "tolerance-help": "tolerance 是探测失败比例：0.01 表示 1%，1 表示 100%；0 关闭此检查。0–1 之外的有限数值可带警告保存。JSON 保留原值，Xray 读取配置时在内核中限制该值。"
@@ -4281,5 +4286,32 @@
   },
   "qr-code-builder": {
     "unavailable": "无法生成二维码。请复制订阅链接或连接密钥。"
+  },
+  "editor-recovery": {
+    "saved-tab": "已保存版本",
+    "unsaved-tab": "未保存草稿",
+    "help": "最新的未保存文本会在当前浏览器中保留最多 7 天。载入编辑器后点击保存即可应用。",
+    "unavailable": "无法在浏览器中保存恢复副本。请检查存储权限。在保存或下载文本前，请勿关闭编辑器。",
+    "too-large": "草稿超过 8 MiB 恢复上限。请从编辑器保存或下载文本。",
+    "stale": "另一个标签页已保存较新版本。请刷新编辑器以使用当前文本。",
+    "corrupt": "无法读取恢复副本。请重试或删除损坏的副本。",
+    "empty": "没有未保存的草稿。",
+    "updated": "恢复副本时间：{{time}}",
+    "baseline": "已保存版本",
+    "recovered": "未保存文本",
+    "discard-title": "删除未保存的副本？",
+    "discard-help": "此草稿的恢复副本将从浏览器中删除。"
+  },
+  "home-diagnostics": {
+    "title": "数据库",
+    "connections": "应用连接",
+    "active-queries": "活动查询",
+    "lock-waits": "等待锁",
+    "idle-transactions": "空闲事务",
+    "longest-query": "最长：{{seconds}} s",
+    "sampled": "当前数据库角色 · 采样时间 {{time}}",
+    "scope": "面板数据库中当前角色的连接。",
+    "unavailable": "数据库诊断暂时不可用，其他仪表盘数据仍可使用。",
+    "partial": "部分统计不可用或已停用采集。未知值不会显示为零。"
   }
 }

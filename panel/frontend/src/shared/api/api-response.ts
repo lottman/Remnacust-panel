@@ -9,7 +9,8 @@ export class ApiResponseError extends Error {
 }
 
 // Never pass an HTML error page or a truncated JSON string to contract validation.
-export function parseApiResponse(data: unknown): object {
+export function parseApiResponse(data: unknown, status = 200): object | undefined {
+    if (status === 202 && (data === '' || data === undefined)) return undefined
     if (typeof data === 'string') {
         try {
             data = JSON.parse(data)

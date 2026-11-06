@@ -1,4 +1,4 @@
-import type { Request } from 'express';
+import type { Request, Response } from 'express';
 
 import {
     Body,
@@ -7,8 +7,10 @@ import {
     Param,
     Query,
     Req,
+    Res,
     UseFilters,
     UseGuards,
+    UseInterceptors,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
@@ -22,6 +24,10 @@ import { JwtDefaultGuard } from '@common/guards/jwt-guards/def-jwt-guard';
 import { RolesGuard } from '@common/guards/roles';
 import { ScopesGuard } from '@common/guards/scopes';
 import { errorHandler } from '@common/helpers/error-handler.helper';
+import {
+    SubscriptionBudgetInterceptor,
+    subscriptionRequestSignal,
+} from '@common/middlewares/subscription-budget.middleware';
 import { extractHwidHeaders } from '@common/utils/extract-hwid-headers';
 import { CONTROLLERS_INFO, SUBSCRIPTIONS_CONTROLLER } from '@libs/contracts/api';
 import {
@@ -73,14 +79,16 @@ export class SubscriptionsController {
         httpCode: HttpStatus.OK,
         type: GetSubscriptionsResponseDto,
     })
+    @UseInterceptors(SubscriptionBudgetInterceptor)
     async getAllSubscriptions(
         @Query() query: GetSubscriptionsQueryDto,
+        @Res({ passthrough: true }) response: Response,
     ): Promise<GetSubscriptionsResponseDto> {
         const { start, size } = query;
-        const result = await this.subscriptionService.getAllSubscriptions({
-            start,
-            size,
-        });
+        const result = await this.subscriptionService.getAllSubscriptions(
+            { start, size },
+            subscriptionRequestSignal(response),
+        );
 
         const data = errorHandler(result);
         return {

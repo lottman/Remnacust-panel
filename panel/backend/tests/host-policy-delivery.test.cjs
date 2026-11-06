@@ -20,6 +20,12 @@ function fixture(revisionAware = true) {
     };
     const sql = (parts, ...values) => ({
         execute: async () => {
+            if (parts.join('').includes('UPDATE nodes SET last_status_message=NULL')) {
+                assert.equal(state.active, false);
+                if (state.failWarning) throw new Error('notice storage unavailable');
+                state.events.push(['clear-legacy', parts.join(''), values]);
+                return { rows: [] };
+            }
             if (parts.join('').includes('pg_try_advisory_xact_lock'))
                 return { rows: [{ acquired: state.lockAvailable !== false }] };
             if (parts.join('').includes('xera_next_host_policy_revision')) {
@@ -84,9 +90,59 @@ function fixture(revisionAware = true) {
     return {
         state,
         service,
+        cache,
         node: { uuid: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', address: '127.0.0.1', port: 1 },
     };
 }
+test('upgraded core clears only its old compatibility warning after confirmed policy delivery', async () => {
+    for (const revisionAware of [true, false]) {
+        const { state, service, node } = fixture(revisionAware);
+        state.caps.routedDeviceSpeedLimitsSupported = true;
+        await service.syncNode(node);
+        const clears = state.events.filter(event => Array.isArray(event) && event[0] === 'clear-legacy');
+        assert.equal(clears.length, 1);
+        assert.match(clears[0][1], /last_status_message='\[NODE_LEGACY_AUTOSELECT\]'/);
+        assert.match(clears[0][1], /NOT is_disabled/);
+        assert.match(clears[0][1], /address=.*port IS NOT DISTINCT FROM.*proxy_url IS NOT DISTINCT FROM/s);
+        assert.deepEqual(clears[0][2], [node.uuid, node.address, node.port, null]);
+        assert.ok(state.events.findIndex(event => Array.isArray(event) && event[0] === 'send') < state.events.indexOf(clears[0]));
+    }
+});
+
+test('failed delivery and missing routed support never clear compatibility warnings', async () => {
+    for (const failure of ['send', 'commit', 'missing', 'unsupported']) {
+        const { state, service, node } = fixture();
+        state.caps.routedDeviceSpeedLimitsSupported = true;
+        if (failure === 'send') state.failSend = true;
+        if (failure === 'commit') state.failCommit = true;
+        if (failure === 'missing') delete state.caps.routedDeviceSpeedLimitsSupported;
+        if (failure === 'unsupported') state.caps.routedDeviceSpeedLimitsSupported = false;
+        if (['send', 'commit'].includes(failure)) await assert.rejects(service.syncNode(node));
+        else await service.syncNode(node);
+        assert.equal(state.events.some(event => Array.isArray(event) && event[0] === 'clear-legacy'), false);
+    }
+});
+
+test('rechecking an expired capability cache clears a persistent pre-upgrade warning', async () => {
+    const { state, service, node, cache } = fixture();
+    await service.syncNode(node);
+    state.caps.routedDeviceSpeedLimitsSupported = true;
+    const saved = await cache.get(service.capabilityKey(node));
+    saved.checkedAt = Date.now() - 60_001;
+    await service.syncNode(node);
+    assert.equal(state.events.filter(event => Array.isArray(event) && event[0] === 'clear-legacy').length, 1);
+    assert.equal(state.events.filter(event => event === 'status').length, 2);
+});
+
+test('a notice storage failure does not turn an acknowledged policy into a failed delivery', async () => {
+    const { state, service, node } = fixture();
+    state.caps.routedDeviceSpeedLimitsSupported = true;
+    state.failWarning = true;
+    service.logger.warn = () => {};
+    await service.syncNode(node);
+    assert.equal(state.events.filter(event => Array.isArray(event) && event[0] === 'send').length, 1);
+});
+
 test('concurrent fleet refreshes coalesce and retain a follow-up pass for later mutations',async()=>{
     const {service}=fixture();let release;let passes=0;
     const gate=new Promise(resolve=>{release=resolve});

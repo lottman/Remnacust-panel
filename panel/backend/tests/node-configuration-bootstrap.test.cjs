@@ -10,7 +10,7 @@ function metadata(relative,overrides={}){
     Object.assign(mocks,{'@common/axios/axios.service':{AxiosService},'@common/host-policy/host-policy.service':{HostPolicyService},
         '@common/raw-cache':{RawCacheService},'./nodes-queues.service':{NodesQueuesService},'@queue/_nodes':{NodesQueuesService},
         '@queue/queue.enum':{QUEUES_NAMES:{NODES:{START:'start-test'}}},'../../queue.enum':{QUEUES_NAMES:{NODES:{START_ALL_BY_PROFILE:'profile-test'}}},
-        './port-plan-lease.service':{PortPlanLeaseService},'./constants/nodes-job-name.constant':{},'../constants':{},...overrides});
+        './port-plan-lease.service':{PortPlanLeaseService},'../port-plan-lease.service':{PortPlanLeaseService},'./constants/nodes-job-name.constant':{},'../constants':{},...overrides});
     const output=ts.transpileModule(text,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,experimentalDecorators:true,emitDecoratorMetadata:true,esModuleInterop:true}}).outputText;
     new Function('require','module','exports',output)(id=>Object.hasOwn(mocks,id)?mocks[id]:local(id),ref,ref.exports);
     return ref.exports;

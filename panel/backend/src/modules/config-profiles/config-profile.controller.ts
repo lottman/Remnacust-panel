@@ -1,5 +1,5 @@
 import { AdminOnlyEndpoint } from '@common/decorators/admin-only-endpoint';
-import { Body, Controller, HttpStatus, Param, UseFilters, UseGuards } from '@nestjs/common';
+import { Body, Controller, ForbiddenException, HttpStatus, Param, Req, UseFilters, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiConflictResponse, ApiTags } from '@nestjs/swagger';
 
 import { Endpoint } from '@common/decorators/base-endpoint';
@@ -27,7 +27,9 @@ import {
     GetConfigProfilesTagsCommand,
     SetConfigProfileTagsCommand,
 } from '@libs/contracts/commands';
-import { ROLE } from '@libs/contracts/constants';
+import { buildActionScope, buildEndpointScope, buildResourceScope, ROLE } from '@libs/contracts/constants';
+
+import type { IJWTAuthPayload } from '@modules/auth/interfaces';
 
 import { ConfigProfileService } from './config-profile.service';
 import {
@@ -227,7 +229,22 @@ export class ConfigProfileController {
     })
     async updateConfigProfile(
         @Body() body: UpdateConfigProfileBodyDto,
+        @Req() request: { user: IJWTAuthPayload },
     ): Promise<UpdateConfigProfileResponseDto> {
+        const resource = CONTROLLERS_INFO.CONFIG_PROFILES.resource;
+        if (
+            request.user.role !== ROLE.ADMIN &&
+            (request.user.role !== ROLE.API ||
+                !request.user.scopes?.some((scope) =>
+                    [
+                        '*',
+                        buildResourceScope(resource),
+                        buildActionScope(resource, 'read'),
+                        buildEndpointScope(resource, GetConfigProfileByUuidCommand.endpointDetails.SCOPE!),
+                    ].includes(scope),
+                ))
+        ) throw new ForbiddenException();
+
         const result = await this.configProfileService.updateConfigProfile(
             body.uuid,
             body.name,

@@ -1,4 +1,5 @@
 import { QueryKey, useQuery, UseQueryResult } from '@tanstack/react-query'
+import { isCancel } from 'axios'
 import { z } from 'zod'
 
 import { instance } from '../axios'
@@ -48,6 +49,7 @@ export function createBodyQueryHook<
     ) => QueryKey
 }) {
     const queryFn = async (params?: {
+        signal?: AbortSignal
         body?: z.infer<BodySchema>
         query?: z.infer<RequestQuerySchema>
         route?: z.infer<RouteParamsSchema>
@@ -62,7 +64,8 @@ export function createBodyQueryHook<
             .request<z.infer<ResponseSchema>>({
                 method: requestMethod,
                 url,
-                data
+                data,
+                signal: params?.signal
             })
             .then(async (response) => {
                 const result = await responseSchema.safeParseAsync(response.data)
@@ -71,7 +74,10 @@ export function createBodyQueryHook<
                 }
                 return result.data.response
             })
-            .catch((error) => errorHandler?.(error) ?? handleRequestError(error))
+            .catch((error) => {
+                if (isCancel(error)) throw error
+                return errorHandler?.(error) ?? handleRequestError(error)
+            })
     }
 
     return (params?: {
@@ -88,6 +94,6 @@ export function createBodyQueryHook<
                 query: params?.query,
                 body: params?.body
             }),
-            queryFn: () => queryFn(params)
+            queryFn: ({ signal }) => queryFn({ ...params, signal })
         }) as UseQueryResult<z.infer<ResponseSchema>['response']>
 }

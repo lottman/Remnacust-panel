@@ -3,7 +3,7 @@ import { getEndpointDetails } from '@libs/contracts/constants';
 import { CONTROLLERS_INFO, NODES_CONTROLLER } from '@contract/api';
 import { ROLE } from '@contract/constants';
 
-import { BadRequestException, Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Post, Query, UseFilters, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Post, Query, UseFilters, UseGuards, UseInterceptors } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
@@ -58,6 +58,7 @@ import {
     NodeResponseDto,
 } from './dtos';
 import { GetAllNodesTagsResponseModel } from './models';
+import { NodeResponseInterceptor } from './models/node-response.interceptor';
 import { GetNodeRuntimeCommand } from '@libs/contracts/commands';
 import { GetNodeRuntimeResponseDto } from './dtos/get-runtime.dto';
 import { NodeRuntimeService } from './node-runtime.service';
@@ -72,6 +73,7 @@ import { GetUserTrafficPathsQuery } from './queries/get-user-traffic-paths';
 @ApiTags(CONTROLLERS_INFO.NODES.tag)
 @Roles(ROLE.ADMIN, ROLE.API)
 @UseGuards(JwtDefaultGuard, RolesGuard, ScopesGuard)
+@UseInterceptors(NodeResponseInterceptor)
 @UseFilters(HttpExceptionFilter)
 @Controller(NODES_CONTROLLER)
 export class NodesController {

@@ -14,6 +14,7 @@ import {
     renderClientGroups,
     type ClientCandidate,
 } from './client-pool';
+import { SubscriptionExpansionBudget } from './subscription-output';
 
 interface NetworkConfig {
     'early-data-header-name'?: string;
@@ -111,7 +112,7 @@ export class ClashGeneratorService {
         } catch (error) {
             if (error instanceof ClientPoolError) throw error;
             this.logger.error('Error generating clash config:', error);
-            return '';
+            throw error;
         }
     }
 
@@ -315,8 +316,12 @@ export class ClashGeneratorService {
                         : []),
                     ...data.proxies,
                 ],
-                'proxy-groups': await renderClientGroups(sourceGroups, candidates, (custom) =>
-                    this.resolveGroupRemarks(custom, proxyRemarks),
+                'proxy-groups': await renderClientGroups(
+                    sourceGroups,
+                    candidates,
+                    (custom) => this.resolveGroupRemarks(custom, proxyRemarks),
+                    false,
+                    new SubscriptionExpansionBudget('yaml'),
                 ),
             };
 
@@ -324,7 +329,7 @@ export class ClashGeneratorService {
         } catch (error) {
             if (error instanceof ClientPoolError) throw error;
             this.logger.error('Error rendering yaml config:', error);
-            return '';
+            throw error;
         }
     }
 

@@ -486,6 +486,11 @@ function BalancerCard({
                     }
                 />
             </div>
+            {strategy === 'leastPing' && (
+                <Text size="sm" c="dimmed">
+                    {t('autoselect.response-time-help')}
+                </Text>
+            )}
             {strategy === 'priority' && (
                 <>
                     <Text size="sm" c="dimmed">
@@ -697,9 +702,6 @@ export function AutoselectPanel({
                     <Group justify="space-between" gap="sm">
                         <div className={styles.sectionHeader}>
                             <Title order={3}>{t('autoselect.title')}</Title>
-                            <Text size="sm" c="dimmed" mt={4}>
-                                {t('autoselect.description')}
-                            </Text>
                         </div>
                         <Button
                             leftSection={<TbPlus size={17} />}
@@ -902,9 +904,14 @@ export function AutoselectPanel({
                                                         <Badge variant="light">{key}</Badge>
                                                         <TextInput
                                                             label={t('autoselect.probe-url')}
+                                                            description={t(
+                                                                'autoselect.probe-url-help'
+                                                            )}
                                                             value={
                                                                 key === 'observatory'
-                                                                    ? (config[key].probeUrl ?? '')
+                                                                    ? (config[key].probeUrl ??
+                                                                      config[key].probeURL ??
+                                                                      '')
                                                                     : (config[key].pingConfig
                                                                           ?.destination ?? '')
                                                             }
@@ -913,7 +920,17 @@ export function AutoselectPanel({
                                                                     editTemplate(
                                                                         text,
                                                                         key === 'observatory'
-                                                                            ? [key, 'probeUrl']
+                                                                            ? [
+                                                                                  key,
+                                                                                  config[key]
+                                                                                      .probeUrl ===
+                                                                                      undefined &&
+                                                                                  config[key]
+                                                                                      .probeURL !==
+                                                                                      undefined
+                                                                                      ? 'probeURL'
+                                                                                      : 'probeUrl'
+                                                                              ]
                                                                             : [
                                                                                   key,
                                                                                   'pingConfig',

@@ -17,6 +17,25 @@ const host = (n, tags = ['LTE']) => ({ protocol: 'vless', address: `${n}.example
     streamOverrides: {}, mux: {}, finalRemark: String(n), metadata: { uuid: id(n), tags, isHidden: n !== 0, excludeFromSubscriptionTypes: [] }, clientOverrides: { mapper: { xrayJson: null } } });
 const candidates = [host(1, ['LTE', 'VK']), host(2, ['LTE', 'YC']), host(3, ['LTE2']), host(4, ['LTE'])];
 const pool = { selector: { type: 'uuids', values: candidates.map(h => h.metadata.uuid), expected: 2 }, mode: 'random', tagPrefix: 'g' };
+
+test('empty host resolution skips global template, quota and raw-cache reads without hiding query failures',async()=>{
+ const {GetHostsForUserHandler}=source('modules/hosts/queries/get-hosts-for-user/get-hosts-for-user.handler.ts',{
+  './get-hosts-for-user.query':{GetHostsForUserQuery:class{}},
+  '@common/types':{ok:response=>({isOk:true,response}),fail:error=>({isOk:false,error})},
+  '@libs/contracts/constants':{ERRORS:{INTERNAL_SERVER_ERROR:'internal'}},
+  '@modules/hosts/entities/host-with-inbound-tag.entity':{HostWithRawInbound:class{}}
+ });
+ let reads=0;
+ const forbidden=async()=>{reads++;throw Error('must not read unrelated data')};
+ const repository={findActiveHostsByUserId:async()=>[],getAssignedXrayTemplates:forbidden};
+ const handler=new GetHostsForUserHandler(repository,{usageForUser:forbidden},{cachedByKeys:forbidden});
+ handler.logger={error(){}};
+ assert.deepEqual(await handler.execute({userId:1n}),{isOk:true,response:[]});
+ assert.equal(reads,0);
+ repository.findActiveHostsByUserId=async()=>{throw Error('database unavailable')};
+ assert.equal((await handler.execute({userId:1n})).isOk,false);
+ assert.equal(reads,0);
+});
 test('host recipients bind to a specific balancer in automatic and explicit-template assignment', async () => {
     const template = { outbounds: [{tag:'direct',protocol:'freedom'}],
         remnawave: { injectHosts: [{...pool,mode:'all'}], assignments: [

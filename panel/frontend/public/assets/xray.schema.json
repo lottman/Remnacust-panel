@@ -9168,45 +9168,116 @@
       "additionalProperties": true,
       "properties": {
         "blockBytes": {
-          "type": [
-            "integer",
-            "string"
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1024,
+              "maximum": 16384
+            },
+            {
+              "type": "string",
+              "pattern": "^(?:(?:\\+?0*(?:(?:1(?:0(?:2(?:4|[5-8]|9)|[3-8][0-9]{1}|9[0-9]{1})|[1-8][0-9]{2}|9[0-9]{2})|[2-8][0-9]{3}|9[0-9]{3})|1(?:0[0-9]{3}|[1-5][0-9]{3}|6(?:0[0-9]{2}|[1-2][0-9]{2}|3(?:0[0-9]{1}|[1-7][0-9]{1}|8(?:0|[1-3]|4))))))(?:-(?:\\+?0*(?:(?:1(?:0(?:2(?:4|[5-8]|9)|[3-8][0-9]{1}|9[0-9]{1})|[1-8][0-9]{2}|9[0-9]{2})|[2-8][0-9]{3}|9[0-9]{3})|1(?:0[0-9]{3}|[1-5][0-9]{3}|6(?:0[0-9]{2}|[1-2][0-9]{2}|3(?:0[0-9]{1}|[1-7][0-9]{1}|8(?:0|[1-3]|4)))))))?)$"
+            }
           ]
         },
         "budgetPercent": {
-          "type": "integer"
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
         },
         "burstBytes": {
-          "type": "integer"
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1048576
         },
         "bytes": {
-          "type": [
-            "integer",
-            "string"
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1024
+            },
+            {
+              "type": "string",
+              "pattern": "^(?:(?:\\+?0*(?:[0-9]{1}|(?:1[0-9]{1}|[2-8][0-9]{1}|9[0-9]{1})|(?:1[0-9]{2}|[2-8][0-9]{2}|9[0-9]{2})|10(?:0[0-9]{1}|1[0-9]{1}|2(?:0|[1-3]|4)))|-0+)(?:-(?:\\+?0*(?:[0-9]{1}|(?:1[0-9]{1}|[2-8][0-9]{1}|9[0-9]{1})|(?:1[0-9]{2}|[2-8][0-9]{2}|9[0-9]{2})|10(?:0[0-9]{1}|1[0-9]{1}|2(?:0|[1-3]|4)))|-0+))?|)$"
+            }
           ]
         },
         "header": {
-          "type": "string"
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 64,
+          "pattern": "^[xX]-[!#$%&\\x27*+.^_`|~0-9A-Za-z-]+$",
+          "not": {
+            "pattern": "^[xX]-(?:[fF][oO][rR][wW][aA][rR][dD][eE][dD]-(?:[fF][oO][rR]|[hH][oO][sS][tT]|[pP][rR][oO][tT][oO])|[aA][cC][cC][eE][lL]-[bB][uU][fF][fF][eE][rR][iI][nN][gG])$"
+          }
         },
         "token": {
-          "type": "string"
+          "type": "string",
+          "minLength": 16,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9_-]+$"
         },
         "uplink": {
           "type": "boolean"
         }
       },
-      "type": "object"
+      "type": "object",
+      "required": [
+        "header",
+        "token"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "burstBytes": {
+                "minimum": 1
+              }
+            },
+            "required": [
+              "burstBytes"
+            ]
+          },
+          "then": {
+            "required": [
+              "budgetPercent"
+            ],
+            "properties": {
+              "budgetPercent": {
+                "minimum": 1
+              }
+            }
+          }
+        }
+      ]
     },
     "RemnacustCoreXeraHTTPConfig": {
       "additionalProperties": true,
       "properties": {
         "customDownlinkPadding": {
-          "$ref": "#/definitions/RemnacustCoreXeraDownlinkPaddingConfig"
+          "type": [
+            "object",
+            "null"
+          ]
         },
         "downloadSettings": {
-          "$ref": "#/definitions/RemnacustCoreStreamConfig"
+          "type": [
+            "object",
+            "null"
+          ]
         },
-        "extra": {},
+        "extra": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/definitions/RemnacustCoreXeraExtra"
+            }
+          ]
+        },
+        "h2Params": {},
         "headers": {
           "additionalProperties": {
             "type": "string"
@@ -9217,13 +9288,14 @@
           "type": "string"
         },
         "mode": {
-          "type": "string"
-        },
-        "noGRPCHeader": {
-          "type": "boolean"
-        },
-        "noSSEHeader": {
-          "type": "boolean"
+          "enum": [
+            "",
+            "auto",
+            "stream-auto",
+            "packet-up",
+            "stream-up",
+            "stream-one"
+          ]
         },
         "path": {
           "type": "string"
@@ -9309,56 +9381,656 @@
         "xPaddingMethod": {
           "type": "string"
         },
-        "xPaddingObfsMode": {
-          "type": "boolean"
-        },
         "xPaddingPlacement": {
           "type": "string"
         },
         "xmux": {
-          "$ref": "#/definitions/RemnacustCoreXeraMuxConfig"
+          "type": [
+            "object",
+            "null"
+          ]
         }
       },
-      "type": "object"
+      "type": "object",
+      "patternProperties": {
+        "^[xX][pP][aA][dD][dD][iI][nN][gG][oO][bB][fF][sS][mM][oO][dD][eE]$": false,
+        "^[nN][oO][gG][rR][pP][cC][hH][eE][aA][dD][eE][rR]$": false,
+        "^[nN][oO][sS][sS][eE][hH][eE][aA][dD][eE][rR]$": false
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "extra"
+            ]
+          },
+          "then": {
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "extra": {
+                      "type": "object",
+                      "properties": {
+                        "uplinkDataPlacement": {
+                          "enum": [
+                            "header",
+                            "cookie"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "uplinkDataPlacement"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "extra"
+                  ]
+                },
+                "then": {
+                  "required": [
+                    "mode"
+                  ],
+                  "properties": {
+                    "mode": {
+                      "const": "packet-up"
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "extra": {
+                      "type": "object",
+                      "properties": {
+                        "uplinkHTTPMethod": {
+                          "pattern": "^[gG][eE][tT]$"
+                        }
+                      },
+                      "required": [
+                        "uplinkHTTPMethod"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "extra"
+                  ]
+                },
+                "then": {
+                  "required": [
+                    "mode"
+                  ],
+                  "properties": {
+                    "mode": {
+                      "const": "packet-up"
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "mode": {
+                      "const": "stream-one"
+                    }
+                  },
+                  "required": [
+                    "mode"
+                  ]
+                },
+                "then": {
+                  "properties": {
+                    "extra": {
+                      "properties": {
+                        "downloadSettings": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "else": {
+            "properties": {
+              "customDownlinkPadding": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/definitions/RemnacustCoreXeraDownlinkPaddingConfig"
+                  }
+                ]
+              },
+              "downloadSettings": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/definitions/RemnacustCoreXeraDownloadSettings"
+                  }
+                ]
+              },
+              "h2Params": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "MaxConcurrentStreams": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 4096
+                  },
+                  "MaxDecoderHeaderTableSize": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 4194303
+                  },
+                  "MaxEncoderHeaderTableSize": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 4194303
+                  },
+                  "MaxReadFrameSize": {
+                    "oneOf": [
+                      {
+                        "const": 0
+                      },
+                      {
+                        "type": "integer",
+                        "minimum": 16384,
+                        "maximum": 16777215
+                      }
+                    ]
+                  },
+                  "MaxReceiveBufferPerConnection": {
+                    "oneOf": [
+                      {
+                        "const": 0
+                      },
+                      {
+                        "type": "integer",
+                        "minimum": 65536,
+                        "maximum": 4194303
+                      }
+                    ]
+                  },
+                  "MaxReceiveBufferPerStream": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 4194303
+                  },
+                  "SendPingTimeout": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 86400000000000
+                  },
+                  "PingTimeout": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 86400000000000
+                  },
+                  "WriteByteTimeout": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 86400000000000
+                  },
+                  "PermitProhibitedCipherSuites": {
+                    "const": false
+                  },
+                  "StrictMaxConcurrentRequests": {
+                    "const": false
+                  },
+                  "CountError": {
+                    "type": "null"
+                  }
+                }
+              },
+              "headers": {
+                "type": "object",
+                "propertyNames": {
+                  "pattern": "^[!#$%&\\x27*+.^_`|~0-9A-Za-z-]+$",
+                  "not": {
+                    "pattern": "^[hH][oO][sS][tT]$"
+                  }
+                },
+                "additionalProperties": {
+                  "type": "string",
+                  "pattern": "^[^\\u0000-\\u0008\\u000A-\\u001F\\u007F]*$"
+                }
+              },
+              "host": {
+                "type": "string"
+              },
+              "mode": {
+                "enum": [
+                  "",
+                  "auto",
+                  "stream-auto",
+                  "packet-up",
+                  "stream-up",
+                  "stream-one"
+                ]
+              },
+              "path": {
+                "type": "string"
+              },
+              "scMaxBufferedPosts": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 65536
+              },
+              "scMaxEachPostBytes": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 16777216
+                  },
+                  {
+                    "const": 0
+                  },
+                  {
+                    "type": "string",
+                    "pattern": "^(?:(?:\\+?0*(?:(?:1|[2-8]|9)|(?:1[0-9]{1}|[2-8][0-9]{1}|9[0-9]{1})|(?:1[0-9]{2}|[2-8][0-9]{2}|9[0-9]{2})|(?:1[0-9]{3}|[2-8][0-9]{3}|9[0-9]{3})|(?:1[0-9]{4}|[2-8][0-9]{4}|9[0-9]{4})|(?:1[0-9]{5}|[2-8][0-9]{5}|9[0-9]{5})|(?:1[0-9]{6}|[2-8][0-9]{6}|9[0-9]{6})|1(?:0[0-9]{6}|[1-5][0-9]{6}|6(?:0[0-9]{5}|[1-6][0-9]{5}|7(?:0[0-9]{4}|[1-6][0-9]{4}|7(?:0[0-9]{3}|[1-6][0-9]{3}|7(?:0[0-9]{2}|1[0-9]{2}|2(?:0[0-9]{1}|1(?:0|[1-5]|6)))))))))(?:-(?:\\+?0*(?:(?:1|[2-8]|9)|(?:1[0-9]{1}|[2-8][0-9]{1}|9[0-9]{1})|(?:1[0-9]{2}|[2-8][0-9]{2}|9[0-9]{2})|(?:1[0-9]{3}|[2-8][0-9]{3}|9[0-9]{3})|(?:1[0-9]{4}|[2-8][0-9]{4}|9[0-9]{4})|(?:1[0-9]{5}|[2-8][0-9]{5}|9[0-9]{5})|(?:1[0-9]{6}|[2-8][0-9]{6}|9[0-9]{6})|1(?:0[0-9]{6}|[1-5][0-9]{6}|6(?:0[0-9]{5}|[1-6][0-9]{5}|7(?:0[0-9]{4}|[1-6][0-9]{4}|7(?:0[0-9]{3}|[1-6][0-9]{3}|7(?:0[0-9]{2}|1[0-9]{2}|2(?:0[0-9]{1}|1(?:0|[1-5]|6))))))))))?|(?:[+-]?0+)(?:-(?:[+-]?0+))?|)$"
+                  }
+                ]
+              },
+              "scMinPostsIntervalMs": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": -1,
+                    "maximum": 2147483647
+                  },
+                  {
+                    "type": "string",
+                    "pattern": "^(?:(?:\\+?0*(?:[0-9]{1}|(?:1[0-9]{1}|[2-8][0-9]{1}|9[0-9]{1})|(?:1[0-9]{2}|[2-8][0-9]{2}|9[0-9]{2})|(?:1[0-9]{3}|[2-8][0-9]{3}|9[0-9]{3})|(?:1[0-9]{4}|[2-8][0-9]{4}|9[0-9]{4})|(?:1[0-9]{5}|[2-8][0-9]{5}|9[0-9]{5})|(?:1[0-9]{6}|[2-8][0-9]{6}|9[0-9]{6})|(?:1[0-9]{7}|[2-8][0-9]{7}|9[0-9]{7})|(?:1[0-9]{8}|[2-8][0-9]{8}|9[0-9]{8})|(?:1[0-9]{9}|2(?:0[0-9]{8}|1(?:0[0-9]{7}|[1-3][0-9]{7}|4(?:0[0-9]{6}|[1-6][0-9]{6}|7(?:0[0-9]{5}|[1-3][0-9]{5}|4(?:0[0-9]{4}|[1-7][0-9]{4}|8(?:0[0-9]{3}|[1-2][0-9]{3}|3(?:0[0-9]{2}|[1-5][0-9]{2}|6(?:0[0-9]{1}|[1-3][0-9]{1}|4(?:0|[1-6]|7)))))))))))|-0*1|-0+)(?:-(?:\\+?0*(?:[0-9]{1}|(?:1[0-9]{1}|[2-8][0-9]{1}|9[0-9]{1})|(?:1[0-9]{2}|[2-8][0-9]{2}|9[0-9]{2})|(?:1[0-9]{3}|[2-8][0-9]{3}|9[0-9]{3})|(?:1[0-9]{4}|[2-8][0-9]{4}|9[0-9]{4})|(?:1[0-9]{5}|[2-8][0-9]{5}|9[0-9]{5})|(?:1[0-9]{6}|[2-8][0-9]{6}|9[0-9]{6})|(?:1[0-9]{7}|[2-8][0-9]{7}|9[0-9]{7})|(?:1[0-9]{8}|[2-8][0-9]{8}|9[0-9]{8})|(?:1[0-9]{9}|2(?:0[0-9]{8}|1(?:0[0-9]{7}|[1-3][0-9]{7}|4(?:0[0-9]{6}|[1-6][0-9]{6}|7(?:0[0-9]{5}|[1-3][0-9]{5}|4(?:0[0-9]{4}|[1-7][0-9]{4}|8(?:0[0-9]{3}|[1-2][0-9]{3}|3(?:0[0-9]{2}|[1-5][0-9]{2}|6(?:0[0-9]{1}|[1-3][0-9]{1}|4(?:0|[1-6]|7)))))))))))|-0*1|-0+))?|)$"
+                  }
+                ]
+              },
+              "scStreamUpServerSecs": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647
+                  },
+                  {
+                    "type": "string",
+                    "pattern": "^(?:(?:\\+?0*(?:[0-9]{1}|(?:1[0-9]{1}|[2-8][0-9]{1}|9[0-9]{1})|(?:1[0-9]{2}|[2-8][0-9]{2}|9[0-9]{2})|(?:1[0-9]{3}|[2-8][0-9]{3}|9[0-9]{3})|(?:1[0-9]{4}|[2-8][0-9]{4}|9[0-9]{4})|(?:1[0-9]{5}|[2-8][0-9]{5}|9[0-9]{5})|(?:1[0-9]{6}|[2-8][0-9]{6}|9[0-9]{6})|(?:1[0-9]{7}|[2-8][0-9]{7}|9[0-9]{7})|(?:1[0-9]{8}|[2-8][0-9]{8}|9[0-9]{8})|(?:1[0-9]{9}|2(?:0[0-9]{8}|1(?:0[0-9]{7}|[1-3][0-9]{7}|4(?:0[0-9]{6}|[1-6][0-9]{6}|7(?:0[0-9]{5}|[1-3][0-9]{5}|4(?:0[0-9]{4}|[1-7][0-9]{4}|8(?:0[0-9]{3}|[1-2][0-9]{3}|3(?:0[0-9]{2}|[1-5][0-9]{2}|6(?:0[0-9]{1}|[1-3][0-9]{1}|4(?:0|[1-6]|7)))))))))))|-0+)(?:-(?:\\+?0*(?:[0-9]{1}|(?:1[0-9]{1}|[2-8][0-9]{1}|9[0-9]{1})|(?:1[0-9]{2}|[2-8][0-9]{2}|9[0-9]{2})|(?:1[0-9]{3}|[2-8][0-9]{3}|9[0-9]{3})|(?:1[0-9]{4}|[2-8][0-9]{4}|9[0-9]{4})|(?:1[0-9]{5}|[2-8][0-9]{5}|9[0-9]{5})|(?:1[0-9]{6}|[2-8][0-9]{6}|9[0-9]{6})|(?:1[0-9]{7}|[2-8][0-9]{7}|9[0-9]{7})|(?:1[0-9]{8}|[2-8][0-9]{8}|9[0-9]{8})|(?:1[0-9]{9}|2(?:0[0-9]{8}|1(?:0[0-9]{7}|[1-3][0-9]{7}|4(?:0[0-9]{6}|[1-6][0-9]{6}|7(?:0[0-9]{5}|[1-3][0-9]{5}|4(?:0[0-9]{4}|[1-7][0-9]{4}|8(?:0[0-9]{3}|[1-2][0-9]{3}|3(?:0[0-9]{2}|[1-5][0-9]{2}|6(?:0[0-9]{1}|[1-3][0-9]{1}|4(?:0|[1-6]|7)))))))))))|-0+))?|)$"
+                  }
+                ]
+              },
+              "seqKey": {
+                "type": "string"
+              },
+              "seqPlacement": {
+                "enum": [
+                  "",
+                  "path",
+                  "query",
+                  "header",
+                  "cookie"
+                ]
+              },
+              "serverMaxBufferedBytes": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9223372036854775807
+              },
+              "serverMaxHeaderBytes": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1048576
+              },
+              "serverMaxSessions": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 65536
+              },
+              "sessionIDKey": {
+                "type": "string"
+              },
+              "sessionIDLength": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 256
+                  },
+                  {
+                    "const": 0
+                  },
+                  {
+                    "type": "string",
+                    "pattern": "^(?:(?:\\+?0*(?:(?:1|[2-8]|9)|(?:1[0-9]{1}|[2-8][0-9]{1}|9[0-9]{1})|(?:1[0-9]{2}|2(?:0[0-9]{1}|[1-4][0-9]{1}|5(?:0|[1-5]|6)))))(?:-(?:\\+?0*(?:(?:1|[2-8]|9)|(?:1[0-9]{1}|[2-8][0-9]{1}|9[0-9]{1})|(?:1[0-9]{2}|2(?:0[0-9]{1}|[1-4][0-9]{1}|5(?:0|[1-5]|6))))))?|(?:[+-]?0+)(?:-(?:[+-]?0+))?|)$"
+                  }
+                ]
+              },
+              "sessionIDPlacement": {
+                "enum": [
+                  "",
+                  "path",
+                  "query",
+                  "header",
+                  "cookie"
+                ]
+              },
+              "sessionIDTable": {
+                "type": "string",
+                "maxLength": 256,
+                "pattern": "^[A-Za-z0-9_.~-]*$"
+              },
+              "uplinkChunkSize": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 1048576
+                  },
+                  {
+                    "const": 0
+                  },
+                  {
+                    "type": "string",
+                    "pattern": "^(?:(?:\\+?0*(?:(?:1|[2-8]|9)|(?:1[0-9]{1}|[2-8][0-9]{1}|9[0-9]{1})|(?:1[0-9]{2}|[2-8][0-9]{2}|9[0-9]{2})|(?:1[0-9]{3}|[2-8][0-9]{3}|9[0-9]{3})|(?:1[0-9]{4}|[2-8][0-9]{4}|9[0-9]{4})|(?:1[0-9]{5}|[2-8][0-9]{5}|9[0-9]{5})|10(?:0[0-9]{4}|[1-3][0-9]{4}|4(?:0[0-9]{3}|[1-7][0-9]{3}|8(?:0[0-9]{2}|[1-4][0-9]{2}|5(?:0[0-9]{1}|[1-6][0-9]{1}|7(?:0|[1-5]|6)))))))(?:-(?:\\+?0*(?:(?:1|[2-8]|9)|(?:1[0-9]{1}|[2-8][0-9]{1}|9[0-9]{1})|(?:1[0-9]{2}|[2-8][0-9]{2}|9[0-9]{2})|(?:1[0-9]{3}|[2-8][0-9]{3}|9[0-9]{3})|(?:1[0-9]{4}|[2-8][0-9]{4}|9[0-9]{4})|(?:1[0-9]{5}|[2-8][0-9]{5}|9[0-9]{5})|10(?:0[0-9]{4}|[1-3][0-9]{4}|4(?:0[0-9]{3}|[1-7][0-9]{3}|8(?:0[0-9]{2}|[1-4][0-9]{2}|5(?:0[0-9]{1}|[1-6][0-9]{1}|7(?:0|[1-5]|6))))))))?|(?:[+-]?0+)(?:-(?:[+-]?0+))?|)$"
+                  }
+                ]
+              },
+              "uplinkDataKey": {
+                "type": "string"
+              },
+              "uplinkDataPlacement": {
+                "enum": [
+                  "",
+                  "auto",
+                  "body",
+                  "header",
+                  "cookie"
+                ]
+              },
+              "uplinkHTTPMethod": {
+                "type": "string"
+              },
+              "xPaddingBytes": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 65536
+                  },
+                  {
+                    "const": 0
+                  },
+                  {
+                    "type": "string",
+                    "pattern": "^(?:(?:\\+?0*(?:(?:1|[2-8]|9)|(?:1[0-9]{1}|[2-8][0-9]{1}|9[0-9]{1})|(?:1[0-9]{2}|[2-8][0-9]{2}|9[0-9]{2})|(?:1[0-9]{3}|[2-8][0-9]{3}|9[0-9]{3})|(?:1[0-9]{4}|[2-5][0-9]{4}|6(?:0[0-9]{3}|[1-4][0-9]{3}|5(?:0[0-9]{2}|[1-4][0-9]{2}|5(?:0[0-9]{1}|[1-2][0-9]{1}|3(?:0|[1-5]|6)))))))(?:-(?:\\+?0*(?:(?:1|[2-8]|9)|(?:1[0-9]{1}|[2-8][0-9]{1}|9[0-9]{1})|(?:1[0-9]{2}|[2-8][0-9]{2}|9[0-9]{2})|(?:1[0-9]{3}|[2-8][0-9]{3}|9[0-9]{3})|(?:1[0-9]{4}|[2-5][0-9]{4}|6(?:0[0-9]{3}|[1-4][0-9]{3}|5(?:0[0-9]{2}|[1-4][0-9]{2}|5(?:0[0-9]{1}|[1-2][0-9]{1}|3(?:0|[1-5]|6))))))))?|(?:[+-]?0+)(?:-(?:[+-]?0+))?|)$"
+                  }
+                ]
+              },
+              "xPaddingHeader": {
+                "anyOf": [
+                  {
+                    "const": ""
+                  },
+                  {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 64,
+                    "pattern": "^[xX]-[!#$%&\\x27*+.^_`|~0-9A-Za-z-]+$",
+                    "not": {
+                      "pattern": "^[xX]-(?:[fF][oO][rR][wW][aA][rR][dD][eE][dD]-(?:[fF][oO][rR]|[hH][oO][sS][tT]|[pP][rR][oO][tT][oO])|[aA][cC][cC][eE][lL]-[bB][uU][fF][fF][eE][rR][iI][nN][gG])$"
+                    }
+                  }
+                ]
+              },
+              "xPaddingKey": {
+                "type": "string"
+              },
+              "xPaddingMethod": {
+                "enum": [
+                  "",
+                  "tokenish"
+                ]
+              },
+              "xPaddingPlacement": {
+                "enum": [
+                  "",
+                  "query",
+                  "header",
+                  "cookie",
+                  "queryInHeader"
+                ]
+              },
+              "xmux": {
+                "$ref": "#/definitions/RemnacustCoreXeraMuxConfig"
+              }
+            },
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "uplinkDataPlacement": {
+                      "enum": [
+                        "header",
+                        "cookie"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "uplinkDataPlacement"
+                  ]
+                },
+                "then": {
+                  "required": [
+                    "mode"
+                  ],
+                  "properties": {
+                    "mode": {
+                      "const": "packet-up"
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "uplinkHTTPMethod": {
+                      "pattern": "^[gG][eE][tT]$"
+                    }
+                  },
+                  "required": [
+                    "uplinkHTTPMethod"
+                  ]
+                },
+                "then": {
+                  "required": [
+                    "mode"
+                  ],
+                  "properties": {
+                    "mode": {
+                      "const": "packet-up"
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "mode": {
+                      "const": "stream-one"
+                    }
+                  },
+                  "required": [
+                    "mode"
+                  ]
+                },
+                "then": {
+                  "properties": {
+                    "downloadSettings": {
+                      "type": "null"
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "customDownlinkPadding": {
+                      "type": "object",
+                      "properties": {
+                        "uplink": {
+                          "const": true
+                        }
+                      },
+                      "required": [
+                        "uplink"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "customDownlinkPadding"
+                  ]
+                },
+                "then": {
+                  "properties": {
+                    "uplinkDataPlacement": {
+                      "enum": [
+                        "",
+                        "body"
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ]
     },
     "RemnacustCoreXeraMuxConfig": {
       "additionalProperties": true,
       "properties": {
         "cMaxReuseTimes": {
-          "type": [
-            "integer",
-            "string"
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1048576
+            },
+            {
+              "type": "string",
+              "pattern": "^(?:(?:\\+?0*(?:[0-9]{1}|(?:1[0-9]{1}|[2-8][0-9]{1}|9[0-9]{1})|(?:1[0-9]{2}|[2-8][0-9]{2}|9[0-9]{2})|(?:1[0-9]{3}|[2-8][0-9]{3}|9[0-9]{3})|(?:1[0-9]{4}|[2-8][0-9]{4}|9[0-9]{4})|(?:1[0-9]{5}|[2-8][0-9]{5}|9[0-9]{5})|10(?:0[0-9]{4}|[1-3][0-9]{4}|4(?:0[0-9]{3}|[1-7][0-9]{3}|8(?:0[0-9]{2}|[1-4][0-9]{2}|5(?:0[0-9]{1}|[1-6][0-9]{1}|7(?:0|[1-5]|6))))))|-0+)(?:-(?:\\+?0*(?:[0-9]{1}|(?:1[0-9]{1}|[2-8][0-9]{1}|9[0-9]{1})|(?:1[0-9]{2}|[2-8][0-9]{2}|9[0-9]{2})|(?:1[0-9]{3}|[2-8][0-9]{3}|9[0-9]{3})|(?:1[0-9]{4}|[2-8][0-9]{4}|9[0-9]{4})|(?:1[0-9]{5}|[2-8][0-9]{5}|9[0-9]{5})|10(?:0[0-9]{4}|[1-3][0-9]{4}|4(?:0[0-9]{3}|[1-7][0-9]{3}|8(?:0[0-9]{2}|[1-4][0-9]{2}|5(?:0[0-9]{1}|[1-6][0-9]{1}|7(?:0|[1-5]|6))))))|-0+))?|)$"
+            }
           ]
         },
         "hKeepAlivePeriod": {
-          "type": "integer"
+          "type": "integer",
+          "minimum": -1,
+          "maximum": 604800
         },
         "hMaxRequestTimes": {
-          "type": [
-            "integer",
-            "string"
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1048576
+            },
+            {
+              "type": "string",
+              "pattern": "^(?:(?:\\+?0*(?:[0-9]{1}|(?:1[0-9]{1}|[2-8][0-9]{1}|9[0-9]{1})|(?:1[0-9]{2}|[2-8][0-9]{2}|9[0-9]{2})|(?:1[0-9]{3}|[2-8][0-9]{3}|9[0-9]{3})|(?:1[0-9]{4}|[2-8][0-9]{4}|9[0-9]{4})|(?:1[0-9]{5}|[2-8][0-9]{5}|9[0-9]{5})|10(?:0[0-9]{4}|[1-3][0-9]{4}|4(?:0[0-9]{3}|[1-7][0-9]{3}|8(?:0[0-9]{2}|[1-4][0-9]{2}|5(?:0[0-9]{1}|[1-6][0-9]{1}|7(?:0|[1-5]|6))))))|-0+)(?:-(?:\\+?0*(?:[0-9]{1}|(?:1[0-9]{1}|[2-8][0-9]{1}|9[0-9]{1})|(?:1[0-9]{2}|[2-8][0-9]{2}|9[0-9]{2})|(?:1[0-9]{3}|[2-8][0-9]{3}|9[0-9]{3})|(?:1[0-9]{4}|[2-8][0-9]{4}|9[0-9]{4})|(?:1[0-9]{5}|[2-8][0-9]{5}|9[0-9]{5})|10(?:0[0-9]{4}|[1-3][0-9]{4}|4(?:0[0-9]{3}|[1-7][0-9]{3}|8(?:0[0-9]{2}|[1-4][0-9]{2}|5(?:0[0-9]{1}|[1-6][0-9]{1}|7(?:0|[1-5]|6))))))|-0+))?|)$"
+            }
           ]
         },
         "hMaxReusableSecs": {
-          "type": [
-            "integer",
-            "string"
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 604800
+            },
+            {
+              "type": "string",
+              "pattern": "^(?:(?:\\+?0*(?:[0-9]{1}|(?:1[0-9]{1}|[2-8][0-9]{1}|9[0-9]{1})|(?:1[0-9]{2}|[2-8][0-9]{2}|9[0-9]{2})|(?:1[0-9]{3}|[2-8][0-9]{3}|9[0-9]{3})|(?:1[0-9]{4}|[2-8][0-9]{4}|9[0-9]{4})|(?:1[0-9]{5}|[2-5][0-9]{5}|60(?:0[0-9]{3}|[1-3][0-9]{3}|4(?:0[0-9]{2}|[1-7][0-9]{2}|800))))|-0+)(?:-(?:\\+?0*(?:[0-9]{1}|(?:1[0-9]{1}|[2-8][0-9]{1}|9[0-9]{1})|(?:1[0-9]{2}|[2-8][0-9]{2}|9[0-9]{2})|(?:1[0-9]{3}|[2-8][0-9]{3}|9[0-9]{3})|(?:1[0-9]{4}|[2-8][0-9]{4}|9[0-9]{4})|(?:1[0-9]{5}|[2-5][0-9]{5}|60(?:0[0-9]{3}|[1-3][0-9]{3}|4(?:0[0-9]{2}|[1-7][0-9]{2}|800))))|-0+))?|)$"
+            }
           ]
         },
         "maxConcurrency": {
-          "type": [
-            "integer",
-            "string"
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4096
+            },
+            {
+              "type": "string",
+              "pattern": "^(?:(?:\\+?0*(?:[0-9]{1}|(?:1[0-9]{1}|[2-8][0-9]{1}|9[0-9]{1})|(?:1[0-9]{2}|[2-8][0-9]{2}|9[0-9]{2})|(?:1[0-9]{3}|[2-3][0-9]{3}|40(?:0[0-9]{1}|[1-8][0-9]{1}|9(?:0|[1-5]|6))))|-0+)(?:-(?:\\+?0*(?:[0-9]{1}|(?:1[0-9]{1}|[2-8][0-9]{1}|9[0-9]{1})|(?:1[0-9]{2}|[2-8][0-9]{2}|9[0-9]{2})|(?:1[0-9]{3}|[2-3][0-9]{3}|40(?:0[0-9]{1}|[1-8][0-9]{1}|9(?:0|[1-5]|6))))|-0+))?|)$"
+            }
           ]
         },
         "maxConnections": {
-          "type": [
-            "integer",
-            "string"
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 256
+            },
+            {
+              "type": "string",
+              "pattern": "^(?:(?:\\+?0*(?:[0-9]{1}|(?:1[0-9]{1}|[2-8][0-9]{1}|9[0-9]{1})|(?:1[0-9]{2}|2(?:0[0-9]{1}|[1-4][0-9]{1}|5(?:0|[1-5]|6))))|-0+)(?:-(?:\\+?0*(?:[0-9]{1}|(?:1[0-9]{1}|[2-8][0-9]{1}|9[0-9]{1})|(?:1[0-9]{2}|2(?:0[0-9]{1}|[1-4][0-9]{1}|5(?:0|[1-5]|6))))|-0+))?|)$"
+            }
           ]
         }
       },
-      "type": "object"
+      "type": "object",
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "maxConnections"
+            ],
+            "properties": {
+              "maxConnections": {
+                "not": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 0
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "^(?:(?:\\+?0*(?:0)|-0+)(?:-(?:\\+?0*(?:0)|-0+))?|)$"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "maxConcurrency": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 0
+                  },
+                  {
+                    "type": "string",
+                    "pattern": "^(?:(?:\\+?0*(?:0)|-0+)(?:-(?:\\+?0*(?:0)|-0+))?|)$"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ]
     },
     "RemnacustCoreXicmp": {
       "additionalProperties": true,
@@ -9493,12 +10165,478 @@
         }
       },
       "type": "object"
+    },
+    "RemnacustCoreplain": {
+      "$ref": "#/definitions/RemnacustCoreXeraHTTPConfig"
+    },
+    "RemnacustCoreXeraDownloadSettings": {
+      "additionalProperties": true,
+      "properties": {
+        "address": {
+          "type": "string",
+          "minLength": 1
+        },
+        "finalmask": {
+          "$ref": "#/definitions/RemnacustCoreFinalMask"
+        },
+        "grpcSettings": {
+          "$ref": "#/definitions/RemnacustCoreGRPCConfig"
+        },
+        "httpupgradeSettings": {
+          "$ref": "#/definitions/RemnacustCoreHttpUpgradeConfig"
+        },
+        "hysteriaSettings": {
+          "$ref": "#/definitions/RemnacustCoreHysteriaConfig"
+        },
+        "kcpSettings": {
+          "$ref": "#/definitions/RemnacustCoreKCPConfig"
+        },
+        "masqueSettings": {
+          "$ref": "#/definitions/RemnacustCoreMasqueConfig"
+        },
+        "method": {
+          "type": "string"
+        },
+        "network": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "rawSettings": {
+          "$ref": "#/definitions/RemnacustCoreTCPConfig"
+        },
+        "realitySettings": {
+          "$ref": "#/definitions/RemnacustCoreREALITYConfig"
+        },
+        "security": {
+          "type": "string"
+        },
+        "sockopt": {
+          "$ref": "#/definitions/RemnacustCoreSocketConfig"
+        },
+        "splithttpSettings": {
+          "$ref": "#/definitions/RemnacustCoreSplitHTTPConfig"
+        },
+        "tcpSettings": {
+          "$ref": "#/definitions/RemnacustCoreTCPConfig"
+        },
+        "tlsSettings": {
+          "$ref": "#/definitions/RemnacustCoreTLSConfig"
+        },
+        "wsSettings": {
+          "$ref": "#/definitions/RemnacustCoreWebSocketConfig"
+        },
+        "xdriveSettings": {
+          "$ref": "#/definitions/RemnacustCoreXDriveConfig"
+        },
+        "xeraHttpSettings": {
+          "$ref": "#/definitions/RemnacustCoreXeraHTTPConfig"
+        },
+        "xhttpSettings": {
+          "$ref": "#/definitions/RemnacustCoreSplitHTTPConfig"
+        }
+      },
+      "type": "object",
+      "required": [
+        "address",
+        "port"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "method"
+            ],
+            "properties": {
+              "method": {
+                "type": "string"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "method": {
+                "enum": [
+                  "xera",
+                  "xera-http"
+                ]
+              }
+            }
+          },
+          "else": {
+            "required": [
+              "network"
+            ],
+            "properties": {
+              "network": {
+                "enum": [
+                  "xera",
+                  "xera-http"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "RemnacustCoreXeraExtra": {
+      "additionalProperties": true,
+      "properties": {
+        "customDownlinkPadding": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/definitions/RemnacustCoreXeraDownlinkPaddingConfig"
+            }
+          ]
+        },
+        "downloadSettings": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/definitions/RemnacustCoreXeraDownloadSettings"
+            }
+          ]
+        },
+        "h2Params": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "MaxConcurrentStreams": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4096
+            },
+            "MaxDecoderHeaderTableSize": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4194303
+            },
+            "MaxEncoderHeaderTableSize": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4194303
+            },
+            "MaxReadFrameSize": {
+              "oneOf": [
+                {
+                  "const": 0
+                },
+                {
+                  "type": "integer",
+                  "minimum": 16384,
+                  "maximum": 16777215
+                }
+              ]
+            },
+            "MaxReceiveBufferPerConnection": {
+              "oneOf": [
+                {
+                  "const": 0
+                },
+                {
+                  "type": "integer",
+                  "minimum": 65536,
+                  "maximum": 4194303
+                }
+              ]
+            },
+            "MaxReceiveBufferPerStream": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4194303
+            },
+            "SendPingTimeout": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 86400000000000
+            },
+            "PingTimeout": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 86400000000000
+            },
+            "WriteByteTimeout": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 86400000000000
+            },
+            "PermitProhibitedCipherSuites": {
+              "const": false
+            },
+            "StrictMaxConcurrentRequests": {
+              "const": false
+            },
+            "CountError": {
+              "type": "null"
+            }
+          }
+        },
+        "headers": {
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^[!#$%&\\x27*+.^_`|~0-9A-Za-z-]+$",
+            "not": {
+              "pattern": "^[hH][oO][sS][tT]$"
+            }
+          },
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^[^\\u0000-\\u0008\\u000A-\\u001F\\u007F]*$"
+          }
+        },
+        "host": {
+          "type": "string"
+        },
+        "mode": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "scMaxBufferedPosts": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 65536
+        },
+        "scMaxEachPostBytes": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 16777216
+            },
+            {
+              "const": 0
+            },
+            {
+              "type": "string",
+              "pattern": "^(?:(?:\\+?0*(?:(?:1|[2-8]|9)|(?:1[0-9]{1}|[2-8][0-9]{1}|9[0-9]{1})|(?:1[0-9]{2}|[2-8][0-9]{2}|9[0-9]{2})|(?:1[0-9]{3}|[2-8][0-9]{3}|9[0-9]{3})|(?:1[0-9]{4}|[2-8][0-9]{4}|9[0-9]{4})|(?:1[0-9]{5}|[2-8][0-9]{5}|9[0-9]{5})|(?:1[0-9]{6}|[2-8][0-9]{6}|9[0-9]{6})|1(?:0[0-9]{6}|[1-5][0-9]{6}|6(?:0[0-9]{5}|[1-6][0-9]{5}|7(?:0[0-9]{4}|[1-6][0-9]{4}|7(?:0[0-9]{3}|[1-6][0-9]{3}|7(?:0[0-9]{2}|1[0-9]{2}|2(?:0[0-9]{1}|1(?:0|[1-5]|6)))))))))(?:-(?:\\+?0*(?:(?:1|[2-8]|9)|(?:1[0-9]{1}|[2-8][0-9]{1}|9[0-9]{1})|(?:1[0-9]{2}|[2-8][0-9]{2}|9[0-9]{2})|(?:1[0-9]{3}|[2-8][0-9]{3}|9[0-9]{3})|(?:1[0-9]{4}|[2-8][0-9]{4}|9[0-9]{4})|(?:1[0-9]{5}|[2-8][0-9]{5}|9[0-9]{5})|(?:1[0-9]{6}|[2-8][0-9]{6}|9[0-9]{6})|1(?:0[0-9]{6}|[1-5][0-9]{6}|6(?:0[0-9]{5}|[1-6][0-9]{5}|7(?:0[0-9]{4}|[1-6][0-9]{4}|7(?:0[0-9]{3}|[1-6][0-9]{3}|7(?:0[0-9]{2}|1[0-9]{2}|2(?:0[0-9]{1}|1(?:0|[1-5]|6))))))))))?|(?:[+-]?0+)(?:-(?:[+-]?0+))?|)$"
+            }
+          ]
+        },
+        "scMinPostsIntervalMs": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": -1,
+              "maximum": 2147483647
+            },
+            {
+              "type": "string",
+              "pattern": "^(?:(?:\\+?0*(?:[0-9]{1}|(?:1[0-9]{1}|[2-8][0-9]{1}|9[0-9]{1})|(?:1[0-9]{2}|[2-8][0-9]{2}|9[0-9]{2})|(?:1[0-9]{3}|[2-8][0-9]{3}|9[0-9]{3})|(?:1[0-9]{4}|[2-8][0-9]{4}|9[0-9]{4})|(?:1[0-9]{5}|[2-8][0-9]{5}|9[0-9]{5})|(?:1[0-9]{6}|[2-8][0-9]{6}|9[0-9]{6})|(?:1[0-9]{7}|[2-8][0-9]{7}|9[0-9]{7})|(?:1[0-9]{8}|[2-8][0-9]{8}|9[0-9]{8})|(?:1[0-9]{9}|2(?:0[0-9]{8}|1(?:0[0-9]{7}|[1-3][0-9]{7}|4(?:0[0-9]{6}|[1-6][0-9]{6}|7(?:0[0-9]{5}|[1-3][0-9]{5}|4(?:0[0-9]{4}|[1-7][0-9]{4}|8(?:0[0-9]{3}|[1-2][0-9]{3}|3(?:0[0-9]{2}|[1-5][0-9]{2}|6(?:0[0-9]{1}|[1-3][0-9]{1}|4(?:0|[1-6]|7)))))))))))|-0*1|-0+)(?:-(?:\\+?0*(?:[0-9]{1}|(?:1[0-9]{1}|[2-8][0-9]{1}|9[0-9]{1})|(?:1[0-9]{2}|[2-8][0-9]{2}|9[0-9]{2})|(?:1[0-9]{3}|[2-8][0-9]{3}|9[0-9]{3})|(?:1[0-9]{4}|[2-8][0-9]{4}|9[0-9]{4})|(?:1[0-9]{5}|[2-8][0-9]{5}|9[0-9]{5})|(?:1[0-9]{6}|[2-8][0-9]{6}|9[0-9]{6})|(?:1[0-9]{7}|[2-8][0-9]{7}|9[0-9]{7})|(?:1[0-9]{8}|[2-8][0-9]{8}|9[0-9]{8})|(?:1[0-9]{9}|2(?:0[0-9]{8}|1(?:0[0-9]{7}|[1-3][0-9]{7}|4(?:0[0-9]{6}|[1-6][0-9]{6}|7(?:0[0-9]{5}|[1-3][0-9]{5}|4(?:0[0-9]{4}|[1-7][0-9]{4}|8(?:0[0-9]{3}|[1-2][0-9]{3}|3(?:0[0-9]{2}|[1-5][0-9]{2}|6(?:0[0-9]{1}|[1-3][0-9]{1}|4(?:0|[1-6]|7)))))))))))|-0*1|-0+))?|)$"
+            }
+          ]
+        },
+        "scStreamUpServerSecs": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2147483647
+            },
+            {
+              "type": "string",
+              "pattern": "^(?:(?:\\+?0*(?:[0-9]{1}|(?:1[0-9]{1}|[2-8][0-9]{1}|9[0-9]{1})|(?:1[0-9]{2}|[2-8][0-9]{2}|9[0-9]{2})|(?:1[0-9]{3}|[2-8][0-9]{3}|9[0-9]{3})|(?:1[0-9]{4}|[2-8][0-9]{4}|9[0-9]{4})|(?:1[0-9]{5}|[2-8][0-9]{5}|9[0-9]{5})|(?:1[0-9]{6}|[2-8][0-9]{6}|9[0-9]{6})|(?:1[0-9]{7}|[2-8][0-9]{7}|9[0-9]{7})|(?:1[0-9]{8}|[2-8][0-9]{8}|9[0-9]{8})|(?:1[0-9]{9}|2(?:0[0-9]{8}|1(?:0[0-9]{7}|[1-3][0-9]{7}|4(?:0[0-9]{6}|[1-6][0-9]{6}|7(?:0[0-9]{5}|[1-3][0-9]{5}|4(?:0[0-9]{4}|[1-7][0-9]{4}|8(?:0[0-9]{3}|[1-2][0-9]{3}|3(?:0[0-9]{2}|[1-5][0-9]{2}|6(?:0[0-9]{1}|[1-3][0-9]{1}|4(?:0|[1-6]|7)))))))))))|-0+)(?:-(?:\\+?0*(?:[0-9]{1}|(?:1[0-9]{1}|[2-8][0-9]{1}|9[0-9]{1})|(?:1[0-9]{2}|[2-8][0-9]{2}|9[0-9]{2})|(?:1[0-9]{3}|[2-8][0-9]{3}|9[0-9]{3})|(?:1[0-9]{4}|[2-8][0-9]{4}|9[0-9]{4})|(?:1[0-9]{5}|[2-8][0-9]{5}|9[0-9]{5})|(?:1[0-9]{6}|[2-8][0-9]{6}|9[0-9]{6})|(?:1[0-9]{7}|[2-8][0-9]{7}|9[0-9]{7})|(?:1[0-9]{8}|[2-8][0-9]{8}|9[0-9]{8})|(?:1[0-9]{9}|2(?:0[0-9]{8}|1(?:0[0-9]{7}|[1-3][0-9]{7}|4(?:0[0-9]{6}|[1-6][0-9]{6}|7(?:0[0-9]{5}|[1-3][0-9]{5}|4(?:0[0-9]{4}|[1-7][0-9]{4}|8(?:0[0-9]{3}|[1-2][0-9]{3}|3(?:0[0-9]{2}|[1-5][0-9]{2}|6(?:0[0-9]{1}|[1-3][0-9]{1}|4(?:0|[1-6]|7)))))))))))|-0+))?|)$"
+            }
+          ]
+        },
+        "seqKey": {
+          "type": "string"
+        },
+        "seqPlacement": {
+          "enum": [
+            "",
+            "path",
+            "query",
+            "header",
+            "cookie"
+          ]
+        },
+        "serverMaxBufferedBytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "serverMaxHeaderBytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1048576
+        },
+        "serverMaxSessions": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 65536
+        },
+        "sessionIDKey": {
+          "type": "string"
+        },
+        "sessionIDLength": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 256
+            },
+            {
+              "const": 0
+            },
+            {
+              "type": "string",
+              "pattern": "^(?:(?:\\+?0*(?:(?:1|[2-8]|9)|(?:1[0-9]{1}|[2-8][0-9]{1}|9[0-9]{1})|(?:1[0-9]{2}|2(?:0[0-9]{1}|[1-4][0-9]{1}|5(?:0|[1-5]|6)))))(?:-(?:\\+?0*(?:(?:1|[2-8]|9)|(?:1[0-9]{1}|[2-8][0-9]{1}|9[0-9]{1})|(?:1[0-9]{2}|2(?:0[0-9]{1}|[1-4][0-9]{1}|5(?:0|[1-5]|6))))))?|(?:[+-]?0+)(?:-(?:[+-]?0+))?|)$"
+            }
+          ]
+        },
+        "sessionIDPlacement": {
+          "enum": [
+            "",
+            "path",
+            "query",
+            "header",
+            "cookie"
+          ]
+        },
+        "sessionIDTable": {
+          "type": "string",
+          "maxLength": 256,
+          "pattern": "^[A-Za-z0-9_.~-]*$"
+        },
+        "uplinkChunkSize": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1048576
+            },
+            {
+              "const": 0
+            },
+            {
+              "type": "string",
+              "pattern": "^(?:(?:\\+?0*(?:(?:1|[2-8]|9)|(?:1[0-9]{1}|[2-8][0-9]{1}|9[0-9]{1})|(?:1[0-9]{2}|[2-8][0-9]{2}|9[0-9]{2})|(?:1[0-9]{3}|[2-8][0-9]{3}|9[0-9]{3})|(?:1[0-9]{4}|[2-8][0-9]{4}|9[0-9]{4})|(?:1[0-9]{5}|[2-8][0-9]{5}|9[0-9]{5})|10(?:0[0-9]{4}|[1-3][0-9]{4}|4(?:0[0-9]{3}|[1-7][0-9]{3}|8(?:0[0-9]{2}|[1-4][0-9]{2}|5(?:0[0-9]{1}|[1-6][0-9]{1}|7(?:0|[1-5]|6)))))))(?:-(?:\\+?0*(?:(?:1|[2-8]|9)|(?:1[0-9]{1}|[2-8][0-9]{1}|9[0-9]{1})|(?:1[0-9]{2}|[2-8][0-9]{2}|9[0-9]{2})|(?:1[0-9]{3}|[2-8][0-9]{3}|9[0-9]{3})|(?:1[0-9]{4}|[2-8][0-9]{4}|9[0-9]{4})|(?:1[0-9]{5}|[2-8][0-9]{5}|9[0-9]{5})|10(?:0[0-9]{4}|[1-3][0-9]{4}|4(?:0[0-9]{3}|[1-7][0-9]{3}|8(?:0[0-9]{2}|[1-4][0-9]{2}|5(?:0[0-9]{1}|[1-6][0-9]{1}|7(?:0|[1-5]|6))))))))?|(?:[+-]?0+)(?:-(?:[+-]?0+))?|)$"
+            }
+          ]
+        },
+        "uplinkDataKey": {
+          "type": "string"
+        },
+        "uplinkDataPlacement": {
+          "enum": [
+            "",
+            "auto",
+            "body",
+            "header",
+            "cookie"
+          ]
+        },
+        "uplinkHTTPMethod": {
+          "type": "string"
+        },
+        "xPaddingBytes": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65536
+            },
+            {
+              "const": 0
+            },
+            {
+              "type": "string",
+              "pattern": "^(?:(?:\\+?0*(?:(?:1|[2-8]|9)|(?:1[0-9]{1}|[2-8][0-9]{1}|9[0-9]{1})|(?:1[0-9]{2}|[2-8][0-9]{2}|9[0-9]{2})|(?:1[0-9]{3}|[2-8][0-9]{3}|9[0-9]{3})|(?:1[0-9]{4}|[2-5][0-9]{4}|6(?:0[0-9]{3}|[1-4][0-9]{3}|5(?:0[0-9]{2}|[1-4][0-9]{2}|5(?:0[0-9]{1}|[1-2][0-9]{1}|3(?:0|[1-5]|6)))))))(?:-(?:\\+?0*(?:(?:1|[2-8]|9)|(?:1[0-9]{1}|[2-8][0-9]{1}|9[0-9]{1})|(?:1[0-9]{2}|[2-8][0-9]{2}|9[0-9]{2})|(?:1[0-9]{3}|[2-8][0-9]{3}|9[0-9]{3})|(?:1[0-9]{4}|[2-5][0-9]{4}|6(?:0[0-9]{3}|[1-4][0-9]{3}|5(?:0[0-9]{2}|[1-4][0-9]{2}|5(?:0[0-9]{1}|[1-2][0-9]{1}|3(?:0|[1-5]|6))))))))?|(?:[+-]?0+)(?:-(?:[+-]?0+))?|)$"
+            }
+          ]
+        },
+        "xPaddingHeader": {
+          "anyOf": [
+            {
+              "const": ""
+            },
+            {
+              "type": "string",
+              "minLength": 3,
+              "maxLength": 64,
+              "pattern": "^[xX]-[!#$%&\\x27*+.^_`|~0-9A-Za-z-]+$",
+              "not": {
+                "pattern": "^[xX]-(?:[fF][oO][rR][wW][aA][rR][dD][eE][dD]-(?:[fF][oO][rR]|[hH][oO][sS][tT]|[pP][rR][oO][tT][oO])|[aA][cC][cC][eE][lL]-[bB][uU][fF][fF][eE][rR][iI][nN][gG])$"
+              }
+            }
+          ]
+        },
+        "xPaddingKey": {
+          "type": "string"
+        },
+        "xPaddingMethod": {
+          "enum": [
+            "",
+            "tokenish"
+          ]
+        },
+        "xPaddingPlacement": {
+          "enum": [
+            "",
+            "query",
+            "header",
+            "cookie",
+            "queryInHeader"
+          ]
+        },
+        "xmux": {
+          "$ref": "#/definitions/RemnacustCoreXeraMuxConfig"
+        }
+      },
+      "type": "object",
+      "patternProperties": {
+        "^[xX][pP][aA][dD][dD][iI][nN][gG][oO][bB][fF][sS][mM][oO][dD][eE]$": false,
+        "^[nN][oO][gG][rR][pP][cC][hH][eE][aA][dD][eE][rR]$": false,
+        "^[nN][oO][sS][sS][eE][hH][eE][aA][dD][eE][rR]$": false
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "customDownlinkPadding": {
+                "type": "object",
+                "properties": {
+                  "uplink": {
+                    "const": true
+                  }
+                },
+                "required": [
+                  "uplink"
+                ]
+              }
+            },
+            "required": [
+              "customDownlinkPadding"
+            ]
+          },
+          "then": {
+            "properties": {
+              "uplinkDataPlacement": {
+                "enum": [
+                  "",
+                  "body"
+                ]
+              }
+            }
+          }
+        }
+      ]
     }
   },
   "x-remnacust-upstream": {
     "version": "v26.10.31",
     "commit": "a4a3dff5b20c2faae567b742c172c7b95e75c083",
     "patchCommit": null,
-    "coreVersion": "1.1.13"
+    "coreVersion": "1.1.14"
   }
 }

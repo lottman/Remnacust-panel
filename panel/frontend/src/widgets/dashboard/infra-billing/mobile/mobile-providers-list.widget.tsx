@@ -115,6 +115,7 @@ export function MobileProvidersListWidget(props: IProps) {
                             <Group gap={4} wrap="nowrap">
                                 {provider.loginUrl && (
                                     <ActionIcon
+                                        aria-label={`${t('common.action.open')}: ${provider.name}`}
                                         color="teal"
                                         onClick={() => {
                                             window.open(
@@ -130,6 +131,7 @@ export function MobileProvidersListWidget(props: IProps) {
                                     </ActionIcon>
                                 )}
                                 <ActionIcon
+                                    aria-label={`${t('common.action.edit')}: ${provider.name}`}
                                     color="blue"
                                     onClick={() =>
                                         showModal('infraBilling_viewInfraProviderModal', {
@@ -142,6 +144,7 @@ export function MobileProvidersListWidget(props: IProps) {
                                     <TbEdit size={16} />
                                 </ActionIcon>
                                 <ActionIcon
+                                    aria-label={`${t('common.action.delete')}: ${provider.name}`}
                                     color="red"
                                     onClick={() => handleDeleteProvider(provider.uuid)}
                                     size="input-xs"

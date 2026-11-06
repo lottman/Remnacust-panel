@@ -2,7 +2,7 @@
 
 # Remnacust Backend
 
-Version **1.1.7.97**. The panel API, background workers and scheduler. Use [prebuilt images](../README.en.md) for a normal deployment; this directory is for development.
+Source version **1.1.7.98**. The panel API, background workers and scheduler. Use [prebuilt images](../README.en.md) for a normal deployment; this directory is for development.
 
 ## Requirements
 

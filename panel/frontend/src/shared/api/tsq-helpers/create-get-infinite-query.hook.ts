@@ -4,6 +4,7 @@ import {
     useInfiniteQuery,
     UseInfiniteQueryResult
 } from '@tanstack/react-query'
+import { isCancel } from 'axios'
 import { z } from 'zod'
 
 import { instance } from '../axios'
@@ -91,6 +92,7 @@ export function createGetInfiniteQueryHook<
     const queryFn = async (
         pageParam: TPageParam,
         params?: {
+            signal?: AbortSignal
             query?: z.infer<RequestQuerySchema>
             route?: z.infer<RouteParamsSchema>
         }
@@ -106,13 +108,16 @@ export function createGetInfiniteQueryHook<
         const url = createUrl(endpoint, validatedQuery, params?.route ?? routeParams)
 
         try {
-            const response = await instance.get<z.infer<ResponseSchema>>(url)
+            const response = await instance.get<z.infer<ResponseSchema>>(url, {
+                signal: params?.signal
+            })
             const result = await responseSchema.safeParseAsync(response.data)
             if (!result.success) {
                 throw result.error
             }
             return result.data.response
         } catch (error) {
+            if (isCancel(error)) throw error
             if (errorHandler) {
                 errorHandler(error)
             } else {
@@ -134,7 +139,8 @@ export function createGetInfiniteQueryHook<
                 route: params?.route,
                 query: params?.query
             }),
-            queryFn: ({ pageParam }) => queryFn(pageParam as TPageParam, params),
+            queryFn: ({ pageParam, signal }) =>
+                queryFn(pageParam as TPageParam, { ...params, signal }),
             initialPageParam,
             getNextPageParam
         }) as UseInfiniteQueryResult<InfiniteData<Response, TPageParam>>

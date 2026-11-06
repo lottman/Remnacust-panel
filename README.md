@@ -1,5 +1,7 @@
 # Remnacust Panel
 
+Выпуск **Panel/Page 1.1.7.98** входит в комплект Installer **1.2.137** с Node **1.1.23** и Core/WASM **1.1.14**. [Изменения 97 → 98](docs/releases/1.1.7.98.md). Обновление установленного сервера выполняется отдельно.
+
 [Русский](README.md) · [English](README.en.md)
 
 Панель управления VPN-пользователями, подписками, устройствами и нодами Xray на основе Remnawave. В репозитории находятся панель и отдельный сайт подписки. Интерфейс и встроенное руководство доступны на RU/EN/FA/ZH.
@@ -30,14 +32,14 @@ docker compose up -d --no-build --pull never
 
 ## Стабильные версии
 
-Сверено с опубликованными выпусками **6 ноября 2026 года**. Нумерация компонентов различается.
+Согласованный комплект на **6 ноября 2026 года**. Нумерация компонентов различается.
 
 | Компонент | Текущий стабильный выпуск |
 | --- | --- |
-| Панель и сайт подписки | [1.1.7.97](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.97) |
-| Установщик / Docker-комплект | [1.2.136](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.136) |
-| Агент ноды | [1.1.22](https://github.com/lottman/Remnacust-node/releases/tag/v1.1.22) |
-| Core / валидатор редактора | [1.1.13](https://github.com/lottman/Remnacust-core/releases/tag/v1.1.13), Xray v26.10.31 |
+| Панель и сайт подписки | [1.1.7.98](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.98) |
+| Установщик / Docker-комплект | [1.2.137](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.137) |
+| Агент ноды | [1.1.23](https://github.com/lottman/Remnacust-node/releases/tag/v1.1.23) |
+| Core / валидатор редактора | [1.1.14](https://github.com/lottman/Remnacust-core/releases/tag/v1.1.14), Xray v26.10.31 |
 
 Используйте согласованный комплект. Обновление панели не обновляет автоматически удалённые Node, управляемое Core или ядро Linux. Для расширенных лимитов нужна подтверждённая поддержка Node/Core, а не только номер версии в интерфейсе. [Совместимость](docs/COMPATIBILITY.md).
 
@@ -55,10 +57,9 @@ docker compose up -d --no-build --pull never
 
 | ПО | Требование |
 | --- | --- |
-| ОС выпущенного установщика 1.2.136 | Ubuntu 22.04 / 24.04 / 26.04 LTS, Linux amd64 или arm64 |
-| ОС следующих исходников установщика | Также Debian 12 / 13; изменение ещё не выпущено |
+| ОС установщика 1.2.137 | Ubuntu 22.04 / 24.04 / 26.04 LTS и Debian 12 / 13, Linux amd64 или arm64 |
 | Контейнеры | Docker Engine и актуальный плагин Docker Compose v2; `docker-compose` v1 не поддерживается |
-| PostgreSQL | В текущих исходниках проверены 14.24 / 15.19 / 16.15 / 17.11 / 18.6; это матрица следующего обновления |
+| PostgreSQL | Для Panel 1.1.7.98 проверены 14.24 / 15.19 / 16.15 / 17.11 / 18.6 на 194 миграциях |
 | Установка готовых образов | Root, доступ к APT, GitHub/GHCR и рабочий DNS; Node.js и Go на VPS не нужны |
 | Сборка из исходников | Node.js 24; для Core/редактора отдельно Go 1.27.3 |
 
@@ -74,7 +75,7 @@ docker compose up -d --no-build --pull never
 curl -fsSL --proto '=https' --proto-redir '=https' \
   https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh \
   -o installer.sh
-sudo bash installer.sh install-panel --version 1.2.136
+sudo bash installer.sh install-panel --version 1.2.137
 ```
 
 Скрипт спрашивает домен, способ HTTPS и установку сайта подписки. После запуска создайте администратора. Для своего reverse proxy предусмотрен `--proxy existing`. [Руководство установщика](https://github.com/lottman/Remnacust-installer#readme).
@@ -125,7 +126,7 @@ CLI-журналы: `/opt/remnacust/logs/installer-panel.log`, `installer-node.l
 - [Копии БД](docs/BACKUPS.md) · [Перенос пользователей](docs/USER-MIGRATION.md) · [Обновление нод](docs/UPDATE-PROGRESS-AND-NODE-HEALTH.md).
 - [Разработка и сборка](docs/BUILDING.md) · [Сайт подписки](subscription-page/README.md) · [История выпусков](docs/releases).
 
-В исходниках готовятся диагностика БД, оптимизация статистики/квот, дополнительные исправления безопасности и Debian установщика. Они требуют отдельного выпуска; обновление README не заменяет установленную версию.
+Выпуск 1.1.7.98 включает диагностику БД, оптимизацию статистики/квот и исправления безопасности; установщик 1.2.137 поддерживает Debian 12/13. [Изменения выпуска](docs/releases/1.1.7.98.md). Обновление README не заменяет установленную версию.
 
 ## Лицензия и поддержка
 

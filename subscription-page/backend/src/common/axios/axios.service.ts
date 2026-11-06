@@ -334,7 +334,7 @@ export class AxiosService implements OnModuleInit, OnModuleDestroy {
                 response: response.data.response,
             };
         } catch (error) {
-            this.logger.error('Unable to fetch subscription page rules');
+            if (!signal?.aborted) this.logger.error('Unable to fetch subscription page rules');
             return {
                 isOk: false,
                 status: axios.isAxiosError(error) ? error.response?.status : undefined,

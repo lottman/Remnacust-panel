@@ -9,15 +9,23 @@ import { RouteCounterInterceptor } from './interceptors/route-counter.intercepto
 import { PanelUpdateController } from './panel-update.controller';
 import { PanelUpdateService } from './panel-update.service';
 import { RouteCounterService } from './route-counter.service';
+import { SubscriptionPagesController } from './subscription-pages.controller';
+import { SystemDiagnosticsController } from './system-diagnostics.controller';
+import { SystemDiagnosticsService } from './system-diagnostics.service';
 import { SystemController } from './system.controller';
 import { SystemService } from './system.service';
-import { SubscriptionPagesController } from './subscription-pages.controller';
 
 @Module({
     imports: [CqrsModule, SubscriptionResponseRulesModule],
-    controllers: [SystemController, PanelUpdateController, SubscriptionPagesController],
+    controllers: [
+        SystemController,
+        SystemDiagnosticsController,
+        PanelUpdateController,
+        SubscriptionPagesController,
+    ],
     providers: [
         SystemService,
+        SystemDiagnosticsService,
         RouteCounterService,
         PanelUpdateService,
         { provide: APP_INTERCEPTOR, useClass: PanelUpdateInterceptor },

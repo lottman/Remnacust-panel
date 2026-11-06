@@ -18,6 +18,8 @@ import {
     XrayJsonConfig,
 } from './interfaces/xray-json-config.interface';
 import { materializePriority } from './priority-failover';
+import { ensureResponseTimeProbes } from './response-time-probes';
+import { assertSubscriptionSize } from './subscription-output';
 
 type VlessConfig = Extract<ResolvedProxyConfig, { protocol: 'vless' }>;
 type TrojanConfig = Extract<ResolvedProxyConfig, { protocol: 'trojan' }>;
@@ -224,10 +226,11 @@ export class XrayJsonGeneratorService {
             const configs: string[] = [];
             let outputBytes = 2;
             const append = (config: XrayJsonConfig) => {
-                const serialized = JSON.stringify(materializePriority(config));
+                const serialized = JSON.stringify(
+                    ensureResponseTimeProbes(materializePriority(config)),
+                );
                 outputBytes += Buffer.byteLength(serialized) + (configs.length ? 1 : 0);
-                if (outputBytes > 16 * 1024 * 1024)
-                    throw new ClientPoolError('subscription-size-limit');
+                assertSubscriptionSize(outputBytes);
                 configs.push(serialized);
             };
             const regexDeadline = Date.now() + 1000;
@@ -309,7 +312,7 @@ export class XrayJsonGeneratorService {
         } catch (error) {
             if (error instanceof ClientPoolError) throw error;
             this.logger.error(`Error generating xray-json config: ${error}`);
-            return '';
+            throw error;
         }
     }
 

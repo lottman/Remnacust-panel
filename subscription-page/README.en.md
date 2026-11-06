@@ -2,19 +2,21 @@
 
 # Remnacust Subscription Page
 
-Subscription page **1.1.7.97** shows account information and instructions in a browser, and delivers panel-generated configuration to VPN clients. It can be installed separately without reinstalling the panel.
+Subscription page **1.1.7.98** shows account information and instructions in a browser, and delivers panel-generated configuration to VPN clients. It can be installed separately without reinstalling the panel.
+
+Bundle 1.2.137 includes Panel/Page 1.1.7.98, Node 1.1.23 and Core/WASM 1.1.14. [Release changes](../docs/releases/1.1.7.98.md).
 
 ## Server and installation
 
-Stable [Installer 1.2.136](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.136) uses prebuilt images and supports Ubuntu 22.04/24.04/26.04 LTS, Linux amd64/arm64. Debian 12/13 support is currently limited to unpublished local installer changes.
+Stable [Installer 1.2.137](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.137) uses prebuilt images and supports Ubuntu 22.04/24.04/26.04 LTS and Debian 12/13, Linux amd64/arm64.
 
 For a standalone page, **1 CPU core and 1 GiB RAM** is a reasonable starting point. The exact minimum memory has not been measured; this is an initial recommendation, not a guarantee for every subscriber count, concurrent download rate or configuration size. Allow space for the Docker image and logs. If the same server runs the panel and database, follow the [panel requirements](../panel/README.en.md#server-and-ports).
 
 You need a domain, an HTTPS proxy and server-to-server access to the panel API. Public HTTPS uses TCP 443; TCP 80 is needed for HTTP/HTTP-01 if selected. Keep the default application port 3010 on loopback or a private network.
 
 ```bash
-curl -fsSL --proto '=https' --proto-redir '=https' https://github.com/lottman/Remnacust-installer/releases/download/v1.2.136/installer.sh -o installer.sh
-sudo bash installer.sh install-subscription-page --version 1.2.136
+curl -fsSL --proto '=https' --proto-redir '=https' https://github.com/lottman/Remnacust-installer/releases/download/v1.2.137/installer.sh -o installer.sh
+sudo bash installer.sh install-subscription-page --version 1.2.137
 ```
 
 Enter the panel backend URL and a restricted API token. Token input is hidden; automation can use `--panel-token-file /root/subscription-token` with mode `0600`. Do not pass the token value as a command-line argument.

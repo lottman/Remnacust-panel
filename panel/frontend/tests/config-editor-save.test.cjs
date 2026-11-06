@@ -8,10 +8,13 @@ const React = require('react')
 const { renderToStaticMarkup } = require('react-dom/server')
 const mantine = require('@mantine/core')
 
-function renderActions({ dirty = false, pending = false, valid = true, value = '{"inbounds":[],"outbounds":[]}' } = {}) {
+function renderActions({ dirty = false, pending = false, valid = true, value = '{"inbounds":[],"outbounds":[]}', onSaved } = {}) {
     const mutations = []
     const confirmations = []
     const notices = []
+    const effects = []
+    const editor = { getValue: () => value, setValue: next => { value = next; effects.push(['editor', next]) }, saveViewState() {}, restoreViewState() {} }
+    let callbacks
     let saveButton
     const exports = {}
     const filename = path.join(__dirname, '../src/features/dashboard/config-profiles/config-editor-actions/config-editor-actions.feature.tsx')
@@ -25,9 +28,9 @@ function renderActions({ dirty = false, pending = false, valid = true, value = '
         if (name === 'react-i18next') return { useTranslation: () => ({ t: key => key }) }
         if (name === '@mantine/modals') return { modals: { openConfirmModal: options => confirmations.push(options) } }
         if (name === '@mantine/notifications') return { notifications: { show: notice => notices.push(notice) } }
-        if (name === '@shared/api') return { queryClient: {} }
+        if (name === '@shared/api') return { queryClient: Object.fromEntries(['cancelQueries', 'refetchQueries', 'invalidateQueries', 'setQueryData'].map(name => [name, async (...args) => effects.push([name, ...args])])) }
         if (name === '@shared/api/hooks') return {
-            QueryKeys: {}, useUpdateConfigProfile: () => ({ mutate: payload => mutations.push(payload), isPending: pending })
+            QueryKeys: { configProfiles: { getConfigProfile: ({ uuid }) => ({ queryKey: ['profile', uuid] }), getConfigProfiles: { queryKey: ['profiles'] } } }, useUpdateConfigProfile: options => { callbacks = options.mutationFns; return { mutate: payload => mutations.push(payload), isPending: pending } }
         }
         if (name === '@shared/hooks') return { useIsMobile: () => false }
         if (name === '@shared/ui/load-templates/use-download-template') return { useDownloadTemplate: () => ({ openDownloadModal() {} }) }
@@ -38,14 +41,14 @@ function renderActions({ dirty = false, pending = false, valid = true, value = '
     } })
     const html = renderToStaticMarkup(React.createElement(mantine.MantineProvider, null,
         React.createElement(exports.ConfigEditorActionsFeature, {
-            editorRef: { current: { getValue: () => value } },
+            editorRef: { current: editor },
             configProfile: { uuid: 'selected-profile', config: {} },
             isConfigValid: valid, validationMessage: 'Invalid runtime configuration',
             hasUnsavedChanges: dirty, setResult() {}, setIsConfigValid() {},
-            setHasUnsavedChanges() {}, setOriginalValue() {}
+            setHasUnsavedChanges(value) { effects.push(['dirty', value]) }, setOriginalValue() {}, onSaved
         })
     ))
-    return { html, saveButton, mutations, confirmations, notices }
+    return { html, saveButton, mutations, confirmations, notices, effects, callbacks, type: next => { value = next } }
 }
 
 for (const dirty of [false, true]) {
@@ -84,4 +87,26 @@ test('malformed JSON is never submitted even after confirming the validation war
     assert.equal(result.mutations.length, 0)
     assert.equal(result.notices.length, 1)
     assert.equal(result.notices[0].color, 'red')
+})
+
+test('only confirmed saves retire recovery, after cancelling an obsolete document fetch', async () => {
+    const retired = []
+    const result = renderActions({ onSaved: async (...args) => retired.push(args) })
+    result.saveButton.onClick()
+    result.callbacks.onError(new Error('network failure'))
+    assert.deepEqual(retired, [])
+    await result.callbacks.onSuccess({ uuid: 'selected-profile', config: { inbounds: [], outbounds: [] } })
+    assert.equal(retired.length, 1)
+    assert.equal(retired[0][1], '{"inbounds":[],"outbounds":[]}')
+    assert.equal(retired[0][0], JSON.stringify({ inbounds: [], outbounds: [] }, null, 2))
+    assert.equal(result.effects[0][0], 'cancelQueries')
+})
+
+test('a delayed successful response does not overwrite text typed after submission', async () => {
+    const result = renderActions({ onSaved: async () => {} })
+    result.saveButton.onClick()
+    result.type('{"inbounds":[{"tag":"newer"}]}')
+    await result.callbacks.onSuccess({ uuid: 'selected-profile', config: { inbounds: [], outbounds: [] } })
+    assert.equal(result.effects.some(effect => effect[0] === 'editor'), false)
+    assert.deepEqual(result.effects.find(effect => effect[0] === 'dirty'), ['dirty', true])
 })

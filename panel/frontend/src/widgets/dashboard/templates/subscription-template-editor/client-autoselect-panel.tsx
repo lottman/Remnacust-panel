@@ -284,6 +284,11 @@ export function ClientAutoselectPanel({
                                             }
                                         />
                                     </div>
+                                    {['urltest', 'url-test'].includes(group.type) && (
+                                        <Text size="sm" c="dimmed">
+                                            {t('autoselect.response-time-help')}
+                                        </Text>
+                                    )}
                                     {group.type === 'fallback' && (
                                         <>
                                             <Alert color="blue">
@@ -604,6 +609,7 @@ export function ClientAutoselectPanel({
                                         <div className={styles.fields}>
                                             <TextInput
                                                 label={t('autoselect.probe-url')}
+                                                description={t('autoselect.probe-url-help')}
                                                 value={group.url ?? ''}
                                                 onChange={(event) =>
                                                     patch(index, ['url'], event.currentTarget.value)

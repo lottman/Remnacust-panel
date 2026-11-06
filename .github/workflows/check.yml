@@ -58,7 +58,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: lottman/Remnacust-node
-          ref: e4c3e91b9279c7dca4eac2587a6556da8e0ddf3e
+          ref: 9d448c8a50043236656a61ae7c2cf9640c30ec15
           path: node-repository
       - uses: actions/setup-node@v4
         with:
@@ -77,6 +77,15 @@ jobs:
           npm run generate:openapi
           node ../frontend/docs-tools/check-documentation.mjs
       - run: npm run build
+      - name: Verify response-time autoselect with the native Xray core
+        env:
+          REMNACUST_AUTOPROBE_CORE: ${{ runner.temp }}/remnacust-response-time-core
+        run: |
+          curl --fail --location --proto '=https' --proto-redir '=https' --max-filesize 201326592 https://github.com/lottman/Remnacust-core/releases/download/v1.1.14/remnacust-core-1.1.14-linux-amd64 -o "$REMNACUST_AUTOPROBE_CORE"
+          printf '5e43412ed657e08db14e1234d5a6d6ffada9487a60513c945eb3119fb261f8b2  %s\n' "$REMNACUST_AUTOPROBE_CORE" | sha256sum -c
+          chmod 755 "$REMNACUST_AUTOPROBE_CORE"
+          node tests/autoselect-http-probe.integration.cjs
+          node tests/autoselect-http-probe.integration.cjs --burst
       - name: Apply migrations to the disposable test database
         run: npm run migrate:deploy
         env:
@@ -334,3 +343,83 @@ jobs:
         working-directory: subscription-page/backend
       - run: node --test tests/*.test.cjs
         working-directory: subscription-page/frontend
+  postgres-compatibility:
+    name: PostgreSQL ${{ matrix.postgres }} focused checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        postgres: ['14.24', '15.19', '16.15', '17.11', '18.6']
+    services:
+      postgres:
+        image: postgres:${{ matrix.postgres }}-alpine
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - '127.0.0.1:55439:5432'
+        options: >-
+          --cpus=2 --memory=1g --pids-limit=160 --shm-size=128m
+          --health-cmd "pg_isready -h 127.0.0.1 -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://remnacust_ci_owner@127.0.0.1:55439/postgres?connection_limit=8&pool_timeout=10
+      DIRECT_URL: postgresql://remnacust_ci_owner@127.0.0.1:55439/postgres?connection_limit=8&pool_timeout=10
+      SYSTEM_DIAGNOSTICS_TEST_ADMIN_URL: postgresql://postgres@127.0.0.1:55439/postgres?connection_limit=1&pool_timeout=5
+    defaults:
+      run:
+        working-directory: panel/backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.22.1
+          cache: npm
+          cache-dependency-path: panel/backend/package-lock.json
+      - run: npm ci
+      - run: npm run migrate:generate
+      - name: Create a non-superuser database owner
+        run: |
+          node - <<'NODE'
+          const { PrismaClient } = require('@prisma/client');
+          const admin = new PrismaClient({ datasourceUrl: process.env.SYSTEM_DIAGNOSTICS_TEST_ADMIN_URL });
+          (async () => {
+            try {
+              await admin.$executeRaw`CREATE ROLE remnacust_ci_owner LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT`;
+              await admin.$executeRaw`ALTER DATABASE postgres OWNER TO remnacust_ci_owner`;
+              await admin.$executeRaw`GRANT USAGE, CREATE ON SCHEMA public TO remnacust_ci_owner`;
+            } finally {
+              await admin.$disconnect();
+            }
+          })().catch(error => { console.error(error); process.exitCode = 1; });
+          NODE
+      - run: npm run migrate:deploy
+      - name: Verify migration coverage and owner privileges
+        run: |
+          node - <<'NODE'
+          const assert = require('node:assert/strict');
+          const fs = require('node:fs');
+          const path = require('node:path');
+          const { PrismaClient } = require('@prisma/client');
+          const database = new PrismaClient();
+          (async () => {
+            try {
+              const [role] = await database.$queryRaw`SELECT current_user AS name, rolsuper, rolcreatedb, rolcreaterole FROM pg_roles WHERE rolname = current_user`;
+              assert.deepEqual(role, { name: 'remnacust_ci_owner', rolsuper: false, rolcreatedb: false, rolcreaterole: false });
+              const migrations = fs.readdirSync('prisma/migrations').filter(name => fs.existsSync(path.join('prisma/migrations', name, 'migration.sql')));
+              const [applied] = await database.$queryRaw`SELECT count(*)::integer AS count FROM _prisma_migrations WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL`;
+              assert.equal(applied.count, migrations.length);
+            } finally {
+              await database.$disconnect();
+            }
+          })().catch(error => { console.error(error); process.exitCode = 1; });
+          NODE
+      - name: Verify quota scope migration semantics
+        run: node tests/quota-scope-indexes.database.integration.cjs
+      - name: Verify UTC access and expiry boundaries
+        run: node tests/access-expiry-timezone.database.integration.cjs
+      - name: Verify actual diagnostics SQL with restricted roles
+        run: node tests/system-diagnostics.database.integration.cjs

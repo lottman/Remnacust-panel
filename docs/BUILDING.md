@@ -2,6 +2,8 @@
 
 Нужны Node.js 26.13 LTS и Docker Engine с Compose v2. Для локальной разработки используйте отдельную PostgreSQL и собственный `.env`; файл с рабочими секретами не добавляйте в Git.
 
+В минимальном Ubuntu/Debian-окружении для запуска Node.js 26 нужны `libstdc++6` и `libatomic1`. Это зависимости среды сборки и тестов; при установке готовых образов Node.js на VPS не требуется.
+
 Часть проверок сравнивает панель с агентом. Клонируйте `Remnacust-node` рядом с панелью либо задайте `REMNACUST_NODE_SOURCE` на его каталог `node`. Установите зависимости frontend командой `npm ci --prefix panel/frontend` из корня.
 
 Backend:
@@ -42,7 +44,7 @@ npm run cb
 Панель поставляется с `panel/backend/src/modules/core-management/core-releases.json`: это закреплённые публичные бинарники для amd64 и arm64, их SHA-256 и коммит исходников. Открытие списка не требует запроса к GitHub. Перед выпуском нового ядра создайте его тег на проверенном коммите и запустите workflow `Publish verified core binaries` в Remnacust-core. После успешных нативных проверок опубликуйте его черновик, затем выполните из корня панели:
 
 ```bash
-python3 panel/backend/scripts/sync-core-catalog.py --tag v1.1.15 --commit "${CORE_SOURCE_COMMIT:?set the verified Core 1.1.15 source commit}"
+python3 panel/backend/scripts/sync-core-catalog.py --tag v1.1.16 --commit "${CORE_SOURCE_COMMIT:?set the verified Core 1.1.16 source commit}"
 ```
 
 Скрипт сверяет тег с коммитом, контрольные суммы выпуска и реально скачанные файлы, включая ELF-архитектуру; только после этого записывает каталог. Добавьте JSON в коммит панели. Пакетировщик выпуска проверяет, что первая сборка каталога соответствует закреплённым версии и коммиту ядра в `component-sources.json`.

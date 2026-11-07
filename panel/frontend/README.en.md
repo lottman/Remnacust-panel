@@ -2,7 +2,7 @@
 
 # Remnacust Frontend
 
-Source for the panel **1.1.7.100** UI. It is included in the prebuilt panel image; a VPS deployment does not need a separate Vite server. See [installation, resources and ports](../README.en.md).
+Source for the panel **1.1.7.101** UI. It is included in the prebuilt panel image; a VPS deployment does not need a separate Vite server. See [installation, resources and ports](../README.en.md).
 
 ## Local development
 

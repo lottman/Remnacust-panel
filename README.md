@@ -1,6 +1,6 @@
 # Remnacust Panel
 
-Выпуск **Panel/Page 1.1.7.100** входит в комплект Installer **1.2.139** с Node **1.1.26** и Core/WASM **1.1.16**. [Изменения 99 → 100](docs/releases/1.1.7.100.md). Обновление установленного сервера выполняется отдельно.
+Выпуск **Panel/Page 1.1.7.101** входит в комплект Installer **1.2.139** с Node **1.1.26** и Core/WASM **1.1.16**. [Изменения 99 → 101](docs/releases/1.1.7.101.md). Обновление установленного сервера выполняется отдельно.
 
 [Русский](README.md) · [English](README.en.md)
 
@@ -36,7 +36,7 @@ docker compose up -d --no-build --pull never
 
 | Компонент | Текущий стабильный выпуск |
 | --- | --- |
-| Панель и сайт подписки | [1.1.7.100](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.100) |
+| Панель и сайт подписки | [1.1.7.101](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.101) |
 | Установщик / Docker-комплект | [1.2.139](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.139) |
 | Агент ноды | [1.1.26](https://github.com/lottman/Remnacust-node/releases/tag/v1.1.26) |
 | Core / валидатор редактора | [1.1.16](https://github.com/lottman/Remnacust-core/releases/tag/v1.1.16), Xray v26.10.31 |
@@ -126,7 +126,7 @@ CLI-журналы: `/opt/remnacust/logs/installer-panel.log`, `installer-node.l
 - [Копии БД](docs/BACKUPS.md) · [Перенос пользователей](docs/USER-MIGRATION.md) · [Обновление нод](docs/UPDATE-PROGRESS-AND-NODE-HEALTH.md).
 - [Разработка и сборка](docs/BUILDING.md) · [Сайт подписки](subscription-page/README.md) · [История выпусков](docs/releases).
 
-Выпуск 1.1.7.100 исправляет выдачу подписки с HWID без ожидания нод, добавляет общий выбор Xray custom/default и обновляет зависимости. Node 1.1.26 содержит оба ядра. Установщик 1.2.139 поставляет согласованный комплект. [Изменения выпуска](docs/releases/1.1.7.100.md). Обновление README не заменяет установленную версию.
+Выпуск 1.1.7.101 исправляет выдачу подписки с HWID без ожидания нод, добавляет общий выбор Xray custom/default и обновляет зависимости. Node 1.1.26 содержит оба ядра. Установщик 1.2.139 поставляет согласованный комплект. [Изменения выпуска](docs/releases/1.1.7.101.md). Обновление README не заменяет установленную версию.
 
 ## Лицензия и поддержка
 

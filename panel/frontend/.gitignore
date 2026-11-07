@@ -148,9 +148,13 @@ scripts/**
 public/assets/**
 !public/assets/
 !public/assets/main.wasm
+!public/assets/default.wasm
 !public/assets/wasm_exec.js
 !public/assets/xray.schema.json
 !public/assets/xray.schema.cn.json
+!public/assets/xray.default.schema.json
+!public/assets/xray.default.schema.cn.json
+!public/assets/xray.default.provenance.json
 
 # Temporary design exports
 .superdesign/tmp/

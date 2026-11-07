@@ -1,0 +1,4324 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Xray v26.10.31 (official upstream)",
+  "$ref": "#/definitions/XrayDefaultConfig",
+  "definitions": {
+    "XrayDefaultAPIConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "listen": {
+          "type": "string"
+        },
+        "services": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "tag": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultAddress": {
+      "additionalProperties": true,
+      "properties": {},
+      "type": "object"
+    },
+    "XrayDefaultAuthenticator": {
+      "additionalProperties": true,
+      "properties": {
+        "request": {
+          "$ref": "#/definitions/XrayDefaultAuthenticatorRequest"
+        },
+        "response": {
+          "$ref": "#/definitions/XrayDefaultAuthenticatorResponse"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultAuthenticatorRequest": {
+      "additionalProperties": true,
+      "properties": {
+        "headers": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            ]
+          },
+          "type": "object"
+        },
+        "method": {
+          "type": "string"
+        },
+        "path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ]
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultAuthenticatorResponse": {
+      "additionalProperties": true,
+      "properties": {
+        "headers": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            ]
+          },
+          "type": "object"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultBalancingRule": {
+      "additionalProperties": true,
+      "properties": {
+        "fallbackTag": {
+          "type": "string"
+        },
+        "selector": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ]
+        },
+        "strategy": {
+          "$ref": "#/definitions/XrayDefaultStrategyConfig"
+        },
+        "tag": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultBandwidth": {
+      "type": "string"
+    },
+    "XrayDefaultBlackholeConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "response": {
+          "$ref": "#/definitions/XrayDefaultResponseConfig"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultBridgeConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "domain": {
+          "type": "string"
+        },
+        "tag": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultBuildable": {},
+    "XrayDefaultBurstObservatoryConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "pingConfig": {
+          "$ref": "#/definitions/XrayDefaultHealthCheckSettings"
+        },
+        "subjectSelector": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "api": {
+          "$ref": "#/definitions/XrayDefaultAPIConfig"
+        },
+        "burstObservatory": {
+          "$ref": "#/definitions/XrayDefaultBurstObservatoryConfig"
+        },
+        "dns": {
+          "$ref": "#/definitions/XrayDefaultDNSConfig"
+        },
+        "env": {
+          "$ref": "#/definitions/XrayDefaultEnvConfig"
+        },
+        "fakeDns": {
+          "$ref": "#/definitions/XrayDefaultFakeDNSConfig"
+        },
+        "geodata": {
+          "$ref": "#/definitions/XrayDefaultGeodataConfig"
+        },
+        "inbounds": {
+          "items": {
+            "$ref": "#/definitions/XrayDefaultInboundDetourConfig"
+          },
+          "type": "array"
+        },
+        "log": {
+          "$ref": "#/definitions/XrayDefaultLogConfig"
+        },
+        "metrics": {
+          "$ref": "#/definitions/XrayDefaultMetricsConfig"
+        },
+        "observatory": {
+          "$ref": "#/definitions/XrayDefaultObservatoryConfig"
+        },
+        "outbounds": {
+          "items": {
+            "$ref": "#/definitions/XrayDefaultOutboundDetourConfig"
+          },
+          "type": "array"
+        },
+        "policy": {
+          "$ref": "#/definitions/XrayDefaultPolicyConfig"
+        },
+        "reverse": {
+          "$ref": "#/definitions/XrayDefaultReverseConfig"
+        },
+        "routing": {
+          "$ref": "#/definitions/XrayDefaultRouterConfig"
+        },
+        "stats": {
+          "$ref": "#/definitions/XrayDefaultStatsConfig"
+        },
+        "transport": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "version": {
+          "$ref": "#/definitions/XrayDefaultVersionConfig"
+        }
+      },
+      "type": "object",
+      "not": {
+        "required": [
+          "remnacustUserQuotaRequired"
+        ],
+        "properties": {
+          "remnacustUserQuotaRequired": {
+            "not": {
+              "const": false
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "properties": {
+            "routing": {
+              "properties": {
+                "rules": {
+                  "items": {
+                    "not": {
+                      "required": [
+                        "webhook"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "XrayDefaultConfigCreator": {},
+    "XrayDefaultConfigCreatorCache": {
+      "additionalProperties": {
+        "$ref": "#/definitions/XrayDefaultConfigCreator"
+      },
+      "type": "object"
+    },
+    "XrayDefaultConfigureFilePostProcessingStage": {},
+    "XrayDefaultCustomSockoptConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "level": {
+          "type": "string"
+        },
+        "network": {
+          "type": "string"
+        },
+        "opt": {
+          "type": "string"
+        },
+        "system": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultCustomTransform": {
+      "additionalProperties": true,
+      "properties": {
+        "args": {
+          "items": {
+            "$ref": "#/definitions/XrayDefaultCustomTransformArg"
+          },
+          "type": "array"
+        },
+        "op": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultCustomTransformArg": {
+      "additionalProperties": true,
+      "properties": {
+        "bytes": {},
+        "metadata": {
+          "type": "string"
+        },
+        "reuse": {
+          "type": "string"
+        },
+        "transform": {
+          "$ref": "#/definitions/XrayDefaultCustomTransform"
+        },
+        "type": {
+          "type": "string"
+        },
+        "u64": {
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultDNSConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "clientIp": {
+          "type": "string"
+        },
+        "disableCache": {
+          "type": "boolean"
+        },
+        "disableFallback": {
+          "type": "boolean"
+        },
+        "disableFallbackIfMatch": {
+          "type": "boolean"
+        },
+        "enableParallelQuery": {
+          "type": "boolean"
+        },
+        "hosts": {
+          "$ref": "#/definitions/XrayDefaultHostsWrapper"
+        },
+        "queryStrategy": {
+          "type": "string"
+        },
+        "script": {
+          "type": "string"
+        },
+        "serveExpiredTTL": {
+          "type": "integer"
+        },
+        "serveStale": {
+          "type": "boolean"
+        },
+        "servers": {
+          "items": {
+            "$ref": "#/definitions/XrayDefaultNameServerConfig"
+          },
+          "type": "array"
+        },
+        "tag": {
+          "type": "string"
+        },
+        "useSystemHosts": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultDNSOutboundConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "blockTypes": {
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "network": {
+          "$ref": "#/definitions/XrayDefaultNetwork"
+        },
+        "nonIPQuery": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "rewriteAddress": {
+          "type": "string"
+        },
+        "rewriteNetwork": {
+          "$ref": "#/definitions/XrayDefaultNetwork"
+        },
+        "rewritePort": {
+          "type": "integer"
+        },
+        "rules": {
+          "items": {
+            "$ref": "#/definitions/XrayDefaultDNSOutboundRuleConfig"
+          },
+          "type": "array"
+        },
+        "userLevel": {
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultDNSOutboundRuleConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "action": {
+          "type": "string"
+        },
+        "domain": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ]
+        },
+        "qType": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "rCode": {
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultDokodemoConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "allowedNetwork": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ]
+        },
+        "followRedirect": {
+          "type": "boolean"
+        },
+        "network": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ]
+        },
+        "port": {
+          "type": "integer"
+        },
+        "portMap": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "rewriteAddress": {
+          "type": "string"
+        },
+        "rewritePort": {
+          "type": "integer"
+        },
+        "userLevel": {
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultEnvConfig": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "XrayDefaultFakeDNSConfig": {
+      "additionalProperties": true,
+      "properties": {},
+      "type": "object"
+    },
+    "XrayDefaultFakeDNSPoolElementConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "ipPool": {
+          "type": "string"
+        },
+        "poolSize": {
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultFakeDNSPostProcessingStage": {
+      "additionalProperties": true,
+      "properties": {},
+      "type": "object"
+    },
+    "XrayDefaultFilter": {
+      "additionalProperties": true,
+      "properties": {
+        "allowedSourceIPs": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "blockedSourceIPs": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultFinalMask": {
+      "additionalProperties": true,
+      "properties": {
+        "quicParams": {
+          "$ref": "#/definitions/XrayDefaultQuicParamsConfig"
+        },
+        "tcp": {
+          "items": {
+            "$ref": "#/definitions/XrayDefaultMask"
+          },
+          "type": "array"
+        },
+        "udp": {
+          "items": {
+            "$ref": "#/definitions/XrayDefaultMask"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultFragment": {
+      "additionalProperties": true,
+      "properties": {
+        "interval": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "length": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "maxSplit": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "packets": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultFragmentMask": {
+      "additionalProperties": true,
+      "properties": {
+        "delay": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "delays": {
+          "items": {
+            "type": [
+              "integer",
+              "string"
+            ]
+          },
+          "type": "array"
+        },
+        "length": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "lengths": {
+          "items": {
+            "type": [
+              "integer",
+              "string"
+            ]
+          },
+          "type": "array"
+        },
+        "maxSplit": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "packets": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultFreedomConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "domainStrategy": {
+          "type": "string"
+        },
+        "finalRules": {
+          "items": {
+            "$ref": "#/definitions/XrayDefaultFreedomFinalRuleConfig"
+          },
+          "type": "array"
+        },
+        "fragment": {
+          "$ref": "#/definitions/XrayDefaultFragment"
+        },
+        "ipsBlocked": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ]
+        },
+        "noise": {
+          "$ref": "#/definitions/XrayDefaultNoise"
+        },
+        "noises": {
+          "items": {
+            "$ref": "#/definitions/XrayDefaultNoise"
+          },
+          "type": "array"
+        },
+        "proxyProtocol": {
+          "type": "integer"
+        },
+        "redirect": {
+          "type": "string"
+        },
+        "targetStrategy": {
+          "type": "string"
+        },
+        "userLevel": {
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultFreedomFinalRuleConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "action": {
+          "type": "string"
+        },
+        "blockDelay": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "ip": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ]
+        },
+        "network": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ]
+        },
+        "port": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultGRPCConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "authority": {
+          "type": "string"
+        },
+        "health_check_timeout": {
+          "type": "integer"
+        },
+        "idle_timeout": {
+          "type": "integer"
+        },
+        "initial_windows_size": {
+          "type": "integer"
+        },
+        "multiMode": {
+          "type": "boolean"
+        },
+        "permit_without_stream": {
+          "type": "boolean"
+        },
+        "serviceName": {
+          "type": "string"
+        },
+        "user_agent": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultGeodataAssetConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "file": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultGeodataConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "assets": {
+          "items": {
+            "$ref": "#/definitions/XrayDefaultGeodataAssetConfig"
+          },
+          "type": "array"
+        },
+        "cron": {
+          "type": "string"
+        },
+        "outbound": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultHTTPAccount": {
+      "additionalProperties": true,
+      "properties": {
+        "pass": {
+          "type": "string"
+        },
+        "user": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultHTTPClientConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "headers": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "level": {
+          "type": "integer"
+        },
+        "pass": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "servers": {
+          "items": {
+            "$ref": "#/definitions/XrayDefaultHTTPRemoteConfig"
+          },
+          "type": "array"
+        },
+        "user": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultHTTPRemoteConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "users": {
+          "items": {},
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultHTTPServerConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "accounts": {
+          "items": {
+            "$ref": "#/definitions/XrayDefaultHTTPAccount"
+          },
+          "type": "array"
+        },
+        "allowTransparent": {
+          "type": "boolean"
+        },
+        "userLevel": {
+          "type": "integer"
+        },
+        "users": {
+          "items": {
+            "$ref": "#/definitions/XrayDefaultHTTPAccount"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultHappyEyeballsConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "interleave": {
+          "type": "integer"
+        },
+        "maxConcurrentTry": {
+          "type": "integer"
+        },
+        "prioritizeIPv6": {
+          "type": "boolean"
+        },
+        "tryDelayMs": {
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultHeaderCustomTCP": {
+      "additionalProperties": true,
+      "properties": {
+        "clients": {
+          "items": {
+            "items": {
+              "$ref": "#/definitions/XrayDefaultTCPItem"
+            },
+            "type": "array"
+          },
+          "type": "array"
+        },
+        "errors": {
+          "items": {
+            "items": {
+              "$ref": "#/definitions/XrayDefaultTCPItem"
+            },
+            "type": "array"
+          },
+          "type": "array"
+        },
+        "servers": {
+          "items": {
+            "items": {
+              "$ref": "#/definitions/XrayDefaultTCPItem"
+            },
+            "type": "array"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultHeaderCustomUDP": {
+      "additionalProperties": true,
+      "properties": {
+        "client": {
+          "items": {
+            "$ref": "#/definitions/XrayDefaultUDPItem"
+          },
+          "type": "array"
+        },
+        "mode": {
+          "type": "string"
+        },
+        "server": {
+          "items": {
+            "$ref": "#/definitions/XrayDefaultUDPItem"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultHealthCheckSettings": {
+      "additionalProperties": true,
+      "properties": {
+        "connectivity": {
+          "type": "string"
+        },
+        "destination": {
+          "type": "string"
+        },
+        "httpMethod": {
+          "type": "string"
+        },
+        "interval": {},
+        "sampling": {
+          "type": "integer"
+        },
+        "timeout": {}
+      },
+      "type": "object"
+    },
+    "XrayDefaultHostAddress": {
+      "additionalProperties": true,
+      "properties": {},
+      "type": "object"
+    },
+    "XrayDefaultHostsWrapper": {
+      "additionalProperties": true,
+      "properties": {},
+      "type": "object"
+    },
+    "XrayDefaultHttpUpgradeConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "acceptProxyProtocol": {
+          "type": "boolean"
+        },
+        "headers": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "host": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultHysteriaClientConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "version": {
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultHysteriaConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "auth": {
+          "type": "string"
+        },
+        "masquerade": {
+          "$ref": "#/definitions/XrayDefaultMasquerade"
+        },
+        "udpIdleTimeout": {
+          "type": "integer"
+        },
+        "version": {
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultHysteriaServerConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "clients": {
+          "items": {
+            "$ref": "#/definitions/XrayDefaultHysteriaUserConfig"
+          },
+          "type": "array"
+        },
+        "users": {
+          "items": {
+            "$ref": "#/definitions/XrayDefaultHysteriaUserConfig"
+          },
+          "type": "array"
+        },
+        "version": {
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultHysteriaUserConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "auth": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "level": {
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultInboundDetourConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "listen": {
+          "type": "string"
+        },
+        "port": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "protocol": {
+          "enum": [
+            "tunnel",
+            "dokodemo-door",
+            "http",
+            "shadowsocks",
+            "mixed",
+            "socks",
+            "vless",
+            "vmess",
+            "trojan",
+            "wireguard",
+            "hysteria",
+            "masque",
+            "tun"
+          ]
+        },
+        "settings": {},
+        "sniffing": {
+          "$ref": "#/definitions/XrayDefaultSniffingConfig"
+        },
+        "streamSettings": {
+          "$ref": "#/definitions/XrayDefaultStreamConfig"
+        },
+        "tag": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "protocol"
+            ],
+            "properties": {
+              "protocol": {
+                "const": "tunnel"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "settings": {
+                "$ref": "#/definitions/XrayDefaultDokodemoConfig"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "protocol"
+            ],
+            "properties": {
+              "protocol": {
+                "const": "dokodemo-door"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "settings": {
+                "$ref": "#/definitions/XrayDefaultDokodemoConfig"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "protocol"
+            ],
+            "properties": {
+              "protocol": {
+                "const": "http"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "settings": {
+                "$ref": "#/definitions/XrayDefaultHTTPServerConfig"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "protocol"
+            ],
+            "properties": {
+              "protocol": {
+                "const": "shadowsocks"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "settings": {
+                "$ref": "#/definitions/XrayDefaultShadowsocksServerConfig"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "protocol"
+            ],
+            "properties": {
+              "protocol": {
+                "const": "mixed"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "settings": {
+                "$ref": "#/definitions/XrayDefaultSocksServerConfig"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "protocol"
+            ],
+            "properties": {
+              "protocol": {
+                "const": "socks"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "settings": {
+                "$ref": "#/definitions/XrayDefaultSocksServerConfig"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "protocol"
+            ],
+            "properties": {
+              "protocol": {
+                "const": "vless"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "settings": {
+                "$ref": "#/definitions/XrayDefaultVLessInboundConfig"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "protocol"
+            ],
+            "properties": {
+              "protocol": {
+                "const": "vmess"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "settings": {
+                "$ref": "#/definitions/XrayDefaultVMessInboundConfig"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "protocol"
+            ],
+            "properties": {
+              "protocol": {
+                "const": "trojan"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "settings": {
+                "$ref": "#/definitions/XrayDefaultTrojanServerConfig"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "protocol"
+            ],
+            "properties": {
+              "protocol": {
+                "const": "wireguard"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "settings": {
+                "$ref": "#/definitions/XrayDefaultWireGuardConfig"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "protocol"
+            ],
+            "properties": {
+              "protocol": {
+                "const": "hysteria"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "settings": {
+                "$ref": "#/definitions/XrayDefaultHysteriaServerConfig"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "protocol"
+            ],
+            "properties": {
+              "protocol": {
+                "const": "masque"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "settings": {
+                "$ref": "#/definitions/XrayDefaultMasqueServerConfig"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "protocol"
+            ],
+            "properties": {
+              "protocol": {
+                "const": "tun"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "settings": {
+                "$ref": "#/definitions/XrayDefaultTunConfig"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "XrayDefaultInt32Range": {
+      "additionalProperties": true,
+      "properties": {},
+      "type": "object"
+    },
+    "XrayDefaultJSONConfigLoader": {
+      "additionalProperties": true,
+      "properties": {},
+      "type": "object"
+    },
+    "XrayDefaultKCPConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "cwndMultiplier": {
+          "type": "integer"
+        },
+        "downlinkCapacity": {
+          "type": "integer"
+        },
+        "header": {},
+        "maxSendingWindow": {
+          "type": "integer"
+        },
+        "mtu": {
+          "type": "integer"
+        },
+        "seed": {
+          "type": "string"
+        },
+        "tti": {
+          "type": "integer"
+        },
+        "uplinkCapacity": {
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultLimitFallback": {
+      "additionalProperties": true,
+      "properties": {},
+      "type": "object"
+    },
+    "XrayDefaultLogConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "access": {
+          "type": "string"
+        },
+        "dnsLog": {
+          "type": "boolean"
+        },
+        "error": {
+          "type": "string"
+        },
+        "loglevel": {
+          "type": "string"
+        },
+        "maskAddress": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultLoopbackConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "inboundTag": {
+          "type": "string"
+        },
+        "sniffing": {
+          "$ref": "#/definitions/XrayDefaultSniffingConfig"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultMask": {
+      "additionalProperties": true,
+      "properties": {
+        "settings": {},
+        "type": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultMasqueClientConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "remoteDNS": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultMasqueConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "headers": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "host": {
+          "type": "string"
+        },
+        "pass": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "user": {
+          "type": "string"
+        },
+        "warp": {
+          "$ref": "#/definitions/XrayDefaultMasqueWarpConfig"
+        },
+        "xmux": {
+          "$ref": "#/definitions/XrayDefaultXmuxConfig"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultMasqueServerConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "address": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "clients": {
+          "items": {
+            "$ref": "#/definitions/XrayDefaultMasqueUserConfig"
+          },
+          "type": "array"
+        },
+        "mtu": {
+          "type": "integer"
+        },
+        "users": {
+          "items": {
+            "$ref": "#/definitions/XrayDefaultMasqueUserConfig"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultMasqueUserConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "email": {
+          "type": "string"
+        },
+        "level": {
+          "type": "integer"
+        },
+        "pass": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultMasqueWarpConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "address": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "privateKey": {
+          "type": "string"
+        },
+        "publicKey": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultMasquerade": {
+      "additionalProperties": true,
+      "properties": {
+        "content": {
+          "type": "string"
+        },
+        "dir": {
+          "type": "string"
+        },
+        "headers": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "insecure": {
+          "type": "boolean"
+        },
+        "rewriteHost": {
+          "type": "boolean"
+        },
+        "statusCode": {
+          "type": "integer"
+        },
+        "type": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "xForwarded": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultMetricsConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "listen": {
+          "type": "string"
+        },
+        "tag": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultMkcpLegacy": {
+      "additionalProperties": true,
+      "properties": {
+        "header": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultMuxConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "concurrency": {},
+        "enabled": {
+          "type": "boolean"
+        },
+        "xudpConcurrency": {},
+        "xudpProxyUDP443": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultNameServerConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "clientIp": {
+          "type": "string"
+        },
+        "disableCache": {
+          "type": "boolean"
+        },
+        "domains": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ]
+        },
+        "expectIPs": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ]
+        },
+        "expectedIPs": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ]
+        },
+        "finalQuery": {
+          "type": "boolean"
+        },
+        "id": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "queryStrategy": {
+          "type": "string"
+        },
+        "serveExpiredTTL": {
+          "type": "integer"
+        },
+        "serveStale": {
+          "type": "boolean"
+        },
+        "skipFallback": {
+          "type": "boolean"
+        },
+        "tag": {
+          "type": "string"
+        },
+        "timeoutMs": {
+          "type": "integer"
+        },
+        "unexpectedIPs": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultNetwork": {
+      "type": "string"
+    },
+    "XrayDefaultNetworkList": {
+      "items": {
+        "$ref": "#/definitions/XrayDefaultNetwork"
+      },
+      "type": "array"
+    },
+    "XrayDefaultNoOpConnectionAuthenticator": {
+      "additionalProperties": true,
+      "properties": {},
+      "type": "object"
+    },
+    "XrayDefaultNoise": {
+      "additionalProperties": true,
+      "properties": {
+        "applyTo": {
+          "type": "string"
+        },
+        "delay": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "packet": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultNoiseItem": {
+      "additionalProperties": true,
+      "properties": {
+        "delay": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "packet": {},
+        "rand": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "randRange": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultNoiseMask": {
+      "additionalProperties": true,
+      "properties": {
+        "noise": {
+          "items": {
+            "$ref": "#/definitions/XrayDefaultNoiseItem"
+          },
+          "type": "array"
+        },
+        "reset": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "script": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultObservatoryConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "enableConcurrency": {
+          "type": "boolean"
+        },
+        "probeInterval": {},
+        "probeURL": {
+          "type": "string"
+        },
+        "subjectSelector": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultOutboundDetourConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "mux": {
+          "$ref": "#/definitions/XrayDefaultMuxConfig"
+        },
+        "protocol": {
+          "enum": [
+            "block",
+            "blackhole",
+            "loopback",
+            "direct",
+            "freedom",
+            "http",
+            "shadowsocks",
+            "socks",
+            "vless",
+            "vmess",
+            "trojan",
+            "hysteria",
+            "masque",
+            "dns",
+            "wireguard"
+          ]
+        },
+        "proxySettings": {},
+        "sendThrough": {
+          "type": "string"
+        },
+        "settings": {},
+        "streamSettings": {
+          "$ref": "#/definitions/XrayDefaultStreamConfig"
+        },
+        "tag": {
+          "type": "string"
+        },
+        "targetStrategy": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "protocol"
+            ],
+            "properties": {
+              "protocol": {
+                "const": "block"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "settings": {
+                "$ref": "#/definitions/XrayDefaultBlackholeConfig"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "protocol"
+            ],
+            "properties": {
+              "protocol": {
+                "const": "blackhole"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "settings": {
+                "$ref": "#/definitions/XrayDefaultBlackholeConfig"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "protocol"
+            ],
+            "properties": {
+              "protocol": {
+                "const": "loopback"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "settings": {
+                "$ref": "#/definitions/XrayDefaultLoopbackConfig"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "protocol"
+            ],
+            "properties": {
+              "protocol": {
+                "const": "direct"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "settings": {
+                "$ref": "#/definitions/XrayDefaultFreedomConfig"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "protocol"
+            ],
+            "properties": {
+              "protocol": {
+                "const": "freedom"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "settings": {
+                "$ref": "#/definitions/XrayDefaultFreedomConfig"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "protocol"
+            ],
+            "properties": {
+              "protocol": {
+                "const": "http"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "settings": {
+                "$ref": "#/definitions/XrayDefaultHTTPClientConfig"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "protocol"
+            ],
+            "properties": {
+              "protocol": {
+                "const": "shadowsocks"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "settings": {
+                "$ref": "#/definitions/XrayDefaultShadowsocksClientConfig"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "protocol"
+            ],
+            "properties": {
+              "protocol": {
+                "const": "socks"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "settings": {
+                "$ref": "#/definitions/XrayDefaultSocksClientConfig"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "protocol"
+            ],
+            "properties": {
+              "protocol": {
+                "const": "vless"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "settings": {
+                "$ref": "#/definitions/XrayDefaultVLessOutboundConfig"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "protocol"
+            ],
+            "properties": {
+              "protocol": {
+                "const": "vmess"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "settings": {
+                "$ref": "#/definitions/XrayDefaultVMessOutboundConfig"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "protocol"
+            ],
+            "properties": {
+              "protocol": {
+                "const": "trojan"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "settings": {
+                "$ref": "#/definitions/XrayDefaultTrojanClientConfig"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "protocol"
+            ],
+            "properties": {
+              "protocol": {
+                "const": "hysteria"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "settings": {
+                "$ref": "#/definitions/XrayDefaultHysteriaClientConfig"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "protocol"
+            ],
+            "properties": {
+              "protocol": {
+                "const": "masque"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "settings": {
+                "$ref": "#/definitions/XrayDefaultMasqueClientConfig"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "protocol"
+            ],
+            "properties": {
+              "protocol": {
+                "const": "dns"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "settings": {
+                "$ref": "#/definitions/XrayDefaultDNSOutboundConfig"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "protocol"
+            ],
+            "properties": {
+              "protocol": {
+                "const": "wireguard"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "settings": {
+                "$ref": "#/definitions/XrayDefaultWireGuardConfig"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "XrayDefaultPolicy": {
+      "additionalProperties": true,
+      "properties": {
+        "bufferSize": {
+          "type": "integer"
+        },
+        "connIdle": {
+          "type": "integer"
+        },
+        "downlinkOnly": {
+          "type": "integer"
+        },
+        "handshake": {
+          "type": "integer"
+        },
+        "statsUserDownlink": {
+          "type": "boolean"
+        },
+        "statsUserOnline": {
+          "type": "boolean"
+        },
+        "statsUserUplink": {
+          "type": "boolean"
+        },
+        "uplinkOnly": {
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultPolicyConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "levels": {
+          "additionalProperties": {
+            "$ref": "#/definitions/XrayDefaultPolicy"
+          },
+          "type": "object"
+        },
+        "system": {
+          "$ref": "#/definitions/XrayDefaultSystemPolicy"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultPortList": {
+      "additionalProperties": true,
+      "properties": {},
+      "type": "object"
+    },
+    "XrayDefaultPortRange": {
+      "additionalProperties": true,
+      "properties": {},
+      "type": "object"
+    },
+    "XrayDefaultPortalConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "domain": {
+          "type": "string"
+        },
+        "tag": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultQuicParamsConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "bbrProfile": {
+          "type": "string"
+        },
+        "brutalDisableLossCompensation": {
+          "type": "boolean"
+        },
+        "brutalDown": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "brutalUp": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "congestion": {
+          "type": "string"
+        },
+        "debug": {
+          "type": "boolean"
+        },
+        "disableChromeParrot": {
+          "type": "boolean"
+        },
+        "disableGSO": {
+          "type": "boolean"
+        },
+        "disablePathMTUDiscovery": {
+          "type": "boolean"
+        },
+        "disableStatelessReset": {
+          "type": "boolean"
+        },
+        "initConnectionReceiveWindow": {
+          "type": "integer"
+        },
+        "initStreamReceiveWindow": {
+          "type": "integer"
+        },
+        "keepAlivePeriod": {
+          "type": "integer"
+        },
+        "maxConnectionReceiveWindow": {
+          "type": "integer"
+        },
+        "maxIdleTimeout": {
+          "type": "integer"
+        },
+        "maxIncomingStreams": {
+          "type": "integer"
+        },
+        "maxStreamReceiveWindow": {
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultREALITYConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "dest": {},
+        "fingerprint": {
+          "type": "string"
+        },
+        "limitFallbackDownload": {
+          "$ref": "#/definitions/XrayDefaultLimitFallback"
+        },
+        "limitFallbackUpload": {
+          "$ref": "#/definitions/XrayDefaultLimitFallback"
+        },
+        "masterKeyLog": {
+          "type": "string"
+        },
+        "maxClientVer": {
+          "type": "string"
+        },
+        "maxTimeDiff": {
+          "type": "integer"
+        },
+        "minClientVer": {
+          "type": "string"
+        },
+        "mldsa65Seed": {
+          "type": "string"
+        },
+        "mldsa65Verify": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        },
+        "privateKey": {
+          "type": "string"
+        },
+        "publicKey": {
+          "type": "string"
+        },
+        "serverName": {
+          "type": "string"
+        },
+        "serverNames": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "shortId": {
+          "type": "string"
+        },
+        "shortIds": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "show": {
+          "type": "boolean"
+        },
+        "spiderX": {
+          "type": "string"
+        },
+        "target": {},
+        "type": {
+          "type": "string"
+        },
+        "xver": {
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultRawFieldRule": {
+      "additionalProperties": true,
+      "properties": {
+        "attrs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "domain": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ]
+        },
+        "domains": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ]
+        },
+        "inboundTag": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ]
+        },
+        "ip": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ]
+        },
+        "localIP": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ]
+        },
+        "localOS": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ]
+        },
+        "localPort": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "network": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ]
+        },
+        "port": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "process": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ]
+        },
+        "protocol": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ]
+        },
+        "source": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ]
+        },
+        "sourceIP": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ]
+        },
+        "sourcePort": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "user": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ]
+        },
+        "vlessRoute": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "webhook": {
+          "$ref": "#/definitions/XrayDefaultWebhookRuleConfig"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultRealm": {
+      "additionalProperties": true,
+      "properties": {
+        "ipMode": {
+          "type": "string"
+        },
+        "portMapping": {},
+        "stunServers": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "tlsConfig": {
+          "$ref": "#/definitions/XrayDefaultTLSConfig"
+        },
+        "url": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultResponseConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "customResponseData": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultReverseConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "bridges": {
+          "items": {
+            "$ref": "#/definitions/XrayDefaultBridgeConfig"
+          },
+          "type": "array"
+        },
+        "portals": {
+          "items": {
+            "$ref": "#/definitions/XrayDefaultPortalConfig"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultRouterConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "balancers": {
+          "items": {
+            "$ref": "#/definitions/XrayDefaultBalancingRule"
+          },
+          "type": "array"
+        },
+        "domainStrategy": {
+          "type": "string"
+        },
+        "rules": {
+          "items": {},
+          "type": "array"
+        },
+        "script": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultRouterRule": {
+      "additionalProperties": true,
+      "properties": {
+        "balancerTag": {
+          "type": "string"
+        },
+        "outboundTag": {
+          "type": "string"
+        },
+        "ruleTag": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultSalamander": {
+      "additionalProperties": true,
+      "properties": {
+        "packetSize": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "password": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultShadowsocksClientConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "level": {
+          "type": "integer"
+        },
+        "method": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "servers": {
+          "items": {
+            "$ref": "#/definitions/XrayDefaultShadowsocksServerTarget"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultShadowsocksServerConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "clients": {
+          "items": {
+            "$ref": "#/definitions/XrayDefaultShadowsocksUserConfig"
+          },
+          "type": "array"
+        },
+        "email": {
+          "type": "string"
+        },
+        "level": {
+          "type": "integer"
+        },
+        "method": {
+          "type": "string"
+        },
+        "network": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ]
+        },
+        "password": {
+          "type": "string"
+        },
+        "users": {
+          "items": {
+            "$ref": "#/definitions/XrayDefaultShadowsocksUserConfig"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultShadowsocksServerTarget": {
+      "additionalProperties": true,
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "level": {
+          "type": "integer"
+        },
+        "method": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultShadowsocksUserConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "level": {
+          "type": "integer"
+        },
+        "method": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultSniffingConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "destOverride": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ]
+        },
+        "domainsExcluded": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ]
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "ipsExcluded": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ]
+        },
+        "metadataOnly": {
+          "type": "boolean"
+        },
+        "routeOnly": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultSocketConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "acceptProxyProtocol": {
+          "type": "boolean"
+        },
+        "addressPortStrategy": {
+          "type": "string"
+        },
+        "customSockopt": {
+          "items": {
+            "$ref": "#/definitions/XrayDefaultCustomSockoptConfig"
+          },
+          "type": "array"
+        },
+        "dialerProxy": {
+          "type": "string"
+        },
+        "domainStrategy": {
+          "type": "string"
+        },
+        "happyEyeballs": {
+          "$ref": "#/definitions/XrayDefaultHappyEyeballsConfig"
+        },
+        "interface": {
+          "type": "string"
+        },
+        "mark": {
+          "type": "integer"
+        },
+        "penetrate": {
+          "type": "boolean"
+        },
+        "tcpCongestion": {
+          "type": "string"
+        },
+        "tcpFastOpen": {},
+        "tcpKeepAliveIdle": {
+          "type": "integer"
+        },
+        "tcpKeepAliveInterval": {
+          "type": "integer"
+        },
+        "tcpMaxSeg": {
+          "type": "integer"
+        },
+        "tcpMptcp": {
+          "type": "boolean"
+        },
+        "tcpUserTimeout": {
+          "type": "integer"
+        },
+        "tcpWindowClamp": {
+          "type": "integer"
+        },
+        "tproxy": {
+          "type": "string"
+        },
+        "trustedXForwardedFor": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "v6only": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultSocksAccount": {
+      "additionalProperties": true,
+      "properties": {
+        "pass": {
+          "type": "string"
+        },
+        "user": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultSocksClientConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "level": {
+          "type": "integer"
+        },
+        "pass": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "servers": {
+          "items": {
+            "$ref": "#/definitions/XrayDefaultSocksRemoteConfig"
+          },
+          "type": "array"
+        },
+        "user": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultSocksRemoteConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "users": {
+          "items": {},
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultSocksServerConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "accounts": {
+          "items": {
+            "$ref": "#/definitions/XrayDefaultSocksAccount"
+          },
+          "type": "array"
+        },
+        "auth": {
+          "type": "string"
+        },
+        "ip": {
+          "type": "string"
+        },
+        "udp": {
+          "type": "boolean"
+        },
+        "userLevel": {
+          "type": "integer"
+        },
+        "users": {
+          "items": {
+            "$ref": "#/definitions/XrayDefaultSocksAccount"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultSplitHTTPConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "downloadSettings": {
+          "$ref": "#/definitions/XrayDefaultStreamConfig"
+        },
+        "extra": {},
+        "h2Params": {},
+        "headers": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "host": {
+          "type": "string"
+        },
+        "mode": {
+          "type": "string"
+        },
+        "noGRPCHeader": {
+          "type": "boolean"
+        },
+        "noSSEHeader": {
+          "type": "boolean"
+        },
+        "path": {
+          "type": "string"
+        },
+        "scMaxBufferedPosts": {
+          "type": "integer"
+        },
+        "scMaxEachPostBytes": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "scMinPostsIntervalMs": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "scStreamUpServerSecs": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "seqKey": {
+          "type": "string"
+        },
+        "seqPlacement": {
+          "type": "string"
+        },
+        "serverMaxHeaderBytes": {
+          "type": "integer"
+        },
+        "sessionIDKey": {
+          "type": "string"
+        },
+        "sessionIDLength": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "sessionIDPlacement": {
+          "type": "string"
+        },
+        "sessionIDTable": {
+          "type": "string"
+        },
+        "uplinkChunkSize": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "uplinkDataKey": {
+          "type": "string"
+        },
+        "uplinkDataPlacement": {
+          "type": "string"
+        },
+        "uplinkHTTPMethod": {
+          "type": "string"
+        },
+        "xPaddingBytes": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "xPaddingHeader": {
+          "type": "string"
+        },
+        "xPaddingKey": {
+          "type": "string"
+        },
+        "xPaddingMethod": {
+          "type": "string"
+        },
+        "xPaddingObfsMode": {
+          "type": "boolean"
+        },
+        "xPaddingPlacement": {
+          "type": "string"
+        },
+        "xmux": {
+          "$ref": "#/definitions/XrayDefaultXmuxConfig"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultStatsConfig": {
+      "additionalProperties": true,
+      "properties": {},
+      "type": "object"
+    },
+    "XrayDefaultStrategyConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "settings": {},
+        "type": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultStreamConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "finalmask": {
+          "$ref": "#/definitions/XrayDefaultFinalMask"
+        },
+        "grpcSettings": {
+          "$ref": "#/definitions/XrayDefaultGRPCConfig"
+        },
+        "httpupgradeSettings": {
+          "$ref": "#/definitions/XrayDefaultHttpUpgradeConfig"
+        },
+        "hysteriaSettings": {
+          "$ref": "#/definitions/XrayDefaultHysteriaConfig"
+        },
+        "kcpSettings": {
+          "$ref": "#/definitions/XrayDefaultKCPConfig"
+        },
+        "masqueSettings": {
+          "$ref": "#/definitions/XrayDefaultMasqueConfig"
+        },
+        "method": {
+          "enum": [
+            "raw",
+            "tcp",
+            "xhttp",
+            "splithttp",
+            "kcp",
+            "mkcp",
+            "grpc",
+            "ws",
+            "websocket",
+            "httpupgrade",
+            "hysteria",
+            "masque",
+            "xdrive"
+          ]
+        },
+        "network": {
+          "enum": [
+            "raw",
+            "tcp",
+            "xhttp",
+            "splithttp",
+            "kcp",
+            "mkcp",
+            "grpc",
+            "ws",
+            "websocket",
+            "httpupgrade",
+            "hysteria",
+            "masque",
+            "xdrive"
+          ]
+        },
+        "port": {
+          "type": "integer"
+        },
+        "rawSettings": {
+          "$ref": "#/definitions/XrayDefaultTCPConfig"
+        },
+        "realitySettings": {
+          "$ref": "#/definitions/XrayDefaultREALITYConfig"
+        },
+        "security": {
+          "type": "string"
+        },
+        "sockopt": {
+          "$ref": "#/definitions/XrayDefaultSocketConfig"
+        },
+        "splithttpSettings": {
+          "$ref": "#/definitions/XrayDefaultSplitHTTPConfig"
+        },
+        "tcpSettings": {
+          "$ref": "#/definitions/XrayDefaultTCPConfig"
+        },
+        "tlsSettings": {
+          "$ref": "#/definitions/XrayDefaultTLSConfig"
+        },
+        "wsSettings": {
+          "$ref": "#/definitions/XrayDefaultWebSocketConfig"
+        },
+        "xdriveSettings": {
+          "$ref": "#/definitions/XrayDefaultXDriveConfig"
+        },
+        "xhttpSettings": {
+          "$ref": "#/definitions/XrayDefaultSplitHTTPConfig"
+        }
+      },
+      "type": "object",
+      "not": {
+        "required": [
+          "xeraHttpSettings"
+        ]
+      }
+    },
+    "XrayDefaultStringList": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "XrayDefaultSudoku": {
+      "additionalProperties": true,
+      "properties": {
+        "ascii": {
+          "type": "string"
+        },
+        "customTable": {
+          "type": "string"
+        },
+        "customTables": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "custom_table": {
+          "type": "string"
+        },
+        "custom_tables": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "paddingMax": {
+          "type": "integer"
+        },
+        "paddingMin": {
+          "type": "integer"
+        },
+        "padding_max": {
+          "type": "integer"
+        },
+        "padding_min": {
+          "type": "integer"
+        },
+        "password": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultSystemPolicy": {
+      "additionalProperties": true,
+      "properties": {
+        "statsInboundDownlink": {
+          "type": "boolean"
+        },
+        "statsInboundUplink": {
+          "type": "boolean"
+        },
+        "statsOutboundDownlink": {
+          "type": "boolean"
+        },
+        "statsOutboundUplink": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultTCPConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "acceptProxyProtocol": {
+          "type": "boolean"
+        },
+        "header": {}
+      },
+      "type": "object"
+    },
+    "XrayDefaultTCPItem": {
+      "additionalProperties": true,
+      "properties": {
+        "capture": {
+          "type": "string"
+        },
+        "delay": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "packet": {},
+        "rand": {
+          "type": "integer"
+        },
+        "randRange": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "reuse": {
+          "type": "string"
+        },
+        "transform": {
+          "$ref": "#/definitions/XrayDefaultCustomTransform"
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultTLSCertConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "buildChain": {
+          "type": "boolean"
+        },
+        "certificate": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "certificateFile": {
+          "type": "string"
+        },
+        "key": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "keyFile": {
+          "type": "string"
+        },
+        "ocspStapling": {
+          "type": "integer"
+        },
+        "oneTimeLoading": {
+          "type": "boolean"
+        },
+        "usage": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultTLSConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "allowInsecure": {
+          "type": "boolean"
+        },
+        "alpn": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ]
+        },
+        "certificates": {
+          "items": {
+            "$ref": "#/definitions/XrayDefaultTLSCertConfig"
+          },
+          "type": "array"
+        },
+        "cipherSuites": {
+          "type": "string"
+        },
+        "curvePreferences": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ]
+        },
+        "disableSystemRoot": {
+          "type": "boolean"
+        },
+        "echConfigList": {
+          "type": "string"
+        },
+        "echServerKeys": {
+          "type": "string"
+        },
+        "echSockopt": {
+          "$ref": "#/definitions/XrayDefaultSocketConfig"
+        },
+        "enableSessionResumption": {
+          "type": "boolean"
+        },
+        "fingerprint": {
+          "type": "string"
+        },
+        "masterKeyLog": {
+          "type": "string"
+        },
+        "maxVersion": {
+          "type": "string"
+        },
+        "minVersion": {
+          "type": "string"
+        },
+        "pinnedPeerCertSha256": {
+          "type": "string"
+        },
+        "rejectUnknownSni": {
+          "type": "boolean"
+        },
+        "serverName": {
+          "type": "string"
+        },
+        "useSystemCA": {
+          "type": "boolean"
+        },
+        "verifyPeerCertByName": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultTransportProtocol": {
+      "type": "string"
+    },
+    "XrayDefaultTrojanClientConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "flow": {
+          "type": "string"
+        },
+        "level": {
+          "type": "integer"
+        },
+        "password": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "servers": {
+          "items": {
+            "$ref": "#/definitions/XrayDefaultTrojanServerTarget"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultTrojanInboundFallback": {
+      "additionalProperties": true,
+      "properties": {
+        "alpn": {
+          "type": "string"
+        },
+        "dest": {},
+        "name": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "xver": {
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultTrojanServerConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "clients": {
+          "items": {
+            "$ref": "#/definitions/XrayDefaultTrojanUserConfig"
+          },
+          "type": "array"
+        },
+        "fallbacks": {
+          "items": {
+            "$ref": "#/definitions/XrayDefaultTrojanInboundFallback"
+          },
+          "type": "array"
+        },
+        "users": {
+          "items": {
+            "$ref": "#/definitions/XrayDefaultTrojanUserConfig"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultTrojanServerTarget": {
+      "additionalProperties": true,
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "flow": {
+          "type": "string"
+        },
+        "level": {
+          "type": "integer"
+        },
+        "password": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultTrojanUserConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "email": {
+          "type": "string"
+        },
+        "flow": {
+          "type": "string"
+        },
+        "level": {
+          "type": "integer"
+        },
+        "password": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultTunConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "autoOutboundsInterface": {
+          "type": "string"
+        },
+        "autoSystemDnsToGateway": {
+          "type": "boolean"
+        },
+        "autoSystemRoutingTable": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "autoSystemWfpBlockLeak": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "desc": {
+          "type": "string"
+        },
+        "dns": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "gateway": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "mtu": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "userLevel": {
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultUDPHop": {
+      "additionalProperties": true,
+      "properties": {
+        "interval": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "mode": {
+          "type": "string"
+        },
+        "remoteIPs": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "remotePorts": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultUDPItem": {
+      "additionalProperties": true,
+      "properties": {
+        "capture": {
+          "type": "string"
+        },
+        "packet": {},
+        "rand": {
+          "type": "integer"
+        },
+        "randRange": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "reuse": {
+          "type": "string"
+        },
+        "transform": {
+          "$ref": "#/definitions/XrayDefaultCustomTransform"
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultUser": {
+      "additionalProperties": true,
+      "properties": {
+        "email": {
+          "type": "string"
+        },
+        "level": {
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultVLessInboundConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "clients": {
+          "items": {},
+          "type": "array"
+        },
+        "decryption": {
+          "type": "string"
+        },
+        "fallbacks": {
+          "items": {
+            "$ref": "#/definitions/XrayDefaultVLessInboundFallback"
+          },
+          "type": "array"
+        },
+        "flow": {
+          "type": "string"
+        },
+        "testseed": {
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "users": {
+          "items": {},
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultVLessInboundFallback": {
+      "additionalProperties": true,
+      "properties": {
+        "alpn": {
+          "type": "string"
+        },
+        "dest": {},
+        "name": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "xver": {
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultVLessOutboundConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "encryption": {
+          "type": "string"
+        },
+        "flow": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "level": {
+          "type": "integer"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "reverse": {
+          "$ref": "#/definitions/XrayDefaultVLessReverseConfig"
+        },
+        "seed": {
+          "type": "string"
+        },
+        "testpre": {
+          "type": "integer"
+        },
+        "testseed": {
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "vnext": {
+          "items": {
+            "$ref": "#/definitions/XrayDefaultVLessOutboundVnext"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultVLessOutboundVnext": {
+      "additionalProperties": true,
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "users": {
+          "items": {},
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultVLessReverseConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "sniffing": {
+          "$ref": "#/definitions/XrayDefaultSniffingConfig"
+        },
+        "tag": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultVMessAccount": {
+      "additionalProperties": true,
+      "properties": {
+        "experiments": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "security": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultVMessDefaultConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "level": {
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultVMessInboundConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "clients": {
+          "items": {},
+          "type": "array"
+        },
+        "default": {
+          "$ref": "#/definitions/XrayDefaultVMessDefaultConfig"
+        },
+        "users": {
+          "items": {},
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultVMessOutboundConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "experiments": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "level": {
+          "type": "integer"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "security": {
+          "type": "string"
+        },
+        "vnext": {
+          "items": {
+            "$ref": "#/definitions/XrayDefaultVMessOutboundTarget"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultVMessOutboundTarget": {
+      "additionalProperties": true,
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "users": {
+          "items": {},
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultVersionConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "max": {
+          "type": "string"
+        },
+        "min": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultWebSocketConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "acceptProxyProtocol": {
+          "type": "boolean"
+        },
+        "headers": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "heartbeatPeriod": {
+          "type": "integer"
+        },
+        "host": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultWebhookRuleConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "deduplication": {
+          "type": "integer"
+        },
+        "headers": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "url": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultWireGuardConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "address": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "mtu": {
+          "type": "integer"
+        },
+        "noKernelTun": {
+          "type": "boolean"
+        },
+        "peers": {
+          "items": {
+            "$ref": "#/definitions/XrayDefaultWireGuardPeerConfig"
+          },
+          "type": "array"
+        },
+        "remoteDNS": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "reserved": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "maximum": 255,
+                "minimum": 0,
+                "type": "integer"
+              },
+              "type": "array"
+            }
+          ]
+        },
+        "secretKey": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultWireGuardPeerConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "allowedIPs": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "email": {
+          "type": "string"
+        },
+        "endpoint": {
+          "type": "string"
+        },
+        "keepAlive": {
+          "type": "integer"
+        },
+        "level": {
+          "type": "integer"
+        },
+        "preSharedKey": {
+          "type": "string"
+        },
+        "publicKey": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultXDNS": {
+      "additionalProperties": true,
+      "properties": {
+        "domains": {
+          "items": {
+            "$ref": "#/definitions/XrayDefaultXDNSDomain"
+          },
+          "type": "array"
+        },
+        "extraPoll": {
+          "type": "integer"
+        },
+        "resolvers": {
+          "items": {
+            "$ref": "#/definitions/XrayDefaultXDNSResolver"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultXDNSDomain": {
+      "additionalProperties": true,
+      "properties": {
+        "edns0": {
+          "type": "integer"
+        },
+        "labelLimit": {
+          "type": "integer"
+        },
+        "lenLimit": {
+          "type": "integer"
+        },
+        "names": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "types": {
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultXDNSResolver": {
+      "additionalProperties": true,
+      "properties": {
+        "addrs": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "quicConfig": {
+          "$ref": "#/definitions/XrayDefaultQuicParamsConfig"
+        },
+        "tlsConfig": {
+          "$ref": "#/definitions/XrayDefaultTLSConfig"
+        },
+        "worker": {
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultXDriveConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "concurrency": {
+          "type": "integer"
+        },
+        "eagerWindowMs": {
+          "type": "integer"
+        },
+        "flushIntervalMs": {
+          "type": "integer"
+        },
+        "holeTimeoutMs": {
+          "type": "integer"
+        },
+        "maxPollIntervalMs": {
+          "type": "integer"
+        },
+        "pollIntervalMs": {
+          "type": "integer"
+        },
+        "remoteFolder": {
+          "type": "string"
+        },
+        "s3": {
+          "$ref": "#/definitions/XrayDefaultXDriveS3Config"
+        },
+        "secrets": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "segmentBytes": {
+          "type": "integer"
+        },
+        "service": {
+          "type": "string"
+        },
+        "sessionTtlSeconds": {
+          "type": "integer"
+        },
+        "template": {},
+        "xmux": {
+          "$ref": "#/definitions/XrayDefaultXmuxConfig"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultXDriveS3Config": {
+      "additionalProperties": true,
+      "properties": {
+        "bucket": {
+          "type": "string"
+        },
+        "endpoint": {
+          "type": "string"
+        },
+        "pathStyle": {
+          "type": "boolean"
+        },
+        "region": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultXMC": {
+      "additionalProperties": true,
+      "properties": {
+        "hostname": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        },
+        "profiles": {
+          "items": {
+            "$ref": "#/definitions/XrayDefaultXMCProfile"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultXMCProfile": {
+      "additionalProperties": true,
+      "properties": {
+        "texturesSignature": {
+          "type": "string"
+        },
+        "texturesValue": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        },
+        "uuid": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultXicmp": {
+      "additionalProperties": true,
+      "properties": {
+        "dgram": {
+          "type": "boolean"
+        },
+        "ips": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultXmuxConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "cMaxReuseTimes": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "hKeepAlivePeriod": {
+          "type": "integer"
+        },
+        "hMaxRequestTimes": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "hMaxReusableSecs": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "maxConcurrency": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "maxConnections": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "XrayDefaultstrategyEmptyConfig": {
+      "additionalProperties": true,
+      "properties": {},
+      "type": "object"
+    },
+    "XrayDefaultstrategyLeastLoadConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "baselines": {
+          "items": {},
+          "type": "array"
+        },
+        "costs": {
+          "items": {},
+          "type": "array"
+        },
+        "expected": {
+          "type": "integer"
+        },
+        "maxRTT": {},
+        "tolerance": {
+          "type": "number"
+        }
+      },
+      "type": "object"
+    }
+  }
+}

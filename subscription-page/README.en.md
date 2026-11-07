@@ -2,9 +2,9 @@
 
 # Remnacust Subscription Page
 
-Subscription page **1.1.7.100** shows account information and instructions in a browser, and delivers panel-generated configuration to VPN clients. It can be installed separately without reinstalling the panel.
+Subscription page **1.1.7.101** shows account information and instructions in a browser, and delivers panel-generated configuration to VPN clients. It can be installed separately without reinstalling the panel.
 
-Bundle 1.2.139 includes Panel/Page 1.1.7.100, Node 1.1.26 and Core/WASM 1.1.16. [Release changes](../docs/releases/1.1.7.100.md).
+Bundle 1.2.139 includes Panel/Page 1.1.7.101, Node 1.1.26 and Core/WASM 1.1.16. [Release changes](../docs/releases/1.1.7.101.md).
 
 ## Server and installation
 

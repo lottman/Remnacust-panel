@@ -36,6 +36,11 @@ function source(relative, overrides = {}) {
             path.join(path.dirname(filename), 'response-time-probes.ts'),
             { './client-pool': require('./client-pool-fixture.cjs').pool },
         );
+    if (Object.hasOwn(mocks, './rendered-xray-routes'))
+        mocks['./rendered-xray-routes'] = load(
+            path.join(path.dirname(filename), 'rendered-xray-routes.ts'),
+            { './client-pool': require('./client-pool-fixture.cjs').pool },
+        );
     return load(filename, { ...mocks, ...overrides });
 }
 

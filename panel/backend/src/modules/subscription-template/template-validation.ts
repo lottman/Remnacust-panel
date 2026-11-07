@@ -137,6 +137,67 @@ export function xrayTemplateWarnings(config: Record<string, any>): string[] {
             }
         }
     }
+    const injector = object(config.remnawave) ? config.remnawave : undefined;
+    const pools = Array.isArray(injector?.injectHosts) ? injector.injectHosts.filter(object) : [];
+    const dynamicNames = pools.some((pool) => pool.useHostRemarkAsTag || pool.useHostTagAsTag);
+    const prefixes = new Set<string>(
+        pools
+            .filter((pool) => !pool.useHostRemarkAsTag && !pool.useHostTagAsTag)
+            .map((pool) => pool.tagPrefix)
+            .filter((tag): tag is string => typeof tag === 'string'),
+    );
+    const outbounds = new Set<string>(
+        Array.isArray(config.outbounds)
+            ? config.outbounds
+                  .filter(object)
+                  .map((outbound) => outbound.tag)
+                  .filter((tag): tag is string => typeof tag === 'string')
+            : [],
+    );
+    if (
+        !injector ||
+        (!injector.injectHosts && !injector.addVirtualHostAsOutbound) ||
+        injector.addVirtualHostAsOutbound
+    )
+        outbounds.add('proxy');
+    const balancers = new Set<string>(
+        Array.isArray(config.routing?.balancers)
+            ? config.routing.balancers
+                  .filter(object)
+                  .map((balancer: Record<string, any>) => balancer.tag)
+                  .filter((tag: unknown): tag is string => typeof tag === 'string')
+            : [],
+    );
+    const outboundExists = (tag: string) => {
+        const split = tag.lastIndexOf('-');
+        return (
+            outbounds.has(tag) ||
+            prefixes.has(tag) ||
+            (split > 0 &&
+                prefixes.has(tag.slice(0, split)) &&
+                injectedTagMatches(tag.slice(0, split), tag))
+        );
+    };
+    if (Array.isArray(config.routing?.balancers)) {
+        for (const [index, balancer] of config.routing.balancers.entries()) {
+            if (!object(balancer) || balancer.fallbackTag === undefined) continue;
+            const tag = balancer.fallbackTag;
+            if (typeof tag !== 'string' || (tag !== '' && !dynamicNames && !outboundExists(tag)))
+                warnings.push(`routing.balancers.${index}.fallbackTag`);
+        }
+    }
+    if (Array.isArray(config.routing?.rules)) {
+        for (const [index, rule] of config.routing.rules.entries()) {
+            if (!object(rule)) continue;
+            if (rule.outboundTag !== undefined) {
+                const tag = rule.outboundTag;
+                if (typeof tag !== 'string' || !tag || (!dynamicNames && !outboundExists(tag)))
+                    warnings.push(`routing.rules.${index}.outboundTag`);
+            }
+            if (rule.balancerTag !== undefined && !balancers.has(rule.balancerTag))
+                warnings.push(`routing.rules.${index}.balancerTag`);
+        }
+    }
     return [...new Set(warnings)];
 }
 

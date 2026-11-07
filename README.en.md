@@ -1,6 +1,8 @@
 # Remnacust Panel
 
-Release **Panel/Page 1.1.7.102** belongs to Installer bundle **1.2.142**, with Node **1.1.26** and Core/WASM **1.1.16**. [Changes in this release](docs/releases/1.1.7.102.md). Installed servers require a separate update.
+Release **Panel/Page 1.1.7.100** belongs to Installer bundle **1.2.143**, with Node **1.1.26** and Core/WASM **1.1.16**. [Changes in this release](docs/releases/1.1.7.100.md). Installed servers require a separate update.
+
+This reissued version includes the fixes from 101–102. Existing 101–102 installations require an [explicit migration](docs/releases/1.1.7.100.md); automatic downgrades remain blocked.
 
 [Русский](README.md) · [English](README.en.md)
 
@@ -36,8 +38,8 @@ Matching bundle as of **November 7, 2026**. Components use separate version numb
 
 | Component | Current stable release |
 | --- | --- |
-| Panel and subscription website | [1.1.7.102](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.102) |
-| Installer / Docker bundle | [1.2.142](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.142) |
+| Panel and subscription website | [1.1.7.100](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.100) |
+| Installer / Docker bundle | [1.2.143](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.143) |
 | Node agent | [1.1.26](https://github.com/lottman/Remnacust-node/releases/tag/v1.1.26) |
 | Core / editor validator | [1.1.16](https://github.com/lottman/Remnacust-core/releases/tag/v1.1.16), Xray v26.10.31 |
 
@@ -57,7 +59,7 @@ When sharing a server, leave headroom for all components. Panel/node requirement
 
 | Software | Requirement |
 | --- | --- |
-| Installer 1.2.142 OS | Ubuntu 22.04 / 24.04 / 26.04 LTS and Debian 12 / 13; Linux amd64 or arm64 |
+| Installer 1.2.143 OS | Ubuntu 22.04 / 24.04 / 26.04 LTS and Debian 12 / 13; Linux amd64 or arm64 |
 | Containers | Docker Engine with a current Docker Compose v2 plugin; legacy `docker-compose` v1 is unsupported |
 | PostgreSQL | 14.24 / 15.19 / 16.15 / 17.11 / 18.6; 195 migrations, HWID and access boundaries |
 | Prebuilt-image installation | Root, APT and GitHub/GHCR access, working DNS; no host Node.js or Go needed |
@@ -128,7 +130,7 @@ If a subscription temporarily fails to load, check logs, panel reachability, web
 - [Backups](docs/BACKUPS.md) · [User migration](docs/USER-MIGRATION.md) · [Node updates](docs/UPDATE-PROGRESS-AND-NODE-HEALTH.md).
 - [Development/building](docs/BUILDING.md) · [Subscription website](subscription-page/README.en.md) · [Release history](docs/releases).
 
-Release 1.1.7.102 fixes HWID subscription delivery without waiting for nodes, adds the global custom/default Xray selection and updates dependencies. Node 1.1.26 includes both cores. Installer 1.2.142 delivers the matching bundle. [Release changes](docs/releases/1.1.7.102.md). Updating the README does not replace installed software.
+Release 1.1.7.100 fixes HWID subscription delivery without waiting for nodes, adds the global custom/default Xray selection and updates dependencies. Node 1.1.26 includes both cores. Installer 1.2.143 delivers the matching bundle. [Release changes](docs/releases/1.1.7.100.md). Updating the README does not replace installed software.
 
 ## License and support
 

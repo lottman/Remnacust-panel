@@ -736,6 +736,19 @@ export function AutoselectPanel({
                         {t(`autoselect.error-${error}`, {
                             defaultValue: t('autoselect.structure-error')
                         })}
+                        {/^routing\.(?:rules|balancers)\.\d+\.(?:outboundTag|fallbackTag)$/.test(
+                            error
+                        ) && (
+                            <Text
+                                component="code"
+                                size="sm"
+                                mt="xs"
+                                dir="ltr"
+                                style={{ overflowWrap: 'anywhere' }}
+                            >
+                                {error}
+                            </Text>
+                        )}
                     </Alert>
                 )}
                 {!groups.length && (

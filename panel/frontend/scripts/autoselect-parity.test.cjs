@@ -11,6 +11,7 @@ const native = load(path.join(editor, 'client-template-model.ts'));
 const selection = source('modules/subscription-template/generators/inject-host-selection.ts');
 const { XrayJsonGeneratorService } = source('modules/subscription-template/generators/xray-json.generator.service.ts', {
     './inject-host-selection': selection,
+    './rendered-xray-routes': source('modules/subscription-template/generators/rendered-xray-routes.ts'),
     '@common/utils/bounded-regex': regex,
     '@common/utils': { isNonEmptyObject: value => value && Object.keys(value).length > 0 },
     '../host-mapper': { applyHostMapper: value => value },

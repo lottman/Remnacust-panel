@@ -484,11 +484,64 @@ export function updatePool(
     return editTemplate(text, ['remnawave', 'injectHosts', index, ...path], value)
 }
 
+function outboundReferences(config: JsonObject, excludedPool?: number) {
+    const pools = poolsOf(config).filter((_, index) => index !== excludedPool)
+    const prefixes = new Set<string>(
+        pools
+            .filter((pool) => !pool.useHostRemarkAsTag && !pool.useHostTagAsTag)
+            .map((pool) => pool.tagPrefix)
+            .filter((tag): tag is string => typeof tag === 'string')
+    )
+    const tags = new Set(
+        (config.outbounds ?? [])
+            .map((outbound: JsonObject | null) => outbound?.tag)
+            .filter((tag: unknown): tag is string => typeof tag === 'string')
+    )
+    const injector = config.remnawave
+    if (
+        !injector ||
+        (!injector.injectHosts && !injector.addVirtualHostAsOutbound) ||
+        injector.addVirtualHostAsOutbound
+    )
+        tags.add('proxy')
+    return {
+        dynamic: pools.some((pool) => pool.useHostRemarkAsTag || pool.useHostTagAsTag),
+        has: (tag: string) => {
+            const split = tag.lastIndexOf('-')
+            return (
+                tags.has(tag) ||
+                prefixes.has(tag) ||
+                (split > 0 &&
+                    prefixes.has(tag.slice(0, split)) &&
+                    injectedTagMatches(tag.slice(0, split), tag))
+            )
+        }
+    }
+}
+
 export function renamePoolPrefix(text: string, index: number, prefix: string): string {
     const config = parseTemplate(text)
-    const previous = poolsOf(config)[index].tagPrefix
+    const pool = poolsOf(config)[index]
+    const previous = pool.tagPrefix
     let next = updatePool(text, index, ['tagPrefix'], prefix)
-    if (!previous || previous === prefix) return next
+    if (!previous || previous === prefix || pool.useHostRemarkAsTag || pool.useHostTagAsTag)
+        return next
+    const other = outboundReferences(config, index)
+    const renameReference = (tag: unknown, path: string) => {
+        if (typeof tag !== 'string' || !injectedTagMatches(previous, tag) || other.has(tag))
+            return tag
+        const renamed = prefix + tag.slice(previous.length)
+        if (!prefix || other.dynamic || other.has(renamed)) throw new Error(path)
+        return renamed
+    }
+    let changed = false
+    const rules = (config.routing?.rules ?? []).map((rule: JsonObject, ruleIndex: number) => {
+        const renamed = renameReference(rule?.outboundTag, `routing.rules.${ruleIndex}.outboundTag`)
+        if (renamed === rule?.outboundTag) return rule
+        changed = true
+        return { ...rule, outboundTag: renamed }
+    })
+    if (changed) next = editTemplate(next, ['routing', 'rules'], rules)
     for (const [balanceIndex, balance] of (config.routing?.balancers ?? []).entries()) {
         for (const [selectorIndex, selector] of (balance.selector ?? []).entries())
             if (selector === previous)
@@ -497,8 +550,16 @@ export function renamePoolPrefix(text: string, index: number, prefix: string): s
                     ['routing', 'balancers', balanceIndex, 'selector', selectorIndex],
                     prefix
                 )
-        if (balance.fallbackTag === previous)
-            next = editTemplate(next, ['routing', 'balancers', balanceIndex, 'fallbackTag'], prefix)
+        const fallback = renameReference(
+            balance.fallbackTag,
+            `routing.balancers.${balanceIndex}.fallbackTag`
+        )
+        if (fallback !== balance.fallbackTag)
+            next = editTemplate(
+                next,
+                ['routing', 'balancers', balanceIndex, 'fallbackTag'],
+                fallback
+            )
     }
     for (const observer of ['observatory', 'burstObservatory'])
         for (const [selectorIndex, selector] of (config[observer]?.subjectSelector ?? []).entries())
@@ -560,6 +621,16 @@ export function removePool(text: string, index: number): string {
     let next = editTemplate(text, ['remnawave', 'injectHosts', index], undefined)
     if (!prefix) return next
     const remaining = parseTemplate(next)
+    const pool = poolsOf(config)[index]
+    const fixedNames = !pool.useHostRemarkAsTag && !pool.useHostTagAsTag
+    const targets = outboundReferences(remaining)
+    if (fixedNames) {
+        for (const [ruleIndex, rule] of (config.routing?.rules ?? []).entries()) {
+            const tag = rule?.outboundTag
+            if (typeof tag === 'string' && injectedTagMatches(prefix, tag) && !targets.has(tag))
+                throw new Error(`routing.rules.${ruleIndex}.outboundTag`)
+        }
+    }
     const available: string[] = [
         ...poolsOf(remaining)
             .map((pool) => pool.tagPrefix)
@@ -575,25 +646,28 @@ export function removePool(text: string, index: number): string {
             (selector) =>
                 !prefix.startsWith(selector) || available.some((tag) => tag.startsWith(selector))
         )
-        if (retained.length === selected.length) {
-            if (balance.fallbackTag === prefix)
-                next = editTemplate(
-                    next,
-                    ['routing', 'balancers', i, 'fallbackTag'],
-                    available.find((tag) => retained.some((selector) => tag.startsWith(selector)))
-                )
+        if (retained.length !== selected.length && !retained.length) {
+            next = removeBalancer(next, i)
             continue
         }
-        if (!retained.length) next = removeBalancer(next, i)
-        else {
-            next = editTemplate(next, ['routing', 'balancers', i, 'selector'], retained)
-            if (balance.fallbackTag === prefix)
-                next = editTemplate(
-                    next,
-                    ['routing', 'balancers', i, 'fallbackTag'],
-                    available.find((tag) => retained.some((selector) => tag.startsWith(selector)))
+        const fallback = balance.fallbackTag
+        if (
+            fixedNames &&
+            typeof fallback === 'string' &&
+            injectedTagMatches(prefix, fallback) &&
+            !targets.has(fallback)
+        ) {
+            const replacement =
+                fallback === prefix &&
+                available.find(
+                    (tag) =>
+                        targets.has(tag) && retained.some((selector) => tag.startsWith(selector))
                 )
+            if (!replacement) throw new Error(`routing.balancers.${i}.fallbackTag`)
+            next = editTemplate(next, ['routing', 'balancers', i, 'fallbackTag'], replacement)
         }
+        if (retained.length !== selected.length)
+            next = editTemplate(next, ['routing', 'balancers', i, 'selector'], retained)
     }
     for (const observer of ['observatory', 'burstObservatory']) {
         const selected = parseTemplate(next)[observer]?.subjectSelector
@@ -673,6 +747,7 @@ export function validationPath(config: JsonObject): string | null {
             }
         }
     }
+    const outbounds = outboundReferences(config)
     const balanceTags = new Set<string>()
     for (const [index, balancer] of (config.routing?.balancers ?? []).entries()) {
         if (balanceTags.has(balancer.tag)) return `routing.balancers.${index}.tag`
@@ -712,6 +787,26 @@ export function validationPath(config: JsonObject): string | null {
             )
                 return `${path}.baselines`
         }
+    }
+    for (const [index, balancer] of (config.routing?.balancers ?? []).entries()) {
+        if (balancer.fallbackTag === undefined) continue
+        const tag = balancer.fallbackTag
+        const optionalEmpty = tag === '' && balancer.strategy?.type !== 'priority'
+        if (
+            typeof tag !== 'string' ||
+            (!optionalEmpty && (!tag || (!outbounds.dynamic && !outbounds.has(tag))))
+        )
+            return `routing.balancers.${index}.fallbackTag`
+    }
+    for (const [index, rule] of (config.routing?.rules ?? []).entries()) {
+        if (!rule || typeof rule !== 'object' || Array.isArray(rule)) continue
+        if (rule.outboundTag !== undefined) {
+            const tag = rule.outboundTag
+            if (typeof tag !== 'string' || !tag || (!outbounds.dynamic && !outbounds.has(tag)))
+                return `routing.rules.${index}.outboundTag`
+        }
+        if (rule.balancerTag !== undefined && !balanceTags.has(rule.balancerTag))
+            return `routing.rules.${index}.balancerTag`
     }
     return null
 }

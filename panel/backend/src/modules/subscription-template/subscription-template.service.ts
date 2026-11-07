@@ -157,18 +157,23 @@ export class SubscriptionTemplateService {
                 }
                 if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed))
                     return await saveDraft(['root']);
-                if (template.templateType === 'XRAY_JSON') {
-                    const warnings = xrayTemplateWarnings(parsed as Record<string, unknown>);
-                    if (
-                        blockingXrayTemplateWarnings(parsed as Record<string, unknown>, warnings)
-                            .length
-                    )
-                        return await saveDraft(warnings);
-                    validationWarnings = warnings.slice(0, 20);
-                }
                 if (isYamlTemplate)
                     encodedTemplateYaml = Buffer.from(draftContent, 'utf8').toString('base64');
                 else templateJson = parsed;
+            }
+
+            if (template.templateType === 'XRAY_JSON' && templateJson !== undefined) {
+                if (
+                    !templateJson ||
+                    typeof templateJson !== 'object' ||
+                    Array.isArray(templateJson)
+                )
+                    return await saveDraft(['root']);
+                const config = templateJson as Record<string, unknown>;
+                const warnings = xrayTemplateWarnings(config);
+                if (blockingXrayTemplateWarnings(config, warnings).length)
+                    return await saveDraft(warnings);
+                validationWarnings = warnings.slice(0, 20);
             }
 
             if (isYamlTemplate && templateJson !== undefined) {

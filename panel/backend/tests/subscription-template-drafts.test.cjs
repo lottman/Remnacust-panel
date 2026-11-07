@@ -63,7 +63,12 @@ function fixture(type = 'XRAY_JSON') {
     };
     const service = new SubscriptionTemplateService(
         repository,
-        { del: async (key) => invalidated.push(key), templateSnapshot: async () => ({ generation: 'a'.repeat(32), value: null }), setTemplateSnapshot: async () => true, invalidateTemplateSnapshots: async () => {} },
+        {
+            del: async (key) => invalidated.push(key),
+            templateSnapshot: async () => ({ generation: 'a'.repeat(32), value: null }),
+            setTemplateSnapshot: async () => true,
+            invalidateTemplateSnapshots: async () => {},
+        },
         geofiles,
     );
     service.logger = { error() {} };
@@ -81,32 +86,54 @@ function editorSavePayload(text, uuid) {
     let payload;
     const ref = { exports: {} };
     const frontend = path.join(__dirname, '../../frontend');
-    const frontendRequire = require('node:module').createRequire(path.join(frontend, 'package.json'));
+    const frontendRequire = require('node:module').createRequire(
+        path.join(frontend, 'package.json'),
+    );
     const mocks = {
-        react: { useRef: value => ({ current: value }) },
+        react: { useRef: (value) => ({ current: value }) },
         '@mantine/core': { Button: 'Button', Group: 'Group' },
         '@mantine/hooks': { useClipboard: () => ({}), useDisclosure: () => [false, {}] },
-        'react-i18next': { useTranslation: () => ({ t: key => key }) },
+        'react-i18next': { useTranslation: () => ({ t: (key) => key }) },
         '@shared/api': {},
-        '@shared/api/hooks': { useUpdateSubscriptionTemplate: () => ({ mutate: value => { payload = value.variables; } }) },
+        '@shared/api/hooks': {
+            useUpdateSubscriptionTemplate: () => ({
+                mutate: (value) => {
+                    payload = value.variables;
+                },
+            }),
+        },
         '@shared/hooks': { useIsMobile: () => false },
         '@shared/ui/load-templates/use-download-template': { useDownloadTemplate: () => ({}) },
         './template-editor-actions.module.css': {},
     };
-    const filename = path.join(frontend, 'src/features/dashboard/subscription-templates/template-editor-actions/template-editor-actions.feature.tsx');
+    const filename = path.join(
+        frontend,
+        'src/features/dashboard/subscription-templates/template-editor-actions/template-editor-actions.feature.tsx',
+    );
     const compiled = ts.transpileModule(fs.readFileSync(filename, 'utf8'), {
-        compilerOptions: { jsx: ts.JsxEmit.ReactJSX, module: ts.ModuleKind.CommonJS, esModuleInterop: true },
+        compilerOptions: {
+            jsx: ts.JsxEmit.ReactJSX,
+            module: ts.ModuleKind.CommonJS,
+            esModuleInterop: true,
+        },
     }).outputText;
     new Function('require', 'module', 'exports', compiled)(
-        id => Object.hasOwn(mocks, id) ? mocks[id] : frontendRequire(id), ref, ref.exports,
+        (id) => (Object.hasOwn(mocks, id) ? mocks[id] : frontendRequire(id)),
+        ref,
+        ref.exports,
     );
     const element = ref.exports.TemplateEditorActionsFeature({
-        template: { uuid }, editorType: 'json', editorRef: { current: { getValue: () => '{ stale editor value' } },
-        getValue: () => text, showEditorTools: false,
+        template: { uuid },
+        editorType: 'json',
+        editorRef: { current: { getValue: () => '{ stale editor value' } },
+        getValue: () => text,
+        showEditorTools: false,
     });
-    element.props.children.find(child => child?.type === 'Button').props.onClick();
+    element.props.children.find((child) => child?.type === 'Button').props.onClick();
     assert.deepEqual(payload, { uuid, draftContent: text });
-    return frontendRequire('@remnawave/backend-contract').UpdateSubscriptionTemplateCommand.RequestBodySchema.parse(payload);
+    return frontendRequire(
+        '@remnawave/backend-contract',
+    ).UpdateSubscriptionTemplateCommand.RequestBodySchema.parse(payload);
 }
 
 test('malformed JSON and empty text survive server reload and history without replacing live content', async () => {
@@ -156,11 +183,21 @@ test('incomplete host selections save drafts with their exact warning paths', as
 
 test('duplicate prefixes from code save an editable draft with indexed pool warnings, while distinct prefixes publish', async () => {
     const f = fixture();
-    const config = { remnawave: { injectHosts: ['g', 'g-ru', 'g-ru'].map(tagPrefix => ({tagPrefix,selector:{type:'tags',values:['RU']}})) } };
+    const config = {
+        remnawave: {
+            injectHosts: ['g', 'g-ru', 'g-ru'].map((tagPrefix) => ({
+                tagPrefix,
+                selector: { type: 'tags', values: ['RU'] },
+            })),
+        },
+    };
     const before = f.current().templateJson;
     const result = await f.save(JSON.stringify(config));
     assert.equal(result.isOk, true);
-    assert.deepEqual(result.response.validationWarnings, ['remnawave.injectHosts.1.tagPrefix', 'remnawave.injectHosts.2.tagPrefix']);
+    assert.deepEqual(result.response.validationWarnings, [
+        'remnawave.injectHosts.1.tagPrefix',
+        'remnawave.injectHosts.2.tagPrefix',
+    ]);
     assert.deepEqual(f.current().templateJson, before);
     config.remnawave.injectHosts[2].tagPrefix = 'g-eu';
     assert.equal((await f.save(JSON.stringify(config))).isOk, true);
@@ -183,21 +220,135 @@ function leastLoad(tolerance) {
     };
 }
 
+test('dangling routing targets keep the live template for both editor drafts and direct API saves', async () => {
+    for (const field of ['outboundTag', 'balancerTag']) {
+        for (const draft of [false, true]) {
+            const f = fixture(),
+                live = f.current().templateJson;
+            const config = {
+                outbounds: [{ tag: 'direct', protocol: 'freedom' }],
+                routing: { rules: [{ domain: ['domain:example.test'], [field]: 'removed-pool' }] },
+            };
+            const result = draft
+                ? await f.save(JSON.stringify(config))
+                : await f.service.updateTemplate(f.current().uuid, undefined, config);
+            assert.equal(result.isOk, draft);
+            assert.deepEqual(f.current().templateJson, live);
+            assert.deepEqual(f.invalidated, []);
+            if (draft)
+                assert.deepEqual(result.response.validationWarnings, [`routing.rules.0.${field}`]);
+        }
+    }
+});
+
+test('routing target validation retains implicit proxy, declared outputs and generated pool names', async () => {
+    for (const draft of [false, true]) {
+        for (const config of [
+            {
+                outbounds: [],
+                routing: { rules: [{ domain: ['domain:example.test'], outboundTag: 'proxy' }] },
+            },
+            {
+                outbounds: [{ tag: 'direct', protocol: 'freedom' }],
+                routing: { rules: [{ domain: ['domain:example.test'], outboundTag: 'direct' }] },
+            },
+            {
+                outbounds: [],
+                remnawave: {
+                    injectHosts: [
+                        { tagPrefix: 'pool-eu', selector: { type: 'tags', values: ['EU'] } },
+                    ],
+                },
+                routing: { rules: [{ domain: ['domain:example.test'], outboundTag: 'pool-eu-2' }] },
+            },
+            {
+                outbounds: [],
+                remnawave: {
+                    injectHosts: [
+                        { useHostRemarkAsTag: true, selector: { type: 'tags', values: ['EU'] } },
+                    ],
+                },
+                routing: {
+                    rules: [{ domain: ['domain:example.test'], outboundTag: 'dynamic-host-name' }],
+                },
+            },
+            {
+                outbounds: [{ tag: 'direct', protocol: 'freedom' }],
+                routing: {
+                    balancers: [{ tag: 'auto', selector: ['direct'] }],
+                    rules: [{ domain: ['domain:example.test'], balancerTag: 'auto' }],
+                },
+            },
+        ]) {
+            const f = fixture();
+            const result = draft
+                ? await f.save(JSON.stringify(config))
+                : await f.service.updateTemplate(f.current().uuid, undefined, config);
+            assert.equal(result.isOk, true, JSON.stringify(config));
+            assert.equal(f.current().draftContent, null);
+            assert.deepEqual(f.current().templateJson, config);
+        }
+    }
+});
+
+test('unresolved fallback routes cannot publish through the editor or direct API', async () => {
+    for (const draft of [false, true]) {
+        const f = fixture(),
+            live = f.current().templateJson;
+        const config = leastLoad(0.02);
+        config.routing.balancers[0].fallbackTag = 'removed-pool';
+        const result = draft
+            ? await f.save(JSON.stringify(config))
+            : await f.service.updateTemplate(f.current().uuid, undefined, config);
+        assert.equal(result.isOk, draft);
+        assert.deepEqual(f.current().templateJson, live);
+        if (draft)
+            assert.deepEqual(result.response.validationWarnings, [
+                'routing.balancers.0.fallbackTag',
+            ]);
+    }
+    for (const target of ['direct', '']) {
+        const f = fixture(),
+            config = leastLoad(0.02);
+        config.routing.balancers[0].fallbackTag = target;
+        assert.equal((await f.save(JSON.stringify(config))).isOk, true);
+        assert.equal(f.current().draftContent, null);
+    }
+});
+
 test('unused prefixes do not block saving when host remarks or tags supply outbound names', async () => {
     for (const mode of ['useHostRemarkAsTag', 'useHostTagAsTag']) {
         for (const inactiveFirst of [false, true]) {
-            const f = fixture(), config = leastLoad(2);
-            const inactive = { tagPrefix: 'direct', [mode]: true, selector: { type: 'tags', values: ['EU'] } };
+            const f = fixture(),
+                config = leastLoad(2);
+            const inactive = {
+                tagPrefix: 'direct',
+                [mode]: true,
+                selector: { type: 'tags', values: ['EU'] },
+            };
             const active = { tagPrefix: 'direct-2', selector: { type: 'tags', values: ['RU'] } };
-            config.remnawave = { injectHosts: inactiveFirst ? [inactive, active] : [active, inactive] };
+            config.remnawave = {
+                injectHosts: inactiveFirst ? [inactive, active] : [active, inactive],
+            };
             await f.save('{ unfinished');
             const body = editorSavePayload(JSON.stringify(config), f.current().uuid);
-            const result = await f.service.updateTemplate(body.uuid, body.name, body.templateJson, body.encodedTemplateYaml, body.draftContent);
+            const result = await f.service.updateTemplate(
+                body.uuid,
+                body.name,
+                body.templateJson,
+                body.encodedTemplateYaml,
+                body.draftContent,
+            );
             assert.equal(result.isOk, true);
             assert.equal(result.response.draftContent, null);
             assert.deepEqual(result.response.templateJson, config);
-            assert.deepEqual(result.response.validationWarnings, ['routing.balancers.0.strategy.settings.tolerance']);
-            assert.deepEqual((await f.service.getRevisions(f.current().uuid)).response.at(-1).templateJson, config);
+            assert.deepEqual(result.response.validationWarnings, [
+                'routing.balancers.0.strategy.settings.tolerance',
+            ]);
+            assert.deepEqual(
+                (await f.service.getRevisions(f.current().uuid)).response.at(-1).templateJson,
+                config,
+            );
             assert.deepEqual(await f.service.getCachedTemplateByType('XRAY_JSON', 'Saved'), config);
             assert.equal(f.invalidated.length, 1);
         }
@@ -206,9 +357,17 @@ test('unused prefixes do not block saving when host remarks or tags supply outbo
 
 test('active prefixes still block static and pool collisions even with a nonfatal tolerance warning', async () => {
     for (const names of [['direct'], ['pool', 'pool'], ['pool', 'pool-2']]) {
-        const f = fixture(), config = leastLoad(2), live = f.current().templateJson;
-        config.remnawave = { injectHosts: names.map(tagPrefix => ({ tagPrefix, selector: { type: 'tags', values: ['EU'] } })) };
-        const raw = JSON.stringify(config), result = await f.save(raw);
+        const f = fixture(),
+            config = leastLoad(2),
+            live = f.current().templateJson;
+        config.remnawave = {
+            injectHosts: names.map((tagPrefix) => ({
+                tagPrefix,
+                selector: { type: 'tags', values: ['EU'] },
+            })),
+        };
+        const raw = JSON.stringify(config),
+            result = await f.save(raw);
         assert.equal(result.isOk, true);
         assert.equal(result.response.draftContent, raw);
         assert.ok(result.response.validationWarnings.includes('remnawave.injectHosts.0.tagPrefix'));

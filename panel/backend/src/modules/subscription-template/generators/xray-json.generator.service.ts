@@ -3,8 +3,8 @@ import { isIP } from 'node:net';
 import { Injectable, Logger } from '@nestjs/common';
 
 import { isNonEmptyObject } from '@common/utils';
-import { XrayModeService } from '@common/xray-mode/xray-mode.service';
 import { configuredRegex } from '@common/utils/bounded-regex';
+import { XrayModeService } from '@common/xray-mode/xray-mode.service';
 import type { TInjectHostsEntry, TRemnawaveInjectorSelectFrom } from '@libs/contracts/models';
 
 import { applyHostMapper } from '../host-mapper';
@@ -19,6 +19,7 @@ import {
     XrayJsonConfig,
 } from './interfaces/xray-json-config.interface';
 import { materializePriority } from './priority-failover';
+import { assertRenderedXrayRoutes } from './rendered-xray-routes';
 import { ensureResponseTimeProbes } from './response-time-probes';
 import { assertSubscriptionSize } from './subscription-output';
 
@@ -205,7 +206,10 @@ function buildRealitySettings(host: ResolvedProxyConfig): Record<string, unknown
 export class XrayJsonGeneratorService {
     private readonly logger = new Logger(XrayJsonGeneratorService.name);
 
-    constructor(private readonly subscriptionTemplateService: SubscriptionTemplateService, private readonly xrayModes?: XrayModeService) {}
+    constructor(
+        private readonly subscriptionTemplateService: SubscriptionTemplateService,
+        private readonly xrayModes?: XrayModeService,
+    ) {}
 
     public async generateConfig(params: IGenerateConfigParams): Promise<string> {
         const {
@@ -228,9 +232,9 @@ export class XrayJsonGeneratorService {
             const configs: string[] = [];
             let outputBytes = 2;
             const append = (config: XrayJsonConfig) => {
-                const serialized = JSON.stringify(
-                    { ...ensureResponseTimeProbes(materializePriority(config)), xray: mode },
-                );
+                const rendered = ensureResponseTimeProbes(materializePriority(config));
+                assertRenderedXrayRoutes(rendered);
+                const serialized = JSON.stringify({ ...rendered, xray: mode });
                 outputBytes += Buffer.byteLength(serialized) + (configs.length ? 1 : 0);
                 assertSubscriptionSize(outputBytes);
                 configs.push(serialized);

@@ -7,7 +7,7 @@ assert.equal(new URL(process.env.COMPATIBILITY_TEST_DATABASE_URL).pathname, '/re
 process.env.DATABASE_URL=process.env.COMPATIBILITY_TEST_DATABASE_URL;
 process.env.DIRECT_URL=process.env.DATABASE_URL;
 process.env.APP_SECRET='compatibility-test-only-original-secret';
-const {PrismaClient}=require(path.join(backend,'node_modules/@prisma/client'));
+const {PrismaClient}=require('./prisma-test-client.cjs');
 const load=require(path.join(backend,'tests/load-typescript.cjs'));
 const crypto=load(path.join(backend,'src/common/utils/xera-crypto.ts'));
 const {restoreStoredUserCredentials,restoreUserCredentials}=load(path.join(backend,'src/common/utils/restore-user-credentials.ts'),{'./xera-crypto':crypto});

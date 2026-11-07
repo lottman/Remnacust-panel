@@ -54,7 +54,7 @@ CLI 详细日志位于 /opt/remnacust/logs/installer-panel.log、installer-node.
 
 ### 受支持的系统与 PostgreSQL
 
-安装器 1.2.140 支持 Ubuntu 22.04/24.04/26.04 LTS 与 Debian 12/13，架构为 amd64/arm64。Docker 使用当前发行版的官方仓库。不会自动接受 Ubuntu 中间发行版或衍生系统。amd64 矩阵检查真实用户空间、Bash、Python、OpenSSL 与单元流程，不能代替内核启动、systemd、防火墙或 arm64 测试。
+安装器 1.2.141 支持 Ubuntu 22.04/24.04/26.04 LTS 与 Debian 12/13，架构为 amd64/arm64。Docker 使用当前发行版的官方仓库。不会自动接受 Ubuntu 中间发行版或衍生系统。amd64 矩阵检查真实用户空间、Bash、Python、OpenSSL 与单元流程，不能代替内核启动、systemd、防火墙或 arm64 测试。
 
 已使用非超级用户数据库所有者，在 PostgreSQL 14.24/15.19/16.15/17.11/18.6 上检查全部 195 项迁移以及配额、到期和诊断场景。新安装请选择仍受支持并安装当前修复的主版本。PostgreSQL 14 将于 2026 年 11 月 12 日结束支持；版本 13 未测试且已结束支持。跨主版本升级需要单独使用 pg_upgrade 或导出/恢复。不要让新主版本镜像直接打开旧数据卷，请先在副本上验证迁移。
 

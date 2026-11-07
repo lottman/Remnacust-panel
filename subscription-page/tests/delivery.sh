@@ -25,7 +25,14 @@ compose up -d >/dev/null
 step 'Test panel ready' wait_ready
 app_id=$(compose ps --quiet remnawave)
 docker exec -i "$app_id" node - > "$test_root/subpage.env" <<'JS'
-const {PrismaClient}=require('@prisma/client'),jwt=require('jsonwebtoken');const p=new PrismaClient();
+const {PrismaClient,Prisma}=require('@prisma/client'),jwt=require('jsonwebtoken');
+const options = Number(Prisma?.prismaVersion?.client?.split('.')[0] ?? 0) >= 7 ? {
+    adapter: new (require('@prisma/adapter-pg').PrismaPg)({
+        connectionString: process.env.DATABASE_URL, max: 2,
+        connectionTimeoutMillis: 10_000, idleTimeoutMillis: 30_000,
+    }, { schema: new URL(process.env.DATABASE_URL).searchParams.get('schema') ?? 'public' }),
+} : undefined;
+const p=new PrismaClient(options);
 (async()=>{
 const raw={tag:'delivery-test',port:443,listen:'0.0.0.0',protocol:'vless',settings:{clients:[],decryption:'none'},streamSettings:{network:'tcp',security:'none'}};
 const profile=await p.configProfiles.create({data:{name:'delivery-test',config:{inbounds:[raw],outbounds:[{protocol:'freedom',tag:'direct'}]}}});

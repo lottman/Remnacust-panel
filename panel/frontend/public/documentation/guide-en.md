@@ -54,7 +54,7 @@ After the build changes, open administrator tabs check the panel version and rel
 
 ### Supported operating systems and PostgreSQL
 
-Installer 1.2.140 accepts Ubuntu 22.04/24.04/26.04 LTS and Debian 12/13, amd64/arm64. Docker uses the official repository for the installed distribution. Interim Ubuntu releases and derivative distributions are not accepted automatically. The amd64 matrix checks real userspace, Bash, Python, OpenSSL and unit workflows; it does not replace kernel boot, systemd, firewall or arm64 tests.
+Installer 1.2.141 accepts Ubuntu 22.04/24.04/26.04 LTS and Debian 12/13, amd64/arm64. Docker uses the official repository for the installed distribution. Interim Ubuntu releases and derivative distributions are not accepted automatically. The amd64 matrix checks real userspace, Bash, Python, OpenSSL and unit workflows; it does not replace kernel boot, systemd, firewall or arm64 tests.
 
 All 195 migrations, quota, expiry and diagnostics scenarios were checked on PostgreSQL 14.24/15.19/16.15/17.11/18.6 as a non-superuser database owner. For new installations, choose a supported major version with current fixes. PostgreSQL 14 support ends on November 12, 2026; PostgreSQL 13 was not tested and is end-of-life. Major upgrades require a separate pg_upgrade or dump/restore. Do not open an old data volume with a new major image; verify the migration on a copy first.
 

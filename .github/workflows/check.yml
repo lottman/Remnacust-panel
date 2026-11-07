@@ -19,6 +19,7 @@ jobs:
           cache-dependency-path: panel/frontend/package-lock.json
       - run: npm ci
       - run: npm ci --prefix ../backend
+      - run: npm run migrate:generate --prefix ../backend
       - run: npm run typecheck
       - run: node --test tests/*.test.cjs tests/*.test.mjs scripts/*.test.cjs
       - run: npm run i18n:check

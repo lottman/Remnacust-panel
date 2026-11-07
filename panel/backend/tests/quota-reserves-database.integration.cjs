@@ -13,7 +13,10 @@ const parsed = new URL(url);
 assert.equal(parsed.hostname, '127.0.0.1');
 assert.equal(parsed.port, '55439');
 assert.equal(parsed.pathname, '/remnacust_quota_reserves_test');
-const prisma = new PrismaClient({ datasourceUrl: url });
+const sessionTimezone = process.env.QUOTA_RESERVES_TEST_TIMEZONE ?? 'UTC';
+assert.ok(['UTC','Asia/Tokyo','America/New_York','Europe/Moscow','Asia/Kathmandu'].includes(sessionTimezone));
+parsed.searchParams.set('options','-c TimeZone='+sessionTimezone);
+const prisma = new PrismaClient({ datasourceUrl: parsed.href });
 const H = '11111111-1111-4111-8111-111111111111';
 const N1 = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
 const N2 = 'ffffffff-ffff-4fff-8fff-ffffffffffff';
@@ -88,14 +91,16 @@ const allocate = (db = prisma, roster = [N1, N2], debt = 100n) => db.$queryRaw`
         const [row] = await prisma.$queryRaw`SELECT xera_quota_window_end('2026-01-31 00:00:00+00',1,'MONTHS',${at}::timestamptz) AS boundary`;
         assert.equal(row.boundary.toISOString(), expected);
     }
-    await prisma.$executeRawUnsafe("SET TIME ZONE 'Asia/Tokyo'");
-    const [day] = await prisma.$queryRaw`SELECT xera_quota_window_end('2026-01-01 03:00:00+00',3,'DAYS','2026-01-04 03:00:00+00') AS boundary`;
+    const [day] = await prisma.$transaction(async tx=>{
+        await tx.$executeRawUnsafe("SET LOCAL TIME ZONE 'Asia/Tokyo'");
+        return tx.$queryRaw`SELECT xera_quota_window_end('2026-01-01 03:00:00+00',3,'DAYS','2026-01-04 03:00:00+00') AS boundary`;
+    });
     assert.equal(day.boundary.toISOString(), '2026-01-07T03:00:00.000Z');
     await assert.rejects(allocate(prisma, [], 0n), /roster/);
     await assert.rejects(allocate(prisma, [N2], -1n), /boundary/);
     console.log('PASS UTC day/month boundaries, month-end clamping and invalid boundaries');
     await prisma.$disconnect();
-    const restarted = new PrismaClient({ datasourceUrl: url });
+    const restarted = new PrismaClient({ datasourceUrl: parsed.href });
     try { assert.deepEqual(await allocate(restarted), first); }
     finally { await restarted.$disconnect(); }
     console.log('PASS reservations survive a panel database-client restart');
@@ -104,7 +109,7 @@ const allocate = (db = prisma, roster = [N1, N2], debt = 100n) => db.$queryRaw`
         const value={id:grant.id,node:N1,instance:INSTANCES[N1],group:'host:'+H,user:901n,
             ceiling:grant.ceiling_bytes,expiry:grant.expires_at,used:123n,revision:902n,...overrides};
         return prisma.$queryRaw`SELECT xera_settle_quota_reserve(${value.id}::uuid,${value.node}::uuid,${value.instance}::uuid,
-            ${value.group},${value.user}::bigint,${value.ceiling}::bigint,${value.expiry}::timestamptz,${value.used}::bigint,${value.revision}::bigint) AS unused`;
+            ${value.group},${value.user}::bigint,${value.ceiling}::bigint,${value.expiry.toISOString()}::timestamptz,${value.used}::bigint,${value.revision}::bigint) AS unused`;
     };
     for(const overrides of [
         {node:N2},{instance:INSTANCES[N2]},{group:'tag:alpha'},{user:902n},
@@ -317,7 +322,7 @@ const allocate = (db = prisma, roster = [N1, N2], debt = 100n) => db.$queryRaw`
         'A later staged policy for the same epoch must not make an already applied reset flicker back to pending');
     console.log('PASS limits UI progress distinguishes a live applied reset from an offline pending node');
     const [calendar]=await prisma.$queryRaw`SELECT date_trunc('month',now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC' AS anchor`;
-    await prisma.$executeRaw`UPDATE hosts SET traffic_limit_reset_anchor_at=${calendar.anchor},
+    await prisma.$executeRaw`UPDATE hosts SET traffic_limit_reset_anchor_at=${calendar.anchor.toISOString()}::timestamptz,
         traffic_limit_reset_value=1,traffic_limit_reset_unit='MONTHS' WHERE uuid=${H}::uuid`;
     const forSecondUser=()=>prisma.$queryRaw`SELECT * FROM xera_allocate_quota_reserves('HOST',${H},902::bigint,
         ARRAY[${N2}::uuid],0::bigint,${JSON.stringify({[N2]:INSTANCES[N2]})}::jsonb)`;

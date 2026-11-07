@@ -196,5 +196,35 @@
         "after": "ignores.push(ANY_EXTN);"
       }
     ]
+  },
+  {
+    "path": "node_modules/@prisma/adapter-pg/dist/index.js",
+    "beforeSha256": "d57ac2ea38047c648b0f3b4b8012031b5adaa9f919dbb21419a4153f7e02d3c4",
+    "afterSha256": "dbede9d37c75fde8a074f43fe280efa71f19642ee93101dca970a54164e7bedf",
+    "changes": [
+      {
+        "before": "function normalize_timestamptz(time) {\n  return time.replace(\" \", \"T\").replace(/[+-]\\d{2}(:\\d{2})?$/, \"+00:00\");\n}",
+        "after": "function normalize_timestamptz(time) {\n  return getTypeParser(ScalarColumnType.TIMESTAMPTZ)(time).toISOString();\n}"
+      },
+      {
+        "before": "function formatDateTime(date) {\n  const pad = (n, z = 2) => String(n).padStart(z, \"0\");\n  const ms = date.getUTCMilliseconds();\n  return pad(date.getUTCFullYear(), 4) + \"-\" + pad(date.getUTCMonth() + 1) + \"-\" + pad(date.getUTCDate()) + \" \" + pad(date.getUTCHours()) + \":\" + pad(date.getUTCMinutes()) + \":\" + pad(date.getUTCSeconds()) + (ms ? \".\" + String(ms).padStart(3, \"0\") : \"\");\n}",
+        "after": "function formatDateTime(date) {\n  const pad = (n, z = 2) => String(n).padStart(z, \"0\");\n  const ms = date.getUTCMilliseconds();\n  return pad(date.getUTCFullYear(), 4) + \"-\" + pad(date.getUTCMonth() + 1) + \"-\" + pad(date.getUTCDate()) + \" \" + pad(date.getUTCHours()) + \":\" + pad(date.getUTCMinutes()) + \":\" + pad(date.getUTCSeconds()) + (ms ? \".\" + String(ms).padStart(3, \"0\") : \"\") + \"+00:00\";\n}"
+      }
+    ]
+  },
+  {
+    "path": "node_modules/@prisma/adapter-pg/dist/index.mjs",
+    "beforeSha256": "e6879b3429f9efade5696321da768476fd4710f2aff7de95c01cca15d6a8d1d1",
+    "afterSha256": "0146a77f5faaddda32a83af888301b154a0d0e9360a571f4a3251b21f70eeb07",
+    "changes": [
+      {
+        "before": "function normalize_timestamptz(time) {\n  return time.replace(\" \", \"T\").replace(/[+-]\\d{2}(:\\d{2})?$/, \"+00:00\");\n}",
+        "after": "function normalize_timestamptz(time) {\n  return getTypeParser(ScalarColumnType.TIMESTAMPTZ)(time).toISOString();\n}"
+      },
+      {
+        "before": "function formatDateTime(date) {\n  const pad = (n, z = 2) => String(n).padStart(z, \"0\");\n  const ms = date.getUTCMilliseconds();\n  return pad(date.getUTCFullYear(), 4) + \"-\" + pad(date.getUTCMonth() + 1) + \"-\" + pad(date.getUTCDate()) + \" \" + pad(date.getUTCHours()) + \":\" + pad(date.getUTCMinutes()) + \":\" + pad(date.getUTCSeconds()) + (ms ? \".\" + String(ms).padStart(3, \"0\") : \"\");\n}",
+        "after": "function formatDateTime(date) {\n  const pad = (n, z = 2) => String(n).padStart(z, \"0\");\n  const ms = date.getUTCMilliseconds();\n  return pad(date.getUTCFullYear(), 4) + \"-\" + pad(date.getUTCMonth() + 1) + \"-\" + pad(date.getUTCDate()) + \" \" + pad(date.getUTCHours()) + \":\" + pad(date.getUTCMinutes()) + \":\" + pad(date.getUTCSeconds()) + (ms ? \".\" + String(ms).padStart(3, \"0\") : \"\") + \"+00:00\";\n}"
+      }
+    ]
   }
 ]

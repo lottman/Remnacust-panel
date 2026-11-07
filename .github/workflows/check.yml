@@ -171,6 +171,7 @@ jobs:
           (async()=>{try{await database.$executeRawUnsafe('CREATE DATABASE remnacust_quota_reserves_test');}finally{await database.$disconnect();}})().catch(error=>{console.error(error);process.exitCode=1;});
           NODE
           npm run migrate:deploy
+          node tests/prisma-pg-timezone.database.integration.cjs
           node tests/quota-reserves-database.integration.cjs
         env:
           DATABASE_URL: postgresql://postgres@127.0.0.1:55439/remnacust_quota_reserves_test

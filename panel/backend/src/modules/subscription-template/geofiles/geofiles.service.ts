@@ -1,8 +1,11 @@
+import type { GeofileCopyData } from './geofile-multipart';
+
 import { load } from 'js-yaml';
 import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { constants } from 'node:fs';
 import { mkdir, open, lstat, rm, writeFile, rename } from 'node:fs/promises';
 import { join } from 'node:path';
+import { setImmediate } from 'node:timers/promises';
 
 import {
     BadRequestException,
@@ -24,8 +27,25 @@ import { readBundleSelection, storeBundleSelection } from './bundle-selection';
 import { compileDat, datCategories, DatRules } from './compile-dat';
 import { downloadGeofile, MAX_GEOFILE_BYTES } from './download-geofile';
 import { datClientFile } from './geofile-delivery';
+import {
+    editGeofileAsync,
+    GeofileEdit,
+    geofileContentAsync,
+    validateGeofileAsync,
+    datCategoriesAsync,
+    compileDatAsync,
+    validateNativeDatAsync,
+    parseGeofileSelections,
+    validateGeofileSelections,
+} from './geofile-editor';
 import { materializeGeofiles } from './materialize-geofiles';
-import { GeofileRefreshState, GeofileRefreshStore, readGeofileRefresh } from './refresh-geofile';
+import { GeofileOrigin, geofileProvenance } from './provenance';
+import {
+    GeofileRefreshState,
+    GeofileRefreshStore,
+    readGeofileRefresh,
+    publishGeofileCurrent,
+} from './refresh-geofile';
 import {
     GEOFILE_EXTENSIONS,
     GEOFILE_KINDS,
@@ -48,6 +68,11 @@ export interface StoredGeofile {
     createdAt: string;
     url: string;
     categories?: string[];
+    origin?: GeofileOrigin;
+    editPolicy?: 'copy' | 'edit';
+    original?: { sha256: string; size: number; filename: string; url: string };
+    editable?: boolean;
+    replaceable?: boolean;
     refresh?: Omit<GeofileRefreshState, 'lease' | 'previousSha256'>;
 }
 
@@ -84,55 +109,227 @@ export class GeofilesService {
             file: (id) => this.fileById(id),
             list: () => this.list(),
             lock: (operation) => this.withReferenceLock(operation),
-            validate: async (file, data) => {
-                if (!['geoip', 'geosite'].includes(file.kind)) return;
-                const selections = new Set<string>();
-                let nativeXray = false;
-                for (const template of await this.repository.getAllTemplates(true)) {
-                    const config =
-                        template.templateJson ??
-                        (template.templateYaml
-                            ? load(template.templateYaml, {
-                                  maxAliases: 100,
-                                  maxTotalMergeKeys: 10000,
-                              })
-                            : undefined);
-                    for (const reference of (config as any)?.remnacust?.geofiles ?? [])
-                        if (reference.id === file.id) {
-                            if (
-                                template.templateType === 'XRAY_JSON' &&
-                                ['geoip', 'geosite'].includes(file.kind)
-                            )
-                                nativeXray = true;
-                            selections.add(
-                                JSON.stringify({
-                                    categories: reference.categories ?? [],
-                                    format: template.templateType,
-                                }),
-                            );
-                        }
-                }
-                for (const selection of selections) {
-                    const { categories, format } = JSON.parse(selection);
-                    let rules: DatRules;
-                    try {
-                        rules = compileDat(data, file.kind as 'geoip' | 'geosite', categories);
-                    } catch (error) {
-                        if (
-                            format !== 'XRAY_JSON' ||
-                            !(error instanceof Error) ||
-                            error.message !== 'geofile-inline-limit'
-                        )
-                            throw error;
-                        compileDat(data, file.kind as 'geoip' | 'geosite', categories, true);
-                        continue;
-                    }
-                    if (['SINGBOX', 'MIHOMO', 'CLASH', 'STASH'].includes(format))
-                        datClientFile(rules, format);
-                }
-                if (nativeXray) bundleDat([{ id: file.id, data }]);
-            },
+            validate: (file, data) => this.validateReplacement(file, data),
+            revision: () => this.referenceRevision(),
+            protect: (file) => this.persistProvenance(file),
         });
+    }
+
+    private async persistProvenance(file: StoredGeofile): Promise<void> {
+        if (file.origin !== 'preset') return;
+        const directory = this.directory(file.id);
+        const handle = await open(
+            join(directory, 'meta.json'),
+            constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0),
+        );
+        let original: StoredGeofile;
+        try {
+            original = JSON.parse(await handle.readFile('utf8')) as StoredGeofile;
+        } finally {
+            await handle.close();
+        }
+        if (original.origin === 'preset') return;
+        const temporary = join(directory, `meta-${randomBytes(16).toString('hex')}.tmp`);
+        try {
+            await writeFile(
+                temporary,
+                JSON.stringify({ ...original, ...geofileProvenance('preset') }),
+                { flag: 'wx', mode: 0o600 },
+            );
+            await rename(temporary, join(directory, 'meta.json'));
+        } finally {
+            await rm(temporary, { force: true });
+        }
+    }
+
+    private async referenceRevision(): Promise<string> {
+        return this.templatesRevision(await this.repository.getAllTemplates(true));
+    }
+
+    private templatesRevision(
+        templates: Awaited<ReturnType<SubscriptionTemplateRepository['getAllTemplates']>>,
+    ): string {
+        return createHash('sha256')
+            .update(
+                JSON.stringify(
+                    templates
+                        .map((template) =>
+                            JSON.stringify({
+                                uuid: template.uuid,
+                                templateType: template.templateType,
+                                templateJson: template.templateJson,
+                                templateYaml: template.templateYaml,
+                            }),
+                        )
+                        .sort(),
+                ),
+            )
+            .digest('hex');
+    }
+
+    private async validateReplacement(file: StoredGeofile, data: Buffer): Promise<string> {
+        const templates = await this.repository.getAllTemplates(true);
+        const revision = this.templatesRevision(templates);
+        if (!['geoip', 'geosite'].includes(file.kind)) return revision;
+        const selections = new Set<string>();
+        const nativeCategories = new Set<string>();
+        let nativeXray = false;
+        for (const template of templates) {
+            const config =
+                template.templateJson ??
+                (template.templateYaml
+                    ? load(template.templateYaml, {
+                          maxAliases: 100,
+                          maxTotalMergeKeys: 10000,
+                      })
+                    : undefined);
+            for (const reference of (config as any)?.remnacust?.geofiles ?? [])
+                if (reference.id === file.id) {
+                    if (
+                        template.templateType === 'XRAY_JSON' &&
+                        ['geoip', 'geosite'].includes(file.kind)
+                    )
+                        nativeXray = true;
+                    selections.add(
+                        JSON.stringify({
+                            categories: reference.categories ?? [],
+                            format: template.templateType,
+                        }),
+                    );
+                }
+            const native = await this.nativeReferences(config, file);
+            for (const selection of native.selections) selections.add(JSON.stringify(selection));
+            for (const category of native.categories) nativeCategories.add(category);
+            nativeXray ||= native.native;
+        }
+        if (nativeCategories.size) {
+            const available = new Set(await datCategoriesAsync(data));
+            if ([...nativeCategories].some((category) => !available.has(category)))
+                throw Error('geofile-category-empty');
+        }
+        for (const selection of selections) {
+            const { categories, format } = JSON.parse(selection);
+            let rules: DatRules;
+            try {
+                rules = await compileDatAsync(data, file.kind as 'geoip' | 'geosite', categories);
+            } catch (error) {
+                if (
+                    format !== 'XRAY_JSON' ||
+                    !(error instanceof Error) ||
+                    error.message !== 'geofile-inline-limit'
+                )
+                    throw error;
+                await compileDatAsync(data, file.kind as 'geoip' | 'geosite', categories, true);
+                continue;
+            }
+            if (['SINGBOX', 'MIHOMO', 'CLASH', 'STASH'].includes(format))
+                datClientFile(rules, format);
+        }
+        if (nativeXray) await validateNativeDatAsync(data, file.id);
+        return revision;
+    }
+
+    private async nativeReferences(config: unknown, file: StoredGeofile) {
+        const selections: Array<{ format: string; categories: string[] }> = [];
+        const categories = new Set<string>();
+        const stack: Array<{ value: unknown; depth: number }> = [{ value: config, depth: 0 }];
+        const visited = new WeakSet<object>();
+        let native = false,
+            work = 0;
+        while (stack.length) {
+            const { value, depth } = stack.pop()!;
+            if (++work % 1000 === 0) await setImmediate();
+            if (work > 200_000 || depth > 32) throw Error('geofile-reference-complexity');
+            if (value && typeof value === 'object') {
+                if (visited.has(value)) continue;
+                visited.add(value);
+                for (const child of Object.values(value)) {
+                    if (work + stack.length >= 200_000) throw Error('geofile-reference-complexity');
+                    stack.push({ value: child, depth: depth + 1 });
+                }
+                continue;
+            }
+            if (typeof value !== 'string' || value.length > 8192 || !/^https?:\/\//i.test(value))
+                continue;
+            let url: URL;
+            try {
+                url = new URL(value);
+            } catch {
+                continue;
+            }
+            const derived = /\/geofiles\/([a-f0-9]{34})\/(rules-[A-Za-z0-9_.-]+)$/.exec(
+                url.pathname,
+            );
+            if (derived && derived[1] === file.id) {
+                const match = /^rules-([A-Za-z0-9_-]{1,2732})\.([a-f0-9]{64})\.(json|yaml)$/.exec(
+                    derived[2],
+                );
+                if (
+                    !match ||
+                    !timingSafeEqual(
+                        Buffer.from(match[2], 'hex'),
+                        Buffer.from(this.derivedSignature(file.id, match[1]), 'hex'),
+                    )
+                )
+                    continue;
+                const payload = Buffer.from(match[1], 'base64url');
+                if (payload.length > 2048 || payload.toString('base64url') !== match[1])
+                    throw Error('geofile-reference');
+                const selection = parseGeofileSelections([JSON.parse(payload.toString('utf8'))])[0];
+                if (
+                    selection.format === 'XRAY_JSON' ||
+                    (selection.format === 'SINGBOX' ? 'json' : 'yaml') !== match[3]
+                )
+                    throw Error('geofile-reference');
+                selections.push(selection);
+            }
+            const bundle =
+                /\/geofiles\/([a-f0-9]{34})\/(?:bundles\/([A-Za-z0-9_-]{1,2732})\/)?bundle-([a-f0-9]{64})\.dat(?:\.sha256)?$/.exec(
+                    url.pathname,
+                );
+            if (!bundle) continue;
+            const encoded = bundle[2] ?? url.searchParams.get('selection');
+            if (
+                typeof encoded !== 'string' ||
+                !/^[A-Za-z0-9_-]{1,2732}$/.test(encoded) ||
+                !timingSafeEqual(
+                    Buffer.from(bundle[3], 'hex'),
+                    Buffer.from(this.bundleSignature(bundle[1], encoded), 'hex'),
+                )
+            )
+                continue;
+            let manifest: {
+                kind: string;
+                ids: string[];
+                namespace?: number;
+                categories?: Record<string, string[]>;
+            };
+            if (/^m-[a-f0-9]{64}$/.test(encoded))
+                manifest = await readBundleSelection(this.directory(bundle[1]), encoded);
+            else {
+                const payload = Buffer.from(encoded, 'base64url');
+                if (payload.length > 2048 || payload.toString('base64url') !== encoded)
+                    throw Error('geofile-reference');
+                manifest = JSON.parse(payload.toString('utf8'));
+            }
+            if (
+                !Array.isArray(manifest.ids) ||
+                manifest.ids[0] !== bundle[1] ||
+                manifest.ids.length > 32 ||
+                manifest.ids.some((id) => typeof id !== 'string' || !ID.test(id)) ||
+                !['geoip', 'geosite'].includes(manifest.kind) ||
+                ![1, 2].includes(manifest.namespace ?? 1)
+            )
+                throw Error('geofile-reference');
+            if (!manifest.ids.includes(file.id)) continue;
+            if (manifest.kind !== file.kind) throw Error('geofile-reference');
+            const selected =
+                manifest.categories?.[file.id] ??
+                (await datCategoriesAsync(await this.readActive(this.activeFile(file))));
+            for (const category of selected) categories.add(category);
+            native = true;
+        }
+        return { selections, categories, native };
     }
 
     private directory(id: string): string {
@@ -146,6 +343,9 @@ export class GeofilesService {
         const directoryInfo = await lstat(directory);
         if (!directoryInfo.isDirectory() || directoryInfo.isSymbolicLink())
             throw new Error('Invalid geofile directory');
+        const metaInfo = await lstat(join(directory, 'meta.json'));
+        if (!metaInfo.isFile() || metaInfo.isSymbolicLink())
+            throw Error('Invalid geofile metadata');
         const meta = await open(
             join(directory, 'meta.json'),
             constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0),
@@ -174,6 +374,7 @@ export class GeofilesService {
         }
         return {
             ...item,
+            ...geofileProvenance(item.origin, refresh?.sourceUrl),
             url: this.base + item.id + '/' + item.filename,
             ...(refresh
                 ? { refresh, categories: refresh.current?.categories ?? item.categories }
@@ -191,6 +392,18 @@ export class GeofilesService {
         const current = file.refresh?.current;
         return {
             ...file,
+            original: file.original ?? {
+                sha256: file.sha256,
+                size: file.size,
+                filename: file.filename,
+                url: file.url,
+            },
+            editable:
+                file.editPolicy !== 'copy' &&
+                file.kind !== 'singbox-srs' &&
+                (['geoip', 'geosite'].includes(file.kind) ||
+                    (current?.size ?? file.size) <= 8 * 1024 * 1024),
+            replaceable: file.editPolicy !== 'copy',
             ...(current
                 ? {
                       sha256: current.sha256,
@@ -203,13 +416,13 @@ export class GeofilesService {
     }
 
     private async readActive(file: StoredGeofile): Promise<Buffer> {
-        const handle = await open(
-            join(
-                this.directory(file.id),
-                file.refresh?.current ? `current-${file.sha256}` : 'data',
-            ),
-            constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0),
+        const path = join(
+            this.directory(file.id),
+            file.refresh?.current ? `current-${file.sha256}` : 'data',
         );
+        const before = await lstat(path);
+        if (!before.isFile() || before.isSymbolicLink()) throw Error('geofile-integrity');
+        const handle = await open(path, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0));
         try {
             const info = await handle.stat();
             if (!info.isFile() || info.size !== file.size || info.size > MAX_GEOFILE_BYTES)
@@ -463,7 +676,7 @@ export class GeofilesService {
     ) {
         try {
             await this.refreshStore.configure(id, options);
-            return await this.fileById(id);
+            return this.activeFile(await this.fileById(id));
         } catch {
             throw new BadRequestException('geofile-refresh-settings');
         }
@@ -475,12 +688,283 @@ export class GeofilesService {
         return this.refreshStore.refreshDue();
     }
 
+    private async editorWork<T>(operation: () => Promise<T>): Promise<T> {
+        if (this.active >= 2) throw new ServiceUnavailableException('geofile-busy');
+        this.active++;
+        try {
+            return await operation();
+        } catch (error) {
+            if ((error as NodeJS.ErrnoException).code === 'ENOENT')
+                throw new NotFoundException('Geofile not found');
+            throw error;
+        } finally {
+            this.active--;
+        }
+    }
+
+    private expectedSha(value: unknown): string {
+        if (typeof value !== 'string' || !/^[a-f0-9]{64}$/.test(value))
+            throw new BadRequestException('geofile-sha256-required');
+        return value;
+    }
+
+    private assertSha(file: StoredGeofile, sha256: string) {
+        if (file.sha256 !== sha256) throw new ConflictException('geofile-stale');
+    }
+
+    private copyName(value: unknown): string {
+        if (
+            typeof value !== 'string' ||
+            !value.trim() ||
+            value.length > 128 ||
+            [...value].some((c) => c.charCodeAt(0) < 32 || c.charCodeAt(0) === 127)
+        )
+            throw new BadRequestException('geofile-name-or-kind');
+        return value.trim();
+    }
+
+    public async content(
+        id: string,
+        query: { category?: unknown; page?: unknown; limit?: unknown; search?: unknown },
+    ) {
+        return this.editorWork(async () => {
+            const file = this.activeFile(await this.fileById(id));
+            const data = await this.readActive(file);
+            try {
+                return {
+                    file,
+                    ...(await geofileContentAsync(data, file.kind, {
+                        ...query,
+                        category: query.category ?? file.categories?.[0],
+                    })),
+                };
+            } catch {
+                throw new BadRequestException('geofile-content-query');
+            }
+        });
+    }
+
+    public async editContent(id: string, patch: GeofileEdit, copy = false): Promise<StoredGeofile> {
+        return this.editorWork(async () => {
+            if (
+                !patch ||
+                typeof patch !== 'object' ||
+                Array.isArray(patch) ||
+                (!copy && (patch.name !== undefined || patch.selections !== undefined))
+            )
+                throw new BadRequestException('geofile-edit');
+            const sha256 = this.expectedSha(patch.sha256);
+            const file = this.activeFile(await this.fileById(id));
+            this.assertSha(file, sha256);
+            if (!copy && file.editPolicy === 'copy')
+                throw new ConflictException('geofile-copy-required');
+            if (!copy && file.kind === 'singbox-srs')
+                throw new BadRequestException('geofile-binary-replacement-required');
+            const name = copy ? this.copyName(patch.name) : undefined;
+            let selections;
+            try {
+                selections = parseGeofileSelections(patch.selections);
+            } catch {
+                throw new BadRequestException('geofile-copy-selections');
+            }
+            let data: Buffer;
+            try {
+                data = await editGeofileAsync(await this.readActive(file), file.kind, patch);
+            } catch {
+                throw new BadRequestException('geofile-edit-invalid');
+            }
+            if (copy) {
+                try {
+                    await validateGeofileSelections(data, file.kind, selections, file.id);
+                } catch {
+                    throw new BadRequestException('geofile-copy-selections');
+                }
+            }
+            return this.commitEdited(file, data, sha256, name);
+        });
+    }
+
+    public async replaceData(
+        id: string,
+        sha: unknown,
+        read: () => Promise<Buffer>,
+        name?: unknown,
+        selected?: unknown,
+    ): Promise<StoredGeofile> {
+        return this.editorWork(async () => {
+            const sha256 = this.expectedSha(sha);
+            const file = this.activeFile(await this.fileById(id));
+            this.assertSha(file, sha256);
+            const copyName = name === undefined ? undefined : this.copyName(name);
+            let selections;
+            try {
+                if (copyName === undefined && selected !== undefined)
+                    throw Error('geofile-copy-selections');
+                selections = parseGeofileSelections(selected);
+            } catch {
+                throw new BadRequestException('geofile-copy-selections');
+            }
+            if (copyName === undefined && file.editPolicy === 'copy')
+                throw new ConflictException('geofile-copy-required');
+            let data: Buffer;
+            try {
+                data = await read();
+                await validateGeofileAsync(data, file.kind);
+            } catch {
+                throw new BadRequestException('geofile-invalid-or-unreachable');
+            }
+            if (copyName !== undefined) {
+                try {
+                    await validateGeofileSelections(data, file.kind, selections, file.id);
+                } catch {
+                    throw new BadRequestException('geofile-copy-selections');
+                }
+            }
+            return this.commitEdited(file, data, sha256, copyName);
+        });
+    }
+
+    public async copyData(
+        id: string,
+        sha: unknown,
+        read: () => Promise<GeofileCopyData>,
+    ): Promise<StoredGeofile> {
+        return this.editorWork(async () => {
+            const expected = this.expectedSha(sha);
+            const file = this.activeFile(await this.fileById(id));
+            this.assertSha(file, expected);
+            let input: GeofileCopyData;
+            try {
+                input = await read();
+            } catch {
+                throw new BadRequestException('geofile-multipart');
+            }
+            const name = this.copyName(input.name);
+            try {
+                await validateGeofileAsync(input.data, file.kind);
+                await validateGeofileSelections(
+                    input.data,
+                    file.kind,
+                    parseGeofileSelections(input.selections),
+                    file.id,
+                );
+            } catch {
+                throw new BadRequestException('geofile-copy-selections');
+            }
+            return this.commitEdited(file, input.data, expected, name);
+        });
+    }
+
+    private async commitEdited(
+        file: StoredGeofile,
+        data: Buffer,
+        expected: string,
+        name?: string,
+    ): Promise<StoredGeofile> {
+        let revision: string | undefined;
+        try {
+            if (name === undefined) revision = await this.validateReplacement(file, data);
+        } catch {
+            throw new BadRequestException('geofile-referenced-content-invalid');
+        }
+        const sha256 = createHash('sha256').update(data).digest('hex');
+        const categories = ['geoip', 'geosite'].includes(file.kind)
+            ? (await datCategoriesAsync(data)).slice(0, 1000)
+            : undefined;
+        await mkdir(this.root, { recursive: true, mode: 0o700 });
+        const rootInfo = await lstat(this.root);
+        if (!rootInfo.isDirectory() || rootInfo.isSymbolicLink())
+            throw new BadRequestException('geofile-storage');
+        const staging = join(this.root, `editor-${randomBytes(16).toString('hex')}`);
+        await mkdir(staging, { mode: 0o700 });
+        try {
+            await writeFile(join(staging, 'data'), data, { flag: 'wx', mode: 0o600 });
+            return await this.withReferenceLock(async () => {
+                const source = this.activeFile(await this.fileById(file.id));
+                this.assertSha(source, expected);
+                if (name !== undefined) {
+                    const folded = (value: string) => value.trim().normalize('NFKC').toLowerCase();
+                    if (
+                        folded(name) === folded(source.name) ||
+                        (await this.list()).some((item) => folded(item.name) === folded(name))
+                    )
+                        throw new ConflictException('geofile-name-exists');
+                    for (let slot = 0; slot < MAX_FILES; slot++) {
+                        const directory = join(this.root, String(slot).padStart(2, '0'));
+                        try {
+                            await lstat(directory);
+                            continue;
+                        } catch (error) {
+                            if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+                        }
+                        const id =
+                            slot.toString(16).padStart(2, '0') + randomBytes(16).toString('hex');
+                        const item: StoredGeofile = {
+                            id,
+                            name,
+                            kind: file.kind,
+                            sha256,
+                            size: data.length,
+                            filename: `${sha256}.${GEOFILE_EXTENSIONS[file.kind]}`,
+                            createdAt: new Date().toISOString(),
+                            url: '',
+                            ...geofileProvenance('copy'),
+                            ...(categories ? { categories } : {}),
+                        };
+                        await writeFile(join(staging, 'meta.json'), JSON.stringify(item), {
+                            flag: 'wx',
+                            mode: 0o600,
+                        });
+                        await rename(staging, directory);
+                        return this.activeFile(await this.fileById(id));
+                    }
+                    throw new ConflictException('geofile-storage-full');
+                }
+                if (source.editPolicy === 'copy')
+                    throw new ConflictException('geofile-copy-required');
+                if (revision !== (await this.referenceRevision()))
+                    throw new ConflictException('geofile-references-changed');
+                const directory = this.directory(file.id);
+                const state: GeofileRefreshState = (await readGeofileRefresh(directory)) ?? {
+                    enabled: false,
+                    intervalSeconds: 86400,
+                };
+                const previous = state.current?.sha256;
+                const obsolete = state.previousSha256;
+                const previousState = structuredClone(state);
+                state.current = {
+                    sha256,
+                    size: data.length,
+                    updatedAt: new Date().toISOString(),
+                    ...(categories ? { categories } : {}),
+                };
+                state.enabled = false;
+                state.previousSha256 = previous;
+                delete state.lease;
+                delete state.lastError;
+                delete state.nextRefreshAt;
+                await publishGeofileCurrent(directory, join(staging, 'data'), state, previousState);
+                if (obsolete && obsolete !== sha256 && obsolete !== previous)
+                    await rm(join(directory, `current-${obsolete}`), { force: true }).catch(
+                        () => undefined,
+                    );
+                return this.activeFile(await this.fileById(file.id));
+            });
+        } finally {
+            await rm(staging, { recursive: true, force: true });
+        }
+    }
+
     public async list(): Promise<StoredGeofile[]> {
         await mkdir(this.root, { recursive: true, mode: 0o700 });
         const result: StoredGeofile[] = [];
         for (let slot = 0; slot < MAX_FILES; slot++) {
             try {
-                result.push(await this.metadata(join(this.root, String(slot).padStart(2, '0'))));
+                result.push(
+                    this.activeFile(
+                        await this.metadata(join(this.root, String(slot).padStart(2, '0'))),
+                    ),
+                );
             } catch (error) {
                 if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
             }
@@ -546,6 +1030,7 @@ export class GeofilesService {
         name: unknown,
         kindValue: unknown,
         read: () => Promise<Buffer>,
+        origin: GeofileOrigin = 'upload',
     ): Promise<StoredGeofile> {
         if (
             typeof name !== 'string' ||
@@ -572,7 +1057,8 @@ export class GeofilesService {
             return await this.withReferenceLock(async () => {
                 await mkdir(this.root, { recursive: true, mode: 0o700 });
                 const existing = (await this.list()).find(
-                    (item) => item.sha256 === sha256 && item.kind === kind,
+                    (item) =>
+                        item.sha256 === sha256 && item.kind === kind && item.origin === origin,
                 );
                 if (existing) return existing;
                 // Atomic slot reservation bounds storage across API workers: 32 × 64 MiB.
@@ -594,6 +1080,7 @@ export class GeofilesService {
                         sha256,
                         filename,
                         createdAt: new Date().toISOString(),
+                        ...geofileProvenance(origin),
                         url: this.base + id + '/' + filename,
                         ...(['geoip', 'geosite'].includes(kind)
                             ? { categories: datCategories(data).slice(0, 1000) }
@@ -622,9 +1109,14 @@ export class GeofilesService {
 
     public async importUrl(name: unknown, kind: unknown, url: unknown): Promise<StoredGeofile> {
         if (typeof url !== 'string') throw new BadRequestException('geofile-url');
-        const file = await this.ingest(name, kind, () => downloadGeofile(url));
+        const file = await this.ingest(
+            name,
+            kind,
+            () => downloadGeofile(url),
+            geofileProvenance(undefined, url).origin,
+        );
         await this.refreshStore.configure(file.id, { sourceUrl: url, enabled: false }, true);
-        return this.fileById(file.id);
+        return this.activeFile(await this.fileById(file.id));
     }
 
     public async remove(id: string): Promise<void> {

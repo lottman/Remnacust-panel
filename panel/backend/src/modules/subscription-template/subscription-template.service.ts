@@ -1,4 +1,3 @@
-import { rethrowXrayModeConflict } from '@common/xray-mode/xray-mode-conflict';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
 import { load } from 'js-yaml';
 
@@ -7,6 +6,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { RawCacheService } from '@common/raw-cache';
 import { fail, ok, TResult } from '@common/types';
 import { YAML_MERGE_SCHEMA } from '@common/utils';
+import { rethrowXrayModeConflict } from '@common/xray-mode/xray-mode-conflict';
 import { CACHE_KEYS, ERRORS, TSubscriptionTemplateType } from '@libs/contracts/constants';
 import { RemnawaveInjectorSchema } from '@libs/contracts/models';
 
@@ -32,6 +32,7 @@ const DEFAULT_TEMPLATE_NAME = 'Default';
 @Injectable()
 export class SubscriptionTemplateService {
     private readonly logger = new Logger(SubscriptionTemplateService.name);
+    private readonly templateLoads = new Map<string, Promise<Record<string, unknown>>>();
 
     constructor(
         private readonly subscriptionTemplateRepository: SubscriptionTemplateRepository,
@@ -205,7 +206,7 @@ export class SubscriptionTemplateService {
                         try {
                             new RegExp(injector.selector.pattern);
                         } catch (error: unknown) {
-            rethrowXrayModeConflict(error);
+                            rethrowXrayModeConflict(error);
                             this.logger.error(
                                 `Invalid regex pattern for injectHosts entry: ${injector.selector.pattern}, ${(error as Error).message}`,
                             );
@@ -296,7 +297,7 @@ export class SubscriptionTemplateService {
                                       : undefined,
                               );
                           } catch (error) {
-            rethrowXrayModeConflict(error);
+                              rethrowXrayModeConflict(error);
                               if (draftContent === undefined) throw error;
                               invalidGeofiles = true;
                               return template;
@@ -344,9 +345,9 @@ export class SubscriptionTemplateService {
                 return fail(ERRORS.RESERVED_TEMPLATE_CANNOT_BE_DELETED);
             }
 
-            await this.removeCachedTemplate(template.uuid, template.templateType, template.name);
-
             await this.subscriptionTemplateRepository.deleteByUUID(uuid);
+
+            await this.removeCachedTemplate(template.uuid, template.templateType, template.name);
 
             return ok(true);
         } catch (error) {
@@ -370,67 +371,70 @@ export class SubscriptionTemplateService {
                 return fail(ERRORS.TEMPLATE_TYPE_NOT_ALLOWED);
             }
 
-            let templateJson = undefined;
-            let templateYaml = undefined;
-            switch (templateType) {
-                case 'CLASH':
-                    templateYaml = DEFAULT_TEMPLATE_CLASH;
-                    break;
-                case 'MIHOMO':
-                    templateYaml = DEFAULT_TEMPLATE_MIHOMO;
-                    break;
-                case 'STASH':
-                    templateYaml = DEFAULT_TEMPLATE_STASH;
-                    break;
-                case 'SINGBOX':
-                    templateJson = DEFAULT_TEMPLATE_SINGBOX;
-                    break;
-                case 'XRAY_JSON':
-                    templateJson = DEFAULT_TEMPLATE_XRAY_JSON;
-                    break;
-            }
+            const create = async () => {
+                let templateJson = undefined;
+                let templateYaml = undefined;
+                switch (templateType) {
+                    case 'CLASH':
+                        templateYaml = DEFAULT_TEMPLATE_CLASH;
+                        break;
+                    case 'MIHOMO':
+                        templateYaml = DEFAULT_TEMPLATE_MIHOMO;
+                        break;
+                    case 'STASH':
+                        templateYaml = DEFAULT_TEMPLATE_STASH;
+                        break;
+                    case 'SINGBOX':
+                        templateJson = DEFAULT_TEMPLATE_SINGBOX;
+                        break;
+                    case 'XRAY_JSON':
+                        templateJson = DEFAULT_TEMPLATE_XRAY_JSON;
+                        break;
+                }
 
-            const templateEntity = new SubscriptionTemplateEntity({
-                name,
-                templateType,
-                templateJson,
-                templateYaml,
-            });
+                const templateEntity = new SubscriptionTemplateEntity({
+                    name,
+                    templateType,
+                    templateJson,
+                    templateYaml,
+                });
 
-            if (sourceUuid) {
-                const source = await this.subscriptionTemplateRepository.findByUUID(sourceUuid);
-                if (!source) return fail(ERRORS.SUBSCRIPTION_TEMPLATE_NOT_FOUND);
-                if (source.templateType !== templateType)
-                    return fail(ERRORS.TEMPLATE_TYPE_NOT_ALLOWED);
-                // Copies share library assets, but must not take over host assignments.
-                const unassign = (value: object | null) => {
-                    const copy = structuredClone(value) as Record<string, any> | null;
-                    if (copy?.remnawave) {
-                        delete copy.remnawave.assignTo;
-                        delete copy.remnawave.assignments;
-                    }
-                    return copy;
-                };
-                templateEntity.templateJson = unassign(source.templateJson);
-                templateEntity.templateYaml = source.templateYaml;
-                templateEntity.tags = [...source.tags];
-                templateEntity.draftContent = source.draftContent;
-                if (source.draftContent && templateType === 'XRAY_JSON') {
-                    try {
-                        templateEntity.draftContent = JSON.stringify(
-                            unassign(JSON.parse(source.draftContent)),
-                            null,
-                            2,
-                        );
-                    } catch {
-                        /* Invalid drafts stay editable and never replace the active config. */
+                if (sourceUuid) {
+                    const source = await this.subscriptionTemplateRepository.findByUUID(sourceUuid);
+                    if (!source) return fail(ERRORS.SUBSCRIPTION_TEMPLATE_NOT_FOUND);
+                    if (source.templateType !== templateType)
+                        return fail(ERRORS.TEMPLATE_TYPE_NOT_ALLOWED);
+                    // Copies share library assets, but must not take over host assignments.
+                    const unassign = (value: object | null) => {
+                        const copy = structuredClone(value) as Record<string, any> | null;
+                        if (copy?.remnawave) {
+                            delete copy.remnawave.assignTo;
+                            delete copy.remnawave.assignments;
+                        }
+                        return copy;
+                    };
+                    templateEntity.templateJson = unassign(source.templateJson);
+                    templateEntity.templateYaml = source.templateYaml;
+                    templateEntity.tags = [...source.tags];
+                    templateEntity.draftContent = source.draftContent;
+                    if (source.draftContent && templateType === 'XRAY_JSON') {
+                        try {
+                            templateEntity.draftContent = JSON.stringify(
+                                unassign(JSON.parse(source.draftContent)),
+                                null,
+                                2,
+                            );
+                        } catch {
+                            /* Invalid drafts stay editable and never replace the active config. */
+                        }
                     }
                 }
-            }
 
-            const template = await this.subscriptionTemplateRepository.create(templateEntity);
+                const template = await this.subscriptionTemplateRepository.create(templateEntity);
 
-            return ok(new BaseTemplateResponseModel(template));
+                return ok(new BaseTemplateResponseModel(template));
+            };
+            return sourceUuid ? await this.geofiles.withReferenceLock(create) : await create();
         } catch (error) {
             rethrowXrayModeConflict(error);
             this.logger.error(error);
@@ -503,8 +507,11 @@ export class SubscriptionTemplateService {
     ): Promise<object> {
         const cacheKey = CACHE_KEYS.SUBSCRIPTION_TEMPLATE(name, type);
         let cached: object | null = null;
+        let generation: string | undefined;
         try {
-            cached = await this.rawCacheService.get<object>(cacheKey, true);
+            const snapshot = await this.rawCacheService.templateSnapshot<object>(cacheKey);
+            cached = snapshot.value;
+            generation = snapshot.generation;
         } catch {
             this.logger.warn('Subscription template cache read failed');
         }
@@ -513,6 +520,30 @@ export class SubscriptionTemplateService {
             return this.prepareClientTemplate(cached as Record<string, unknown>, type, happ);
         }
 
+        const loadRaw = () => this.loadRawTemplate(type, name, cacheKey, generation);
+        let pending: Promise<Record<string, unknown>>;
+        if (generation) {
+            const flightKey = JSON.stringify([cacheKey, generation]);
+            const existing = this.templateLoads.get(flightKey);
+            if (existing) pending = existing;
+            else if (this.templateLoads.size < 128) {
+                const tracked = loadRaw().finally(() => {
+                    if (this.templateLoads.get(flightKey) === tracked)
+                        this.templateLoads.delete(flightKey);
+                });
+                this.templateLoads.set(flightKey, tracked);
+                pending = tracked;
+            } else pending = loadRaw();
+        } else pending = loadRaw();
+        return this.prepareClientTemplate(await pending, type, happ);
+    }
+
+    private async loadRawTemplate(
+        type: TSubscriptionTemplateType,
+        name: string,
+        cacheKey: string,
+        generation?: string,
+    ): Promise<Record<string, unknown>> {
         const template =
             await this.subscriptionTemplateRepository.getTemplateByNameAndTypeOrGetDefault(
                 name,
@@ -533,8 +564,8 @@ export class SubscriptionTemplateService {
             case 'CLASH':
                 templateContent = load(template.templateYaml!, {
                     schema: YAML_MERGE_SCHEMA,
-                    maxAliases: -1,
-                    maxTotalMergeKeys: -1,
+                    maxAliases: 100,
+                    maxTotalMergeKeys: 10000,
                 });
                 break;
             case 'SINGBOX':
@@ -552,12 +583,17 @@ export class SubscriptionTemplateService {
         }
 
         try {
-            await this.rawCacheService.set(cacheKey, templateContent, 3_600);
+            if (generation)
+                await this.rawCacheService.setTemplateSnapshot(
+                    cacheKey,
+                    generation,
+                    templateContent,
+                );
         } catch {
             this.logger.warn('Subscription template cache write failed');
         }
 
-        return this.prepareClientTemplate(templateContent as Record<string, unknown>, type, happ);
+        return templateContent as Record<string, unknown>;
     }
 
     public async prepareClientTemplate(
@@ -570,13 +606,14 @@ export class SubscriptionTemplateService {
     }
 
     private async removeCachedTemplate(
-        uuid: string,
-        type: TSubscriptionTemplateType,
-        name: string = DEFAULT_TEMPLATE_NAME,
+        _uuid: string,
+        _type: TSubscriptionTemplateType,
+        _name: string = DEFAULT_TEMPLATE_NAME,
     ): Promise<void> {
-        await this.rawCacheService.del(CACHE_KEYS.SUBSCRIPTION_TEMPLATE(name, type));
-        if (type === 'XRAY_JSON') {
-            await this.rawCacheService.del(CACHE_KEYS.XRAY_JSON_TEMPLATE(uuid));
+        try {
+            await this.rawCacheService.invalidateTemplateSnapshots();
+        } catch {
+            this.logger.warn('Template cache cleanup deferred');
         }
     }
 

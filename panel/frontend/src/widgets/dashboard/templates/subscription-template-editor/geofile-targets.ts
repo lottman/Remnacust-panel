@@ -7,6 +7,54 @@ const object = (value: unknown): ObjectValue => (isObject(value) ? value : {})
 const items = (value: unknown): ObjectValue[] =>
     Array.isArray(value) ? value.filter(isObject) : []
 
+export type AddressRuleTarget =
+    | { kind: 'action'; name: 'DIRECT' | 'REJECT' }
+    | { kind: 'outbound' | 'balancer' | 'route'; name: string }
+
+// Select values carry both namespace and name; a literal tag may itself be DIRECT.
+export const addressRuleTargetKey = (target: AddressRuleTarget): string =>
+    JSON.stringify([target.kind, target.name])
+
+export function addressRuleTargets(config: ObjectValue, format: ClientFormat): AddressRuleTarget[] {
+    const routing = object(config.routing)
+    const remnawave = object(config.remnawave)
+    const targets: AddressRuleTarget[] = []
+    const add = (kind: 'outbound' | 'balancer' | 'route', name: unknown) => {
+        if (
+            typeof name === 'string' &&
+            name &&
+            (format === 'XRAY_JSON' || format === 'SINGBOX' || !/[,\r\n\0]/.test(name))
+        )
+            targets.push({ kind, name })
+    }
+    if (format === 'XRAY_JSON') {
+        if (!remnawave.injectHosts || remnawave.addVirtualHostAsOutbound) add('outbound', 'proxy')
+        for (const entry of items(routing.balancers)) add('balancer', entry.tag)
+        for (const entry of items(remnawave.injectHosts))
+            if (!entry.useHostRemarkAsTag && !entry.useHostTagAsTag)
+                add('outbound', entry.tagPrefix)
+        for (const entry of items(config.outbounds)) add('outbound', entry.tag)
+    } else if (format === 'SINGBOX') {
+        for (const entry of items(config.outbounds)) add('outbound', entry.tag)
+    } else {
+        for (const entry of items(config['proxy-groups'])) add('route', entry.name)
+        for (const entry of items(config.proxies)) add('route', entry.name)
+    }
+    const named = new Set(targets.map((target) => target.name))
+    const actions: AddressRuleTarget[] = []
+    for (const name of ['DIRECT', 'REJECT'] as const) {
+        // YAML has one native destination namespace. A shadowed action cannot
+        // be expressed independently of the literal route with the same name.
+        if (format === 'XRAY_JSON' || format === 'SINGBOX' || !named.has(name))
+            actions.push({ kind: 'action', name })
+    }
+    return [
+        ...new Map(
+            [...actions, ...targets].map((target) => [addressRuleTargetKey(target), target])
+        ).values()
+    ]
+}
+
 export function geofileTargetAliases(
     config: ObjectValue,
     format: ClientFormat

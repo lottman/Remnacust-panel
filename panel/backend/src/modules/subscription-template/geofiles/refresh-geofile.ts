@@ -2,7 +2,7 @@ import type { StoredGeofile } from './geofiles.service';
 
 import { createHash, randomBytes } from 'node:crypto';
 import { constants } from 'node:fs';
-import { open, readdir, rename, rm, writeFile } from 'node:fs/promises';
+import { open, lstat, readdir, rename, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { datCategories } from './compile-dat';
@@ -11,7 +11,7 @@ import { DEFAULT_GEOFILE_INTERVAL, geofileInterval } from './geofile-delivery';
 import { validateGeofile } from './validate-geofile';
 
 export interface GeofileRefreshState {
-    sourceUrl: string;
+    sourceUrl?: string;
     enabled: boolean;
     intervalSeconds: number;
     lastAttemptAt?: string;
@@ -28,6 +28,8 @@ export async function readGeofileRefresh(
 ): Promise<GeofileRefreshState | undefined> {
     let handle;
     try {
+        const info = await lstat(join(directory, 'refresh.json'));
+        if (!info.isFile() || info.isSymbolicLink()) throw Error('geofile-refresh-state');
         handle = await open(
             join(directory, 'refresh.json'),
             constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0),
@@ -40,7 +42,8 @@ export async function readGeofileRefresh(
         const info = await handle.stat();
         if (!info.isFile() || info.size > 256 * 1024) throw Error('geofile-refresh-state');
         const state = JSON.parse(await handle.readFile('utf8')) as GeofileRefreshState;
-        geofileUrl(state.sourceUrl);
+        if (state.sourceUrl !== undefined) geofileUrl(state.sourceUrl);
+        if (state.enabled && !state.sourceUrl) throw Error('geofile-refresh-state');
         geofileInterval(state.intervalSeconds, 900);
         if (typeof state.enabled !== 'boolean') throw Error('geofile-refresh-state');
         if (
@@ -67,15 +70,48 @@ export async function readGeofileRefresh(
     }
 }
 
-async function writeState(directory: string, state: GeofileRefreshState) {
+export async function writeGeofileRefresh(directory: string, state: GeofileRefreshState) {
     const temporary = join(directory, `refresh-${randomBytes(16).toString('hex')}.tmp`);
     try {
         await writeFile(temporary, JSON.stringify(state), { flag: 'wx', mode: 0o600 });
         await rename(temporary, join(directory, 'refresh.json'));
     } finally {
-        await rm(temporary, { force: true });
+        await rm(temporary, { force: true }).catch(() => undefined);
     }
 }
+
+export async function publishGeofileCurrent(
+    directory: string,
+    temporary: string,
+    state: GeofileRefreshState,
+    previous?: GeofileRefreshState,
+): Promise<void> {
+    const sha = state.current?.sha256;
+    if (!sha || !/^[a-f0-9]{64}$/.test(sha)) throw Error('geofile-refresh-state');
+    const target = join(directory, `current-${sha}`);
+    try {
+        await rename(temporary, target);
+        await writeGeofileRefresh(directory, state);
+    } catch (error) {
+        let actual: GeofileRefreshState | undefined;
+        try {
+            actual = await readGeofileRefresh(directory);
+        } catch {
+            throw error;
+        }
+        if (JSON.stringify(actual) === JSON.stringify(state)) return;
+        const retained = [
+            previous?.current?.sha256,
+            previous?.previousSha256,
+            actual?.current?.sha256,
+            actual?.previousSha256,
+        ];
+        if (!retained.includes(sha)) await rm(target, { force: true }).catch(() => undefined);
+        throw error;
+    }
+}
+
+const writeState = writeGeofileRefresh;
 
 async function cleanupStaging(directory: string, state: GeofileRefreshState) {
     const retained = new Set([state.current?.sha256, state.previousSha256].filter(Boolean));
@@ -97,7 +133,9 @@ export class GeofileRefreshStore {
             file: (id: string) => Promise<StoredGeofile>;
             list: () => Promise<StoredGeofile[]>;
             lock: <T>(operation: () => Promise<T>) => Promise<T>;
-            validate: (file: StoredGeofile, data: Buffer) => Promise<void>;
+            validate: (file: StoredGeofile, data: Buffer) => Promise<string>;
+            revision: () => Promise<string>;
+            protect?: (file: StoredGeofile) => Promise<void>;
         },
     ) {}
 
@@ -107,20 +145,23 @@ export class GeofileRefreshStore {
         onlyIfMissing = false,
     ) {
         return this.dependencies.lock(async () => {
-            await this.dependencies.file(id);
+            const file = await this.dependencies.file(id);
+            await this.dependencies.protect?.(file);
             const directory = this.dependencies.directory(id),
                 old = await readGeofileRefresh(directory);
             if (onlyIfMissing && old) return;
             const source = options.sourceUrl ?? old?.sourceUrl;
-            if (typeof source !== 'string') throw Error('geofile-refresh-source-required');
-            const sourceUrl = geofileUrl(source).href;
             const enabled = options.enabled ?? old?.enabled ?? false;
             if (typeof enabled !== 'boolean') throw Error('geofile-refresh-enabled');
+            if ((source !== undefined && typeof source !== 'string') || (enabled && !source))
+                throw Error('geofile-refresh-source-required');
+            const sourceUrl = typeof source === 'string' ? geofileUrl(source).href : undefined;
             const intervalSeconds = geofileInterval(
                 options.intervalSeconds ?? old?.intervalSeconds ?? DEFAULT_GEOFILE_INTERVAL,
                 900,
             );
             const state: GeofileRefreshState = { ...old, sourceUrl, enabled, intervalSeconds };
+            if (old?.sourceUrl !== sourceUrl || !enabled) delete state.lease;
             if (onlyIfMissing) {
                 state.lastAttemptAt = new Date().toISOString();
                 state.lastSuccessAt = state.lastAttemptAt;
@@ -150,7 +191,7 @@ export class GeofileRefreshStore {
                 directory = this.dependencies.directory(id),
                 state = await readGeofileRefresh(directory),
                 now = Date.now();
-            if (!state || (!manual && !state.enabled)) return;
+            if (!state || !state.sourceUrl || (!manual && !state.enabled)) return;
             if (
                 (state.lease && Date.parse(state.lease.until) > now) ||
                 (state.nextRefreshAt && Date.parse(state.nextRefreshAt) > now)
@@ -171,52 +212,57 @@ export class GeofileRefreshStore {
             const data = await downloadGeofile(claim.sourceUrl);
             validateGeofile(data, claim.file.kind);
             const sha256 = createHash('sha256').update(data).digest('hex');
-            const committed = await this.dependencies.lock(async () => {
-                // Deletion/replacement while the download was in progress must not recreate a slot.
-                const file = await this.dependencies.file(id),
-                    state = await readGeofileRefresh(claim.directory);
-                if (
-                    file.id !== id ||
-                    state?.lease?.token !== claim.token ||
-                    state.sourceUrl !== claim.sourceUrl
-                )
-                    return false;
-                const now = new Date().toISOString(),
-                    old = state.current;
-                if (sha256 !== (old?.sha256 ?? file.sha256)) {
-                    await this.dependencies.validate(file, data);
-                    const temporary = join(claim.directory, `download-${claim.token}.tmp`);
-                    try {
-                        await writeFile(temporary, data, { flag: 'wx', mode: 0o600 });
-                        await rename(temporary, join(claim.directory, `current-${sha256}`));
-                    } finally {
-                        await rm(temporary, { force: true });
+            const validation = await this.dependencies.validate(claim.file, data);
+            const categories = ['geoip', 'geosite'].includes(claim.file.kind)
+                ? datCategories(data).slice(0, 1000)
+                : undefined;
+            const temporary = join(claim.directory, `download-${claim.token}.tmp`);
+            await writeFile(temporary, data, { flag: 'wx', mode: 0o600 });
+            try {
+                const committed = await this.dependencies.lock(async () => {
+                    // Deletion/replacement while the download was in progress must not recreate a slot.
+                    const file = await this.dependencies.file(id),
+                        state = await readGeofileRefresh(claim.directory);
+                    if (
+                        file.id !== id ||
+                        state?.lease?.token !== claim.token ||
+                        state.sourceUrl !== claim.sourceUrl
+                    )
+                        return false;
+                    if (validation !== (await this.dependencies.revision()))
+                        throw Error('geofile-references-changed');
+                    const now = new Date().toISOString(),
+                        old = state.current;
+                    if (sha256 !== (old?.sha256 ?? file.sha256)) {
+                        const previous = structuredClone(state);
+                        state.current = {
+                            sha256,
+                            size: data.length,
+                            updatedAt: now,
+                            ...(categories ? { categories } : {}),
+                        };
+                        const obsolete = state.previousSha256;
+                        state.previousSha256 = old?.sha256;
+                        delete state.lease;
+                        delete state.lastError;
+                        state.lastSuccessAt = now;
+                        await publishGeofileCurrent(claim.directory, temporary, state, previous);
+                        if (obsolete && obsolete !== sha256 && obsolete !== state.previousSha256)
+                            await rm(join(claim.directory, `current-${obsolete}`), {
+                                force: true,
+                            }).catch(() => undefined);
+                    } else {
+                        delete state.lease;
+                        delete state.lastError;
+                        state.lastSuccessAt = now;
+                        await writeState(claim.directory, state);
                     }
-                    state.current = {
-                        sha256,
-                        size: data.length,
-                        updatedAt: now,
-                        ...(['geoip', 'geosite'].includes(file.kind)
-                            ? { categories: datCategories(data).slice(0, 1000) }
-                            : {}),
-                    };
-                    const obsolete = state.previousSha256;
-                    state.previousSha256 = old?.sha256;
-                    delete state.lease;
-                    delete state.lastError;
-                    state.lastSuccessAt = now;
-                    await writeState(claim.directory, state);
-                    if (obsolete && obsolete !== sha256 && obsolete !== state.previousSha256)
-                        await rm(join(claim.directory, `current-${obsolete}`), { force: true });
-                } else {
-                    delete state.lease;
-                    delete state.lastError;
-                    state.lastSuccessAt = now;
-                    await writeState(claim.directory, state);
-                }
-                return true;
-            });
-            return committed;
+                    return true;
+                });
+                return committed;
+            } finally {
+                await rm(temporary, { force: true });
+            }
         } catch {
             await this.dependencies.lock(async () => {
                 try {

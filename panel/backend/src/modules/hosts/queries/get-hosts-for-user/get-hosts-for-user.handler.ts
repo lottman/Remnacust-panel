@@ -61,6 +61,7 @@ export class GetHostsForUserHandler implements IQueryHandler<GetHostsForUserQuer
 
             const templates = await this.rawCache.cachedByKeys([...templateUuids], {
                 cacheKey: CACHE_KEYS.XRAY_JSON_TEMPLATE,
+                templateGeneration: true,
                 ttlSeconds: CACHE_KEYS_TTL.XRAY_JSON_TEMPLATE,
                 fetch: (m) => this.hostsRepository.getTemplatesByUuids(m),
                 rowId: (r) => r.uuid,

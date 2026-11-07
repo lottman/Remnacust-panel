@@ -1,6 +1,7 @@
 import { load } from 'js-yaml';
 
 import { MAX_GEOFILE_BYTES } from './download-geofile';
+import { createGoRegexpValidator } from './go-regexp';
 import { validateSrs } from './validate-srs';
 
 export const GEOFILE_KINDS = [
@@ -41,7 +42,14 @@ function varint(data: Buffer, cursor: { offset: number }): number {
 export function* geofileFields(
     data: Buffer,
     spans = false,
-): Generator<{ field: number; value: number | Buffer; start?: number; end?: number }> {
+    includeFixed = false,
+): Generator<{
+    field: number;
+    value: number | Buffer;
+    start?: number;
+    end?: number;
+    wire?: number;
+}> {
     const cursor = { offset: 0 };
     let count = 0;
     while (cursor.offset < data.length) {
@@ -54,17 +62,35 @@ export function* geofileFields(
             throw new Error('geofile-protobuf');
         if (wire === 0) {
             const value = varint(data, cursor);
-            yield { field, value, ...(spans ? { start, end: cursor.offset } : {}) };
+            yield {
+                field,
+                value,
+                ...(spans ? { start, end: cursor.offset } : {}),
+                ...(includeFixed ? { wire } : {}),
+            };
         } else if (wire === 2) {
             const length = varint(data, cursor);
             if (!Number.isSafeInteger(length) || length < 0 || cursor.offset + length > data.length)
                 throw new Error('geofile-protobuf');
             const value = data.subarray(cursor.offset, cursor.offset + length);
             cursor.offset += length;
-            yield { field, value, ...(spans ? { start, end: cursor.offset } : {}) };
+            yield {
+                field,
+                value,
+                ...(spans ? { start, end: cursor.offset } : {}),
+                ...(includeFixed ? { wire } : {}),
+            };
         } else if (wire === 1 || wire === 5) {
+            const offset = cursor.offset;
             cursor.offset += wire === 1 ? 8 : 4;
             if (cursor.offset > data.length) throw new Error('geofile-protobuf');
+            if (includeFixed)
+                yield {
+                    field,
+                    value: data.subarray(offset, cursor.offset),
+                    wire,
+                    ...(spans ? { start, end: cursor.offset } : {}),
+                };
         } else throw new Error('geofile-protobuf');
     }
 }
@@ -73,32 +99,84 @@ const fields = geofileFields;
 
 const utf8 = (value: Buffer) => new TextDecoder('utf-8', { fatal: true }).decode(value);
 
-function validateDat(data: Buffer, kind: 'geoip' | 'geosite') {
+export function* validateDatSteps(data: Buffer, kind: 'geoip' | 'geosite'): Generator<void, void> {
+    if (!data.length || data.length > MAX_GEOFILE_BYTES) throw Error('geofile-size-or-kind');
+    const regexp = createGoRegexpValidator();
     let entries = 0,
-        records = 0;
-    for (const entry of fields(data)) {
-        if (entry.field !== 1 || !Buffer.isBuffer(entry.value) || !entry.value.length)
-            throw new Error('geofile-dat');
+        records = 0,
+        work = 0;
+    for (const entry of fields(data, false, true)) {
+        if (++work % 1000 === 0) yield;
+        if (entry.field !== 1) continue;
+        if (entry.wire !== 2 || !Buffer.isBuffer(entry.value) || !entry.value.length)
+            throw Error('geofile-dat');
         if (++entries > 50_000) throw new Error('geofile-complexity');
         let code = false,
-            items = 0;
-        for (const item of fields(entry.value)) {
+            items = 0,
+            reverse = false;
+        for (const item of fields(entry.value, false, true)) {
+            if (++work % 1000 === 0) yield;
             if (item.field === 1) {
+                if (code) throw Error('geofile-duplicate-field');
                 if (
+                    item.wire !== 2 ||
                     !Buffer.isBuffer(item.value) ||
                     !/^[A-Za-z0-9_@.\-!+]{1,128}$/.test(utf8(item.value))
                 )
                     throw new Error('geofile-dat');
                 code = true;
             }
+            if (kind === 'geoip' && item.field === 3) {
+                if (reverse) throw Error('geofile-duplicate-field');
+                if (item.wire !== 0 || typeof item.value !== 'number') throw Error('geofile-dat');
+                reverse = true;
+            }
             if (item.field !== 2) continue;
-            if (!Buffer.isBuffer(item.value) || ++records > 2_000_000)
+            if (item.wire !== 2 || !Buffer.isBuffer(item.value) || ++records > 2_000_000)
                 throw new Error('geofile-dat');
             items++;
-            const parts = [...fields(item.value)];
+            let first: Buffer | number | undefined, second: Buffer | number | undefined;
+            let haveFirst = false,
+                haveSecond = false;
+            for (const part of fields(item.value, false, true)) {
+                if (++work % 1000 === 0) yield;
+                if (part.field === 1) {
+                    if (part.wire !== (kind === 'geoip' ? 2 : 0)) throw Error('geofile-dat');
+                    if (haveFirst) throw Error('geofile-duplicate-field');
+                    haveFirst = true;
+                    first = part.value;
+                }
+                if (part.field === 2) {
+                    if (part.wire !== (kind === 'geoip' ? 0 : 2)) throw Error('geofile-dat');
+                    if (haveSecond) throw Error('geofile-duplicate-field');
+                    haveSecond = true;
+                    second = part.value;
+                }
+                if (kind === 'geosite' && part.field === 3) {
+                    if (part.wire !== 2 || !Buffer.isBuffer(part.value)) throw Error('geofile-dat');
+                    let key = false,
+                        typedValue = false;
+                    for (const attribute of fields(part.value, false, true)) {
+                        if (++work % 1000 === 0) yield;
+                        if (attribute.field === 1) {
+                            if (key) throw Error('geofile-duplicate-field');
+                            if (attribute.wire !== 2 || !Buffer.isBuffer(attribute.value))
+                                throw Error('geofile-dat');
+                            utf8(attribute.value);
+                            key = true;
+                        }
+                        if (attribute.field === 2 || attribute.field === 3) {
+                            if (typedValue) throw Error('geofile-duplicate-field');
+                            if (attribute.wire !== 0 || typeof attribute.value !== 'number')
+                                throw Error('geofile-dat');
+                            typedValue = true;
+                        }
+                    }
+                }
+            }
             if (kind === 'geoip') {
-                const ip = parts.find((part) => part.field === 1)?.value;
-                const prefix = parts.find((part) => part.field === 2)?.value ?? 0;
+                const ip = first;
+                const prefix = second ?? 0;
                 if (
                     !Buffer.isBuffer(ip) ||
                     ![4, 16].includes(ip.length) ||
@@ -109,8 +187,8 @@ function validateDat(data: Buffer, kind: 'geoip' | 'geosite') {
                 )
                     throw new Error('geofile-dat');
             } else {
-                const type = parts.find((part) => part.field === 1)?.value ?? 0;
-                const domain = parts.find((part) => part.field === 2)?.value;
+                const type = first ?? 0;
+                const domain = second;
                 if (
                     typeof type !== 'number' ||
                     ![0, 1, 2, 3].includes(type) ||
@@ -121,6 +199,7 @@ function validateDat(data: Buffer, kind: 'geoip' | 'geosite') {
                     /[\x00-\x1f]/.test(utf8(domain))
                 )
                     throw new Error('geofile-dat');
+                if (type === 1) regexp(utf8(domain));
             }
         }
         if (!code || !items) throw new Error('geofile-dat');
@@ -131,7 +210,12 @@ function validateDat(data: Buffer, kind: 'geoip' | 'geosite') {
 export function validateGeofile(data: Buffer, kind: GeofileKind): void {
     if (!GEOFILE_KINDS.includes(kind) || !data.length || data.length > MAX_GEOFILE_BYTES)
         throw new Error('geofile-size-or-kind');
-    if (kind === 'geoip' || kind === 'geosite') return validateDat(data, kind);
+    if (kind === 'geoip' || kind === 'geosite') {
+        for (const _ of validateDatSteps(data, kind)) {
+            /* Synchronous ingest shares the cooperative editor validator. */
+        }
+        return;
+    }
     if (kind === 'singbox-srs') return validateSrs(data);
     if (data.length > 8 * 1024 * 1024) throw new Error('geofile-text-size');
     const text = utf8(data);
@@ -140,6 +224,7 @@ export function validateGeofile(data: Buffer, kind: GeofileKind): void {
         throw new Error('geofile-content');
     if (kind === 'singbox-json') {
         const value = JSON.parse(text);
+        const regexp = createGoRegexpValidator();
         if (
             !value ||
             ![1, 2, 3, 4].includes(value.version) ||
@@ -154,6 +239,13 @@ export function validateGeofile(data: Buffer, kind: GeofileKind): void {
                 for (const [key, child] of Object.entries(node)) {
                     if (['__proto__', 'constructor', 'prototype'].includes(key))
                         throw new Error('geofile-content');
+                    if (key === 'domain_regex') {
+                        const patterns = Array.isArray(child) ? child : [child];
+                        for (const pattern of patterns) {
+                            if (typeof pattern !== 'string') throw Error('geofile-regexp');
+                            regexp(pattern);
+                        }
+                    }
                     walk(child, depth + 1);
                 }
         };
@@ -170,4 +262,9 @@ export function validateGeofile(data: Buffer, kind: GeofileKind): void {
         rows.some((row) => typeof row !== 'string' || row.length > 4096 || /[\r\n\0<>]/.test(row))
     )
         throw new Error('geofile-payload');
+    if (kind === 'mihomo-classical') {
+        const regexp = createGoRegexpValidator();
+        for (const row of rows as string[])
+            if (row.startsWith('DOMAIN-REGEX,')) regexp(row.slice('DOMAIN-REGEX,'.length));
+    }
 }

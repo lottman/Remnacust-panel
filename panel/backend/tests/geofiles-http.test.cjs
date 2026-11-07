@@ -121,6 +121,11 @@ test('real HTTP binary upload, admin-only roles, public byte stream and in-use d
             ['/invalid', 'DELETE'],
             ['/invalid/refresh', 'PATCH'],
             ['/invalid/refresh', 'POST'],
+            ['/invalid/content', 'GET'],
+            ['/invalid/content', 'PATCH'],
+            ['/invalid/copy', 'POST'],
+            ['/invalid/data', 'PUT'],
+            ['/invalid/copy-data', 'POST'],
         ]) {
             assert.equal((await fetch(base + '/api/geofiles' + route, { method })).status, 401);
             for (const role of ['API', 'AUDITOR'])
@@ -157,6 +162,161 @@ test('real HTTP binary upload, admin-only roles, public byte stream and in-use d
         assert.equal(latest.status, 200);
         assert.doesNotMatch(latest.headers.get('cache-control'), /immutable/);
         assert.deepEqual(Buffer.from(await latest.arrayBuffer()), fixture.geoip);
+        const editorHeaders = { ...headers, 'Content-Type': 'application/json' };
+        const opened = await fetch(`${base}/api/geofiles/${item.id}/content?category=ru&limit=1`, {
+            headers,
+        });
+        assert.equal(opened.status, 200);
+        assert.equal(opened.headers.get('cache-control'), 'no-store');
+        assert.equal((await opened.json()).response.records[0].value, '203.0.113.0/24');
+        assert.equal(
+            (await fetch(`${base}/api/geofiles/1f${'0'.repeat(32)}/content`, { headers })).status,
+            404,
+        );
+        const missingSha = await fetch(`${base}/api/geofiles/${item.id}/content`, {
+            method: 'PATCH',
+            headers: editorHeaders,
+            body: '{}',
+        });
+        assert.equal(missingSha.status, 400);
+        assert.equal((await missingSha.json()).message, 'geofile-sha256-required');
+        const duplicateName = await fetch(`${base}/api/geofiles/${item.id}/copy`, {
+            method: 'POST',
+            headers: editorHeaders,
+            body: JSON.stringify({ name: ' test ', sha256: item.sha256 }),
+        });
+        assert.equal(duplicateName.status, 409);
+        assert.equal((await duplicateName.json()).message, 'geofile-name-exists');
+        const selectionRejected = await fetch(`${base}/api/geofiles/${item.id}/copy`, {
+            method: 'POST',
+            headers: editorHeaders,
+            body: JSON.stringify({
+                name: 'Rejected selection',
+                sha256: item.sha256,
+                selections: [{ format: 'SINGBOX', categories: ['missing'] }],
+            }),
+        });
+        assert.equal(selectionRejected.status, 400);
+        assert.equal((await selectionRejected.json()).message, 'geofile-copy-selections');
+        for (const selections of [
+            JSON.stringify([{ format: 'SINGBOX', categories: ['missing'] }]),
+            'x'.repeat(2049),
+        ]) {
+            const rejected = await fetch(
+                `${base}/api/geofiles/${item.id}/copy-data?name=Rejected%20raw&sha256=${item.sha256}&selections=${encodeURIComponent(selections)}`,
+                { method: 'POST', headers, body: fixture.geoip },
+            );
+            assert.equal(rejected.status, 400);
+            assert.equal((await rejected.json()).message, 'geofile-copy-selections');
+        }
+        const copied = await fetch(`${base}/api/geofiles/${item.id}/copy`, {
+            method: 'POST',
+            headers: editorHeaders,
+            body: JSON.stringify({
+                name: 'HTTP edited copy',
+                sha256: item.sha256,
+                category: 'ru',
+                additions: [{ type: 'ip', value: '192.0.2.0/24' }],
+            }),
+        });
+        assert.equal(copied.status, 201);
+        const copy = (await copied.json()).response;
+        const edited = await fetch(`${base}/api/geofiles/${copy.id}/content`, {
+            method: 'PATCH',
+            headers: editorHeaders,
+            body: JSON.stringify({
+                sha256: copy.sha256,
+                category: 'ru',
+                changes: [{ index: 1, type: 'ip', value: '198.51.100.0/24' }],
+            }),
+        });
+        assert.equal(edited.status, 200);
+        const changed = (await edited.json()).response;
+        const stale = await fetch(`${base}/api/geofiles/${copy.id}/data`, {
+            method: 'PUT',
+            headers: { ...headers, 'If-Match': `"${copy.sha256}"` },
+            body: fixture.geoip,
+        });
+        assert.equal(stale.status, 409);
+        assert.equal((await stale.json()).message, 'geofile-stale');
+        const replaced = await fetch(`${base}/api/geofiles/${copy.id}/data`, {
+            method: 'PUT',
+            headers: { ...headers, 'If-Match': `"${changed.sha256}"` },
+            body: fixture.geoip,
+        });
+        assert.equal(replaced.status, 200);
+        const rawCopy = await fetch(
+            `${base}/api/geofiles/${item.id}/copy-data?name=HTTP%20raw%20copy&sha256=${item.sha256}`,
+            {
+                method: 'POST',
+                headers,
+                body: fixture.geoip,
+            },
+        );
+        assert.equal(rawCopy.status, 201);
+        const rawFile = (await rawCopy.json()).response;
+        assert.notEqual(rawFile.id, item.id);
+        const selections = Array.from({ length: 20 }, () => ({
+            format: 'SINGBOX',
+            categories: Array(32).fill('ru'),
+        }));
+        assert(Buffer.byteLength(JSON.stringify(selections)) > 2048);
+        const multipartFiles = [];
+        for (const reverse of [false, true]) {
+            const form = new FormData();
+            const metadata = JSON.stringify({ name: 'Multipart ' + reverse, selections });
+            if (reverse) form.append('file', new Blob([fixture.geoip]), 'ignored.dat');
+            form.append('metadata', metadata);
+            if (!reverse) form.append('file', new Blob([fixture.geoip]), 'ignored.dat');
+            const result = await fetch(`${base}/api/geofiles/${item.id}/copy-data`, {
+                method: 'POST',
+                headers: { 'x-test-role': 'ADMIN', 'If-Match': item.sha256 },
+                body: form,
+            });
+            assert.equal(result.status, 201, await result.clone().text());
+            multipartFiles.push((await result.json()).response.id);
+        }
+        for (const invalid of [
+            'extra',
+            'duplicate-file',
+            'duplicate-metadata',
+            'metadata-size',
+            'unknown-key',
+            'missing-file',
+            'selection',
+        ]) {
+            const form = new FormData();
+            form.append(
+                'metadata',
+                invalid === 'metadata-size'
+                    ? 'x'.repeat(32 * 1024 + 1)
+                    : JSON.stringify({
+                          name: 'Invalid multipart',
+                          selections:
+                              invalid === 'selection'
+                                  ? [{ format: 'SINGBOX', categories: ['missing'] }]
+                                  : [],
+                          ...(invalid === 'unknown-key' ? { extra: true } : {}),
+                      }),
+            );
+            if (invalid !== 'missing-file')
+                form.append('file', new Blob([fixture.geoip]), 'file.dat');
+            if (invalid === 'extra') form.append('other', 'bad');
+            if (invalid === 'duplicate-file')
+                form.append('file', new Blob([fixture.geoip]), 'file2.dat');
+            if (invalid === 'duplicate-metadata') form.append('metadata', '{}');
+            const result = await fetch(`${base}/api/geofiles/${item.id}/copy-data`, {
+                method: 'POST',
+                headers: { 'x-test-role': 'ADMIN', 'If-Match': item.sha256 },
+                body: form,
+            });
+            assert.equal(result.status, 400, invalid + ': ' + (await result.text()));
+        }
+        for (const id of [copy.id, rawFile.id, ...multipartFiles])
+            assert.equal(
+                (await fetch(`${base}/api/geofiles/${id}`, { method: 'DELETE', headers })).status,
+                200,
+            );
         const prepared = await files.prepare(
             {
                 remnacust: {
@@ -281,8 +441,15 @@ test('real HTTP binary upload, admin-only roles, public byte stream and in-use d
         );
         assert.equal((await fetch(proxyBase + bundleUrl.pathname)).status, 200);
         const incyChecksum = await fetch(proxyBase + bundleUrl.pathname + '.sha256');
-        assert.equal(incyChecksum.status, 200, 'INCY appends the checksum suffix to the complete URL');
-        assert.equal(await incyChecksum.text(), require('node:crypto').createHash('sha256').update(bytes).digest('hex'));
+        assert.equal(
+            incyChecksum.status,
+            200,
+            'INCY appends the checksum suffix to the complete URL',
+        );
+        assert.equal(
+            await incyChecksum.text(),
+            require('node:crypto').createHash('sha256').update(bytes).digest('hex'),
+        );
         const configured = await fetch(`${base}/api/geofiles/${item.id}/refresh`, {
             method: 'PATCH',
             headers: { 'x-test-role': 'ADMIN', 'Content-Type': 'application/json' },
@@ -342,80 +509,174 @@ test('real HTTP binary upload, admin-only roles, public byte stream and in-use d
 });
 
 test('signed category subsets survive the real subscription-page proxy and reject tampered manifests', async () => {
- const directory=await fs.mkdtemp(path.join(os.tmpdir(),'remnacust-subset-http-'));
- const previous=process.env.XERA_BACKUPS_DIR;process.env.XERA_BACKUPS_DIR=directory;
- const files=new GeofilesService({getOrThrow:()=> 'sub.example.test'},{getAllTemplates:async()=>[]},{$transaction:async fn=>fn({$executeRaw:async()=>1})});
- let app,proxy;
- try {
-  const extra=fixture.bytes(1,Buffer.concat([fixture.bytes(1,'UNUSED'),fixture.bytes(2,fixture.domain(2,'unused.test'))]));
-  const item=await files.ingest('Subset fixture','geosite',async()=>Buffer.concat([fixture.geosite,extra]));
-  const beforeSelection=await fs.readdir(files.directory(item.id));
-  await assert.rejects(files.bundleUrl('geosite',[item.id],{[item.id]:['missing']}),/empty/);
-  assert.deepEqual(await fs.readdir(files.directory(item.id)),beforeSelection,'Invalid category selections cannot write manifests');
-  class SubsetModule {}
-  Module({controllers:[PublicGeofilesController],providers:[{provide:GeofilesService,useValue:files}]})(SubsetModule);
-  app=await NestFactory.create(SubsetModule,{logger:false});app.setGlobalPrefix('api');await app.listen(0,'127.0.0.1');
-  class SubsetProxy {}
-  Module({controllers:[SubscriptionPageGeofiles],providers:[{provide:UpstreamAxios,useValue:{geofileAxiosInstance:require('axios').create({baseURL:await app.getUrl(),proxy:false})}}]})(SubsetProxy);
-  proxy=await NestFactory.create(SubsetProxy,{logger:false});await proxy.listen(0,'127.0.0.1');
-  const issued=new URL(await files.bundleUrl('geosite',[item.id],{[item.id]:['example']}));
-  assert.match(issued.pathname,/\/bundles\/m-[a-f0-9]{64}\//);
-  const url=(await proxy.getUrl())+issued.pathname;
-  const response=await fetch(url);assert.equal(response.status,200);
-  const body=Buffer.from(await response.arrayBuffer());
-  assert.deepEqual(compileDat(body,'geosite',[datCategory(item.id,'example')+'@ads']).domains,[{type:3,value:'ads.example.com'}]);
-  assert.throws(()=>compileDat(body,'geosite',[datCategory(item.id,'unused')]),/empty/);
-  assert.equal(await (await fetch(url+'.sha256')).text(),require('node:crypto').createHash('sha256').update(body).digest('hex'));
-  const restarted=new GeofilesService({getOrThrow:()=> 'sub.example.test'},{},{});
-  const [,,owner,,selection,filename]=issued.pathname.split('/');
-  assert.deepEqual(await restarted.bundle(owner,filename,selection),body);
-  assert.equal((await fetch(url.replace(/bundle-[a-f0-9]{64}/,'bundle-'+'0'.repeat(64)))).status,404);
-  await fs.writeFile(path.join(files.directory(item.id),'selection-'+selection.slice(2)+'.json'),'{}');
-  const tampered=await fetch(url);assert.equal(tampered.status,404);
-  assert(!JSON.stringify([...tampered.headers]).includes('sub.example.test'));
-  assert.equal(await tampered.text(),'');
- } finally {
-  if(proxy)await proxy.close();if(app)await app.close();
-  if(previous===undefined)delete process.env.XERA_BACKUPS_DIR;else process.env.XERA_BACKUPS_DIR=previous;
-  await fs.rm(directory,{recursive:true,force:true});
- }
+    const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'remnacust-subset-http-'));
+    const previous = process.env.XERA_BACKUPS_DIR;
+    process.env.XERA_BACKUPS_DIR = directory;
+    const files = new GeofilesService(
+        { getOrThrow: () => 'sub.example.test' },
+        { getAllTemplates: async () => [] },
+        { $transaction: async (fn) => fn({ $executeRaw: async () => 1 }) },
+    );
+    let app, proxy;
+    try {
+        const extra = fixture.bytes(
+            1,
+            Buffer.concat([
+                fixture.bytes(1, 'UNUSED'),
+                fixture.bytes(2, fixture.domain(2, 'unused.test')),
+            ]),
+        );
+        const item = await files.ingest('Subset fixture', 'geosite', async () =>
+            Buffer.concat([fixture.geosite, extra]),
+        );
+        const beforeSelection = await fs.readdir(files.directory(item.id));
+        await assert.rejects(
+            files.bundleUrl('geosite', [item.id], { [item.id]: ['missing'] }),
+            /empty/,
+        );
+        assert.deepEqual(
+            await fs.readdir(files.directory(item.id)),
+            beforeSelection,
+            'Invalid category selections cannot write manifests',
+        );
+        class SubsetModule {}
+        Module({
+            controllers: [PublicGeofilesController],
+            providers: [{ provide: GeofilesService, useValue: files }],
+        })(SubsetModule);
+        app = await NestFactory.create(SubsetModule, { logger: false });
+        app.setGlobalPrefix('api');
+        await app.listen(0, '127.0.0.1');
+        class SubsetProxy {}
+        Module({
+            controllers: [SubscriptionPageGeofiles],
+            providers: [
+                {
+                    provide: UpstreamAxios,
+                    useValue: {
+                        geofileAxiosInstance: require('axios').create({
+                            baseURL: await app.getUrl(),
+                            proxy: false,
+                        }),
+                    },
+                },
+            ],
+        })(SubsetProxy);
+        proxy = await NestFactory.create(SubsetProxy, { logger: false });
+        await proxy.listen(0, '127.0.0.1');
+        const issued = new URL(
+            await files.bundleUrl('geosite', [item.id], { [item.id]: ['example'] }),
+        );
+        assert.match(issued.pathname, /\/bundles\/m-[a-f0-9]{64}\//);
+        const url = (await proxy.getUrl()) + issued.pathname;
+        const response = await fetch(url);
+        assert.equal(response.status, 200);
+        const body = Buffer.from(await response.arrayBuffer());
+        assert.deepEqual(
+            compileDat(body, 'geosite', [datCategory(item.id, 'example') + '@ads']).domains,
+            [{ type: 3, value: 'ads.example.com' }],
+        );
+        assert.throws(() => compileDat(body, 'geosite', [datCategory(item.id, 'unused')]), /empty/);
+        assert.equal(
+            await (await fetch(url + '.sha256')).text(),
+            require('node:crypto').createHash('sha256').update(body).digest('hex'),
+        );
+        const restarted = new GeofilesService({ getOrThrow: () => 'sub.example.test' }, {}, {});
+        const [, , owner, , selection, filename] = issued.pathname.split('/');
+        assert.deepEqual(await restarted.bundle(owner, filename, selection), body);
+        assert.equal(
+            (await fetch(url.replace(/bundle-[a-f0-9]{64}/, 'bundle-' + '0'.repeat(64)))).status,
+            404,
+        );
+        await fs.writeFile(
+            path.join(files.directory(item.id), 'selection-' + selection.slice(2) + '.json'),
+            '{}',
+        );
+        const tampered = await fetch(url);
+        assert.equal(tampered.status, 404);
+        assert(!JSON.stringify([...tampered.headers]).includes('sub.example.test'));
+        assert.equal(await tampered.text(), '');
+    } finally {
+        if (proxy) await proxy.close();
+        if (app) await app.close();
+        if (previous === undefined) delete process.env.XERA_BACKUPS_DIR;
+        else process.env.XERA_BACKUPS_DIR = previous;
+        await fs.rm(directory, { recursive: true, force: true });
+    }
 });
 
 test('transient upstream failures cannot become cached missing geofiles or leak private responses', async () => {
- const http=require('node:http');let status=503,received,holdOpen=false,closed=false,length=fixture.geoip.length;
- const upstream=http.createServer((request,response)=>{
-  received=request.headers;
-  response.writeHead(status,{'Content-Length':String(length),'X-Private-Upstream':'private-panel.example.test'});
-  if(holdOpen) {
-   response.write(fixture.geoip.subarray(0,3));
-   response.once('close',()=>{closed=true;});
-  } else response.end(fixture.geoip);
- });
- await new Promise(resolve=>upstream.listen(0,'127.0.0.1',resolve));
- class AvailabilityProxy {}
- Module({controllers:[SubscriptionPageGeofiles],providers:[{provide:UpstreamAxios,useValue:{geofileAxiosInstance:require('axios').create({baseURL:'http://127.0.0.1:'+upstream.address().port,proxy:false})}}]})(AvailabilityProxy);
- const app=await NestFactory.create(AvailabilityProxy,{logger:false});await app.listen(0,'127.0.0.1');
- try {
-  const url=(await app.getUrl())+'/geofiles/'+'a'.repeat(34)+'/latest.dat';
-  for(const failure of [503,502,500,504,429,404]) {
-   status=failure;
-   const response=await fetch(url,{headers:{Authorization:'Bearer client-fixture-do-not-forward'}});
-   assert.equal(response.status,failure===404?404:503);
-   assert.equal(response.headers.get('cache-control'),'no-store');
-   assert.equal(response.headers.get('retry-after'),failure===404?null:'2');
-   assert.equal(response.headers.get('x-private-upstream'),null);
-   assert.equal(await response.text(),'');
-   assert.equal(received.authorization,undefined);
-  }
-  status=200;const recovered=await fetch(url);assert.equal(recovered.status,200);
-  assert.deepEqual(Buffer.from(await recovered.arrayBuffer()),fixture.geoip);
-  status=503;holdOpen=true;
-  assert.equal((await fetch(url)).status,503);
-  for(let i=0;i<50&&!closed;i++)await new Promise(resolve=>setTimeout(resolve,10));
-  assert(closed,'Rejected upstream streams must be closed immediately');
-  closed=false;status=200;length=64*1024*1024+1;
-  assert.equal((await fetch(url)).status,404);
-  for(let i=0;i<50&&!closed;i++)await new Promise(resolve=>setTimeout(resolve,10));
-  assert(closed,'Oversized upstream responses must be closed before body consumption');
- } finally {await app.close();upstream.closeAllConnections();await new Promise(resolve=>upstream.close(resolve));}
+    const http = require('node:http');
+    let status = 503,
+        received,
+        holdOpen = false,
+        closed = false,
+        length = fixture.geoip.length;
+    const upstream = http.createServer((request, response) => {
+        received = request.headers;
+        response.writeHead(status, {
+            'Content-Length': String(length),
+            'X-Private-Upstream': 'private-panel.example.test',
+        });
+        if (holdOpen) {
+            response.write(fixture.geoip.subarray(0, 3));
+            response.once('close', () => {
+                closed = true;
+            });
+        } else response.end(fixture.geoip);
+    });
+    await new Promise((resolve) => upstream.listen(0, '127.0.0.1', resolve));
+    class AvailabilityProxy {}
+    Module({
+        controllers: [SubscriptionPageGeofiles],
+        providers: [
+            {
+                provide: UpstreamAxios,
+                useValue: {
+                    geofileAxiosInstance: require('axios').create({
+                        baseURL: 'http://127.0.0.1:' + upstream.address().port,
+                        proxy: false,
+                    }),
+                },
+            },
+        ],
+    })(AvailabilityProxy);
+    const app = await NestFactory.create(AvailabilityProxy, { logger: false });
+    await app.listen(0, '127.0.0.1');
+    try {
+        const url = (await app.getUrl()) + '/geofiles/' + 'a'.repeat(34) + '/latest.dat';
+        for (const failure of [503, 502, 500, 504, 429, 404]) {
+            status = failure;
+            const response = await fetch(url, {
+                headers: { Authorization: 'Bearer client-fixture-do-not-forward' },
+            });
+            assert.equal(response.status, failure === 404 ? 404 : 503);
+            assert.equal(response.headers.get('cache-control'), 'no-store');
+            assert.equal(response.headers.get('retry-after'), failure === 404 ? null : '2');
+            assert.equal(response.headers.get('x-private-upstream'), null);
+            assert.equal(await response.text(), '');
+            assert.equal(received.authorization, undefined);
+        }
+        status = 200;
+        const recovered = await fetch(url);
+        assert.equal(recovered.status, 200);
+        assert.deepEqual(Buffer.from(await recovered.arrayBuffer()), fixture.geoip);
+        status = 503;
+        holdOpen = true;
+        assert.equal((await fetch(url)).status, 503);
+        for (let i = 0; i < 50 && !closed; i++)
+            await new Promise((resolve) => setTimeout(resolve, 10));
+        assert(closed, 'Rejected upstream streams must be closed immediately');
+        closed = false;
+        status = 200;
+        length = 64 * 1024 * 1024 + 1;
+        assert.equal((await fetch(url)).status, 404);
+        for (let i = 0; i < 50 && !closed; i++)
+            await new Promise((resolve) => setTimeout(resolve, 10));
+        assert(closed, 'Oversized upstream responses must be closed before body consumption');
+    } finally {
+        await app.close();
+        upstream.closeAllConnections();
+        await new Promise((resolve) => upstream.close(resolve));
+    }
 });

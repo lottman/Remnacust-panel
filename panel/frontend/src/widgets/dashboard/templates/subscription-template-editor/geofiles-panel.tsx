@@ -1,3 +1,5 @@
+import type { Geofile, GeofileSelection } from './geofile-types'
+
 import {
     Accordion,
     Alert,
@@ -23,7 +25,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { isAxiosError } from 'axios'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { TbPlus, TbTrash } from 'react-icons/tb'
+import { TbPencil, TbPlus, TbTrash } from 'react-icons/tb'
 
 import { instance } from '@shared/api'
 import { useGetSubscriptionSettings } from '@shared/api/hooks/subscription-settings/subscription-settings.query.hooks'
@@ -32,22 +34,17 @@ import { ROUTES } from '@shared/constants/routes'
 import { type JsonObject } from './autoselect-model'
 import styles from './autoselect-panel.module.css'
 import { editClientTemplate, readClientTemplate, type ClientFormat } from './client-template-model'
-import { attachLibraryGeofile, compatibleGeofile, geofileCatalog } from './geofile-library-model'
+import { GeofileAddressRules } from './geofile-address-rules-panel'
+import { GeofileEditorModal } from './geofile-editor-modal'
+import {
+    attachLibraryGeofile,
+    compatibleGeofile,
+    geofileCatalog,
+    replaceLibraryGeofile
+} from './geofile-library-model'
 import { geofilePresets } from './geofile-presets'
-import { GeofileRefreshSettings, type GeofileRefresh } from './geofile-refresh-settings'
+import { GeofileRefreshSettings } from './geofile-refresh-settings'
 import { geofileTargetAliases, geofileTargets } from './geofile-targets'
-
-interface Geofile {
-    id: string
-    name: string
-    kind: string
-    size: number
-    sha256: string
-    filename: string
-    url: string
-    categories?: string[]
-    refresh?: GeofileRefresh
-}
 interface Reference {
     id: string
     categories?: string[]
@@ -90,7 +87,9 @@ export function GeofilesPanel({
             (await instance.get<{ response: Geofile[] }>('/api/geofiles', { signal })).data
                 .response,
         staleTime: 20_000,
-        refetchInterval: 60_000
+        refetchInterval: 60_000,
+        refetchOnMount: 'always',
+        refetchOnWindowFocus: 'always'
     })
     const files = filesQuery.data ?? []
     const [uploadSource, setUploadSource] = useState('library')
@@ -101,9 +100,65 @@ export function GeofilesPanel({
     const [file, setFile] = useState<File | null>(null)
     const [progress, setProgress] = useState<number | null>(null)
     const [error, setError] = useState<
-        'geofiles.operation-failed' | 'geofiles.delete-in-use' | 'geofiles.attach-failed' | null
+        | 'geofiles.operation-failed'
+        | 'geofiles.delete-in-use'
+        | 'geofiles.attach-failed'
+        | 'geofiles.copy-selection-changed'
+        | null
     >(null)
     const [selection, setSelection] = useState<string | null>(null)
+    const [editingFile, setEditingFile] = useState<Geofile | null>(null)
+    const rememberFile = async (item: Geofile) => {
+        await client.cancelQueries({ queryKey })
+        client.setQueryData<Geofile[]>(queryKey, (previous) => [
+            item,
+            ...(previous ?? []).filter((existing) => existing.id !== item.id)
+        ])
+    }
+    const savedFile = async (item: Geofile, sourceId: string, selections: GeofileSelection[]) => {
+        await rememberFile(item)
+        if (item.id !== sourceId && compatibleGeofile(item.kind, format)) {
+            try {
+                const current = getValue()
+                const changed = replaceLibraryGeofile(
+                    current,
+                    format,
+                    sourceId,
+                    item,
+                    selections
+                        .filter((selection) => selection.format === format)
+                        .map((selection) => selection.categories)
+                )
+                if (changed !== current) onChange(changed)
+            } catch (failure) {
+                setError(
+                    failure instanceof Error && failure.message === 'geofile-copy-selection'
+                        ? 'geofiles.copy-selection-changed'
+                        : 'geofiles.attach-failed'
+                )
+            }
+        }
+        setSelection(`file:${item.id}`)
+        await client.invalidateQueries({ queryKey: ['geofile-content', sourceId] })
+        await client.invalidateQueries({ queryKey })
+    }
+    const editPreset = useMutation({
+        mutationFn: async (item: (typeof geofilePresets)[number]) =>
+            (
+                await instance.post<{ response: Geofile }>(
+                    '/api/geofiles/import',
+                    { name: item.name, kind: item.kind, url: item.url },
+                    { timeout: 45_000 }
+                )
+            ).data.response,
+        onSuccess: async (item) => {
+            await rememberFile(item)
+            setSelection(`file:${item.id}`)
+            setEditingFile(item)
+            await client.invalidateQueries({ queryKey })
+        },
+        onError: () => setError('geofiles.operation-failed')
+    })
     const requestedPreset = geofilePresets.find((item) => selection === `preset:${item.id}`)
     const selectedFile = files.find(
         (item) =>
@@ -189,11 +244,8 @@ export function GeofilesPanel({
                 )
             ).data.response
         },
-        onSuccess: (item, source) => {
-            client.setQueryData<Geofile[]>(queryKey, (previous) => [
-                item,
-                ...(previous ?? []).filter((existing) => existing.id !== item.id)
-            ])
+        onSuccess: async (item, source) => {
+            await rememberFile(item)
             setSelection(`file:${item.id}`)
             setError(null)
             setUploadSource('library')
@@ -207,6 +259,7 @@ export function GeofilesPanel({
             if (source === 'file') setFile(null)
             if (source === 'url') setUrl('')
             setProgress(null)
+            await client.invalidateQueries({ queryKey })
         },
         onError: () => {
             setError('geofiles.operation-failed')
@@ -215,11 +268,12 @@ export function GeofilesPanel({
     })
     const remove = useMutation({
         mutationFn: (id: string) => instance.delete(`/api/geofiles/${id}`),
-        onSuccess: (_, id) => {
+        onSuccess: async (_, id) => {
+            await client.cancelQueries({ queryKey })
             client.setQueryData<Geofile[]>(queryKey, (previous) =>
                 (previous ?? []).filter((item) => item.id !== id)
             )
-            setSelection(null)
+            setSelection((previous) => (previous === `file:${id}` ? null : previous))
             try {
                 const currentText = getValue()
                 const currentRefs: Reference[] =
@@ -237,7 +291,7 @@ export function GeofilesPanel({
             } catch {
                 setError('geofiles.operation-failed')
             }
-            void client.invalidateQueries({ queryKey })
+            await client.invalidateQueries({ queryKey })
         },
         onError: (failure) =>
             setError(
@@ -368,6 +422,18 @@ export function GeofilesPanel({
                             {(selectedFile || preset) && (
                                 <div className={styles.libraryActions}>
                                     <Button
+                                        variant="default"
+                                        leftSection={<TbPencil size={16} />}
+                                        loading={editPreset.isPending}
+                                        disabled={upload.isPending || remove.isPending}
+                                        onClick={() => {
+                                            if (selectedFile) setEditingFile(selectedFile)
+                                            else if (preset) editPreset.mutate(preset)
+                                        }}
+                                    >
+                                        {t(preset ? 'geofiles.edit-preset' : 'geofiles.edit-file')}
+                                    </Button>
+                                    <Button
                                         leftSection={<TbPlus size={16} />}
                                         disabled={
                                             !!selectedFile &&
@@ -445,11 +511,16 @@ export function GeofilesPanel({
                                                         SHA-256: {selectedFile.sha256}
                                                     </Text>
                                                     <GeofileRefreshSettings
-                                                        key={selectedFile.id}
+                                                        key={JSON.stringify([
+                                                            selectedFile.id,
+                                                            selectedFile.refresh?.sourceUrl,
+                                                            selectedFile.refresh?.enabled,
+                                                            selectedFile.refresh?.intervalSeconds
+                                                        ])}
                                                         id={selectedFile.id}
                                                         refresh={selectedFile.refresh}
                                                         onUpdated={() =>
-                                                            void client.invalidateQueries({
+                                                            client.invalidateQueries({
                                                                 queryKey
                                                             })
                                                         }
@@ -728,6 +799,15 @@ export function GeofilesPanel({
                                         />
                                     </div>
                                     <Group justify="flex-end" className={styles.selectionActions}>
+                                        {item && (
+                                            <Button
+                                                variant="default"
+                                                leftSection={<TbPencil size={16} />}
+                                                onClick={() => setEditingFile(item)}
+                                            >
+                                                {t('geofiles.edit-file')}
+                                            </Button>
+                                        )}
                                         <Button
                                             color="red"
                                             variant="subtle"
@@ -786,6 +866,30 @@ export function GeofilesPanel({
                     </Accordion.Panel>
                 </Accordion.Item>
             </Accordion>
+            <GeofileAddressRules
+                config={config}
+                format={format}
+                getValue={getValue}
+                onChange={onChange}
+            />
+            {editingFile && (
+                <GeofileEditorModal
+                    key={editingFile.id}
+                    file={editingFile}
+                    onClose={() => setEditingFile(null)}
+                    onSaved={savedFile}
+                    getCopySelections={() => {
+                        const references: Reference[] =
+                            readClientTemplate(getValue(), format).remnacust?.geofiles ?? []
+                        return references
+                            .filter((reference) => reference.id === editingFile.id)
+                            .map((reference) => ({
+                                format,
+                                categories: [...(reference.categories ?? [])]
+                            }))
+                    }}
+                />
+            )}
             {existingUrls.length > 0 && (
                 <Card p="md" className={styles.card}>
                     <Stack gap="sm">

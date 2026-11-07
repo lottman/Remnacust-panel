@@ -45,6 +45,7 @@ import {
 } from './autoselect-model'
 import styles from './autoselect-panel.module.css'
 import { defaultAutoselectSources, xrayPoolPreview } from './autoselect-sources'
+import { GeofileAddressRules } from './geofile-address-rules-panel'
 import { PriorityOrder } from './priority-order'
 import { LegacyAssignments, TemplateAssignmentPanel } from './template-assignment-panel'
 import { TemplateChanges } from './template-changes'
@@ -992,6 +993,12 @@ export function AutoselectPanel({
                         </Accordion.Panel>
                     </Accordion.Item>
                 </Accordion>
+                <GeofileAddressRules
+                    config={config}
+                    format="XRAY_JSON"
+                    getValue={() => text}
+                    onChange={onChange}
+                />
             </Stack>
             <TemplateChanges changes={changes} />
         </div>

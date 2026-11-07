@@ -9,10 +9,11 @@ export interface DatRules {
 export function datCategories(data: Buffer): string[] {
     const codes: string[] = [];
     for (const entry of geofileFields(data)) {
-        if (!Buffer.isBuffer(entry.value)) continue;
+        if (entry.field !== 1 || !Buffer.isBuffer(entry.value)) continue;
+        let code: Buffer | undefined;
         for (const field of geofileFields(entry.value))
-            if (field.field === 1 && Buffer.isBuffer(field.value))
-                codes.push(field.value.toString('utf8').toLowerCase());
+            if (field.field === 1 && Buffer.isBuffer(field.value)) code = field.value;
+        if (code) codes.push(code.toString('utf8').toLowerCase());
     }
     return [...new Set(codes)].sort();
 }
@@ -41,12 +42,12 @@ export function compileDat(
     let bytes = 0;
     let matched = false;
     for (const entry of geofileFields(data)) {
-        if (!Buffer.isBuffer(entry.value)) continue;
+        if (entry.field !== 1 || !Buffer.isBuffer(entry.value)) continue;
         let code: number | Buffer | undefined;
         let reverse = false;
         for (const field of geofileFields(entry.value)) {
             if (field.field === 1) code = field.value;
-            if (field.field === 3 && field.value !== 0) reverse = true;
+            if (field.field === 3 && typeof field.value === 'number') reverse = field.value !== 0;
         }
         if (!Buffer.isBuffer(code)) continue;
         const requests = [...wanted].filter(
@@ -62,8 +63,8 @@ export function compileDat(
             if (kind === 'geoip') {
                 if (requests.some((value) => value.includes('@')))
                     throw new Error('geofile-categories');
-                const ip = parts.find((field) => field.field === 1)?.value;
-                const prefix = parts.find((field) => field.field === 2)?.value ?? 0;
+                const ip = parts.findLast((field) => field.field === 1)?.value;
+                const prefix = parts.findLast((field) => field.field === 2)?.value ?? 0;
                 if (!Buffer.isBuffer(ip)) throw new Error('geofile-dat');
                 const address =
                     ip.length === 4
@@ -81,14 +82,10 @@ export function compileDat(
                     .filter((field) => field.field === 3)
                     .flatMap((field) => {
                         if (!Buffer.isBuffer(field.value)) return [];
-                        return [...geofileFields(field.value)]
-                            .filter(
-                                (attribute) =>
-                                    attribute.field === 1 && Buffer.isBuffer(attribute.value),
-                            )
-                            .map((attribute) =>
-                                (attribute.value as Buffer).toString('utf8').toLowerCase(),
-                            );
+                        const key = [...geofileFields(field.value)].findLast(
+                            (attribute) => attribute.field === 1,
+                        )?.value;
+                        return Buffer.isBuffer(key) ? [key.toString('utf8')] : [];
                     });
                 if (
                     !requests.some(
@@ -96,10 +93,10 @@ export function compileDat(
                     )
                 )
                     continue;
-                const value = parts.find((field) => field.field === 2)?.value;
+                const value = parts.findLast((field) => field.field === 2)?.value;
                 if (!Buffer.isBuffer(value)) throw new Error('geofile-dat');
                 const domain = value.toString('utf8');
-                const type = Number(parts.find((field) => field.field === 1)?.value ?? 0);
+                const type = Number(parts.findLast((field) => field.field === 1)?.value ?? 0);
                 matched = true;
                 if (validateOnly) continue;
                 // Categories form a union in one route; identical matchers add no coverage.

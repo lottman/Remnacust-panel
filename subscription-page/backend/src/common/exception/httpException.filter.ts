@@ -28,12 +28,12 @@ export class HttpExceptionFilter implements ExceptionFilter {
         this.logger.error({
             timestamp: new Date().toISOString(),
             code: errorCode,
-            path: request.url,
+            path: '/subscription',
             message: errorMessage,
         });
         response.status(status).json({
             timestamp: new Date().toISOString(),
-            path: request.url,
+            path: '/subscription',
             message: errorMessage,
             errorCode,
         });

@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 
 import { HttpExceptionWithErrorCodeType } from './http-exeception-with-error-code.type';
+import { httpLogPath } from '../utils/http-log-path';
 
 @Catch(HttpExceptionWithErrorCodeType, ZodValidationException)
 export class PublicHttpExceptionFilter implements ExceptionFilter {
@@ -45,13 +46,13 @@ export class PublicHttpExceptionFilter implements ExceptionFilter {
         this.logger.error({
             timestamp: new Date().toISOString(),
             code: errorCode,
-            path: request.url,
+            path: httpLogPath(request.url),
             message: errorMessage,
         });
 
         response.status(status).json({
             timestamp: new Date().toISOString(),
-            path: request.url,
+            path: httpLogPath(request.url),
             statusCode: HttpStatus.FORBIDDEN,
             message: 'Forbidden',
         });

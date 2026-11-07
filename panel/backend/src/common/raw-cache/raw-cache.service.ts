@@ -1,8 +1,10 @@
-import { Inject } from '@nestjs/common';
 import Redis, { ChainableCommander, ScanStream } from 'ioredis';
+import { createHash } from 'node:crypto';
 
+import { Inject } from '@nestjs/common';
 import { Injectable, Logger } from '@nestjs/common';
 
+import { PrismaService } from '../database/prisma.service';
 import { MemoryCacheService } from './memory-cache.service';
 import { NODE_INCIDENT_SCRIPT, ACK_NODE_INCIDENT_SCRIPT } from './node-incident';
 import { ROUTING_PROFILE_REVISION_SCRIPT } from './routing-profile-revision';
@@ -10,11 +12,86 @@ import { ROUTING_PROFILE_REVISION_SCRIPT } from './routing-profile-revision';
 @Injectable()
 export class RawCacheService {
     private readonly logger = new Logger(RawCacheService.name);
+    private templateRevisionRead?: Promise<string>;
 
     constructor(
         @Inject('RC_REDIS_CLIENT') private readonly redis: Redis,
         private readonly memoryCacheService: MemoryCacheService,
+        private readonly prisma: PrismaService,
     ) {}
+
+    private templateCacheKey(key: string): string {
+        return `remnacust:template-cache:v1:${createHash('sha256').update(key).digest('hex')}`;
+    }
+
+    private async templateCacheOperation<T>(operation: Promise<T>): Promise<T> {
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        try {
+            return await Promise.race([
+                operation,
+                new Promise<never>((_resolve, reject) => {
+                    timer = setTimeout(() => reject(Error('Template cache timeout')), 250);
+                }),
+            ]);
+        } finally {
+            if (timer) clearTimeout(timer);
+        }
+    }
+
+    async templateGeneration(): Promise<string> {
+        if (this.templateRevisionRead) return this.templateRevisionRead;
+        const pending = this.prisma.$queryRaw<{ revision: string }[]>`
+            SELECT replace(revision::text, '-', '') AS revision
+            FROM public.xera_template_cache_revision WHERE id = 1
+        `
+            .then((rows) => {
+                const generation = rows[0]?.revision;
+                if (!generation || !/^[a-f0-9]{32}$/.test(generation))
+                    throw Error('Invalid template cache generation');
+                return generation;
+            })
+            .finally(() => {
+                if (this.templateRevisionRead === pending) this.templateRevisionRead = undefined;
+            });
+        this.templateRevisionRead = pending;
+        return pending;
+    }
+
+    async templateSnapshot<T>(key: string): Promise<{ generation: string; value: T | null }> {
+        const generation = await this.templateGeneration();
+        const dataKey = `${this.templateCacheKey(key)}:${generation}`;
+        if (generation && /^[a-f0-9]{32}$/.test(generation)) {
+            const cached = this.memoryCacheService.get<T>(dataKey);
+            if (cached !== undefined) return { generation, value: cached };
+        }
+        const raw = await this.templateCacheOperation(this.redis.get(dataKey));
+        const item = raw ? (JSON.parse(raw) as { generation?: string; value?: T }) : null;
+        const value = item?.generation === generation ? (item.value ?? null) : null;
+        if (value !== null) this.memoryCacheService.set(dataKey, value as object);
+        return { generation, value };
+    }
+
+    async setTemplateSnapshot(key: string, generation: string, value: unknown): Promise<boolean> {
+        if (!/^[a-f0-9]{32}$/.test(generation)) throw Error('Invalid template cache generation');
+        if ((await this.templateGeneration()) !== generation) return false;
+        await this.templateCacheOperation(
+            this.redis.set(
+                `${this.templateCacheKey(key)}:${generation}`,
+                JSON.stringify({ generation, value }),
+                'EX',
+                3600,
+            ),
+        );
+        return true;
+    }
+
+    async invalidateTemplateSnapshots(): Promise<void> {
+        try {
+            await this.templateCacheOperation(this.memoryCacheService.invalidate('*'));
+        } catch {
+            this.logger.warn('Template cache cleanup deferred');
+        }
+    }
 
     async routingProfileRevision(
         key: string,
@@ -363,13 +440,22 @@ export class RawCacheService {
             fetch: (missed: string[]) => Promise<TRow[]>;
             rowId: (row: TRow) => string;
             toValue: (row: TRow) => TVal;
+            templateGeneration?: boolean;
         },
     ): Promise<Map<string, TVal>> {
         if (ids.length === 0) return new Map();
 
         let cached: ({ v: TVal } | null)[];
+        let cacheKey = opts.cacheKey;
+        let writable = !opts.templateGeneration;
         try {
-            cached = await this.mget<{ v: TVal }>(ids.map(opts.cacheKey));
+            if (opts.templateGeneration) {
+                const generation = await this.templateGeneration();
+                cacheKey = (id) => `${opts.cacheKey(id)}:generation:${generation}`;
+                writable = true;
+            }
+            const read = this.mget<{ v: TVal }>(ids.map(cacheKey));
+            cached = opts.templateGeneration ? await this.templateCacheOperation(read) : await read;
         } catch (error) {
             this.logger.warn(
                 `Configuration cache read failed: ${error instanceof Error ? error.name : 'unknown'}`,
@@ -389,13 +475,17 @@ export class RawCacheService {
         if (missed.length) {
             const rows = await opts.fetch(missed);
             try {
-                await this.setMany(
-                    rows.map((r) => ({
-                        key: opts.cacheKey(opts.rowId(r)),
-                        value: { v: opts.toValue(r) },
-                        ttlSeconds: opts.ttlSeconds,
-                    })),
-                );
+                if (writable) {
+                    const write = this.setMany(
+                        rows.map((r) => ({
+                            key: cacheKey(opts.rowId(r)),
+                            value: { v: opts.toValue(r) },
+                            ttlSeconds: opts.ttlSeconds,
+                        })),
+                    );
+                    if (opts.templateGeneration) await this.templateCacheOperation(write);
+                    else await write;
+                }
             } catch (error) {
                 this.logger.warn(
                     `Configuration cache write failed: ${error instanceof Error ? error.name : 'unknown'}`,

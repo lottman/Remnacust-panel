@@ -49,19 +49,19 @@ const additions = [
         [
             [
                 'Когда приложение скачивает geofiles',
-                "Панель проверяет размер каждого профиля с учётом разворачивания списков и форматирования в приложении. Небольшие наборы встроены в правила; большие Happ/INCY получают как DAT. Нужна JSON-подписка: включите «Отдавать JSON на базовом пути подписки» либо используйте /json. Сохраните шаблон и обновите подписку."
+                'Панель проверяет размер каждого профиля с учётом разворачивания списков и форматирования в приложении. Небольшие наборы встроены в правила; большие Happ/INCY получают как DAT. Нужна JSON-подписка: включите «Отдавать JSON на базовом пути подписки» либо используйте /json. Сохраните шаблон и обновите подписку.'
             ],
             [
                 'When the app downloads geofiles',
-                "The panel measures each profile including list expansion and client formatting. Small datasets are inline rules; Happ/INCY download large datasets as DAT. A JSON subscription is required: enable “Serve JSON at the base subscription path” or use /json. Save the template and refresh the subscription."
+                'The panel measures each profile including list expansion and client formatting. Small datasets are inline rules; Happ/INCY download large datasets as DAT. A JSON subscription is required: enable “Serve JSON at the base subscription path” or use /json. Save the template and refresh the subscription.'
             ],
             [
                 'زمان دانلود فایل‌های جغرافیایی در برنامه',
-                "پنل اندازه هر نمایه را با بازشدن فهرست‌ها و قالب‌بندی برنامه بررسی می‌کند. مجموعه کوچک داخل قوانین است؛ Happ/INCY مجموعه بزرگ را به‌صورت DAT دانلود می‌کنند. اشتراک JSON لازم است: «ارائه JSON در مسیر پایه اشتراک» را فعال کنید یا /json را به‌کار ببرید. قالب را ذخیره و اشتراک را به‌روز کنید."
+                'پنل اندازه هر نمایه را با بازشدن فهرست‌ها و قالب‌بندی برنامه بررسی می‌کند. مجموعه کوچک داخل قوانین است؛ Happ/INCY مجموعه بزرگ را به‌صورت DAT دانلود می‌کنند. اشتراک JSON لازم است: «ارائه JSON در مسیر پایه اشتراک» را فعال کنید یا /json را به‌کار ببرید. قالب را ذخیره و اشتراک را به‌روز کنید.'
             ],
             [
                 '应用何时下载地理文件',
-                '默认将 GeoIP/GeoSite DAT 转换为完整配置中的内嵌规则。新开关可让支持的应用下载转换后的规则集；Xray JSON 为 Happ 和 INCY 提供 DAT 首次下载配置，其他客户端使用内嵌规则。sing-box 原生 JSON/SRS 和 Mihomo/Clash/Stash YAML/text 使用应用格式。需要完整 JSON/YAML 订阅；单独的 VLESS 链接无法携带路由。客户端间隔和服务端自动下载分别设置，详见下文。'
+                '面板按每个配置计算大小，包含列表展开和客户端格式化开销。小型规则集内嵌，Happ/INCY 下载大型 DAT。需要 JSON 订阅：启用“在订阅基础路径提供 JSON”或使用 /json。保存模板并刷新订阅。'
             ]
         ]
     ],
@@ -71,7 +71,7 @@ const additions = [
         [
             [
                 'Массовые действия и поиск стран',
-                "面板按每个配置计算大小，包含列表展开和客户端格式化开销。小型规则集内嵌，Happ/INCY 下载大型 DAT。需要 JSON 订阅：启用“在订阅基础路径提供 JSON”或使用 /json。保存模板并刷新订阅。"
+                'Включение, отключение и удаление хостов завершаются после сохранения в БД; правила нод синхронизируются отдельно. Карточка перечитывает данные при открытии и сохраняет только изменённые поля. Поиск флагов понимает названия стран на всех четырёх языках и ISO-коды.'
             ],
             [
                 'Bulk actions and country search',

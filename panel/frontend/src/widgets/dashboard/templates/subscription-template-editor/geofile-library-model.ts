@@ -6,7 +6,8 @@ export interface LibraryGeofile {
     name: string
     kind: string
     size: number
-    refresh?: { sourceUrl: string }
+    categories?: string[]
+    refresh?: { sourceUrl?: string }
 }
 
 export function compatibleGeofile(kind: string, format: ClientFormat): boolean {
@@ -17,6 +18,59 @@ export function compatibleGeofile(kind: string, format: ClientFormat): boolean {
             : format !== 'XRAY_JSON' &&
               kind.startsWith('mihomo-') &&
               (format === 'MIHOMO' || !kind.startsWith('mihomo-text-')))
+    )
+}
+
+export function replaceLibraryGeofile(
+    text: string,
+    format: ClientFormat,
+    sourceId: string,
+    file: LibraryGeofile,
+    validatedSelections?: string[][]
+): string {
+    if (!compatibleGeofile(file.kind, format)) throw new Error('incompatible-geofile')
+    const current = readClientTemplate(text, format)
+    const refs = current.remnacust?.geofiles ?? []
+    if (!refs.some((ref: { id: string }) => ref.id === sourceId)) return text
+    if (
+        !validatedSelections &&
+        refs.some(
+            (ref: { id: string; categories?: string[] }) =>
+                ref.id === sourceId && ref.categories?.some((category) => category.includes('@'))
+        )
+    )
+        throw new Error('geofile-copy-selection')
+    const selectionKey = (categories: string[]) =>
+        JSON.stringify([...new Set(categories.map((category) => category.toLowerCase()))].sort())
+    if (
+        validatedSelections &&
+        refs.some(
+            (ref: { id: string; categories?: string[] }) =>
+                ref.id === sourceId &&
+                !validatedSelections.some(
+                    (selection) => selectionKey(selection) === selectionKey(ref.categories ?? [])
+                )
+        )
+    )
+        throw new Error('geofile-copy-selection')
+    if (['geoip', 'geosite'].includes(file.kind)) {
+        const available = new Set((file.categories ?? []).map((category) => category.toLowerCase()))
+        if (
+            refs.some(
+                (ref: { id: string; categories?: string[] }) =>
+                    ref.id === sourceId &&
+                    ref.categories?.some(
+                        (category) => !available.has(category.toLowerCase().split('@')[0])
+                    )
+            )
+        )
+            throw new Error('geofile-copy-selection')
+    }
+    return editClientTemplate(
+        text,
+        format,
+        ['remnacust', 'geofiles'],
+        refs.map((ref: { id: string }) => (ref.id === sourceId ? { ...ref, id: file.id } : ref))
     )
 }
 

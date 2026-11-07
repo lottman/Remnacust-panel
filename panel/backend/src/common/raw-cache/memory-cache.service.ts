@@ -1,7 +1,7 @@
-import { Inject } from '@nestjs/common';
 import Redis from 'ioredis';
 import { LRUCache } from 'lru-cache';
 
+import { Inject } from '@nestjs/common';
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 
 @Injectable()
@@ -54,7 +54,8 @@ export class MemoryCacheService implements OnModuleInit, OnModuleDestroy {
     }
 
     async invalidate(key: string): Promise<void> {
-        this.cache.delete(key);
+        if (key === '*') this.cache.clear();
+        else this.cache.delete(key);
         await this.redis.publish(MemoryCacheService.CHANNEL, key);
     }
 

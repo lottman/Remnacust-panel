@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next'
 import { instance } from '@shared/api'
 
 export interface GeofileRefresh {
-    sourceUrl: string
+    sourceUrl?: string
     enabled: boolean
     intervalSeconds: number
     lastSuccessAt?: string
@@ -22,7 +22,7 @@ export function GeofileRefreshSettings({
 }: {
     id: string
     refresh?: GeofileRefresh
-    onUpdated: () => void
+    onUpdated: () => void | Promise<void>
 }) {
     const { t, i18n } = useTranslation()
     const [source, setSource] = useState(refresh?.sourceUrl ?? '')
@@ -49,9 +49,9 @@ export function GeofileRefreshSettings({
                     { timeout: 45000 }
                 )
             ).data.response,
-        onSuccess: (result) => {
+        onSuccess: async (result) => {
             setDeferred(!result.updated)
-            onUpdated()
+            await onUpdated()
         }
     })
     const busy = configure.isPending || update.isPending

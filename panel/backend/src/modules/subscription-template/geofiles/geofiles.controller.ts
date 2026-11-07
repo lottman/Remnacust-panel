@@ -1,9 +1,11 @@
+import type { GeofileEdit } from './geofile-editor';
 import type { Request, Response } from 'express';
 
 import { createHash } from 'node:crypto';
 
 import {
     Body,
+    BadRequestException,
     Controller,
     Delete,
     Get,
@@ -11,6 +13,7 @@ import {
     Param,
     Patch,
     Post,
+    Put,
     Query,
     Req,
     Res,
@@ -26,6 +29,8 @@ import { RolesGuard } from '@common/guards/roles';
 import { ROLE } from '@libs/contracts/constants';
 
 import { MAX_GEOFILE_BYTES } from './download-geofile';
+import { parseGeofileSelections } from './geofile-editor';
+import { readGeofileMultipart } from './geofile-multipart';
 import { GeofilesService } from './geofiles.service';
 
 @ApiExcludeController()
@@ -37,8 +42,105 @@ export class GeofilesController {
 
     @AdminOnlyEndpoint()
     @Get()
-    async list() {
+    async list(@Res({ passthrough: true }) response: Response) {
+        response.set('Cache-Control', 'no-store');
         return { response: await this.files.list() };
+    }
+
+    private async readData(request: Request): Promise<Buffer> {
+        if (
+            request.headers['content-type']?.split(';')[0].trim().toLowerCase() !==
+            'application/octet-stream'
+        )
+            throw Error('geofile-raw-content-type');
+        const chunks: Buffer[] = [];
+        let size = 0;
+        const timer = setTimeout(() => request.destroy(new Error('geofile-timeout')), 30_000);
+        try {
+            if (Number(request.headers['content-length'] ?? 0) > MAX_GEOFILE_BYTES)
+                throw Error('geofile-size');
+            for await (const part of request) {
+                const chunk = Buffer.isBuffer(part) ? part : Buffer.from(part);
+                size += chunk.length;
+                if (size > MAX_GEOFILE_BYTES) throw Error('geofile-size');
+                chunks.push(chunk);
+            }
+            return Buffer.concat(chunks, size);
+        } finally {
+            clearTimeout(timer);
+        }
+    }
+
+    @AdminOnlyEndpoint()
+    @Get(':id/content')
+    async content(
+        @Param('id') id: string,
+        @Query() query: { category?: string; page?: string; limit?: string; search?: string },
+        @Res({ passthrough: true }) response: Response,
+    ) {
+        response.set('Cache-Control', 'no-store');
+        return { response: await this.files.content(id, query) };
+    }
+
+    @AdminOnlyEndpoint()
+    @Post(':id/copy')
+    async copy(@Param('id') id: string, @Body() body: GeofileEdit) {
+        return { response: await this.files.editContent(id, body, true) };
+    }
+
+    @AdminOnlyEndpoint()
+    @Patch(':id/content')
+    async edit(@Param('id') id: string, @Body() body: GeofileEdit) {
+        return { response: await this.files.editContent(id, body) };
+    }
+
+    private replacementSha(request: Request, sha?: string) {
+        const header = request.headers['if-match'];
+        if (typeof header === 'string') return header.replace(/^"([a-f0-9]{64})"$/, '$1');
+        return sha;
+    }
+
+    @AdminOnlyEndpoint()
+    @Put(':id/data')
+    async replace(@Param('id') id: string, @Req() request: Request, @Query('sha256') sha: string) {
+        return {
+            response: await this.files.replaceData(id, this.replacementSha(request, sha), () =>
+                this.readData(request),
+            ),
+        };
+    }
+
+    @AdminOnlyEndpoint()
+    @Post(':id/copy-data')
+    async copyData(
+        @Param('id') id: string,
+        @Req() request: Request,
+        @Query('name') name: string,
+        @Query('sha256') sha: string,
+        @Query('selections') selected: string,
+    ) {
+        if (/^multipart\/form-data\s*;/i.test(request.headers['content-type'] ?? '')) {
+            return {
+                response: await this.files.copyData(id, this.replacementSha(request, sha), () =>
+                    readGeofileMultipart(request),
+                ),
+            };
+        }
+        let selections;
+        try {
+            selections = parseGeofileSelections(selected, true);
+        } catch {
+            throw new BadRequestException('geofile-copy-selections');
+        }
+        return {
+            response: await this.files.replaceData(
+                id,
+                this.replacementSha(request, sha),
+                () => this.readData(request),
+                name ?? '',
+                selections,
+            ),
+        };
     }
 
     @AdminOnlyEndpoint()

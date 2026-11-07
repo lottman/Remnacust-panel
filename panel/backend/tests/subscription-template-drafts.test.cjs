@@ -63,7 +63,7 @@ function fixture(type = 'XRAY_JSON') {
     };
     const service = new SubscriptionTemplateService(
         repository,
-        { del: async (key) => invalidated.push(key), get: async () => null, set: async () => {} },
+        { del: async (key) => invalidated.push(key), templateSnapshot: async () => ({ generation: 'a'.repeat(32), value: null }), setTemplateSnapshot: async () => true, invalidateTemplateSnapshots: async () => {} },
         geofiles,
     );
     service.logger = { error() {} };

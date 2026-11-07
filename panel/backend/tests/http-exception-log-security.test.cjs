@@ -46,7 +46,7 @@ for (const url of [
     '/api/sub/fixture-subscription-key/info?token=fixture-query-token',
     '/API/SUB/fixture-subscription-key/device/fixture-device-token/json',
 ]) {
-    test(`application error logs redact subscription credentials while preserving error.path: ${url}`, () => {
+    test(`application logs and response paths redact subscription credentials: ${url}`, () => {
         const { records, result } = runFilter(
             new HttpExceptionWithErrorCodeType('Fixture failure', 'FIXTURE_ERROR', 500),
             url,
@@ -55,7 +55,7 @@ for (const url of [
         assert.equal(records[0].path, '/api/sub/[redacted]');
         assert.equal(JSON.stringify(records).includes('fixture-'), false);
         assert.equal(result.status, 500);
-        assert.equal(result.body.path, url);
+        assert.equal(result.body.path, '/api/sub/[redacted]');
         assert.equal(result.body.errorCode, 'FIXTURE_ERROR');
         assert.equal(result.body.message, 'Fixture failure');
     });
@@ -85,7 +85,7 @@ test('other API logs retain useful routes but omit query credentials', () => {
     );
     assert.equal(records[0].path, '/api/users');
     assert.equal(JSON.stringify(records).includes('fixture-query-token'), false);
-    assert.equal(result.body.path, url);
+    assert.equal(result.body.path, '/api/users');
 });
 
 test('not-found logging suppression and forbidden response behavior remain unchanged', () => {
@@ -96,7 +96,7 @@ test('not-found logging suppression and forbidden response behavior remain uncha
     );
     assert.equal(missing.records.length, 0);
     assert.equal(missing.result.status, 404);
-    assert.equal(missing.result.body.path, url);
+    assert.equal(missing.result.body.path, '/api/sub/[redacted]');
     const forbidden = runFilter(
         new HttpExceptionWithErrorCodeType('Private detail', 'FIXTURE_FORBIDDEN', 403),
         url,
@@ -106,5 +106,5 @@ test('not-found logging suppression and forbidden response behavior remain uncha
     assert.equal(forbidden.result.status, 403);
     assert.equal(forbidden.result.body.message, 'Forbidden');
     assert.equal(forbidden.result.body.errorCode, 'E000');
-    assert.equal(forbidden.result.body.path, url);
+    assert.equal(forbidden.result.body.path, '/api/sub/[redacted]');
 });

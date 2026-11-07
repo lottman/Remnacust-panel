@@ -31,11 +31,11 @@ for (const type of ['SINGBOX', 'MIHOMO', 'STASH', 'CLASH', 'XRAY_JSON']) {
                     },
                 },
                 {
-                    get: async () => {
+                    templateSnapshot: async () => {
                         if (failure !== 'set') throw new Error('fixture cache read');
-                        return null;
+                        return { generation: 'a'.repeat(32), value: null };
                     },
-                    set: async () => {
+                    setTemplateSnapshot: async () => {
                         if (failure !== 'get') throw new Error('fixture cache write');
                     },
                 },
@@ -63,7 +63,7 @@ test('cache hits keep the normal fast path; repository failures and missing temp
             getTemplateByNameAndTypeOrGetDefault: async () =>
                 assert.fail('unexpected database access'),
         },
-        { get: async () => cached },
+        { templateSnapshot: async () => ({ generation: 'a'.repeat(32), value: cached }) },
     );
     assert.equal(await hit.getCachedTemplateByType('SINGBOX'), cached);
     for (const repository of [
@@ -75,10 +75,11 @@ test('cache hits keep the normal fast path; repository failures and missing temp
         const templates = templateService(
             { getTemplateByNameAndTypeOrGetDefault: repository },
             {
-                get: async () => {
+                templateSnapshot: async () => {
                     throw new Error('fixture cache');
                 },
-                set: async () => assert.fail('failed repository result must not be cached'),
+                setTemplateSnapshot: async () =>
+                    assert.fail('failed repository result must not be cached'),
             },
         );
         await assert.rejects(
@@ -95,7 +96,10 @@ test('repository errors become existing HTTP 503 responses for every template ge
                 throw new Error('fixture database unavailable');
             },
         },
-        { get: async () => null },
+        {
+            templateSnapshot: async () => ({ generation: 'a'.repeat(32), value: null }),
+            setTemplateSnapshot: async () => true,
+        },
     );
     const { service, settings } = subscriptionService(templates);
     const { app, base } = await httpController(service, settings);
@@ -124,4 +128,102 @@ test('native serialization failures reject rather than returning empty strings',
     await assert.rejects(sing.generateConfig([]), /circular/i);
     await assert.rejects(mihomo.generateConfig([]));
     await assert.rejects(clash.generateConfig([]));
+});
+
+test('raw template cold burst is singleflight per shared generation, while every delivery stays independent', async () => {
+    let generation = 'a'.repeat(32),
+        cached = null,
+        reads = 0,
+        prepared = 0,
+        fills = 0;
+    const service = templateService(
+        {
+            getTemplateByNameAndTypeOrGetDefault: async () => {
+                reads++;
+                await new Promise((r) => setTimeout(r, 10));
+                return {
+                    templateType: 'SINGBOX',
+                    templateJson: { remnacust: {}, marker: generation },
+                };
+            },
+        },
+        {
+            templateSnapshot: async () => ({ generation, value: cached }),
+            setTemplateSnapshot: async (key, expected, value) => {
+                fills++;
+                if (generation !== expected) return false;
+                cached = value;
+                return true;
+            },
+        },
+    );
+    service.prepareClientTemplate = async (raw, type, delivery) => {
+        prepared++;
+        return { raw, delivery };
+    };
+    const deliveries = Array.from({ length: 100 }, () => ({}));
+    const cold = await Promise.all(
+        deliveries.map((delivery) => service.getCachedTemplateByType('SINGBOX', 'Saved', delivery)),
+    );
+    assert.equal(reads, 1);
+    assert.equal(fills, 1);
+    assert.equal(prepared, 100);
+    cold.forEach((result, index) => assert.equal(result.delivery, deliveries[index]));
+    await Promise.all(
+        deliveries.map((delivery) => service.getCachedTemplateByType('SINGBOX', 'Saved', delivery)),
+    );
+    assert.equal(reads, 1);
+    assert.equal(prepared, 200);
+    generation = 'b'.repeat(32);
+    cached = null;
+    await Promise.all(
+        deliveries.map((delivery) => service.getCachedTemplateByType('SINGBOX', 'Saved', delivery)),
+    );
+    assert.equal(reads, 2);
+    assert.equal(prepared, 300);
+    assert.equal(service.templateLoads.size, 0);
+});
+
+test('raw flight failures retry, Redis-down bypasses coalescing, and changed generation never joins an old flight', async () => {
+    let generation = 'a'.repeat(32),
+        fail = true,
+        down = false,
+        reads = 0;
+    const service = templateService(
+        {
+            getTemplateByNameAndTypeOrGetDefault: async () => {
+                reads++;
+                await new Promise((r) => setTimeout(r, 10));
+                if (fail) throw Error('fixture database');
+                return { templateType: 'SINGBOX', templateJson: { marker: 'fresh' } };
+            },
+        },
+        {
+            templateSnapshot: async () => {
+                if (down) throw Error('redis');
+                return { generation, value: null };
+            },
+            setTemplateSnapshot: async () => true,
+        },
+    );
+    const failures = await Promise.allSettled(
+        Array.from({ length: 100 }, () => service.getCachedTemplateByType('SINGBOX')),
+    );
+    assert(failures.every((result) => result.status === 'rejected'));
+    assert.equal(reads, 1);
+    assert.equal(service.templateLoads.size, 0);
+    fail = false;
+    await service.getCachedTemplateByType('SINGBOX');
+    assert.equal(reads, 2);
+    down = true;
+    await Promise.all(Array.from({ length: 5 }, () => service.getCachedTemplateByType('SINGBOX')));
+    assert.equal(reads, 7);
+    down = false;
+    const old = service.getCachedTemplateByType('SINGBOX');
+    await new Promise((r) => setImmediate(r));
+    generation = 'b'.repeat(32);
+    const fresh = service.getCachedTemplateByType('SINGBOX');
+    await Promise.all([old, fresh]);
+    assert.equal(reads, 9);
+    assert.equal(service.templateLoads.size, 0);
 });

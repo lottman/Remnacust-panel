@@ -32,9 +32,11 @@ Keep SSH reachable on your configured port. Do not expose PostgreSQL or Valkey p
 ## Install prebuilt images
 
 ```bash
-curl -fsSL --proto '=https' --proto-redir '=https' https://github.com/lottman/Remnacust-installer/releases/download/v1.2.138/installer.sh -o installer.sh
-sudo bash installer.sh install-panel --version 1.2.138
+curl -fsSLo installer.sh https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh
+sudo bash installer.sh install-panel
 ```
+
+The command downloads the latest stable installer. Press Enter at the version prompt to select Latest; `--version` is only needed to pin a specific release.
 
 Select a domain and HTTPS; the installer offers the subscription page separately. Create an administrator after startup. Main commands:
 

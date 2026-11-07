@@ -15,9 +15,11 @@ For a standalone page, **1 CPU core and 1 GiB RAM** is a reasonable starting poi
 You need a domain, an HTTPS proxy and server-to-server access to the panel API. Public HTTPS uses TCP 443; TCP 80 is needed for HTTP/HTTP-01 if selected. Keep the default application port 3010 on loopback or a private network.
 
 ```bash
-curl -fsSL --proto '=https' --proto-redir '=https' https://github.com/lottman/Remnacust-installer/releases/download/v1.2.138/installer.sh -o installer.sh
-sudo bash installer.sh install-subscription-page --version 1.2.138
+curl -fsSLo installer.sh https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh
+sudo bash installer.sh install-subscription-page
 ```
+
+The command downloads the latest stable installer. Press Enter at the version prompt to select Latest; `--version` is only needed to pin a specific release.
 
 Enter the panel backend URL and a restricted API token. Token input is hidden; automation can use `--panel-token-file /root/subscription-token` with mode `0600`. Do not pass the token value as a command-line argument.
 

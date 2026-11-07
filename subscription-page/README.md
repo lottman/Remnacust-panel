@@ -15,9 +15,11 @@
 Нужны домен, HTTPS proxy и доступ от страницы к API панели. Публичный HTTPS — TCP 443; TCP 80 нужен для HTTP/HTTP-01, если выбран этот способ. Порт приложения 3010 по умолчанию оставляйте на loopback или в приватной сети.
 
 ```bash
-curl -fsSL --proto '=https' --proto-redir '=https' https://github.com/lottman/Remnacust-installer/releases/download/v1.2.138/installer.sh -o installer.sh
-sudo bash installer.sh install-subscription-page --version 1.2.138
+curl -fsSLo installer.sh https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh
+sudo bash installer.sh install-subscription-page
 ```
+
+Команда скачивает последний стабильный установщик. В вопросе о версии нажмите Enter для Latest; `--version` нужен только для выбора конкретного выпуска.
 
 Укажите адрес backend панели и ограниченный API-токен. Токен вводится скрыто; для автоматизации поддерживается `--panel-token-file /root/subscription-token` с правами `0600`. Не передавайте значение токена в командной строке.
 

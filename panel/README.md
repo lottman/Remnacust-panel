@@ -32,9 +32,11 @@
 ## Установка готовых образов
 
 ```bash
-curl -fsSL --proto '=https' --proto-redir '=https' https://github.com/lottman/Remnacust-installer/releases/download/v1.2.138/installer.sh -o installer.sh
-sudo bash installer.sh install-panel --version 1.2.138
+curl -fsSLo installer.sh https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh
+sudo bash installer.sh install-panel
 ```
+
+Команда скачивает последний стабильный установщик. В вопросе о версии нажмите Enter для Latest; `--version` нужен только для выбора конкретного выпуска.
 
 Укажите домен и HTTPS; сайт подписки установщик предлагает отдельно. После запуска создайте администратора. Основные команды:
 

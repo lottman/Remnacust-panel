@@ -58,9 +58,6 @@ samples
 documentation
 schemes
 
-frontend
-
-
 .vscode/settings.json
 
 openapi.json
@@ -71,7 +68,7 @@ openapi.json
 
 prisma/generated/types.ts
 
-frontend/
+/frontend/
 f.json
 
 # Public contracts and schema shipped with this source distribution.

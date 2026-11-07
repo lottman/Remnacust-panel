@@ -33,6 +33,7 @@ export class DeviceAccessService {
     private readonly logger = new Logger(DeviceAccessService.name);
     private readonly secret: string;
     private reconciliation: Promise<void> | null = null;
+    private reconciliationScheduled = false;
 
     constructor(
         config: TypedConfigService,
@@ -76,7 +77,10 @@ export class DeviceAccessService {
     }
 
     public kickReconciliation(): void {
+        if (this.reconciliationScheduled) return;
+        this.reconciliationScheduled = true;
         setImmediate(() => {
+            this.reconciliationScheduled = false;
             void this.reconcilePendingDevices().catch(() =>
                 this.logger.warn('Device reconciliation will retry from the database'),
             );
@@ -101,11 +105,14 @@ export class DeviceAccessService {
                 // Reconcile the current row, not a stale delete event. Registration or an
                 // administrator may have deliberately changed this device in the meantime.
                 const current = await this.devices.checkHwidExists(task.hwid, task.userId);
-                success = await this.syncDevice(
-                    task.userId,
-                    task.hwid,
-                    !current.exists || current.blocked,
-                );
+                const operations = [
+                    this.syncDevice(task.userId, task.hwid, !current.exists || current.blocked),
+                ];
+                if (current.blocked) {
+                    operations.push(this.retireBlockedSharedCredential(task.userId));
+                }
+                const results = await Promise.allSettled(operations);
+                success = results.every((result) => result.status === 'fulfilled' && result.value);
             } catch {
                 this.logger.warn(`Device reconciliation pending for user ${task.userId}`);
             }
@@ -121,29 +128,6 @@ export class DeviceAccessService {
     ): Promise<
         'OK' | 'LEGACY' | 'BLOCKED' | 'LIMIT_REACHED' | 'REGISTRATION_BLOCKED' | 'NODE_ERROR'
     > {
-        // Keep the shared credential during migration so older clients and
-        // temporarily unavailable nodes do not cause a service-wide outage.
-        // A blocked HWID requires strict revocation before any personal key is issued.
-        const hasBlockedDevice = await this.hasBlockedDevice(user.id);
-        const sharedRevoked = hasBlockedDevice
-            ? await this.retireSharedCredential(user.id, user.vlessUuid)
-            : true;
-        if (user.status !== USERS_STATUS.ACTIVE || user.expireAt <= new Date()) {
-            // Resolve the dedicated exception inbounds from the database. Ordinary
-            // inbounds stay revoked; an existing device can still reach renewal hosts.
-            const devices = await this.devices.findByCriteria({ userId: user.id });
-            const revoked = await Promise.all(
-                devices.map((device) => this.syncDevice(user.id, device.hwid, device.blocked)),
-            );
-            if (sharedRevoked && revoked.every(Boolean)) return 'OK';
-            return hasBlockedDevice ? 'NODE_ERROR' : 'LEGACY';
-        }
-        const existing = await this.devices.checkHwidExists(headers.hwid, user.id);
-        if (existing.blocked) {
-            const deviceRevoked = await this.syncDevice(user.id, headers.hwid, true);
-            return sharedRevoked && deviceRevoked ? 'BLOCKED' : 'NODE_ERROR';
-        }
-        if (!sharedRevoked) return 'NODE_ERROR';
         const limit =
             settings.enabled && user.hwidDeviceLimit !== 0
                 ? (user.hwidDeviceLimit ?? settings.fallbackDeviceLimit)
@@ -163,25 +147,21 @@ export class DeviceAccessService {
         if (result.status === 'REGISTRATION_BLOCKED') return 'REGISTRATION_BLOCKED';
         if (result.status === 'LIMIT_REACHED') return 'LIMIT_REACHED';
         if (!result.hwidDevice) return 'NODE_ERROR';
+        if (result.status === 'CREATED') this.kickReconciliation();
         if (result.hwidDevice.blocked) {
-            return (await this.syncDevice(user.id, headers.hwid, true)) ? 'BLOCKED' : 'NODE_ERROR';
+            return 'BLOCKED';
         }
-        // The renderer prepares host-scoped keys separately for the requested hosts.
-        // Confirm the personal grant here without waiting for a fleet policy refresh.
-        if (!(await this.syncDeviceCredential(user.id, headers.hwid, false, false))) {
-            this.logger.error(`Device ${user.id} could not be present on all connected nodes`);
-            return hasBlockedDevice ? 'NODE_ERROR' : 'LEGACY';
-        }
-        // An administrator may have blocked the device while node sync was running.
         const latest = await this.devices.checkHwidExists(headers.hwid, user.id);
-        if (!latest.exists) {
-            await this.syncDevice(user.id, headers.hwid, true);
-            return 'NODE_ERROR';
-        }
-        if (latest.blocked) {
-            return (await this.syncDevice(user.id, headers.hwid, true)) ? 'BLOCKED' : 'NODE_ERROR';
-        }
+        if (!latest.exists) return 'NODE_ERROR';
+        if (latest.blocked) return 'BLOCKED';
         return 'OK';
+    }
+
+    private async retireBlockedSharedCredential(userId: bigint): Promise<boolean> {
+        const user = await this.queryBus.execute(
+            new GetUserByUniqueFieldQuery({ id: userId }, { activeInternalSquads: false }),
+        );
+        return user.isOk && this.retireSharedCredential(userId, user.response.vlessUuid);
     }
 
     public async retireSharedCredential(
@@ -190,15 +170,18 @@ export class DeviceAccessService {
         allowOfflineNodes = false,
     ): Promise<boolean> {
         const { nodes, complete } = await this.getNodeTargets();
-        const results = await Promise.all(
-            nodes.map((node) =>
-                this.axios.deleteUser(
-                    {
-                        username: userId.toString(),
-                        hashData: { vlessUuid },
-                    },
-                    { uuid: node.uuid, address: node.address, port: node.port, proxyUrl: node.proxyUrl },
-                ),
+        const results = await settleConcurrent(nodes, 8, (node) =>
+            this.axios.deleteUser(
+                {
+                    username: userId.toString(),
+                    hashData: { vlessUuid },
+                },
+                {
+                    uuid: node.uuid,
+                    address: node.address,
+                    port: node.port,
+                    proxyUrl: node.proxyUrl,
+                },
             ),
         );
         if (!complete && allowOfflineNodes) {
@@ -206,16 +189,15 @@ export class DeviceAccessService {
                 `Shared credential revocation is pending on offline nodes for user ${userId}`,
             );
         }
-        // Callers issuing credentials still require a complete fleet confirmation. A block
-        // may persist while nodes are offline; their next full start uses the current config.
         return (
             (complete || allowOfflineNodes) &&
             results.every(
                 (result) =>
-                    result.isOk &&
-                    result.response?.success === true &&
+                    result.status === 'fulfilled' &&
+                    result.value.isOk &&
+                    result.value.response?.success === true &&
                     (
-                        result.response as typeof result.response & {
+                        result.value.response as typeof result.value.response & {
                             deviceRevocationSupported?: boolean;
                         }
                     ).deviceRevocationSupported === true,
@@ -260,7 +242,12 @@ export class DeviceAccessService {
                             username: old.username,
                             hashData: { vlessUuid: old.vlessUuid },
                         },
-                        { uuid: node.uuid, address: node.address, port: node.port, proxyUrl: node.proxyUrl },
+                        {
+                            uuid: node.uuid,
+                            address: node.address,
+                            port: node.port,
+                            proxyUrl: node.proxyUrl,
+                        },
                     ),
                 );
             }),
@@ -338,7 +325,12 @@ export class DeviceAccessService {
                         username: credentials.username,
                         hashData: { vlessUuid: credentials.vlessUuid },
                     },
-                    { uuid: node.uuid, address: node.address, port: node.port, proxyUrl: node.proxyUrl },
+                    {
+                        uuid: node.uuid,
+                        address: node.address,
+                        port: node.port,
+                        proxyUrl: node.proxyUrl,
+                    },
                 ),
             );
             if (!complete && allowOfflineNodes) {
@@ -375,7 +367,12 @@ export class DeviceAccessService {
                         username: credentials.username,
                         hashData: { vlessUuid: credentials.vlessUuid },
                     },
-                    { uuid: node.uuid, address: node.address, port: node.port, proxyUrl: node.proxyUrl },
+                    {
+                        uuid: node.uuid,
+                        address: node.address,
+                        port: node.port,
+                        proxyUrl: node.proxyUrl,
+                    },
                 );
                 return (
                     response.isOk &&
@@ -441,7 +438,12 @@ export class DeviceAccessService {
                     hashData: { vlessUuid: credentials.vlessUuid },
                     data,
                 },
-                { uuid: node.uuid, address: node.address, port: node.port, proxyUrl: node.proxyUrl },
+                {
+                    uuid: node.uuid,
+                    address: node.address,
+                    port: node.port,
+                    proxyUrl: node.proxyUrl,
+                },
             );
             return response.isOk && response.response?.success === true;
         });
@@ -469,7 +471,12 @@ export class DeviceAccessService {
                         username: credentials.username,
                         hashData: { vlessUuid: credentials.vlessUuid },
                     },
-                    { uuid: node.uuid, address: node.address, port: node.port, proxyUrl: node.proxyUrl },
+                    {
+                        uuid: node.uuid,
+                        address: node.address,
+                        port: node.port,
+                        proxyUrl: node.proxyUrl,
+                    },
                 ),
             );
             return false;

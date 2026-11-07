@@ -25,7 +25,7 @@ export declare namespace GetHwidRegistrationCommand {
     type Response = z.infer<typeof response>;
 }
 export declare namespace UpdateHwidRegistrationCommand {
-    const url: (userId: number | string) => string;
+    const url: typeof GetHwidRegistrationCommand.url;
     const TSQ_url: string;
     const endpointDetails: import("../../constants").EndpointDetails;
     const RequestParamSchema: z.ZodObject<{

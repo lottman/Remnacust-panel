@@ -16,7 +16,8 @@ import {
     GetInternalSquadsCommand
 } from '@remnawave/backend-contract'
 import ColorHash from 'color-hash'
-import { githubDarkTheme, JsonEditor } from 'json-edit-react'
+import { JsonViewer } from 'json-edit-react'
+import { githubDarkTheme } from '@json-edit-react/themes'
 import { useMemo } from 'react'
 import { PiCheck, PiCopy, PiTag, PiUsers } from 'react-icons/pi'
 import { TbChevronRight, TbCirclesRelation, TbTag } from 'react-icons/tb'
@@ -47,14 +48,13 @@ const openRawInboundModal = (inbound: ProfileInbound) => {
     modals.open({
         children: (
             <Box>
-                <JsonEditor
+                <JsonViewer
                     collapse={3}
                     data={inbound.rawInbound as object}
                     indent={4}
                     maxWidth="100%"
                     rootName=""
                     theme={githubDarkTheme}
-                    viewOnly
                 />
             </Box>
         ),

@@ -7,17 +7,17 @@ export declare namespace UpdateUserCommand {
         username: z.ZodOptional<z.ZodString>;
         id: z.ZodOptional<z.ZodNumber>;
         status: z.ZodOptional<z.ZodEnum<{
-            DISABLED: "DISABLED";
             ACTIVE: "ACTIVE";
+            DISABLED: "DISABLED";
             FROZEN: "FROZEN";
         }>>;
         trafficLimitBytes: z.ZodOptional<z.ZodNumber>;
         trafficLimitStrategy: z.ZodOptional<z.ZodEnum<{
-            readonly NO_RESET: "NO_RESET";
-            readonly DAY: "DAY";
-            readonly WEEK: "WEEK";
-            readonly MONTH: "MONTH";
-            readonly MONTH_ROLLING: "MONTH_ROLLING";
+            readonly NO_RESET: 'NO_RESET';
+            readonly DAY: 'DAY';
+            readonly WEEK: 'WEEK';
+            readonly MONTH: 'MONTH';
+            readonly MONTH_ROLLING: 'MONTH_ROLLING';
         }>>;
         expireAt: z.ZodOptional<z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>>;
         description: z.ZodOptional<z.ZodNullable<z.ZodString>>;
@@ -35,19 +35,19 @@ export declare namespace UpdateUserCommand {
             shortUuid: z.ZodString;
             username: z.ZodString;
             status: z.ZodEnum<{
-                readonly ACTIVE: "ACTIVE";
-                readonly DISABLED: "DISABLED";
-                readonly FROZEN: "FROZEN";
-                readonly LIMITED: "LIMITED";
-                readonly EXPIRED: "EXPIRED";
+                readonly ACTIVE: 'ACTIVE';
+                readonly DISABLED: 'DISABLED';
+                readonly FROZEN: 'FROZEN';
+                readonly LIMITED: 'LIMITED';
+                readonly EXPIRED: 'EXPIRED';
             }>;
             trafficLimitBytes: z.ZodNumber;
             trafficLimitStrategy: z.ZodEnum<{
-                readonly NO_RESET: "NO_RESET";
-                readonly DAY: "DAY";
-                readonly WEEK: "WEEK";
-                readonly MONTH: "MONTH";
-                readonly MONTH_ROLLING: "MONTH_ROLLING";
+                readonly NO_RESET: 'NO_RESET';
+                readonly DAY: 'DAY';
+                readonly WEEK: 'WEEK';
+                readonly MONTH: 'MONTH';
+                readonly MONTH_ROLLING: 'MONTH_ROLLING';
             }>;
             expireAt: z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>;
             frozenAt: z.ZodOptional<z.ZodNullable<z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>>>;
@@ -74,8 +74,8 @@ export declare namespace UpdateUserCommand {
                 domain: z.ZodString;
                 path: z.ZodString;
                 kind: z.ZodEnum<{
-                    PRIMARY: "PRIMARY";
                     CDN: "CDN";
+                    PRIMARY: "PRIMARY";
                 }>;
                 parentUuid: z.ZodNullable<z.ZodUUID>;
                 isDefault: z.ZodBoolean;

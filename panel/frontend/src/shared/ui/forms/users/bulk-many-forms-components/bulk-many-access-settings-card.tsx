@@ -24,6 +24,7 @@ interface IProps {
 
 export const BulkAccessSettingsCard = (props: IProps) => {
     const uiText = useUiText()
+    const [minimumDate] = useState(() => new Date())
 
     const { t, i18n } = useTranslation()
 
@@ -76,7 +77,7 @@ export const BulkAccessSettingsCard = (props: IProps) => {
                             key={form.key('fields.expireAt')}
                             label={t('create-user-modal.widget.expiry-date')}
                             locale={i18n.language}
-                            minDate={new Date()}
+                            minDate={minimumDate}
                             styles={{
                                 calendarHeaderLevel: {
                                     justifyContent: 'flex-start',

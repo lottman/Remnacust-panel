@@ -3,7 +3,8 @@ import { modals } from '@mantine/modals'
 import { GetUserByIdCommand, USERS_STATUS } from '@remnawave/backend-contract'
 import { UserStatusBadge } from '@widgets/dashboard/users/user-status-badge'
 import dayjs from 'dayjs'
-import { githubDarkTheme, JsonEditor } from 'json-edit-react'
+import { JsonViewer } from 'json-edit-react'
+import { githubDarkTheme } from '@json-edit-react/themes'
 import { ForwardRefComponent, HTMLMotionProps, Variants } from 'motion/react'
 import { memo } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -181,14 +182,13 @@ export const UserIdentificationCard = memo((props: IProps) => {
                                             ),
                                             children: (
                                                 <Box>
-                                                    <JsonEditor
+                                                    <JsonViewer
                                                         collapse={3}
                                                         data={metadata.metadata as object}
                                                         indent={4}
                                                         maxWidth="100%"
                                                         rootName=""
                                                         theme={githubDarkTheme}
-                                                        viewOnly
                                                     />
                                                 </Box>
                                             )

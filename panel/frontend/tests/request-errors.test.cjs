@@ -20,7 +20,7 @@ function handler(language) {
             if (name === '@remnawave/backend-contract') return { ERRORS }
             if (name === 'consola/browser') return { consola: { log() {}, error() {} } }
             if (name === 'zod') return { ZodError: class extends Error {} }
-            if (name === 'i18next') return { default: { t(key, values = {}) {
+            if (name === 'i18next') return { __esModule: true, default: { t(key, values = {}) {
                 const value = key.split('.').reduce((part, name) => part?.[name], locale) ?? values.defaultValue
                 assert.equal(typeof value, 'string', `${language}: ${key}`)
                 return value.replace(/\{\{(\w+)\}\}/g, (_, name) => String(values[name] ?? ''))
@@ -107,7 +107,7 @@ test('query notifications and mutation errors share descriptions; unauthorized e
     vm.runInNewContext(notificationSource, { exports, require(name) {
         if (name === '@mantine/notifications') return { notifications: { show: message => messages.push(message) } }
         if (name === 'axios') return { isAxiosError: error => error?.isAxiosError === true }
-        if (name === 'i18next') return { default: { t: key => key } }
+        if (name === 'i18next') return { __esModule: true, default: { t: key => key } }
         if (name === 'zod') return { ZodError: class extends Error {} }
         if (name === '../api-response') return { ApiResponseError: class extends Error {} }
         if (name === '../helpers/handler-request-error') return { getRequestErrorMessage: getMessage, RequestError }

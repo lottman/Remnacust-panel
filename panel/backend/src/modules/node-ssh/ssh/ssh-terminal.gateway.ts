@@ -1,5 +1,5 @@
 import { getClientIp } from '@kastov/request-ip';
-import { InjectRedis } from '@songkeys/nestjs-redis';
+import { Inject } from '@nestjs/common';
 import { Redis } from 'ioredis';
 import { verify } from 'jsonwebtoken';
 import { IncomingMessage } from 'node:http';
@@ -47,7 +47,7 @@ export class SshTerminalGateway implements OnApplicationBootstrap, OnModuleDestr
         private readonly httpAdapterHost: HttpAdapterHost,
         private readonly nodeSshService: NodeSshService,
         private readonly queryBus: QueryBus,
-        @InjectRedis() private readonly redis: Redis,
+        @Inject('RC_REDIS_CLIENT') private readonly redis: Redis,
         private readonly keygen: KeygenService,
     ) {}
 

@@ -3,7 +3,8 @@ import type { IProps } from './interfaces/props.interface'
 import { ActionIcon, Badge, Checkbox, Group, Text } from '@mantine/core'
 import { modals } from '@mantine/modals'
 import { GetConfigProfilesCommand } from '@remnawave/backend-contract'
-import { githubDarkTheme, JsonEditor } from 'json-edit-react'
+import { JsonViewer } from 'json-edit-react'
+import { githubDarkTheme } from '@json-edit-react/themes'
 import { useTranslation } from 'react-i18next'
 import { TbCode } from 'react-icons/tb'
 
@@ -21,14 +22,13 @@ export const InboundCheckboxCardShared = (props: IProps) => {
     ) => {
         modals.open({
             children: (
-                <JsonEditor
+                <JsonViewer
                     collapse={3}
                     data={inbound.rawInbound!}
                     indent={4}
                     maxWidth="100%"
                     rootName=""
                     theme={githubDarkTheme}
-                    viewOnly
                 />
             ),
             title: (

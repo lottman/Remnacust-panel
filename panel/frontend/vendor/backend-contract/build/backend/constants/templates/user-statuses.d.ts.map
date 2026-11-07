@@ -1,1 +1,1 @@
-{"version":3,"file":"user-statuses.d.ts","sourceRoot":"","sources":["../../../../constants/templates/user-statuses.ts"],"names":[],"mappings":"AAAA,eAAO,MAAM,sBAAsB;;;;;;CAMzB,CAAC"}
+{"version":3,"file":"user-statuses.d.ts","sourceRoot":"","sources":["../../../../constants/templates/user-statuses.ts"],"names":[],"mappings":"AAAA,eAAO,MAAM,sBAAsB;aAC/B,MAAM,EAAE,WAAW;aACnB,OAAO,EAAE,aAAa;aACtB,QAAQ,EAAE,YAAY;aACtB,MAAM,EAAE,WAAW;aACnB,OAAO,EAAE,YAAY;CACf,CAAC"}

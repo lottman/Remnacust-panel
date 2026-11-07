@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import { PrismaClient } from '@prisma/client';
+import { createPrismaClient } from '../../src/common/database/postgres-adapter';
 import consola from 'consola';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -34,13 +34,7 @@ dayjs.extend(timezone);
 
 const logger = consola;
 
-const prisma = new PrismaClient({
-    datasources: {
-        db: {
-            url: process.env.DATABASE_URL,
-        },
-    },
-});
+const prisma = createPrismaClient();
 
 const SEED_STEPS = [
     { name: 'Fix Old Migrations', fn: fixOldMigrations },

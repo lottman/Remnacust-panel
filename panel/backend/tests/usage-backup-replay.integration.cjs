@@ -1,5 +1,5 @@
 // Called only after an actual pg_restore into the owned disposable restore DB.
-const assert=require('node:assert/strict');const path=require('node:path');const {PrismaClient}=require('@prisma/client');
+const assert=require('node:assert/strict');const path=require('node:path');const {PrismaClient}=require('./prisma-test-client.cjs');
 const {TransactionHost}=require('@nestjs-cls/transactional');const k=require('kysely');const load=require('./load-typescript.cjs');
 const {PrismaTxDriver}=require('../node_modules/@kastov/nestjs-prisma-kysely/build/drivers/prisma-tx.driver.js');
 const url=process.env.USAGE_RESTORE_REPLAY_DATABASE_URL;assert.ok(url);const target=new URL(url);

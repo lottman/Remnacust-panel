@@ -1,4 +1,5 @@
 .row {
+    container-type: inline-size;
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
@@ -19,6 +20,20 @@
 .headerControl {
     margin-inline-start: auto;
     flex-shrink: 0;
+    min-width: 0;
+    max-width: 100%;
+}
+
+@container (max-width: 32rem) {
+    .headerControl {
+        flex-basis: 100%;
+        flex-shrink: 1;
+        margin-inline-start: 0;
+    }
+
+    .headerControl :global(.mantine-SegmentedControl-root) {
+        width: 100%;
+    }
 }
 
 .action {
@@ -78,13 +93,20 @@
 }
 
 @media (pointer: coarse) {
-    .action::before {
-        content: '';
-        position: absolute;
-        inset: 50% auto auto 50%;
+    .actionButton {
         width: 2.75rem;
         height: 2.75rem;
-        translate: -50% -50%;
+    }
+
+    .headerControl :global(.mantine-SegmentedControl-label) {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 44px;
+        font-size: var(--mantine-font-size-sm);
+        white-space: normal;
+        overflow-wrap: normal;
+        line-height: 1.4;
     }
 }
 

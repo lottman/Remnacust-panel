@@ -7,18 +7,18 @@ export declare namespace GetUsersStreamCommand {
         cursor: z.ZodOptional<z.ZodCoercedNumber<unknown>>;
         size: z.ZodDefault<z.ZodOptional<z.ZodCoercedNumber<unknown>>>;
         status: z.ZodOptional<z.ZodEnum<{
-            readonly ACTIVE: "ACTIVE";
-            readonly DISABLED: "DISABLED";
-            readonly FROZEN: "FROZEN";
-            readonly LIMITED: "LIMITED";
-            readonly EXPIRED: "EXPIRED";
+            readonly ACTIVE: 'ACTIVE';
+            readonly DISABLED: 'DISABLED';
+            readonly FROZEN: 'FROZEN';
+            readonly LIMITED: 'LIMITED';
+            readonly EXPIRED: 'EXPIRED';
         }>>;
         trafficLimitStrategy: z.ZodOptional<z.ZodEnum<{
-            readonly NO_RESET: "NO_RESET";
-            readonly DAY: "DAY";
-            readonly WEEK: "WEEK";
-            readonly MONTH: "MONTH";
-            readonly MONTH_ROLLING: "MONTH_ROLLING";
+            readonly NO_RESET: 'NO_RESET';
+            readonly DAY: 'DAY';
+            readonly WEEK: 'WEEK';
+            readonly MONTH: 'MONTH';
+            readonly MONTH_ROLLING: 'MONTH_ROLLING';
         }>>;
         telegramId: z.ZodOptional<z.ZodPipe<z.ZodPipe<z.ZodString, z.ZodTransform<number, string>>, z.ZodNumber>>;
         email: z.ZodOptional<z.ZodEmail>;
@@ -32,19 +32,19 @@ export declare namespace GetUsersStreamCommand {
                 shortUuid: z.ZodString;
                 username: z.ZodString;
                 status: z.ZodEnum<{
-                    readonly ACTIVE: "ACTIVE";
-                    readonly DISABLED: "DISABLED";
-                    readonly FROZEN: "FROZEN";
-                    readonly LIMITED: "LIMITED";
-                    readonly EXPIRED: "EXPIRED";
+                    readonly ACTIVE: 'ACTIVE';
+                    readonly DISABLED: 'DISABLED';
+                    readonly FROZEN: 'FROZEN';
+                    readonly LIMITED: 'LIMITED';
+                    readonly EXPIRED: 'EXPIRED';
                 }>;
                 trafficLimitBytes: z.ZodNumber;
                 trafficLimitStrategy: z.ZodEnum<{
-                    readonly NO_RESET: "NO_RESET";
-                    readonly DAY: "DAY";
-                    readonly WEEK: "WEEK";
-                    readonly MONTH: "MONTH";
-                    readonly MONTH_ROLLING: "MONTH_ROLLING";
+                    readonly NO_RESET: 'NO_RESET';
+                    readonly DAY: 'DAY';
+                    readonly WEEK: 'WEEK';
+                    readonly MONTH: 'MONTH';
+                    readonly MONTH_ROLLING: 'MONTH_ROLLING';
                 }>;
                 expireAt: z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>;
                 frozenAt: z.ZodOptional<z.ZodNullable<z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>>>;
@@ -71,8 +71,8 @@ export declare namespace GetUsersStreamCommand {
                     domain: z.ZodString;
                     path: z.ZodString;
                     kind: z.ZodEnum<{
-                        PRIMARY: "PRIMARY";
                         CDN: "CDN";
+                        PRIMARY: "PRIMARY";
                     }>;
                     parentUuid: z.ZodNullable<z.ZodUUID>;
                     isDefault: z.ZodBoolean;

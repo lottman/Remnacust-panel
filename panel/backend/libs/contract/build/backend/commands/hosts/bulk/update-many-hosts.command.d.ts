@@ -4,20 +4,96 @@ export declare namespace UpdateManyHostsCommand {
     const TSQ_url: "/api/hosts/bulk/update";
     const endpointDetails: import("../../../constants").EndpointDetails;
     const RequestBodySchema: z.ZodObject<{
-        nodes: z.ZodOptional<z.ZodOptional<z.ZodArray<z.ZodUUID>>>;
-        tags: z.ZodOptional<z.ZodOptional<z.ZodArray<z.ZodString>>>;
-        path: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodString>>>;
+        inbound: z.ZodOptional<z.ZodOptional<z.ZodObject<{
+            configProfileUuid: z.ZodUUID;
+            configProfileInboundUuid: z.ZodUUID;
+        }, z.core.$strip>>>;
+        remark: z.ZodOptional<z.ZodOptional<z.ZodString>>;
+        address: z.ZodOptional<z.ZodOptional<z.ZodString>>;
         port: z.ZodOptional<z.ZodOptional<z.ZodInt>>;
-        alpn: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodEnum<{
-            readonly H3: "h3";
-            readonly H2: "h2";
-            readonly HTTP_1_1: "http/1.1";
-            readonly H_COMBINED: "h2,http/1.1";
-            readonly H3_H2_H1_COMBINED: "h3,h2,http/1.1";
-            readonly H3_H2_COMBINED: "h3,h2";
-        }>>>>;
-        host: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodString>>>;
+        path: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodString>>>;
         sni: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodString>>>;
+        host: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodString>>>;
+        alpn: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodEnum<{
+            readonly H3: 'h3';
+            readonly H2: 'h2';
+            readonly HTTP_1_1: 'http/1.1';
+            readonly H_COMBINED: 'h2,http/1.1';
+            readonly H3_H2_H1_COMBINED: 'h3,h2,http/1.1';
+            readonly H3_H2_COMBINED: 'h3,h2';
+        }>>>>;
+        fingerprint: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodString>>>;
+        isDisabled: z.ZodOptional<z.ZodOptional<z.ZodBoolean>>;
+        alwaysAvailable: z.ZodOptional<z.ZodOptional<z.ZodBoolean>>;
+        onlyWhenInactive: z.ZodOptional<z.ZodOptional<z.ZodBoolean>>;
+        userTrafficLimitBytes: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodNumber>>>;
+        trafficLimitResetValue: z.ZodOptional<z.ZodOptional<z.ZodInt>>;
+        trafficLimitResetUnit: z.ZodOptional<z.ZodOptional<z.ZodEnum<{
+            DAYS: "DAYS";
+            MONTHS: "MONTHS";
+        }>>>;
+        speedLimitMbps: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodInt>>>;
+        totalSpeedLimitMbps: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodInt>>>;
+        trafficMultiplier: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodNumber>>>;
+        serverSpeedLimitMbps: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodInt>>>;
+        deviceSpeedLimitMbps: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodInt>>>;
+        useTagTrafficLimit: z.ZodOptional<z.ZodOptional<z.ZodBoolean>>;
+        useTagSpeedLimit: z.ZodOptional<z.ZodOptional<z.ZodBoolean>>;
+        useTagDeviceSpeedLimit: z.ZodOptional<z.ZodOptional<z.ZodBoolean>>;
+        useTagTotalSpeedLimit: z.ZodOptional<z.ZodOptional<z.ZodBoolean>>;
+        domainRules: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodObject<{
+            mode: z.ZodDefault<z.ZodEnum<{
+                ALLOW_ONLY: "ALLOW_ONLY";
+                DENY: "DENY";
+                OFF: "OFF";
+            }>>;
+            domains: z.ZodDefault<z.ZodArray<z.ZodString>>;
+        }, z.core.$strip>>>>;
+        sniRegeneration: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodObject<{
+            enabled: z.ZodDefault<z.ZodBoolean>;
+            intervalHours: z.ZodDefault<z.ZodInt>;
+            pool: z.ZodDefault<z.ZodArray<z.ZodString>>;
+            rotateShortIds: z.ZodDefault<z.ZodBoolean>;
+            shortIdLength: z.ZodDefault<z.ZodInt>;
+            shortIdCount: z.ZodDefault<z.ZodInt>;
+            lastRotatedAt: z.ZodDefault<z.ZodNullable<z.ZodString>>;
+        }, z.core.$strip>>>>;
+        securityLayer: z.ZodOptional<z.ZodOptional<z.ZodEnum<{
+            readonly DEFAULT: 'DEFAULT';
+            readonly TLS: 'TLS';
+            readonly NONE: 'NONE';
+        }>>>;
+        xhttpExtraParams: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodUnknown>>>;
+        muxParams: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodUnknown>>>;
+        sockoptParams: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodUnknown>>>;
+        finalMask: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodUnknown>>>;
+        serverDescription: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodString>>>;
+        tags: z.ZodOptional<z.ZodOptional<z.ZodArray<z.ZodString>>>;
+        isHidden: z.ZodOptional<z.ZodOptional<z.ZodBoolean>>;
+        overrideSniFromAddress: z.ZodOptional<z.ZodOptional<z.ZodBoolean>>;
+        keepSniBlank: z.ZodOptional<z.ZodOptional<z.ZodBoolean>>;
+        vlessRouteId: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodInt>>>;
+        pinnedPeerCertSha256: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodString>>>;
+        verifyPeerCertByName: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodString>>>;
+        shuffleHost: z.ZodOptional<z.ZodOptional<z.ZodBoolean>>;
+        mihomoX25519: z.ZodOptional<z.ZodOptional<z.ZodBoolean>>;
+        mihomoIpVersion: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodEnum<{
+            readonly DUAL: 'dual';
+            readonly IPV4: 'ipv4';
+            readonly IPV6: 'ipv6';
+            readonly IPV4_PREFER: 'ipv4-prefer';
+            readonly IPV6_PREFER: 'ipv6-prefer';
+        }>>>>;
+        nodes: z.ZodOptional<z.ZodOptional<z.ZodArray<z.ZodUUID>>>;
+        xrayJsonTemplateUuid: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodUUID>>>;
+        excludeFromSubscriptionTypes: z.ZodOptional<z.ZodOptional<z.ZodArray<z.ZodEnum<{
+            readonly XRAY_JSON: 'XRAY_JSON';
+            readonly XRAY_BASE64: 'XRAY_BASE64';
+            readonly MIHOMO: 'MIHOMO';
+            readonly STASH: 'STASH';
+            readonly CLASH: 'CLASH';
+            readonly SINGBOX: 'SINGBOX';
+        }>>>>;
         mapper: z.ZodOptional<z.ZodOptional<z.ZodObject<{
             xrayJson: z.ZodOptional<z.ZodArray<z.ZodDiscriminatedUnion<[z.ZodObject<{
                 op: z.ZodLiteral<"copy">;
@@ -68,86 +144,10 @@ export declare namespace UpdateManyHostsCommand {
                 to: z.ZodString;
             }, z.core.$strip>], "op">>>;
         }, z.core.$strip>>>;
-        remark: z.ZodOptional<z.ZodOptional<z.ZodString>>;
-        address: z.ZodOptional<z.ZodOptional<z.ZodString>>;
-        fingerprint: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodString>>>;
-        isDisabled: z.ZodOptional<z.ZodOptional<z.ZodBoolean>>;
-        alwaysAvailable: z.ZodOptional<z.ZodOptional<z.ZodBoolean>>;
-        onlyWhenInactive: z.ZodOptional<z.ZodOptional<z.ZodBoolean>>;
-        userTrafficLimitBytes: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodNumber>>>;
-        trafficLimitResetValue: z.ZodOptional<z.ZodOptional<z.ZodInt>>;
-        trafficLimitResetUnit: z.ZodOptional<z.ZodOptional<z.ZodEnum<{
-            DAYS: "DAYS";
-            MONTHS: "MONTHS";
-        }>>>;
-        speedLimitMbps: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodInt>>>;
-        totalSpeedLimitMbps: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodInt>>>;
-        trafficMultiplier: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodNumber>>>;
-        serverSpeedLimitMbps: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodInt>>>;
-        deviceSpeedLimitMbps: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodInt>>>;
-        useTagTrafficLimit: z.ZodOptional<z.ZodOptional<z.ZodBoolean>>;
-        useTagSpeedLimit: z.ZodOptional<z.ZodOptional<z.ZodBoolean>>;
-        useTagDeviceSpeedLimit: z.ZodOptional<z.ZodOptional<z.ZodBoolean>>;
-        useTagTotalSpeedLimit: z.ZodOptional<z.ZodOptional<z.ZodBoolean>>;
-        domainRules: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodObject<{
-            mode: z.ZodDefault<z.ZodEnum<{
-                ALLOW_ONLY: "ALLOW_ONLY";
-                OFF: "OFF";
-                DENY: "DENY";
-            }>>;
-            domains: z.ZodDefault<z.ZodArray<z.ZodString>>;
-        }, z.core.$strip>>>>;
-        sniRegeneration: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodObject<{
-            enabled: z.ZodDefault<z.ZodBoolean>;
-            intervalHours: z.ZodDefault<z.ZodInt>;
-            pool: z.ZodDefault<z.ZodArray<z.ZodString>>;
-            rotateShortIds: z.ZodDefault<z.ZodBoolean>;
-            shortIdLength: z.ZodDefault<z.ZodInt>;
-            shortIdCount: z.ZodDefault<z.ZodInt>;
-            lastRotatedAt: z.ZodDefault<z.ZodNullable<z.ZodString>>;
-        }, z.core.$strip>>>>;
-        securityLayer: z.ZodOptional<z.ZodOptional<z.ZodEnum<{
-            readonly DEFAULT: "DEFAULT";
-            readonly TLS: "TLS";
-            readonly NONE: "NONE";
-        }>>>;
-        xhttpExtraParams: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodUnknown>>>;
-        muxParams: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodUnknown>>>;
-        sockoptParams: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodUnknown>>>;
-        finalMask: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodUnknown>>>;
-        inbound: z.ZodOptional<z.ZodOptional<z.ZodObject<{
-            configProfileUuid: z.ZodUUID;
-            configProfileInboundUuid: z.ZodUUID;
-        }, z.core.$strip>>>;
-        serverDescription: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodString>>>;
-        isHidden: z.ZodOptional<z.ZodOptional<z.ZodBoolean>>;
-        overrideSniFromAddress: z.ZodOptional<z.ZodOptional<z.ZodBoolean>>;
-        keepSniBlank: z.ZodOptional<z.ZodOptional<z.ZodBoolean>>;
-        vlessRouteId: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodInt>>>;
-        pinnedPeerCertSha256: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodString>>>;
-        verifyPeerCertByName: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodString>>>;
-        shuffleHost: z.ZodOptional<z.ZodOptional<z.ZodBoolean>>;
-        mihomoX25519: z.ZodOptional<z.ZodOptional<z.ZodBoolean>>;
-        mihomoIpVersion: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodEnum<{
-            readonly DUAL: "dual";
-            readonly IPV4: "ipv4";
-            readonly IPV6: "ipv6";
-            readonly IPV4_PREFER: "ipv4-prefer";
-            readonly IPV6_PREFER: "ipv6-prefer";
-        }>>>>;
-        xrayJsonTemplateUuid: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodUUID>>>;
-        excludeFromSubscriptionTypes: z.ZodOptional<z.ZodOptional<z.ZodArray<z.ZodEnum<{
-            readonly XRAY_JSON: "XRAY_JSON";
-            readonly XRAY_BASE64: "XRAY_BASE64";
-            readonly MIHOMO: "MIHOMO";
-            readonly STASH: "STASH";
-            readonly CLASH: "CLASH";
-            readonly SINGBOX: "SINGBOX";
-        }>>>>;
         internalSquads: z.ZodOptional<z.ZodOptional<z.ZodObject<{
             mode: z.ZodEnum<{
-                readonly EXCLUDE: "EXCLUDE";
-                readonly ALLOW_ONLY: "ALLOW_ONLY";
+                readonly EXCLUDE: 'EXCLUDE';
+                readonly ALLOW_ONLY: 'ALLOW_ONLY';
             }>;
             squads: z.ZodArray<z.ZodUUID>;
         }, z.core.$strip>>>;

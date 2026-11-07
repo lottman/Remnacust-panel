@@ -35,6 +35,8 @@ function source(filename) {
     } }).outputText;
     new Function('require', 'module', 'exports', compiled)(id => {
         if (Object.hasOwn(mocks, id)) return mocks[id];
+        if (id.startsWith('@common/xray-mode/'))
+            return source(path.join(__dirname, '../src/common/xray-mode', id.slice('@common/xray-mode/'.length) + '.ts'));
         const relative = id.startsWith('.') ? path.resolve(path.dirname(filename), id + '.ts') : '';
         if (relative && fs.existsSync(relative)) return source(relative);
         const index = id.startsWith('.') ? path.resolve(path.dirname(filename), id, 'index.ts') : '';
@@ -44,6 +46,8 @@ function source(filename) {
     loaded.set(filename, ref.exports); return ref.exports;
 }
 const root = path.join(__dirname, '../src/common/axios');
+const { XrayModeService } = source(path.join(__dirname, '../src/common/xray-mode/xray-mode.service.ts'));
+mocks['@common/xray-mode/xray-mode.service'] = { XrayModeService };
 const { AxiosModule } = source(path.join(root, 'axios.module.ts'));
 const { AxiosService } = source(path.join(root, 'axios.service.ts'));
 const { NodeRouteRegistryService } = source(path.join(root, 'node-route-registry.service.ts'));
@@ -55,11 +59,11 @@ test('actual AxiosModule Nest provider resolves registry; cache, edit fence and 
     let rows = [row()], queries = 0;
     const values = new Map();
     const cache = { get: async key => values.get(key) ?? null, set: async (key, value) => { values.set(key, value); } };
-    const db = { nodes: { findMany: async () => { queries++; await new Promise(r => setImmediate(r)); return structuredClone(rows); } } };
+    const db = { $queryRaw: async () => [{ mode: 'custom', revision: 1 }], nodes: { findMany: async () => { queries++; await new Promise(r => setImmediate(r)); return structuredClone(rows); } } };
     class Dependencies {}
     Global()(Dependencies);
     Module({ providers: [{ provide: PrismaService, useValue: db }, { provide: RawCacheService, useValue: cache },
-        { provide: TypedConfigService, useValue: {} }], exports: [PrismaService, RawCacheService, TypedConfigService] })(Dependencies);
+        { provide: TypedConfigService, useValue: {} }, XrayModeService], exports: [PrismaService, RawCacheService, TypedConfigService, XrayModeService] })(Dependencies);
     class Root {}
     Module({ imports: [Dependencies, AxiosModule] })(Root);
     const app = await NestFactory.createApplicationContext(Root, { logger: false, abortOnError: false });
@@ -67,6 +71,8 @@ test('actual AxiosModule Nest provider resolves registry; cache, edit fence and 
     const registry = app.get(NodeRouteRegistryService);
     assert.equal(app.get(NodeRouteRegistry), registry);
     assert.equal(app.get(AxiosService).routeRegistry, registry);
+    assert.equal(app.get(AxiosService).xrayModes, app.get(XrayModeService));
+    assert.deepEqual(await app.get(XrayModeService).get(), { mode: 'custom', revision: 1 });
     const initial = await Promise.all(Array.from({ length: 30 }, () => registry.get({ uuid })));
     assert.equal(queries, 1); assert(initial.every(config => config.uuid === uuid));
     assert.equal(await registry.isCurrent(initial[0]), true); assert.equal(queries, 1);

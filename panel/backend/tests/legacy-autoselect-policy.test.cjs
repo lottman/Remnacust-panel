@@ -38,7 +38,7 @@ test('legacy cores receive source credentials without creating routed aliases', 
     const hosts = [{ uuid: 'source', configProfileInboundUuid: 'inbound' }];
     const expected = new Map([['source', { vlessUuid: 'ordinary-source-key' }]]);
     service.prepare = async (...args) => { assert.deepEqual(args, [user, hosts]); return expected; };
-    service.db = { get kysely() { assert.fail('legacy autoselect must not insert routed identities'); } };
+    service.db = { get kysely() { return assert.fail('legacy autoselect must not insert routed identities'); } };
     assert.equal(await service.prepareAutoselect(user, 'owner', hosts), expected);
 });
 

@@ -12,19 +12,19 @@ export declare namespace GetUserByShortUuidCommand {
             shortUuid: z.ZodString;
             username: z.ZodString;
             status: z.ZodEnum<{
-                readonly ACTIVE: "ACTIVE";
-                readonly DISABLED: "DISABLED";
-                readonly FROZEN: "FROZEN";
-                readonly LIMITED: "LIMITED";
-                readonly EXPIRED: "EXPIRED";
+                readonly ACTIVE: 'ACTIVE';
+                readonly DISABLED: 'DISABLED';
+                readonly FROZEN: 'FROZEN';
+                readonly LIMITED: 'LIMITED';
+                readonly EXPIRED: 'EXPIRED';
             }>;
             trafficLimitBytes: z.ZodNumber;
             trafficLimitStrategy: z.ZodEnum<{
-                readonly NO_RESET: "NO_RESET";
-                readonly DAY: "DAY";
-                readonly WEEK: "WEEK";
-                readonly MONTH: "MONTH";
-                readonly MONTH_ROLLING: "MONTH_ROLLING";
+                readonly NO_RESET: 'NO_RESET';
+                readonly DAY: 'DAY';
+                readonly WEEK: 'WEEK';
+                readonly MONTH: 'MONTH';
+                readonly MONTH_ROLLING: 'MONTH_ROLLING';
             }>;
             expireAt: z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>;
             frozenAt: z.ZodOptional<z.ZodNullable<z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>>>;
@@ -51,8 +51,8 @@ export declare namespace GetUserByShortUuidCommand {
                 domain: z.ZodString;
                 path: z.ZodString;
                 kind: z.ZodEnum<{
-                    PRIMARY: "PRIMARY";
                     CDN: "CDN";
+                    PRIMARY: "PRIMARY";
                 }>;
                 parentUuid: z.ZodNullable<z.ZodUUID>;
                 isDefault: z.ZodBoolean;

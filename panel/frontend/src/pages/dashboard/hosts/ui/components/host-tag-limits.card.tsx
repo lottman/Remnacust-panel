@@ -1,3 +1,5 @@
+import { useXrayMode } from '@shared/api/hooks/xray-mode'
+import { XrayModeNotice } from '@shared/ui/xray-mode-notice'
 import {
     Alert,
     Drawer,
@@ -41,6 +43,7 @@ import { DisclosureCard } from '@shared/ui/disclosure-card/disclosure-card'
 const GIB = 1024 ** 3
 
 export function HostTagLimitsCard({ tags }: { tags: string[] }) {
+    const { isCustom } = useXrayMode()
     const uiText = useUiText()
 
     const { i18n } = useTranslation()
@@ -66,6 +69,7 @@ export function HostTagLimitsCard({ tags }: { tags: string[] }) {
                 title={uiText('tag-settings-9449b1a')}
             >
                 <Stack gap="sm">
+                    <XrayModeNotice />
                     {isError ? (
                         <Alert color="red">
                             <Button variant="subtle" onClick={() => void refetch()}>
@@ -93,7 +97,7 @@ export function HostTagLimitsCard({ tags }: { tags: string[] }) {
                                 />
                                 <Button
                                     leftSection={<TbPlus size={16} />}
-                                    disabled={!canCreate || isPending}
+                                    disabled={!isCustom || !canCreate || isPending}
                                     onClick={() => {
                                         setEditing(trimmed)
                                         setNewTag('')
@@ -117,6 +121,7 @@ export function HostTagLimitsCard({ tags }: { tags: string[] }) {
                                             return (
                                                 <Button
                                                     key={tag}
+                                                    disabled={!isCustom}
                                                     variant="default"
                                                     h="auto"
                                                     py="sm"

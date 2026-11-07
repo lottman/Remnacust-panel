@@ -1,7 +1,7 @@
 // Seeds only the explicitly named, empty, disposable loopback database.
 const assert=require('node:assert/strict');const fs=require('node:fs');const path=require('node:path');
 const {AsyncLocalStorage}=require('node:async_hooks');const crypto=require('node:crypto');
-const {PrismaClient}=require('@prisma/client');const k=require('kysely');const load=require('./load-typescript.cjs');
+const {PrismaClient}=require('./prisma-test-client.cjs');const k=require('kysely');const load=require('./load-typescript.cjs');
 const {PrismaTxDriver}=require('../node_modules/@kastov/nestjs-prisma-kysely/build/drivers/prisma-tx.driver.js');
 const url=process.env.USAGE_RECEIPTS_TEST_DATABASE_URL;assert.ok(url,'Set USAGE_RECEIPTS_TEST_DATABASE_URL');
 const target=new URL(url);assert.equal(target.hostname,'127.0.0.1');assert.equal(target.port,'55439');assert.equal(target.pathname,'/remnacust_usage_receipts_test');

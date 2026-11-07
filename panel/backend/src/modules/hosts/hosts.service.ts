@@ -1,3 +1,4 @@
+import { rethrowXrayModeConflict } from '@common/xray-mode/xray-mode-conflict';
 import { Transactional } from '@nestjs-cls/transactional';
 import { randomBytes } from 'node:crypto';
 
@@ -155,6 +156,7 @@ export class HostsService {
             await this.syncExceptionPolicy(policyBefore);
             return ok(result);
         } catch (error) {
+            rethrowXrayModeConflict(error);
             if (error instanceof HttpException) throw error;
             this.logger.error(error);
 
@@ -326,6 +328,7 @@ export class HostsService {
             await this.syncExceptionPolicy(policyBefore);
             return ok(result);
         } catch (error) {
+            rethrowXrayModeConflict(error);
             if (error instanceof HttpException) throw error;
             this.logger.error(error);
 
@@ -347,6 +350,7 @@ export class HostsService {
             await this.syncExceptionPolicy(policyBefore);
             return ok(true);
         } catch (error) {
+            rethrowXrayModeConflict(error);
             if (error instanceof HttpException) throw error;
             this.logger.error(error);
             this.logger.error(JSON.stringify(error));
@@ -391,6 +395,7 @@ export class HostsService {
 
             return ok(await this.cloneHostTransactional(host));
         } catch (error) {
+            rethrowXrayModeConflict(error);
             if (error instanceof HttpException) throw error;
             this.logger.error(error);
 
@@ -469,6 +474,7 @@ export class HostsService {
             await this.syncExceptionPolicy(policyBefore);
             return ok(true);
         } catch (error) {
+            rethrowXrayModeConflict(error);
             if (error instanceof HttpException) throw error;
             this.logger.error(error);
             return fail(ERRORS.DELETE_HOSTS_ERROR);
@@ -485,6 +491,7 @@ export class HostsService {
             await this.syncExceptionPolicy(policyBefore);
             return ok(true);
         } catch (error) {
+            rethrowXrayModeConflict(error);
             if (error instanceof HttpException) throw error;
             this.logger.error(error);
             return fail(ERRORS.BULK_ENABLE_HOSTS_ERROR);
@@ -501,6 +508,7 @@ export class HostsService {
             await this.syncExceptionPolicy(policyBefore);
             return ok(true);
         } catch (error) {
+            rethrowXrayModeConflict(error);
             if (error instanceof HttpException) throw error;
             this.logger.error(error);
             return fail(ERRORS.BULK_DISABLE_HOSTS_ERROR);
@@ -647,6 +655,7 @@ export class HostsService {
             await this.syncExceptionPolicy(policyBefore);
             return ok(true);
         } catch (error) {
+            rethrowXrayModeConflict(error);
             if (error instanceof HttpException) throw error;
             this.logger.error(error);
             return fail(ERRORS.UPDATE_HOSTS_ERROR);

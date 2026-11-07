@@ -22,7 +22,8 @@ import {
 } from '@remnawave/backend-contract'
 import cx from 'clsx'
 import ColorHash from 'color-hash'
-import { githubDarkTheme, JsonEditor } from 'json-edit-react'
+import { JsonViewer } from 'json-edit-react'
+import { githubDarkTheme } from '@json-edit-react/themes'
 import { CSSProperties, memo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiNetwork, PiProhibit, PiPulse } from 'react-icons/pi'
@@ -457,7 +458,7 @@ export const HostCardWidget = memo(function HostCardWidget(props: IProps) {
                                         e.stopPropagation()
                                         modals.open({
                                             children: (
-                                                <JsonEditor
+                                                <JsonViewer
                                                     collapse={3}
                                                     data={JSON.parse(
                                                         JSON.stringify(item.muxParams)
@@ -466,7 +467,6 @@ export const HostCardWidget = memo(function HostCardWidget(props: IProps) {
                                                     maxWidth="100%"
                                                     rootName=""
                                                     theme={githubDarkTheme}
-                                                    viewOnly
                                                 />
                                             ),
                                             title: (
@@ -497,7 +497,7 @@ export const HostCardWidget = memo(function HostCardWidget(props: IProps) {
                                         e.stopPropagation()
                                         modals.open({
                                             children: (
-                                                <JsonEditor
+                                                <JsonViewer
                                                     collapse={3}
                                                     data={JSON.parse(
                                                         JSON.stringify(item.finalMask)
@@ -506,7 +506,6 @@ export const HostCardWidget = memo(function HostCardWidget(props: IProps) {
                                                     maxWidth="100%"
                                                     rootName=""
                                                     theme={githubDarkTheme}
-                                                    viewOnly
                                                 />
                                             ),
                                             title: (
@@ -537,7 +536,7 @@ export const HostCardWidget = memo(function HostCardWidget(props: IProps) {
                                         e.stopPropagation()
                                         modals.open({
                                             children: (
-                                                <JsonEditor
+                                                <JsonViewer
                                                     collapse={3}
                                                     data={JSON.parse(
                                                         JSON.stringify(item.sockoptParams)
@@ -546,7 +545,6 @@ export const HostCardWidget = memo(function HostCardWidget(props: IProps) {
                                                     maxWidth="100%"
                                                     rootName=""
                                                     theme={githubDarkTheme}
-                                                    viewOnly
                                                 />
                                             ),
                                             title: (

@@ -33,8 +33,8 @@ export declare namespace UpdateConfigProfileCommand {
             createdAt: z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>;
             updatedAt: z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>;
             applyStatus: z.ZodOptional<z.ZodEnum<{
-                queued: "queued";
                 failed: "failed";
+                queued: "queued";
                 unchanged: "unchanged";
             }>>;
         }, z.core.$strip>;

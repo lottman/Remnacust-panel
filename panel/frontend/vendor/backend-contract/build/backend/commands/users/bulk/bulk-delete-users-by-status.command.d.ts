@@ -5,11 +5,11 @@ export declare namespace BulkDeleteUsersByStatusCommand {
     const endpointDetails: import("../../../constants").EndpointDetails;
     const RequestBodySchema: z.ZodObject<{
         status: z.ZodEnum<{
-            readonly ACTIVE: "ACTIVE";
-            readonly DISABLED: "DISABLED";
-            readonly FROZEN: "FROZEN";
-            readonly LIMITED: "LIMITED";
-            readonly EXPIRED: "EXPIRED";
+            readonly ACTIVE: 'ACTIVE';
+            readonly DISABLED: 'DISABLED';
+            readonly FROZEN: 'FROZEN';
+            readonly LIMITED: 'LIMITED';
+            readonly EXPIRED: 'EXPIRED';
         }>;
     }, z.core.$strip>;
     type RequestBody = z.infer<typeof RequestBodySchema>;

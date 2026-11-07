@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const { execFileSync } = require('node:child_process');
 const { randomBytes } = require('node:crypto');
 const path = require('node:path');
-const { PrismaClient } = require('@prisma/client');
+const { PrismaClient } = require('./prisma-test-client.cjs');
 const load = require('./load-typescript.cjs');
 const { backupDumpArguments } = load(
     path.join(__dirname, '../src/modules/backups/backup-dump-options.ts'),

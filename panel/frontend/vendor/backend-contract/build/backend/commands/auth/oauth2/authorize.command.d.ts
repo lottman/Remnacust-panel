@@ -5,12 +5,12 @@ export declare namespace OAuth2AuthorizeCommand {
     const endpointDetails: import("../../../constants").EndpointDetails;
     const RequestBodySchema: z.ZodObject<{
         provider: z.ZodEnum<{
-            readonly TELEGRAM: "telegram";
-            readonly GITHUB: "github";
-            readonly POCKETID: "pocketid";
-            readonly YANDEX: "yandex";
-            readonly KEYCLOAK: "keycloak";
-            readonly GENERIC: "generic";
+            readonly TELEGRAM: 'telegram';
+            readonly GITHUB: 'github';
+            readonly POCKETID: 'pocketid';
+            readonly YANDEX: 'yandex';
+            readonly KEYCLOAK: 'keycloak';
+            readonly GENERIC: 'generic';
         }>;
     }, z.core.$strip>;
     const ResponseSchema: z.ZodObject<{

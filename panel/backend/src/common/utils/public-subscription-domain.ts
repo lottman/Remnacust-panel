@@ -9,7 +9,8 @@ export function configuredSubscriptionDomain(
         !input ||
         input.startsWith('/') ||
         input.length > 512 ||
-        /[\s\\%?#\x00-\x1f\x7f]/.test(input) ||
+        /[\s\\%?#]/.test(input) ||
+        Array.from(input).some((character) => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127) ||
         input.includes('..')
     )
         return;

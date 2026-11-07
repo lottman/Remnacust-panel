@@ -1,8 +1,8 @@
-export declare const INTERNAL_SQUADS_CONTROLLER: "internal-squads";
+export declare const INTERNAL_SQUADS_CONTROLLER: 'internal-squads';
 export declare const INTERNAL_SQUADS_ROUTES: {
-    readonly GET: "";
-    readonly CREATE: "";
-    readonly UPDATE: "";
+    readonly GET: '';
+    readonly CREATE: '';
+    readonly UPDATE: '';
     readonly GET_BY_UUID: (uuid: string) => string;
     readonly DELETE: (uuid: string) => string;
     readonly ACCESSIBLE_NODES: (uuid: string) => string;
@@ -16,8 +16,8 @@ export declare const INTERNAL_SQUADS_ROUTES: {
         readonly REORDER: "actions/reorder";
     };
     readonly TAGS: {
-        readonly GET: "tags";
-        readonly SET: "tags";
+        readonly GET: 'tags';
+        readonly SET: 'tags';
     };
 };
 //# sourceMappingURL=internal-squads.d.ts.map

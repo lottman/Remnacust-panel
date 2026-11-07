@@ -1,3 +1,4 @@
+import { rethrowXrayModeConflict } from '@common/xray-mode/xray-mode-conflict';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { sql } from 'kysely';
@@ -268,156 +269,161 @@ export class LimitsService {
         };
     }
     async act(input: LimitAction) {
-        const { kind, key, action, amountBytes, requestId, selection } = input;
-        const fingerprint = JSON.stringify(selection);
-        const recipients = sql`xera_limit_entitled(${kind},${key},u.id) AND ${limitSelectionPredicate(selection)}`;
-        const result = await this.transactions.withTransaction({ timeout: 60000 }, async () => {
-            await this.hosts.lockPolicies();
-            await sql`SELECT 1 FROM pg_advisory_xact_lock(hashtextextended(${requestId},20260927))`.execute(
-                this.db.kysely,
-            );
-            const old = await sql<{
-                kind: string;
-                key: string;
-                action: string;
-                amountBytes: bigint;
-                affectedUsers: number;
-                selection: LimitSelection;
-            }>`SELECT selection,kind,key,action,amount_bytes AS "amountBytes",affected_users AS "affectedUsers" FROM xera_limit_actions WHERE id=${requestId}::uuid`.execute(
-                this.db.kysely,
-            );
-            if (old.rows[0]) {
-                const previous = old.rows[0];
-                if (
-                    previous.kind !== kind ||
-                    previous.key !== key ||
-                    previous.action !== action ||
-                    BigInt(previous.amountBytes) !== BigInt(amountBytes) ||
-                    JSON.stringify(Object.entries(previous.selection).sort()) !==
-                        JSON.stringify(Object.entries(selection).sort())
-                )
-                    throw new ConflictException('Идентификатор операции уже использован');
-                return { affectedUsers: previous.affectedUsers, replayed: true };
-            }
-            const scope = await this.scope(kind, key);
-            await this.validateSelection(selection);
-            if (action === 'ADD' && BigInt(scope.limitBytes) <= 0n)
-                throw new BadRequestException(
-                    'Сначала задайте постоянную пользовательскую квоту: сейчас трафик не ограничен',
-                );
-            const hosts = await this.hosts.findAll();
-            const selected = hosts.filter((h) =>
-                kind === 'HOST' ? h.uuid === key : h.tags.includes(key) && h.useTagTrafficLimit,
-            );
-            if (action === 'PAUSE') {
-                if (!selected.length)
-                    throw new BadRequestException('В этой области пока нет хостов');
-                // Verify every affected inbound supports host isolation before committing a pause.
-                await this.hostsService.validatePolicyState(
-                    hosts.map((h) =>
-                        selected.some((s) => s.uuid === h.uuid)
-                            ? Object.assign(Object.create(Object.getPrototypeOf(h)), h, {
-                                  serverSpeedLimitMbps: h.serverSpeedLimitMbps || 1,
-                              })
-                            : h,
-                    ),
-                    [],
-                    true,
-                    new Set(selected.map((host) => host.uuid)),
-                );
-            }
-            if (kind === 'TAG')
-                await sql`INSERT INTO xera_host_tag_limits(tag,user_traffic_limit_bytes) VALUES(${key},0) ON CONFLICT DO NOTHING`.execute(
+        try {
+            const { kind, key, action, amountBytes, requestId, selection } = input;
+            const fingerprint = JSON.stringify(selection);
+            const recipients = sql`xera_limit_entitled(${kind},${key},u.id) AND ${limitSelectionPredicate(selection)}`;
+            const result = await this.transactions.withTransaction({ timeout: 60000 }, async () => {
+                await this.hosts.lockPolicies();
+                await sql`SELECT 1 FROM pg_advisory_xact_lock(hashtextextended(${requestId},20260927))`.execute(
                     this.db.kysely,
                 );
-            await sql`INSERT INTO xera_limit_scopes(kind,key) VALUES(${kind},${key}) ON CONFLICT DO NOTHING`.execute(
-                this.db.kysely,
-            );
-            // Freeze recipients once: a concurrent squad change must not change the
-            // target set between counting, validating and applying this operation.
-            await sql`CREATE TEMP TABLE xera_limit_action_recipients ON COMMIT DROP AS SELECT u.id FROM users u WHERE ${recipients}`.execute(
-                this.db.kysely,
-            );
-            const selectedRecipients = sql`u.id IN (SELECT id FROM xera_limit_action_recipients)`;
-            const count = await sql<{
-                total: number;
-            }>`SELECT count(*)::integer AS total FROM xera_limit_action_recipients`.execute(
-                this.db.kysely,
-            );
-            if (selection.type === 'SELECTED' && count.rows[0].total !== selection.userIds.length)
-                throw new BadRequestException(
-                    'Часть выбранных пользователей не имеет доступа к этой области. Обновите список.',
+                const old = await sql<{
+                    kind: string;
+                    key: string;
+                    action: string;
+                    amountBytes: bigint;
+                    affectedUsers: number;
+                    selection: LimitSelection;
+                }>`SELECT selection,kind,key,action,amount_bytes AS "amountBytes",affected_users AS "affectedUsers" FROM xera_limit_actions WHERE id=${requestId}::uuid`.execute(
+                    this.db.kysely,
                 );
-            if (selection.type !== 'ALL' && !count.rows[0].total)
-                throw new BadRequestException('Нет пользователей с доступом к этой области');
-            if (action === 'PAUSE' || action === 'RESUME') {
-                if (selection.type === 'ALL') {
-                    await sql`UPDATE xera_limit_scopes SET paused=${action === 'PAUSE'},updated_at=now() WHERE kind=${kind} AND key=${key}`.execute(
+                if (old.rows[0]) {
+                    const previous = old.rows[0];
+                    if (
+                        previous.kind !== kind ||
+                        previous.key !== key ||
+                        previous.action !== action ||
+                        BigInt(previous.amountBytes) !== BigInt(amountBytes) ||
+                        JSON.stringify(Object.entries(previous.selection).sort()) !==
+                            JSON.stringify(Object.entries(selection).sort())
+                    )
+                        throw new ConflictException('Идентификатор операции уже использован');
+                    return { affectedUsers: previous.affectedUsers, replayed: true };
+                }
+                const scope = await this.scope(kind, key);
+                await this.validateSelection(selection);
+                if (action === 'ADD' && BigInt(scope.limitBytes) <= 0n)
+                    throw new BadRequestException(
+                        'Сначала задайте постоянную пользовательскую квоту: сейчас трафик не ограничен',
+                    );
+                const hosts = await this.hosts.findAll();
+                const selected = hosts.filter((h) =>
+                    kind === 'HOST' ? h.uuid === key : h.tags.includes(key) && h.useTagTrafficLimit,
+                );
+                if (action === 'PAUSE') {
+                    if (!selected.length)
+                        throw new BadRequestException('В этой области пока нет хостов');
+                    // Verify every affected inbound supports host isolation before committing a pause.
+                    await this.hostsService.validatePolicyState(
+                        hosts.map((h) =>
+                            selected.some((s) => s.uuid === h.uuid)
+                                ? Object.assign(Object.create(Object.getPrototypeOf(h)), h, {
+                                      serverSpeedLimitMbps: h.serverSpeedLimitMbps || 1,
+                                  })
+                                : h,
+                        ),
+                        [],
+                        true,
+                        new Set(selected.map((host) => host.uuid)),
+                    );
+                }
+                if (kind === 'TAG')
+                    await sql`INSERT INTO xera_host_tag_limits(tag,user_traffic_limit_bytes) VALUES(${key},0) ON CONFLICT DO NOTHING`.execute(
                         this.db.kysely,
                     );
-                    if (action === 'RESUME')
-                        await sql`UPDATE xera_limit_user_adjustments SET paused=false,updated_at=now() WHERE kind=${kind} AND key=${key}`.execute(
+                await sql`INSERT INTO xera_limit_scopes(kind,key) VALUES(${kind},${key}) ON CONFLICT DO NOTHING`.execute(
+                    this.db.kysely,
+                );
+                // Freeze recipients once: a concurrent squad change must not change the
+                // target set between counting, validating and applying this operation.
+                await sql`CREATE TEMP TABLE xera_limit_action_recipients ON COMMIT DROP AS SELECT u.id FROM users u WHERE ${recipients}`.execute(
+                    this.db.kysely,
+                );
+                const selectedRecipients = sql`u.id IN (SELECT id FROM xera_limit_action_recipients)`;
+                const count = await sql<{
+                    total: number;
+                }>`SELECT count(*)::integer AS total FROM xera_limit_action_recipients`.execute(
+                    this.db.kysely,
+                );
+                if (selection.type === 'SELECTED' && count.rows[0].total !== selection.userIds.length)
+                    throw new BadRequestException(
+                        'Часть выбранных пользователей не имеет доступа к этой области. Обновите список.',
+                    );
+                if (selection.type !== 'ALL' && !count.rows[0].total)
+                    throw new BadRequestException('Нет пользователей с доступом к этой области');
+                if (action === 'PAUSE' || action === 'RESUME') {
+                    if (selection.type === 'ALL') {
+                        await sql`UPDATE xera_limit_scopes SET paused=${action === 'PAUSE'},updated_at=now() WHERE kind=${kind} AND key=${key}`.execute(
                             this.db.kysely,
                         );
+                        if (action === 'RESUME')
+                            await sql`UPDATE xera_limit_user_adjustments SET paused=false,updated_at=now() WHERE kind=${kind} AND key=${key}`.execute(
+                                this.db.kysely,
+                            );
+                    } else {
+                        await sql`INSERT INTO xera_limit_user_adjustments(kind,key,user_id,window_start,paused)
+          SELECT ${kind},${key},u.id,q.window_start,${action === 'PAUSE'} FROM users u CROSS JOIN LATERAL xera_limit_state(${kind},${key},u.id) q WHERE ${selectedRecipients}
+          ON CONFLICT(kind,key,user_id) DO UPDATE SET paused=excluded.paused,updated_at=now()`.execute(
+                            this.db.kysely,
+                        );
+                    }
+                } else if (action === 'UNLIMITED' || action === 'LIMITED') {
+                    // Personal override: never attach it to a squad or the scope itself.
+                    // Preserve period bonuses, reset baselines and independent pause flags.
+                    await sql`INSERT INTO xera_limit_user_adjustments(kind,key,user_id,window_start,unlimited)
+                        SELECT ${kind},${key},u.id,q.window_start,${action === 'UNLIMITED'}
+                        FROM users u CROSS JOIN LATERAL xera_limit_state(${kind},${key},u.id) q
+                        WHERE ${selectedRecipients}
+                        ON CONFLICT(kind,key,user_id) DO UPDATE SET unlimited=excluded.unlimited,updated_at=now()`.execute(
+                        this.db.kysely,
+                    );
                 } else {
-                    await sql`INSERT INTO xera_limit_user_adjustments(kind,key,user_id,window_start,paused)
-      SELECT ${kind},${key},u.id,q.window_start,${action === 'PAUSE'} FROM users u CROSS JOIN LATERAL xera_limit_state(${kind},${key},u.id) q WHERE ${selectedRecipients}
-      ON CONFLICT(kind,key,user_id) DO UPDATE SET paused=excluded.paused,updated_at=now()`.execute(
+                    if (action === 'ADD') {
+                        const overflow = await sql<{
+                            bad: boolean;
+                        }>`SELECT EXISTS(SELECT 1 FROM users u CROSS JOIN LATERAL xera_limit_state(${kind},${key},u.id) q WHERE ${selectedRecipients} AND q.base_limit+q.bonus_bytes+${amountBytes}::bigint>9007199254740991) AS bad`.execute(
+                            this.db.kysely,
+                        );
+                        if (overflow.rows[0].bad)
+                            throw new BadRequestException('Итоговая квота слишком велика');
+                    }
+                    await sql`INSERT INTO xera_limit_user_adjustments(kind,key,user_id,window_start,bonus_bytes,reset_base)
+         SELECT ${kind},${key},u.id,q.window_start,
+          CASE WHEN ${action}='ADD' THEN q.bonus_bytes+${amountBytes}::bigint ELSE q.bonus_bytes END,
+          CASE WHEN ${action}='RESET' THEN COALESCE((SELECT jsonb_object_agg(r.bucket,r.raw_bytes::text) FROM xera_limit_raw(${kind},${key},u.id,q.window_start,1) r),'{}'::jsonb)
+           ELSE COALESCE((SELECT a.reset_base FROM xera_limit_user_adjustments a WHERE a.kind=${kind} AND a.key=${key} AND a.user_id=u.id AND a.window_start=q.window_start),'{}'::jsonb) END
+         FROM users u CROSS JOIN LATERAL xera_limit_state(${kind},${key},u.id) q WHERE ${selectedRecipients}
+         ON CONFLICT(kind,key,user_id) DO UPDATE SET window_start=excluded.window_start,bonus_bytes=excluded.bonus_bytes,reset_base=excluded.reset_base,updated_at=now()`.execute(
                         this.db.kysely,
                     );
                 }
-            } else if (action === 'UNLIMITED' || action === 'LIMITED') {
-                // Personal override: never attach it to a squad or the scope itself.
-                // Preserve period bonuses, reset baselines and independent pause flags.
-                await sql`INSERT INTO xera_limit_user_adjustments(kind,key,user_id,window_start,unlimited)
-                    SELECT ${kind},${key},u.id,q.window_start,${action === 'UNLIMITED'}
-                    FROM users u CROSS JOIN LATERAL xera_limit_state(${kind},${key},u.id) q
-                    WHERE ${selectedRecipients}
-                    ON CONFLICT(kind,key,user_id) DO UPDATE SET unlimited=excluded.unlimited,updated_at=now()`.execute(
-                    this.db.kysely,
-                );
-            } else {
-                if (action === 'ADD') {
-                    const overflow = await sql<{
-                        bad: boolean;
-                    }>`SELECT EXISTS(SELECT 1 FROM users u CROSS JOIN LATERAL xera_limit_state(${kind},${key},u.id) q WHERE ${selectedRecipients} AND q.base_limit+q.bonus_bytes+${amountBytes}::bigint>9007199254740991) AS bad`.execute(
-                        this.db.kysely,
-                    );
-                    if (overflow.rows[0].bad)
-                        throw new BadRequestException('Итоговая квота слишком велика');
+                if (action === 'RESET' || action === 'ADD') {
+                    // Rotate only an already initialized reserve bank. The legacy
+                    // meter and the new epoch commit together; HTTP follows commit.
+                    await sql`SELECT xera_adjust_quota_budget(${requestId}::uuid,${kind},${key},u.id,
+                        ${action},${action === 'ADD' ? amountBytes : 0}::bigint)
+                        FROM users u WHERE ${selectedRecipients} AND EXISTS(
+                            SELECT 1 FROM xera_quota_reserve_pools p WHERE p.kind=${kind} AND p.key=${key} AND p.user_id=u.id
+                              AND p.window_start=(SELECT window_start FROM xera_limit_state(${kind},${key},u.id))
+                              AND p.budget_epoch=xera_current_quota_epoch(p.kind,p.key,p.user_id,p.window_start)
+                        ) ORDER BY u.id`.execute(this.db.kysely);
                 }
-                await sql`INSERT INTO xera_limit_user_adjustments(kind,key,user_id,window_start,bonus_bytes,reset_base)
-     SELECT ${kind},${key},u.id,q.window_start,
-      CASE WHEN ${action}='ADD' THEN q.bonus_bytes+${amountBytes}::bigint ELSE q.bonus_bytes END,
-      CASE WHEN ${action}='RESET' THEN COALESCE((SELECT jsonb_object_agg(r.bucket,r.raw_bytes::text) FROM xera_limit_raw(${kind},${key},u.id,q.window_start,1) r),'{}'::jsonb)
-       ELSE COALESCE((SELECT a.reset_base FROM xera_limit_user_adjustments a WHERE a.kind=${kind} AND a.key=${key} AND a.user_id=u.id AND a.window_start=q.window_start),'{}'::jsonb) END
-     FROM users u CROSS JOIN LATERAL xera_limit_state(${kind},${key},u.id) q WHERE ${selectedRecipients}
-     ON CONFLICT(kind,key,user_id) DO UPDATE SET window_start=excluded.window_start,bonus_bytes=excluded.bonus_bytes,reset_base=excluded.reset_base,updated_at=now()`.execute(
+                await sql`INSERT INTO xera_limit_actions(id,kind,key,action,amount_bytes,affected_users,selection) VALUES(${requestId}::uuid,${kind},${key},${action},${amountBytes}::bigint,${count.rows[0].total},${fingerprint}::jsonb)`.execute(
                     this.db.kysely,
                 );
-            }
-            if (action === 'RESET' || action === 'ADD') {
-                // Rotate only an already initialized reserve bank. The legacy
-                // meter and the new epoch commit together; HTTP follows commit.
-                await sql`SELECT xera_adjust_quota_budget(${requestId}::uuid,${kind},${key},u.id,
-                    ${action},${action === 'ADD' ? amountBytes : 0}::bigint)
-                    FROM users u WHERE ${selectedRecipients} AND EXISTS(
-                        SELECT 1 FROM xera_quota_reserve_pools p WHERE p.kind=${kind} AND p.key=${key} AND p.user_id=u.id
-                          AND p.window_start=(SELECT window_start FROM xera_limit_state(${kind},${key},u.id))
-                          AND p.budget_epoch=xera_current_quota_epoch(p.kind,p.key,p.user_id,p.window_start)
-                    ) ORDER BY u.id`.execute(this.db.kysely);
-            }
-            await sql`INSERT INTO xera_limit_actions(id,kind,key,action,amount_bytes,affected_users,selection) VALUES(${requestId}::uuid,${kind},${key},${action},${amountBytes}::bigint,${count.rows[0].total},${fingerprint}::jsonb)`.execute(
-                this.db.kysely,
-            );
-            return { affectedUsers: count.rows[0].total, replayed: false };
-        });
-        this.policy.requestSync();
-        return {
-            ...result,
-            saved: true,
-            enforcement: 'synchronizing' as const,
-            synchronization: await this.synchronization(kind, key),
-        };
+                return { affectedUsers: count.rows[0].total, replayed: false };
+            });
+            this.policy.requestSync();
+            return {
+                ...result,
+                saved: true,
+                enforcement: 'synchronizing' as const,
+                synchronization: await this.synchronization(kind, key),
+            };
+        } catch (error) {
+            rethrowXrayModeConflict(error);
+            throw error;
+        }
     }
 }

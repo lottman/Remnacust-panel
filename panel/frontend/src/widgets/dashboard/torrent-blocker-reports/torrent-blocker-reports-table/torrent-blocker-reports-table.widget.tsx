@@ -8,7 +8,8 @@ import {
 } from '@kastov/mantine-react-table-open'
 import { ActionIcon, ActionIconGroup, Box, Tooltip } from '@mantine/core'
 import { modals } from '@mantine/modals'
-import { githubDarkTheme, JsonEditor } from 'json-edit-react'
+import { JsonViewer } from 'json-edit-react'
+import { githubDarkTheme } from '@json-edit-react/themes'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiUserCircle } from 'react-icons/pi'
@@ -193,14 +194,13 @@ export function TorrentBlockerReportsTableWidget() {
                         modals.open({
                             children: (
                                 <Box>
-                                    <JsonEditor
+                                    <JsonViewer
                                         collapse={3}
                                         data={JSON.parse(JSON.stringify(row.original.report))}
                                         indent={2}
                                         maxWidth="100%"
                                         rootName=""
                                         theme={githubDarkTheme}
-                                        viewOnly
                                     />
                                 </Box>
                             ),

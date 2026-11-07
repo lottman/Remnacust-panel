@@ -15,7 +15,7 @@ function load(filename, resolve = require) {
 const defaults = load('prisma/seed/default/hwid-settings.ts');
 const { seedSubscriptionSettings } = load('prisma/seed/seeders/8_seed-subscription-settings.ts', (name) => {
     if (name === '../default') return defaults;
-    if (name === 'consola') return { default: { start() {}, success() {} } };
+    if (name === 'consola') return { __esModule: true, default: { start() {}, success() {} } };
     if (name === '@libs/contracts/models') return { CustomRemarksSchema: { safeParseAsync: async () => ({ success: true }) } };
     return require(name);
 });

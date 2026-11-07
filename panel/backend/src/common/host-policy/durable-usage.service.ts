@@ -213,7 +213,7 @@ export class DurableUsageService {
                     frame.capturedAt,
                 );
                 await sql`SELECT xera_cover_quota_usage_exposure(${node.nodeUuid}::uuid,${frame.coreProcessId}::uuid,
-                    ${current.stream}::uuid,${current.sequence}::bigint,${current.requestedAt}::timestamptz)`.execute(
+                    ${current.stream}::uuid,${current.sequence}::bigint,${current.requestedAt?.toISOString() ?? null}::timestamptz)`.execute(
                     this.db.kysely,
                 );
                 await sql`UPDATE xera_quota_node_modes SET initial_drained_at=clock_timestamp(),initial_drain_sequence=${current.sequence}::bigint

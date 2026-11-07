@@ -21,7 +21,7 @@ function loadStore(responses) {
         exports,
         atob,
         require(name) {
-            if (name === 'axios') return { default: { get: async () => {
+            if (name === 'axios') return { __esModule: true, default: { get: async () => {
                 const response = responses[calls++]
                 if (response instanceof Error) throw response
                 if (!response) throw Error('Unexpected request')

@@ -1,4 +1,4 @@
-import { InjectRedis } from '@songkeys/nestjs-redis';
+import { Inject } from '@nestjs/common';
 import Redis, { ChainableCommander, ScanStream } from 'ioredis';
 
 import { Injectable, Logger } from '@nestjs/common';
@@ -12,7 +12,7 @@ export class RawCacheService {
     private readonly logger = new Logger(RawCacheService.name);
 
     constructor(
-        @InjectRedis() private readonly redis: Redis,
+        @Inject('RC_REDIS_CLIENT') private readonly redis: Redis,
         private readonly memoryCacheService: MemoryCacheService,
     ) {}
 

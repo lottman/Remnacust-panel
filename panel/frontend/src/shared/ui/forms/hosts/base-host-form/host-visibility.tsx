@@ -4,10 +4,12 @@ import { useTranslation } from 'react-i18next'
 import { PiProhibit, PiPulse } from 'react-icons/pi'
 
 import { useUiText } from '@shared/i18n/interface-text'
+import { useXrayMode } from '@shared/api/hooks/xray-mode'
 
 import { useHostFormData } from './options'
 
 export function HostVisibility() {
+    const { isCustom } = useXrayMode()
     const uiText = useUiText()
 
     const { form } = useHostFormData()
@@ -61,6 +63,7 @@ export function HostVisibility() {
             </Group>
             <Switch
                 label={uiText('available-after-subscription-expires-or-is-disabled-61afc39')}
+                disabled={!isCustom}
                 description={uiText(
                     'can-share-an-inbound-with-ordinary-hosts-access-uses-separate--1881b29'
                 )}
@@ -68,7 +71,7 @@ export function HostVisibility() {
                 {...form.getInputProps('alwaysAvailable', { type: 'checkbox' })}
             />
             <Checkbox
-                disabled={!afterEnd}
+                disabled={!isCustom || !afterEnd}
                 label={uiText('unavailable-during-an-active-subscription-43ed8ab')}
                 description={uiText(
                     'only-for-expired-or-disabled-subscriptions-squad-access-restri-c5bbce7'

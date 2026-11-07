@@ -1,6 +1,6 @@
 // Native usage import in a dedicated disposable database; no RPC ACK or barrier release.
 const assert=require('node:assert/strict'),path=require('node:path'),{randomUUID}=require('node:crypto');
-const {PrismaClient}=require('@prisma/client'),{TransactionHost}=require('@nestjs-cls/transactional'),k=require('kysely'),load=require('./load-typescript.cjs');
+const {PrismaClient}=require('./prisma-test-client.cjs'),{TransactionHost}=require('@nestjs-cls/transactional'),k=require('kysely'),load=require('./load-typescript.cjs');
 const {PrismaTxDriver}=require('../node_modules/@kastov/nestjs-prisma-kysely/build/drivers/prisma-tx.driver.js');
 const url=process.env.NATIVE_QUOTA_RECOVERY_TEST_DATABASE_URL;assert.ok(url);const parsed=new URL(url);
 assert.equal(parsed.hostname,'127.0.0.1');assert.equal(parsed.port,'55439');assert.ok(['/remnacust_native_recovery_test','/remnacust_native_ack_source_test','/remnacust_recovery_receipt_jobs_test','/remnacust_receipt_ui_test'].includes(parsed.pathname));

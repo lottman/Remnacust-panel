@@ -1,5 +1,6 @@
 import {
     Group,
+    Fieldset,
     NumberInput,
     Select,
     SegmentedControl,
@@ -10,6 +11,8 @@ import {
     Text
 } from '@mantine/core'
 import { useState } from 'react'
+import { useXrayMode } from '@shared/api/hooks/xray-mode'
+import { XrayModeNotice } from '@shared/ui/xray-mode-notice'
 import {
     TbClock,
     TbGauge,
@@ -63,6 +66,7 @@ function TagLimitSwitch({
 }
 
 export function HostLimitsAndRules() {
+    const { isCustom } = useXrayMode()
     const uiText = useUiText()
 
     const { form } = useHostFormData()
@@ -90,6 +94,8 @@ export function HostLimitsAndRules() {
 
     return (
         <Stack gap="md">
+            <XrayModeNotice />
+            <Fieldset variant="unstyled" disabled={!isCustom}><Stack gap="md">
             <Text size="sm" c="dimmed">
                 {uiText('the-host-s-own-limits-apply-independently-each-kind-of-limit-c-9735c38')}
             </Text>
@@ -309,6 +315,7 @@ export function HostLimitsAndRules() {
                 )}
             </Stack>
 
+            </Stack></Fieldset>
             <Stack gap="xs">
                 <Switch
                     label={uiText('automatic-sni-and-shortid-regeneration-fa50b0e')}

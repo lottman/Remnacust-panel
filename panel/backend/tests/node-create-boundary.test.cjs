@@ -44,6 +44,14 @@ function fixture() {
     return { service, repository, queues, queries, cache, events, calls };
 }
 
+test('DB flavor conflict is a clean HTTP409 and cannot enqueue a failed node create',async()=>{
+    const f=fixture();let queued=0;
+    f.repository.create=async()=>{throw {code:'P2010',meta:{code:'P0C01'}};};
+    f.queues.startNode=async()=>{queued++;};
+    await assert.rejects(f.service.createNode(body()),error=>error.getStatus()===409&&error.errorCode==='CUSTOM_XRAY_REQUIRED');
+    assert.equal(queued,0);
+});
+
 test('missing profile or mismatched inbound cannot leave a node behind', async () => {
     for (const response of [
         { isOk: false, ...ERRORS.CONFIG_PROFILE_NOT_FOUND },

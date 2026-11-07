@@ -1,4 +1,4 @@
-import { InjectRedis } from '@songkeys/nestjs-redis';
+import { Inject } from '@nestjs/common';
 import { InjectMetric } from '@willsoto/nestjs-prometheus';
 import Redis from 'ioredis';
 import { Counter } from 'prom-client';
@@ -16,7 +16,7 @@ export class NodeMetricsSubscriber implements OnModuleInit, OnModuleDestroy {
     private subscriber: Redis;
 
     constructor(
-        @InjectRedis() private readonly redis: Redis,
+        @Inject('RC_REDIS_CLIENT') private readonly redis: Redis,
         @InjectMetric(METRIC_NAMES.NODE_INBOUND_UPLOAD_BYTES)
         public nodeInboundUploadBytes: Counter<string>,
         @InjectMetric(METRIC_NAMES.NODE_INBOUND_DOWNLOAD_BYTES)

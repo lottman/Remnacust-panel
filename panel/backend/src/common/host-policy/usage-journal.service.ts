@@ -6,6 +6,7 @@ import { randomUUID } from 'node:crypto';
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
 
 import { TypedConfigService } from '@common/config/app-config';
+import { createPrismaClient } from '../database/postgres-adapter';
 
 @Injectable()
 export class UsageJournalService implements OnModuleDestroy {
@@ -19,7 +20,7 @@ export class UsageJournalService implements OnModuleDestroy {
         const url = new URL(config.getOrThrow('DATABASE_URL'));
         url.searchParams.set('connection_limit', '2');
         url.searchParams.set('pool_timeout', '10');
-        this.client = new PrismaClient({ datasourceUrl: url.toString() });
+        this.client = createPrismaClient(url.toString());
     }
 
     async prepare(node: UsageNode): Promise<void> {

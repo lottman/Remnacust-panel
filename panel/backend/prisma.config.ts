@@ -14,6 +14,7 @@ if (!process.env.DIRECT_URL) {
 
 export default {
     schema: path.join('prisma', 'schema.prisma'),
+    datasource: { url: process.env.DIRECT_URL ?? process.env.DATABASE_URL },
     migrations: {
         path: path.join('prisma', 'migrations'),
         seed: 'node dist/seed.js',

@@ -5,7 +5,11 @@ export const EDITOR_ASSETS = [
     'main.wasm',
     'wasm_exec.js',
     'xray.schema.json',
-    'xray.schema.cn.json'
+    'xray.schema.cn.json',
+    'default.wasm',
+    'xray.default.schema.json',
+    'xray.default.schema.cn.json',
+    'xray.default.provenance.json'
 ]
 
 export function editorAssetVersions(

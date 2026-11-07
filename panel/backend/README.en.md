@@ -2,11 +2,11 @@
 
 # Remnacust Backend
 
-Source version **1.1.7.99**. The panel API, background workers and scheduler. Use [prebuilt images](../README.en.md) for a normal deployment; this directory is for development.
+Source version **1.1.7.100**. The panel API, background workers and scheduler. Use [prebuilt images](../README.en.md) for a normal deployment; this directory is for development.
 
 ## Requirements
 
-Node.js 24, isolated PostgreSQL and Valkey services, and a test `.env`. See the [panel guide](../README.en.md#server-and-ports) for server resources and private ports, and [database compatibility](../../docs/DATABASE-COMPATIBILITY.md) for database versions and migration considerations.
+Node.js 26.13 LTS, isolated PostgreSQL and Valkey services, and a test `.env`. See the [panel guide](../README.en.md#server-and-ports) for server resources and private ports, and [database compatibility](../../docs/DATABASE-COMPATIBILITY.md) for database versions and migration considerations.
 
 From this directory:
 

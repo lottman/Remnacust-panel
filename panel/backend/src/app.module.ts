@@ -1,7 +1,8 @@
 import { HostPolicyModule } from '@common/host-policy/host-policy.module';
+import { XrayModeModule } from '@common/xray-mode/xray-mode.module';
 import { ClsPluginTransactional } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
-import { SirvModule } from 'nest-sirv';
+import { FrontendModule } from '@common/frontend/frontend.module';
 import { ClsModule } from 'nestjs-cls';
 
 import { Logger, Module, type OnApplicationShutdown } from '@nestjs/common';
@@ -13,7 +14,6 @@ import { PrismaModule } from '@common/database';
 import { PrismaService } from '@common/database/prisma.service';
 import { RawCacheModule } from '@common/raw-cache/raw-cache.module';
 import { RuntimeMetricsModule } from '@common/runtime-metrics/runtime-metrics.module';
-import { getAssetsPath } from '@common/utils/get-assets-path';
 import { disableFrontend } from '@common/utils/startup-app/is-development';
 
 import { IntegrationModules } from '@integration-modules/integration-modules';
@@ -22,10 +22,9 @@ import { RemnawaveModules } from '@modules/remnawave-backend.modules';
 
 import { QueueModule } from '@queue/queue.module';
 
-const HASHED = /-[A-Za-z0-9_-]{8,}\.[a-z0-9]+$/i;
-
 @Module({
     imports: [
+        XrayModeModule,
         HostPolicyModule,
         RawCacheModule,
         CommonConfigModule,
@@ -48,22 +47,7 @@ const HASHED = /-[A-Za-z0-9_-]{8,}\.[a-z0-9]+$/i;
         IntegrationModules,
         RemnawaveModules,
         ConditionalModule.registerWhen(
-            SirvModule.forRoot({
-                rootPath: getAssetsPath(),
-                exclude: ['/api'],
-                sirv: {
-                    gzip: true,
-                    brotli: true,
-                    etag: true,
-                    setHeaders(res, pathname) {
-                        if (HASHED.test(pathname.replace(/\.(?:gz|br)$/, ''))) {
-                            res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-                        } else {
-                            res.setHeader('Cache-Control', 'no-cache');
-                        }
-                    },
-                },
-            }),
+            FrontendModule,
             () => !disableFrontend(),
         ),
 

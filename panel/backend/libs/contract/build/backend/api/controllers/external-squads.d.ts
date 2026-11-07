@@ -1,8 +1,8 @@
-export declare const EXTERNAL_SQUADS_CONTROLLER: "external-squads";
+export declare const EXTERNAL_SQUADS_CONTROLLER: 'external-squads';
 export declare const EXTERNAL_SQUADS_ROUTES: {
-    readonly GET: "";
-    readonly CREATE: "";
-    readonly UPDATE: "";
+    readonly GET: '';
+    readonly CREATE: '';
+    readonly UPDATE: '';
     readonly GET_BY_UUID: (uuid: string) => string;
     readonly DELETE: (uuid: string) => string;
     readonly BULK_ACTIONS: {
@@ -13,8 +13,8 @@ export declare const EXTERNAL_SQUADS_ROUTES: {
         readonly REORDER: "actions/reorder";
     };
     readonly TAGS: {
-        readonly GET: "tags";
-        readonly SET: "tags";
+        readonly GET: 'tags';
+        readonly SET: 'tags';
     };
 };
 //# sourceMappingURL=external-squads.d.ts.map

@@ -2,19 +2,19 @@ import z from 'zod';
 export declare const RemnawaveWebhookUserEvents: z.ZodObject<{
     scope: z.ZodLiteral<"user">;
     event: z.ZodEnum<{
+        "user.bandwidth_usage_threshold_reached": "user.bandwidth_usage_threshold_reached";
         "user.created": "user.created";
-        "user.modified": "user.modified";
         "user.deleted": "user.deleted";
-        "user.revoked": "user.revoked";
         "user.disabled": "user.disabled";
         "user.enabled": "user.enabled";
-        "user.limited": "user.limited";
-        "user.expired": "user.expired";
-        "user.traffic_reset": "user.traffic_reset";
-        "user.first_connected": "user.first_connected";
-        "user.bandwidth_usage_threshold_reached": "user.bandwidth_usage_threshold_reached";
-        "user.not_connected": "user.not_connected";
         "user.expiration": "user.expiration";
+        "user.expired": "user.expired";
+        "user.first_connected": "user.first_connected";
+        "user.limited": "user.limited";
+        "user.modified": "user.modified";
+        "user.not_connected": "user.not_connected";
+        "user.revoked": "user.revoked";
+        "user.traffic_reset": "user.traffic_reset";
     }>;
     timestamp: z.ZodPipe<z.ZodString, z.ZodTransform<Date, string>>;
     data: z.ZodObject<{
@@ -22,19 +22,19 @@ export declare const RemnawaveWebhookUserEvents: z.ZodObject<{
         shortUuid: z.ZodString;
         username: z.ZodString;
         status: z.ZodEnum<{
-            readonly ACTIVE: "ACTIVE";
-            readonly DISABLED: "DISABLED";
-            readonly FROZEN: "FROZEN";
-            readonly LIMITED: "LIMITED";
-            readonly EXPIRED: "EXPIRED";
+            readonly ACTIVE: 'ACTIVE';
+            readonly DISABLED: 'DISABLED';
+            readonly FROZEN: 'FROZEN';
+            readonly LIMITED: 'LIMITED';
+            readonly EXPIRED: 'EXPIRED';
         }>;
         trafficLimitBytes: z.ZodNumber;
         trafficLimitStrategy: z.ZodEnum<{
-            readonly NO_RESET: "NO_RESET";
-            readonly DAY: "DAY";
-            readonly WEEK: "WEEK";
-            readonly MONTH: "MONTH";
-            readonly MONTH_ROLLING: "MONTH_ROLLING";
+            readonly NO_RESET: 'NO_RESET';
+            readonly DAY: 'DAY';
+            readonly WEEK: 'WEEK';
+            readonly MONTH: 'MONTH';
+            readonly MONTH_ROLLING: 'MONTH_ROLLING';
         }>;
         expireAt: z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>;
         frozenAt: z.ZodOptional<z.ZodNullable<z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>>>;
@@ -61,8 +61,8 @@ export declare const RemnawaveWebhookUserEvents: z.ZodObject<{
             domain: z.ZodString;
             path: z.ZodString;
             kind: z.ZodEnum<{
-                PRIMARY: "PRIMARY";
                 CDN: "CDN";
+                PRIMARY: "PRIMARY";
             }>;
             parentUuid: z.ZodNullable<z.ZodUUID>;
             isDefault: z.ZodBoolean;
@@ -97,19 +97,19 @@ export declare const RemnawaveWebhookUserHwidDevicesEvents: z.ZodObject<{
             shortUuid: z.ZodString;
             username: z.ZodString;
             status: z.ZodEnum<{
-                readonly ACTIVE: "ACTIVE";
-                readonly DISABLED: "DISABLED";
-                readonly FROZEN: "FROZEN";
-                readonly LIMITED: "LIMITED";
-                readonly EXPIRED: "EXPIRED";
+                readonly ACTIVE: 'ACTIVE';
+                readonly DISABLED: 'DISABLED';
+                readonly FROZEN: 'FROZEN';
+                readonly LIMITED: 'LIMITED';
+                readonly EXPIRED: 'EXPIRED';
             }>;
             trafficLimitBytes: z.ZodNumber;
             trafficLimitStrategy: z.ZodEnum<{
-                readonly NO_RESET: "NO_RESET";
-                readonly DAY: "DAY";
-                readonly WEEK: "WEEK";
-                readonly MONTH: "MONTH";
-                readonly MONTH_ROLLING: "MONTH_ROLLING";
+                readonly NO_RESET: 'NO_RESET';
+                readonly DAY: 'DAY';
+                readonly WEEK: 'WEEK';
+                readonly MONTH: 'MONTH';
+                readonly MONTH_ROLLING: 'MONTH_ROLLING';
             }>;
             expireAt: z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>;
             frozenAt: z.ZodOptional<z.ZodNullable<z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>>>;
@@ -136,8 +136,8 @@ export declare const RemnawaveWebhookUserHwidDevicesEvents: z.ZodObject<{
                 domain: z.ZodString;
                 path: z.ZodString;
                 kind: z.ZodEnum<{
-                    PRIMARY: "PRIMARY";
                     CDN: "CDN";
+                    PRIMARY: "PRIMARY";
                 }>;
                 parentUuid: z.ZodNullable<z.ZodUUID>;
                 isDefault: z.ZodBoolean;
@@ -171,13 +171,13 @@ export declare const RemnawaveWebhookUserHwidDevicesEvents: z.ZodObject<{
 export declare const RemnawaveWebhookNodeEvents: z.ZodObject<{
     scope: z.ZodLiteral<"node">;
     event: z.ZodEnum<{
-        "node.created": "node.created";
-        "node.modified": "node.modified";
-        "node.disabled": "node.disabled";
-        "node.enabled": "node.enabled";
-        "node.deleted": "node.deleted";
         "node.connection_lost": "node.connection_lost";
         "node.connection_restored": "node.connection_restored";
+        "node.created": "node.created";
+        "node.deleted": "node.deleted";
+        "node.disabled": "node.disabled";
+        "node.enabled": "node.enabled";
+        "node.modified": "node.modified";
         "node.traffic_notify": "node.traffic_notify";
     }>;
     timestamp: z.ZodPipe<z.ZodString, z.ZodTransform<Date, string>>;
@@ -207,16 +207,16 @@ export declare const RemnawaveWebhookNodeEvents: z.ZodObject<{
         ips: z.ZodArray<z.ZodObject<{
             ip: z.ZodUnion<readonly [z.ZodIPv4, z.ZodIPv6]>;
             status: z.ZodEnum<{
-                readonly INBOUND: "INBOUND";
-                readonly OUTBOUND: "OUTBOUND";
-                readonly MANAGEMENT: "MANAGEMENT";
-                readonly TRANSIT: "TRANSIT";
-                readonly MONITORING: "MONITORING";
-                readonly RESERVE: "RESERVE";
-                readonly BLOCKED: "BLOCKED";
-                readonly FLAGGED: "FLAGGED";
-                readonly DEPRECATED: "DEPRECATED";
-                readonly UNKNOWN: "UNKNOWN";
+                readonly INBOUND: 'INBOUND';
+                readonly OUTBOUND: 'OUTBOUND';
+                readonly MANAGEMENT: 'MANAGEMENT';
+                readonly TRANSIT: 'TRANSIT';
+                readonly MONITORING: 'MONITORING';
+                readonly RESERVE: 'RESERVE';
+                readonly BLOCKED: 'BLOCKED';
+                readonly FLAGGED: 'FLAGGED';
+                readonly DEPRECATED: 'DEPRECATED';
+                readonly UNKNOWN: 'UNKNOWN';
             }>;
         }, z.core.$strip>>;
         createdAt: z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>;
@@ -283,12 +283,12 @@ export declare const RemnawaveWebhookNodeEvents: z.ZodObject<{
 export declare const RemnawaveWebhookServiceEvents: z.ZodObject<{
     scope: z.ZodLiteral<"service">;
     event: z.ZodEnum<{
-        "service.panel_started": "service.panel_started";
-        "service.login_attempt_failed": "service.login_attempt_failed";
-        "service.login_attempt_success": "service.login_attempt_success";
-        "service.subpage_config_changed": "service.subpage_config_changed";
         "service.api_token_created": "service.api_token_created";
         "service.api_token_deleted": "service.api_token_deleted";
+        "service.login_attempt_failed": "service.login_attempt_failed";
+        "service.login_attempt_success": "service.login_attempt_success";
+        "service.panel_started": "service.panel_started";
+        "service.subpage_config_changed": "service.subpage_config_changed";
     }>;
     timestamp: z.ZodPipe<z.ZodString, z.ZodTransform<Date, string>>;
     data: z.ZodObject<{
@@ -303,8 +303,8 @@ export declare const RemnawaveWebhookServiceEvents: z.ZodObject<{
         subpageConfig: z.ZodOptional<z.ZodObject<{
             action: z.ZodEnum<{
                 CREATED: "CREATED";
-                UPDATED: "UPDATED";
                 DELETED: "DELETED";
+                UPDATED: "UPDATED";
             }>;
             uuid: z.ZodUUID;
         }, z.core.$strip>>;
@@ -329,10 +329,10 @@ export declare const RemnawaveWebhookErrorsEvents: z.ZodObject<{
 export declare const RemnawaveWebhookCrmEvents: z.ZodObject<{
     scope: z.ZodLiteral<"crm">;
     event: z.ZodEnum<{
-        "crm.infra_billing_node_payment_in_7_days": "crm.infra_billing_node_payment_in_7_days";
-        "crm.infra_billing_node_payment_in_48hrs": "crm.infra_billing_node_payment_in_48hrs";
-        "crm.infra_billing_node_payment_in_24hrs": "crm.infra_billing_node_payment_in_24hrs";
         "crm.infra_billing_node_payment_due_today": "crm.infra_billing_node_payment_due_today";
+        "crm.infra_billing_node_payment_in_24hrs": "crm.infra_billing_node_payment_in_24hrs";
+        "crm.infra_billing_node_payment_in_48hrs": "crm.infra_billing_node_payment_in_48hrs";
+        "crm.infra_billing_node_payment_in_7_days": "crm.infra_billing_node_payment_in_7_days";
         "crm.infra_billing_node_payment_overdue_24hrs": "crm.infra_billing_node_payment_overdue_24hrs";
         "crm.infra_billing_node_payment_overdue_48hrs": "crm.infra_billing_node_payment_overdue_48hrs";
         "crm.infra_billing_node_payment_overdue_7_days": "crm.infra_billing_node_payment_overdue_7_days";
@@ -378,16 +378,16 @@ export declare const RemnawaveWebhookTorrentBlockerEvents: z.ZodObject<{
             ips: z.ZodArray<z.ZodObject<{
                 ip: z.ZodUnion<readonly [z.ZodIPv4, z.ZodIPv6]>;
                 status: z.ZodEnum<{
-                    readonly INBOUND: "INBOUND";
-                    readonly OUTBOUND: "OUTBOUND";
-                    readonly MANAGEMENT: "MANAGEMENT";
-                    readonly TRANSIT: "TRANSIT";
-                    readonly MONITORING: "MONITORING";
-                    readonly RESERVE: "RESERVE";
-                    readonly BLOCKED: "BLOCKED";
-                    readonly FLAGGED: "FLAGGED";
-                    readonly DEPRECATED: "DEPRECATED";
-                    readonly UNKNOWN: "UNKNOWN";
+                    readonly INBOUND: 'INBOUND';
+                    readonly OUTBOUND: 'OUTBOUND';
+                    readonly MANAGEMENT: 'MANAGEMENT';
+                    readonly TRANSIT: 'TRANSIT';
+                    readonly MONITORING: 'MONITORING';
+                    readonly RESERVE: 'RESERVE';
+                    readonly BLOCKED: 'BLOCKED';
+                    readonly FLAGGED: 'FLAGGED';
+                    readonly DEPRECATED: 'DEPRECATED';
+                    readonly UNKNOWN: 'UNKNOWN';
                 }>;
             }, z.core.$strip>>;
             createdAt: z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>;
@@ -455,19 +455,19 @@ export declare const RemnawaveWebhookTorrentBlockerEvents: z.ZodObject<{
             shortUuid: z.ZodString;
             username: z.ZodString;
             status: z.ZodEnum<{
-                readonly ACTIVE: "ACTIVE";
-                readonly DISABLED: "DISABLED";
-                readonly FROZEN: "FROZEN";
-                readonly LIMITED: "LIMITED";
-                readonly EXPIRED: "EXPIRED";
+                readonly ACTIVE: 'ACTIVE';
+                readonly DISABLED: 'DISABLED';
+                readonly FROZEN: 'FROZEN';
+                readonly LIMITED: 'LIMITED';
+                readonly EXPIRED: 'EXPIRED';
             }>;
             trafficLimitBytes: z.ZodNumber;
             trafficLimitStrategy: z.ZodEnum<{
-                readonly NO_RESET: "NO_RESET";
-                readonly DAY: "DAY";
-                readonly WEEK: "WEEK";
-                readonly MONTH: "MONTH";
-                readonly MONTH_ROLLING: "MONTH_ROLLING";
+                readonly NO_RESET: 'NO_RESET';
+                readonly DAY: 'DAY';
+                readonly WEEK: 'WEEK';
+                readonly MONTH: 'MONTH';
+                readonly MONTH_ROLLING: 'MONTH_ROLLING';
             }>;
             expireAt: z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>;
             frozenAt: z.ZodOptional<z.ZodNullable<z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>>>;
@@ -494,8 +494,8 @@ export declare const RemnawaveWebhookTorrentBlockerEvents: z.ZodObject<{
                 domain: z.ZodString;
                 path: z.ZodString;
                 kind: z.ZodEnum<{
-                    PRIMARY: "PRIMARY";
                     CDN: "CDN";
+                    PRIMARY: "PRIMARY";
                 }>;
                 parentUuid: z.ZodNullable<z.ZodUUID>;
                 isDefault: z.ZodBoolean;
@@ -542,19 +542,19 @@ export declare const RemnawaveWebhookTorrentBlockerEvents: z.ZodObject<{
 export declare const RemnawaveWebhookEventSchema: z.ZodDiscriminatedUnion<[z.ZodObject<{
     scope: z.ZodLiteral<"user">;
     event: z.ZodEnum<{
+        "user.bandwidth_usage_threshold_reached": "user.bandwidth_usage_threshold_reached";
         "user.created": "user.created";
-        "user.modified": "user.modified";
         "user.deleted": "user.deleted";
-        "user.revoked": "user.revoked";
         "user.disabled": "user.disabled";
         "user.enabled": "user.enabled";
-        "user.limited": "user.limited";
-        "user.expired": "user.expired";
-        "user.traffic_reset": "user.traffic_reset";
-        "user.first_connected": "user.first_connected";
-        "user.bandwidth_usage_threshold_reached": "user.bandwidth_usage_threshold_reached";
-        "user.not_connected": "user.not_connected";
         "user.expiration": "user.expiration";
+        "user.expired": "user.expired";
+        "user.first_connected": "user.first_connected";
+        "user.limited": "user.limited";
+        "user.modified": "user.modified";
+        "user.not_connected": "user.not_connected";
+        "user.revoked": "user.revoked";
+        "user.traffic_reset": "user.traffic_reset";
     }>;
     timestamp: z.ZodPipe<z.ZodString, z.ZodTransform<Date, string>>;
     data: z.ZodObject<{
@@ -562,19 +562,19 @@ export declare const RemnawaveWebhookEventSchema: z.ZodDiscriminatedUnion<[z.Zod
         shortUuid: z.ZodString;
         username: z.ZodString;
         status: z.ZodEnum<{
-            readonly ACTIVE: "ACTIVE";
-            readonly DISABLED: "DISABLED";
-            readonly FROZEN: "FROZEN";
-            readonly LIMITED: "LIMITED";
-            readonly EXPIRED: "EXPIRED";
+            readonly ACTIVE: 'ACTIVE';
+            readonly DISABLED: 'DISABLED';
+            readonly FROZEN: 'FROZEN';
+            readonly LIMITED: 'LIMITED';
+            readonly EXPIRED: 'EXPIRED';
         }>;
         trafficLimitBytes: z.ZodNumber;
         trafficLimitStrategy: z.ZodEnum<{
-            readonly NO_RESET: "NO_RESET";
-            readonly DAY: "DAY";
-            readonly WEEK: "WEEK";
-            readonly MONTH: "MONTH";
-            readonly MONTH_ROLLING: "MONTH_ROLLING";
+            readonly NO_RESET: 'NO_RESET';
+            readonly DAY: 'DAY';
+            readonly WEEK: 'WEEK';
+            readonly MONTH: 'MONTH';
+            readonly MONTH_ROLLING: 'MONTH_ROLLING';
         }>;
         expireAt: z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>;
         frozenAt: z.ZodOptional<z.ZodNullable<z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>>>;
@@ -601,8 +601,8 @@ export declare const RemnawaveWebhookEventSchema: z.ZodDiscriminatedUnion<[z.Zod
             domain: z.ZodString;
             path: z.ZodString;
             kind: z.ZodEnum<{
-                PRIMARY: "PRIMARY";
                 CDN: "CDN";
+                PRIMARY: "PRIMARY";
             }>;
             parentUuid: z.ZodNullable<z.ZodUUID>;
             isDefault: z.ZodBoolean;
@@ -636,19 +636,19 @@ export declare const RemnawaveWebhookEventSchema: z.ZodDiscriminatedUnion<[z.Zod
             shortUuid: z.ZodString;
             username: z.ZodString;
             status: z.ZodEnum<{
-                readonly ACTIVE: "ACTIVE";
-                readonly DISABLED: "DISABLED";
-                readonly FROZEN: "FROZEN";
-                readonly LIMITED: "LIMITED";
-                readonly EXPIRED: "EXPIRED";
+                readonly ACTIVE: 'ACTIVE';
+                readonly DISABLED: 'DISABLED';
+                readonly FROZEN: 'FROZEN';
+                readonly LIMITED: 'LIMITED';
+                readonly EXPIRED: 'EXPIRED';
             }>;
             trafficLimitBytes: z.ZodNumber;
             trafficLimitStrategy: z.ZodEnum<{
-                readonly NO_RESET: "NO_RESET";
-                readonly DAY: "DAY";
-                readonly WEEK: "WEEK";
-                readonly MONTH: "MONTH";
-                readonly MONTH_ROLLING: "MONTH_ROLLING";
+                readonly NO_RESET: 'NO_RESET';
+                readonly DAY: 'DAY';
+                readonly WEEK: 'WEEK';
+                readonly MONTH: 'MONTH';
+                readonly MONTH_ROLLING: 'MONTH_ROLLING';
             }>;
             expireAt: z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>;
             frozenAt: z.ZodOptional<z.ZodNullable<z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>>>;
@@ -675,8 +675,8 @@ export declare const RemnawaveWebhookEventSchema: z.ZodDiscriminatedUnion<[z.Zod
                 domain: z.ZodString;
                 path: z.ZodString;
                 kind: z.ZodEnum<{
-                    PRIMARY: "PRIMARY";
                     CDN: "CDN";
+                    PRIMARY: "PRIMARY";
                 }>;
                 parentUuid: z.ZodNullable<z.ZodUUID>;
                 isDefault: z.ZodBoolean;
@@ -709,13 +709,13 @@ export declare const RemnawaveWebhookEventSchema: z.ZodDiscriminatedUnion<[z.Zod
 }, z.core.$strip>, z.ZodObject<{
     scope: z.ZodLiteral<"node">;
     event: z.ZodEnum<{
-        "node.created": "node.created";
-        "node.modified": "node.modified";
-        "node.disabled": "node.disabled";
-        "node.enabled": "node.enabled";
-        "node.deleted": "node.deleted";
         "node.connection_lost": "node.connection_lost";
         "node.connection_restored": "node.connection_restored";
+        "node.created": "node.created";
+        "node.deleted": "node.deleted";
+        "node.disabled": "node.disabled";
+        "node.enabled": "node.enabled";
+        "node.modified": "node.modified";
         "node.traffic_notify": "node.traffic_notify";
     }>;
     timestamp: z.ZodPipe<z.ZodString, z.ZodTransform<Date, string>>;
@@ -745,16 +745,16 @@ export declare const RemnawaveWebhookEventSchema: z.ZodDiscriminatedUnion<[z.Zod
         ips: z.ZodArray<z.ZodObject<{
             ip: z.ZodUnion<readonly [z.ZodIPv4, z.ZodIPv6]>;
             status: z.ZodEnum<{
-                readonly INBOUND: "INBOUND";
-                readonly OUTBOUND: "OUTBOUND";
-                readonly MANAGEMENT: "MANAGEMENT";
-                readonly TRANSIT: "TRANSIT";
-                readonly MONITORING: "MONITORING";
-                readonly RESERVE: "RESERVE";
-                readonly BLOCKED: "BLOCKED";
-                readonly FLAGGED: "FLAGGED";
-                readonly DEPRECATED: "DEPRECATED";
-                readonly UNKNOWN: "UNKNOWN";
+                readonly INBOUND: 'INBOUND';
+                readonly OUTBOUND: 'OUTBOUND';
+                readonly MANAGEMENT: 'MANAGEMENT';
+                readonly TRANSIT: 'TRANSIT';
+                readonly MONITORING: 'MONITORING';
+                readonly RESERVE: 'RESERVE';
+                readonly BLOCKED: 'BLOCKED';
+                readonly FLAGGED: 'FLAGGED';
+                readonly DEPRECATED: 'DEPRECATED';
+                readonly UNKNOWN: 'UNKNOWN';
             }>;
         }, z.core.$strip>>;
         createdAt: z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>;
@@ -820,12 +820,12 @@ export declare const RemnawaveWebhookEventSchema: z.ZodDiscriminatedUnion<[z.Zod
 }, z.core.$strip>, z.ZodObject<{
     scope: z.ZodLiteral<"service">;
     event: z.ZodEnum<{
-        "service.panel_started": "service.panel_started";
-        "service.login_attempt_failed": "service.login_attempt_failed";
-        "service.login_attempt_success": "service.login_attempt_success";
-        "service.subpage_config_changed": "service.subpage_config_changed";
         "service.api_token_created": "service.api_token_created";
         "service.api_token_deleted": "service.api_token_deleted";
+        "service.login_attempt_failed": "service.login_attempt_failed";
+        "service.login_attempt_success": "service.login_attempt_success";
+        "service.panel_started": "service.panel_started";
+        "service.subpage_config_changed": "service.subpage_config_changed";
     }>;
     timestamp: z.ZodPipe<z.ZodString, z.ZodTransform<Date, string>>;
     data: z.ZodObject<{
@@ -840,8 +840,8 @@ export declare const RemnawaveWebhookEventSchema: z.ZodDiscriminatedUnion<[z.Zod
         subpageConfig: z.ZodOptional<z.ZodObject<{
             action: z.ZodEnum<{
                 CREATED: "CREATED";
-                UPDATED: "UPDATED";
                 DELETED: "DELETED";
+                UPDATED: "UPDATED";
             }>;
             uuid: z.ZodUUID;
         }, z.core.$strip>>;
@@ -864,10 +864,10 @@ export declare const RemnawaveWebhookEventSchema: z.ZodDiscriminatedUnion<[z.Zod
 }, z.core.$strip>, z.ZodObject<{
     scope: z.ZodLiteral<"crm">;
     event: z.ZodEnum<{
-        "crm.infra_billing_node_payment_in_7_days": "crm.infra_billing_node_payment_in_7_days";
-        "crm.infra_billing_node_payment_in_48hrs": "crm.infra_billing_node_payment_in_48hrs";
-        "crm.infra_billing_node_payment_in_24hrs": "crm.infra_billing_node_payment_in_24hrs";
         "crm.infra_billing_node_payment_due_today": "crm.infra_billing_node_payment_due_today";
+        "crm.infra_billing_node_payment_in_24hrs": "crm.infra_billing_node_payment_in_24hrs";
+        "crm.infra_billing_node_payment_in_48hrs": "crm.infra_billing_node_payment_in_48hrs";
+        "crm.infra_billing_node_payment_in_7_days": "crm.infra_billing_node_payment_in_7_days";
         "crm.infra_billing_node_payment_overdue_24hrs": "crm.infra_billing_node_payment_overdue_24hrs";
         "crm.infra_billing_node_payment_overdue_48hrs": "crm.infra_billing_node_payment_overdue_48hrs";
         "crm.infra_billing_node_payment_overdue_7_days": "crm.infra_billing_node_payment_overdue_7_days";
@@ -912,16 +912,16 @@ export declare const RemnawaveWebhookEventSchema: z.ZodDiscriminatedUnion<[z.Zod
             ips: z.ZodArray<z.ZodObject<{
                 ip: z.ZodUnion<readonly [z.ZodIPv4, z.ZodIPv6]>;
                 status: z.ZodEnum<{
-                    readonly INBOUND: "INBOUND";
-                    readonly OUTBOUND: "OUTBOUND";
-                    readonly MANAGEMENT: "MANAGEMENT";
-                    readonly TRANSIT: "TRANSIT";
-                    readonly MONITORING: "MONITORING";
-                    readonly RESERVE: "RESERVE";
-                    readonly BLOCKED: "BLOCKED";
-                    readonly FLAGGED: "FLAGGED";
-                    readonly DEPRECATED: "DEPRECATED";
-                    readonly UNKNOWN: "UNKNOWN";
+                    readonly INBOUND: 'INBOUND';
+                    readonly OUTBOUND: 'OUTBOUND';
+                    readonly MANAGEMENT: 'MANAGEMENT';
+                    readonly TRANSIT: 'TRANSIT';
+                    readonly MONITORING: 'MONITORING';
+                    readonly RESERVE: 'RESERVE';
+                    readonly BLOCKED: 'BLOCKED';
+                    readonly FLAGGED: 'FLAGGED';
+                    readonly DEPRECATED: 'DEPRECATED';
+                    readonly UNKNOWN: 'UNKNOWN';
                 }>;
             }, z.core.$strip>>;
             createdAt: z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>;
@@ -989,19 +989,19 @@ export declare const RemnawaveWebhookEventSchema: z.ZodDiscriminatedUnion<[z.Zod
             shortUuid: z.ZodString;
             username: z.ZodString;
             status: z.ZodEnum<{
-                readonly ACTIVE: "ACTIVE";
-                readonly DISABLED: "DISABLED";
-                readonly FROZEN: "FROZEN";
-                readonly LIMITED: "LIMITED";
-                readonly EXPIRED: "EXPIRED";
+                readonly ACTIVE: 'ACTIVE';
+                readonly DISABLED: 'DISABLED';
+                readonly FROZEN: 'FROZEN';
+                readonly LIMITED: 'LIMITED';
+                readonly EXPIRED: 'EXPIRED';
             }>;
             trafficLimitBytes: z.ZodNumber;
             trafficLimitStrategy: z.ZodEnum<{
-                readonly NO_RESET: "NO_RESET";
-                readonly DAY: "DAY";
-                readonly WEEK: "WEEK";
-                readonly MONTH: "MONTH";
-                readonly MONTH_ROLLING: "MONTH_ROLLING";
+                readonly NO_RESET: 'NO_RESET';
+                readonly DAY: 'DAY';
+                readonly WEEK: 'WEEK';
+                readonly MONTH: 'MONTH';
+                readonly MONTH_ROLLING: 'MONTH_ROLLING';
             }>;
             expireAt: z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>;
             frozenAt: z.ZodOptional<z.ZodNullable<z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>>>;
@@ -1028,8 +1028,8 @@ export declare const RemnawaveWebhookEventSchema: z.ZodDiscriminatedUnion<[z.Zod
                 domain: z.ZodString;
                 path: z.ZodString;
                 kind: z.ZodEnum<{
-                    PRIMARY: "PRIMARY";
                     CDN: "CDN";
+                    PRIMARY: "PRIMARY";
                 }>;
                 parentUuid: z.ZodNullable<z.ZodUUID>;
                 isDefault: z.ZodBoolean;

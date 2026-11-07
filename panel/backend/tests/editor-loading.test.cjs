@@ -1,6 +1,11 @@
 const test=require('node:test'); const assert=require('node:assert/strict'); const path=require('node:path');
 const load=require('./load-typescript.cjs');
 const root=path.resolve(__dirname,'../../frontend');
+function editorMocks() {
+ const mode=load(path.join(root,'src/shared/api/hooks/xray-mode.ts'),{'@tanstack/react-query':{},'../axios':{instance:{get:async()=>({data:{response:{mode:'custom',revision:1}}})}}});
+ const config=load(path.join(root,'src/config.ts'),{'./shared/api/hooks/xray-mode':mode},{__EDITOR_ASSET_VERSIONS__:Object.fromEntries(['main.wasm','default.wasm','wasm_exec.js','xray.schema.json','xray.schema.cn.json','xray.default.schema.json','xray.default.schema.cn.json'].map(name=>[name,'fixture']))});
+ return {'src/config':config,'@shared/api/hooks/xray-mode':mode};
+}
 test('WASM shares streaming compilation, retries download errors and keeps no byte-buffer cache', async()=>{
  const globals={};
  let fetches=0,compiles=0,instances=0,runs=0; const module={};
@@ -8,7 +13,7 @@ test('WASM shares streaming compilation, retries download errors and keeps no by
  globals.WebAssembly={compileStreaming:async()=>{compiles++;return module},instantiate:async m=>{assert.equal(m,module);instances++;return{} }};
  const window=globals.window={Go:class{importObject={};run(){runs++;window.XrayParseConfig=()=>null;window.onWasmInitialized();return new Promise(()=>{})}}};
  try{
-  const runtime=load(path.join(root,'src/shared/utils/xray-wasm.ts'),{'src/config':{app:{configEditor:{wasmUrl:'/assets/test.wasm'}}}},globals);
+  const runtime=load(path.join(root,'src/shared/utils/xray-wasm.ts'),editorMocks(),globals);
   await assert.rejects(runtime.initializeXrayWasm(),/503/);
   await Promise.all([runtime.initializeXrayWasm(),runtime.initializeXrayWasm()]);
   await runtime.initializeXrayWasm();
@@ -24,7 +29,7 @@ test('WASM supports incorrect MIME and runtime failures without downloading a se
  globals.WebAssembly={compile:async()=>({}),instantiate:async()=>({})};
  const window=globals.window={Go:class{importObject={};run(){runs++;if(runs===1)return Promise.reject(Error('startup failed'));window.XrayParseConfig=()=>null;window.onWasmInitialized();return new Promise(()=>{})}}};
  try{
-  const runtime=load(path.join(root,'src/shared/utils/xray-wasm.ts'),{'src/config':{app:{configEditor:{wasmUrl:'/assets/test.wasm'}}}},globals);
+  const runtime=load(path.join(root,'src/shared/utils/xray-wasm.ts'),editorMocks(),globals);
   await assert.rejects(runtime.initializeXrayWasm(),/startup failed/);
   assert.equal(window.onWasmInitialized,undefined);
   await runtime.initializeXrayWasm(); assert.deepEqual({fetches,buffers,runs},{fetches:1,buffers:1,runs:2});

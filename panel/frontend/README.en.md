@@ -2,11 +2,11 @@
 
 # Remnacust Frontend
 
-Source for the panel **1.1.7.99** UI. It is included in the prebuilt panel image; a VPS deployment does not need a separate Vite server. See [installation, resources and ports](../README.en.md).
+Source for the panel **1.1.7.100** UI. It is included in the prebuilt panel image; a VPS deployment does not need a separate Vite server. See [installation, resources and ports](../README.en.md).
 
 ## Local development
 
-Use Node.js 24 and an isolated test backend. From this directory:
+Use Node.js 26.13 LTS and an isolated test backend. From this directory:
 
 ```bash
 cp .env.sample .env
@@ -38,7 +38,7 @@ The test command targets Linux. Use the [Docker build from the repository root](
 
 ## Editor and documentation
 
-The current source includes Core/WASM **1.1.15**, Xray v26.10.31. Check editor assets with:
+The current source includes Core/WASM **1.1.16**, Xray v26.10.31. Check editor assets with:
 
 ```bash
 node verify-editor-assets.mjs

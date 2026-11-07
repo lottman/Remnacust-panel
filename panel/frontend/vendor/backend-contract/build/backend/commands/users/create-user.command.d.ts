@@ -6,11 +6,11 @@ export declare namespace CreateUserCommand {
     const RequestBodySchema: z.ZodObject<{
         username: z.ZodString;
         status: z.ZodOptional<z.ZodDefault<z.ZodEnum<{
-            readonly ACTIVE: "ACTIVE";
-            readonly DISABLED: "DISABLED";
-            readonly FROZEN: "FROZEN";
-            readonly LIMITED: "LIMITED";
-            readonly EXPIRED: "EXPIRED";
+            readonly ACTIVE: 'ACTIVE';
+            readonly DISABLED: 'DISABLED';
+            readonly FROZEN: 'FROZEN';
+            readonly LIMITED: 'LIMITED';
+            readonly EXPIRED: 'EXPIRED';
         }>>>;
         shortUuid: z.ZodOptional<z.ZodString>;
         trojanPassword: z.ZodOptional<z.ZodString>;
@@ -18,11 +18,11 @@ export declare namespace CreateUserCommand {
         ssPassword: z.ZodOptional<z.ZodString>;
         trafficLimitBytes: z.ZodOptional<z.ZodNumber>;
         trafficLimitStrategy: z.ZodOptional<z.ZodDefault<z.ZodEnum<{
-            readonly NO_RESET: "NO_RESET";
-            readonly DAY: "DAY";
-            readonly WEEK: "WEEK";
-            readonly MONTH: "MONTH";
-            readonly MONTH_ROLLING: "MONTH_ROLLING";
+            readonly NO_RESET: 'NO_RESET';
+            readonly DAY: 'DAY';
+            readonly WEEK: 'WEEK';
+            readonly MONTH: 'MONTH';
+            readonly MONTH_ROLLING: 'MONTH_ROLLING';
         }>>>;
         expireAt: z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>;
         createdAt: z.ZodOptional<z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>>;
@@ -42,19 +42,19 @@ export declare namespace CreateUserCommand {
             shortUuid: z.ZodString;
             username: z.ZodString;
             status: z.ZodEnum<{
-                readonly ACTIVE: "ACTIVE";
-                readonly DISABLED: "DISABLED";
-                readonly FROZEN: "FROZEN";
-                readonly LIMITED: "LIMITED";
-                readonly EXPIRED: "EXPIRED";
+                readonly ACTIVE: 'ACTIVE';
+                readonly DISABLED: 'DISABLED';
+                readonly FROZEN: 'FROZEN';
+                readonly LIMITED: 'LIMITED';
+                readonly EXPIRED: 'EXPIRED';
             }>;
             trafficLimitBytes: z.ZodNumber;
             trafficLimitStrategy: z.ZodEnum<{
-                readonly NO_RESET: "NO_RESET";
-                readonly DAY: "DAY";
-                readonly WEEK: "WEEK";
-                readonly MONTH: "MONTH";
-                readonly MONTH_ROLLING: "MONTH_ROLLING";
+                readonly NO_RESET: 'NO_RESET';
+                readonly DAY: 'DAY';
+                readonly WEEK: 'WEEK';
+                readonly MONTH: 'MONTH';
+                readonly MONTH_ROLLING: 'MONTH_ROLLING';
             }>;
             expireAt: z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>;
             frozenAt: z.ZodOptional<z.ZodNullable<z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>>>;
@@ -81,8 +81,8 @@ export declare namespace CreateUserCommand {
                 domain: z.ZodString;
                 path: z.ZodString;
                 kind: z.ZodEnum<{
-                    PRIMARY: "PRIMARY";
                     CDN: "CDN";
+                    PRIMARY: "PRIMARY";
                 }>;
                 parentUuid: z.ZodNullable<z.ZodUUID>;
                 isDefault: z.ZodBoolean;

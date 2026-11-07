@@ -4,6 +4,7 @@ import { useIsMobile } from '@shared/hooks'
 import { HeaderControls } from '@shared/ui/header-buttons'
 import { PanelUpdateGate } from '@shared/ui/panel-update-gate/panel-update-gate'
 import { QuickLauncher } from '@shared/ui/quick-launcher'
+import { XrayModeSync } from '@shared/ui/xray-mode-sync'
 
 import {
     useIsLoadingRemnawaveUpdates,
@@ -53,6 +54,7 @@ export function MainLayout() {
         <PanelUpdateGate>
             <SidebarLayout headerControls={headerControls} mobile={isMobile} />
             {!isMobile && <QuickLauncher routes={launcherRoutes} />}
+            <XrayModeSync />
         </PanelUpdateGate>
     )
 }

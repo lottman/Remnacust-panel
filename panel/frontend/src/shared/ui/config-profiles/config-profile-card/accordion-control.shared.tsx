@@ -9,7 +9,8 @@ import {
 } from '@mantine/core'
 import { modals } from '@mantine/modals'
 import { GetConfigProfilesCommand } from '@remnawave/backend-contract'
-import { githubDarkTheme, JsonEditor } from 'json-edit-react'
+import { JsonViewer } from 'json-edit-react'
+import { githubDarkTheme } from '@json-edit-react/themes'
 import { PiCheckBold, PiXBold } from 'react-icons/pi'
 
 import { XrayLogo } from '@shared/ui/logos'
@@ -33,14 +34,13 @@ export const AccordionControlShared = (props: IProps) => {
         modals.open({
             children: (
                 <Box>
-                    <JsonEditor
+                    <JsonViewer
                         collapse={3}
                         data={profile.config as object}
                         indent={4}
                         maxWidth="100%"
                         rootName=""
                         theme={githubDarkTheme}
-                        viewOnly
                     />
                 </Box>
             ),

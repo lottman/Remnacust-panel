@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { constants } from 'node:fs';
-import { open, readdir, rename, unlink, writeFile } from 'node:fs/promises';
+import { link, open, readdir, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 export interface BundleSelection {
@@ -94,7 +94,12 @@ export async function storeBundleSelection(
     const temporary = join(directory, `.selection-${randomBytes(16).toString('hex')}`);
     try {
         await writeFile(temporary, data, { flag: 'wx', mode: 0o600 });
-        await rename(temporary, join(directory, `selection-${key.slice(2)}.json`));
+        try {
+            await link(temporary, join(directory, `selection-${key.slice(2)}.json`));
+        } catch (error) {
+            if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error;
+            await readBundleSelection(directory, key);
+        }
     } finally {
         await unlink(temporary).catch((error) => {
             if (error.code !== 'ENOENT') throw error;

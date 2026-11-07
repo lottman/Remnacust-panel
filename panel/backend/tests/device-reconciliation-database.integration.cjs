@@ -2,7 +2,7 @@
 const assert = require('node:assert/strict');
 const path = require('node:path');
 const { AsyncLocalStorage } = require('node:async_hooks');
-const { PrismaClient } = require('@prisma/client');
+const { PrismaClient } = require('./prisma-test-client.cjs');
 const k = require('kysely');
 const {
     PrismaTxDriver,

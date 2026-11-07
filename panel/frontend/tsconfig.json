@@ -4,6 +4,7 @@
     "target": "ES2020",
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "module": "ESNext",
+    "types": ["node", "vite/client"],
     "skipLibCheck": true,
     /* ------------------------------------------------------------ */
     /* Bundler mode */
@@ -30,8 +31,8 @@
     /* ------------------------------------------------------------ */
     /* Paths */
     /* ------------------------------------------------------------ */
-    "baseUrl": ".",
     "paths": {
+      "src/*": ["./src/*"],
       "@entities/*": ["./src/entities/*"],
       "@features/*": ["./src/features/*"],
       "@pages/*": ["./src/pages/*"],

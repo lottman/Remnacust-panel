@@ -6,6 +6,7 @@
 
 generator client {
   provider = "prisma-client-js"
+  engineType = "client"
 }
 
 generator kysely {
@@ -24,8 +25,6 @@ generator json {
 
 datasource db {
   provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
 }
 
 model RemnawaveSettings {
@@ -50,6 +49,15 @@ model NodeHealthLogSettings {
   retentionDays Int @default(3) @map("retention_days")
 
   @@map("xera_node_health_log_settings")
+}
+
+model XraySettings {
+  id       Int    @id @default(1)
+  mode     String @default("custom")
+  revision Int    @default(0)
+  applyPending Boolean @default(false) @map("apply_pending")
+
+  @@map("xera_xray_settings")
 }
 
 model NodeHealthLogs {

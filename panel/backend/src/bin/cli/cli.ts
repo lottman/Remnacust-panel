@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import 'zod/compile';
 import 'reflect-metadata';
-import { PrismaClient } from '@prisma/client';
+import { createPrismaClient } from '../../common/database/postgres-adapter';
 import {
     generateHybridIdentity,
     generateX25519Identity,
@@ -28,13 +28,7 @@ dayjs.extend(relativeTime);
 dayjs.extend(timezone);
 dayjs.extend(customParseFormat);
 
-const prisma = new PrismaClient({
-    datasources: {
-        db: {
-            url: process.env.DATABASE_URL,
-        },
-    },
-});
+const prisma = createPrismaClient();
 
 const redisOptions = getRedisConnectionOptions(
     process.env.REDIS_SOCKET,

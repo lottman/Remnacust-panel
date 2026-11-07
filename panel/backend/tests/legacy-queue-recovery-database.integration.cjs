@@ -1,6 +1,6 @@
 // Requires the explicitly named migrated, seeded legacy recovery fixture.
 const assert=require('node:assert/strict'),path=require('node:path'),{randomUUID,createHash}=require('node:crypto');
-const {PrismaClient}=require('@prisma/client'),{TransactionHost}=require('@nestjs-cls/transactional'),k=require('kysely'),load=require('./load-typescript.cjs');
+const {PrismaClient}=require('./prisma-test-client.cjs'),{TransactionHost}=require('@nestjs-cls/transactional'),k=require('kysely'),load=require('./load-typescript.cjs');
 const {Queue,Worker}=require('bullmq'),Redis=require('ioredis');
 const {PrismaTxDriver}=require('../node_modules/@kastov/nestjs-prisma-kysely/build/drivers/prisma-tx.driver.js');
 const url=process.env.LEGACY_QUOTA_RECOVERY_TEST_DATABASE_URL;assert.ok(url);const parsed=new URL(url);

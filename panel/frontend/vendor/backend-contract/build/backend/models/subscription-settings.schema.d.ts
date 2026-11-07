@@ -5,8 +5,8 @@ export declare const SubscriptionSettingsSchema: z.ZodObject<{
     isShowCustomRemarks: z.ZodBoolean;
     customRemarks: z.ZodObject<{
         alwaysAvailableHostsPosition: z.ZodOptional<z.ZodEnum<{
-            before: "before";
             after: "after";
+            before: "before";
         }>>;
         combineSubscriptionAndHwidRemarks: z.ZodDefault<z.ZodBoolean>;
         subscriptionAndHwidRemarkOrder: z.ZodDefault<z.ZodArray<z.ZodEnum<{
@@ -37,7 +37,7 @@ export declare const SubscriptionSettingsSchema: z.ZodObject<{
     randomizeHosts: z.ZodBoolean;
     responseRules: z.ZodNullable<z.ZodObject<{
         version: z.ZodEnum<{
-            readonly 1: "1";
+            readonly 1: '1';
         }>;
         settings: z.ZodOptional<z.ZodObject<{
             disableSubscriptionAccessByPath: z.ZodOptional<z.ZodBoolean>;
@@ -47,38 +47,38 @@ export declare const SubscriptionSettingsSchema: z.ZodObject<{
             description: z.ZodOptional<z.ZodString>;
             enabled: z.ZodBoolean;
             operator: z.ZodEnum<{
-                readonly AND: "AND";
-                readonly OR: "OR";
+                readonly AND: 'AND';
+                readonly OR: 'OR';
             }>;
             conditions: z.ZodArray<z.ZodObject<{
                 headerName: z.ZodString;
                 operator: z.ZodEnum<{
-                    readonly EQUALS: "EQUALS";
-                    readonly NOT_EQUALS: "NOT_EQUALS";
-                    readonly CONTAINS: "CONTAINS";
-                    readonly NOT_CONTAINS: "NOT_CONTAINS";
-                    readonly STARTS_WITH: "STARTS_WITH";
-                    readonly NOT_STARTS_WITH: "NOT_STARTS_WITH";
-                    readonly ENDS_WITH: "ENDS_WITH";
-                    readonly NOT_ENDS_WITH: "NOT_ENDS_WITH";
-                    readonly REGEX: "REGEX";
-                    readonly NOT_REGEX: "NOT_REGEX";
+                    readonly EQUALS: 'EQUALS';
+                    readonly NOT_EQUALS: 'NOT_EQUALS';
+                    readonly CONTAINS: 'CONTAINS';
+                    readonly NOT_CONTAINS: 'NOT_CONTAINS';
+                    readonly STARTS_WITH: 'STARTS_WITH';
+                    readonly NOT_STARTS_WITH: 'NOT_STARTS_WITH';
+                    readonly ENDS_WITH: 'ENDS_WITH';
+                    readonly NOT_ENDS_WITH: 'NOT_ENDS_WITH';
+                    readonly REGEX: 'REGEX';
+                    readonly NOT_REGEX: 'NOT_REGEX';
                 }>;
                 value: z.ZodString;
                 caseSensitive: z.ZodBoolean;
             }, z.core.$strip>>;
             responseType: z.ZodEnum<{
-                readonly BROWSER: "BROWSER";
-                readonly BLOCK: "BLOCK";
-                readonly STATUS_CODE_404: "STATUS_CODE_404";
-                readonly STATUS_CODE_451: "STATUS_CODE_451";
-                readonly SOCKET_DROP: "SOCKET_DROP";
-                readonly XRAY_JSON: "XRAY_JSON";
-                readonly XRAY_BASE64: "XRAY_BASE64";
-                readonly MIHOMO: "MIHOMO";
-                readonly STASH: "STASH";
-                readonly CLASH: "CLASH";
-                readonly SINGBOX: "SINGBOX";
+                readonly XRAY_JSON: 'XRAY_JSON';
+                readonly XRAY_BASE64: 'XRAY_BASE64';
+                readonly MIHOMO: 'MIHOMO';
+                readonly STASH: 'STASH';
+                readonly CLASH: 'CLASH';
+                readonly SINGBOX: 'SINGBOX';
+                readonly BROWSER: 'BROWSER';
+                readonly BLOCK: 'BLOCK';
+                readonly STATUS_CODE_404: 'STATUS_CODE_404';
+                readonly STATUS_CODE_451: 'STATUS_CODE_451';
+                readonly SOCKET_DROP: 'SOCKET_DROP';
             }>;
             responseModifications: z.ZodOptional<z.ZodObject<{
                 headers: z.ZodOptional<z.ZodArray<z.ZodObject<{

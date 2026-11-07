@@ -14,8 +14,10 @@
     "sourceMap": true,
     "resolveJsonModule": true,
     "outDir": "./dist",
-    "baseUrl": "./",
     "paths": {
+      "src/*": ["./src/*"],
+      "libs/*": ["./libs/*"],
+      "prisma/*": ["./prisma/*"],
       "@common/*": ["./src/common/*"],
       "@integration-modules/*": ["./src/integration-modules/*"],
       "@modules/*": ["./src/modules/*"],

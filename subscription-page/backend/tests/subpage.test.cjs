@@ -14,6 +14,34 @@ function response() {
     res.cookie = (...args) => res.cookies.push(args);res.socket = {destroy:()=>{res.destroyed=true;}};
     return res;
 }
+
+test('disconnects cannot release capacity before upstream work settles, including a rejected operation', async () => {
+    const { dynamicRequestBudget, runDynamicRequestWork } = load(path.join(__dirname, '../src/common/middlewares/request-budget.middleware.ts'));
+    const budget = dynamicRequestBudget(1);
+    for (const fail of [false, true]) {
+        const res = response();
+        let settle;
+        let work;
+        budget({path:'/subscription'}, res, () => {
+            work = runDynamicRequestWork(res, () => new Promise((resolve, reject) => {settle = () => fail ? reject(Error('fixture')) : resolve();}));
+        });
+        res.destroyed = true;
+        res.emit('close');
+        for (let i = 0; i < 20; i++) {
+            const rejected = response();
+            budget({path:'/subscription'}, rejected, () => assert.fail('unfinished work released its slot'));
+            assert.equal(rejected.code, 503);
+        }
+        settle();
+        if (fail) await assert.rejects(work, /fixture/); else await work;
+        const next = response();
+        let accepted = false;
+        budget({path:'/subscription'}, next, () => {accepted = true;});
+        assert(accepted);
+        next.emit('finish');
+        assert.equal(res.listenerCount('close') + res.listenerCount('finish'), 0);
+    }
+});
 test('ten thousand page completions and synchronous errors preserve the request budget', () => {
     const { dynamicRequestBudget } = load(path.join(__dirname, '../src/common/middlewares/request-budget.middleware.ts'));
     const budget = dynamicRequestBudget(1);

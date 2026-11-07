@@ -2,7 +2,7 @@
 const assert=require('node:assert/strict');
 const path=require('node:path');
 const fs=require('node:fs');
-const {PrismaClient}=require('@prisma/client');
+const {PrismaClient}=require('./prisma-test-client.cjs');
 const {TransactionHost}=require('@nestjs-cls/transactional');
 const k=require('kysely');
 const load=require('./load-typescript.cjs');

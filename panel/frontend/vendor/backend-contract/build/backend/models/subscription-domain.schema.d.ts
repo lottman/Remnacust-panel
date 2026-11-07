@@ -5,8 +5,8 @@ export declare const SubscriptionDomainInputSchema: z.ZodObject<{
     domain: z.ZodPipe<z.ZodString, z.ZodTransform<string, string>>;
     path: z.ZodPipe<z.ZodDefault<z.ZodString>, z.ZodTransform<string, string>>;
     kind: z.ZodEnum<{
-        PRIMARY: "PRIMARY";
         CDN: "CDN";
+        PRIMARY: "PRIMARY";
     }>;
     parentUuid: z.ZodDefault<z.ZodNullable<z.ZodUUID>>;
     isDefault: z.ZodDefault<z.ZodBoolean>;
@@ -17,8 +17,8 @@ export declare const SubscriptionDomainSchema: z.ZodObject<{
     domain: z.ZodString;
     path: z.ZodString;
     kind: z.ZodEnum<{
-        PRIMARY: "PRIMARY";
         CDN: "CDN";
+        PRIMARY: "PRIMARY";
     }>;
     parentUuid: z.ZodNullable<z.ZodUUID>;
     isDefault: z.ZodBoolean;

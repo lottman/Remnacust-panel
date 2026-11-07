@@ -1,5 +1,6 @@
+import { rethrowXrayModeConflict } from '@common/xray-mode/xray-mode-conflict';
 import { Transactional } from '@nestjs-cls/transactional';
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
 
 import { Injectable, Logger } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
@@ -137,6 +138,7 @@ export class ConfigProfileService {
 
             return ok(true);
         } catch (error) {
+            rethrowXrayModeConflict(error);
             this.logger.error(error);
             return fail(ERRORS.DELETE_CONFIG_PROFILE_BY_UUID_ERROR);
         }
@@ -180,6 +182,7 @@ export class ConfigProfileService {
 
             return await this.getConfigProfileByUUID(uuid);
         } catch (error) {
+            rethrowXrayModeConflict(error);
             if (error instanceof XrayConfigValidationError) {
                 return fail(ERRORS.CONFIG_VALIDATION_ERROR.withMessage(error.message));
             }
@@ -234,6 +237,7 @@ export class ConfigProfileService {
                     });
                     applyStatus = 'queued';
                 } catch (error) {
+            rethrowXrayModeConflict(error);
                     applyStatus = 'failed';
                     this.logger.error('Profile saved, but node synchronization could not be queued', error);
                 }
@@ -243,6 +247,7 @@ export class ConfigProfileService {
             if (result.isOk) result.response.applyStatus = applyStatus;
             return result;
         } catch (error) {
+            rethrowXrayModeConflict(error);
             this.logger.error(error);
 
             if (
@@ -404,6 +409,7 @@ export class ConfigProfileService {
 
             return;
         } catch (error) {
+            rethrowXrayModeConflict(error);
             if (error instanceof Error) {
                 this.logger.error('Failed to sync inbounds:', error.message);
             } else {
@@ -430,6 +436,7 @@ export class ConfigProfileService {
 
             return ok(updated);
         } catch (error) {
+            rethrowXrayModeConflict(error);
             this.logger.error(error);
             return fail(ERRORS.SET_ENTITY_TAGS_ERROR);
         }

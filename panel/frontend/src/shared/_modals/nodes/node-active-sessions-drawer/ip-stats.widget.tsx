@@ -3,6 +3,7 @@ import { useMemo } from 'react'
 import { TbClockCheck, TbClockExclamation, TbClockPause } from 'react-icons/tb'
 
 import { formatInt } from '@shared/utils/misc'
+import { useCurrentTime } from '@shared/hooks/use-current-time'
 
 import { ActiveSessionUser } from './use-node-active-sessions'
 
@@ -11,15 +12,15 @@ interface IProps {
 }
 
 export const IpStatsWidget = ({ users }: IProps) => {
+    const now = useCurrentTime()
     const stats = useMemo(() => {
-        const now = new Date()
         let active = 0
         let idle = 0
         let stale = 0
 
         for (const user of users) {
             for (const ip of user.ips) {
-                const diffMinutes = (now.getTime() - new Date(ip.lastSeen).getTime()) / 60_000
+                const diffMinutes = (now - new Date(ip.lastSeen).getTime()) / 60_000
                 if (diffMinutes <= 5) active++
                 else if (diffMinutes <= 60) idle++
                 else stale++
@@ -27,7 +28,7 @@ export const IpStatsWidget = ({ users }: IProps) => {
         }
 
         return { active, idle, stale }
-    }, [users])
+    }, [users, now])
 
     return (
         <Group gap="xs" grow>

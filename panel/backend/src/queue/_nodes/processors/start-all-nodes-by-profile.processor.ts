@@ -12,6 +12,7 @@ import {
     syncHostPolicyForStart,
 } from '@common/host-policy/sync-host-policy-for-start';
 import { RawCacheService } from '@common/raw-cache';
+import { XrayModeService } from '@common/xray-mode/xray-mode.service';
 import { nodeReconciliationEnrollment } from '@common/utils/node-reconciliation';
 import { nodeSupportsPlugins } from '@common/utils/node-version';
 import { CACHE_KEYS, CACHE_KEYS_TTL } from '@libs/contracts/constants';
@@ -63,6 +64,7 @@ export class StartAllNodesByProfileQueueProcessor extends WorkerHost {
         private readonly rawCacheService: RawCacheService,
         private readonly configurations: NodeConfigurationService,
         private readonly deliveries: PortPlanLeaseService,
+        private readonly xrayModes?: XrayModeService,
     ) {
         super();
         this.CONCURRENCY = 20;
@@ -71,7 +73,9 @@ export class StartAllNodesByProfileQueueProcessor extends WorkerHost {
     async process(job: Job) {
         switch (job.name) {
             case NODES_JOB_NAMES.START_ALL_BY_PROFILE:
-                return await this.handleStartAllNodesByProfile(job.data);
+                return this.xrayModes
+                    ? this.xrayModes.withSnapshot(() => this.handleStartAllNodesByProfile(job.data))
+                    : this.handleStartAllNodesByProfile(job.data);
             default:
                 this.logger.warn(`Job "${job.name}" is not handled.`);
                 break;

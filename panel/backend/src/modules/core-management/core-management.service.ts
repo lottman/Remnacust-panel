@@ -1,4 +1,4 @@
-import { InjectRedis } from '@songkeys/nestjs-redis';
+import { Inject } from '@nestjs/common';
 import { Job, Queue } from 'bullmq';
 import { Redis } from 'ioredis';
 import { setTimeout as delay } from 'node:timers/promises';
@@ -15,6 +15,7 @@ import { QueryBus } from '@nestjs/cqrs';
 
 import { AxiosService } from '@common/axios/axios.service';
 import { coreSshTunnelKey } from '@common/utils/core-ssh-tunnel';
+import { XrayModeService } from '@common/xray-mode/xray-mode.service';
 
 import { GetNodeByUuidQuery } from '@modules/nodes/queries/get-node-by-uuid';
 
@@ -34,7 +35,8 @@ export class CoreManagementService implements OnModuleInit {
         @InjectQueue(CORE_QUEUE) private readonly queue: Queue<CoreJobData>,
         private readonly queries: QueryBus,
         private readonly axios: AxiosService,
-        @InjectRedis() private readonly redis: Redis,
+        @Inject('RC_REDIS_CLIENT') private readonly redis: Redis,
+        private readonly xrayModes?: XrayModeService,
     ) {}
     async onModuleInit() {
         coreCatalog();
@@ -116,6 +118,8 @@ export class CoreManagementService implements OnModuleInit {
             throw new BadRequestException('Request ID already used for a different operation');
     }
     async create(input: CoreJobRequest) {
+        if (['install', 'rollback', 'bundled', 'profile'].includes(input.action))
+            await this.xrayModes?.assertCustom('core-management');
         const prior = await this.queue.getJob(input.requestId);
         if (prior) {
             this.assertSameRequest(prior, input);
@@ -209,6 +213,8 @@ export class CoreManagementService implements OnModuleInit {
                 result.phase = 'connecting';
                 await job.updateProgress(results);
                 try {
+                    if (['install', 'rollback', 'bundled', 'profile'].includes(job.data.action))
+                        await this.xrayModes?.assertCustom('core-management');
                     const node = await this.node(result.uuid);
                     if (node.isDisabled && !['check', 'stop'].includes(job.data.action))
                         throw new Error('Node was disabled; enable it before retrying');

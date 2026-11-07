@@ -1,7 +1,7 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const { PrismaClient } = require('@prisma/client');
+const { PrismaClient } = require('./prisma-test-client.cjs');
 const k = require('kysely');
 const load = require('./load-typescript.cjs');
 const { identityAccessQuery } = load(path.join(__dirname, '../src/common/host-policy/identity-access-query.ts'));

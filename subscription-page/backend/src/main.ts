@@ -1,10 +1,10 @@
-process.title = 'rw-subpage';
+process.title = 'rc-subpage';
 
 import cookieParser from 'cookie-parser';
 import { Request, Response, NextFunction } from 'express';
 import helmet from 'helmet';
 import compression from 'compression';
-import { dynamicRequestBudget } from '@common/middlewares/request-budget.middleware';
+import { dynamicRequestBudget, DynamicRequestBudgetInterceptor } from '@common/middlewares/request-budget.middleware';
 import morgan from 'morgan';
 import { utilities as nestWinstonModuleUtilities, WinstonModule } from 'nest-winston';
 import path from 'node:path';
@@ -78,6 +78,7 @@ async function bootstrap(): Promise<void> {
     app.disable('x-powered-by');
     app.use(compression({ threshold: 1024 }));
     app.use(dynamicRequestBudget());
+    app.useGlobalInterceptors(new DynamicRequestBudgetInterceptor());
 
     app.set('trust proxy', config.getOrThrow('TRUST_PROXY'));
 

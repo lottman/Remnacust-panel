@@ -1,4 +1,5 @@
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { rethrowXrayModeConflict } from '@common/xray-mode/xray-mode-conflict';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
 
 import { Injectable, Logger } from '@nestjs/common';
 
@@ -45,6 +46,7 @@ export class SnippetsService {
 
             return ok(true);
         } catch (error) {
+            rethrowXrayModeConflict(error);
             this.logger.error(error);
             return fail(ERRORS.DELETE_SNIPPET_BY_NAME_ERROR);
         }
@@ -72,6 +74,7 @@ export class SnippetsService {
 
             return await this.getSnippets();
         } catch (error) {
+            rethrowXrayModeConflict(error);
             if (
                 error instanceof PrismaClientKnownRequestError &&
                 error.code === 'P2002' &&
@@ -116,6 +119,7 @@ export class SnippetsService {
 
             return await this.getSnippets();
         } catch (error) {
+            rethrowXrayModeConflict(error);
             this.logger.error(error);
 
             if (

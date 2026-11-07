@@ -1,5 +1,5 @@
 const assert=require('node:assert/strict');const fs=require('node:fs');const path=require('node:path');const crypto=require('node:crypto');
-const {PrismaClient}=require('@prisma/client');const {TransactionHost}=require('@nestjs-cls/transactional');const k=require('kysely');const load=require('./load-typescript.cjs');
+const {PrismaClient}=require('./prisma-test-client.cjs');const {TransactionHost}=require('@nestjs-cls/transactional');const k=require('kysely');const load=require('./load-typescript.cjs');
 const {PrismaTxDriver}=require('../node_modules/@kastov/nestjs-prisma-kysely/build/drivers/prisma-tx.driver.js');
 const url=process.env.QUOTA_COORDINATOR_TEST_DATABASE_URL;assert.ok(url);const parsed=new URL(url);
 assert.equal(parsed.hostname,'127.0.0.1');assert.equal(parsed.port,'55439');assert.match(parsed.pathname,/^\/remnacust_coordinator_test(?:_codex_[0-9]{14})?$/);

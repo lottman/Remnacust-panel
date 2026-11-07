@@ -1,4 +1,30 @@
-import { RequestHandler } from 'express';
+import { RequestHandler, Response } from 'express';
+import { CallHandler, ExecutionContext, NestInterceptor, ServiceUnavailableException } from '@nestjs/common';
+import { defer, lastValueFrom, Observable } from 'rxjs';
+
+interface RequestLease {
+    closed: boolean;
+    pending: number;
+    releaseIfIdle: () => void;
+}
+
+const leases = new WeakMap<Response, RequestLease>();
+
+export async function runDynamicRequestWork<T>(response: Response, work: () => Promise<T>): Promise<T> {
+    const lease = leases.get(response);
+    if (!lease) return work();
+    if (lease.closed || response.destroyed) throw new ServiceUnavailableException('Request has closed');
+    lease.pending++;
+    try { return await work(); }
+    finally { lease.pending--; lease.releaseIfIdle(); }
+}
+
+export class DynamicRequestBudgetInterceptor implements NestInterceptor {
+    intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
+        const response = context.switchToHttp().getResponse<Response>();
+        return defer(() => runDynamicRequestWork(response, () => lastValueFrom(next.handle())));
+    }
+}
 
 export function dynamicRequestBudget(maximum = 128): RequestHandler {
     let active = 0;
@@ -24,14 +50,20 @@ export function dynamicRequestBudget(maximum = 128): RequestHandler {
         active++;
         if (geofile) geofiles++;
         let released = false;
-        const release = () => {
-            if (released) return;
-            released = true;
-            active--;
-            if (geofile) geofiles--;
-            res.off('finish', release);
-            res.off('close', release);
+        const lease: RequestLease = {
+            closed: false,
+            pending: 0,
+            releaseIfIdle: () => {
+                if (released || !lease.closed || lease.pending !== 0) return;
+                released = true;
+                active--;
+                if (geofile) geofiles--;
+                res.off('finish', release);
+                res.off('close', release);
+            },
         };
+        const release = () => { lease.closed = true; lease.releaseIfIdle(); };
+        leases.set(res, lease);
         res.once('finish', release);
         res.once('close', release);
         try {

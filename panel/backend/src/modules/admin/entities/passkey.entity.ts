@@ -1,7 +1,7 @@
 import { Passkeys } from '@prisma/client';
-import { AuthenticatorTransportFuture } from '@simplewebauthn/server';
+import { AuthenticatorTransport } from '@simplewebauthn/server';
 
-type TTransports = AuthenticatorTransportFuture;
+type TTransports = AuthenticatorTransport;
 
 export class PasskeyEntity implements Passkeys {
     public id: string;

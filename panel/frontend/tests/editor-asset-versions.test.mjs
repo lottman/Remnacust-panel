@@ -25,9 +25,10 @@ test('changing an editor asset invalidates only that asset URL', () => {
 
 test('all configured editor URLs use their asset content version', () => {
     const versions = editorAssetVersions((name) => Buffer.from(name))
+    let mode = 'custom'
     const { app } = load(
         fileURLToPath(new URL('../src/config.ts', import.meta.url)),
-        {},
+        { './shared/api/hooks/xray-mode': { selectedXrayMode: () => mode } },
         {
             __EDITOR_ASSET_VERSIONS__: versions
         }
@@ -40,4 +41,12 @@ test('all configured editor URLs use their asset content version', () => {
     })) {
         assert.equal(app.configEditor[key], `/assets/${name}?v=${versions[name]}`)
     }
+    mode = 'default'
+    for (const [key, name] of Object.entries({
+        wasmUrl: 'default.wasm',
+        wasmJsUrl: 'wasm_exec.js',
+        jsonSchemaUrl: 'xray.default.schema.json',
+        jsonSchemaCnUrl: 'xray.default.schema.cn.json'
+    }))
+        assert.equal(app.configEditor[key], `/assets/${name}?v=${versions[name]}`)
 })

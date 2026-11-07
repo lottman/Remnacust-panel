@@ -22,7 +22,8 @@ import {
 } from '@mantine/core'
 import { modals } from '@mantine/modals'
 import { GetNodeCommand, UpdateNodeCommand } from '@remnawave/backend-contract'
-import { githubDarkTheme, JsonEditor } from 'json-edit-react'
+import { JsonViewer } from 'json-edit-react'
+import { githubDarkTheme } from '@json-edit-react/themes'
 import { memo, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
@@ -296,14 +297,13 @@ export const NodeDetailsCardWidget = memo((props: IProps) => {
                                         ),
                                         children: (
                                             <Box>
-                                                <JsonEditor
+                                                <JsonViewer
                                                     collapse={3}
                                                     data={metadata.metadata as object}
                                                     indent={4}
                                                     maxWidth="100%"
                                                     rootName=""
                                                     theme={githubDarkTheme}
-                                                    viewOnly
                                                 />
                                             </Box>
                                         )

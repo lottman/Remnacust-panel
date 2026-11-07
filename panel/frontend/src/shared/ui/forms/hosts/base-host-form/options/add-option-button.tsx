@@ -37,18 +37,18 @@ export function AddOptionButton() {
 
     return (
         <Combobox
+            keepMounted={false}
             onOptionSubmit={(value) => {
                 activate(value)
                 combobox.closeDropdown()
             }}
             middlewares={{ flip: { padding: 8 }, shift: { padding: 8 }, size: { padding: 8 } }}
             position="top-end"
+            preventPositionChangeWhenVisible={false}
             store={combobox}
             styles={{
                 dropdown: {
                     maxWidth: 'calc(100vw - 16px)',
-                    display: 'flex',
-                    flexDirection: 'column',
                     overflow: 'hidden'
                 }
             }}

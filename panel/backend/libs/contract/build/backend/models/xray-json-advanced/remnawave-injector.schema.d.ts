@@ -53,9 +53,9 @@ export declare const InjectHostsEntrySchema: z.ZodObject<{
         groups: z.ZodOptional<z.ZodUnion<readonly [z.ZodArray<z.ZodArray<z.ZodType<string, unknown, z.core.$ZodTypeInternals<string, unknown>>>>, z.ZodRecord<z.ZodString, z.ZodArray<z.ZodType<string, unknown, z.core.$ZodTypeInternals<string, unknown>>>>]>>;
     }, z.core.$strip>], "type">;
     mode: z.ZodOptional<z.ZodEnum<{
-        random: "random";
         all: "all";
         group: "group";
+        random: "random";
     }>>;
     selectFrom: z.ZodOptional<z.ZodEnum<{
         ALL: "ALL";
@@ -94,9 +94,9 @@ export declare const RemnawaveInjectorSchema: z.ZodObject<{
             groups: z.ZodOptional<z.ZodUnion<readonly [z.ZodArray<z.ZodArray<z.ZodType<string, unknown, z.core.$ZodTypeInternals<string, unknown>>>>, z.ZodRecord<z.ZodString, z.ZodArray<z.ZodType<string, unknown, z.core.$ZodTypeInternals<string, unknown>>>>]>>;
         }, z.core.$strip>], "type">;
         mode: z.ZodOptional<z.ZodEnum<{
-            random: "random";
             all: "all";
             group: "group";
+            random: "random";
         }>>;
         selectFrom: z.ZodOptional<z.ZodEnum<{
             ALL: "ALL";

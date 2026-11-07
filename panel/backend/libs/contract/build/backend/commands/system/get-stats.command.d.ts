@@ -20,11 +20,11 @@ export declare namespace GetStatsCommand {
             timestamp: z.ZodNumber;
             users: z.ZodObject<{
                 statusCounts: z.ZodRecord<z.ZodEnum<{
-                    readonly ACTIVE: "ACTIVE";
-                    readonly DISABLED: "DISABLED";
-                    readonly FROZEN: "FROZEN";
-                    readonly LIMITED: "LIMITED";
-                    readonly EXPIRED: "EXPIRED";
+                    readonly ACTIVE: 'ACTIVE';
+                    readonly DISABLED: 'DISABLED';
+                    readonly FROZEN: 'FROZEN';
+                    readonly LIMITED: 'LIMITED';
+                    readonly EXPIRED: 'EXPIRED';
                 }>, z.ZodNumber>;
                 totalUsers: z.ZodNumber;
             }, z.core.$strip>;

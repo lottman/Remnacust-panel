@@ -2,7 +2,7 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const { PrismaClient } = require('@prisma/client');
+const { PrismaClient } = require('./prisma-test-client.cjs');
 const load = require('./load-typescript.cjs');
 const { NodeHealthLogService } = load(path.join(__dirname, '../src/modules/nodes/node-health-log.service.ts'), { '@common/database/prisma.service': {} });
 

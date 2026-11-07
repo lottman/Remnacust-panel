@@ -64,7 +64,6 @@ export class HwidUserDevicesRepository implements Omit<
 
     @Transactional()
     public async upsert(entity: HwidUserDeviceEntity): Promise<HwidUserDeviceEntity> {
-        // The same transaction lock serializes every write path with policy changes.
         const created = await this.createWithAdvisoryLock(entity, Number.MAX_SAFE_INTEGER);
         if (!created.hwidDevice)
             throw new ForbiddenException('New device registration is disabled');
@@ -177,7 +176,7 @@ export class HwidUserDevicesRepository implements Omit<
             .$executeRaw`SELECT pg_advisory_xact_lock(${HWID_LOCK_PREFIX + userId})`;
         const snapshots = devices.map(
             (device) =>
-                sql`(${device.hwid},${device.createdAt}::timestamptz AT TIME ZONE 'UTC',${device.updatedAt}::timestamptz AT TIME ZONE 'UTC')`,
+                sql`(${device.hwid},${device.createdAt.toISOString()}::timestamptz AT TIME ZONE 'UTC',${device.updatedAt.toISOString()}::timestamptz AT TIME ZONE 'UTC')`,
         );
         const result = await sql<{ hwid: string }>`WITH removed AS (
             DELETE FROM hwid_user_devices d USING (VALUES ${sql.join(snapshots)}) AS requested(hwid,created_at,updated_at)
@@ -454,9 +453,6 @@ export class HwidUserDevicesRepository implements Omit<
               hwidDevice: null;
           }
     > {
-        await this.prisma.tx
-            .$executeRaw`SELECT pg_advisory_xact_lock(${HWID_LOCK_PREFIX + entity.userId})`;
-
         const existing = await this.prisma.tx.hwidUserDevices.findUnique({
             where: { hwid_userId: { hwid: entity.hwid, userId: entity.userId } },
         });
@@ -467,6 +463,17 @@ export class HwidUserDevicesRepository implements Omit<
                 hwidDevice: this.converter.fromPrismaModelToEntity(existing),
             };
         }
+
+        await this.prisma.tx
+            .$executeRaw`SELECT pg_advisory_xact_lock(${HWID_LOCK_PREFIX + entity.userId})`;
+        const concurrent = await this.prisma.tx.hwidUserDevices.findUnique({
+            where: { hwid_userId: { hwid: entity.hwid, userId: entity.userId } },
+        });
+        if (concurrent)
+            return {
+                status: 'EXISTS',
+                hwidDevice: this.converter.fromPrismaModelToEntity(concurrent),
+            };
 
         if (!(await this.registrationAllowed(entity.userId)))
             return { status: 'REGISTRATION_BLOCKED', hwidDevice: null };

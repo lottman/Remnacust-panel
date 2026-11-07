@@ -1,7 +1,7 @@
 // Standalone disposable PostgreSQL fixture. No public server or production node.
 const assert=require('node:assert/strict'),path=require('node:path'),fs=require('node:fs');
 const {randomUUID,createHash}=require('node:crypto'),{execFileSync}=require('node:child_process');
-const {PrismaClient}=require('@prisma/client'),{TransactionHost}=require('@nestjs-cls/transactional'),k=require('kysely'),load=require('./load-typescript.cjs');
+const {PrismaClient}=require('./prisma-test-client.cjs'),{TransactionHost}=require('@nestjs-cls/transactional'),k=require('kysely'),load=require('./load-typescript.cjs');
 const {PrismaTxDriver}=require('../node_modules/@kastov/nestjs-prisma-kysely/build/drivers/prisma-tx.driver.js');
 const url=process.env.RECOVERY_POLICY_TEST_DATABASE_URL;assert.ok(url);const parsed=new URL(url);
 assert.equal(parsed.hostname,'127.0.0.1');assert.equal(parsed.port,'55439');assert.ok(['/remnacust_recovery_policy_jobs_test','/remnacust_recovery_policy_receipt_test','/remnacust_tail_policy_regression_test'].includes(parsed.pathname));

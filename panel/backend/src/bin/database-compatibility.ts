@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { PrismaClient } from '@prisma/client';
+import { createPrismaClient } from '../common/database/postgres-adapter';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
@@ -10,7 +10,7 @@ async function main() {
     if (!['--check', '--apply'].includes(action) || process.argv.length !== 3) {
         throw new Error('Usage: node dist/database-compatibility.js --check|--apply');
     }
-    const prisma = new PrismaClient();
+    const prisma = createPrismaClient();
     try {
         if (action === '--check') {
             const tables = await prisma.$queryRaw`

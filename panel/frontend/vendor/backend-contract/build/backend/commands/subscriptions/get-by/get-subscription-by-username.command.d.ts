@@ -22,19 +22,19 @@ export declare namespace GetSubscriptionByUsernameCommand {
                 expiresAt: z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>;
                 isActive: z.ZodBoolean;
                 userStatus: z.ZodEnum<{
-                    readonly ACTIVE: "ACTIVE";
-                    readonly DISABLED: "DISABLED";
-                    readonly FROZEN: "FROZEN";
-                    readonly LIMITED: "LIMITED";
-                    readonly EXPIRED: "EXPIRED";
+                    readonly ACTIVE: 'ACTIVE';
+                    readonly DISABLED: 'DISABLED';
+                    readonly FROZEN: 'FROZEN';
+                    readonly LIMITED: 'LIMITED';
+                    readonly EXPIRED: 'EXPIRED';
                 }>;
                 frozenRemainingMs: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
                 trafficLimitStrategy: z.ZodEnum<{
-                    readonly NO_RESET: "NO_RESET";
-                    readonly DAY: "DAY";
-                    readonly WEEK: "WEEK";
-                    readonly MONTH: "MONTH";
-                    readonly MONTH_ROLLING: "MONTH_ROLLING";
+                    readonly NO_RESET: 'NO_RESET';
+                    readonly DAY: 'DAY';
+                    readonly WEEK: 'WEEK';
+                    readonly MONTH: 'MONTH';
+                    readonly MONTH_ROLLING: 'MONTH_ROLLING';
                 }>;
             }, z.core.$strip>;
             links: z.ZodArray<z.ZodString>;

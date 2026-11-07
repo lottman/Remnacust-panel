@@ -2,7 +2,7 @@ const assert = require('node:assert/strict');
 const { randomUUID } = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
-const { PrismaClient } = require('@prisma/client');
+const { PrismaClient } = require('./prisma-test-client.cjs');
 const { source } = require('./upstream-filter-fixture.cjs');
 const { SubscriptionTemplateRepository } = source(
     'modules/subscription-template/repositories/subscription-template.repository.ts',

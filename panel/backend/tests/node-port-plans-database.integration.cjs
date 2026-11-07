@@ -1,5 +1,5 @@
 const assert=require('node:assert/strict');const fs=require('node:fs');const path=require('node:path');
-const {PrismaClient}=require('@prisma/client');const {TransactionHost}=require('@nestjs-cls/transactional');const k=require('kysely');
+const {PrismaClient}=require('./prisma-test-client.cjs');const {TransactionHost}=require('@nestjs-cls/transactional');const k=require('kysely');
 const load=require('./load-typescript.cjs');const {source}=require('./upstream-filter-fixture.cjs');
 const {PrismaTxDriver}=require('../node_modules/@kastov/nestjs-prisma-kysely/build/drivers/prisma-tx.driver.js');
 const url=process.env.PORT_PLANS_TEST_DATABASE_URL;assert.ok(url);const parsed=new URL(url);

@@ -14,19 +14,19 @@ export declare namespace ImportUsersCommand {
             subscriptionDomainUuid: z.ZodOptional<z.ZodNullable<z.ZodUUID>>;
             externalSquadUuid: z.ZodOptional<z.ZodNullable<z.ZodUUID>>;
             status: z.ZodOptional<z.ZodNullable<z.ZodOptional<z.ZodDefault<z.ZodEnum<{
-                readonly ACTIVE: "ACTIVE";
-                readonly DISABLED: "DISABLED";
-                readonly FROZEN: "FROZEN";
-                readonly LIMITED: "LIMITED";
-                readonly EXPIRED: "EXPIRED";
+                readonly ACTIVE: 'ACTIVE';
+                readonly DISABLED: 'DISABLED';
+                readonly FROZEN: 'FROZEN';
+                readonly LIMITED: 'LIMITED';
+                readonly EXPIRED: 'EXPIRED';
             }>>>>>;
             trafficLimitBytes: z.ZodOptional<z.ZodNullable<z.ZodOptional<z.ZodNumber>>>;
             trafficLimitStrategy: z.ZodOptional<z.ZodNullable<z.ZodOptional<z.ZodDefault<z.ZodEnum<{
-                readonly NO_RESET: "NO_RESET";
-                readonly DAY: "DAY";
-                readonly WEEK: "WEEK";
-                readonly MONTH: "MONTH";
-                readonly MONTH_ROLLING: "MONTH_ROLLING";
+                readonly NO_RESET: 'NO_RESET';
+                readonly DAY: 'DAY';
+                readonly WEEK: 'WEEK';
+                readonly MONTH: 'MONTH';
+                readonly MONTH_ROLLING: 'MONTH_ROLLING';
             }>>>>>;
             expireAt: z.ZodNullable<z.ZodISODateTime>;
             frozenRemainingMs: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;

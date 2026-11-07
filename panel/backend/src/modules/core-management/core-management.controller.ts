@@ -10,6 +10,7 @@ import {
     Param,
     ParseUUIDPipe,
     Post,
+    Patch,
     UseFilters,
     UseGuards,
 } from '@nestjs/common';
@@ -25,6 +26,9 @@ import { getEndpointDetails } from '@libs/contracts/constants';
 
 import { CoreManagementService } from './core-management.service';
 import { coreJobSchema } from './core-management.types';
+import { XrayModeService } from '@common/xray-mode/xray-mode.service';
+import { NodesQueuesService } from '@queue/_nodes';
+import { z } from 'zod';
 
 @ApiBearerAuth('Authorization')
 @ApiTags('Core management')
@@ -34,7 +38,37 @@ import { coreJobSchema } from './core-management.types';
 @UseFilters(HttpExceptionFilter)
 @Controller('nodes/core-management')
 export class CoreManagementController {
-    constructor(private readonly service: CoreManagementService) {}
+    constructor(
+        private readonly service: CoreManagementService,
+        private readonly modes: XrayModeService,
+        private readonly nodeQueues: NodesQueuesService,
+    ) {}
+
+    @AdminOnlyEndpoint()
+    @Get('settings')
+    @ApiScopeEndpoint(getEndpointDetails('settings', 'get', 'Get global Xray settings', { scope: 'core-settings', kind: 'read' }))
+    async settings() {
+        return { response: await this.modes.describe() };
+    }
+
+    @AdminOnlyEndpoint()
+    @Get('settings/default-check')
+    @ApiScopeEndpoint(getEndpointDetails('settings/default-check', 'get', 'Check default Xray compatibility', { scope: 'core-settings-check', kind: 'read' }))
+    async defaultCheck() {
+        return { response: { blockers: await this.modes.defaultBlockers() } };
+    }
+
+    @AdminOnlyEndpoint()
+    @Patch('settings')
+    @ApiScopeEndpoint(getEndpointDetails('settings', 'patch', 'Change global Xray settings', { scope: 'core-settings-update', kind: 'write' }))
+    async updateSettings(@Body() body: unknown) {
+        const parsed = z.object({ mode: z.enum(['custom', 'default']), expectedRevision: z.number().int().min(0).max(2147483646) }).strict().safeParse(body);
+        if (!parsed.success) throw new BadRequestException('Invalid Xray settings');
+        const state = await this.modes.change(parsed.data.mode, parsed.data.expectedRevision);
+        await this.nodeQueues.startAllNodesWithoutDeduplication({ emitter: `xray-mode:${state.revision}` });
+        await this.modes.markQueued(state.revision);
+        return { response: state };
+    }
 
     @AdminOnlyEndpoint()
     @Get('catalog')

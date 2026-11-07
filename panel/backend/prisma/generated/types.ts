@@ -457,6 +457,12 @@ export type XeraQuotaUsage = {
     createdAt: Timestamp;
     totalBytes: bigint;
 };
+export type XraySettings = {
+    id: Generated<number>;
+    mode: Generated<string>;
+    revision: Generated<number>;
+    applyPending: Generated<boolean>;
+};
 export type DB = {
     admin: Admin;
     apiTokens: ApiTokens;
@@ -502,4 +508,5 @@ export type DB = {
     xeraNodeOptimization: XeraNodeOptimization;
     xeraQuotaUsage: XeraQuotaUsage;
     xeraSessionRecordings: SessionRecording;
+    xeraXraySettings: XraySettings;
 };

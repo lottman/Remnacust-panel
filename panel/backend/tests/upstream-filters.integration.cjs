@@ -1,5 +1,5 @@
 const assert = require('node:assert/strict');
-const { PrismaClient } = require('@prisma/client');
+const { PrismaClient } = require('./prisma-test-client.cjs');
 const { database, userFilter, reportFilter } = require('./upstream-filter-fixture.cjs');
 
 async function main() {

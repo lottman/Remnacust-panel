@@ -23,6 +23,16 @@ function host() {
     };
 }
 
+for (const mode of ['custom', 'default']) test('every generated JSON profile carries the selected core flavor: '+mode, async () => {
+    const generator = new XrayJsonGeneratorService({ getCachedTemplateByType: async () => ({inbounds:[],xray:'incorrect-template-value'}) }, {get:async()=>({mode,revision:1})});
+    const input=host(); delete input.clientOverrides.xrayJsonTemplate;
+    for (const extended of [true,false]) {
+        const configs=JSON.parse(await generator.generateConfig({hosts:[input,{...input,finalRemark:'Another'}],isExtendedClient:extended}));
+        assert.equal(configs.length,2);
+        assert.ok(configs.every(config=>config.xray===mode));
+    }
+});
+
 test('inactive JSON delivers an exception without preparing shared or assigned geofiles', async () => {
     const generator = new XrayJsonGeneratorService({
         getCachedTemplateByType: async () => { throw Error('shared geofile cannot be delivered'); },

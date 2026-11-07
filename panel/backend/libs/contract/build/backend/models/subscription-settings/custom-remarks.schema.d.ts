@@ -19,8 +19,8 @@ export declare const SubscriptionActionSchema: z.ZodObject<{
 }, z.core.$strip>;
 export declare const CustomRemarksSchema: z.ZodObject<{
     alwaysAvailableHostsPosition: z.ZodOptional<z.ZodEnum<{
-        before: "before";
         after: "after";
+        before: "before";
     }>>;
     combineSubscriptionAndHwidRemarks: z.ZodDefault<z.ZodBoolean>;
     subscriptionAndHwidRemarkOrder: z.ZodDefault<z.ZodArray<z.ZodEnum<{

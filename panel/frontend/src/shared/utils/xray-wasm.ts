@@ -1,9 +1,14 @@
-import { app } from 'src/config'
+import { app, configEditorAssetUrls } from 'src/config'
+
+import { loadXrayMode, selectedXrayMode } from '@shared/api/hooks/xray-mode'
 
 const LOAD_TIMEOUT = 60_000
 let compiled: Promise<WebAssembly.Module> | undefined
+let compiledUrl: string | undefined
 let runtime: Promise<void> | undefined
 let startup: Promise<void> | undefined
+let selection: Promise<void> | undefined
+let validatorMode: 'custom' | 'default' | undefined
 
 function abortable<T>(operation: Promise<T>, signal: AbortSignal): Promise<T> {
     signal.throwIfAborted()
@@ -53,9 +58,12 @@ function loadRuntime(signal: AbortSignal): Promise<void> {
 }
 
 // Retain compiled code, not a second 60 MB copy of the downloaded bytes.
-export function loadXrayWasm(signal?: AbortSignal): Promise<WebAssembly.Module> {
+export function loadXrayWasm(
+    signal?: AbortSignal,
+    url = app.configEditor.wasmUrl
+): Promise<WebAssembly.Module> {
     signal?.throwIfAborted()
-    if (compiled) return compiled
+    if (compiled && compiledUrl === url) return compiled
     const controller = new AbortController()
     const aborted = () => controller.abort(signal?.reason)
     signal?.addEventListener('abort', aborted, { once: true })
@@ -65,7 +73,7 @@ export function loadXrayWasm(signal?: AbortSignal): Promise<WebAssembly.Module> 
     )
     const pending = abortable(
         (async () => {
-            const response = await fetch(app.configEditor.wasmUrl, { signal: controller.signal })
+            const response = await fetch(url, { signal: controller.signal })
             if (!response.ok) throw new Error(`Xray validator download failed (${response.status})`)
             if (
                 response.headers.get('content-type')?.split(';')[0].trim() === 'application/wasm' &&
@@ -86,10 +94,33 @@ export function loadXrayWasm(signal?: AbortSignal): Promise<WebAssembly.Module> 
             signal?.removeEventListener('abort', aborted)
         })
     compiled = pending
+    compiledUrl = url
     return pending
 }
 
 export function initializeXrayWasm(): Promise<void> {
+    if (selection) return selection
+    const pending = loadXrayMode()
+        .then(async ({ mode }) => {
+            if (validatorMode && validatorMode !== mode) {
+                location.reload()
+                throw new Error('Xray editor mode changed')
+            }
+            validatorMode = mode
+            await initializeSelectedXrayWasm(mode)
+            if (selectedXrayMode() !== mode) {
+                location.reload()
+                throw new Error('Xray editor mode changed')
+            }
+        })
+        .finally(() => {
+            if (selection === pending) selection = undefined
+        })
+    selection = pending
+    return pending
+}
+
+function initializeSelectedXrayWasm(mode: 'custom' | 'default'): Promise<void> {
     if (typeof window.XrayParseConfig === 'function') return Promise.resolve()
     if (startup) return startup
     const controller = new AbortController()
@@ -98,9 +129,13 @@ export function initializeXrayWasm(): Promise<void> {
         LOAD_TIMEOUT
     )
     const pending = (async () => {
+        const assets = configEditorAssetUrls(mode)
         await loadRuntime(controller.signal)
         const go = new window.Go()
-        const module = await abortable(loadXrayWasm(controller.signal), controller.signal)
+        const module = await abortable(
+            loadXrayWasm(controller.signal, assets.wasmUrl),
+            controller.signal
+        )
         const instance = await abortable(
             WebAssembly.instantiate(module, go.importObject),
             controller.signal

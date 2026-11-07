@@ -6,10 +6,10 @@ export declare namespace BulkNodesActionsCommand {
     const RequestBodySchema: z.ZodObject<{
         uuids: z.ZodArray<z.ZodUUID>;
         action: z.ZodEnum<{
-            readonly ENABLE: "ENABLE";
-            readonly DISABLE: "DISABLE";
-            readonly RESTART: "RESTART";
-            readonly RESET_TRAFFIC: "RESET_TRAFFIC";
+            readonly ENABLE: 'ENABLE';
+            readonly DISABLE: 'DISABLE';
+            readonly RESTART: 'RESTART';
+            readonly RESET_TRAFFIC: 'RESET_TRAFFIC';
         }>;
     }, z.core.$strip>;
     type RequestBody = z.infer<typeof RequestBodySchema>;

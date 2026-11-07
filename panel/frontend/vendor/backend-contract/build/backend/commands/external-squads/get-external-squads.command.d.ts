@@ -17,12 +17,12 @@ export declare namespace GetExternalSquadsCommand {
                 templates: z.ZodArray<z.ZodObject<{
                     templateUuid: z.ZodUUID;
                     templateType: z.ZodEnum<{
-                        readonly XRAY_JSON: "XRAY_JSON";
-                        readonly XRAY_BASE64: "XRAY_BASE64";
-                        readonly MIHOMO: "MIHOMO";
-                        readonly STASH: "STASH";
-                        readonly CLASH: "CLASH";
-                        readonly SINGBOX: "SINGBOX";
+                        readonly XRAY_JSON: 'XRAY_JSON';
+                        readonly XRAY_BASE64: 'XRAY_BASE64';
+                        readonly MIHOMO: 'MIHOMO';
+                        readonly STASH: 'STASH';
+                        readonly CLASH: 'CLASH';
+                        readonly SINGBOX: 'SINGBOX';
                     }>;
                 }, z.core.$strip>>;
                 subscriptionSettings: z.ZodNullable<z.ZodObject<{
@@ -44,8 +44,8 @@ export declare namespace GetExternalSquadsCommand {
                 }, z.core.$strip>>;
                 customRemarks: z.ZodNullable<z.ZodObject<{
                     alwaysAvailableHostsPosition: z.ZodOptional<z.ZodEnum<{
-                        before: "before";
                         after: "after";
+                        before: "before";
                     }>>;
                     combineSubscriptionAndHwidRemarks: z.ZodDefault<z.ZodBoolean>;
                     subscriptionAndHwidRemarkOrder: z.ZodDefault<z.ZodArray<z.ZodEnum<{
@@ -76,7 +76,6 @@ export declare namespace GetExternalSquadsCommand {
                 createdAt: z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>;
                 updatedAt: z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>;
             }, z.core.$strip>, z.ZodTransform<{
-                responseHeadersAdd: Record<string, string>;
                 uuid: string;
                 viewPosition: number;
                 name: string;
@@ -86,7 +85,7 @@ export declare namespace GetExternalSquadsCommand {
                 };
                 templates: {
                     templateUuid: string;
-                    templateType: "STASH" | "SINGBOX" | "MIHOMO" | "XRAY_JSON" | "CLASH" | "XRAY_BASE64";
+                    templateType: "CLASH" | "MIHOMO" | "SINGBOX" | "STASH" | "XRAY_BASE64" | "XRAY_JSON";
                 }[];
                 subscriptionSettings: {
                     serveJsonAtBaseSubscription?: boolean | undefined;
@@ -104,8 +103,14 @@ export declare namespace GetExternalSquadsCommand {
                     maxDevicesAnnounce: string | null;
                 } | null;
                 customRemarks: {
+                    alwaysAvailableHostsPosition?: "after" | "before" | undefined;
                     combineSubscriptionAndHwidRemarks: boolean;
                     subscriptionAndHwidRemarkOrder: ("DISABLED" | "EXPIRED" | "FROZEN" | "HWID_BLOCKED" | "HWID_REGISTRATION_BLOCKED")[];
+                    action?: {
+                        text: string;
+                        buttonText: string;
+                        url: string;
+                    } | null | undefined;
                     expiredUsers: string[];
                     limitedUsers: string[];
                     disabledUsers: string[];
@@ -117,16 +122,11 @@ export declare namespace GetExternalSquadsCommand {
                     HWIDBlocked: string[];
                     hostTrafficPaused: string[];
                     hostTrafficLimit: string[];
-                    alwaysAvailableHostsPosition?: "before" | "after" | undefined;
-                    action?: {
-                        text: string;
-                        buttonText: string;
-                        url: string;
-                    } | null | undefined;
                 } | null;
                 subpageConfigUuid: string | null;
                 createdAt: Date;
                 updatedAt: Date;
+                responseHeadersAdd: Record<string, string>;
             }, {
                 uuid: string;
                 viewPosition: number;
@@ -137,7 +137,7 @@ export declare namespace GetExternalSquadsCommand {
                 };
                 templates: {
                     templateUuid: string;
-                    templateType: "STASH" | "SINGBOX" | "MIHOMO" | "XRAY_JSON" | "CLASH" | "XRAY_BASE64";
+                    templateType: "CLASH" | "MIHOMO" | "SINGBOX" | "STASH" | "XRAY_BASE64" | "XRAY_JSON";
                 }[];
                 subscriptionSettings: {
                     serveJsonAtBaseSubscription?: boolean | undefined;
@@ -148,6 +148,8 @@ export declare namespace GetExternalSquadsCommand {
                     serverDescription?: string | null | undefined;
                     vlessRouteId?: number | null | undefined;
                 } | null;
+                responseHeaders?: Record<string, string> | undefined;
+                responseHeadersAdd?: Record<string, string> | undefined;
                 responseHeadersRemove: string[];
                 hwidSettings: {
                     enabled: boolean;
@@ -155,8 +157,14 @@ export declare namespace GetExternalSquadsCommand {
                     maxDevicesAnnounce: string | null;
                 } | null;
                 customRemarks: {
+                    alwaysAvailableHostsPosition?: "after" | "before" | undefined;
                     combineSubscriptionAndHwidRemarks: boolean;
                     subscriptionAndHwidRemarkOrder: ("DISABLED" | "EXPIRED" | "FROZEN" | "HWID_BLOCKED" | "HWID_REGISTRATION_BLOCKED")[];
+                    action?: {
+                        text: string;
+                        buttonText: string;
+                        url: string;
+                    } | null | undefined;
                     expiredUsers: string[];
                     limitedUsers: string[];
                     disabledUsers: string[];
@@ -168,18 +176,10 @@ export declare namespace GetExternalSquadsCommand {
                     HWIDBlocked: string[];
                     hostTrafficPaused: string[];
                     hostTrafficLimit: string[];
-                    alwaysAvailableHostsPosition?: "before" | "after" | undefined;
-                    action?: {
-                        text: string;
-                        buttonText: string;
-                        url: string;
-                    } | null | undefined;
                 } | null;
                 subpageConfigUuid: string | null;
                 createdAt: Date;
                 updatedAt: Date;
-                responseHeaders?: Record<string, string> | undefined;
-                responseHeadersAdd?: Record<string, string> | undefined;
             }>>>;
         }, z.core.$strip>;
     }, z.core.$strip>;

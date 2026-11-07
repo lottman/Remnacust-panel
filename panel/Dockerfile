@@ -1,5 +1,5 @@
 # Build from the public project root: docker build -f panel/Dockerfile .
-FROM node:24.22.1-trixie-slim AS backend-build
+FROM node:26.13.0-trixie-slim AS backend-build
 WORKDIR /opt/app
 
 COPY panel/backend/package*.json ./
@@ -25,21 +25,13 @@ RUN npm run migrate:generate \
     && npm prune --omit=dev \
     && npm cache clean --force
 
-RUN cd node_modules/@prisma/client/runtime && \
-    find . -maxdepth 1 -type f ! -name 'library.js' ! -name 'package.json' -delete && \
-    cd /opt/app/node_modules/.prisma/client && \
-    find . -maxdepth 1 -type f \
-      \( -name 'edge.*' -o -name 'index-browser.js' -o -name 'wasm.*' \
-         -o -name 'query_engine_bg.*' -o -name '*-loader.mjs' \) -delete && \
-    cd /opt/app && \
-    rm -rf node_modules/typescript \
-           node_modules/effect/dist/esm \
+RUN rm -rf node_modules/effect/dist/esm \
            node_modules/effect/dist/dts \
            node_modules/effect/src && \
     find node_modules \( -name '*.js.map' -o -name '*.mjs.map' \) -delete && \
     find node_modules \( -name '*.d.ts' -o -name '*.d.cts' -o -name '*.d.mts' \) -delete
 
-FROM node:24.22.1-trixie-slim AS frontend
+FROM node:26.13.0-trixie-slim AS frontend
 WORKDIR /opt/frontend
 COPY panel/frontend/package*.json ./
 COPY panel/frontend/vendor ./vendor
@@ -57,16 +49,16 @@ RUN --mount=type=cache,id=remnacust-webfonts,target=/opt/frontend/node_modules/.
 FROM alpine:3.21 AS certificates
 RUN apk add --no-cache ca-certificates
 
-FROM node:24.22.1-trixie-slim AS runtime-manager
+FROM node:26.13.0-trixie-slim AS runtime-manager
 WORKDIR /opt/pm2
 COPY panel/runtime-manager/package*.json ./
 RUN npm ci --omit=dev --ignore-scripts --no-audit --no-fund
 
-FROM node:24.22.1-trixie-slim
+FROM node:26.13.0-trixie-slim
 COPY --from=certificates /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 
 LABEL org.opencontainers.image.title="Remnacust"
-LABEL org.opencontainers.image.version="1.1.7.87"
+LABEL org.opencontainers.image.version="1.1.7.100"
 LABEL org.opencontainers.image.description="Powerful proxy management tool"
 LABEL org.opencontainers.image.url="https://github.com/lottman/Remnacust-panel"
 LABEL org.opencontainers.image.source="https://github.com/lottman/Remnacust-panel"
@@ -77,7 +69,7 @@ LABEL org.opencontainers.image.documentation="https://docs.rw"
 WORKDIR /opt/app
 
 ARG BRANCH=main
-ARG __RW_METADATA_VERSION=1.1.7.87
+ARG __RW_METADATA_VERSION=1.1.7.100
 ARG __RW_METADATA_GIT_BACKEND_COMMIT=unknown
 ARG __RW_METADATA_GIT_FRONTEND_COMMIT=unknown
 ARG __RW_METADATA_GIT_BRANCH=local

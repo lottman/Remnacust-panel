@@ -16,7 +16,13 @@ function loadTypescript(filename, mocks = {}, globals = {}) {
     const ref = { exports: {} };
     new Function('require', 'module', 'exports', ...Object.keys(globals), compiled)(
         (id) => {
+            if (id === '@common/xray-mode/xray-mode-conflict' && (!Object.hasOwn(mocks,id) || Object.keys(mocks[id]).length === 0)) {
+                return loadTypescript(path.join(__dirname, '../src/common/xray-mode/xray-mode-conflict.ts'), mocks, globals);
+            }
             if (Object.hasOwn(mocks,id)) return mocks[id];
+            if (id.startsWith('@common/xray-mode/')) {
+                return loadTypescript(path.join(__dirname, '../src/common/xray-mode', id.slice('@common/xray-mode/'.length) + '.ts'), mocks, globals);
+            }
             if(id.startsWith('.')) {
                 const sibling=path.resolve(path.dirname(filename),id+'.ts');
                 if(fs.existsSync(sibling)) return loadTypescript(sibling,mocks,globals);

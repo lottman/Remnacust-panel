@@ -5,6 +5,7 @@ import { HiChartPie, HiServer } from 'react-icons/hi'
 import { PiArrowsInCardinalFill, PiChartLine, PiListChecks, PiUsers } from 'react-icons/pi'
 import {
     TbGauge,
+    TbCpu,
     TbBook2,
     TbApi,
     TbDatabase,
@@ -298,6 +299,12 @@ export const useDesktopMenuSections = (): MenuItem[] => {
                         href: ROUTES.DASHBOARD.MANAGEMENT.REMNAWAVE_SETTINGS,
                         icon: Logo,
                         id: 'remnawave-settings'
+                    },
+                    {
+                        name: t('xray-settings.title' as never),
+                        href: ROUTES.DASHBOARD.MANAGEMENT.XRAY_SETTINGS,
+                        icon: TbCpu,
+                        id: 'xray-settings'
                     }
                 ]
             }

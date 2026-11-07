@@ -1,4 +1,4 @@
-import { monitorEventLoopDelay, IntervalHistogram } from 'node:perf_hooks';
+import { monitorEventLoopDelay } from 'node:perf_hooks';
 import process from 'node:process';
 
 import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
@@ -19,7 +19,7 @@ export class RuntimeMetricsService implements OnModuleDestroy, OnModuleInit {
     private readonly RESOLUTION_MS = 10;
 
     private timer: NodeJS.Timeout | null = null;
-    private eld: IntervalHistogram;
+    private eld: ReturnType<typeof monitorEventLoopDelay>;
 
     constructor(private readonly rawCacheService: RawCacheService) {
         this.INSTANCE_ID = process.env.INSTANCE_ID || '0';

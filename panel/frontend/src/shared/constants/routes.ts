@@ -35,6 +35,7 @@ export const ROUTES = {
             INTERNAL_SQUADS: '/dashboard/management/internal-squads',
             EXTERNAL_SQUADS: '/dashboard/management/external-squads',
             REMNAWAVE_SETTINGS: '/dashboard/management/settings',
+            XRAY_SETTINGS: '/dashboard/management/xray',
             NODE_PLUGINS: {
                 ROOT: '/dashboard/management/plugins',
                 NODE_PLUGIN_BY_UUID: '/dashboard/management/plugins/:uuid'

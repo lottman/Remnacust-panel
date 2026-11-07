@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "target": "es2020",
-    "module": "commonjs",
-    "moduleResolution": "node",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "outDir": "./build/backend",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
@@ -14,7 +14,10 @@
       "es2020"
     ],
     "declaration": true,
-    "declarationMap": true
+    "declarationMap": true,
+    "types": [
+      "node"
+    ]
   },
   "exclude": [
     "scripts/**/*",

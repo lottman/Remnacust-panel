@@ -2,6 +2,8 @@ import { Logger } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 
 import { RawCacheService } from '@common/raw-cache';
+import { XrayModeService } from '@common/xray-mode/xray-mode.service';
+import { stockHostPolicy } from '@common/xray-mode/stock-host-policy';
 import { fail, ok } from '@common/types';
 import { CACHE_KEYS, CACHE_KEYS_TTL, ERRORS } from '@libs/contracts/constants';
 
@@ -23,10 +25,12 @@ export class GetHostsForUserHandler implements IQueryHandler<GetHostsForUserQuer
         private readonly hostsRepository: HostsRepository,
         private readonly tagLimitsRepository: HostTagLimitsRepository,
         private readonly rawCache: RawCacheService,
+        private readonly xrayModes?: XrayModeService,
     ) {}
 
     async execute(query: GetHostsForUserQuery) {
         try {
+            const custom = !this.xrayModes || await this.xrayModes.isCustom();
             const hostsEntities = await this.hostsRepository.findActiveHostsByUserId(
                 query.userId,
                 query.returnDisabledHosts,
@@ -34,7 +38,7 @@ export class GetHostsForUserHandler implements IQueryHandler<GetHostsForUserQuer
             );
             if (hostsEntities.length === 0) return ok([]);
             const [tagUsage, assignedTemplates] = await Promise.all([
-                this.tagLimitsRepository.usageForUser(query.userId),
+                custom ? this.tagLimitsRepository.usageForUser(query.userId) : Promise.resolve([]),
                 this.hostsRepository.getAssignedXrayTemplates(),
             ]);
             const assignments = indexXrayTemplateAssignments(assignedTemplates);
@@ -102,7 +106,7 @@ export class GetHostsForUserHandler implements IQueryHandler<GetHostsForUserQuer
                         h.effectiveLimitBytes ?? h.userTrafficLimitBytes ?? 0,
                     );
                     result.ambiguousTraffic = Boolean(h.ambiguousTraffic);
-                    return result;
+                    return custom ? result : stockHostPolicy(result);
                 }),
             );
         } catch (error) {

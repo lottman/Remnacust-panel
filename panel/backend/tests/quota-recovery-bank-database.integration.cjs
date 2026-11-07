@@ -1,6 +1,6 @@
 // Read-only recovery bank verification in the seeded disposable legacy fixture.
 const assert=require('node:assert/strict'),path=require('node:path'),{randomUUID}=require('node:crypto');
-const {PrismaClient}=require('@prisma/client'),{TransactionHost}=require('@nestjs-cls/transactional'),k=require('kysely'),load=require('./load-typescript.cjs');
+const {PrismaClient}=require('./prisma-test-client.cjs'),{TransactionHost}=require('@nestjs-cls/transactional'),k=require('kysely'),load=require('./load-typescript.cjs');
 const {PrismaTxDriver}=require('../node_modules/@kastov/nestjs-prisma-kysely/build/drivers/prisma-tx.driver.js');
 const url=process.env.LEGACY_QUOTA_RECOVERY_TEST_DATABASE_URL;assert.ok(url);const parsed=new URL(url);
 assert.equal(parsed.hostname,'127.0.0.1');assert.equal(parsed.port,'55439');assert.equal(parsed.pathname,'/remnacust_legacy_decisions_test');

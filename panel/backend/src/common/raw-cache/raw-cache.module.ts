@@ -1,4 +1,4 @@
-import { RedisModule, RedisModuleOptions } from '@songkeys/nestjs-redis';
+import { RedisModule, RedisModuleOptions, RedisService } from '@songkeys/nestjs-redis';
 
 import { Global, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -33,7 +33,11 @@ import { RAW_CACHE_KEY_PREFIX } from './raw-cache.constants';
             inject: [ConfigService],
         }),
     ],
-    providers: [RawCacheService, MemoryCacheService],
-    exports: [RawCacheService],
+    providers: [RawCacheService, MemoryCacheService, {
+        provide: 'RC_REDIS_CLIENT',
+        inject: [RedisService],
+        useFactory: (redisService: RedisService) => redisService.getOrThrow(),
+    }],
+    exports: [RawCacheService, 'RC_REDIS_CLIENT'],
 })
 export class RawCacheModule {}

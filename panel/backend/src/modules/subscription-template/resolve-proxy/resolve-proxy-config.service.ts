@@ -15,6 +15,8 @@ import {
 import { Injectable } from '@nestjs/common';
 
 import { TypedConfigService } from '@common/config/app-config';
+import { XrayModeService } from '@common/xray-mode/xray-mode.service';
+import { stockHostPolicy } from '@common/xray-mode/stock-host-policy';
 import {
     resolveEncryptionFromDecryption,
     resolveInboundAndMlDsa65PublicKey,
@@ -80,6 +82,7 @@ export class ResolveProxyConfigService {
     constructor(
         private readonly configService: TypedConfigService,
         private readonly hostAccess: HostAccessService,
+        private readonly xrayModes?: XrayModeService,
     ) {
         this.nanoid = customAlphabet('0123456789abcdefghjkmnopqrstuvwxyz', 10);
         this.subPublicDomain = this.configService.getOrThrow('SUB_PUBLIC_DOMAIN');
@@ -93,6 +96,11 @@ export class ResolveProxyConfigService {
 
         if (subscriptionSettings === null) {
             return [];
+        }
+
+        const custom = !this.xrayModes || await this.xrayModes.isCustom();
+        if (!custom) {
+            options = { ...options, hosts: options.hosts.map(stockHostPolicy), ...(options.quotaOwnerHost ? { quotaOwnerHost: stockHostPolicy(options.quotaOwnerHost) } : {}) };
         }
 
         if (!options.selectionOnly && !options.quotaOwnerHost)
@@ -153,6 +161,7 @@ export class ResolveProxyConfigService {
                 inputHost.deviceSpeedLimitMbps = options.quotaOwnerHost.deviceSpeedLimitMbps;
             }
             this.applyHostOverrides(inputHost, hostsOverrides);
+            if (!custom) Object.assign(inputHost, stockHostPolicy(inputHost));
             const userValueMap = TemplateEngine.createUserValueMap(
                 user,
                 subscriptionSettings,

@@ -1,1 +1,1 @@
-{"version":3,"file":"snippets.d.ts","sourceRoot":"","sources":["../../../../api/controllers/snippets.ts"],"names":[],"mappings":"AAAA,eAAO,MAAM,mBAAmB,EAAG,UAAmB,CAAC;AAIvD,eAAO,MAAM,eAAe;;;;;;;;CASlB,CAAC"}
+{"version":3,"file":"snippets.d.ts","sourceRoot":"","sources":["../../../../api/controllers/snippets.ts"],"names":[],"mappings":"AAAA,eAAO,MAAM,mBAAmB,EAAG,UAAmB,CAAC;AAIvD,eAAO,MAAM,eAAe;aACxB,GAAG,EAAE,EAAE;aACP,MAAM,EAAE,EAAE;aACV,MAAM,EAAE,EAAE;aACV,MAAM,EAAE,EAAE;aAEV,OAAO;iBACH,IAAI;;CAEF,CAAC"}

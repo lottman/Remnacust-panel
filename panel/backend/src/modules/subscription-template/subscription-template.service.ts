@@ -1,4 +1,5 @@
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { rethrowXrayModeConflict } from '@common/xray-mode/xray-mode-conflict';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
 import { load } from 'js-yaml';
 
 import { Injectable, Logger } from '@nestjs/common';
@@ -204,6 +205,7 @@ export class SubscriptionTemplateService {
                         try {
                             new RegExp(injector.selector.pattern);
                         } catch (error: unknown) {
+            rethrowXrayModeConflict(error);
                             this.logger.error(
                                 `Invalid regex pattern for injectHosts entry: ${injector.selector.pattern}, ${(error as Error).message}`,
                             );
@@ -294,6 +296,7 @@ export class SubscriptionTemplateService {
                                       : undefined,
                               );
                           } catch (error) {
+            rethrowXrayModeConflict(error);
                               if (draftContent === undefined) throw error;
                               invalidGeofiles = true;
                               return template;
@@ -310,6 +313,7 @@ export class SubscriptionTemplateService {
             if (validationWarnings.length) response.validationWarnings = validationWarnings;
             return ok(response);
         } catch (error) {
+            rethrowXrayModeConflict(error);
             this.logger.error(error);
 
             if (
@@ -346,6 +350,7 @@ export class SubscriptionTemplateService {
 
             return ok(true);
         } catch (error) {
+            rethrowXrayModeConflict(error);
             this.logger.error(error);
             return fail(ERRORS.DELETE_SUBSCRIPTION_TEMPLATE_ERROR);
         }
@@ -427,6 +432,7 @@ export class SubscriptionTemplateService {
 
             return ok(new BaseTemplateResponseModel(template));
         } catch (error) {
+            rethrowXrayModeConflict(error);
             this.logger.error(error);
 
             if (
@@ -591,6 +597,7 @@ export class SubscriptionTemplateService {
 
             return ok(updated);
         } catch (error) {
+            rethrowXrayModeConflict(error);
             this.logger.error(error);
             return fail(ERRORS.SET_ENTITY_TAGS_ERROR);
         }

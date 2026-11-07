@@ -1,5 +1,6 @@
 import { CommonConfigModule } from '@common/config/common-config';
 import { HostPolicyModule } from '@common/host-policy/host-policy.module';
+import { XrayModeModule } from '@common/xray-mode/xray-mode.module';
 import { ClsPluginTransactional } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { ClsModule } from 'nestjs-cls';
@@ -23,6 +24,7 @@ import { SchedulerModule } from '@scheduler/scheduler.module';
 
 @Module({
     imports: [
+        XrayModeModule,
         HostPolicyModule,
         RawCacheModule,
         CommonConfigModule,

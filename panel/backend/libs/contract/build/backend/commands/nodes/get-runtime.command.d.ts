@@ -41,9 +41,9 @@ export declare const NodeRuntimeSchema: z.ZodObject<{
     }, z.core.$strip>;
     xray: z.ZodObject<{
         state: z.ZodEnum<{
-            unknown: "unknown";
             running: "running";
             stopped: "stopped";
+            unknown: "unknown";
         }>;
         pid: z.ZodNullable<z.ZodNumber>;
         version: z.ZodNullable<z.ZodString>;
@@ -68,14 +68,14 @@ export declare namespace GetNodeRuntimeCommand {
             available: z.ZodBoolean;
             reason: z.ZodNullable<z.ZodEnum<{
                 disabled: "disabled";
-                unavailable_or_unsupported: "unavailable_or_unsupported";
                 invalid_node_response: "invalid_node_response";
+                unavailable_or_unsupported: "unavailable_or_unsupported";
             }>>;
             health: z.ZodObject<{
                 connection: z.ZodEnum<{
-                    disabled: "disabled";
                     connected: "connected";
                     connecting: "connecting";
+                    disabled: "disabled";
                     disconnected: "disconnected";
                 }>;
                 lastCheck: z.ZodNullable<z.ZodObject<{
@@ -131,9 +131,9 @@ export declare namespace GetNodeRuntimeCommand {
                 }, z.core.$strip>;
                 xray: z.ZodObject<{
                     state: z.ZodEnum<{
-                        unknown: "unknown";
                         running: "running";
                         stopped: "stopped";
+                        unknown: "unknown";
                     }>;
                     pid: z.ZodNullable<z.ZodNumber>;
                     version: z.ZodNullable<z.ZodString>;

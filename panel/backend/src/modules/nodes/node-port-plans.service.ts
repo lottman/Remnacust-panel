@@ -1,3 +1,5 @@
+import { rethrowXrayModeConflict } from '@common/xray-mode/xray-mode-conflict';
+import { XrayModeService } from '@common/xray-mode/xray-mode.service';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { sql } from 'kysely';
@@ -113,6 +115,7 @@ export class NodePortPlansService {
         private readonly transactions: TransactionHost<TransactionalAdapterPrisma>,
         private readonly dispatcher: PortPlanDispatchService,
         private readonly cache: RawCacheService,
+        private readonly xrayModes?: XrayModeService,
     ) {}
 
     private async state(nodeUuid: string, lock = false): Promise<PlanState> {
@@ -239,6 +242,7 @@ export class NodePortPlansService {
 
     async preview(nodeUuid: string, request: unknown) {
         const input = NodePortPlanInputSchema.parse(request);
+        if (input.enabled) await this.xrayModes?.assertCustom('live-port-plans');
         return this.transactions.withTransaction(
             { isolationLevel: 'RepeatableRead', timeout: 30000 },
             async () => {
@@ -274,6 +278,7 @@ export class NodePortPlansService {
         const input = NodePortPlanInputSchema.parse(request),
             snapshot = body(input),
             hash = createHash('sha256').update(JSON.stringify(snapshot)).digest('hex');
+        if (input.enabled) await this.xrayModes?.assertCustom('live-port-plans');
         if (this.transactions.isTransactionActive())
             throw new Error('Port-plan save requires its own commit boundary');
         try {
@@ -343,6 +348,7 @@ export class NodePortPlansService {
                 },
             );
         } catch (error) {
+            rethrowXrayModeConflict(error);
             rethrowPortPlanEditError(error);
         }
         let queued = false;
@@ -401,6 +407,7 @@ export class NodePortPlansService {
                 },
             );
         } catch (error) {
+            rethrowXrayModeConflict(error);
             rethrowPortPlanEditError(error);
         }
         let queued = false;

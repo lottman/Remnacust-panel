@@ -1,4 +1,4 @@
-import { InjectRedis } from '@songkeys/nestjs-redis';
+import { Inject } from '@nestjs/common';
 import Redis from 'ioredis';
 import { LRUCache } from 'lru-cache';
 
@@ -19,7 +19,7 @@ export class MemoryCacheService implements OnModuleInit, OnModuleDestroy {
     private subscriber: Redis;
     private everConnected = false;
 
-    constructor(@InjectRedis() private readonly redis: Redis) {}
+    constructor(@Inject('RC_REDIS_CLIENT') private readonly redis: Redis) {}
 
     async onModuleInit() {
         this.subscriber = this.redis.duplicate();

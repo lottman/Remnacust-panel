@@ -5,8 +5,8 @@ export declare namespace UpdateBackupSettingsCommand {
     const endpointDetails: import("../../constants").EndpointDetails;
     const RequestBodySchema: z.ZodObject<{
         autoMode: z.ZodOptional<z.ZodPreprocess<z.ZodDefault<z.ZodEnum<{
-            OFF: "OFF";
             DAILY: "DAILY";
+            OFF: "OFF";
         }>>, unknown>>;
         intervalHours: z.ZodOptional<z.ZodDefault<z.ZodInt>>;
         retentionDays: z.ZodOptional<z.ZodDefault<z.ZodInt>>;
@@ -17,8 +17,8 @@ export declare namespace UpdateBackupSettingsCommand {
     const ResponseSchema: z.ZodObject<{
         response: z.ZodObject<{
             autoMode: z.ZodPreprocess<z.ZodDefault<z.ZodEnum<{
-                OFF: "OFF";
                 DAILY: "DAILY";
+                OFF: "OFF";
             }>>, unknown>;
             intervalHours: z.ZodDefault<z.ZodInt>;
             retentionDays: z.ZodDefault<z.ZodInt>;

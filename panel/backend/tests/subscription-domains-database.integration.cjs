@@ -1,6 +1,6 @@
 const assert = require('node:assert/strict');
 const path = require('node:path');
-const { PrismaClient } = require('@prisma/client');
+const { PrismaClient } = require('./prisma-test-client.cjs');
 const load = require('./load-typescript.cjs');
 const url = process.env.SUBSCRIPTION_DOMAINS_TEST_DATABASE_URL;
 if (!url || !/^\/remnacust_test_subscription_domains(?:_[a-z0-9]+)?$/.test(new URL(url).pathname))

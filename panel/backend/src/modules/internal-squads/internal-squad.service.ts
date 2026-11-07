@@ -1,5 +1,5 @@
 import { Transactional } from '@nestjs-cls/transactional';
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
 import dayjs from 'dayjs';
 
 import { Injectable, Logger } from '@nestjs/common';

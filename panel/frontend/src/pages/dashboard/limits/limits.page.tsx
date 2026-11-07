@@ -1,3 +1,6 @@
+import { Fieldset } from '@mantine/core'
+import { useXrayMode } from '@shared/api/hooks/xray-mode'
+import { XrayModeNotice } from '@shared/ui/xray-mode-notice'
 import {
     ActionIcon,
     Alert,
@@ -78,6 +81,7 @@ const gib = (value: string) =>
 const quota = (value: string) => (value === '0' ? '∞' : gib(value))
 
 export function LimitsPage() {
+    const { isCustom } = useXrayMode()
     const uiText = useUiText()
 
     const client = useQueryClient()
@@ -137,6 +141,8 @@ export function LimitsPage() {
                 }
             />
             <QuotaRecoveryPanel />
+            <XrayModeNotice />
+            <Fieldset disabled={!isCustom} variant="unstyled">
             {selected ? (
                 <ScopeUsers
                     key={selected.kind + selected.key}
@@ -310,6 +316,7 @@ export function LimitsPage() {
                     )}
                 </Stack>
             )}
+            </Fieldset>
         </Page>
     )
 }

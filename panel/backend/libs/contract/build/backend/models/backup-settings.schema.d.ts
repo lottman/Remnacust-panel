@@ -1,8 +1,8 @@
 import { z } from 'zod';
 export declare const BackupSettingsSchema: z.ZodObject<{
     autoMode: z.ZodPreprocess<z.ZodDefault<z.ZodEnum<{
-        OFF: "OFF";
         DAILY: "DAILY";
+        OFF: "OFF";
     }>>, unknown>;
     intervalHours: z.ZodDefault<z.ZodInt>;
     retentionDays: z.ZodDefault<z.ZodInt>;

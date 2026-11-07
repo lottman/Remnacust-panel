@@ -5,12 +5,12 @@ export declare namespace OAuth2CallbackCommand {
     const endpointDetails: import("../../../constants").EndpointDetails;
     const RequestBodySchema: z.ZodObject<{
         provider: z.ZodEnum<{
-            readonly TELEGRAM: "telegram";
-            readonly GITHUB: "github";
-            readonly POCKETID: "pocketid";
-            readonly YANDEX: "yandex";
-            readonly KEYCLOAK: "keycloak";
-            readonly GENERIC: "generic";
+            readonly TELEGRAM: 'telegram';
+            readonly GITHUB: 'github';
+            readonly POCKETID: 'pocketid';
+            readonly YANDEX: 'yandex';
+            readonly KEYCLOAK: 'keycloak';
+            readonly GENERIC: 'generic';
         }>;
         code: z.ZodString;
         state: z.ZodString;

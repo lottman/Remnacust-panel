@@ -1,10 +1,10 @@
-export declare const ROOT: "/api";
-export declare const METRICS_ROOT: "/metrics";
-export declare const HEALTH_ROOT: "/health";
-export declare const BACKEND_TOOLS_ROOT: "/backend-tools";
-export declare const BULLBOARD_ROOT: "/backend-tools/queues";
-export declare const SWAGGER_ROOT: "/backend-tools/swagger";
-export declare const SCALAR_ROOT: "/backend-tools/scalar";
+export declare const ROOT: '/api';
+export declare const METRICS_ROOT: '/metrics';
+export declare const HEALTH_ROOT: '/health';
+export declare const BACKEND_TOOLS_ROOT: '/backend-tools';
+export declare const BULLBOARD_ROOT: '/backend-tools/queues';
+export declare const SWAGGER_ROOT: '/backend-tools/swagger';
+export declare const SCALAR_ROOT: '/backend-tools/scalar';
 export declare const REST_API: {
     readonly AUTH: {
         readonly LOGIN: "/api/auth/login";

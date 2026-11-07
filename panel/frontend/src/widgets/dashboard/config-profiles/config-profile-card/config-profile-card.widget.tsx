@@ -2,7 +2,8 @@ import { Badge, Box, CopyButton, Divider, Group, Loader, Menu, Text, Tooltip } f
 import { modals } from '@mantine/modals'
 import { notifications } from '@mantine/notifications'
 import { GetConfigProfilesCommand } from '@remnawave/backend-contract'
-import { githubDarkTheme, JsonEditor } from 'json-edit-react'
+import { JsonViewer } from 'json-edit-react'
+import { githubDarkTheme } from '@json-edit-react/themes'
 import { useTranslation } from 'react-i18next'
 import { PiCheck, PiCopy, PiCpu, PiPencil, PiTag, PiTrashDuotone } from 'react-icons/pi'
 import { TbCheck, TbCpu2, TbDownload, TbEye, TbTags } from 'react-icons/tb'
@@ -87,13 +88,12 @@ export function ConfigProfileCardWidget(props: IProps) {
                             )}
                         </Text>
                         <Divider my="md" />
-                        <JsonEditor
+                        <JsonViewer
                             data={computedConfigProfile.data.config as object}
                             indent={4}
                             maxWidth="100%"
                             rootName=""
                             theme={githubDarkTheme}
-                            viewOnly
                         />
                     </>
                 ),
@@ -212,14 +212,13 @@ export function ConfigProfileCardWidget(props: IProps) {
                                 modals.open({
                                     children: (
                                         <Box>
-                                            <JsonEditor
+                                            <JsonViewer
                                                 collapse={3}
                                                 data={configProfile.config as object}
                                                 indent={4}
                                                 maxWidth="100%"
                                                 rootName=""
                                                 theme={githubDarkTheme}
-                                                viewOnly
                                             />
                                         </Box>
                                     ),

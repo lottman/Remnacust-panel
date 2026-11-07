@@ -146,7 +146,7 @@ export class QuotaSettlementService {
                 // irreversible closure also invalidates that later top-up.
                 await sql`SELECT xera_settle_quota_reserve(${entry.id}::uuid,${node.uuid}::uuid,
                     ${report.instance}::uuid,${entry.group},${entry.owner}::bigint,
-                    ${entry.ceiling}::bigint,${new Date(entry.expiresAt)}::timestamptz,
+                    ${entry.ceiling}::bigint,${new Date(entry.expiresAt).toISOString()}::timestamptz,
                     ${entry.reserved}::bigint,${report.policyRevision}::bigint)`.execute(
                     this.db.kysely,
                 );

@@ -144,7 +144,7 @@ export async function renderQuotaPolicy(
             FROM xera_quota_reserves g JOIN xera_quota_reserve_pools p USING(kind,key,user_id,window_start,budget_epoch)
             WHERE g.kind=${kind} AND g.key=${key} AND g.node_uuid=${node}::uuid
               AND g.closed_usage_bytes IS NULL AND g.retired_at IS NULL AND p.expires_at>now()
-              AND g.window_start=(xera_quota_window_start(${group.anchor}::timestamptz,${group.resetValue}::integer,
+              AND g.window_start=(xera_quota_window_start(${group.anchor.toISOString()}::timestamptz,${group.resetValue}::integer,
                   ${group.resetUnit},now()) AT TIME ZONE 'UTC')::date
               AND g.budget_epoch=xera_current_quota_epoch(g.kind,g.key,g.user_id,g.window_start)
               AND NOT EXISTS(SELECT 1 FROM xera_limit_user_adjustments a WHERE a.kind=g.kind

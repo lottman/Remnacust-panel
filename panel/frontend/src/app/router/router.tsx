@@ -94,6 +94,7 @@ const RemnawaveSettingsConnector = lazy(() =>
         default: m.RemnawaveSettingsConnector
     }))
 )
+const XraySettingsPage = lazy(() => import('@pages/dashboard/xray-settings/xray-settings.page').then(module => ({ default: module.XraySettingsPage })))
 const BackupsPageConnector = lazy(() =>
     import('@pages/dashboard/backups/connectors/backups.page.connector').then((m) => ({
         default: m.BackupsPageConnector
@@ -276,6 +277,7 @@ const router = createBrowserRouter(
                             element={<RemnawaveSettingsConnector />}
                             path={ROUTES.DASHBOARD.MANAGEMENT.REMNAWAVE_SETTINGS}
                         />
+                        <Route element={<XraySettingsPage />} path={ROUTES.DASHBOARD.MANAGEMENT.XRAY_SETTINGS} />
 
                         <Route path={ROUTES.DASHBOARD.MANAGEMENT.NODE_PLUGINS.ROOT}>
                             <Route element={<NodePluginsBasePageConnector />} index />

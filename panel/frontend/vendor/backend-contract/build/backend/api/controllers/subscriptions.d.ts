@@ -1,6 +1,6 @@
-export declare const SUBSCRIPTIONS_CONTROLLER: "subscriptions";
+export declare const SUBSCRIPTIONS_CONTROLLER: 'subscriptions';
 export declare const SUBSCRIPTIONS_ROUTES: {
-    readonly GET: "";
+    readonly GET: '';
     readonly GET_BY: {
         readonly USERNAME: (username: string) => string;
         readonly ID: (userId: string) => string;

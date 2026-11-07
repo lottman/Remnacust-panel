@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
-const { PrismaClientKnownRequestError } = require('@prisma/client/runtime/library');
+const { PrismaClientKnownRequestError } = require('@prisma/client/runtime/client');
 const load = require('./load-typescript.cjs');
 const directory = path.join(__dirname, '../src/modules/subscription-template');
 const { ERRORS } = load(path.join(__dirname, '../libs/contract/constants/errors/errors.ts'));

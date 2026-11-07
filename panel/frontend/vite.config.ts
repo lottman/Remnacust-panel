@@ -1,6 +1,7 @@
 import react from '@vitejs/plugin-react'
 import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vite'
 // import { splashScreen } from 'vite-plugin-splash-screen'
 // import { visualizer } from 'rollup-plugin-visualizer'
@@ -183,6 +184,10 @@ export default defineConfig({
     resolve: {
         tsconfigPaths: true,
         alias: [
+            {
+                find: /^\.\/dompurify\/dompurify\.js$/,
+                replacement: fileURLToPath(new URL('./src/shared/lib/monaco-dompurify.ts', import.meta.url))
+            },
             {
                 find: /^monaco-editor\/esm\/vs\/(.*)$/,
                 replacement: 'monaco-editor/$1'

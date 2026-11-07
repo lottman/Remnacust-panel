@@ -1,6 +1,6 @@
 # Remnacust Panel
 
-Выпуск **Panel/Page 1.1.7.99** входит в комплект Installer **1.2.138** с Node **1.1.24** и Core/WASM **1.1.15**. [Изменения 98 → 99](docs/releases/1.1.7.99.md). Обновление установленного сервера выполняется отдельно.
+Выпуск **Panel/Page 1.1.7.100** входит в комплект Installer **1.2.139** с Node **1.1.26** и Core/WASM **1.1.16**. [Изменения 99 → 100](docs/releases/1.1.7.100.md). Обновление установленного сервера выполняется отдельно.
 
 [Русский](README.md) · [English](README.en.md)
 
@@ -36,10 +36,10 @@ docker compose up -d --no-build --pull never
 
 | Компонент | Текущий стабильный выпуск |
 | --- | --- |
-| Панель и сайт подписки | [1.1.7.99](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.99) |
-| Установщик / Docker-комплект | [1.2.138](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.138) |
-| Агент ноды | [1.1.24](https://github.com/lottman/Remnacust-node/releases/tag/v1.1.24) |
-| Core / валидатор редактора | [1.1.15](https://github.com/lottman/Remnacust-core/releases/tag/v1.1.15), Xray v26.10.31 |
+| Панель и сайт подписки | [1.1.7.100](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.100) |
+| Установщик / Docker-комплект | [1.2.139](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.139) |
+| Агент ноды | [1.1.26](https://github.com/lottman/Remnacust-node/releases/tag/v1.1.26) |
+| Core / валидатор редактора | [1.1.16](https://github.com/lottman/Remnacust-core/releases/tag/v1.1.16), Xray v26.10.31 |
 
 Используйте согласованный комплект. Обновление панели не обновляет автоматически удалённые Node, управляемое Core или ядро Linux. Для расширенных лимитов нужна подтверждённая поддержка Node/Core, а не только номер версии в интерфейсе. [Совместимость](docs/COMPATIBILITY.md).
 
@@ -57,11 +57,11 @@ docker compose up -d --no-build --pull never
 
 | ПО | Требование |
 | --- | --- |
-| ОС установщика 1.2.138 | Ubuntu 22.04 / 24.04 / 26.04 LTS и Debian 12 / 13, Linux amd64 или arm64 |
+| ОС установщика 1.2.139 | Ubuntu 22.04 / 24.04 / 26.04 LTS и Debian 12 / 13, Linux amd64 или arm64 |
 | Контейнеры | Docker Engine и актуальный плагин Docker Compose v2; `docker-compose` v1 не поддерживается |
-| PostgreSQL | Матрица 1.1.7.98: 14.24 / 15.19 / 16.15 / 17.11 / 18.6; 1.1.7.99 сохраняет 194 миграции |
+| PostgreSQL | 14.24 / 15.19 / 16.15 / 17.11 / 18.6; 195 миграций, HWID и границы доступа |
 | Установка готовых образов | Root, доступ к APT, GitHub/GHCR и рабочий DNS; Node.js и Go на VPS не нужны |
-| Сборка из исходников | Node.js 24; для Core/редактора отдельно Go 1.27.3 |
+| Сборка из исходников | Node.js 26.13 LTS; для Core/редактора отдельно Go 1.27.3 |
 
 Отдельный минимальный номер Engine или minor-версии Compose не проверен: используйте актуальные пакеты официального репозитория. Образы БД и кеша выбирает комплект; устанавливать эти сервисы на хост обычно не нужно.
 
@@ -126,7 +126,7 @@ CLI-журналы: `/opt/remnacust/logs/installer-panel.log`, `installer-node.l
 - [Копии БД](docs/BACKUPS.md) · [Перенос пользователей](docs/USER-MIGRATION.md) · [Обновление нод](docs/UPDATE-PROGRESS-AND-NODE-HEALTH.md).
 - [Разработка и сборка](docs/BUILDING.md) · [Сайт подписки](subscription-page/README.md) · [История выпусков](docs/releases).
 
-Выпуск 1.1.7.99 добавляет резервные управляющие адреса нод, безопасную диагностику SOCKS5 и защиту proxy-реквизитов в API. Установщик 1.2.138 разделяет проверку выпуска, обновление компонентов и обслуживание ОС. [Изменения выпуска](docs/releases/1.1.7.99.md). Обновление README не заменяет установленную версию.
+Выпуск 1.1.7.100 исправляет выдачу подписки с HWID без ожидания нод, добавляет общий выбор Xray custom/default и обновляет зависимости. Node 1.1.26 содержит оба ядра. Установщик 1.2.139 поставляет согласованный комплект. [Изменения выпуска](docs/releases/1.1.7.100.md). Обновление README не заменяет установленную версию.
 
 ## Лицензия и поддержка
 

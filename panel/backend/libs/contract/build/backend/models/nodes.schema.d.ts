@@ -25,16 +25,16 @@ export declare const NodesSchema: z.ZodObject<{
     ips: z.ZodArray<z.ZodObject<{
         ip: z.ZodUnion<readonly [z.ZodIPv4, z.ZodIPv6]>;
         status: z.ZodEnum<{
-            readonly INBOUND: "INBOUND";
-            readonly OUTBOUND: "OUTBOUND";
-            readonly MANAGEMENT: "MANAGEMENT";
-            readonly TRANSIT: "TRANSIT";
-            readonly MONITORING: "MONITORING";
-            readonly RESERVE: "RESERVE";
-            readonly BLOCKED: "BLOCKED";
-            readonly FLAGGED: "FLAGGED";
-            readonly DEPRECATED: "DEPRECATED";
-            readonly UNKNOWN: "UNKNOWN";
+            readonly INBOUND: 'INBOUND';
+            readonly OUTBOUND: 'OUTBOUND';
+            readonly MANAGEMENT: 'MANAGEMENT';
+            readonly TRANSIT: 'TRANSIT';
+            readonly MONITORING: 'MONITORING';
+            readonly RESERVE: 'RESERVE';
+            readonly BLOCKED: 'BLOCKED';
+            readonly FLAGGED: 'FLAGGED';
+            readonly DEPRECATED: 'DEPRECATED';
+            readonly UNKNOWN: 'UNKNOWN';
         }>;
     }, z.core.$strip>>;
     createdAt: z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>;

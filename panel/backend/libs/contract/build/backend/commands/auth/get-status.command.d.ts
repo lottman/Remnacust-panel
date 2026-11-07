@@ -13,12 +13,12 @@ export declare namespace GetStatusCommand {
                 }, z.core.$strip>;
                 oauth2: z.ZodObject<{
                     providers: z.ZodRecord<z.ZodEnum<{
-                        readonly TELEGRAM: "telegram";
-                        readonly GITHUB: "github";
-                        readonly POCKETID: "pocketid";
-                        readonly YANDEX: "yandex";
-                        readonly KEYCLOAK: "keycloak";
-                        readonly GENERIC: "generic";
+                        readonly TELEGRAM: 'telegram';
+                        readonly GITHUB: 'github';
+                        readonly POCKETID: 'pocketid';
+                        readonly YANDEX: 'yandex';
+                        readonly KEYCLOAK: 'keycloak';
+                        readonly GENERIC: 'generic';
                     }>, z.ZodBoolean>;
                 }, z.core.$strip>;
                 password: z.ZodObject<{

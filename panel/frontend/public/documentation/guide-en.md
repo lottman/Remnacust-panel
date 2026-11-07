@@ -54,9 +54,9 @@ After the build changes, open administrator tabs check the panel version and rel
 
 ### Supported operating systems and PostgreSQL
 
-Released installer 1.2.136 supports Ubuntu 22.04/24.04/26.04 LTS. Debian support and the PostgreSQL matrix below belong to the upcoming unreleased update. The current installer source accepts Ubuntu 22.04/24.04/26.04 LTS and Debian 12/13, amd64/arm64. Docker uses the official repository for the installed distribution. Interim Ubuntu releases and derivative distributions are not accepted automatically. The amd64 matrix checks real userspace, Bash, Python, OpenSSL and unit workflows; it does not replace kernel boot, systemd, firewall or arm64 tests.
+Installer 1.2.139 accepts Ubuntu 22.04/24.04/26.04 LTS and Debian 12/13, amd64/arm64. Docker uses the official repository for the installed distribution. Interim Ubuntu releases and derivative distributions are not accepted automatically. The amd64 matrix checks real userspace, Bash, Python, OpenSSL and unit workflows; it does not replace kernel boot, systemd, firewall or arm64 tests.
 
-All 194 migrations, quota, expiry and diagnostics scenarios were checked on PostgreSQL 14.24/15.19/16.15/17.11/18.6 as a non-superuser database owner. For new installations, choose a supported major version with current fixes. PostgreSQL 14 support ends on November 12, 2026; PostgreSQL 13 was not tested and is end-of-life. Major upgrades require a separate pg_upgrade or dump/restore. Do not open an old data volume with a new major image; verify the migration on a copy first.
+All 195 migrations, quota, expiry and diagnostics scenarios were checked on PostgreSQL 14.24/15.19/16.15/17.11/18.6 as a non-superuser database owner. For new installations, choose a supported major version with current fixes. PostgreSQL 14 support ends on November 12, 2026; PostgreSQL 13 was not tested and is end-of-life. Major upgrades require a separate pg_upgrade or dump/restore. Do not open an old data volume with a new major image; verify the migration on a copy first.
 
 ## First working connection
 
@@ -253,6 +253,14 @@ After a confirmed crash of a compatible core, the agent restores the last privat
 ### Confirming node commands
 
 Start and stop operations for one node run sequentially. An outdated command must not overwrite a newer state or connection address. An unconfirmed stop retains its error and is retried up to five times, 30 seconds apart. A node disabled by an administrator is never automatically enabled after failure. Check connectivity and the log, then retry the action. An unavailable node can still be deleted from the panel. Bulk profile jobs run one at a time while retaining shared configuration preparation. Updating the Node image preserves the previously selected managed Core. Check the running version in Node tasks and update Core separately if needed, then refresh the client subscription. An outdated autoselect-limit warning clears after support and successful policy application are confirmed; a failed check never removes restrictions.
+
+### Xray settings
+
+Xray settings selects one core flavor for the entire panel. The default is the custom Remnacust core. Stock Xray supports standard protocols and transports. Users, freezing, subscriptions, geofiles and client-side autoselect work in both modes. Host/device limits, separate autoselect recipient accounting, destination access rules, inactive-access hosts, port plans and Xera HTTP require the custom core. Stock mode disables their controls and effective policies without deleting saved settings.
+
+Before switching to stock Xray, the panel checks active profiles, port plans and quota journals. Resolve the listed blockers; never delete accounting data or reserves merely to switch. Dual-core selection on a custom node requires an updated Node image; native Remnawave nodes retain baseline compatibility. Changes are queued and the scheduler retries delivery if the queue is temporarily unavailable. Selection does not prove every node applied it: check node status.
+
+Switching cores restarts the core and may interrupt connections. Save editor changes first. An open editor refreshes on a mode change and loads the matching validator and schema. The global choice overrides the legacy geodata.core profile selector without rewriting the saved profile. Custom core version management is available only in custom mode.
 
 ### Installation and certificates
 
@@ -958,6 +966,12 @@ Copy the individual neutral request header name and UUID value from Set up CDN. 
 ### Subscription domain and .env
 
 The primary domain and SUB_PUBLIC_DOMAIN are synchronized both ways through the local installer service. The API checks .env at startup, when opening the list and every 30 seconds. Changing the primary address in the panel updates .env and the registered Compose without a restart. A hostname, HTTPS URL and safe path are supported. CDN domains remain in the registry. The domain list API requires panel 1.1.7.78 or later to avoid the authentication dependency error. Installer 1.2.113 or later is required; a missing service shows an unavailable status rather than a false confirmation. Concurrent file changes prevent overwrites. Configure DNS and certificates separately.
+
+### Subscription refresh and HWID
+
+Subscription delivery checks the user, device, registration policy and device limit in the database without waiting for nodes. Personal keys are delivered separately through persistent jobs with retries. If a node is unavailable, the subscription is still returned; a new connection on that node becomes usable after its key arrives. Known devices do not wait for the lock used to register new devices. Refreshing a known device does not resend keys to every node, but rechecks authorization: HWID blocks and registration restrictions remain enforced.
+
+A website visit or curl request without device headers does not exercise the same path as Happ or INCY. Compare the same URL with the application User-Agent and HWID when diagnosing failures. Do not publish subscription URLs or HWIDs in public logs.
 
 ### Pages on this server
 

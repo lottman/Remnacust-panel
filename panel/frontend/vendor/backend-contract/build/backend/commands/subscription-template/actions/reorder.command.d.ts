@@ -18,12 +18,12 @@ export declare namespace ReorderSubscriptionTemplateCommand {
                 name: z.ZodString;
                 tags: z.ZodArray<z.ZodString>;
                 templateType: z.ZodEnum<{
-                    readonly XRAY_JSON: "XRAY_JSON";
-                    readonly XRAY_BASE64: "XRAY_BASE64";
-                    readonly MIHOMO: "MIHOMO";
-                    readonly STASH: "STASH";
-                    readonly CLASH: "CLASH";
-                    readonly SINGBOX: "SINGBOX";
+                    readonly XRAY_JSON: 'XRAY_JSON';
+                    readonly XRAY_BASE64: 'XRAY_BASE64';
+                    readonly MIHOMO: 'MIHOMO';
+                    readonly STASH: 'STASH';
+                    readonly CLASH: 'CLASH';
+                    readonly SINGBOX: 'SINGBOX';
                 }>;
                 templateJson: z.ZodNullable<z.ZodUnknown>;
                 encodedTemplateYaml: z.ZodNullable<z.ZodString>;

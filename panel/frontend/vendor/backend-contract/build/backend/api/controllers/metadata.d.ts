@@ -1,4 +1,4 @@
-export declare const METADATA_CONTROLLER: "metadata";
+export declare const METADATA_CONTROLLER: 'metadata';
 export declare const METADATA_ROUTES: {
     readonly NODE: {
         readonly GET: (nodeId: string) => string;

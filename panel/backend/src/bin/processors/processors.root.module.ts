@@ -1,4 +1,5 @@
 import { HostPolicyModule } from '@common/host-policy/host-policy.module';
+import { XrayModeModule } from '@common/xray-mode/xray-mode.module';
 import { ClsPluginTransactional } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { ClsModule } from 'nestjs-cls';
@@ -18,6 +19,7 @@ import { RemnawaveModules } from '@modules/remnawave-backend.modules';
 
 @Module({
     imports: [
+        XrayModeModule,
         HostPolicyModule,
         RawCacheModule,
         AxiosModule,

@@ -22,6 +22,7 @@ import { NodeHealthLogCleanupTask } from './tasks/node-health-log-cleanup.task';
 import { PortPlanDispatchTask } from './tasks/port-plan-dispatch.task';
 import { QuotaCoordinatorTask } from './tasks/quota-coordinator.task';
 import { QuotaFinalizationDispatchTask } from './tasks/quota-finalization-dispatch.task';
+import { XrayModeApplyTask } from './tasks/xray-mode-apply.task';
 
 @Module({
     imports: [
@@ -48,6 +49,7 @@ import { QuotaFinalizationDispatchTask } from './tasks/quota-finalization-dispat
         PortPlanDispatchTask,
         QuotaCoordinatorTask,
         QuotaFinalizationDispatchTask,
+        XrayModeApplyTask,
     ],
 })
 export class SchedulerModule {}

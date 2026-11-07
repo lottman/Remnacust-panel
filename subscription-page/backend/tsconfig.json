@@ -12,7 +12,6 @@
     "sourceMap": true,
     "resolveJsonModule": true,
     "outDir": "./dist",
-    "baseUrl": "./",
     "paths": {
       "@common/*": ["./src/common/*"],
       "@integration-modules/*": ["./src/integration-modules/*"],

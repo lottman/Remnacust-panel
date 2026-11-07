@@ -331,6 +331,9 @@ body {
     }
 }
 @media (pointer: coarse) {
+    html.panel-themed :is(button, a, .mantine-SegmentedControl-label, .mantine-Combobox-option) {
+        touch-action: manipulation;
+    }
     html.panel-themed .mantine-Input-input {
         font-size: max(16px, var(--input-fz, 16px));
     }

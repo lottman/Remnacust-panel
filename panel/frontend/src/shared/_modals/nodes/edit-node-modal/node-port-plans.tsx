@@ -21,6 +21,7 @@ import { TbPlus, TbRefresh, TbTrash } from 'react-icons/tb'
 import { z } from 'zod'
 
 import { useGetConfigProfiles } from '@shared/api/hooks'
+import { useXrayMode } from '@shared/api/hooks/xray-mode'
 
 import {
     getPortPlanHistory,
@@ -202,6 +203,7 @@ function NodePortPlanEditor({
     refreshError: boolean
     reloadSaved: () => Promise<PortPlanView>
 }) {
+    const { isCustom } = useXrayMode()
     const { t } = useTranslation(),
         client = useQueryClient()
     const [draft, setDraft] = useState<Draft>(() => fromView(current)),
@@ -426,7 +428,7 @@ function NodePortPlanEditor({
             <Switch
                 label={t('nodePorts.enabled')}
                 checked={draft.enabled}
-                disabled={busy}
+                disabled={busy || !isCustom}
                 onChange={(event) => change({ ...draft, enabled: event.currentTarget.checked })}
             />
             <div className={classes.layout}>

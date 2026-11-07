@@ -58,7 +58,7 @@ function fixture() {
         sendCommand(command) {
             assert.equal(active, false, 'Redis must never run while the SQL row lock is held');
             redisCommands.push(command);
-            const [first, count, key, arg, ttl] = command.args;
+            const [first, count, key, arg] = command.args;
             let result;
             if (command.name === 'set') {
                 result = redisValues.has(first) ? null : 'OK';

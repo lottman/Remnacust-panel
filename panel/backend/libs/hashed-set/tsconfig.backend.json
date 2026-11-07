@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "target": "es2020",
-    "module": "commonjs",
-    "moduleResolution": "node",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "outDir": "./build/backend",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
@@ -10,9 +10,21 @@
     "strictPropertyInitialization": false,
     "skipLibCheck": true,
     "noEmit": false,
-    "lib": ["es2020"],
+    "lib": [
+      "es2020"
+    ],
     "declaration": true,
-    "declarationMap": true
+    "declarationMap": true,
+    "types": [
+      "node"
+    ]
   },
-  "exclude": ["node_modules", "build", "scripts/**/*", "tests/**/*", "**/*.spec.ts", "**/*.test.ts"]
+  "exclude": [
+    "node_modules",
+    "build",
+    "scripts/**/*",
+    "tests/**/*",
+    "**/*.spec.ts",
+    "**/*.test.ts"
+  ]
 }

@@ -14,7 +14,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 26.13.0
           cache: npm
           cache-dependency-path: panel/frontend/package-lock.json
       - run: npm ci
@@ -58,11 +58,11 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: lottman/Remnacust-node
-          ref: 9d448c8a50043236656a61ae7c2cf9640c30ec15
+          ref: 2e9d572ff2be267893cba3e665be7f8191927058
           path: node-repository
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 26.13.0
       - run: npm ci
       - run: npm ci --prefix ../frontend
       - run: npm ci --prefix ../../node-repository/node
@@ -81,8 +81,8 @@ jobs:
         env:
           REMNACUST_AUTOPROBE_CORE: ${{ runner.temp }}/remnacust-response-time-core
         run: |
-          curl --fail --location --proto '=https' --proto-redir '=https' --max-filesize 201326592 https://github.com/lottman/Remnacust-core/releases/download/v1.1.15/remnacust-core-1.1.15-linux-amd64 -o "$REMNACUST_AUTOPROBE_CORE"
-          printf 'ab19e2235154200d676bf93daa5a822fa106e72d4d8a2611a390a3ce8a24ec99  %s\n' "$REMNACUST_AUTOPROBE_CORE" | sha256sum -c
+          curl --fail --location --proto '=https' --proto-redir '=https' --max-filesize 201326592 https://github.com/lottman/Remnacust-core/releases/download/v1.1.16/remnacust-core-1.1.16-linux-amd64 -o "$REMNACUST_AUTOPROBE_CORE"
+          printf 'f8ca5d7da286caf83c90d195c018ed2a3d3c97da3d405f05ebf031f1d60bf2c9  %s\n' "$REMNACUST_AUTOPROBE_CORE" | sha256sum -c
           chmod 755 "$REMNACUST_AUTOPROBE_CORE"
           node tests/autoselect-http-probe.integration.cjs
           node tests/autoselect-http-probe.integration.cjs --burst
@@ -98,12 +98,23 @@ jobs:
         env:
           FROZEN_TEST_DATABASE_URL: postgresql://postgres@127.0.0.1:55439/postgres
           NODE_INSTALL_TEST_LINUX: '1'
+      - name: Verify serialized Xray mode changes with restricted PostgreSQL writers
+        env:
+          XRAY_MODE_TEST_DATABASE_URL: postgresql://mode_guard_owner@127.0.0.1:55439/xray_mode_guard_test
+          XRAY_MODE_TEST_PG_MAJOR: '17'
+        run: |
+          node - <<'NODE'
+          const {Client}=require('pg');
+          (async()=>{const client=new Client({connectionString:'postgresql://postgres@127.0.0.1:55439/postgres'});await client.connect();try{await client.query('CREATE ROLE mode_guard_owner LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE');await client.query('CREATE DATABASE xray_mode_guard_test OWNER mode_guard_owner');}finally{await client.end();}})().catch(error=>{console.error(error);process.exitCode=1;});
+          NODE
+          DATABASE_URL="$XRAY_MODE_TEST_DATABASE_URL" DIRECT_URL="$XRAY_MODE_TEST_DATABASE_URL" npm run migrate:deploy
+          node --test tests/xray-mode-serialization.database.integration.cjs
       - name: Check access policies and limits with PostgreSQL
         run: node tests/hwid-default-database.integration.cjs && node tests/host-policy-database.integration.cjs && node tests/limit-management-database.integration.cjs && node tests/device-reconciliation-database.integration.cjs && node tests/node-health-retention-database.integration.cjs
       - name: Check bidirectional subscription domain synchronization with PostgreSQL
         run: |
           node - <<'NODE'
-          const {PrismaClient}=require('@prisma/client');
+          const {PrismaClient}=require('./tests/prisma-test-client.cjs');
           const database=new PrismaClient({datasourceUrl:'postgresql://postgres@127.0.0.1:55439/postgres'});
           (async()=>{try{await database.$executeRawUnsafe('CREATE DATABASE remnacust_test_subscription_domains');}finally{await database.$disconnect();}})().catch(error=>{console.error(error);process.exitCode=1;});
           NODE
@@ -116,7 +127,7 @@ jobs:
       - name: Check concurrent geofile imports across API processes
         run: |
           node - <<'NODE'
-          const {PrismaClient}=require('@prisma/client');
+          const {PrismaClient}=require('./tests/prisma-test-client.cjs');
           const database=new PrismaClient({datasourceUrl:'postgresql://postgres@127.0.0.1:55439/postgres'});
           (async()=>{try{await database.$executeRawUnsafe('CREATE DATABASE remnacust_test_geofiles');}finally{await database.$disconnect();}})().catch(error=>{console.error(error);process.exitCode=1;});
           NODE
@@ -138,7 +149,7 @@ jobs:
       - name: Verify bounded receipt commits and batched quota epochs with PostgreSQL
         run: |
           node - <<'NODE'
-          const {PrismaClient}=require('@prisma/client');
+          const {PrismaClient}=require('./tests/prisma-test-client.cjs');
           const database=new PrismaClient({datasourceUrl:'postgresql://postgres@127.0.0.1:55439/postgres'});
           (async()=>{try{
             await database.$executeRawUnsafe('CREATE DATABASE remnacust_test_host_usage_batch');
@@ -154,7 +165,7 @@ jobs:
       - name: Check durable quota reservation issuance in a separate empty database
         run: |
           node - <<'NODE'
-          const {PrismaClient}=require('@prisma/client');
+          const {PrismaClient}=require('./tests/prisma-test-client.cjs');
           const database=new PrismaClient({datasourceUrl:'postgresql://postgres@127.0.0.1:55439/postgres'});
           (async()=>{try{await database.$executeRawUnsafe('CREATE DATABASE remnacust_quota_reserves_test');}finally{await database.$disconnect();}})().catch(error=>{console.error(error);process.exitCode=1;});
           NODE
@@ -167,7 +178,7 @@ jobs:
       - name: Check global user reserves and native checkpoint acknowledgement in an empty database
         run: |
           node - <<'NODE'
-          const {PrismaClient}=require('@prisma/client');
+          const {PrismaClient}=require('./tests/prisma-test-client.cjs');
           const database=new PrismaClient({datasourceUrl:'postgresql://postgres@127.0.0.1:55439/postgres'});
           (async()=>{try{await database.$executeRawUnsafe('CREATE DATABASE remnacust_global_quota_test');}finally{await database.$disconnect();}})().catch(error=>{console.error(error);process.exitCode=1;});
           NODE
@@ -180,7 +191,7 @@ jobs:
       - name: Check legacy usage cutover, rollback and old queue retries with PostgreSQL
         run: |
           node - <<'NODE'
-          const {PrismaClient}=require('@prisma/client');
+          const {PrismaClient}=require('./tests/prisma-test-client.cjs');
           const database=new PrismaClient({datasourceUrl:'postgresql://postgres@127.0.0.1:55439/postgres'});
           (async()=>{try{await database.$executeRawUnsafe('CREATE DATABASE remnacust_legacy_usage_test');}finally{await database.$disconnect();}})().catch(error=>{console.error(error);process.exitCode=1;});
           NODE
@@ -195,7 +206,7 @@ jobs:
       - name: Check legacy billing and destructive collection during restore in a separate database
         run: |
           node - <<'NODE'
-          const {PrismaClient}=require('@prisma/client');
+          const {PrismaClient}=require('./tests/prisma-test-client.cjs');
           const database=new PrismaClient({datasourceUrl:'postgresql://postgres@127.0.0.1:55439/postgres'});
           (async()=>{try{await database.$executeRawUnsafe('CREATE DATABASE remnacust_legacy_recovery_test');}finally{await database.$disconnect();}})().catch(error=>{console.error(error);process.exitCode=1;});
           NODE
@@ -208,7 +219,7 @@ jobs:
       - name: Check explicit legacy accounting recovery decisions in an empty database
         run: |
           node - <<'NODE'
-          const {PrismaClient}=require('@prisma/client');
+          const {PrismaClient}=require('./tests/prisma-test-client.cjs');
           const database=new PrismaClient({datasourceUrl:'postgresql://postgres@127.0.0.1:55439/postgres'});
           (async()=>{try{await database.$executeRawUnsafe('CREATE DATABASE remnacust_legacy_decisions_test');}finally{await database.$disconnect();}})().catch(error=>{console.error(error);process.exitCode=1;});
           NODE
@@ -225,7 +236,7 @@ jobs:
       - name: Check approved native receipt recovery without ACK or global resume
         run: |
           node - <<'NODE'
-          const {PrismaClient}=require('@prisma/client');
+          const {PrismaClient}=require('./tests/prisma-test-client.cjs');
           const database=new PrismaClient({datasourceUrl:'postgresql://postgres@127.0.0.1:55439/postgres'});
           (async()=>{try{await database.$executeRawUnsafe('CREATE DATABASE remnacust_native_recovery_test');}finally{await database.$disconnect();}})().catch(error=>{console.error(error);process.exitCode=1;});
           NODE
@@ -238,7 +249,7 @@ jobs:
       - name: Check reviewed native quota settlements while recovery remains pending
         run: |
           node - <<'NODE'
-          const {PrismaClient}=require('@prisma/client');
+          const {PrismaClient}=require('./tests/prisma-test-client.cjs');
           const database=new PrismaClient({datasourceUrl:'postgresql://postgres@127.0.0.1:55439/postgres'});
           (async()=>{try{await database.$executeRawUnsafe('CREATE DATABASE remnacust_recovery_settlement_test');}finally{await database.$disconnect();}})().catch(error=>{console.error(error);process.exitCode=1;});
           NODE
@@ -251,7 +262,7 @@ jobs:
       - name: Check resumable two-node quota coordinator with PostgreSQL
         run: |
           node - <<'NODE'
-          const {PrismaClient}=require('@prisma/client');
+          const {PrismaClient}=require('./tests/prisma-test-client.cjs');
           const database=new PrismaClient({datasourceUrl:'postgresql://postgres@127.0.0.1:55439/postgres'});
           (async()=>{try{await database.$executeRawUnsafe('CREATE DATABASE remnacust_coordinator_test');}finally{await database.$disconnect();}})().catch(error=>{console.error(error);process.exitCode=1;});
           NODE
@@ -264,7 +275,7 @@ jobs:
       - name: Check process-specific outside-grant debt coverage
         run: |
           node - <<'NODE'
-          const {PrismaClient}=require('@prisma/client');
+          const {PrismaClient}=require('./tests/prisma-test-client.cjs');
           const database=new PrismaClient({datasourceUrl:'postgresql://postgres@127.0.0.1:55439/postgres'});
           (async()=>{try{await database.$executeRawUnsafe('CREATE DATABASE remnacust_exposure_test');}finally{await database.$disconnect();}})().catch(error=>{console.error(error);process.exitCode=1;});
           NODE
@@ -277,7 +288,7 @@ jobs:
       - name: Check durable quota journal enrollment and restore barriers
         run: |
           node - <<'NODE'
-          const {PrismaClient}=require('@prisma/client');
+          const {PrismaClient}=require('./tests/prisma-test-client.cjs');
           const database=new PrismaClient({datasourceUrl:'postgresql://postgres@127.0.0.1:55439/postgres'});
           (async()=>{try{await database.$executeRawUnsafe('CREATE DATABASE remnacust_watermark_test');}finally{await database.$disconnect();}})().catch(error=>{console.error(error);process.exitCode=1;});
           NODE
@@ -290,7 +301,7 @@ jobs:
       - name: Inspect restored quota journals without changing reserves or the restore barrier
         run: |
           node - <<'NODE'
-          const {PrismaClient}=require('@prisma/client');
+          const {PrismaClient}=require('./tests/prisma-test-client.cjs');
           const database=new PrismaClient({datasourceUrl:'postgresql://postgres@127.0.0.1:55439/postgres'});
           (async()=>{try{await database.$executeRawUnsafe('CREATE DATABASE remnacust_quota_recovery_test');}finally{await database.$disconnect();}})().catch(error=>{console.error(error);process.exitCode=1;});
           NODE
@@ -303,7 +314,7 @@ jobs:
       - name: Verify stable quota owners across deletion and numeric ID reuse
         run: |
           node - <<'NODE'
-          const {PrismaClient}=require('@prisma/client');
+          const {PrismaClient}=require('./tests/prisma-test-client.cjs');
           const database=new PrismaClient({datasourceUrl:'postgresql://postgres@127.0.0.1:55439/postgres'});
           (async()=>{try{await database.$executeRawUnsafe('CREATE DATABASE remnacust_quota_subject_test');}finally{await database.$disconnect();}})().catch(error=>{console.error(error);process.exitCode=1;});
           NODE
@@ -316,7 +327,7 @@ jobs:
       - name: Archive original node outboxes without applying usage or ACK
         run: |
           node - <<'NODE'
-          const {PrismaClient}=require('@prisma/client');
+          const {PrismaClient}=require('./tests/prisma-test-client.cjs');
           const database=new PrismaClient({datasourceUrl:'postgresql://postgres@127.0.0.1:55439/postgres'});
           (async()=>{try{await database.$executeRawUnsafe('CREATE DATABASE remnacust_receipt_archive_test');}finally{await database.$disconnect();}})().catch(error=>{console.error(error);process.exitCode=1;});
           NODE
@@ -332,7 +343,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 26.13.0
       - run: npm ci && npm run typecheck
         working-directory: subscription-page/backend
       - run: npm ci --include=dev && npm run typecheck && npm run cb
@@ -376,7 +387,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 24.22.1
+          node-version: 26.13.0
           cache: npm
           cache-dependency-path: panel/backend/package-lock.json
       - run: npm ci
@@ -384,7 +395,7 @@ jobs:
       - name: Create a non-superuser database owner
         run: |
           node - <<'NODE'
-          const { PrismaClient } = require('@prisma/client');
+          const { PrismaClient } = require('./tests/prisma-test-client.cjs');
           const admin = new PrismaClient({ datasourceUrl: process.env.SYSTEM_DIAGNOSTICS_TEST_ADMIN_URL });
           (async () => {
             try {
@@ -403,7 +414,7 @@ jobs:
           const assert = require('node:assert/strict');
           const fs = require('node:fs');
           const path = require('node:path');
-          const { PrismaClient } = require('@prisma/client');
+          const { PrismaClient } = require('./tests/prisma-test-client.cjs');
           const database = new PrismaClient();
           (async () => {
             try {

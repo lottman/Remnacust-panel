@@ -162,6 +162,12 @@ export const useMobileMenuSections = (): MenuItem[] => {
                     href: ROUTES.DASHBOARD.MANAGEMENT.REMNAWAVE_SETTINGS,
                     icon: Logo,
                     id: 'remnawave-settings'
+                },
+                {
+                    name: t('xray-settings.title' as never),
+                    href: ROUTES.DASHBOARD.MANAGEMENT.XRAY_SETTINGS,
+                    icon: PiCpu,
+                    id: 'xray-settings'
                 }
             ]
         },

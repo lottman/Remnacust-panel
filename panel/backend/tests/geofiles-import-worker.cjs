@@ -1,5 +1,5 @@
 const path = require('node:path');
-const { PrismaClient } = require('@prisma/client');
+const { PrismaClient } = require('./prisma-test-client.cjs');
 const load = require('./load-typescript.cjs');
 const { mocks, pool } = require('./client-pool-fixture.cjs');
 const database = new PrismaClient({ datasourceUrl: process.env.TEST_GEOFILES_DATABASE_URL });

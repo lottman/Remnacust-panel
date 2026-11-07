@@ -1,4 +1,4 @@
-const assert=require('node:assert/strict');const path=require('node:path');const {PrismaClient}=require('@prisma/client');const k=require('kysely');const load=require('./load-typescript.cjs');
+const assert=require('node:assert/strict');const path=require('node:path');const {PrismaClient}=require('./prisma-test-client.cjs');const k=require('kysely');const load=require('./load-typescript.cjs');
 const {PrismaTxDriver}=require('../node_modules/@kastov/nestjs-prisma-kysely/build/drivers/prisma-tx.driver.js');
 const {NodeSshService}=load(path.join(__dirname,'../src/modules/node-ssh/node-ssh.service.ts'),{
  '@common/database':{},'@common/raw-cache':{},'@common/types':{ok:response=>({isOk:true,response}),fail:error=>({isOk:false,error})},

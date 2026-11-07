@@ -14,8 +14,8 @@ import {
     useComputedColorScheme
 } from '@mantine/core'
 import { modals } from '@mantine/modals'
-import { githubDarkTheme, githubLightTheme } from 'json-edit-react'
-import { JsonEditor } from 'json-edit-react'
+import { githubDarkTheme, githubLightTheme } from '@json-edit-react/themes'
+import { JsonViewer } from 'json-edit-react'
 import { useTranslation } from 'react-i18next'
 import {
     PiEyeSlashDuotone,
@@ -202,7 +202,7 @@ export const ConnectionKeysDrawer = NiceModal.create((props: IProps) => {
             ),
             children: (
                 <Box>
-                    <JsonEditor
+                    <JsonViewer
                         collapse={({ path }) => {
                             if (path.length === 0) return false
                             if (path[0] !== 'resolvedProxyConfigs') return true
@@ -210,7 +210,7 @@ export const ConnectionKeysDrawer = NiceModal.create((props: IProps) => {
                         }}
                         data={JSON.parse(JSON.stringify(result.data))}
                         indent={4}
-                        keySort={([a], [b]) => {
+                        sortKeys={([a], [b]) => {
                             if (a === 'resolvedProxyConfigs') return -1
                             if (b === 'resolvedProxyConfigs') return 1
                             return 0
@@ -218,7 +218,6 @@ export const ConnectionKeysDrawer = NiceModal.create((props: IProps) => {
                         maxWidth="100%"
                         rootName=""
                         theme={colorScheme === 'light' ? githubLightTheme : githubDarkTheme}
-                        viewOnly
                         jsonStringify={(data) => JSON.stringify(data)}
                     />
                 </Box>

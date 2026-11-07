@@ -42,6 +42,8 @@ import {
 
 import { TypedConfigService } from '@common/config/app-config/typed-config.service';
 import { RawCacheService } from '@common/raw-cache';
+import { XrayModeService } from '@common/xray-mode/xray-mode.service';
+import { customCoreConfigPaths, withCoreFlavor } from '@common/xray-mode/xray-mode-policy';
 import { prettyBytesUtil } from '@common/utils/bytes';
 import { deriveSni } from '@common/utils/certs';
 import { formatExecutionTime, getTime } from '@common/utils/get-elapsed-time';
@@ -458,6 +460,7 @@ export class AxiosService {
         private readonly rawCacheService: RawCacheService,
         private readonly configService: TypedConfigService,
         private readonly routeRegistry?: NodeRouteRegistry,
+        private readonly xrayModes?: XrayModeService,
     ) {
         this.axiosInstance = axios.create({
             proxy: false,
@@ -768,6 +771,20 @@ export class AxiosService {
     ): Promise<TResult<INodeStartResponse>> {
         const version = await this.getNodeVersion(opts);
         if (!version.isOk) return version;
+        if (this.xrayModes) {
+            const { mode } = await this.xrayModes.assertCurrent();
+            if (mode === 'default' && customCoreConfigPaths(data.xrayConfig).length) {
+                return fail(ERRORS.NODE_ERROR_WITH_MSG.withMessage('The configuration requires custom Xray'));
+            }
+            data = {
+                ...data,
+                xrayConfig: withCoreFlavor(data.xrayConfig, mode),
+                internals: {
+                    ...data.internals,
+                    hashes: { ...data.internals.hashes, emptyConfig: createHash('sha256').update(JSON.stringify([data.internals.hashes.emptyConfig, mode])).digest('hex') },
+                },
+            };
+        }
         const result = await this.request<{ response: INodeStartResponse }>({
             label: 'START XRAY',
             path: StartXrayCommand.url,

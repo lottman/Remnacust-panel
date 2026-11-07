@@ -206,7 +206,7 @@ export async function acknowledgeQuotaRegistrations(
         else {
             const entry = report.entries.find((entry) => entry.id === item.grant.id)!;
             await sql`SELECT xera_settle_quota_reserve(${item.grant.id}::uuid,${node}::uuid,${report.instance}::uuid,${item.group},${item.owner}::bigint,
-                ${entry.ceiling}::bigint,${new Date(entry.expiresAt)}::timestamptz,${entry.reserved}::bigint,${report.policyRevision}::bigint)`.execute(
+                ${entry.ceiling}::bigint,${new Date(entry.expiresAt).toISOString()}::timestamptz,${entry.reserved}::bigint,${report.policyRevision}::bigint)`.execute(
                 db.kysely,
             );
         }

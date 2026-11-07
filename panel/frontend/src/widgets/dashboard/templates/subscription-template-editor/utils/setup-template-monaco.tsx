@@ -1,3 +1,4 @@
+import { loadXrayMode } from '@shared/api/hooks/xray-mode'
 import type { editor, IPosition } from 'monaco-editor'
 
 import { Monaco } from '@monaco-editor/react'
@@ -110,6 +111,7 @@ export const configureMonaco = async (
     templateType: TSubscriptionTemplateType
 ) => {
     try {
+        if (templateType === SUBSCRIPTION_TEMPLATE_TYPE.XRAY_JSON) await loadXrayMode()
         if (language === 'yaml') {
             const schemas =
                 templateType === SUBSCRIPTION_TEMPLATE_TYPE.MIHOMO

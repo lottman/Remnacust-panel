@@ -25,9 +25,11 @@ import { TbCpu, TbRefresh } from 'react-icons/tb'
 import { showModal } from '@shared/_modals/show-modal'
 import { instance } from '@shared/api/axios'
 import { useGetNodes } from '@shared/api/hooks/nodes/nodes.query.hooks'
+import { useXrayMode } from '@shared/api/hooks/xray-mode'
 import { useUiText } from '@shared/i18n/interface-text'
 import { usePanelReducedMotion } from '@shared/ui/appearance/appearance'
 import { RefreshButton } from '@shared/ui/refresh-control'
+import { XrayModeNotice } from '@shared/ui/xray-mode-notice'
 
 import { selectCoreRelease } from './core-release-selection'
 import { selectNodeTargets, type SelectionMode } from './node-selection'
@@ -82,6 +84,7 @@ export function CoreManagementFeature({
 }) {
     const uiText = useUiText()
     const reducedMotion = usePanelReducedMotion()
+    const { isCustom } = useXrayMode()
 
     const [opened, { open, close }] = useDisclosure()
     const mobile = useMediaQuery('(max-width: 48em)')
@@ -381,6 +384,7 @@ export function CoreManagementFeature({
                                     )}
                                 </>
                             )}
+                            <XrayModeNotice />
                             <Select
                                 label={uiText('action-64cff13')}
                                 value={action}
@@ -403,9 +407,13 @@ export function CoreManagementFeature({
                                     value,
                                     label: labels[value],
                                     disabled:
-                                        value === 'rollback' &&
-                                        selected.length === 1 &&
-                                        status.data?.canRollback === false
+                                        (!isCustom &&
+                                            ['install', 'rollback', 'bundled', 'profile'].includes(
+                                                value
+                                            )) ||
+                                        (value === 'rollback' &&
+                                            selected.length === 1 &&
+                                            status.data?.canRollback === false)
                                 }))}
                             />
                             {action === 'optimize' && (
@@ -569,6 +577,10 @@ export function CoreManagementFeature({
                                 loading={create.isPending}
                                 disabled={
                                     !action ||
+                                    (!isCustom &&
+                                        ['install', 'rollback', 'bundled', 'profile'].includes(
+                                            action
+                                        )) ||
                                     (action === 'optimize' &&
                                         selected.some(
                                             (node) =>

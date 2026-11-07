@@ -1,7 +1,8 @@
 import { ActionIcon, Box, Divider, Group, Stack } from '@mantine/core'
 import { modals } from '@mantine/modals'
 import { GetTorrentBlockerReportsCommand } from '@remnawave/backend-contract'
-import { githubDarkTheme, JsonEditor } from 'json-edit-react'
+import { JsonViewer } from 'json-edit-react'
+import { githubDarkTheme } from '@json-edit-react/themes'
 import { useTranslation } from 'react-i18next'
 import { TbExternalLink, TbFlame, TbJson } from 'react-icons/tb'
 
@@ -39,14 +40,13 @@ export const UserTorrentBlockerReportItem = (props: IProps) => {
                         modals.open({
                             children: (
                                 <Box>
-                                    <JsonEditor
+                                    <JsonViewer
                                         collapse={3}
                                         data={JSON.parse(JSON.stringify(report.report))}
                                         indent={2}
                                         maxWidth="100%"
                                         rootName=""
                                         theme={githubDarkTheme}
-                                        viewOnly
                                     />
                                 </Box>
                             ),

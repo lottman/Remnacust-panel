@@ -3,7 +3,8 @@ import ms from 'enhanced-ms';
 export function formatExecutionTime(startTime: number): string {
     return (
         ms(performance.now() - startTime, {
-            extends: 'short',
+            useAbbreviations: true,
+            unitLimit: 2,
             includeMs: true,
         }) || '0ms'
     );

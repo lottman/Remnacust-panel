@@ -1,6 +1,6 @@
 import { SubscriptionActionSchema } from '@libs/contracts/models/subscription-settings/custom-remarks.schema';
 import { Transactional } from '@nestjs-cls/transactional';
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
 
 import { Injectable, Logger } from '@nestjs/common';
 

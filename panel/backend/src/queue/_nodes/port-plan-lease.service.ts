@@ -1,6 +1,6 @@
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
-import { InjectRedis } from '@songkeys/nestjs-redis';
+import { Inject } from '@nestjs/common';
 import Redis, { Command as RedisCommand } from 'ioredis';
 import { sql } from 'kysely';
 import { randomUUID } from 'node:crypto';
@@ -54,7 +54,7 @@ export class PortPlanLeaseService {
     constructor(
         private readonly db: TxKyselyService,
         private readonly transactions: TransactionHost<TransactionalAdapterPrisma>,
-        @InjectRedis() private readonly redis: Redis,
+        @Inject('RC_REDIS_CLIENT') private readonly redis: Redis,
     ) {}
 
     private redisCommand(name: string, ...args: (string | number)[]): Promise<unknown> {

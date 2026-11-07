@@ -1,6 +1,6 @@
 // Dedicated disposable PostgreSQL only, on loopback port 55439.
 const assert=require('node:assert/strict');const fs=require('node:fs');const path=require('node:path');const {randomUUID}=require('node:crypto');
-const {AsyncLocalStorage}=require('node:async_hooks');const {PrismaClient}=require('@prisma/client');const k=require('kysely');const load=require('./load-typescript.cjs');
+const {AsyncLocalStorage}=require('node:async_hooks');const {PrismaClient}=require('./prisma-test-client.cjs');const k=require('kysely');const load=require('./load-typescript.cjs');
 const {PrismaTxDriver}=require('../node_modules/@kastov/nestjs-prisma-kysely/build/drivers/prisma-tx.driver.js');
 const selection=load(path.join(__dirname,'../src/modules/hosts/limit-selection.ts'));
 const {LimitsService}=load(path.join(__dirname,'../src/modules/hosts/limits.service.ts'),{'@common/database':{},'@common/host-policy/host-policy.service':{},'./repositories/hosts.repository':{},'./hosts.service':{},'./limit-selection':selection,'./limit-scopes.query':load(path.join(__dirname,'../src/modules/hosts/limit-scopes.query.ts'))});

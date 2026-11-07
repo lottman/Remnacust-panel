@@ -5,8 +5,8 @@ export declare namespace ListSubscriptionDomainsCommand {
     const endpointDetails: import("../../constants").EndpointDetails;
     const RequestQuerySchema: z.ZodObject<{
         kind: z.ZodOptional<z.ZodEnum<{
-            PRIMARY: "PRIMARY";
             CDN: "CDN";
+            PRIMARY: "PRIMARY";
         }>>;
         parentUuid: z.ZodOptional<z.ZodUUID>;
     }, z.core.$strict>;
@@ -18,8 +18,8 @@ export declare namespace ListSubscriptionDomainsCommand {
             domain: z.ZodString;
             path: z.ZodString;
             kind: z.ZodEnum<{
-                PRIMARY: "PRIMARY";
                 CDN: "CDN";
+                PRIMARY: "PRIMARY";
             }>;
             parentUuid: z.ZodNullable<z.ZodUUID>;
             isDefault: z.ZodBoolean;
@@ -29,10 +29,10 @@ export declare namespace ListSubscriptionDomainsCommand {
             requestHeaderName: z.ZodNullable<z.ZodString>;
         }, z.core.$strip>>;
         environment: z.ZodOptional<z.ZodEnum<{
-            unavailable: "unavailable";
-            synced: "synced";
-            invalid: "invalid";
             conflict: "conflict";
+            invalid: "invalid";
+            synced: "synced";
+            unavailable: "unavailable";
         }>>;
     }, z.core.$strip>;
 }
@@ -47,8 +47,8 @@ export declare namespace GetSubscriptionDomainCommand {
             domain: z.ZodString;
             path: z.ZodString;
             kind: z.ZodEnum<{
-                PRIMARY: "PRIMARY";
                 CDN: "CDN";
+                PRIMARY: "PRIMARY";
             }>;
             parentUuid: z.ZodNullable<z.ZodUUID>;
             isDefault: z.ZodBoolean;
@@ -68,8 +68,8 @@ export declare namespace CreateSubscriptionDomainCommand {
         domain: z.ZodPipe<z.ZodString, z.ZodTransform<string, string>>;
         path: z.ZodPipe<z.ZodDefault<z.ZodString>, z.ZodTransform<string, string>>;
         kind: z.ZodEnum<{
-            PRIMARY: "PRIMARY";
             CDN: "CDN";
+            PRIMARY: "PRIMARY";
         }>;
         parentUuid: z.ZodDefault<z.ZodNullable<z.ZodUUID>>;
         isDefault: z.ZodDefault<z.ZodBoolean>;
@@ -81,8 +81,8 @@ export declare namespace CreateSubscriptionDomainCommand {
             domain: z.ZodString;
             path: z.ZodString;
             kind: z.ZodEnum<{
-                PRIMARY: "PRIMARY";
                 CDN: "CDN";
+                PRIMARY: "PRIMARY";
             }>;
             parentUuid: z.ZodNullable<z.ZodUUID>;
             isDefault: z.ZodBoolean;
@@ -102,8 +102,8 @@ export declare namespace UpdateSubscriptionDomainCommand {
         domain: z.ZodPipe<z.ZodString, z.ZodTransform<string, string>>;
         path: z.ZodPipe<z.ZodDefault<z.ZodString>, z.ZodTransform<string, string>>;
         kind: z.ZodEnum<{
-            PRIMARY: "PRIMARY";
             CDN: "CDN";
+            PRIMARY: "PRIMARY";
         }>;
         parentUuid: z.ZodDefault<z.ZodNullable<z.ZodUUID>>;
         isDefault: z.ZodDefault<z.ZodBoolean>;
@@ -115,8 +115,8 @@ export declare namespace UpdateSubscriptionDomainCommand {
             domain: z.ZodString;
             path: z.ZodString;
             kind: z.ZodEnum<{
-                PRIMARY: "PRIMARY";
                 CDN: "CDN";
+                PRIMARY: "PRIMARY";
             }>;
             parentUuid: z.ZodNullable<z.ZodUUID>;
             isDefault: z.ZodBoolean;

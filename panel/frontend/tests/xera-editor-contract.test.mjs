@@ -33,6 +33,7 @@ function harness(language = 'en') {
     const providers = []
     const errors = []
     const setup = load(setupPath, {
+        '@shared/api/hooks/xray-mode': { loadXrayMode: async () => ({mode:'custom',revision:0}) },
         '@remnawave/backend-contract': {
             SUBSCRIPTION_TEMPLATE_TYPE: { XRAY_JSON: 'XRAY_JSON', SINGBOX: 'SINGBOX' }
         },

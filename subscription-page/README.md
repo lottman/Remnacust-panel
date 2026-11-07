@@ -2,13 +2,13 @@
 
 # Remnacust Subscription Page
 
-Страница подписки **1.1.7.99** показывает пользователю состояние и инструкции, а VPN-приложению передаёт конфигурацию с панели. Её можно установить отдельно, без переустановки панели.
+Страница подписки **1.1.7.100** показывает пользователю состояние и инструкции, а VPN-приложению передаёт конфигурацию с панели. Её можно установить отдельно, без переустановки панели.
 
-Комплект 1.2.138 включает Panel/Page 1.1.7.99, Node 1.1.24 и Core/WASM 1.1.15. [Изменения выпуска](../docs/releases/1.1.7.99.md).
+Комплект 1.2.139 включает Panel/Page 1.1.7.100, Node 1.1.26 и Core/WASM 1.1.16. [Изменения выпуска](../docs/releases/1.1.7.100.md).
 
 ## Сервер и установка
 
-Стабильный [Installer 1.2.138](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.138) использует готовые образы и поддерживает Ubuntu 22.04/24.04/26.04 LTS и Debian 12/13, Linux amd64/arm64.
+Стабильный [Installer 1.2.139](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.139) использует готовые образы и поддерживает Ubuntu 22.04/24.04/26.04 LTS и Debian 12/13, Linux amd64/arm64.
 
 Для отдельной страницы можно начать с **1 CPU и 1 GiB RAM**. Точный минимум памяти не измерен; это начальная рекомендация, не гарантия для любого числа подписчиков, одновременных загрузок и размеров конфигураций. Оставьте место под Docker-образ и журналы. Если рядом работает панель с БД, используйте [требования панели](../panel/README.md#сервер-и-порты).
 
@@ -95,6 +95,6 @@ docker compose up -d --build
 
 Обычный `docker-compose.yml` собирает исходники. `docker-compose-prod.yml` содержит upstream-образ Remnawave и не является рецептом установки готового Remnacust: для готовых образов используйте установщик.
 
-Для разработки нужен Node.js 24. Из `subscription-page` выполните `npm ci --prefix backend`, `npm ci --prefix frontend`, затем `npm run typecheck --prefix backend` и `npm run typecheck --prefix frontend`. Dev-backend читает `.env` из своего рабочего каталога; корневой `.env` выше предназначен для Compose. [Полные проверки](../docs/BUILDING.md).
+Для разработки нужен Node.js 26.13 LTS. Из `subscription-page` выполните `npm ci --prefix backend`, `npm ci --prefix frontend`, затем `npm run typecheck --prefix backend` и `npm run typecheck --prefix frontend`. Dev-backend читает `.env` из своего рабочего каталога; корневой `.env` выше предназначен для Compose. [Полные проверки](../docs/BUILDING.md).
 
 Сохраняются [AGPL-3.0 и авторство](../NOTICE.md) Remnawave Subscription Page.

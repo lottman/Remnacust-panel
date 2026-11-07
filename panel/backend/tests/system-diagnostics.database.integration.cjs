@@ -1,6 +1,6 @@
 const assert = require('node:assert/strict');
 const path = require('node:path');
-const { PrismaClient } = require('@prisma/client');
+const { PrismaClient } = require('./prisma-test-client.cjs');
 const load = require('./load-typescript.cjs');
 
 const url = new URL(process.env.SYSTEM_DIAGNOSTICS_TEST_ADMIN_URL);

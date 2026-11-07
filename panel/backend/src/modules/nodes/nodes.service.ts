@@ -1,3 +1,4 @@
+import { rethrowXrayModeConflict } from '@common/xray-mode/xray-mode-conflict';
 import { ERRORS, EVENTS, NODES_BULK_ACTIONS } from '@contract/constants';
 import { Prisma } from '@prisma/client';
 
@@ -105,6 +106,7 @@ export class NodesService {
             }));
             return ok(new NodeResponseModel(result, system));
         } catch (error) {
+            rethrowXrayModeConflict(error);
             if (
                 error instanceof Prisma.PrismaClientKnownRequestError &&
                 error.code === 'P2002' &&
@@ -247,6 +249,7 @@ export class NodesService {
 
             return ok(true);
         } catch (error) {
+            rethrowXrayModeConflict(error);
             this.logger.error(error);
             return fail(ERRORS.DELETE_NODE_ERROR);
         }
@@ -331,6 +334,7 @@ export class NodesService {
                 ),
             );
         } catch (error) {
+            rethrowXrayModeConflict(error);
             if (
                 error instanceof Prisma.PrismaClientKnownRequestError &&
                 error.code === 'P2002' &&
@@ -406,6 +410,7 @@ export class NodesService {
                 ),
             );
         } catch (error) {
+            rethrowXrayModeConflict(error);
             this.logger.error(error);
             return fail(ERRORS.ENABLE_NODE_ERROR);
         }
@@ -458,6 +463,7 @@ export class NodesService {
                 ),
             );
         } catch (error) {
+            rethrowXrayModeConflict(error);
             this.logger.error(error);
             return fail(ERRORS.ENABLE_NODE_ERROR);
         }
@@ -537,6 +543,7 @@ export class NodesService {
 
             return ok(true);
         } catch (error) {
+            rethrowXrayModeConflict(error);
             this.logger.error(error);
             return fail(ERRORS.INTERNAL_SERVER_ERROR);
         }
@@ -565,6 +572,7 @@ export class NodesService {
 
             return ok(true);
         } catch (error) {
+            rethrowXrayModeConflict(error);
             this.logger.error(error);
             return fail(ERRORS.INTERNAL_SERVER_ERROR);
         }
@@ -608,6 +616,7 @@ export class NodesService {
 
             return ok(true);
         } catch (error) {
+            rethrowXrayModeConflict(error);
             this.logger.error(error);
             return fail(ERRORS.INTERNAL_SERVER_ERROR);
         }

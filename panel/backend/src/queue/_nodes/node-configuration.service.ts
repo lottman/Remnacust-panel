@@ -11,6 +11,7 @@ import {
     syncHostPolicyForStart,
 } from '@common/host-policy/sync-host-policy-for-start';
 import { RawCacheService } from '@common/raw-cache';
+import { XrayModeService } from '@common/xray-mode/xray-mode.service';
 import { ok } from '@common/types';
 import { formatExecutionTime, getTime } from '@common/utils/get-elapsed-time';
 import { nodeReconciliationEnrollment } from '@common/utils/node-reconciliation';
@@ -58,12 +59,14 @@ export class NodeConfigurationService {
         private readonly rawCacheService: RawCacheService,
         private readonly hostPolicies: HostPolicyService,
         private readonly leases: PortPlanLeaseService,
+        private readonly xrayModes?: XrayModeService,
     ) {}
 
     async apply(payload: { nodeUuid: string; force?: boolean }) {
-        return this.leases.withLifecycle(payload.nodeUuid, (assert) =>
+        const work = () => this.leases.withLifecycle(payload.nodeUuid, (assert) =>
             this.applyOwned(payload, assert),
         );
+        return this.xrayModes ? this.xrayModes.withSnapshot(work) : work();
     }
 
     private async applyOwned(

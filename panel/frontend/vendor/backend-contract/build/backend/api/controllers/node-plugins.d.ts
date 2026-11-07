@@ -1,16 +1,16 @@
-export declare const NODE_PLUGINS_CONTROLLER: "node-plugins";
+export declare const NODE_PLUGINS_CONTROLLER: 'node-plugins';
 export declare const NODE_PLUGINS_ROUTES: {
-    readonly GET_ALL: "";
+    readonly GET_ALL: '';
     readonly GET: (uuid: string) => string;
-    readonly UPDATE: "";
+    readonly UPDATE: '';
     readonly DELETE: (uuid: string) => string;
-    readonly CREATE: "";
+    readonly CREATE: '';
     readonly ACTIONS: {
         readonly REORDER: "actions/reorder";
         readonly CLONE: "actions/clone";
         readonly SYNC: "actions/sync";
     };
-    readonly EXECUTOR: "executor";
+    readonly EXECUTOR: 'executor';
     readonly TORRENT_BLOCKER: {
         readonly GET_REPORTS: "torrent-blocker";
         readonly GET_REPORTS_STATS: "torrent-blocker/stats";
@@ -27,8 +27,8 @@ export declare const NODE_PLUGINS_ROUTES: {
         };
     };
     readonly TAGS: {
-        readonly GET: "tags";
-        readonly SET: "tags";
+        readonly GET: 'tags';
+        readonly SET: 'tags';
     };
 };
 //# sourceMappingURL=node-plugins.d.ts.map

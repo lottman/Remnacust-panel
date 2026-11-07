@@ -11,6 +11,7 @@ import { INodeConnectionOpts } from '@common/axios/axios.interfaces';
 import { TypedConfigService } from '@common/config/app-config/typed-config.service';
 import { TxKyselyService } from '@common/database';
 import { RawCacheService } from '@common/raw-cache';
+import { XrayModeService } from '@common/xray-mode/xray-mode.service';
 import { hostCredentials } from '@common/utils/host-identity';
 
 import { BoundedWorkQueue } from '../utils/bounded-work-queue';
@@ -112,6 +113,7 @@ export class HostPolicyService {
         private readonly cache: RawCacheService,
         @Inject(forwardRef(() => TypedConfigService)) config: TypedConfigService,
         private readonly transactions: TransactionHost<TransactionalAdapterPrisma>,
+        private readonly xrayModes?: XrayModeService,
     ) {
         this.secret = config.getOrThrow('APP_SECRET');
     }
@@ -125,7 +127,13 @@ export class HostPolicyService {
             row.quotaHostUuid ?? row.hostUuid,
         );
     }
-    legacyInbounds(): Promise<Set<string>> {
+    async legacyInbounds(): Promise<Set<string>> {
+        if (this.xrayModes && !(await this.xrayModes.isCustom())) {
+            const rows = await sql<{ uuid: string }>`SELECT uuid FROM config_profile_inbounds`.execute(this.db.kysely);
+            const inbounds = new Set(rows.rows.map(row => row.uuid));
+            this.legacyInventory = { until: Date.now() + 1000, inbounds, routed: inbounds };
+            return inbounds;
+        }
         const snapshot = this.compatibility.getStore();
         if (snapshot) return Promise.resolve(snapshot.inbounds);
         if (this.legacyInventory && this.legacyInventory.until > Date.now())
@@ -173,6 +181,7 @@ export class HostPolicyService {
         work: () => Promise<T>,
         allowPartial = false,
     ): Promise<T> {
+        if (this.xrayModes && !(await this.xrayModes.isCustom())) return this.compatibility.run(undefined, work);
         if (this.transactions.isTransactionActive())
             throw new Error('Node capability discovery must run outside SQL transactions');
         const current = this.compatibility.getStore();
@@ -450,6 +459,8 @@ export class HostPolicyService {
         userQuota = false,
         options: { identities?: boolean; profileUuid?: string } = {},
     ): Promise<PolicySnapshot> {
+        const custom = !this.xrayModes || await this.xrayModes.isCustom();
+        if (!custom) userQuota = false;
         const [hosts, tags, identities, routes] = await Promise.all([
             sql<PolicyHost>`SELECT h.uuid,h.tags,h.config_profile_inbound_uuid AS "inboundUuid",i.tag AS "inboundTag",i.profile_uuid AS "profileUuid",
     h.always_available AS "alwaysAvailable",h.only_when_inactive AS "onlyWhenInactive",
@@ -469,7 +480,7 @@ export class HostPolicyService {
     reset_value AS "resetValue",reset_unit AS "resetUnit" FROM xera_host_tag_limits`.execute(
                 this.db.kysely,
             ),
-            options.identities === false
+            !custom || options.identities === false
                 ? Promise.resolve({ rows: [] as PolicyIdentity[] })
                 : sql<PolicyIdentity>`SELECT a.*,u.expire_at AS "expireAt",i.raw_inbound,i.tag AS "inboundTag",i.profile_uuid AS "profileUuid"
     FROM (${identityAccessQuery(sql`SELECT k.user_id,k.host_uuid,k.host_uuid AS owner_uuid,k.host_uuid AS source_uuid,k.hwid,k.parent_vless_uuid AS parent
@@ -572,6 +583,7 @@ export class HostPolicyService {
         return snapshot;
     }
     async routedIdentitySupport(hostUuids: string[]): Promise<boolean | undefined> {
+        if (this.xrayModes && !(await this.xrayModes.isCustom())) return false;
         if (!hostUuids.length) return undefined;
         const nodes = await sql<
             INodeConnectionOpts & { uuid: string }
@@ -611,7 +623,8 @@ export class HostPolicyService {
             ? true
             : undefined;
     }
-    syncNode(node: INodeConnectionOpts & { uuid: string }): Promise<void> {
+    async syncNode(node: INodeConnectionOpts & { uuid: string }): Promise<void> {
+        if (this.xrayModes && !(await this.xrayModes.isCustom())) return;
         if (this.transactions.isTransactionActive())
             return Promise.reject(
                 new Error('Host policy synchronization must run after SQL commit'),
@@ -702,6 +715,7 @@ export class HostPolicyService {
         node: INodeConnectionOpts & { uuid: string },
         registrationPass = 0,
     ): Promise<void> {
+        if (this.xrayModes && !(await this.xrayModes.isCustom())) return;
         if (this.transactions.isTransactionActive())
             throw new Error('Host policy synchronization must run after SQL commit');
         // Legacy nodes still need a lock held through delivery. Revision-aware

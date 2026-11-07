@@ -6,8 +6,8 @@ export declare namespace GetBackupSettingsCommand {
     const ResponseSchema: z.ZodObject<{
         response: z.ZodObject<{
             autoMode: z.ZodPreprocess<z.ZodDefault<z.ZodEnum<{
-                OFF: "OFF";
                 DAILY: "DAILY";
+                OFF: "OFF";
             }>>, unknown>;
             intervalHours: z.ZodDefault<z.ZodInt>;
             retentionDays: z.ZodDefault<z.ZodInt>;

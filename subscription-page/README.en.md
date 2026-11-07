@@ -2,13 +2,13 @@
 
 # Remnacust Subscription Page
 
-Subscription page **1.1.7.99** shows account information and instructions in a browser, and delivers panel-generated configuration to VPN clients. It can be installed separately without reinstalling the panel.
+Subscription page **1.1.7.100** shows account information and instructions in a browser, and delivers panel-generated configuration to VPN clients. It can be installed separately without reinstalling the panel.
 
-Bundle 1.2.138 includes Panel/Page 1.1.7.99, Node 1.1.24 and Core/WASM 1.1.15. [Release changes](../docs/releases/1.1.7.99.md).
+Bundle 1.2.139 includes Panel/Page 1.1.7.100, Node 1.1.26 and Core/WASM 1.1.16. [Release changes](../docs/releases/1.1.7.100.md).
 
 ## Server and installation
 
-Stable [Installer 1.2.138](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.138) uses prebuilt images and supports Ubuntu 22.04/24.04/26.04 LTS and Debian 12/13, Linux amd64/arm64.
+Stable [Installer 1.2.139](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.139) uses prebuilt images and supports Ubuntu 22.04/24.04/26.04 LTS and Debian 12/13, Linux amd64/arm64.
 
 For a standalone page, **1 CPU core and 1 GiB RAM** is a reasonable starting point. The exact minimum memory has not been measured; this is an initial recommendation, not a guarantee for every subscriber count, concurrent download rate or configuration size. Allow space for the Docker image and logs. If the same server runs the panel and database, follow the [panel requirements](../panel/README.en.md#server-and-ports).
 
@@ -95,6 +95,6 @@ docker compose up -d --build
 
 The default `docker-compose.yml` builds source. `docker-compose-prod.yml` references the upstream Remnawave image and is not a prebuilt Remnacust deployment recipe; use the installer for prebuilt images.
 
-Development needs Node.js 24. From `subscription-page`, run `npm ci --prefix backend`, `npm ci --prefix frontend`, then `npm run typecheck --prefix backend` and `npm run typecheck --prefix frontend`. The development backend reads `.env` from its working directory; the root `.env` above is for Compose. See [full checks](../docs/BUILDING.md).
+Development needs Node.js 26.13 LTS. From `subscription-page`, run `npm ci --prefix backend`, `npm ci --prefix frontend`, then `npm run typecheck --prefix backend` and `npm run typecheck --prefix frontend`. The development backend reads `.env` from its working directory; the root `.env` above is for Compose. See [full checks](../docs/BUILDING.md).
 
 Remnawave Subscription Page [AGPL-3.0 licensing and attribution](../NOTICE.md) are retained.

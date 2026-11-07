@@ -837,7 +837,7 @@ export class UsersRepository {
                 .limit(BATCH_SIZE);
 
             const startTime = getTime();
-            const result = await builder.execute();
+            const result: (UserForConfigEntity & { id: bigint })[] = await builder.execute();
             this.logger.log(
                 `[getUsersForConfigStream] ${formatExecutionTime(startTime)}, length: ${result.length}`,
             );

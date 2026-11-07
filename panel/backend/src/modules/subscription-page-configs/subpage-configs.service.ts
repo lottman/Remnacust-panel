@@ -1,4 +1,4 @@
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
 import { nanoid } from 'nanoid';
 
 import { Injectable, Logger } from '@nestjs/common';

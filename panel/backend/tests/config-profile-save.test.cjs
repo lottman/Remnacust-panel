@@ -103,3 +103,11 @@ test('queue failure is reported as saved with failed synchronization, not an uns
     assert.ok(events.includes('write'));
     assert.ok(events.includes('revision'));
 });
+
+test('DB mode conflict remains HTTP409 through nested profile catches and queues no apply', async () => {
+    const { service, record, queued } = setup();
+    service.configProfileRepository.update = async () => { throw {code:'P2010',meta:{code:'P0C01'}}; };
+    const changed = config(); changed.inbounds[0].port = 8443;
+    await assert.rejects(service.updateConfigProfile(record.uuid, undefined, changed),error=>error.getStatus()===409&&error.errorCode==='CUSTOM_XRAY_REQUIRED');
+    assert.equal(queued.length,0);
+});

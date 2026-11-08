@@ -9,7 +9,7 @@ Source for the panel **1.1.7.100** UI. It is included in the prebuilt panel imag
 Download the latest stable installer and open its interactive menu:
 
 ```bash
-curl -fsSLo installer.sh https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh && sudo bash installer.sh
+bash <(curl -fsSL https://raw.githubusercontent.com/lottman/Remnacust-installer/main/bootstrap.sh) @ install
 ```
 
 ## Local development

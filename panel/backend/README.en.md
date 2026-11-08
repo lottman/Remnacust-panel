@@ -9,7 +9,7 @@ Source version **1.1.7.100**. The panel API, background workers and scheduler. U
 Download the latest stable installer and open its interactive menu:
 
 ```bash
-curl -fsSLo installer.sh https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh && sudo bash installer.sh
+bash <(curl -fsSL https://raw.githubusercontent.com/lottman/Remnacust-installer/main/bootstrap.sh) @ install
 ```
 
 ## Requirements

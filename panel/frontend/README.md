@@ -9,7 +9,7 @@
 Скачать последний стабильный установщик и открыть его интерактивное меню:
 
 ```bash
-curl -fsSLo installer.sh https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh && sudo bash installer.sh
+bash <(curl -fsSL https://raw.githubusercontent.com/lottman/Remnacust-installer/main/bootstrap.sh) @ install
 ```
 
 ## Локальная разработка

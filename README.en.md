@@ -74,7 +74,7 @@ PostgreSQL 14 support ends on **November 12, 2026**. For new installations use a
 Prepare the panel hostname and DNS records. Use a separate public subscription address. Allow the ports needed by your HTTPS proxy and preserve SSH access; database, cache and node API ports must not be generally accessible.
 
 ```bash
-curl -fsSLo installer.sh https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh && sudo bash installer.sh install-panel
+bash <(curl -fsSL https://raw.githubusercontent.com/lottman/Remnacust-installer/main/bootstrap.sh) @ install-panel
 ```
 
 The command downloads the latest stable installer. Press Enter at the version prompt to select Latest; `--version` is only needed to pin a specific release.

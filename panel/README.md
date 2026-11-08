@@ -32,7 +32,7 @@
 ## Установка готовых образов
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/lottman/Remnacust-installer/main/bootstrap.sh) @ install-panel
+bash <(curl -fsSL https://raw.githubusercontent.com/lottman/Remnacust-installer/main/Install.sh) @ install-panel
 ```
 
 Команда скачивает последний стабильный установщик. В вопросе о версии нажмите Enter для Latest; `--version` нужен только для выбора конкретного выпуска.

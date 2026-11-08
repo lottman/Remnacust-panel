@@ -15,7 +15,7 @@
 Нужны домен, HTTPS proxy и доступ от страницы к API панели. Публичный HTTPS — TCP 443; TCP 80 нужен для HTTP/HTTP-01, если выбран этот способ. Порт приложения 3010 по умолчанию оставляйте на loopback или в приватной сети.
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/lottman/Remnacust-installer/main/bootstrap.sh) @ install-subscription-page
+bash <(curl -fsSL https://raw.githubusercontent.com/lottman/Remnacust-installer/main/Install.sh) @ install-subscription-page
 ```
 
 Команда скачивает последний стабильный установщик. В вопросе о версии нажмите Enter для Latest; `--version` нужен только для выбора конкретного выпуска.

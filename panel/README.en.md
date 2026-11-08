@@ -32,7 +32,7 @@ Keep SSH reachable on your configured port. Do not expose PostgreSQL or Valkey p
 ## Install prebuilt images
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/lottman/Remnacust-installer/main/bootstrap.sh) @ install-panel
+bash <(curl -fsSL https://raw.githubusercontent.com/lottman/Remnacust-installer/main/Install.sh) @ install-panel
 ```
 
 The command downloads the latest stable installer. Press Enter at the version prompt to select Latest; `--version` is only needed to pin a specific release.

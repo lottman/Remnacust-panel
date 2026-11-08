@@ -9,7 +9,7 @@ Source version **1.1.7.100**. The panel API, background workers and scheduler. U
 Download the latest stable installer and open its interactive menu:
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/lottman/Remnacust-installer/main/bootstrap.sh) @ install
+bash <(curl -fsSL https://raw.githubusercontent.com/lottman/Remnacust-installer/main/Install.sh) @ install
 ```
 
 ## Requirements

@@ -15,7 +15,7 @@ For a standalone page, **1 CPU core and 1 GiB RAM** is a reasonable starting poi
 You need a domain, an HTTPS proxy and server-to-server access to the panel API. Public HTTPS uses TCP 443; TCP 80 is needed for HTTP/HTTP-01 if selected. Keep the default application port 3010 on loopback or a private network.
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/lottman/Remnacust-installer/main/bootstrap.sh) @ install-subscription-page
+bash <(curl -fsSL https://raw.githubusercontent.com/lottman/Remnacust-installer/main/Install.sh) @ install-subscription-page
 ```
 
 The command downloads the latest stable installer. Press Enter at the version prompt to select Latest; `--version` is only needed to pin a specific release.

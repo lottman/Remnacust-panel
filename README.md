@@ -74,7 +74,7 @@ docker compose up -d --no-build --pull never
 Подготовьте домен панели и DNS-записи. Для подписок используйте отдельный публичный адрес. Откройте порты выбранного HTTPS proxy, сохраните SSH-доступ; внутренние порты БД, кеша и API ноды не должны быть общедоступны.
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/lottman/Remnacust-installer/main/bootstrap.sh) @ install-panel
+bash <(curl -fsSL https://raw.githubusercontent.com/lottman/Remnacust-installer/main/Install.sh) @ install-panel
 ```
 
 Команда скачивает последний стабильный установщик. В вопросе о версии нажмите Enter для Latest; `--version` нужен только для выбора конкретного выпуска.

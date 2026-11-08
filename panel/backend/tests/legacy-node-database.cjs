@@ -13,7 +13,7 @@ module.exports = async function ({ prisma, service, access, cache, axios, calls 
     const cacheKeys = [];
     const originalSet = cache.set;
     cache.set = async (key, value, ttl) => { if (key.includes(native.uuid)) cacheKeys.push(key); return originalSet(key, value, ttl); };
-    axios.getNodeHealth = async () => ({ isOk: true, response: { nodeVersion: '3.4.3', isAlive: true, xrayInternalStatusCached: true } });
+    axios.getNodeHealth = async node => ({ isOk: true, response: { nodeVersion: node.uuid === native.uuid ? '3.4.3' : '1.1.26', isAlive: true, xrayInternalStatusCached: true } });
     axios.hostPolicy = async (node, policy, ...rest) => {
         if (node.uuid !== native.uuid) return original(node, policy, ...rest);
         assert.equal(policy, undefined, 'never send custom policies to a native node');

@@ -12,6 +12,37 @@ class Cache {
     async set(key, value, seconds) { this.rows.set(key, { value, until: Date.now() + seconds * 1000 }); }
     async incrementWithTtl(key, seconds) { const n = (await this.get(key) ?? 0) + 1; await this.set(key, n, seconds); return n; }
 }
+
+test('local route-cache failures are admission failures and never produce a network failure record', async () => {
+    for (const method of ['get', 'set', 'incrementWithTtl']) {
+        const cache = new Cache();
+        cache[method] = async () => { throw Error('synthetic local cache outage'); };
+        const resolver = new NodeControlRouteResolver(cache);
+        let probes = 0;
+        await assert.rejects(resolver.select({ ...base, ips: [] }, async () => {
+            probes++;
+            return { healthy: true };
+        }), error => error.code === 'NODE_ROUTE_BUSY');
+        assert.equal(resolver.diagnostics(base).status, 'unverified');
+        assert.equal([...cache.rows.keys()].some(key => key.startsWith('node-route:failure:')), false);
+        assert(probes <= 1);
+    }
+});
+
+test('a sole node receives the bounded selection budget while fallback probes retain their individual cap', async () => {
+    for (const [ips, budget, expected] of [[[], 15_000, 15_000], [[], 1200, 1200],
+        [[{ ip: '192.0.2.1', status: 'RESERVE' }], 6000, 3000],
+        [[{ ip: '192.0.2.1', status: 'RESERVE' }], 15_000, 7500]]) {
+        const resolver = new NodeControlRouteResolver(new Cache());
+        const config = { ...base, ips };
+        let observed;
+        await resolver.select(config, async (_opts, timeout) => {
+            observed = timeout;
+            return { healthy: true };
+        }, budget);
+        assert(observed > expected - 500 && observed <= expected, String(observed));
+    }
+});
 test('SOCKS contracts validate port, IPv6, encoded credentials and bounded RFC1929 fields', () => {
     for (const value of ['socks5://proxy.invalid:1080', 'socks5://u:p@[2001:db8::1]:65535',
         'socks5://u:p%40ss@127.0.0.1:1', `socks5://${'é'.repeat(127)}:p@proxy.invalid:1080`])
@@ -136,6 +167,19 @@ test('POST and destructive GET dispatch once after ambiguous timeout; valid app 
         assert.equal((await client.connectionRoute(base)).status, status === 500 || status === 404 ? 'authenticated' : 'unavailable');
     }
 });
+test('a deadline cancellation is a timeout rather than an unexplained serialized canceled error', async () => {
+    const single = { ...base, ips: [] };
+    const { client } = service(single);
+    client.axiosInstance.get = async () => {
+        await new Promise(resolve => setTimeout(resolve, 40));
+        throw new axios.CanceledError('canceled');
+    };
+    const result = await client.request({ label: 'READ', opts: single, path: '/read', method: 'get', timeout: 25 });
+    assert.equal(result.isOk, false);
+    assert.equal(result.code, 'ETIMEDOUT');
+    assert.equal(result.message, 'Node API request timed out');
+});
+
 test('edit detected before dispatch does not quarantine a healthy selected route', async () => {
     const { client, registry } = service(); registry.isCurrent = async () => false;
     client.axiosInstance.get = async () => ({ data: { response: { isAlive: true } } });
@@ -218,6 +262,7 @@ test('expired queued admission rejects as local busy without a network probe or 
 });
 test('diagnostics distinguish local capacity from a node outage', async () => {
     const { NodeDiagnosticsService } = load(path.join(__dirname, '../src/modules/nodes/node-diagnostics.service.ts'), {
+        '@contract/constants': { ERRORS: { NODE_ERROR_500_WITH_MSG: { code: 'N002' } } },
         '@common/axios': {}, '@common/raw-cache': {},
         '@common/helpers/error-handler.helper': { errorHandler: result => result.response },
         './node-port-plans.service': {}, './queries/get-node-by-uuid/get-node-by-uuid.query': { GetNodeByUuidQuery: class {} },

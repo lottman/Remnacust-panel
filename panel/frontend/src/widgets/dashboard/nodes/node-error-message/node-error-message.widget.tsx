@@ -1,11 +1,10 @@
-import { Text } from '@mantine/core'
 import { useTranslation } from 'react-i18next'
 import { TbAlertTriangle } from 'react-icons/tb'
 
 import { ErrorMessageBlock } from '@shared/ui/error-message-block'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SectionCard } from '@shared/ui/section-card'
-import { getNodeErrorMessage } from '@shared/utils/node-error-message'
+import { getNodeErrorMessage, hasNodeErrorMessage, nodeConfigurationNeedsRestart } from '@shared/utils/node-error-message'
 import {
     nodeNeedsCustomUpgrade,
     nodePolicyIsPending,
@@ -19,10 +18,13 @@ export const NodeErrorMessageWidget = (props: IProps) => {
 
     const { node } = props
 
-    if (!node || !node.lastStatusMessage) {
+    if (!node || !hasNodeErrorMessage(node.lastStatusMessage)) {
         return null
     }
     const policyPending = nodePolicyIsPending(node.lastStatusMessage)
+    const maintenancePending = nodeConfigurationNeedsRestart(node.lastStatusMessage)
+    const telemetryUnavailable = node.lastStatusMessage === 'Failed to get system stats'
+    const warning = policyPending || maintenancePending || telemetryUnavailable
     const upgradeRequired = nodeNeedsCustomUpgrade(node.lastStatusMessage)
     const compatibility = nodeUsesCompatibility(node.lastStatusMessage)
     const explanation = getNodeErrorMessage(node.lastStatusMessage, t)
@@ -36,7 +38,7 @@ export const NodeErrorMessageWidget = (props: IProps) => {
                             ? 'blue'
                             : upgradeRequired
                               ? 'violet'
-                              : policyPending
+                              : warning
                                 ? 'yellow'
                                 : 'red'
                     }
@@ -47,7 +49,7 @@ export const NodeErrorMessageWidget = (props: IProps) => {
                             ? 'nodeErrors.compatibilityTitle'
                             : upgradeRequired
                               ? 'xera-node-health.upgrade-required-title'
-                              : policyPending
+                              : policyPending || maintenancePending
                                 ? 'xera-node-health.policy-pending-title'
                                 : 'common.message.last-error-message'
                     )}
@@ -56,12 +58,8 @@ export const NodeErrorMessageWidget = (props: IProps) => {
             </SectionCard.Section>
 
             <SectionCard.Section>
-                {!compatibility && explanation !== node.lastStatusMessage && (
-                    <Text size="sm" mb="sm">
-                        {explanation}
-                    </Text>
-                )}
                 <ErrorMessageBlock
+                    copyValue={node.lastStatusMessage}
                     message={
                         compatibility
                             ? explanation
@@ -69,12 +67,12 @@ export const NodeErrorMessageWidget = (props: IProps) => {
                               ? t('xera-node-health.upgrade-required-message')
                               : policyPending
                                 ? t('xera-node-health.policy-pending-message')
-                                : node.lastStatusMessage
+                                : explanation
                     }
                     tone={
                         upgradeRequired
                             ? 'upgrade'
-                            : compatibility || policyPending
+                            : compatibility || warning
                               ? 'warning'
                               : 'error'
                     }

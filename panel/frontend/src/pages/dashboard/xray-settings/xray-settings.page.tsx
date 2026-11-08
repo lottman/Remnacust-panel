@@ -131,11 +131,10 @@ export function XraySettingsPage() {
                                                                     `xray-settings.${mode}-title` as never
                                                                 )}
                                                             </Text>
-                                                            <Radio
+                                                            <Radio.Indicator
                                                                 checked={selected === mode}
-                                                                readOnly
-                                                                tabIndex={-1}
                                                                 aria-hidden
+                                                                style={{ flexShrink: 0 }}
                                                             />
                                                         </Group>
                                                         <Text c="dimmed" size="sm">

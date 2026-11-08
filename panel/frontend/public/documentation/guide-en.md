@@ -335,7 +335,7 @@ Compatible changes apply through the core without restarting its process. From N
 
 Open a node card to inspect connectivity, online users, CPU load, memory, networking and Xray information. Available metrics depend on the agent. A missing value does not mean zero load: check connectivity and refresh. Panel, node agent and Xray versions are listed separately under Documentation → Versions.
 
-Host policies could not be applied. The new configuration was not sent to the node; a running Xray keeps its previous configuration. Check host isolation v2 support in the node and core. The panel will retry once support is restored. The configured limits remain enabled.
+Host policies could not be applied. The new configuration has not yet been sent to the node; a running Xray keeps its previous configuration. Check the node connection and policy application errors. The panel will retry when the connection is restored or the error is resolved. The configured limits remain enabled.
 
 Update the node to Remnacust Node 1.1.1 with our Xray. This profile requires host isolation v2. Its limits and new connections will not work until the update. The running configuration is kept; after updating, the panel will apply the new one automatically.
 

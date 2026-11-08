@@ -97,7 +97,7 @@ import {
     INodeSystemStatsResponse,
 } from './axios.interfaces';
 import { MtlsSocksProxyAgent } from './mtls-agent';
-import { NodeControlRouteResolver, NodeRouteRegistry, NodeRouteBusyError, normalizeNodeAddress, nodeUsesLegacyHttp, routeFailure,
+import { NodeControlRouteResolver, NodeRouteRegistry, NodeRouteBusyError, normalizeNodeAddress, nodeUsesLegacyHttp, routeCandidates, routeFailure,
     type NodeRouteConfiguration, type ConnectionRoute } from './node-control-route';
 
 const EMPTY_BODY: Readonly<Record<string, never>> = {};
@@ -628,9 +628,11 @@ export class AxiosService {
                 this.nodeRoutes ??= new NodeControlRouteResolver(this.rawCacheService);
                 const shutdown = label === 'STOP XRAY' && path === StopXrayCommand.url;
                 if (registered.isDisabled && !shutdown) throw new Error('Node is disabled');
-                selected = await this.nodeRoutes.select(registered, (candidate, budget) => this.probeRoute(candidate, budget), Math.max(1, deadline - Date.now()), shutdown);
+                selected = routeCandidates(registered).length === 1
+                    ? registered
+                    : await this.nodeRoutes.select(registered, (candidate, budget) => this.probeRoute(candidate, budget), Math.max(1, deadline - Date.now()), shutdown);
                 if (!(await this.routeRegistry.isCurrent(registered, shutdown)))
-                    throw new Error('Node connection configuration changed before dispatch');
+                    throw new NodeRouteBusyError('Node connection configuration changed before dispatch');
             }
             const url = this.getNodeUrl(selected.address, path, selected.port);
             const httpsAgent = this.resolveAgent(selected.proxyUrl, registered?.uuid ?? opts.uuid ?? `${opts.address}:${opts.port}`);
@@ -689,10 +691,16 @@ export class AxiosService {
                     ERRORS.NODE_ERROR_WITH_MSG.withMessage('Node returned an invalid API response'),
                 );
             }
+            if (registered && this.nodeRoutes) this.nodeRoutes.confirmed(registered, selected.address);
             return ok(response.data.response);
         } catch (error) {
             if (error instanceof NodeRouteBusyError) return { isOk: false, code: 'NODE_ROUTE_BUSY', message: error.message };
+            const optionalCapabilityReset = method === 'get' &&
+                ['/node/xray/host-policy', '/node/stats/runtime', '/node/xray/managed-core',
+                    '/node/xray/logs'].includes(path) && error instanceof AxiosError &&
+                !error.response && error.code === 'ECONNRESET';
             if (dispatched && registered && this.nodeRoutes && error instanceof AxiosError &&
+                !optionalCapabilityReset &&
                 (!error.response || error.response.status === 401 || error.response.status === 403)) {
                 await this.nodeRoutes.failed(registered, selected.address, routeFailure(error.code, error.response?.status)).catch(() => undefined);
             }
@@ -701,6 +709,11 @@ export class AxiosService {
             }
 
             if (error instanceof AxiosError) {
+                if (error.code === 'ERR_CANCELED' && Date.now() >= deadline) {
+                    return { ...fail(ERRORS.NODE_ERROR_WITH_MSG.withMessage(
+                        'Node API request timed out',
+                    )), code: 'ETIMEDOUT' };
+                }
                 if (logAxiosError) {
                     this.logger.error(`Error in Axios ${label} request: ${error.message}`);
                 }
@@ -719,7 +732,7 @@ export class AxiosService {
                 }
 
                 return {
-                    ...fail(ERRORS.NODE_ERROR_WITH_MSG.withMessage(JSON.stringify(error.message))),
+                    ...fail(ERRORS.NODE_ERROR_WITH_MSG.withMessage(error.message)),
                     code: error.response?.status
                         ? `NODE_HTTP_${error.response.status}`
                         : error.code,
@@ -729,7 +742,11 @@ export class AxiosService {
             this.logger.error(`Error in ${label}: ${error}`);
 
             return fail(
-                ERRORS.NODE_ERROR_WITH_MSG.withMessage(JSON.stringify(error) ?? 'Unknown error'),
+                ERRORS.NODE_ERROR_WITH_MSG.withMessage(
+                    error instanceof Error && error.message.trim()
+                        ? error.message.slice(0, 500)
+                        : 'Unknown node control error',
+                ),
             );
         }
     }
@@ -795,15 +812,28 @@ export class AxiosService {
             timeout: 60_000,
         });
         if (!result.isOk) return result;
-        const response = result.response;
+        let response = result.response;
         if (!response || typeof response.isStarted !== 'boolean') {
             return fail(
                 ERRORS.NODE_ERROR_WITH_MSG.withMessage('Node returned an invalid start response'),
             );
         }
+        if (!data.internals.forceRestart && !response.isStarted &&
+            typeof response.error === 'string' &&
+            response.error.includes('Global core settings changed; preserve current sessions')) {
+            const [health, stats] = await Promise.all([
+                this.getNodeHealth(opts), this.getSystemStats(opts),
+            ]);
+            if (health.isOk && health.response.isAlive === true &&
+                health.response.xrayInternalStatusCached === true &&
+                stats.isOk && stats.response.xrayInfo !== null) {
+                response = { ...response, isStarted: true,
+                    version: health.response.xrayVersion ?? response.version };
+            }
+        }
         const actualVersion = response.nodeInformation?.version ?? version.response;
         this.rememberVersion(opts, actualVersion ?? '');
-        if (response.isStarted) {
+        if (response.isStarted && !response.error) {
             const inbounds = data.xrayConfig.inbounds;
             if (Array.isArray(inbounds)) {
                 await this.rawCacheService.setMany([

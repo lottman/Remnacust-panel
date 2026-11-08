@@ -504,6 +504,7 @@ const { NodeHealthCheckQueueProcessor } = load(
     {
         ...processorMocks,
         '@modules/nodes/node-health-log.service': {},
+        '@contract/constants': { ERRORS: { NODE_ERROR_500_WITH_MSG: { code: 'N002' } } },
         '@common/axios/profile-traffic.schema': load(path.join(__dirname, '../src/common/axios/profile-traffic.schema.ts')),
     },
 );
@@ -1045,19 +1046,19 @@ test('database failures and transport outages on our modern node never demand a 
     }
 });
 
-test('a stopped core waits for the policy deadline and preserves its upgrade notice',async()=>{
+test('a stopped core keeps its policy retry deadline while showing the latest health error',async()=>{
     const f=pendingFixture();f.setRunning(false);
     await f.single.process({data:{nodeUuid:'pending'}});
-    const notice=f.nodes[0].lastStatusMessage;
+    assert.match(f.nodes[0].lastStatusMessage,/HOST_POLICY_UPGRADE_REQUIRED/);
     const job={data:{nodeUuid:'pending',isConnected:false,connectionOpts:opts}};
     await f.health.process(job);await f.health.process(job);
     assert.equal(f.queued.length,0);
     assert.equal(f.nodes[0].isConnected,false);
-    assert.equal(f.nodes[0].lastStatusMessage,notice);
+    assert.equal(f.nodes[0].lastStatusMessage,'Core statistics unavailable');
     f.values.set('remnacust:host-policy:retry:pending',Date.now()-1);
     await f.health.process(job);
     assert.deepEqual(f.queued,[{nodeUuid:'pending'}]);
-    assert.equal(f.nodes[0].lastStatusMessage,notice);
+    assert.equal(f.nodes[0].lastStatusMessage,'Core statistics unavailable');
 });
 
 test('reconnection keeps a future policy deadline, while an ordinary failure retries immediately',async()=>{
@@ -1142,12 +1143,14 @@ function discoveryFixture() {
     const axios={hostPolicy:async(node,document)=>{
         assert.equal(inTransaction(),false);
         if(document){posts.push({node:node.uuid,document});return result.ok({version:caps.version,applied:true});}
-        probes.set(node.uuid,(probes.get(node.uuid)??0)+1);peak=Math.max(peak,++active);
+        peak=Math.max(peak,++active);
         try{if(allGate)await allGate;return node.uuid==='ordinary'?{isOk:false,code:'NODE_HTTP_404'}:result.ok(caps);}
         finally{active--;}
-    },getNodeHealth:async()=>{
-        assert.equal(inTransaction(),false);if(nativeGate)await nativeGate;
-        return result.ok({nodeVersion:'2.5.1',isAlive:true,xrayInternalStatusCached:true});
+    },getNodeHealth:async(node)=>{
+        assert.equal(inTransaction(),false);
+        probes.set(node.uuid,(probes.get(node.uuid)??0)+1);
+        if(node.uuid==='ordinary'&&nativeGate)await nativeGate;
+        return result.ok({nodeVersion:node.uuid==='ordinary'?'2.5.1':'1.1.11-remnacust',isAlive:true,xrayInternalStatusCached:true});
     }};
     const service=new HostPolicyService({kysely:{}},axios,{get:async key=>values.get(key)??null,
         set:async(key,value)=>values.set(key,value),del:async key=>values.delete(key)},
@@ -1270,6 +1273,8 @@ test('an offline isolated bulk root does not block an independent healthy root',
     f.inventory[1].inbounds=['isolated'];f.nodes[1].activeInbounds=[{uuid:'isolated',tag:'vless',protocol:'vless'}];
     const policy=f.policyAxios.hostPolicy;
     f.policyAxios.hostPolicy=async(node,document)=>node.uuid==='ordinary'?{isOk:false,code:'ECONNRESET'}:policy(node,document);
+    const health=f.policyAxios.getNodeHealth;
+    f.policyAxios.getNodeHealth=async node=>node.uuid==='ordinary'?{isOk:false,code:'ECONNRESET'}:health(node);
     await f.bulk.process({name:'start-profile',data:{profileUuid:'profile'}});
     assert.equal(f.starts.length,1);
     assert.equal(f.starts[0].payload.internals.metadata.uuid,'pending');
@@ -1295,6 +1300,8 @@ test('an unknown shared peer blocks only its affected component and never reuses
 test('single preflight failure records its discovery cause and retry without changing delivery ownership or connectivity',async()=>{
     const f=discoveryFixture();const policy=f.policyAxios.hostPolicy;
     f.policyAxios.hostPolicy=async(node,document)=>node.uuid==='ordinary'?{isOk:false,code:'ECONNRESET'}:policy(node,document);
+    const health=f.policyAxios.getNodeHealth;
+    f.policyAxios.getNodeHealth=async node=>node.uuid==='ordinary'?{isOk:false,code:'ECONNRESET'}:health(node);
     await f.single.process({name:'start-node',data:{nodeUuid:'pending'}});
     assert.equal(f.starts.length,0);assert.equal(f.configReads(),0);
     const update=f.updates.find(value=>value.lastStatusMessage?.includes('HOST_POLICY_PENDING'));
@@ -1303,6 +1310,22 @@ test('single preflight failure records its discovery cause and retry without cha
     assert.equal(Object.hasOwn(update,'isConnecting'),false);
     assert.equal(f.nodes[0].isConnected,true);
     assert(f.deliveryValues.get('remnacust:host-policy:retry:pending')>Date.now());
+});
+
+test('a positively authenticated native root is not blocked by an unknown shared peer while custom roots remain fenced',async()=>{
+    const f=discoveryFixture();
+    const offline={...opts,uuid:'offline-peer',inbounds:['shared']};f.inventory.push(offline);
+    const health=f.policyAxios.getNodeHealth;
+    f.policyAxios.getNodeHealth=async node=>node.uuid==='offline-peer'?{isOk:false,code:'ECONNRESET'}:health(node);
+    const policy=f.policyAxios.hostPolicy;
+    f.policyAxios.hostPolicy=async(node,document)=>node.uuid==='offline-peer'?{isOk:false,code:'ECONNRESET'}:policy(node,document);
+    await f.service.withCompatibilitySnapshot(['ordinary'],async()=>{
+        assert((await f.service.legacyInbounds()).has('shared'));
+        await f.service.syncNode(f.nodes.find(node=>node.uuid==='ordinary'));
+    });
+    assert.equal(f.posts.some(post=>post.node==='offline-peer'),false);
+    await assert.rejects(f.service.withCompatibilitySnapshot(['pending'],async()=>{}),/offline-peer/);
+    assert.equal(f.posts.length,0);
 });
 
 test('discovery budget stops scheduling new peers and unavailable roots cannot send policy',async()=>{

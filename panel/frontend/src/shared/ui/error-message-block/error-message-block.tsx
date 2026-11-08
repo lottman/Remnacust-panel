@@ -6,18 +6,19 @@ import classes from './ErrorMessageBlock.module.css'
 
 interface IProps {
     message: string
+    copyValue?: string
     tone?: 'error' | 'warning' | 'upgrade'
 }
 
 export const ErrorMessageBlock = (props: IProps) => {
-    const { message, tone = 'error' } = props
+    const { message, copyValue = message, tone = 'error' } = props
     const { t } = useTranslation()
 
     return (
         <Box className={classes.message} data-tone={tone}>
             <Text className={classes.text}>{message}</Text>
 
-            <CopyButton timeout={2000} value={message}>
+            <CopyButton timeout={2000} value={copyValue}>
                 {({ copied, copy }) => (
                     <Tooltip label={t('common.action.copy')}>
                         <ActionIcon

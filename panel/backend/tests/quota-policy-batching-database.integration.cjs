@@ -362,11 +362,13 @@ async function main() {
         connection.uuid === peer
             ? { isOk: false, code: 'NODE_HTTP_404' }
             : hostPolicy(connection, document);
-    service.axios.getNodeHealth = async () => {
+    service.axios.getNodeHealth = async (connection) => {
         assert.equal(transactions.isTransactionActive(), false);
+        if (connection.uuid !== peer)
+            return { isOk: true, response: { nodeVersion: '1.1.11-remnacust', isAlive: true } };
         enteredPeer();
         await peerGate;
-        return { isOk: true, response: { nodeVersion: '2.5.1' } };
+        return { isOk: true, response: { nodeVersion: '2.5.1', isAlive: true } };
     };
     delete service.scopes;
     const [connection] =

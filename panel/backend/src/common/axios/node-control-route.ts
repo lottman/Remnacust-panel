@@ -28,7 +28,7 @@ export abstract class NodeRouteRegistry {
 }
 export class NodeRouteBusyError extends Error {
     readonly code = 'NODE_ROUTE_BUSY';
-    constructor() { super('Node route probe capacity is temporarily unavailable'); }
+    constructor(message = 'Node route probe capacity is temporarily unavailable') { super(message); }
 }
 export interface RouteCache {
     get<T>(key: string): Promise<T | null>;
@@ -99,7 +99,21 @@ export class NodeControlRouteResolver {
     private readonly reports = new Map<string, ConnectionRoute>();
     private active = 0;
     private readonly waiting: { accept: () => boolean; reject: () => void }[] = [];
-    constructor(private readonly cache: RouteCache) {}
+    private readonly cache: RouteCache;
+    constructor(cache: RouteCache) {
+        this.cache = {
+            get: <T>(key: string) => this.cacheOperation(() => cache.get<T>(key)),
+            set: <T>(key: string, value: T, ttl: number) => this.cacheOperation(() => cache.set(key, value, ttl)),
+            incrementWithTtl: (key, ttl) => this.cacheOperation(() => cache.incrementWithTtl(key, ttl)),
+        };
+    }
+    private async cacheOperation<T>(operation: () => Promise<T>): Promise<T> {
+        try {
+            return await operation();
+        } catch {
+            throw new NodeRouteBusyError('Node route cache is temporarily unavailable');
+        }
+    }
 
     private async admit(deadline: number): Promise<void> {
         if (Date.now() >= deadline || this.waiting.length >= 128) throw new NodeRouteBusyError();
@@ -132,6 +146,12 @@ export class NodeControlRouteResolver {
         if (this.reports.size >= 1000) this.reports.delete(this.reports.keys().next().value!);
         this.reports.set(revision, report);
     }
+    confirmed(config: NodeRouteConfiguration, address: string): void {
+        const revision = routeRevision(config);
+        this.remember(revision, { ...emptyConnectionRoute(config), status: 'authenticated',
+            activeAddress: address, checkedAt: new Date().toISOString(),
+            attempts: [{ address, status: 'authenticated', code: 'authenticated' }] });
+    }
     async failed(config: NodeRouteConfiguration, address: string, code: RouteFailureCode = 'transport'): Promise<void> {
         const revision = routeRevision(config);
         const report = this.reports.get(revision) ?? emptyConnectionRoute(config);
@@ -148,7 +168,7 @@ export class NodeControlRouteResolver {
         }
         const existing = this.inFlight.get(revision);
         if (existing) return existing;
-        const pending = this.choose(config, probe, Math.min(budgetMs, 6000), allowDisabled)
+        const pending = this.choose(config, probe, Math.min(budgetMs, 15_000), allowDisabled)
             .finally(() => this.inFlight.delete(revision));
         this.inFlight.set(revision, pending);
         return pending;
@@ -196,7 +216,10 @@ export class NodeControlRouteResolver {
                 const node = await this.cache.incrementWithTtl(`node-route:probes:${config.uuid}:${revision}:${nodeBucket}`, 20);
                 if (node > 3) throw new NodeRouteBusyError();
                 probes++;
-                const timeout = Math.min(2000, deadline - Date.now());
+                const timeout = Math.min(
+                    Math.floor(budgetMs / Math.min(3, candidates.length)),
+                    deadline - Date.now(),
+                );
                 if (timeout <= 0) break;
                 let result: Awaited<ReturnType<RouteProbe>>;
                 try {

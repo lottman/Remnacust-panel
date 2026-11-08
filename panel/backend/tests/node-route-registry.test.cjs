@@ -5,15 +5,18 @@ const path = require('node:path');
 const { createRequire } = require('node:module');
 const test = require('node:test');
 const ts = require('typescript');
-const { Module, Global } = require('@nestjs/common');
+const { Module, Global, Inject } = require('@nestjs/common');
 const { NestFactory } = require('@nestjs/core');
 const cqrs = require('@nestjs/cqrs');
 class PrismaService {}
+class NodeRouteInventoryService { constructor(prisma) { this.nodes = prisma.nodes; } }
+Inject(PrismaService)(NodeRouteInventoryService, undefined, 0);
 class RawCacheService {}
 class TypedConfigService {}
 class FixtureCqrsModule {}
 Module({ providers: [{ provide: cqrs.CommandBus, useValue: { execute: async () => ({ isOk: false }) } }], exports: [cqrs.CommandBus] })(FixtureCqrsModule);
 const mocks = {
+    './node-route-inventory.service': { NodeRouteInventoryService },
     '@common/database/prisma.service': { PrismaService }, '@common/raw-cache': { RawCacheService },
     '@common/config/app-config/typed-config.service': { TypedConfigService },
     '@nestjs/cqrs': { ...cqrs, CqrsModule: FixtureCqrsModule },
@@ -54,6 +57,28 @@ const { NodeRouteRegistryService } = source(path.join(root, 'node-route-registry
 const { NodeRouteRegistry } = source(path.join(root, 'node-control-route.ts'));
 const uuid = '11111111-1111-4111-8111-111111111111';
 function row() { return { uuid, address: 'primary.invalid', port: 2222, proxyUrl: null, ips: [{ ip: '192.0.2.1', status: 'MANAGEMENT' }], isDisabled: false }; }
+
+test('database and cache outages never masquerade as edited routes or remote node disconnections', async () => {
+    const cache = { get: async () => null, set: async () => {} };
+    const db = { nodes: { findMany: async () => [row()] } };
+    const registry = new NodeRouteRegistryService(db, cache);
+    const initial = await registry.get({ uuid });
+    const service = new AxiosService({}, cache, {}, registry);
+    service.initialization = Promise.resolve();
+    let dispatched = 0;
+    service.axiosInstance.get = async () => { dispatched++; throw Error('Unexpected node request'); };
+    cache.get = async () => { throw Error('synthetic Redis connection outage'); };
+    await assert.rejects(registry.isCurrent(initial), error => error.code === 'NODE_ROUTE_BUSY');
+    assert.equal((await service.getSystemStats({ uuid })).code, 'NODE_ROUTE_BUSY');
+    cache.get = async () => null;
+    await registry.invalidate();
+    db.nodes.findMany = async () => { throw Error('timeout exceeded when trying to connect'); };
+    await assert.rejects(registry.isCurrent(initial), error => error.code === 'NODE_ROUTE_BUSY');
+    assert.equal((await service.getSystemStats({ uuid })).code, 'NODE_ROUTE_BUSY');
+    assert.equal(dispatched, 0);
+    db.nodes.findMany = async () => [{ ...row(), address: 'changed.invalid' }];
+    assert.equal(await registry.isCurrent(initial), false);
+});
 
 test('actual AxiosModule Nest provider resolves registry; cache, edit fence and historical job isolation work', async t => {
     let rows = [row()], queries = 0;

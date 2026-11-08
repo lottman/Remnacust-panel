@@ -14,6 +14,7 @@ const keys = Object.fromEntries(['NODE_SYSTEM_INFO', 'NODE_SYSTEM_STATS', 'NODE_
 const { NodeHealthCheckQueueProcessor } = load(file, {
     ...mocks,
     '@nestjs/common': { Logger: class { log() {} warn() {} error() {} debug() {} } },
+    '@contract/constants': { ERRORS: { NODE_ERROR_500_WITH_MSG: { code: 'N002' } } },
     '@nestjs/bullmq': { Processor: () => value => value, WorkerHost: class {} },
     '@common/axios/profile-traffic.schema': { nodeBindingTrafficKey: uuid => `binding:${uuid}`, parseProfileTraffic: () => null },
     '@common/host-policy/sync-host-policy-for-start': { hostPolicyRetryKey: uuid => `retry:${uuid}` },
@@ -33,21 +34,65 @@ function job(index = 1) {
     return { timestamp: Date.now(), data: { nodeUuid, isConnected: true,
         connectionOpts: { address: `node-${index}.invalid`, port: 2222, proxyUrl: null } } };
 }
-function fixture(getSystemStats) {
+function fixture(getSystemStats, getNodeHealth = async () => ({ isOk: false, code: 'ECONNREFUSED' })) {
     const writes = [], records = [], deleted = [], incidents = [], starts = [];
+    const cache = new Map(), observations = [];
     const worker = new NodeHealthCheckQueueProcessor(
         { execute: async command => { writes.push(command.value); return { isOk: true, response: command.value }; } },
         { emitAsync: async event => incidents.push(event) },
-        { getSystemStats },
+        { getSystemStats, getNodeHealth },
         { startNode: async value => starts.push(value) },
-        { setMany: async () => {}, delMany: async value => deleted.push(value), get: async () => null,
-            getString: async () => null, observeNodeIncident: async (_uuid, _at, good) => good ? 0 : 1,
+        { setMany: async () => {}, delMany: async value => deleted.push(value), get: async key => cache.get(key) ?? null,
+            getString: async () => null, observeNodeIncident: async (_uuid, _at, good, muted) => {
+                observations.push({ good, muted }); return good || muted ? 0 : 1;
+            },
             acknowledgeNodeIncident: async () => {} },
         { record: async value => records.push(value) },
         { execute: async query => ({ isOk: true, response: { uuid: query.uuid, isDisabled: false } }) },
     );
-    return { worker, writes, records, deleted, incidents, starts };
+    return { worker, writes, records, deleted, incidents, starts, cache, observations };
 }
+
+test('an authenticated telemetry failure never disconnects or restarts an independently reachable legacy agent', async () => {
+    for (const connected of [true, false]) {
+        const f = fixture(async () => ({ isOk: false, code: 'N002', message: 'Failed to get system stats' }),
+            async () => ({ isOk: true, response: { isAlive: true, xrayInternalStatusCached: true } }));
+        const current = job(); current.data.isConnected = connected;
+        await f.worker.process(current);
+        assert.deepEqual(f.deleted, []);
+        assert.deepEqual(f.starts, []);
+        assert.deepEqual(f.incidents, []);
+        assert.equal(f.records.length, 1);
+        assert.equal(f.records[0].status, 'retry');
+        assert.equal(f.writes.length, connected ? 0 : 1);
+        if (!connected) assert.equal(f.writes[0].isConnected, true);
+    }
+});
+
+test('reachable API without core statistics stays connected without fabricating core telemetry', async () => {
+    for (const health of [{ isAlive: true, xrayInternalStatusCached: false }, { isAlive: true }]) {
+        const f = fixture(async () => ({ isOk: false, code: 'N002', message: 'Failed to get system stats' }),
+            async () => ({ isOk: true, response: health }));
+        const current = job(); current.data.isConnected = false;
+        await f.worker.process(current);
+        assert.equal(f.writes[0].isConnected, true);
+        assert.deepEqual(f.deleted, []);
+        assert.deepEqual(f.starts, []);
+        assert.equal(f.records.every(record => record.status !== 'ok' && !record.metrics), true);
+    }
+});
+
+test('telemetry failure cannot claim connection recovery without authenticated API evidence', async () => {
+    for (const health of [{ isOk: false, code: 'NODE_HTTP_401' },
+        { isOk: true, response: {} },
+        { isOk: true, response: { isAlive: false, xrayInternalStatusCached: true } }]) {
+        const f = fixture(async () => ({ isOk: false, code: 'N002', message: 'Failed to get system stats' }),
+            async () => health);
+        await f.worker.process(job());
+        assert.equal(f.writes.some(value => value.isConnected === true), false);
+        assert.equal(f.writes[0].isConnected, false);
+    }
+});
 
 test('40 healthy nodes under eight-slot local pressure never become offline and later polls succeed', async () => {
     let active = 0, peak = 0, skipped = 0, pressure = true;
@@ -97,4 +142,51 @@ test('two actual transport failures still record offline and the connection-lost
     assert.equal(f.deleted.length, 1);
     assert.deepEqual(f.incidents, ['lost']);
     assert.equal(f.starts.length, 1);
+});
+
+test('two network failures replace stale policy warnings while future and expired retry keys retain scheduling and muting', async () => {
+    for (const future of [true, false]) {
+        const currentJob = job();
+        const retryKey = `retry:${currentJob.data.nodeUuid}`;
+        const retryAt = Date.now() + (future ? 60_000 : -60_000);
+        let calls = 0;
+        const f = fixture(async () => {
+            calls++;
+            return { isOk: false, code: 'ETIMEDOUT', message: 'Node API connection timed out' };
+        });
+        f.cache.set(retryKey, retryAt);
+        await f.worker.process(currentJob);
+        assert.equal(calls, 2);
+        assert.deepEqual(f.records.map(record => record.status), ['retry', 'retry', 'unreachable']);
+        assert.equal(f.writes.length, 1);
+        assert.equal(f.writes[0].isConnected, false);
+        assert.equal(f.writes[0].lastStatusMessage, 'Node API connection timed out');
+        assert.equal(f.cache.get(retryKey), retryAt);
+        assert.equal(f.deleted.flat().includes(retryKey), false);
+        assert.deepEqual(f.starts, future ? [] : [{ nodeUuid: currentJob.data.nodeUuid }]);
+        assert.deepEqual(f.observations, [{ good: false, muted: future }]);
+        assert.deepEqual(f.incidents, future ? [] : ['lost']);
+    }
+});
+
+test('retry keys do not let local admission pressure bypass the two-network-failure barrier', async () => {
+    for (const future of [true, false]) {
+        const currentJob = job();
+        const retryKey = `retry:${currentJob.data.nodeUuid}`;
+        const retryAt = Date.now() + (future ? 60_000 : -60_000);
+        let calls = 0;
+        const f = fixture(async () => ++calls === 1
+            ? { isOk: false, code: 'ETIMEDOUT', message: 'Node API connection timed out' }
+            : busy);
+        f.cache.set(retryKey, retryAt);
+        await f.worker.process(currentJob);
+        assert.equal(calls, 2);
+        assert.deepEqual(f.records.map(record => record.status), ['retry']);
+        assert.deepEqual(f.writes, []);
+        assert.deepEqual(f.deleted, []);
+        assert.deepEqual(f.starts, []);
+        assert.deepEqual(f.observations, []);
+        assert.deepEqual(f.incidents, []);
+        assert.equal(f.cache.get(retryKey), retryAt);
+    }
 });

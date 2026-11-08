@@ -22,6 +22,20 @@
 
 ## Подключение
 
+Если у ноды один управляющий адрес, панель обращается прямо к её штатному API с проверкой mTLS/JWT. Отдельная предварительная проверка маршрута и её кешированная пауза не блокируют такой запрос. Для явно добавленных резервных адресов сохраняются аутентифицированный выбор и ограничения частоты проверок. Таймаут получения статистики — 15 секунд; изменение адреса, отключение ноды и ошибки авторизации по-прежнему проверяются до выполнения операций.
+
+HTTP 500 при получении статистики не равен потере связи: панель отдельно проверяет здоровье API. Положительный ответ подтверждает управляющую связь, но не подменяет сведения о работающем Xray: панель показывает отсутствие телеметрии и не перезапускает ядро ради метрик. Старые значения не превращаются в свежие измерения. На старой ноде без сведений CPU/RAM возможна оценка 75/100; это не означает обрыв VPN.
+
+Реестр управляющих маршрутов использует отдельное ограниченное подключение к БД. Сбор расхода внутри транзакции больше не должен ждать свободного подключения из собственного занятого пула. Локальная нехватка ресурсов панели не считается доказательством отключения удалённой ноды. Ошибка сбора пользователей также не записывает вымышленный ноль активных соединений.
+
+Подтверждённая штатная нода не блокируется только из-за недоступности другого агента на общем inbound. Неизвестный сосед остаётся неподтверждённым; кастомные ноды, ограничения и финансовые обязательства сохраняют прежние проверки.
+
+### Control-plane compatibility (English)
+
+A node with one configured management address receives its authenticated API request directly. An extra route preflight or stale route cooldown does not gate that request. Explicit fallback addresses still require authenticated selection; TLS verification, authorization, disabled-node checks and configuration-revision checks remain enabled. Statistics requests keep a 15-second timeout.
+
+A statistics HTTP 500 is checked against authenticated API health before declaring a connection failure. API reachability and running-core evidence stay separate: missing metrics never authorize a restart or fabricated core statistics. Older agents without CPU/RAM telemetry may show 75/100 even while serving clients. Route inventory reads use a separate bounded database connection, avoiding pool starvation inside usage transactions; local admission failures do not declare a remote outage. Failed user-statistics collection does not overwrite the last observation with zero.
+
 Для нод с mTLS сохраните действующий ключ или сертификат и управляющий порт. Не заменяйте их новым случайным значением при переносе панели. Ошибка TLS или авторизации не вызывает переход на HTTP.
 
 В списке IP назначайте роль `MANAGEMENT` управляющим адресам, а `RESERVE` — их резервам. Только эти две роли допустимы для резервных управляющих кандидатов: `OUTBOUND`, `BLOCKED` и остальные роли не разрешают использование адреса для управления. Сам список IP и выбранная вручную роль не подтверждают доступность. Для кандидатов сохраняется один настроенный API-порт ноды; подбор других портов не выполняется.

@@ -7,7 +7,6 @@ import { DurableUsageService, UsageEffects } from '@common/host-policy/durable-u
 import { LegacyUsageService } from '@common/host-policy/legacy-usage.service';
 import { UsageEffectsService } from '@common/host-policy/usage-effects.service';
 import { RawCacheService } from '@common/raw-cache';
-import { CACHE_KEYS, CACHE_KEYS_TTL } from '@libs/contracts/constants';
 
 import { QUEUES_NAMES } from '@queue/queue.enum';
 
@@ -59,11 +58,6 @@ export class RecordUserUsageQueueProcessor extends WorkerHost {
         } catch (error) {
             this.logger.error(
                 `Error handling "${NODES_JOB_NAMES.RECORD_USER_USAGE}" job: ${error}`,
-            );
-            await this.rawCacheService.set(
-                CACHE_KEYS.NODE_USERS_ONLINE(job.data.nodeUuid),
-                0,
-                CACHE_KEYS_TTL.NODE_USERS_ONLINE,
             );
             throw error;
         }

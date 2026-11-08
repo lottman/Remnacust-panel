@@ -286,12 +286,13 @@ export class HostPolicyService {
             for (const inbound of nodesById.get(uuid)?.inbounds ?? [])
                 failedInbounds.set(inbound, failure);
         for (const uuid of rootIds) {
+            const nativeRoot = capabilities.get(uuid)?.value.native === true;
             const failure =
                 failures.get(uuid) ??
-                nodesById
+                (nativeRoot ? undefined : nodesById
                     .get(uuid)
                     ?.inbounds.map((inbound) => failedInbounds.get(inbound))
-                    .find((value) => value !== undefined);
+                    .find((value) => value !== undefined));
             if (failure) unavailable.set(uuid, failure);
         }
         const legacy = new Set<string>();
@@ -375,13 +376,28 @@ export class HostPolicyService {
         const pending = this.discoveries.get(key);
         if (pending) return pending;
         const discovery = this.discoveryWork.submit(async () => {
+            const healthStarted = performance.now();
+            let native = false;
+            try {
+                const health = await this.axios.getNodeHealth(node);
+                native = health.isOk &&
+                    typeof health.response?.isAlive === 'boolean' &&
+                    typeof health.response.nodeVersion === 'string' &&
+                    /^v?[23]\.\d+\.\d+$/.test(health.response.nodeVersion);
+            } catch {
+                native = false;
+            } finally {
+                network?.(performance.now() - healthStarted);
+            }
             const started = performance.now();
-            const status = await this.axios
+            const status = native ? null : await this.axios
                 .hostPolicy<HostPolicyCapabilities>(node)
                 .finally(() => network?.(performance.now() - started));
             let value: HostPolicyCapabilities;
-            if (
-                status.isOk &&
+            if (native) {
+                value = { native: true, supported: false, checkedAt: Date.now() };
+            } else if (
+                status?.isOk &&
                 status.response &&
                 typeof status.response === 'object' &&
                 !Array.isArray(status.response) &&
@@ -418,24 +434,6 @@ export class HostPolicyService {
                     quotaRecoveryPolicyBindingsSupported:
                         response.quotaRecoveryPolicyBindingsSupported,
                 };
-            } else if (
-                !status.isOk &&
-                ['NODE_HTTP_404', 'NODE_HTTP_405'].includes(status.code ?? '')
-            ) {
-                const healthStarted = performance.now();
-                const health = await this.axios
-                    .getNodeHealth(node)
-                    .finally(() => network?.(performance.now() - healthStarted));
-                if (
-                    !health.isOk ||
-                    typeof health.response.nodeVersion !== 'string' ||
-                    !/^v?\d+\.\d+\.\d+(?:[-+][\w.-]+)?$/.test(health.response.nodeVersion) ||
-                    health.response.nodeVersion.toLowerCase().includes('remnacust')
-                )
-                    throw new Error(
-                        `Node ${node.uuid}: native compatibility could not be verified`,
-                    );
-                value = { native: true, supported: false, checkedAt: Date.now() };
             } else throw new Error(`Node ${node.uuid}: host policy capabilities unavailable`);
             await this.cache.set(key, value, 86400);
             await this.legacyInventoryPending;

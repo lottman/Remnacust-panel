@@ -57,11 +57,11 @@ test('a staged legacy response is completed before another native or legacy rese
     processor.durableUsage.collect=()=>assert.fail('No second read');
     await processor.process(job);assert.equal(calls.freshness[0][1].durable,false);assert.equal(calls.online[0][1],1);
 });
-test('failed collection clears stale online and rejects the Bull job for retry',async()=>{
+test('failed collection preserves the last online observation and rejects the Bull job for retry',async()=>{
     for(const mode of ['legacy','native']){
         const {processor,calls}=fixture();processor[mode==='legacy'?'legacyUsage':'durableUsage'].collect=async()=>{throw Error('Uncertain response');};
         await assert.rejects(processor.process(job),/Uncertain response/);
-        assert.equal(calls.online.at(-1)[1],0);assert.deepEqual(calls.freshness,[]);
+        assert.deepEqual(calls.online,[]);assert.deepEqual(calls.freshness,[]);
         if(mode==='legacy')assert.deepEqual(calls.order,[]);
     }
 });

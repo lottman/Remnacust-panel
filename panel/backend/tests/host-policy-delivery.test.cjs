@@ -251,7 +251,7 @@ test('native Remnawave nodes accept basic configurations but never bypass saved 
     for (const restricted of [false, true]) {
         const { service, node, state } = fixture();
         service.axios.hostPolicy = async () => ({ isOk: false, code: 'NODE_HTTP_404' });
-        service.axios.getNodeHealth = async () => ({ isOk: true, response: { nodeVersion: '2.5.1' } });
+        service.axios.getNodeHealth = async () => ({ isOk: true, response: { nodeVersion: '2.5.1', isAlive: true } });
         service.scopes = async (_user, _node, _quota, options) => {
             assert.equal(options.identities, false);
             return { hosts: [{ uuid: 'host', inboundUuid: 'in', boundNodes: [node.uuid], domains: restricted ? { mode: 'ALLOW_ONLY' } : null }],

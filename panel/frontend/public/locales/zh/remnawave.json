@@ -104,7 +104,7 @@
         "not-measured": "未测量",
         "filter": "健康状态",
         "policy-pending-title": "配置等待应用",
-        "policy-pending-message": "主机策略未能应用。新配置未发送到节点；正在运行的 Xray 保留原配置。请检查节点和内核是否支持主机隔离 v2。恢复支持后，面板会重试。已配置的限制仍保持启用。",
+        "policy-pending-message": "主机策略暂未应用。新配置尚未发送到节点；正在运行的 Xray 保留原配置。请检查节点连接及策略应用错误。连接恢复或错误解决后，面板会重试。已配置的限制仍保持启用。",
         "upgrade-required-title": "需要更新节点",
         "upgrade-required-message": "此配置需要支持主机隔离 v2 的兼容 Remnacust Node 和 Core。请更新两个组件并检查实际运行的 Core 版本。当前配置会保留；确认支持后，面板将重试应用。此要求仅针对该配置，并非要求所有标准 Remnawave 节点都更新。",
         "connecting": "节点连接尚未完成",
@@ -3925,6 +3925,9 @@
         "remaining_many": "{{count}} 天后付款"
     },
     "nodeErrors": {
+        "requestTimeout": "节点未在请求期限内响应。请检查面板服务器能否访问其 API。",
+        "telemetryUnavailable": "节点 API 可访问，但无法获取 Xray 统计信息。这并不表示 VPN 已停止。",
+        "maintenanceRestart": "应用全局设置需要手动重启内核。常规同步不会更改这些设置。",
         "preparation": "面板无法准备节点配置。请检查分配的配置、片段和面板日志；运行中的配置未被替换。",
         "profile": "无法加载分配的配置。请检查配置是否存在且可访问。",
         "snippets": "无法加载配置片段。请检查面板日志并重试应用。",

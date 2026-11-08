@@ -179,15 +179,18 @@ test('registered management routes retain real mTLS, JWT, SOCKS isolation and at
             impostor.on('tlsClientError', () => {});
             await listen(impostor, '127.0.0.2', port);
             try {
+                const primaryOnly = make({ ips: [] });
+                assert.equal((await primaryOnly.service.managedCore(primaryOnly.config)).isOk, false);
+                assert.equal(exposed, 0);
                 const { service, config } = make();
                 assert.equal((await service.managedCore(config)).isOk, true);
                 assert.equal(exposed, 0);
                 assert.equal((await service.connectionRoute(config)).activeAddress, '127.0.0.1');
             } finally { await close(impostor); }
         });
-        await t.test('an unverified health body never authorizes a command', async () => {
+        await t.test('an unverified health body never selects a fallback for a command', async () => {
             invalidHealth = true;
-            const { service, config } = make({ address: '127.0.0.1', ips: [] });
+            const { service, config } = make();
             const before = requests.length;
             try {
                 assert.equal((await service.managedCore(config)).isOk, false);

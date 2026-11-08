@@ -75,6 +75,20 @@ jobs:
       - run: node --test tests/*.test.cjs
       - name: Verify template cache generations across API workers
         run: node tests/subscription-template-cache-redis.integration.cjs
+      - name: Verify route inventory does not wait for the billing transaction pool
+        env:
+          REMNACUST_ROUTE_POOL_TEST_URL: postgresql://postgres@127.0.0.1:55439/rc_route_pool_ci
+        run: |
+          node - <<'NODE'
+          const { Client } = require('pg');
+          (async () => {
+            const database = new Client({ connectionString: 'postgresql://postgres@127.0.0.1:55439/postgres' });
+            await database.connect();
+            try { await database.query('CREATE DATABASE rc_route_pool_ci'); }
+            finally { await database.end(); }
+          })().catch(error => { console.error(error); process.exitCode = 1; });
+          NODE
+          node --test tests/node-route-pool.database.integration.cjs
       - name: Check private Xray IPC and certificate files on Linux
         run: sudo --preserve-env=REMNACUST_NODE_SOURCE "$(command -v node)" --test tests/node-api-socket.test.cjs tests/pem-file-security.test.cjs tests/node-upgrade-script.test.cjs tests/node-install-script.test.cjs
       - name: Verify documentation against freshly generated backend contract

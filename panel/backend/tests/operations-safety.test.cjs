@@ -9,6 +9,7 @@ test('diagnostics classify failures without exposing node errors and do not prob
     const { NodeDiagnosticsService, transportFailure } = source(
         'modules/nodes/node-diagnostics.service.ts',
         {
+            '@contract/constants': { ERRORS: { NODE_ERROR_500_WITH_MSG: { code: 'N002' } } },
             '@common/helpers/error-handler.helper': { errorHandler: (r) => r.response },
             './queries/get-node-by-uuid/get-node-by-uuid.query': { GetNodeByUuidQuery: class {} },
         },

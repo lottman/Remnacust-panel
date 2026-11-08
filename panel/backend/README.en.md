@@ -2,7 +2,15 @@
 
 # Remnacust Backend
 
-Source version **1.1.7.101**. The panel API, background workers and scheduler. Use [prebuilt images](../README.en.md) for a normal deployment; this directory is for development.
+Source version **1.1.7.100**. The panel API, background workers and scheduler. Use [prebuilt images](../README.en.md) for a normal deployment; this directory is for development.
+
+## Install ready components
+
+Download the latest stable installer and open its interactive menu:
+
+```bash
+curl -fsSLo installer.sh https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh && sudo bash installer.sh
+```
 
 ## Requirements
 

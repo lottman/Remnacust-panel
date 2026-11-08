@@ -2,20 +2,20 @@
 
 # Remnacust Panel
 
-Выпуск **Panel/Page 1.1.7.101** входит в комплект Installer **1.2.141** с Node **1.1.26** и Core/WASM **1.1.16**. [Изменения 99 → 100](../docs/releases/1.1.7.101.md). Обновление установленного сервера выполняется отдельно.
+Выпуск **Panel/Page 1.1.7.100** входит в комплект Installer **1.2.144** с Node **1.1.26** и Core/WASM **1.1.16**. [Изменения 99 → 100](../docs/releases/1.1.7.100.md). Обновление установленного сервера выполняется отдельно.
 
 Панель управления пользователями, нодами и подписками. Для установки на VPS используйте готовые образы через установщик; Node.js и Go на сервере не нужны.
 
 | Стабильный компонент | Версия |
 | --- | --- |
-| [Panel и страница подписки](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.101) | 1.1.7.101 |
-| [Installer / комплект](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.141) | 1.2.141 |
+| [Panel и страница подписки](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.100) | 1.1.7.100 |
+| [Installer / комплект](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.144) | 1.2.144 |
 | [Node](https://github.com/lottman/Remnacust-node/releases/tag/v1.1.26) | 1.1.26 |
 | [Core / WASM](https://github.com/lottman/Remnacust-core/releases/tag/v1.1.16) | 1.1.16 |
 
 ## Сервер и порты
 
-Установщик 1.2.141 поддерживает **Ubuntu 22.04/24.04/26.04 LTS и Debian 12/13**, Linux amd64/arm64.
+Установщик 1.2.144 поддерживает **Ubuntu 22.04/24.04/26.04 LTS и Debian 12/13**, Linux amd64/arm64.
 
 Для небольшой панели ориентируйтесь на 2 CPU, 2 GiB RAM и 20 GiB диска; рекомендуются 4 CPU и 4 GiB RAM. Под базу, журналы и копии нужен дополнительный запас по мере роста нагрузки. Нужны root, домен, доступ к пакетным репозиториям и скачиванию образов.
 
@@ -32,8 +32,7 @@
 ## Установка готовых образов
 
 ```bash
-curl -fsSLo installer.sh https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh
-sudo bash installer.sh install-panel
+curl -fsSLo installer.sh https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh && sudo bash installer.sh install-panel
 ```
 
 Команда скачивает последний стабильный установщик. В вопросе о версии нажмите Enter для Latest; `--version` нужен только для выбора конкретного выпуска.

@@ -1,6 +1,6 @@
 # Remnacust Panel
 
-Выпуск **Panel/Page 1.1.7.100** входит в комплект Installer **1.2.143** с Node **1.1.26** и Core/WASM **1.1.16**. [Изменения выпуска](docs/releases/1.1.7.100.md). Обновление установленного сервера выполняется отдельно.
+Выпуск **Panel/Page 1.1.7.100** входит в комплект Installer **1.2.144** с Node **1.1.26** и Core/WASM **1.1.16**. [Изменения выпуска](docs/releases/1.1.7.100.md). Обновление установленного сервера выполняется отдельно.
 
 Этот номер перевыпущен с актуальными исправлениями 101–102. Для установленной 101–102 нужен [явный переход](docs/releases/1.1.7.100.md#переход-с-101102); автоматический откат отключён.
 
@@ -39,7 +39,7 @@ docker compose up -d --no-build --pull never
 | Компонент | Текущий стабильный выпуск |
 | --- | --- |
 | Панель и сайт подписки | [1.1.7.100](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.100) |
-| Установщик / Docker-комплект | [1.2.143](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.143) |
+| Установщик / Docker-комплект | [1.2.144](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.144) |
 | Агент ноды | [1.1.26](https://github.com/lottman/Remnacust-node/releases/tag/v1.1.26) |
 | Core / валидатор редактора | [1.1.16](https://github.com/lottman/Remnacust-core/releases/tag/v1.1.16), Xray v26.10.31 |
 
@@ -59,7 +59,7 @@ docker compose up -d --no-build --pull never
 
 | ПО | Требование |
 | --- | --- |
-| ОС установщика 1.2.143 | Ubuntu 22.04 / 24.04 / 26.04 LTS и Debian 12 / 13, Linux amd64 или arm64 |
+| ОС установщика 1.2.144 | Ubuntu 22.04 / 24.04 / 26.04 LTS и Debian 12 / 13, Linux amd64 или arm64 |
 | Контейнеры | Docker Engine и актуальный плагин Docker Compose v2; `docker-compose` v1 не поддерживается |
 | PostgreSQL | 14.24 / 15.19 / 16.15 / 17.11 / 18.6; 195 миграций, HWID и границы доступа |
 | Установка готовых образов | Root, доступ к APT, GitHub/GHCR и рабочий DNS; Node.js и Go на VPS не нужны |
@@ -74,8 +74,7 @@ docker compose up -d --no-build --pull never
 Подготовьте домен панели и DNS-записи. Для подписок используйте отдельный публичный адрес. Откройте порты выбранного HTTPS proxy, сохраните SSH-доступ; внутренние порты БД, кеша и API ноды не должны быть общедоступны.
 
 ```bash
-curl -fsSLo installer.sh https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh
-sudo bash installer.sh install-panel
+curl -fsSLo installer.sh https://github.com/lottman/Remnacust-installer/releases/latest/download/installer.sh && sudo bash installer.sh install-panel
 ```
 
 Команда скачивает последний стабильный установщик. В вопросе о версии нажмите Enter для Latest; `--version` нужен только для выбора конкретного выпуска.
@@ -130,7 +129,7 @@ CLI-журналы: `/opt/remnacust/logs/installer-panel.log`, `installer-node.l
 - [Копии БД](docs/BACKUPS.md) · [Перенос пользователей](docs/USER-MIGRATION.md) · [Обновление нод](docs/UPDATE-PROGRESS-AND-NODE-HEALTH.md).
 - [Разработка и сборка](docs/BUILDING.md) · [Сайт подписки](subscription-page/README.md) · [История выпусков](docs/releases).
 
-Выпуск 1.1.7.100 исправляет выдачу подписки с HWID без ожидания нод, добавляет общий выбор Xray custom/default и обновляет зависимости. Node 1.1.26 содержит оба ядра. Установщик 1.2.143 поставляет согласованный комплект. [Изменения выпуска](docs/releases/1.1.7.100.md). Обновление README не заменяет установленную версию.
+Выпуск 1.1.7.100 исправляет выдачу подписки с HWID без ожидания нод, добавляет общий выбор Xray custom/default и обновляет зависимости. Node 1.1.26 содержит оба ядра. Установщик 1.2.144 поставляет согласованный комплект. [Изменения выпуска](docs/releases/1.1.7.100.md). Обновление README не заменяет установленную версию.
 
 ## Лицензия и поддержка
 

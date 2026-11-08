@@ -191,7 +191,15 @@ export function xrayTemplateWarnings(config: Record<string, any>): string[] {
             if (!object(rule)) continue;
             if (rule.outboundTag !== undefined) {
                 const tag = rule.outboundTag;
-                if (typeof tag !== 'string' || !tag || (!dynamicNames && !outboundExists(tag)))
+                if (
+                    typeof tag !== 'string' ||
+                    !tag ||
+                    (!dynamicNames &&
+                        !outboundExists(tag) &&
+                        !/^host:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(
+                            tag,
+                        ))
+                )
                     warnings.push(`routing.rules.${index}.outboundTag`);
             }
             if (rule.balancerTag !== undefined && !balancers.has(rule.balancerTag))

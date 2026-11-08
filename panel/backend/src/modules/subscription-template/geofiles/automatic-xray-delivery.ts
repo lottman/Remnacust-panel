@@ -15,7 +15,13 @@ export async function automaticXrayDelivery(options: {
     title: string;
     profileKey: string;
     generate: (delivery?: XrayGeofileDelivery) => Promise<string>;
-}): Promise<{ subscription: string; header?: string; intervalHours?: number; inline: boolean; sourceRevision?: string }> {
+}): Promise<{
+    subscription: string;
+    header?: string;
+    intervalHours?: number;
+    inline: boolean;
+    sourceRevision?: string;
+}> {
     const { client, manualRouting, title, profileKey, generate } = options;
     const budget = client === 'incy' ? INCY_FORMATTED_CONFIG_BUDGET : XRAY_FORMATTED_CONFIG_BUDGET;
     const inline =
@@ -50,12 +56,18 @@ export async function automaticXrayDelivery(options: {
         // references. Do not emit headers from the abandoned inline render.
         const remote = new XrayGeofileDelivery(client, 'remote', title);
         try {
-            const body = await generate(remote);
+            const body = remote.resolveLegacyReferences(await generate(remote));
             const header = body ? await remote.header(body, profileKey) : undefined;
             subscription = compact(body);
             if (!header || remote.inlineOnly || !xrayProfilesFit(subscription, budget))
                 throw new ClientPoolError('geofile-client-config-size-limit');
-            return { subscription, header, intervalHours: remote.intervalHours, inline: false, sourceRevision: remote.sourceRevision };
+            return {
+                subscription,
+                header,
+                intervalHours: remote.intervalHours,
+                inline: false,
+                sourceRevision: remote.sourceRevision,
+            };
         } catch (failure) {
             if (failure instanceof XrayGeofileFallback)
                 throw new ClientPoolError(`geofile-auto-delivery-unavailable: ${failure.reason}`);

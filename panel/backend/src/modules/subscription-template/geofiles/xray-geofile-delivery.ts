@@ -115,6 +115,43 @@ export class XrayGeofileDelivery {
         });
     }
 
+    public resolveLegacyReferences(subscription: string): string {
+        if (this.mode !== 'remote' || !this.references.size) return subscription;
+        const configs = JSON.parse(subscription);
+        if (!Array.isArray(configs)) throw new XrayGeofileFallback('configuration');
+        const aliases = new Map<string, string | null>();
+        for (const [key, entry] of this.references) {
+            const attribute = key.includes('@') ? key.slice(key.indexOf('@')) : '';
+            const alias = `${entry.kind}:${entry.category}${attribute}`;
+            aliases.set(alias, aliases.has(alias) ? null : key);
+        }
+        let changed = false;
+        for (const config of configs) {
+            if (config?.geodata) throw new XrayGeofileFallback('existing-geodata');
+            const stack: unknown[] = [config];
+            let visited = 0;
+            while (stack.length) {
+                if (++visited > 200_000) throw new XrayGeofileFallback('size');
+                const value = stack.pop();
+                if (!value || typeof value !== 'object') continue;
+                for (const [field, item] of Object.entries(value)) {
+                    if (typeof item !== 'string') {
+                        if (item && typeof item === 'object') stack.push(item);
+                        continue;
+                    }
+                    const match = /^(geoip|geosite):(.+)$/i.exec(item);
+                    if (!match || this.references.has(item.toLowerCase())) continue;
+                    const key = aliases.get(item.toLowerCase());
+                    if (!key) throw new XrayGeofileFallback('existing-geodata');
+                    (value as Record<string, unknown>)[field] = key;
+                    this.references.get(key)!.ambiguous = true;
+                    changed = true;
+                }
+            }
+        }
+        return changed ? JSON.stringify(configs) : subscription;
+    }
+
     private inlineHeader(profileKey: string, now: number): string | undefined {
         if (!this.containsInline) return undefined;
         // Absence of a routing header leaves the previous provider profile on
@@ -182,7 +219,9 @@ export class XrayGeofileDelivery {
             .filter((entry) => entry.sourceSha256 !== undefined)
             .map((entry) => `${entry.kind}:${entry.id}:${entry.sourceSha256}`);
         this.sourceRevision = sources.length
-            ? createHash('sha256').update(JSON.stringify([...new Set(sources)].sort())).digest('hex')
+            ? createHash('sha256')
+                  .update(JSON.stringify([...new Set(sources)].sort()))
+                  .digest('hex')
             : undefined;
         const interval = Math.max(...selected.map((key) => this.references.get(key)!.interval));
         // Force one refresh when migrating from the longer v1 names in the same interval.

@@ -31,7 +31,6 @@ import {
     selectClientOnConnection,
     type ClientFormat
 } from './client-template-model'
-import { GeofileAddressRules } from './geofile-address-rules-panel'
 import { PriorityOrder } from './priority-order'
 
 export function ClientAutoselectPanel({
@@ -700,12 +699,7 @@ export function ClientAutoselectPanel({
                     )
                 })}
             </Accordion>
-            <GeofileAddressRules
-                config={config}
-                format={format}
-                getValue={() => text}
-                onChange={onChange}
-            />
+
             <Alert>{t('autoselect.access-help')}</Alert>
         </Stack>
     )

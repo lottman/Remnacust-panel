@@ -4,6 +4,7 @@ import { editClientTemplate, readClientTemplate, type ClientFormat } from './cli
 import {
     addressRuleTargetKey,
     addressRuleTargets,
+    isHostRouteTarget,
     geofileTargetAliases,
     type AddressRuleTarget
 } from './geofile-targets'
@@ -88,7 +89,23 @@ export function parseAddressRules(text: string): Address[] {
         throw new Error('address-rule-limit')
     const result: Address[] = [],
         seen = new Set<string>()
-    for (const raw of text.split(/\r?\n/)) {
+    const source = text.trim()
+    let lines: string[]
+    if (source.startsWith('[') || source.startsWith('"')) {
+        let parsed: unknown
+        try {
+            parsed = JSON.parse(
+                source.startsWith('[') ? source : `[${source.replace(/,\s*$/, '')}]`
+            )
+        } catch {
+            throw new Error('address-rule-input')
+        }
+        if (!Array.isArray(parsed) || !parsed.every((item) => typeof item === 'string'))
+            throw new Error('address-rule-input')
+        if (parsed.length > MAX_ADDRESS_RULES) throw new Error('address-rule-limit')
+        lines = parsed
+    } else lines = text.split(/\r?\n/)
+    for (const raw of lines) {
         const line = raw.trim()
         if (!line || line.startsWith('#')) continue
         if (
@@ -397,9 +414,14 @@ function nativeRules(
 ): unknown[] {
     if (
         !requestedTarget ||
-        !addressRuleTargets(root, format).some(
-            (target) => addressRuleTargetKey(target) === addressRuleTargetKey(requestedTarget)
-        )
+        (!(
+            format === 'XRAY_JSON' &&
+            requestedTarget.kind === 'outbound' &&
+            isHostRouteTarget(requestedTarget.name)
+        ) &&
+            !addressRuleTargets(root, format).some(
+                (target) => addressRuleTargetKey(target) === addressRuleTargetKey(requestedTarget)
+            ))
     )
         throw new Error('address-rule-target')
     let target = requestedTarget.name

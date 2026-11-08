@@ -174,7 +174,7 @@ test('unsupported import conditions show an explicit error and never enable appl
     assert.equal(view.find(element => element.type === 'Button' && element.props.children === panel.t('geofiles.manual-import-apply')).props.disabled, true);
 });
 
-for (const format of ['XRAY_JSON', 'SINGBOX', 'MIHOMO', 'CLASH', 'STASH']) test(`${format}: autoselect includes the shared manual rules/import UI with the current draft callbacks`, () => {
+for (const format of ['XRAY_JSON', 'SINGBOX', 'MIHOMO', 'CLASH', 'STASH']) test(`${format}: autoselect leaves manual address and import controls in the geofiles tab`, () => {
     const json = format === 'XRAY_JSON' || format === 'SINGBOX';
     const config = format === 'XRAY_JSON' ? { outbounds: [], routing: { rules: [] } }
         : format === 'SINGBOX' ? { outbounds: [], route: { rules: [] } } : { 'proxy-groups': [], rules: [] };
@@ -201,10 +201,6 @@ for (const format of ['XRAY_JSON', 'SINGBOX', 'MIHOMO', 'CLASH', 'STASH']) test(
     const component = format === 'XRAY_JSON' ? ref.exports.AutoselectPanel : ref.exports.ClientAutoselectPanel;
     const elements = value => Array.isArray(value) ? value.flatMap(elements) : !value || typeof value !== 'object' ? [] : [value, ...elements(value.props?.children)];
     const manual = elements(component(props)).find(element => element.type === 'ManualRules');
-    assert(manual);
-    assert.equal(manual.props.format, format);
-    assert.equal(manual.props.config, config);
-    assert.equal(manual.props.getValue(), text);
-    manual.props.onChange('updated draft');
-    assert.equal(updated, 'updated draft');
+    assert.equal(manual, undefined);
+    assert.equal(updated, undefined);
 });

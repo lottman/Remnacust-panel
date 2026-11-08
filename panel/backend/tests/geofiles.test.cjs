@@ -565,3 +565,25 @@ test('host DENY preserves materialized geofile/manual rules and routing metadata
     assert.equal(restricted.routing.rules.length, 2);
     assert.equal(restricted.routing.rules[1].network, 'tcp,udp');
 });
+
+test('Xray geofiles preserve host destinations until authorized per-user rendering', async () => {
+    const id = '00' + 'a'.repeat(32),
+        target = 'host:12345678-1234-1234-1234-123456789abc';
+    const result = await materializeGeofiles(
+        { remnacust: { geofiles: [{ id, target, categories: ['ru'] }] } },
+        'XRAY_JSON',
+        async () => ({ id, kind: 'geoip' }),
+        async () => compileDat(fixtures.geoip, 'geoip', ['ru']),
+    );
+    assert.equal(result.routing.rules[0].outboundTag, target);
+    assert.equal(result.outbounds, undefined);
+    await assert.rejects(
+        materializeGeofiles(
+            { remnacust: { geofiles: [{ id, target: 'host:invalid', categories: ['ru'] }] } },
+            'XRAY_JSON',
+            async () => ({ id, kind: 'geoip' }),
+            async () => compileDat(fixtures.geoip, 'geoip', ['ru']),
+        ),
+        /geofile-target/,
+    );
+});

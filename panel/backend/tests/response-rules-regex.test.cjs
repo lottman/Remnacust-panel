@@ -231,3 +231,68 @@ test('subscription injector uses the same bounded regex for remarks and tags', a
         );
     }
 });
+
+test('a completed short regex survives delayed delivery while the API event loop is busy', async () => {
+    const pool = new bounded.BoundedRegexPool(1, 4, 30, 1000);
+    try {
+        await pool.test('^Client$', 'Client');
+        let result;
+        await new Promise((resolve) =>
+            setTimeout(() => {
+                result = pool.test('^Client$', 'Client');
+                result.catch(() => {});
+                Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 120);
+                resolve();
+            }, 0),
+        );
+        assert.equal(await result, true);
+        assert.equal(pool.pending, 0);
+    } finally {
+        await pool.close();
+    }
+});
+
+test('worker scheduling delay does not spend regex execution time, and late replies cannot finish the next task', async () => {
+    const { EventEmitter } = require('node:events');
+    class DelayedWorker extends EventEmitter {
+        constructor() {
+            super();
+            setImmediate(() => this.emit('message', 'ready'));
+        }
+        unref() {}
+        terminate() {
+            setImmediate(() => this.emit('exit', 0));
+            return Promise.resolve(0);
+        }
+        postMessage(task) {
+            setTimeout(() => {
+                if (!task.progress) {
+                    this.emit('message', task.input === 'yes');
+                    return;
+                }
+                const state = new Int32Array(task.progress, 0, 2),
+                    clock = new BigInt64Array(task.progress, 8, 2);
+                Atomics.store(clock, 0, process.hrtime.bigint());
+                Atomics.store(state, 0, 1);
+                Atomics.store(state, 1, task.input === 'yes' ? 1 : 0);
+                Atomics.store(clock, 1, process.hrtime.bigint());
+                Atomics.store(state, 0, 2);
+                this.emit('message', { id: task.id });
+                setImmediate(() => this.emit('message', { id: task.id }));
+            }, 80);
+        }
+    }
+    const { BoundedRegexPool } = load(
+        path.join(__dirname, '../src/common/utils/bounded-regex.ts'),
+        { 'node:worker_threads': { Worker: DelayedWorker } },
+    );
+    const pool = new BoundedRegexPool(1, 4, 30, 1000);
+    try {
+        const first = pool.test('^yes$', 'yes'),
+            second = pool.test('^yes$', 'no');
+        assert.deepEqual(await Promise.all([first, second]), [true, false]);
+        assert.equal(pool.pending, 0);
+    } finally {
+        await pool.close();
+    }
+});

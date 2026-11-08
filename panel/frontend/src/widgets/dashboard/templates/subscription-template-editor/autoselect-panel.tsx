@@ -45,7 +45,6 @@ import {
 } from './autoselect-model'
 import styles from './autoselect-panel.module.css'
 import { defaultAutoselectSources, xrayPoolPreview } from './autoselect-sources'
-import { GeofileAddressRules } from './geofile-address-rules-panel'
 import { PriorityOrder } from './priority-order'
 import { LegacyAssignments, TemplateAssignmentPanel } from './template-assignment-panel'
 import { TemplateChanges } from './template-changes'
@@ -222,7 +221,34 @@ function PoolCard({
                     data={optionsWithSaved(options, values)}
                     value={values}
                     error={!values.length ? t('autoselect.select-members') : undefined}
-                    onChange={(value) => patch(['selector', 'values'], value)}
+                    onChange={(value) =>
+                        edit((text) => {
+                            let next = updatePool(text, index, ['selector', 'values'], value)
+                            const parsed = parseTemplate(next)
+                            for (const [balanceIndex, balance] of (
+                                parsed.routing?.balancers ?? []
+                            ).entries())
+                                if (
+                                    balance.strategy?.type === 'roundRobin' &&
+                                    balance.selector?.some((prefix: string) =>
+                                        pool.tagPrefix?.startsWith(prefix)
+                                    )
+                                )
+                                    next = editTemplate(
+                                        next,
+                                        [
+                                            'routing',
+                                            'balancers',
+                                            balanceIndex,
+                                            'strategy',
+                                            'settings',
+                                            'remnacustOrder'
+                                        ],
+                                        true
+                                    )
+                            return next
+                        })
+                    }
                     nothingFoundMessage={t('autoselect.no-results')}
                 />
             )}
@@ -238,7 +264,34 @@ function PoolCard({
                 <PriorityOrder
                     values={selector.values ?? []}
                     options={hostOptions}
-                    onChange={(value) => patch(['selector', 'values'], value)}
+                    onChange={(value) =>
+                        edit((text) => {
+                            let next = updatePool(text, index, ['selector', 'values'], value)
+                            const parsed = parseTemplate(next)
+                            for (const [balanceIndex, balance] of (
+                                parsed.routing?.balancers ?? []
+                            ).entries())
+                                if (
+                                    balance.strategy?.type === 'roundRobin' &&
+                                    balance.selector?.some((prefix: string) =>
+                                        pool.tagPrefix?.startsWith(prefix)
+                                    )
+                                )
+                                    next = editTemplate(
+                                        next,
+                                        [
+                                            'routing',
+                                            'balancers',
+                                            balanceIndex,
+                                            'strategy',
+                                            'settings',
+                                            'remnacustOrder'
+                                        ],
+                                        true
+                                    )
+                            return next
+                        })
+                    }
                 />
             )}
             {priority && (type !== 'uuids' || mode !== 'all') && (
@@ -492,16 +545,42 @@ function BalancerCard({
                     {t('autoselect.response-time-help')}
                 </Text>
             )}
-            {strategy === 'priority' && (
+            {['priority', 'roundRobin'].includes(strategy) && (
                 <>
                     <Text size="sm" c="dimmed">
-                        {t('autoselect.priority-summary')}
+                        {t(
+                            strategy === 'priority'
+                                ? 'autoselect.priority-summary'
+                                : 'autoselect.round-robin-summary'
+                        )}
                     </Text>
                     {values.length > 1 && (
                         <PriorityOrder
                             values={values}
                             options={selectors}
-                            onChange={(value) => patch(['selector'], value)}
+                            onChange={(value) =>
+                                edit((text) => {
+                                    let next = editTemplate(
+                                        text,
+                                        ['routing', 'balancers', index, 'selector'],
+                                        value
+                                    )
+                                    if (strategy === 'roundRobin')
+                                        next = editTemplate(
+                                            next,
+                                            [
+                                                'routing',
+                                                'balancers',
+                                                index,
+                                                'strategy',
+                                                'settings',
+                                                'remnacustOrder'
+                                            ],
+                                            true
+                                        )
+                                    return next
+                                })
+                            }
                         />
                     )}
                 </>
@@ -824,10 +903,10 @@ export function AutoselectPanel({
                                                         pools[index],
                                                         hosts
                                                     )}
-                                                    priority={group.balancers.some(
-                                                        (balanceIndex) =>
-                                                            balancers[balanceIndex]?.strategy
-                                                                ?.type === 'priority'
+                                                    priority={group.balancers.some((balanceIndex) =>
+                                                        ['priority', 'roundRobin'].includes(
+                                                            balancers[balanceIndex]?.strategy?.type
+                                                        )
                                                     )}
                                                 />
                                             ))}
@@ -1006,12 +1085,6 @@ export function AutoselectPanel({
                         </Accordion.Panel>
                     </Accordion.Item>
                 </Accordion>
-                <GeofileAddressRules
-                    config={config}
-                    format="XRAY_JSON"
-                    getValue={() => text}
-                    onChange={onChange}
-                />
             </Stack>
             <TemplateChanges changes={changes} />
         </div>

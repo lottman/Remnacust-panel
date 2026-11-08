@@ -1,4 +1,5 @@
 import type { Geofile, GeofileSelection } from './geofile-types'
+import type { GetHostsCommand } from '@remnawave/backend-contract'
 
 import {
     Accordion,
@@ -70,8 +71,10 @@ export function GeofilesPanel({
     config,
     format,
     onChange,
-    getValue
+    getValue,
+    hosts = []
 }: {
+    hosts?: GetHostsCommand.Response['response']
     text: string
     config: JsonObject
     format: ClientFormat
@@ -181,7 +184,11 @@ export function GeofilesPanel({
     })
     const jsonAtBase = subscriptionSettings.data?.serveJsonAtBaseSubscription
     const targetAliases = geofileTargetAliases(config, format)
-    const targets = geofileTargets(config, format)
+    const hostLabels = new Map(hosts.map((host) => [`host:${host.uuid}`, host.remark]))
+    const targets = [
+        ...geofileTargets(config, format),
+        ...(format === 'XRAY_JSON' ? hosts.map((host) => `host:${host.uuid}`) : [])
+    ]
     const patch = (value: Reference[]) => {
         try {
             onChange(
@@ -686,7 +693,7 @@ export function GeofilesPanel({
                                                 ? t('geofiles.direct')
                                                 : target === 'REJECT'
                                                   ? t('geofiles.reject')
-                                                  : target}
+                                                  : (hostLabels.get(target) ?? target)}
                                         </Text>
                                     </div>
                                     <Group gap="xs">
@@ -758,7 +765,11 @@ export function GeofilesPanel({
                                                             ? t('geofiles.direct')
                                                             : value === 'REJECT'
                                                               ? t('geofiles.reject')
-                                                              : value
+                                                              : hostLabels.has(value)
+                                                                ? t('geofiles.via-host', {
+                                                                      name: hostLabels.get(value)
+                                                                  })
+                                                                : value
                                                 }))}
                                             onChange={(value) =>
                                                 value &&
@@ -869,6 +880,7 @@ export function GeofilesPanel({
             <GeofileAddressRules
                 config={config}
                 format={format}
+                hosts={hosts}
                 getValue={getValue}
                 onChange={onChange}
             />

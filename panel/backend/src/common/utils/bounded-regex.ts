@@ -4,7 +4,12 @@ import { Worker } from 'node:worker_threads';
 const WORKER = String.raw`
 const { parentPort } = require('node:worker_threads');
 const cache = new Map();
-parentPort.on('message', ({ pattern, input, flags }) => {
+parentPort.on('message', ({ id, pattern, input, flags, progress }) => {
+    const state = new Int32Array(progress, 0, 2);
+    const clock = new BigInt64Array(progress, 8, 2);
+    Atomics.store(clock, 0, process.hrtime.bigint());
+    Atomics.store(state, 0, 1);
+    let result = -1;
     try {
         const key = flags + '\0' + pattern;
         let regex = cache.get(key);
@@ -13,8 +18,12 @@ parentPort.on('message', ({ pattern, input, flags }) => {
             if (cache.size >= 64) cache.delete(cache.keys().next().value);
             cache.set(key, regex);
         }
-        parentPort.postMessage(regex.test(input));
-    } catch { parentPort.postMessage(null); }
+        result = regex.test(input) ? 1 : 0;
+    } catch {}
+    Atomics.store(state, 1, result);
+    Atomics.store(clock, 1, process.hrtime.bigint());
+    Atomics.store(state, 0, 2);
+    parentPort.postMessage({ id });
 });
 parentPort.postMessage('ready');
 `;
@@ -26,6 +35,9 @@ export class RegexBudgetError extends Error {
 }
 
 type Task = {
+    id: number;
+    progress: SharedArrayBuffer;
+    deadlineNs: bigint;
     pattern: string;
     input: string;
     flags: string;
@@ -41,6 +53,7 @@ export class BoundedRegexPool {
     private readonly slots = new Set<Slot>();
     private readonly queue: Task[] = [];
     private closed = false;
+    private nextId = 0;
 
     constructor(
         private readonly size = 2,
@@ -67,6 +80,11 @@ export class BoundedRegexPool {
         }
         return new Promise((resolve, reject) => {
             const task: Task = {
+                id: ++this.nextId,
+                progress: new SharedArrayBuffer(24),
+                deadlineNs:
+                    process.hrtime.bigint() +
+                    BigInt(Math.max(0, Math.floor(deadline - Date.now()))) * 1_000_000n,
                 pattern,
                 input,
                 flags,
@@ -109,6 +127,51 @@ export class BoundedRegexPool {
         }
     }
 
+    private complete(slot: Slot): void {
+        const task = slot.task;
+        if (!task) return;
+        const state = new Int32Array(task.progress, 0, 2);
+        if (Atomics.load(state, 0) !== 2) return;
+        const clock = new BigInt64Array(task.progress, 8, 2);
+        const start = Atomics.load(clock, 0),
+            end = Atomics.load(clock, 1);
+        if (
+            end < start ||
+            end > task.deadlineNs ||
+            end - start > BigInt(this.executionTimeoutMs) * 1_000_000n
+        ) {
+            this.fail(slot);
+            return;
+        }
+        clearTimeout(task.timer);
+        slot.task = undefined;
+        const result = Atomics.load(state, 1);
+        if (result === 0 || result === 1) task.resolve(result === 1);
+        else task.reject(new RegexBudgetError());
+        this.pump();
+    }
+
+    private watch(slot: Slot, task: Task): void {
+        if (slot.task !== task || slot.retiring) return;
+        const state = new Int32Array(task.progress, 0, 2);
+        if (Atomics.load(state, 0) === 2) {
+            this.complete(slot);
+            return;
+        }
+        const now = process.hrtime.bigint();
+        const started = Atomics.load(new BigInt64Array(task.progress, 8, 2), 0);
+        const remaining = Number(task.deadlineNs - now) / 1_000_000;
+        const elapsed = started ? Number(now - started) / 1_000_000 : 0;
+        if (remaining <= 0 || elapsed >= this.executionTimeoutMs) {
+            this.fail(slot);
+            return;
+        }
+        task.timer = setTimeout(
+            () => this.watch(slot, task),
+            Math.max(1, Math.min(remaining, this.executionTimeoutMs - elapsed)),
+        );
+    }
+
     private spawn(): void {
         const worker = new Worker(WORKER, {
             eval: true,
@@ -121,13 +184,7 @@ export class BoundedRegexPool {
         worker.on('message', (value) => {
             if (slot.retiring) return;
             if (value === 'ready') slot.ready = true;
-            else if (slot.task) {
-                const task = slot.task;
-                slot.task = undefined;
-                clearTimeout(task.timer);
-                if (typeof value === 'boolean') task.resolve(value);
-                else task.reject(new RegexBudgetError());
-            }
+            else if (slot.task && value?.id === slot.task.id) this.complete(slot);
             this.pump();
         });
         worker.on('error', () => this.fail(slot));
@@ -156,12 +213,14 @@ export class BoundedRegexPool {
             if (remaining <= 0) continue;
             clearTimeout(task.timer);
             task.timer = setTimeout(
-                () => this.fail(slot),
+                () => this.watch(slot, task),
                 Math.min(this.executionTimeoutMs, remaining),
             );
             slot.task = task;
             try {
                 slot.worker.postMessage({
+                    id: task.id,
+                    progress: task.progress,
                     pattern: task.pattern,
                     input: task.input,
                     flags: task.flags,

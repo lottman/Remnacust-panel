@@ -1,4 +1,9 @@
 .root {
+    margin: 0;
+    min-inline-size: 0;
+    max-width: 100%;
+}
+.root:not([data-variant='unstyled']) {
     background: rgba(255, 255, 255, 0.02);
     border: 1px solid rgba(255, 255, 255, 0.08);
 }

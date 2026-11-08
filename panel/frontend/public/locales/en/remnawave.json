@@ -3312,6 +3312,8 @@
         "sark": "Sark"
     },
     "autoselect": {
+        "server-order": "Server order",
+        "round-robin-summary": "New connections rotate through the servers. To use the next server only when the previous one is unavailable, choose Priority: first available.",
         "editing": "Editing",
         "title": "Autoselect",
         "description": "Configure host selection and balancing together. GUI and code edit the same draft.",
@@ -3971,6 +3973,7 @@
         "use-pool-help": "When off, legacy injection of eligible hosts remains active. Manually configured group members are preserved."
     },
     "geofiles": {
+        "via-host": "Via host: {{name}}",
         "title": "Geofiles",
         "help": "Attach rule datasets to the template. Changes apply after saving the template and updating the subscription.",
         "library": "File library",
@@ -4099,7 +4102,7 @@
         "address-count": "Addresses: {{count}}",
         "manual-delete": "Delete these rules?",
         "addresses": "Addresses",
-        "manual-address-help": "One address per line. example.com includes subdomains; full:example.com matches only that domain. keyword:, regexp:, IP and CIDR are also supported.",
+        "manual-address-help": "Enter one address per line or a comma-separated JSON list of quoted strings. example.com includes subdomains; full:example.com matches only that domain. keyword:, regexp:, IP and CIDR are also supported.",
         "editor-title": "Edit: {{name}}",
         "editor-copy-help": "A preset is saved as a separate copy. Enter a new name. The copy replaces the original set in this template; other templates remain unchanged.",
         "editor-shared-help": "File changes apply to every template using it. Automatic source refresh will be disabled to preserve your edits.",

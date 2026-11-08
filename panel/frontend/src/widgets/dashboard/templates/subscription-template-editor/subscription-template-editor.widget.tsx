@@ -251,6 +251,7 @@ export function SubscriptionTemplateEditorWidget(props: Props) {
                             <div className={panelStyles.layout}>
                                 <div className={panelStyles.main}>
                                     <GeofilesPanel
+                                        hosts={hosts}
                                         text={value}
                                         config={draft.config}
                                         format={format}

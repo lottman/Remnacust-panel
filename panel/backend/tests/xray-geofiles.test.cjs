@@ -42,13 +42,121 @@ const id = '00' + 'a'.repeat(32),
 const decode = (header) =>
     JSON.parse(Buffer.from(header.slice('happ://routing/onadd/'.length), 'base64').toString());
 
+test('remote delivery resolves legacy references across profiles only to a unique registered category', async () => {
+    const delivery = new XrayGeofileDelivery('happ', 'remote');
+    const refs = delivery.register(
+        'geosite',
+        { id, categories: ['example@ads'], target: 'DIRECT' },
+        async () => 'https://sub.test/site.dat',
+    );
+    const original = JSON.stringify([
+        { routing: { rules: [{ domain: refs, outboundTag: 'direct' }] } },
+        { routing: { rules: [{ domain: ['geosite:EXAMPLE@ads'], balancerTag: 'auto' }] } },
+    ]);
+    const resolved = delivery.resolveLegacyReferences(original);
+    const profiles = JSON.parse(resolved);
+    assert.deepEqual(profiles[1].routing.rules[0].domain, refs);
+    assert.equal(profiles[1].routing.rules[0].balancerTag, 'auto');
+    assert.match(original, /geosite:EXAMPLE@ads/);
+    const header = decode(await delivery.header(resolved, 'user'));
+    assert.equal(header.Geositeurl.split('?')[0], 'https://sub.test/site.dat');
+    assert.deepEqual(header.DirectSites, []);
+    assert.throws(
+        () =>
+            delivery.resolveLegacyReferences(
+                JSON.stringify([{ routing: { rules: [{ domain: ['geosite:missing'] }] } }]),
+            ),
+        /existing-geodata/,
+    );
+    assert.throws(
+        () =>
+            delivery.resolveLegacyReferences(
+                JSON.stringify([{ routing: { rules: [{ domain: ['geosite:example'] }] } }]),
+            ),
+        /existing-geodata/,
+    );
+    assert.throws(
+        () => delivery.resolveLegacyReferences(JSON.stringify([{ geodata: {}, routing: {} }])),
+        /existing-geodata/,
+    );
+    delivery.register(
+        'geosite',
+        { id: other, categories: ['example@ads'], target: 'DIRECT' },
+        async () => 'https://sub.test/other.dat',
+    );
+    assert.throws(() => delivery.resolveLegacyReferences(original), /existing-geodata/);
+});
+
+test('automatic oversized delivery remaps a legacy profile before creating its DAT header', async () => {
+    const { automaticXrayDelivery } = load(path.join(root, 'geofiles/automatic-xray-delivery.ts'), {
+        ...modules,
+        './xray-geofile-delivery': { XrayGeofileDelivery, XrayGeofileFallback },
+    });
+    for (const client of ['happ', 'incy']) {
+        const result = await automaticXrayDelivery({
+            client,
+            manualRouting: false,
+            title: 'Fixture',
+            profileKey: 'user',
+            generate: async (delivery) => {
+                if (delivery.mode === 'inline') {
+                    delivery.registerInline();
+                    throw new pool.ClientPoolError('geofile-inline-limit');
+                }
+                const domain = delivery.register(
+                    'geosite',
+                    { id, categories: ['example'], target: 'DIRECT' },
+                    async () => 'https://sub.test/site.dat',
+                );
+                return JSON.stringify([
+                    { routing: { rules: [{ domain, outboundTag: 'direct' }] } },
+                    { routing: { rules: [{ domain: ['geosite:example'], balancerTag: 'auto' }] } },
+                ]);
+            },
+        });
+        assert.equal(result.inline, false);
+        assert.ok(result.header.startsWith(client + '://routing/onadd/'));
+        assert.doesNotMatch(result.subscription, /geosite:example/);
+        assert.equal(JSON.parse(result.subscription)[1].routing.rules[0].balancerTag, 'auto');
+    }
+});
+
 test('switching automatically to inline delivery embeds rules and clears URLs on the same provider profile', async () => {
     const clock = 1793204000000;
     const previous = new XrayGeofileDelivery('incy');
-    const refs = previous.register('geosite', { id, categories: ['example'], target: 'DIRECT', downloadToClient: true }, async () => 'https://sub.test/geosite.dat');
-    const remote = JSON.parse(Buffer.from((await previous.header(JSON.stringify([{routing:{rules:[{domain:refs}]}}]), 'user', clock)).split('/onadd/')[1], 'base64'));
+    const refs = previous.register(
+        'geosite',
+        { id, categories: ['example'], target: 'DIRECT', downloadToClient: true },
+        async () => 'https://sub.test/geosite.dat',
+    );
+    const remote = JSON.parse(
+        Buffer.from(
+            (
+                await previous.header(
+                    JSON.stringify([{ routing: { rules: [{ domain: refs }] } }]),
+                    'user',
+                    clock,
+                )
+            ).split('/onadd/')[1],
+            'base64',
+        ),
+    );
     const delivery = new XrayGeofileDelivery('incy', 'inline');
-    const native = await materializeGeofiles({ remnacust: { geofiles: [{id, categories:['example'], target:'DIRECT', downloadToClient:false}] }, outbounds: [] }, 'XRAY_JSON', async()=>({id,kind:'geosite'}), async(_, categories)=>compileDat(fixture.geosite,'geosite',categories), undefined, delivery);
+    const native = await materializeGeofiles(
+        {
+            remnacust: {
+                geofiles: [
+                    { id, categories: ['example'], target: 'DIRECT', downloadToClient: false },
+                ],
+            },
+            outbounds: [],
+        },
+        'XRAY_JSON',
+        async () => ({ id, kind: 'geosite' }),
+        async (_, categories) => compileDat(fixture.geosite, 'geosite', categories),
+        undefined,
+        delivery,
+    );
     const body = JSON.stringify([native]);
     const header = await delivery.header(body, 'user', clock + 1000);
     const inline = JSON.parse(Buffer.from(header.split('/onadd/')[1], 'base64'));
@@ -60,14 +168,37 @@ test('switching automatically to inline delivery embeds rules and clears URLs on
     assert.equal(delivery.inlineOnly, true);
     assert.match(body, /example\.com/);
     assert.doesNotMatch(body, /https:\/\/.*\.dat|geosite:r[a-f0-9]/);
-    assert.equal(await new XrayGeofileDelivery('incy').header(body, 'other-user'), undefined, 'Unrelated configurations do not override client profiles');
-    assert.equal(await delivery.header(JSON.stringify([{geodata:{custom:true}}]), 'user'), undefined, 'Manual geodata stays under operator control');
-    const active = delivery.register('geosite', {id,categories:['example'],target:'DIRECT',downloadToClient:true}, async()=> 'https://sub.test/geosite.dat');
-    const enabledHeader = await delivery.header(JSON.stringify([{routing:{rules:[{domain:active}]}}]), 'user', clock + 2000);
+    assert.equal(
+        await new XrayGeofileDelivery('incy').header(body, 'other-user'),
+        undefined,
+        'Unrelated configurations do not override client profiles',
+    );
+    assert.equal(
+        await delivery.header(JSON.stringify([{ geodata: { custom: true } }]), 'user'),
+        undefined,
+        'Manual geodata stays under operator control',
+    );
+    const active = delivery.register(
+        'geosite',
+        { id, categories: ['example'], target: 'DIRECT', downloadToClient: true },
+        async () => 'https://sub.test/geosite.dat',
+    );
+    const enabledHeader = await delivery.header(
+        JSON.stringify([{ routing: { rules: [{ domain: active }] } }]),
+        'user',
+        clock + 2000,
+    );
     const enabled = JSON.parse(Buffer.from(enabledHeader.split('/onadd/')[1], 'base64'));
     assert.equal(enabled.Name, inline.Name);
-    assert.ok(Number(enabled.LastUpdated) > Number(inline.LastUpdated), 'INCY accepts the re-enabled profile in the same refresh window');
-    assert.equal(enabled.Geositeurl, remote.Geositeurl, 'Checksum URL stays stable across mode changes');
+    assert.ok(
+        Number(enabled.LastUpdated) > Number(inline.LastUpdated),
+        'INCY accepts the re-enabled profile in the same refresh window',
+    );
+    assert.equal(
+        enabled.Geositeurl,
+        remote.Geositeurl,
+        'Checksum URL stays stable across mode changes',
+    );
     assert.equal(delivery.inlineOnly, false, 'Re-enabling delivery resets inline mode');
     assert.ok(delivery.intervalHours > 0);
 });
@@ -267,7 +398,11 @@ test('request-local renderer delivers Happ and INCY profiles, preserves manual h
     const fallback = context('Happ/4.0.0');
     const result = await run(fallback);
     assert.match(result.subscription, /domain:example.com/);
-    assert.equal(decode(fallback.headersToApply.routing).Geositeurl, '', 'Small inline rules never request a bundle');
+    assert.equal(
+        decode(fallback.headersToApply.routing).Geositeurl,
+        '',
+        'Small inline rules never request a bundle',
+    );
     failure = false;
     const later = context('Happ/4.0.0');
     await run(later);
@@ -275,51 +410,120 @@ test('request-local renderer delivers Happ and INCY profiles, preserves manual h
 });
 
 test('INCY compaction runs after geofile collection, including manual routing and bundle fallback', async () => {
-    const networks = Array.from({length:1000}, (_,i)=>`100.${i >> 8}.${i & 255}.0/24`);
+    const networks = Array.from({ length: 1000 }, (_, i) => `100.${i >> 8}.${i & 255}.0/24`);
     let failBundle = false;
-    const generator = {async generateConfig({geofileDelivery}) {
-        geofileDelivery?.registerInline();
-        const domain = geofileDelivery?.mode === 'remote' ? geofileDelivery.register('geosite',
-            {id,categories:['example'],target:'DIRECT',downloadToClient:true},
-            async()=>{if(failBundle) throw Error('bundle');return 'https://sub.test/rules.dat';})
-            : ['domain:example.com'];
-        return JSON.stringify([{inbounds:[],outbounds:[],routing:{rules:[
-            {ip:networks,outboundTag:'direct'}, {domain,outboundTag:'direct'}]}}]);
-    }};
-    const renderer = new RenderTemplatesService({resolveProxyConfig:async()=>[]},null,null,null,null,generator,revisionCache);
-    for (const mode of ['download','manual','settings','fallback','other-client']) {
+    const generator = {
+        async generateConfig({ geofileDelivery }) {
+            geofileDelivery?.registerInline();
+            const domain =
+                geofileDelivery?.mode === 'remote'
+                    ? geofileDelivery.register(
+                          'geosite',
+                          { id, categories: ['example'], target: 'DIRECT', downloadToClient: true },
+                          async () => {
+                              if (failBundle) throw Error('bundle');
+                              return 'https://sub.test/rules.dat';
+                          },
+                      )
+                    : ['domain:example.com'];
+            return JSON.stringify([
+                {
+                    inbounds: [],
+                    outbounds: [],
+                    routing: {
+                        rules: [
+                            { ip: networks, outboundTag: 'direct' },
+                            { domain, outboundTag: 'direct' },
+                        ],
+                    },
+                },
+            ]);
+        },
+    };
+    const renderer = new RenderTemplatesService(
+        { resolveProxyConfig: async () => [] },
+        null,
+        null,
+        null,
+        null,
+        generator,
+        revisionCache,
+    );
+    for (const mode of ['download', 'manual', 'settings', 'fallback', 'other-client']) {
         failBundle = mode === 'fallback';
-        const context = {userAgent:mode==='other-client'?'Happ/4.0.0':'INCY/2.6.2/iOS',
-            matchedResponseType:'XRAY_JSON', isExtendedClient:true, subscriptionSettings:{}};
-        if(mode==='manual') context.headersToApply={Routing:'off'};
-        if(mode==='settings') context.subscriptionSettings.customResponseHeaders={routing:'off'};
-        const output = await renderer.generateSubscription({srrContext:context,user:{id:42},hosts:[]});
-        const config=JSON.parse(output.subscription)[0];
-        if(mode==='other-client') {
-            assert.deepEqual(config.routing.rules[0].ip,networks);
+        const context = {
+            userAgent: mode === 'other-client' ? 'Happ/4.0.0' : 'INCY/2.6.2/iOS',
+            matchedResponseType: 'XRAY_JSON',
+            isExtendedClient: true,
+            subscriptionSettings: {},
+        };
+        if (mode === 'manual') context.headersToApply = { Routing: 'off' };
+        if (mode === 'settings')
+            context.subscriptionSettings.customResponseHeaders = { routing: 'off' };
+        const output = await renderer.generateSubscription({
+            srrContext: context,
+            user: { id: 42 },
+            hosts: [],
+        });
+        const config = JSON.parse(output.subscription)[0];
+        if (mode === 'other-client') {
+            assert.deepEqual(config.routing.rules[0].ip, networks);
             continue;
         }
-        assert.deepEqual(config.routing.rules[0].ip.split(','),networks,mode);
-        assert.ok(Buffer.byteLength(JSON.stringify(config,null,4))<500_000,mode);
-        if(mode==='download') assert.match(context.headersToApply.routing,/^incy:\/\/routing\/onadd\//);
-        if(mode==='manual') assert.deepEqual(context.headersToApply,{Routing:'off'});
-        if(mode==='fallback') {
-            assert.equal(JSON.parse(Buffer.from(context.headersToApply.routing.split('/onadd/')[1],'base64')).Geositeurl,'');
-            assert.equal(context.headersToApply['x-remnacust-geofiles-delivery'],'inline');
+        assert.deepEqual(config.routing.rules[0].ip.split(','), networks, mode);
+        assert.ok(Buffer.byteLength(JSON.stringify(config, null, 4)) < 500_000, mode);
+        if (mode === 'download')
+            assert.match(context.headersToApply.routing, /^incy:\/\/routing\/onadd\//);
+        if (mode === 'manual') assert.deepEqual(context.headersToApply, { Routing: 'off' });
+        if (mode === 'fallback') {
+            assert.equal(
+                JSON.parse(
+                    Buffer.from(context.headersToApply.routing.split('/onadd/')[1], 'base64'),
+                ).Geositeurl,
+                '',
+            );
+            assert.equal(context.headersToApply['x-remnacust-geofiles-delivery'], 'inline');
         }
     }
 });
 
 test('oversized unmanaged StringLists are rejected instead of disguised by wire compaction', async () => {
-    const networks = Array.from({length:26000}, (_,i)=>`100.${i >> 8}.${i & 255}.0/24`);
-    const generator={async generateConfig(){return JSON.stringify([{inbounds:[],outbounds:[],routing:{rules:[{ip:networks,outboundTag:'direct'}]}}]);}};
-    const renderer=new RenderTemplatesService({resolveProxyConfig:async()=>[]},null,null,null,null,generator,revisionCache);
-    for(const client of ['INCY/2.6.2/iOS','Happ/6.2.0'])for(const manual of [false,true]){
-        const context={userAgent:client,matchedResponseType:'XRAY_JSON',isExtendedClient:true,subscriptionSettings:{}};
-        if(manual)context.headersToApply={Routing:'off'};
-        await assert.rejects(renderer.generateSubscription({srrContext:context,user:{id:42},hosts:[]}),/geofile-client-config-size-limit/);
-        if(manual)assert.deepEqual(context.headersToApply,{Routing:'off'});
-    }
+    const networks = Array.from({ length: 26000 }, (_, i) => `100.${i >> 8}.${i & 255}.0/24`);
+    const generator = {
+        async generateConfig() {
+            return JSON.stringify([
+                {
+                    inbounds: [],
+                    outbounds: [],
+                    routing: { rules: [{ ip: networks, outboundTag: 'direct' }] },
+                },
+            ]);
+        },
+    };
+    const renderer = new RenderTemplatesService(
+        { resolveProxyConfig: async () => [] },
+        null,
+        null,
+        null,
+        null,
+        generator,
+        revisionCache,
+    );
+    for (const client of ['INCY/2.6.2/iOS', 'Happ/6.2.0'])
+        for (const manual of [false, true]) {
+            const context = {
+                userAgent: client,
+                matchedResponseType: 'XRAY_JSON',
+                isExtendedClient: true,
+                subscriptionSettings: {},
+            };
+            if (manual) context.headersToApply = { Routing: 'off' };
+            await assert.rejects(
+                renderer.generateSubscription({ srrContext: context, user: { id: 42 }, hosts: [] }),
+                /geofile-client-config-size-limit/,
+            );
+            if (manual) assert.deepEqual(context.headersToApply, { Routing: 'off' });
+        }
 });
 
 test('INCY rounds the longest requested interval up to supported whole hours', async () => {

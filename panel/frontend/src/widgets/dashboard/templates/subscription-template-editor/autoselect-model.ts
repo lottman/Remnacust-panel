@@ -352,6 +352,15 @@ export function setBalancerStrategy(text: string, index: number, strategy: strin
     const oldSelectors: string[] = before.routing.balancers[index].selector ?? []
     let next = editTemplate(text, ['routing', 'balancers', index, 'strategy', 'type'], strategy)
     if (
+        strategy !== 'roundRobin' &&
+        before.routing.balancers[index].strategy?.settings?.remnacustOrder !== undefined
+    )
+        next = editTemplate(
+            next,
+            ['routing', 'balancers', index, 'strategy', 'settings', 'remnacustOrder'],
+            undefined
+        )
+    if (
         strategy === 'priority' &&
         oldSelectors.includes(before.routing.balancers[index].fallbackTag)
     )
@@ -802,7 +811,15 @@ export function validationPath(config: JsonObject): string | null {
         if (!rule || typeof rule !== 'object' || Array.isArray(rule)) continue
         if (rule.outboundTag !== undefined) {
             const tag = rule.outboundTag
-            if (typeof tag !== 'string' || !tag || (!outbounds.dynamic && !outbounds.has(tag)))
+            if (
+                typeof tag !== 'string' ||
+                !tag ||
+                (!outbounds.dynamic &&
+                    !outbounds.has(tag) &&
+                    !/^host:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(
+                        tag
+                    ))
+            )
                 return `routing.rules.${index}.outboundTag`
         }
         if (rule.balancerTag !== undefined && !balanceTags.has(rule.balancerTag))

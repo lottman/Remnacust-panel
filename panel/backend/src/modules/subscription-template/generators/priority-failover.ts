@@ -7,10 +7,87 @@ import { ClientPoolError } from './client-pool';
 type Config = Record<string, any>;
 export const MAX_PRIORITY_MEMBERS = 128;
 
-export function materializePriority<T extends object>(input: T): T {
+function materializeOrderedRoundRobin<T extends object>(input: T): T {
     const source = input as Config;
-    if (!source.routing?.balancers?.some((item: Config) => item.strategy?.type === 'priority'))
+    if (
+        !source.routing?.balancers?.some(
+            (item: Config) =>
+                item.strategy?.type === 'roundRobin' &&
+                item.strategy.settings?.remnacustOrder === true,
+        )
+    )
         return input;
+    const config: Config = structuredClone(source);
+    const original: Config[] = config.outbounds ?? [];
+    const aliases: Config[] = [];
+    const used = new Set([
+        ...original.map((item) => item.tag),
+        ...config.routing.balancers.map((item: Config) => item.tag),
+    ]);
+    let total = 0;
+    for (const [index, balance] of config.routing.balancers.entries()) {
+        if (
+            balance.strategy?.type !== 'roundRobin' ||
+            balance.strategy.settings?.remnacustOrder !== true
+        )
+            continue;
+        const members: Config[] = [];
+        const seen = new Set<string>();
+        for (const prefix of balance.selector ?? []) {
+            if (typeof prefix !== 'string' || !prefix)
+                throw new ClientPoolError('round-robin-selector');
+            for (const outbound of original)
+                if (
+                    typeof outbound.tag === 'string' &&
+                    outbound.tag.startsWith(prefix) &&
+                    !seen.has(outbound.tag)
+                ) {
+                    seen.add(outbound.tag);
+                    members.push(outbound);
+                }
+        }
+        total += members.length;
+        if (!members.length || members.length > 128 || total > 256)
+            throw new ClientPoolError('round-robin-members-limit');
+        const stem =
+            'rc-order-' +
+            createHash('sha256').update(`${index}:${balance.tag}`).digest('hex').slice(0, 16) +
+            '-';
+        if (
+            [...used].some((tag) => typeof tag === 'string' && tag.startsWith(stem)) ||
+            config.routing.balancers.some(
+                (other: Config) =>
+                    other !== balance &&
+                    other.selector?.some((prefix: string) => stem.startsWith(prefix)),
+            )
+        )
+            throw new ClientPoolError('round-robin-tag-conflict');
+        balance.selector = members.map((member, position) => {
+            const tag = `${stem}${String(position + 1).padStart(3, '0')}!`;
+            aliases.push({ ...member, tag });
+            used.add(tag);
+            for (const key of ['observatory', 'burstObservatory']) {
+                const observer = config[key];
+                if (
+                    observer?.subjectSelector?.some((prefix: string) =>
+                        member.tag.startsWith(prefix),
+                    )
+                )
+                    observer.subjectSelector.push(tag);
+            }
+            return tag;
+        });
+        delete balance.strategy.settings.remnacustOrder;
+        if (!Object.keys(balance.strategy.settings).length) delete balance.strategy.settings;
+    }
+    config.outbounds = [...original, ...aliases];
+    return config as T;
+}
+
+export function materializePriority<T extends object>(input: T): T {
+    const source = materializeOrderedRoundRobin(input) as Config;
+    if (!source.routing?.balancers?.some((item: Config) => item.strategy?.type === 'priority'))
+        return source as T;
     if (source.routing.script) throw new ClientPoolError('priority-routing-script');
     const config: Config = structuredClone(source);
     const original: Config[] = config.outbounds ?? [];

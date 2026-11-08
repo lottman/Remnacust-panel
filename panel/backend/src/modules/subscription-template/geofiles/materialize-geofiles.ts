@@ -167,12 +167,15 @@ export async function materializeGeofiles(
                 !balancer &&
                 !dynamic &&
                 !standardProxy &&
+                !/^host:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(
+                    target,
+                ) &&
                 !root.outbounds?.some((item: ObjectValue) => item.tag === target)
             )
                 throw new Error('geofile-target');
             const outbound =
                 !balancer && !dynamic
-                    ? root.outbounds.find((item: ObjectValue) => item.tag === target)
+                    ? root.outbounds?.find((item: ObjectValue) => item.tag === target)
                     : undefined;
             if (
                 outbound &&

@@ -241,3 +241,104 @@ test('pool injection honors disabled hosts and Xray JSON exclusions for every ex
         assert.deepEqual(addresses, ['allowed.example.com']);
     }
 });
+
+test('geofile host routes use only already-authorized direct host credentials, including the recipient itself', async () => {
+    const id = '12345678-1234-1234-1234-123456789abc';
+    const recipient = host(id, false);
+    const target = 'host:' + id;
+    const template = {
+        outbounds: [{ tag: 'direct', protocol: 'freedom' }],
+        routing: { rules: [{ domain: ['domain:example.com'], outboundTag: target }] },
+    };
+    const generator = new XrayJsonGeneratorService({
+        getCachedTemplateByType: async () => template,
+    });
+    const [config] = JSON.parse(
+        await generator.generateConfig({ hosts: [recipient], isExtendedClient: false }),
+    );
+    assert.equal(
+        config.outbounds.find((item) => item.tag === target).settings.vnext[0].address,
+        recipient.address,
+    );
+    assert.deepEqual(template.outbounds, [{ tag: 'direct', protocol: 'freedom' }]);
+    for (const candidate of [
+        undefined,
+        { ...recipient, metadata: { ...recipient.metadata, isDisabled: true } },
+        { ...recipient, clientOverrides: { ...recipient.clientOverrides, selectionOnly: true } },
+    ]) {
+        const own = host('another', false);
+        await assert.rejects(
+            generator.generateConfig({
+                hosts: candidate ? [own, candidate] : [own],
+                isExtendedClient: false,
+            }),
+            /geofile-host-unavailable/,
+        );
+    }
+    const conflicting = { ...template, outbounds: [{ tag: target, protocol: 'freedom' }] };
+    await assert.rejects(
+        new XrayJsonGeneratorService({
+            getCachedTemplateByType: async () => conflicting,
+        }).generateConfig({ hosts: [recipient], isExtendedClient: false }),
+        /geofile-host-conflict/,
+    );
+});
+
+test('a shared regex selection budget excludes slow credential registration and reuses matches per request', async () => {
+    const load = require('./load-typescript.cjs');
+    const path = require('node:path');
+    const bounded = load(path.join(__dirname, '../src/common/utils/bounded-regex.ts'));
+    try {
+        await bounded.configuredRegex.test('^source$', 'source');
+        const { XrayJsonGeneratorService: Generator } = source(
+            'modules/subscription-template/generators/xray-json.generator.service.ts',
+            {
+                '@common/utils/bounded-regex': bounded,
+                './inject-host-selection': source(
+                    'modules/subscription-template/generators/inject-host-selection.ts',
+                ),
+                '../host-mapper': { applyHostMapper: (outbound) => outbound },
+                '@common/utils': {
+                    isNonEmptyObject: (value) => value && Object.keys(value).length > 0,
+                },
+            },
+        );
+        const template = {
+            outbounds: [{ tag: 'direct', protocol: 'freedom' }],
+            remnawave: {
+                injectHosts: [
+                    {
+                        tagPrefix: 'pool',
+                        selectFrom: 'HIDDEN',
+                        mode: 'all',
+                        selector: { type: 'remarkRegex', pattern: '^source$' },
+                    },
+                ],
+            },
+        };
+        const members = [host('source')];
+        let calls = 0;
+        const result = JSON.parse(
+            await new Generator({ getCachedTemplateByType: async () => template }).generateConfig({
+                hosts: [host('first', false), host('second', false), ...members],
+                isExtendedClient: false,
+                bindAutoselect: async () => {
+                    if (++calls === 1) await new Promise((resolve) => setTimeout(resolve, 1100));
+                    return members;
+                },
+            }),
+        );
+        assert.equal(result.length, 2);
+        assert.equal(calls, 2);
+        assert(
+            result.every((config) => config.outbounds.some((outbound) => outbound.tag === 'pool')),
+        );
+        const generator = new Generator({});
+        await assert.rejects(
+            generator.matchPoolRegex('new', 'input', { remainingMs: 0, matches: new Map() }),
+            bounded.RegexBudgetError,
+        );
+    } finally {
+        await bounded.configuredRegex.close();
+    }
+});

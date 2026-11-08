@@ -1,5 +1,6 @@
 import type { JsonObject } from './autoselect-model'
 import type { ClientFormat } from './client-template-model'
+import type { GetHostsCommand } from '@remnawave/backend-contract'
 
 import {
     Alert,
@@ -74,8 +75,10 @@ export function GeofileAddressRules({
     config,
     format,
     getValue,
-    onChange
+    onChange,
+    hosts = []
 }: {
+    hosts?: GetHostsCommand.Response['response']
     config: JsonObject
     format: ClientFormat
     getValue: () => string
@@ -115,7 +118,13 @@ export function GeofileAddressRules({
             return { groups: [], invalid: true }
         }
     }, [config, format])
-    const targets = addressRuleTargets(config, format)
+    const hostLabels = new Map(hosts.map((host) => [`host:${host.uuid}`, host.remark]))
+    const targets: AddressRuleTarget[] = [
+        ...addressRuleTargets(config, format),
+        ...(format === 'XRAY_JSON'
+            ? hosts.map((host) => ({ kind: 'outbound' as const, name: `host:${host.uuid}` }))
+            : [])
+    ]
     const defaultTarget = targets.find(
         (target) => target.kind === 'action' && target.name === 'DIRECT'
     )
@@ -134,7 +143,9 @@ export function GeofileAddressRules({
             ? t('geofiles.direct')
             : target.kind === 'action' && target.name === 'REJECT'
               ? t('geofiles.reject')
-              : t('geofiles.route-target', { name: target.name })
+              : hostLabels.has(target.name)
+                ? t('geofiles.via-host', { name: hostLabels.get(target.name) })
+                : t('geofiles.route-target', { name: target.name })
     const close = () => {
         if (!editor) return
         const dirty =

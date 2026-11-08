@@ -221,6 +221,13 @@ const routeReferenceNotes = {
     zh: ' 通过 API 保存时也会检查规则引用的出站和均衡器。不存在的名称不会被替换为 DIRECT 或其他路由：编辑器文本作为草稿保留并显示准确的错误路径，生效模板保持不变。由主机备注或标签生成的名称在生成订阅时确定。'
 }
 
+const orderNotes = {
+    ru: 'Порядок серверов настраивается в отдельном окне кнопкой «Порядок серверов»: стрелки меняют позиции, длинный список разбит на страницы. Для точного порядка отдельных серверов выберите хосты и все выбранные хосты. «По очереди» распределяет новые соединения по кругу; это не резервирование до отказа первого сервера. Для такого поведения выберите «По приоритету: первый доступный». Явно настроенный порядок round-robin сохраняется и после сортировки тегов ядром. До 128 участников одного балансера и 256 на конфигурацию. После изменения сохраните шаблон и обновите подписку.',
+    en: 'Use Server order to open the ordering dialog. Arrows move members and long lists are paginated. Select explicit hosts and all selected hosts for precise per-server order. Round robin rotates new connections; it does not retain the first server until failure. Use Priority: first available for failover. Explicit round-robin order is retained after native tag sorting, with up to 128 members per balancer and 256 per configuration. Save the template and refresh the subscription after changing the order.',
+    fa: 'با دکمه «ترتیب سرورها» پنجره تنظیم ترتیب را باز کنید. پیکان‌ها ترتیب را تغییر می‌دهند و فهرست بلند صفحه‌بندی می‌شود. برای ترتیب دقیق، میزبان‌های مشخص و همه میزبان‌های انتخاب‌شده را برگزینید. حالت چرخشی اتصال‌های جدید را بین سرورها پخش می‌کند؛ برای استفاده از سرور اول تا زمان قطع، حالت اولین سرور در دسترس را انتخاب کنید. ترتیب صریح چرخشی پس از مرتب‌سازی تگ‌های هسته حفظ می‌شود؛ حداکثر ۱۲۸ عضو در هر متعادل‌ساز و ۲۵۶ عضو در هر پیکربندی. الگو را ذخیره و اشتراک را به‌روز کنید.',
+    zh: '点击“服务器顺序”在独立窗口调整顺序，使用箭头移动成员，长列表分页显示。若需精确的服务器顺序，请选择具体主机及全部已选主机。轮询会循环分配新连接；若只想在前一台不可用时切换，请选择“优先级：首个可用”。显式轮询顺序在内核排序标签后仍保持，每个均衡器最多 128 个成员，每个配置最多 256 个。修改后保存模板并刷新订阅。'
+}
+
 export function explainAutoselect(articles) {
     const template = articles.find((article) => article.id === 'templates')
     for (const [id, translations] of sections)
@@ -233,7 +240,8 @@ export function explainAutoselect(articles) {
                         title: translations[index][0],
                         body:
                             translations[index][1] +
-                            (id === 'templates-assignments' ? routeReferenceNotes[language] : '')
+                            (id === 'templates-assignments' ? routeReferenceNotes[language] : '') +
+                            (id === 'templates-priority' ? '\n\n' + orderNotes[language] : '')
                     }
                 ])
             )

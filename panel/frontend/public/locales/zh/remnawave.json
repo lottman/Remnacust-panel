@@ -3312,6 +3312,8 @@
         "sark": "萨克岛"
     },
     "autoselect": {
+        "server-order": "服务器顺序",
+        "round-robin-summary": "新连接按顺序轮流分配。若只想在前一个服务器不可用时切换，请选择“优先级：首个可用”。",
         "editing": "编辑",
         "title": "自动选择",
         "description": "在同一区域配置主机选择和负载均衡。图形界面与代码编辑同一份草稿。",
@@ -3971,6 +3973,7 @@
         "use-pool-help": "关闭后仍按原有方式添加符合条件的主机。手动配置的组成员将保留。"
     },
     "geofiles": {
+        "via-host": "通过主机：{{name}}",
         "title": "地理规则文件",
         "help": "为模板附加规则数据集。保存模板并更新订阅后生效。",
         "library": "文件库",
@@ -4099,7 +4102,7 @@
         "address-count": "地址数：{{count}}",
         "manual-delete": "删除这些规则？",
         "addresses": "地址",
-        "manual-address-help": "每行一个地址。example.com 包括子域名；full:example.com 仅匹配该域名。也支持 keyword:、regexp:、IP 和 CIDR。",
+        "manual-address-help": "每行输入一个地址，或粘贴以逗号分隔、带引号的 JSON 字符串列表。example.com 包含子域名；full:example.com 仅匹配该域名。也支持 keyword:、regexp:、IP 和 CIDR。",
         "editor-title": "编辑：{{name}}",
         "editor-copy-help": "预设将保存为独立副本。请输入新名称。副本会替换此模板中的原集合，其他模板不变。",
         "editor-shared-help": "文件更改将影响所有使用它的模板。自动源更新会关闭，以保留您的编辑。",

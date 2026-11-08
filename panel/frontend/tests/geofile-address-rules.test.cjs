@@ -380,3 +380,22 @@ for (const format of ['XRAY_JSON', 'SINGBOX', 'MIHOMO', 'CLASH', 'STASH']) test(
         assert.deepEqual(output.route.rules[2], { action: 'sniff' });
     } else assert.deepEqual(output.rules, ['DOMAIN-SUFFIX,example.com,DIRECT', 'IP-CIDR6,2001:db8::/32,DIRECT', 'MATCH,VPN']);
 });
+
+
+test('quoted JSON arrays and pasted comma-separated strings retain IPv4, IPv6 and domain semantics', () => {
+    const lines = '"0.0.0.0/8",\n"::1/128",\n"domain:localhost",\n"regexp:[.]ru$",'
+    const expected = parseAddressRules('0.0.0.0/8\n::1/128\ndomain:localhost\nregexp:[.]ru$');
+    assert.deepEqual(parseAddressRules(lines), expected);
+    assert.deepEqual(parseAddressRules('[' + lines.replace(/,$/, '') + ']'), expected);
+    assert.deepEqual(parseAddressRules('"full:login.example.com"'), parseAddressRules('full:login.example.com'));
+    for (const input of ['["example.com",{}]', '["example.com",null]', '"example.com",alert(1)', '["example.com\\nother.example"]', '["999.0.0.1"]'])
+        assert.throws(() => parseAddressRules(input), /address-rule/);
+});
+
+test('Xray manual address rules can reference a host destination without inventing an unrestricted outbound', () => {
+    const target = 'host:12345678-1234-1234-1234-123456789abc';
+    const result = JSON.parse(changeAddressRule(JSON.stringify(base()), 'XRAY_JSON', undefined, 'example.com', outbound(target)));
+    assert.equal(result.routing.rules[0].outboundTag, target);
+    assert.deepEqual(result.outbounds, base().outbounds);
+    assert.throws(() => changeAddressRule(JSON.stringify(base()), 'XRAY_JSON', undefined, 'example.com', outbound('host:../../secret')), /target/);
+});

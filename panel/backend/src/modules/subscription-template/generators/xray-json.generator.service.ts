@@ -232,14 +232,16 @@ export class XrayJsonGeneratorService {
             const configs: string[] = [];
             let outputBytes = 2;
             const append = (config: XrayJsonConfig) => {
-                const rendered = ensureResponseTimeProbes(materializePriority(config));
+                const rendered = ensureResponseTimeProbes(
+                    materializePriority(this.addHostRoutes(config, hosts)),
+                );
                 assertRenderedXrayRoutes(rendered);
                 const serialized = JSON.stringify({ ...rendered, xray: mode });
                 outputBytes += Buffer.byteLength(serialized) + (configs.length ? 1 : 0);
                 assertSubscriptionSize(outputBytes);
                 configs.push(serialized);
             };
-            const regexDeadline = Date.now() + 1000;
+            const regexBudget = { remainingMs: 1000, matches: new Map<string, boolean>() };
 
             for (const source of hosts) {
                 if (source.metadata.isHidden) continue;
@@ -281,7 +283,7 @@ export class XrayJsonGeneratorService {
                             host,
                             hosts,
                             isExtendedClient,
-                            regexDeadline,
+                            regexBudget,
                             params.autoselectCandidates
                                 ? await params.autoselectCandidates()
                                 : undefined,
@@ -526,12 +528,67 @@ export class XrayJsonGeneratorService {
         );
     }
 
+    private addHostRoutes(config: XrayJsonConfig, hosts: ResolvedProxyConfig[]): XrayJsonConfig {
+        const targets = new Set<string>();
+        for (const rule of config.routing?.rules ?? []) {
+            const tag = rule.outboundTag;
+            if (
+                typeof tag === 'string' &&
+                /^host:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(tag)
+            )
+                targets.add(tag);
+        }
+        if (!targets.size) return config;
+        if (targets.size > 32) throw new ClientPoolError('geofile-host-limit');
+        const outbounds = [...(config.outbounds ?? [])];
+        for (const tag of targets) {
+            if (outbounds.some((item) => item.tag === tag))
+                throw new ClientPoolError('geofile-host-conflict');
+            const host = hosts.find((item) => item.metadata.uuid === tag.slice(5));
+            if (
+                !host ||
+                host.metadata.isDisabled ||
+                host.metadata.excludeFromSubscriptionTypes.includes('XRAY_JSON') ||
+                host.clientOverrides.selectionOnly
+            )
+                throw new ClientPoolError('geofile-host-unavailable');
+            outbounds.push(this.buildOutbound(host, tag));
+        }
+        return { ...config, outbounds };
+    }
+
+    private async matchPoolRegex(
+        pattern: string,
+        input: string,
+        budget: number | { remainingMs: number; matches: Map<string, boolean> },
+    ): Promise<boolean> {
+        if (typeof budget === 'number') return configuredRegex.test(pattern, input, '', budget);
+        const key = JSON.stringify([pattern, input]);
+        const cached = budget.matches.get(key);
+        if (cached !== undefined) return cached;
+        const started = performance.now();
+        try {
+            const result = await configuredRegex.test(
+                pattern,
+                input,
+                '',
+                Date.now() + Math.max(0, Math.floor(budget.remainingMs)),
+            );
+            if (budget.matches.size >= 256)
+                budget.matches.delete(budget.matches.keys().next().value!);
+            budget.matches.set(key, result);
+            return result;
+        } finally {
+            budget.remainingMs = Math.max(0, budget.remainingMs - (performance.now() - started));
+        }
+    }
+
     private async resolveHosts(
         entry: TInjectHostsEntry,
         selectFrom: TRemnawaveInjectorSelectFrom,
         host: ResolvedProxyConfig,
         allHosts: ResolvedProxyConfig[],
-        deadline: number,
+        deadline: number | { remainingMs: number; matches: Map<string, boolean> },
     ): Promise<ResolvedProxyConfig[]> {
         const selector = entry.selector;
         const source = selectFrom ?? 'HIDDEN';
@@ -568,12 +625,7 @@ export class XrayJsonGeneratorService {
                 const selected: ResolvedProxyConfig[] = [];
                 for (const candidate of candidates) {
                     if (
-                        await configuredRegex.test(
-                            selector.pattern,
-                            candidate.finalRemark,
-                            '',
-                            deadline,
-                        )
+                        await this.matchPoolRegex(selector.pattern, candidate.finalRemark, deadline)
                     )
                         selected.push(candidate);
                 }
@@ -595,7 +647,7 @@ export class XrayJsonGeneratorService {
                 const selected: ResolvedProxyConfig[] = [];
                 for (const candidate of candidates) {
                     for (const tag of candidate.metadata.tags) {
-                        if (await configuredRegex.test(selector.pattern, tag, '', deadline)) {
+                        if (await this.matchPoolRegex(selector.pattern, tag, deadline)) {
                             selected.push(candidate);
                             break;
                         }
@@ -611,7 +663,7 @@ export class XrayJsonGeneratorService {
         host: ResolvedProxyConfig,
         allHosts: ResolvedProxyConfig[],
         isExtendedClient: boolean,
-        deadline: number,
+        deadline: number | { remainingMs: number; matches: Map<string, boolean> },
         candidates?: ResolvedProxyConfig[],
         bindAutoselect?: IGenerateConfigParams['bindAutoselect'],
         selections?: IGenerateConfigParams['autoselectSelections'],

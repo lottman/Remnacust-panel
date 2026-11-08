@@ -127,3 +127,67 @@ test('priority rejects unsafe or unbounded chains without changing the source', 
     };
     assert.equal(materializePriority(plain), plain);
 });
+
+test('explicit round robin order survives native lexicographic tag selection, including ten or more hosts', () => {
+    const source = {
+        outbounds: Array.from({ length: 12 }, (_, index) => ({
+            tag: index ? 'pool-' + (index + 1) : 'pool',
+            protocol: 'http',
+            settings: { servers: [{ address: 'host-' + index, port: 443 }] },
+        })),
+        routing: {
+            balancers: [
+                {
+                    tag: 'auto',
+                    selector: ['pool'],
+                    strategy: { type: 'roundRobin', settings: { remnacustOrder: true } },
+                },
+            ],
+        },
+        observatory: { subjectSelector: ['pool'] },
+    };
+    const snapshot = structuredClone(source);
+    const result = materializePriority(source);
+    const balance = result.routing.balancers[0];
+    const nativeTags = result.outbounds
+        .filter((out) => balance.selector.some((prefix) => out.tag.startsWith(prefix)))
+        .map((out) => out.tag)
+        .sort();
+    assert.deepEqual(
+        nativeTags.map(
+            (tag) => result.outbounds.find((out) => out.tag === tag).settings.servers[0].address,
+        ),
+        source.outbounds.map((out) => out.settings.servers[0].address),
+    );
+    assert.equal(balance.strategy.settings, undefined);
+    assert(nativeTags.every((tag) => result.observatory.subjectSelector.includes(tag)));
+    assert.deepEqual(source, snapshot);
+    assert.equal(result.outbounds.length, 24);
+});
+
+test('ordered round robin respects pool prefix order, deduplicates and rejects empty or oversized selections', () => {
+    const source = template();
+    source.routing.balancers[0].strategy = {
+        type: 'roundRobin',
+        settings: { remnacustOrder: true },
+    };
+    const result = materializePriority(source);
+    const tags = result.routing.balancers[0].selector;
+    assert.deepEqual(
+        tags.map(
+            (tag) => result.outbounds.find((out) => out.tag === tag).settings.servers[0].address,
+        ),
+        ['q.test', 'p.test', 'p-2.test'],
+    );
+    for (const selector of [[], [''], ['missing']]) {
+        const invalid = structuredClone(source);
+        invalid.routing.balancers[0].selector = selector;
+        assert.throws(() => materializePriority(invalid), /round-robin/);
+    }
+    const large = structuredClone(source);
+    large.outbounds = Array.from({ length: 129 }, (_, i) => ({
+        tag: 'p' + i,
+        protocol: 'freedom',
+    }));
+    assert.throws(() => materializePriority(large), /members-limit/);
+});

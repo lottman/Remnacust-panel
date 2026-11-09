@@ -34,7 +34,9 @@ export const USER_MANAGEMENT_SCOPES = [
 ] as const
 
 export const getUserManagementKeys = (resources: readonly Resource[]): string[] => {
-    const available = new Set(resources.flatMap((resource) => resource.endpoints.map(({ key }) => key)))
+    const available = new Set(
+        resources.flatMap((resource) => resource.endpoints.map(({ key }) => key))
+    )
     return USER_MANAGEMENT_SCOPES.filter((scope) => available.has(scope))
 }
 
@@ -67,7 +69,9 @@ export function domainLinkScopeLabel(
     | 'user-domain-links.scope-all'
     | 'user-domain-links.scope-primary'
     | 'user-domain-links.scope-cdn'
+    | 'subscription-domains.scope-credentials'
     | undefined {
+    if (key === 'subscription-domains:credentials') return 'subscription-domains.scope-credentials'
     if (key === DOMAIN_LINK_KEYS.all) return 'user-domain-links.scope-all'
     if (key === DOMAIN_LINK_KEYS.primary) return 'user-domain-links.scope-primary'
     if (key === DOMAIN_LINK_KEYS.cdn) return 'user-domain-links.scope-cdn'

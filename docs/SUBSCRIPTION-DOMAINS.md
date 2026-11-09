@@ -40,9 +40,9 @@
 
    | Название | Значение |
    | --- | --- |
-   | Индивидуальное имя из поля «Название заголовка запроса» | UUID соответствующего CDN-домена из поля «Значение заголовка» |
+   | Индивидуальное имя из поля «Название заголовка запроса» | Готовое секретное значение из поля «Значение заголовка» |
 
-Имя формируется из UUID домена с закрытым ключом установки (HMAC с отдельным контекстом) и не меняется при обычном обновлении панели, изменении домена или перезапуске. Публичный UUID не позволяет вычислить имя по общему алгоритму без закрытого ключа. Отдельная смена APP_SECRET меняет имя: после неё скопируйте новое имя в CDN; UUID-значение остаётся прежним. Сам APP_SECRET остаётся на сервере и никогда не передаётся CDN или клиентам. Хранить дополнительные секреты или переменные .env не требуется. В API оно доступно в `requestHeaderName` (для основного домена — `null`). При переходе с общего `X-Remnacust-CDN` замените в CDN только имя, сохранив значение. Старое имя поддерживается для совместимости. Нейтральное имя не скрывает остальные признаки трафика и не подтверждает происхождение запроса.
+Имя и ключ формируются независимо для каждого CDN с помощью HMAC и закрытого APP_SECRET установки. В текущей версии значение содержит UUID и отдельную подпись; скопируйте его целиком. APP_SECRET остаётся только на сервере. Смена APP_SECRET меняет и имена, и ключи: после неё обновите настройки всех CDN. Значение выдаётся только отдельным защищённым API с правом изменения доменов; обычное чтение списка возвращает лишь публичное имя заголовка. Старое UUID-значение и X-Remnacust-CDN работают как выбор адреса только в открытом режиме. Они не доказывают происхождение запроса и не обходят ограничение источника.
 
 4. Сохраните пути, query string и `GET`/`HEAD`. Отключите принудительное кэширование персональных ответов подписки и сохраняйте Cache-Control источника.
 
@@ -54,7 +54,7 @@
 
 ### Ранее выданные ссылки
 
-Ранее выдавались ссылки `https://cdn.example.com/cdn/<UUID>/<ключ>`. Они продолжают приниматься, но больше не формируются для новых пользователей, API и шаблонов. Для обычных ссылок при подмене Host настройте заголовок запроса к источнику, указанный выше. Раздел «Проверить ссылку с этим доменом» в настройках CDN преобразует ссылку или ключ локально в браузере и не добавляет ID в путь.
+Ранее выдавались ссылки `https://cdn.example.com/cdn/<UUID>/<ключ>`. В открытом режиме они продолжают приниматься; при ограничении источника дополнительно нужен секретный заголовок CDN. Такие ссылки больше не формируются для новых пользователей, API и шаблонов. Для обычных ссылок при подмене Host настройте заголовок запроса к источнику, указанный выше. Раздел «Проверить ссылку с этим доменом» в настройках CDN преобразует ссылку или ключ локально в браузере и не добавляет ID в путь.
 
 При постепенном обновлении компонентов старые страницы подписки продолжают получать прежний формат публичных метаданных резолвера. Новая страница запрашивает версию `2` и понимает также прежний ответ панели. Для полного перехода выдачи обновляйте панель и страницу вместе.
 
@@ -83,3 +83,27 @@ UUID — публичный селектор зарегистрированно�
 | Удалить | `DELETE /api/subscription-domains/:uuid` | `subscription-domains:delete` |
 
 В запросах создания и изменения передавайте `name`, `domain`, `path`, `kind`, `parentUuid` и `isDefault`. `path` — необязательный статичный путь подписки, например `/api/sub`; CDN без пути наследует путь основного домена. Для `domain` принимаются только публичные hostname без схемы, порта и пути. Для `CDN` обязателен UUID основного домена; для `PRIMARY` `parentUuid` должен быть `null`.
+
+
+## Доступ через CDN / CDN origin access
+
+В карточке основного домена выберите «Открытый доступ», «Только через CDN» или «Перенаправлять на CDN». Последний режим переводит прямые GET/HEAD-запросы на выбранный CDN этого же домена, сохраняя ключ подписки, /json, путь устройства, геофайла и параметры запроса. Проверка охватывает страницу, профили и DAT с контрольными суммами. Адрес источника и SUB_PUBLIC_DOMAIN остаются основными: не заменяйте их CDN-доменом. У одного основного домена не более трёх CDN.
+
+Сначала обновите панель и нашу страницу подписки. В «Настроить CDN» скопируйте индивидуальные имя и значение заголовка в заголовки ЗАПРОСОВ VK/Яндекса. CDN должен перезаписывать этот заголовок, а не добавлять второе значение. Ключ нельзя помещать в ответы, публичные ссылки или настройки приложения. Получение ключа через POST /api/subscription-domains/{uuid}/credentials требует прав изменения доменов либо отдельного права credentials; чтение списка ключ не раскрывает. Публичный UUID и старый /cdn/ID выбирают адрес, но не открывают закрытый источник. Каждый CDN имеет отдельные имя и ключ, привязанные к этой установке.
+
+Проверьте через CDN HTML, обычную ссылку, /json и скачивание геофайлов до включения ограничения. Для CDN без правильного ключа возвращается 403, а не повторное перенаправление. Прямой запрос к закрытому источнику получает 403; режим перенаправления отвечает 307 без кэширования. Если приложение не следует перенаправлениям, выдайте ему CDN-ссылку сразу. Изменения могут распространяться между процессами до пяти секунд. При обновлении существующие домены остаются открытыми. Старые страницы работают в открытом режиме; для закрытого режима нужна обновлённая наша страница либо прямой CDN-доступ к API панели с тем же заголовком. Это защита выдачи, а не сетевое скрытие IP или изменение VPN-транспорта.
+
+Edit the primary domain and choose Open access, CDN only, or Redirect to CDN. Redirect sends direct GET/HEAD requests to a selected CDN belonging to the same primary, preserving the subscription key, /json, device paths, geofile paths and query parameters. The policy covers HTML, profiles, DAT and checksums. Keep the origin address and SUB_PUBLIC_DOMAIN on the primary domain; never replace them with the CDN hostname. Each primary supports at most three CDNs.
+
+Update both the panel and our subscription page first. In Configure CDN, copy its individual header name and value into REQUEST headers in VK/Yandex. The CDN must overwrite that header, not append another value. Never put the key in response headers, public links or client settings. POST /api/subscription-domains/{uuid}/credentials requires domain write access or the specific credentials permission; list/read access does not disclose the key. A public UUID or legacy /cdn/ID selects a domain but cannot unlock a restricted origin. Every CDN has a separate name and key tied to this installation.
+
+Test CDN HTML, the base link, /json and geofile downloads before restricting access. A CDN request without the correct key returns 403 instead of looping. Direct access returns 403 in CDN-only mode or an uncacheable 307 in redirect mode. Give clients the CDN link directly if they do not follow redirects. Changes may take up to five seconds across processes. Existing domains remain open after upgrade. Old pages work in open mode; restricted mode needs our updated page or direct CDN access to the panel subscription API with the same request header. This protects delivery; it does not hide network IPs or change VPN transports.
+
+
+## JSON и Throne / JSON and Throne
+
+При включённом «Отдавать JSON на базовом пути подписки» распознанные Throne 1.x от стабильной 1.2.0 получают полный Xray JSON на обычной ссылке; при передаче beta-номера поддерживается 1.2.0-beta.5 и новее. Это одинаково для основного и CDN-домена. Старые и нераспознанные версии не переключаются автоматически. Явные `/json` и `/v2ray-json` имеют приоритет над распознаванием браузера на странице подписки; блокировки доступа и запрет выбора формата по пути в правилах ответов сохраняются. Явно выбранные Mihomo/Clash/sing-box и исключение из базового JSON не заменяются Xray-форматом. Throne не получает специальные расширения Happ/INCY или отдельную доставку DAT автоматически.
+
+With JSON enabled at the base subscription URL, recognized Throne 1.x clients from stable 1.2.0 receive full Xray JSON without a suffix; explicitly reported beta builds are supported from 1.2.0-beta.5. Primary and CDN domains behave identically. Older or unrecognized versions retain their existing format. Explicit `/json` and `/v2ray-json` override browser detection on the subscription page, while access controls and the response-rule setting that disables format paths remain effective. Explicit Mihomo/Clash/sing-box formats and base-JSON opt-outs are preserved. Throne is not automatically granted Happ/INCY extensions or separate DAT delivery.
+
+Основание / Sources: [Throne changelog](https://github.com/throneproj/Throne/blob/dev/CHANGELOG.md), [subscription parser](https://github.com/throneproj/Throne/blob/dev/src/configs/sub/SubscriptionParser.cpp), [User-Agent implementation](https://github.com/throneproj/Throne/blob/dev/src/database/SettingsRepo.cpp).

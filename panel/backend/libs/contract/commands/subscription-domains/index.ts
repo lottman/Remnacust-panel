@@ -74,3 +74,20 @@ export namespace DeleteSubscriptionDomainCommand {
         { scope: 'delete', kind: 'write' },
     );
 }
+
+export namespace GetSubscriptionDomainCredentialsCommand {
+    export const url = '/api/subscription-domains/:uuid/credentials';
+    export const TSQ_url = url;
+    export const endpointDetails = getEndpointDetails(
+        ':uuid/credentials',
+        'post',
+        'Get private CDN origin credentials',
+        { scope: 'credentials', kind: 'write' },
+    );
+    export const ResponseSchema = z.object({
+        response: z.object({
+            requestHeaderName: z.string().regex(/^X-[a-f0-9]{24}$/),
+            requestHeaderValue: z.string().max(101),
+        }),
+    });
+}

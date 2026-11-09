@@ -261,3 +261,21 @@ test('device routes keep the credential in the backend path, reject malformed in
         ':shortUuid/device/:token/:clientType',
     ]);
 });
+
+test('explicit supported format takes precedence over browser detection and unknown formats are rejected', async () => {
+    const noop = () => () => {};
+    const { SubscriptionController } = load(path.join(__dirname, '../src/modules/subscription/subscription.controller.ts'), {
+        '@common/decorators/get-ip': { ClientIp: noop }, '@common/decorators/get-resolved-short-uuid': { ResolvedShortUuid: noop },
+        '@common/decorators/is-browser': { IsBrowser: noop }, '@modules/webpage/webpage.service': {}, './subscription.service': {},
+    });
+    let profiles = 0, html = 0;
+    const controller = new SubscriptionController({ serveSubscriptionPage: async (...args) => { profiles++; return args[4]; } }, { serveWebpage: async () => { html++; return 'html'; } });
+    for (const format of ['json', 'v2ray-json', 'singbox', 'mihomo', 'clash', 'stash']) {
+        assert.equal(await controller.root('192.0.2.1', undefined, { headers: { 'user-agent': 'Mozilla/5.0' } }, {}, 'fixturekey', format, true), format);
+    }
+    assert.equal(html, 0); assert.equal(profiles, 6);
+    assert.equal(await controller.root('192.0.2.1', undefined, { headers: {} }, {}, 'fixturekey', undefined, true), 'html');
+    const res = { status(value) { this.code = value; return this; }, send() {} };
+    await controller.root('192.0.2.1', undefined, { headers: {} }, res, 'fixturekey', 'invalid', false);
+    assert.equal(res.code, 404); assert.equal(profiles, 6);
+});

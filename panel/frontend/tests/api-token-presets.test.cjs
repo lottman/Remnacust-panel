@@ -55,3 +55,9 @@ test('subscription page preset matches the installer and never exposes user mana
     assert.equal(SUBSCRIPTION_PAGE_SCOPES.length,4);
     assert.ok(!SUBSCRIPTION_PAGE_SCOPES.some(key=>key.startsWith('users:')||key.includes('*')));
 });
+
+test('the CDN credential permission has a localized label and is absent from bot/page presets', () => {
+    assert.equal(domainLinkScopeLabel('subscription-domains:credentials'), 'subscription-domains.scope-credentials');
+    assert.ok(!USER_MANAGEMENT_SCOPES.includes('subscription-domains:credentials'));
+    assert.ok(!SUBSCRIPTION_PAGE_SCOPES.includes('subscription-domains:credentials'));
+});

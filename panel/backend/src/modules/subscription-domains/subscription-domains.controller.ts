@@ -20,6 +20,7 @@ import { RolesGuard } from '@common/guards/roles';
 import { ScopesGuard } from '@common/guards/scopes';
 import { CONTROLLERS_INFO } from '@libs/contracts/api';
 import {
+    GetSubscriptionDomainCredentialsCommand,
     ListSubscriptionDomainsCommand,
     GetSubscriptionDomainCommand,
     CreateSubscriptionDomainCommand,
@@ -29,6 +30,9 @@ import {
 import { ROLE } from '@libs/contracts/constants';
 
 import { SubscriptionDomainsService } from './subscription-domains.service';
+export class SubscriptionDomainCredentialsResponseDto extends createZodDto(
+    GetSubscriptionDomainCredentialsCommand.ResponseSchema,
+) {}
 export class SubscriptionDomainBodyDto extends createZodDto(
     CreateSubscriptionDomainCommand.RequestBodySchema,
 ) {}
@@ -49,6 +53,15 @@ export class SubscriptionDomainsQueryDto extends createZodDto(
 @Controller('subscription-domains')
 export class SubscriptionDomainsController {
     constructor(private readonly service: SubscriptionDomainsService) {}
+    @Header('Cache-Control', 'no-store')
+    @Endpoint({
+        command: GetSubscriptionDomainCredentialsCommand,
+        httpCode: HttpStatus.OK,
+        type: SubscriptionDomainCredentialsResponseDto,
+    })
+    async credentials(@Param('uuid', new ParseUUIDPipe()) uuid: string) {
+        return { response: await this.service.credentials(uuid) };
+    }
     @Header('Cache-Control', 'no-store')
     @Endpoint({
         command: ListSubscriptionDomainsCommand,

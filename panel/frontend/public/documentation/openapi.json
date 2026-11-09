@@ -1484,6 +1484,83 @@
         "x-remnacust-kind": "write"
       }
     },
+    "/api/subscription-domains/{uuid}/credentials": {
+      "post": {
+        "operationId": "SubscriptionDomainsController_credentials",
+        "parameters": [
+          {
+            "name": "uuid",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operation successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionDomainCredentialsResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request / Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/RemnawaveBadRequestErrorDto"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RemnawaveValidationErrorDto"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemnawaveNotFoundErrorDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemnawaveInternalServerErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Authorization": []
+          }
+        ],
+        "summary": "Get private CDN origin credentials",
+        "tags": [
+          "Subscription Domains Controller"
+        ],
+        "x-remnacust-access": "api-token",
+        "x-remnacust-scope": "subscription-domains:credentials",
+        "x-remnacust-resource": "subscription-domains",
+        "x-remnacust-kind": "write"
+      }
+    },
     "/api/subscription-domains": {
       "get": {
         "operationId": "SubscriptionDomainsController_list",
@@ -20047,9 +20124,9 @@
     }
   },
   "info": {
-    "title": "Remnacust API v1.1.7.100",
+    "title": "Remnacust API v1.1.7.103",
     "description": "\nRemnacust manages Xray users, nodes, configuration profiles and subscriptions.\n\n## Resources\n* https://t.me/lottman\n* https://github.com/lottman/Remnacust-panel\n",
-    "version": "1.1.7.100",
+    "version": "1.1.7.103",
     "contact": {},
     "license": {
       "name": "AGPL-3.0",
@@ -21088,6 +21165,31 @@
           "response"
         ]
       },
+      "SubscriptionDomainCredentialsResponseDto": {
+        "type": "object",
+        "properties": {
+          "response": {
+            "type": "object",
+            "properties": {
+              "requestHeaderName": {
+                "type": "string",
+                "pattern": "^X-[a-f0-9]{24}$"
+              },
+              "requestHeaderValue": {
+                "type": "string",
+                "maxLength": 101
+              }
+            },
+            "required": [
+              "requestHeaderName",
+              "requestHeaderValue"
+            ]
+          }
+        },
+        "required": [
+          "response"
+        ]
+      },
       "SubscriptionDomainsResponseDto": {
         "type": "object",
         "properties": {
@@ -21126,6 +21228,20 @@
                 "isDefault": {
                   "type": "boolean"
                 },
+                "accessMode": {
+                  "type": "string",
+                  "enum": [
+                    "OPEN",
+                    "CDN_ONLY",
+                    "REDIRECT"
+                  ]
+                },
+                "redirectDomainUuid": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                  "nullable": true
+                },
                 "usersCount": {
                   "type": "integer",
                   "minimum": 0,
@@ -21154,6 +21270,8 @@
                 "kind",
                 "parentUuid",
                 "isDefault",
+                "accessMode",
+                "redirectDomainUuid",
                 "usersCount",
                 "aliasesCount",
                 "publicBaseUrl",
@@ -21211,6 +21329,20 @@
               "isDefault": {
                 "type": "boolean"
               },
+              "accessMode": {
+                "type": "string",
+                "enum": [
+                  "OPEN",
+                  "CDN_ONLY",
+                  "REDIRECT"
+                ]
+              },
+              "redirectDomainUuid": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                "nullable": true
+              },
               "usersCount": {
                 "type": "integer",
                 "minimum": 0,
@@ -21239,6 +21371,8 @@
               "kind",
               "parentUuid",
               "isDefault",
+              "accessMode",
+              "redirectDomainUuid",
               "usersCount",
               "aliasesCount",
               "publicBaseUrl",
@@ -21285,6 +21419,20 @@
           "isDefault": {
             "default": false,
             "type": "boolean"
+          },
+          "accessMode": {
+            "type": "string",
+            "enum": [
+              "OPEN",
+              "CDN_ONLY",
+              "REDIRECT"
+            ]
+          },
+          "redirectDomainUuid": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "nullable": true
           }
         },
         "required": [

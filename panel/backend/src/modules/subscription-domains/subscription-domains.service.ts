@@ -25,6 +25,11 @@ import { HttpExceptionWithErrorCodeType } from '../../common/exception/http-exec
 import { cdnRequestHeaderName } from '../../common/utils/cdn-request-header';
 import { configuredSubscriptionDomain } from '../../common/utils/public-subscription-domain';
 import { isRestApi } from '../../common/utils/startup-app/is-development';
+import {
+    cdnRequestProof,
+    decideDomainAccess,
+    type DomainAccessRequest,
+} from '../../common/utils/subscription-domain-access';
 import { subscriptionDomainBase } from '../../common/utils/subscription-domain-url';
 import {
     SubscriptionDomainEnvironmentService,
@@ -231,7 +236,62 @@ export class SubscriptionDomainsService implements OnModuleInit, OnModuleDestroy
                             where: { isDefault: true },
                             data: { isDefault: false },
                         });
-                    const data = { ...input, path: inheritedPath, isDefault };
+                    const accessMode =
+                        input.kind === 'CDN'
+                            ? 'OPEN'
+                            : (input.accessMode ?? current?.accessMode ?? 'OPEN');
+                    const redirectDomainUuid =
+                        accessMode === 'REDIRECT'
+                            ? (input.redirectDomainUuid ?? current?.redirectDomainUuid ?? null)
+                            : null;
+                    if (accessMode !== 'OPEN') {
+                        if (
+                            !uuid ||
+                            !(await tx.subscriptionDomains.count({
+                                where: { parentUuid: uuid, kind: 'CDN' },
+                            }))
+                        )
+                            throw new BadRequestException('SUBSCRIPTION_DOMAIN_ACCESS_INVALID');
+                        if (redirectDomainUuid) {
+                            const target = await tx.subscriptionDomains.findUnique({
+                                where: { uuid: redirectDomainUuid },
+                            });
+                            if (!target || target.kind !== 'CDN' || target.parentUuid !== uuid)
+                                throw new BadRequestException('SUBSCRIPTION_DOMAIN_ACCESS_INVALID');
+                        } else if (accessMode === 'REDIRECT')
+                            throw new BadRequestException('SUBSCRIPTION_DOMAIN_ACCESS_INVALID');
+                    }
+                    if (
+                        current?.kind === 'CDN' &&
+                        (input.kind !== 'CDN' || input.parentUuid !== current.parentUuid)
+                    ) {
+                        if (
+                            await tx.subscriptionDomains.count({
+                                where: { redirectDomainUuid: uuid },
+                            })
+                        )
+                            throw new ConflictException('SUBSCRIPTION_DOMAIN_IN_USE');
+                        const oldParent = current.parentUuid
+                            ? await tx.subscriptionDomains.findUnique({
+                                  where: { uuid: current.parentUuid },
+                              })
+                            : null;
+                        if (
+                            oldParent?.accessMode &&
+                            oldParent.accessMode !== 'OPEN' &&
+                            (await tx.subscriptionDomains.count({
+                                where: { parentUuid: current.parentUuid, kind: 'CDN' },
+                            })) <= 1
+                        )
+                            throw new ConflictException('SUBSCRIPTION_DOMAIN_IN_USE');
+                    }
+                    const data = {
+                        ...input,
+                        path: inheritedPath,
+                        isDefault,
+                        accessMode,
+                        redirectDomainUuid,
+                    };
                     const row = uuid
                         ? await tx.subscriptionDomains.update({
                               where: { uuid },
@@ -289,6 +349,21 @@ export class SubscriptionDomainsService implements OnModuleInit, OnModuleDestroy
                 await tx.$executeRawUnsafe(`SELECT pg_advisory_xact_lock(${LOCK})`);
                 const row = await tx.subscriptionDomains.findUnique({ where: { uuid } });
                 if (!row) throw new NotFoundException('SUBSCRIPTION_DOMAIN_NOT_FOUND');
+                if (await tx.subscriptionDomains.count({ where: { redirectDomainUuid: uuid } }))
+                    throw new ConflictException('SUBSCRIPTION_DOMAIN_IN_USE');
+                if (row.kind === 'CDN' && row.parentUuid) {
+                    const parent = await tx.subscriptionDomains.findUnique({
+                        where: { uuid: row.parentUuid },
+                    });
+                    if (
+                        parent?.accessMode &&
+                        parent.accessMode !== 'OPEN' &&
+                        (await tx.subscriptionDomains.count({
+                            where: { parentUuid: parent.uuid, kind: 'CDN' },
+                        })) <= 1
+                    )
+                        throw new ConflictException('SUBSCRIPTION_DOMAIN_IN_USE');
+                }
                 if (row.isDefault)
                     throw new ConflictException('SUBSCRIPTION_DOMAIN_DEFAULT_REQUIRED');
                 await tx.subscriptionDomains.delete({ where: { uuid } });
@@ -335,6 +410,21 @@ export class SubscriptionDomainsService implements OnModuleInit, OnModuleDestroy
         return main ? `https://${main.domain}${main.path}` : undefined;
     }
 
+    async access(input: DomainAccessRequest) {
+        return decideDomainAccess(
+            await this.registry(),
+            input,
+            this.config.getOrThrow('APP_SECRET'),
+        );
+    }
+    async credentials(uuid: string) {
+        await this.gatewayBase(uuid);
+        return {
+            requestHeaderName: cdnRequestHeaderName(uuid, this.config.getOrThrow('APP_SECRET')),
+            requestHeaderValue:
+                uuid + '.' + cdnRequestProof(uuid, this.config.getOrThrow('APP_SECRET')),
+        };
+    }
     async gatewayBase(uuid: string): Promise<string> {
         const rows = await this.registry();
         const domain = rows.find((row) => row.uuid === uuid && row.kind === 'CDN');

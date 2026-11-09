@@ -523,18 +523,19 @@ export class GeofilesService {
         categories?: Record<string, string[]>,
     ): Promise<string> {
         const ordered = [...ids].sort();
+        const content = await this.bundleContent(kind, ordered, 2, categories);
+        const revision = createHash('sha256').update(content).digest('hex');
         if (categories) {
-            const selection = { kind, ids: ordered, namespace: 2 as const, categories };
-            await this.bundleContent(kind, ordered, 2, categories);
+            const selection = { kind, ids: ordered, namespace: 2 as const, categories, revision };
             const key = await storeBundleSelection(this.directory(ordered[0]), selection);
             if (key) {
                 return `${this.base}${ordered[0]}/bundles/${key}/bundle-${this.bundleSignature(ordered[0], key)}.dat`;
             }
         }
         await this.bundleContent(kind, ordered);
-        const payload = Buffer.from(JSON.stringify({ kind, ids: ordered, namespace: 2 })).toString(
-            'base64url',
-        );
+        const payload = Buffer.from(
+            JSON.stringify({ kind, ids: ordered, namespace: 2, revision }),
+        ).toString('base64url');
         if (payload.length > 2732) throw new Error('geofile-bundle-size');
         // Some clients append .sha256 to the entire URL, including its query.
         // Put the authenticated selection in the path so both requests stay valid.

@@ -4294,6 +4294,16 @@
         "upgrade": "Update"
     },
     "subscription-domains": {
+        "scope-credentials": "Retrieve private CDN keys",
+        "credentials-failed": "Could not load the CDN key. Domain write permission is required.",
+        "credentials-help": "Set this request header and value in your CDN settings. Each CDN has its own key. Never add it to response headers.",
+        "access-mode": "Primary domain access",
+        "access-help": "Configure the request header on each CDN first. Applies to the subscription page, profiles and geofiles.",
+        "access-OPEN": "Open access",
+        "access-CDN_ONLY": "CDN only",
+        "access-REDIRECT": "Redirect to CDN",
+        "redirect-target": "Redirect destination",
+        "access-warning": "Requests without the correct CDN key will be rejected. Test your CDN before saving; keep the origin domain and Host/SNI unchanged.",
         "loading": "Loading domains",
         "load-failed": "Could not load subscription domains. Try again.",
         "environment-synced": "The primary domain is synchronized with SUB_PUBLIC_DOMAIN in .env.",

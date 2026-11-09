@@ -57,9 +57,22 @@ export const SubscriptionDomainInputSchema = z
         kind: z.enum(['PRIMARY', 'CDN']),
         parentUuid: z.uuid().nullable().default(null),
         isDefault: z.boolean().default(false),
+        accessMode: z.enum(['OPEN', 'CDN_ONLY', 'REDIRECT']).optional(),
+        redirectDomainUuid: z.uuid().nullable().optional(),
     })
     .strict()
     .superRefine((data, ctx) => {
+        if (
+            (data.kind === 'CDN' &&
+                ((data.accessMode && data.accessMode !== 'OPEN') || data.redirectDomainUuid)) ||
+            (data.accessMode === 'REDIRECT' && !data.redirectDomainUuid) ||
+            (data.accessMode && data.accessMode !== 'REDIRECT' && data.redirectDomainUuid)
+        )
+            ctx.addIssue({
+                code: 'custom',
+                message: 'Invalid domain access policy',
+                path: ['accessMode'],
+            });
         if ((data.kind === 'CDN') !== !!data.parentUuid || (data.kind === 'CDN' && data.isDefault))
             ctx.addIssue({
                 code: 'custom',
@@ -75,6 +88,8 @@ export const SubscriptionDomainSchema = z.object({
     kind: z.enum(['PRIMARY', 'CDN']),
     parentUuid: z.uuid().nullable(),
     isDefault: z.boolean(),
+    accessMode: z.enum(['OPEN', 'CDN_ONLY', 'REDIRECT']),
+    redirectDomainUuid: z.uuid().nullable(),
     usersCount: z.number().int().nonnegative(),
     aliasesCount: z.number().int().nonnegative(),
     publicBaseUrl: z.string().url(),

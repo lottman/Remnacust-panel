@@ -9,6 +9,8 @@ import { Controller, Get, NotFoundException, Param, Query, Req, Res } from '@nes
 
 import { AxiosService } from '@common/axios/axios.service';
 
+import { subscriptionDomainRequestHeaders } from '../../common/utils/subscription-domain-context';
+
 @Controller('geofiles')
 export class GeofilesController {
     constructor(private readonly axios: AxiosService) {}
@@ -69,7 +71,11 @@ export class GeofilesController {
                     maxRedirects: 0,
                     signal: abort.signal,
                     timeout: 30_000,
-                    headers: { 'Accept-Encoding': 'identity', 'If-None-Match': conditionalTag },
+                    headers: {
+                        ...subscriptionDomainRequestHeaders(),
+                        'Accept-Encoding': 'identity',
+                        'If-None-Match': conditionalTag,
+                    },
                     decompress: false,
                     validateStatus: (status) => status === 200 || status === 304,
                 },

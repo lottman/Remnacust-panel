@@ -40,6 +40,8 @@ type SubscriptionDomain = {
     kind: DomainKind
     parentUuid: string | null
     isDefault: boolean
+    accessMode: 'OPEN' | 'CDN_ONLY' | 'REDIRECT'
+    redirectDomainUuid: string | null
     usersCount: number
     aliasesCount: number
     publicBaseUrl: string
@@ -53,6 +55,8 @@ type DomainForm = {
     kind: DomainKind
     parentUuid: string | null
     isDefault: boolean
+    accessMode: 'OPEN' | 'CDN_ONLY' | 'REDIRECT'
+    redirectDomainUuid: string | null
 }
 
 const queryKey = ['subscription-domains'] as const
@@ -63,7 +67,9 @@ const emptyForm: DomainForm = {
     path: '',
     kind: 'PRIMARY',
     parentUuid: null,
-    isDefault: false
+    isDefault: false,
+    accessMode: 'OPEN',
+    redirectDomainUuid: null
 }
 
 export function SubscriptionDomainsWidget() {
@@ -86,12 +92,30 @@ export function SubscriptionDomainsWidget() {
         staleTime: 15_000,
         refetchOnWindowFocus: 'always'
     })
+    const credentials = useQuery({
+        queryKey: ['subscription-domain-credentials', setupDomain?.uuid],
+        enabled: !!setupDomain,
+        gcTime: 0,
+        staleTime: 0,
+        retry: false,
+        queryFn: async () =>
+            (
+                await instance.post<{
+                    response: { requestHeaderName: string; requestHeaderValue: string }
+                }>(`/api/subscription-domains/${setupDomain!.uuid}/credentials`)
+            ).data.response
+    })
     const save = useMutation({
         mutationFn: async (values: DomainForm) => {
             const data = {
                 ...values,
                 parentUuid: values.kind === 'CDN' ? values.parentUuid : null,
-                isDefault: values.kind === 'PRIMARY' && values.isDefault
+                isDefault: values.kind === 'PRIMARY' && values.isDefault,
+                accessMode: values.kind === 'PRIMARY' ? values.accessMode : 'OPEN',
+                redirectDomainUuid:
+                    values.kind === 'PRIMARY' && values.accessMode === 'REDIRECT'
+                        ? values.redirectDomainUuid
+                        : null
             }
             if (editing) {
                 return instance.patch(`/api/subscription-domains/${editing.uuid}`, data)
@@ -121,7 +145,9 @@ export function SubscriptionDomainsWidget() {
             path: domain.path,
             kind: domain.kind,
             parentUuid: domain.parentUuid,
-            isDefault: domain.isDefault
+            isDefault: domain.isDefault,
+            accessMode: domain.accessMode ?? 'OPEN',
+            redirectDomainUuid: domain.redirectDomainUuid ?? null
         })
         setOpened(true)
     }
@@ -130,9 +156,11 @@ export function SubscriptionDomainsWidget() {
     const convertedLink = setupDomain
         ? cdnSubscriptionLink(setupDomain.publicBaseUrl, existingLink)
         : null
-    const copyableField = (label: string, value: string) => (
+    const copyableField = (label: string, value: string, secret = false) => (
         <TextInput
             readOnly
+            type={secret ? 'password' : 'text'}
+            autoComplete="off"
             dir="ltr"
             label={label}
             value={value}
@@ -403,14 +431,28 @@ export function SubscriptionDomainsWidget() {
                 {setupDomain && (
                     <Stack>
                         <Text size="sm">{t('subscription-domains.gateway-help')}</Text>
-                        {copyableField(
-                            t('subscription-domains.request-header-name'),
-                            setupDomain.requestHeaderName ?? ''
+                        {credentials.isPending && <Loader size="sm" />}
+                        {credentials.isError && (
+                            <Alert color="red">
+                                {t('subscription-domains.credentials-failed')}
+                            </Alert>
                         )}
-                        {copyableField(
-                            t('subscription-domains.request-header-value'),
-                            setupDomain.uuid
+                        {credentials.data && (
+                            <>
+                                {copyableField(
+                                    t('subscription-domains.request-header-name'),
+                                    credentials.data.requestHeaderName
+                                )}
+                                {copyableField(
+                                    t('subscription-domains.request-header-value'),
+                                    credentials.data.requestHeaderValue,
+                                    true
+                                )}
+                            </>
                         )}
+                        <Text size="sm" c="dimmed">
+                            {t('subscription-domains.credentials-help')}
+                        </Text>
                         {copyableField(
                             t('subscription-domains.origin'),
                             `https://${rows.find((row) => row.uuid === setupDomain.parentUuid)?.domain ?? ''}`
@@ -545,10 +587,60 @@ export function SubscriptionDomainsWidget() {
                             />
                         )}
                         {form.values.kind === 'PRIMARY' && (
-                            <Switch
-                                label={t('subscription-domains.make-default')}
-                                {...form.getInputProps('isDefault', { type: 'checkbox' })}
-                            />
+                            <>
+                                <Switch
+                                    label={t('subscription-domains.make-default')}
+                                    {...form.getInputProps('isDefault', { type: 'checkbox' })}
+                                />
+                                <Select
+                                    label={t('subscription-domains.access-mode')}
+                                    description={t('subscription-domains.access-help')}
+                                    data={(['OPEN', 'CDN_ONLY', 'REDIRECT'] as const).map(
+                                        (value) => ({
+                                            value,
+                                            label: t(`subscription-domains.access-${value}`),
+                                            disabled:
+                                                value !== 'OPEN' &&
+                                                !rows.some(
+                                                    (row) =>
+                                                        row.kind === 'CDN' &&
+                                                        row.parentUuid === editing?.uuid
+                                                )
+                                        })
+                                    )}
+                                    {...form.getInputProps('accessMode')}
+                                    onChange={(value) => {
+                                        form.setFieldValue(
+                                            'accessMode',
+                                            (value ?? 'OPEN') as DomainForm['accessMode']
+                                        )
+                                        if (value !== 'REDIRECT')
+                                            form.setFieldValue('redirectDomainUuid', null)
+                                    }}
+                                />
+                                {form.values.accessMode === 'REDIRECT' && (
+                                    <Select
+                                        label={t('subscription-domains.redirect-target')}
+                                        required
+                                        data={rows
+                                            .filter(
+                                                (row) =>
+                                                    row.kind === 'CDN' &&
+                                                    row.parentUuid === editing?.uuid
+                                            )
+                                            .map((row) => ({
+                                                value: row.uuid,
+                                                label: `${row.name} · ${row.domain}`
+                                            }))}
+                                        {...form.getInputProps('redirectDomainUuid')}
+                                    />
+                                )}
+                                {form.values.accessMode !== 'OPEN' && (
+                                    <Alert color="yellow">
+                                        {t('subscription-domains.access-warning')}
+                                    </Alert>
+                                )}
+                            </>
                         )}
                         {save.isError && (
                             <Alert color="red">
@@ -565,7 +657,15 @@ export function SubscriptionDomainsWidget() {
                             <Button onClick={() => setOpened(false)} variant="default">
                                 {t('common.action.cancel')}
                             </Button>
-                            <Button loading={save.isPending} type="submit">
+                            <Button
+                                disabled={
+                                    form.values.kind === 'PRIMARY' &&
+                                    form.values.accessMode === 'REDIRECT' &&
+                                    !form.values.redirectDomainUuid
+                                }
+                                loading={save.isPending}
+                                type="submit"
+                            >
                                 {t('common.action.save')}
                             </Button>
                         </Group>

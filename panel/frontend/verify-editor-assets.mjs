@@ -21,10 +21,10 @@ for (const name of EDITOR_ASSETS) {
 const provenance = JSON.parse(readFileSync(asset('xray.default.provenance.json'), 'utf8'))
 if (
     provenance.flavor !== 'default' ||
-    provenance.upstreamVersion !== 'v26.10.31' ||
-    provenance.upstreamCommit !== 'a4a3dff5b20c2faae567b742c172c7b95e75c083' ||
+    provenance.upstreamVersion !== 'v26.11.9' ||
+    provenance.upstreamCommit !== '676eaf66f8f05d4d558ee7a74b4736623d3feeb9' ||
     provenance.sourceArchiveSha256 !==
-        'dcaec8dbf4520883c63544f48c972807cc2445f2a932b8fe63867361ef32084c'
+        'eab6fad20dfabc862c2537552e136e195de93d166c9a0bab72e408b4295eb7dc'
 )
     throw new Error('Stale default editor provenance')
 for (const name of ['default.wasm', 'xray.default.schema.json', 'xray.default.schema.cn.json']) {
@@ -46,10 +46,10 @@ for (const name of ['xray.schema.json', 'xray.schema.cn.json']) {
     const schema = JSON.parse(readFileSync(asset(name), 'utf8'))
     if (schema.definitions.TLSObject.properties.allowInsecure) throw new Error('Stale TLS schema')
     if (
-        schema['x-remnacust-upstream']?.version !== 'v26.10.31' ||
-        schema['x-remnacust-upstream']?.commit !== 'a4a3dff5b20c2faae567b742c172c7b95e75c083' ||
+        schema['x-remnacust-upstream']?.version !== 'v26.11.9' ||
+        schema['x-remnacust-upstream']?.commit !== '676eaf66f8f05d4d558ee7a74b4736623d3feeb9' ||
         schema['x-remnacust-upstream']?.patchCommit !== null ||
-        schema['x-remnacust-upstream']?.coreVersion !== '1.1.16'
+        schema['x-remnacust-upstream']?.coreVersion !== '1.1.17'
     )
         throw new Error('Stale config schema')
 }
@@ -86,7 +86,7 @@ if (!globalThis.XrayParseConfig('{invalid json')) {
     throw new Error('Xray WASM accepted invalid JSON')
 }
 
-if (globalThis.XrayGetVersion() !== (stock ? '26.10.31' : '1.1.16')) {
+if (globalThis.XrayGetVersion() !== (stock ? '26.11.9' : '1.1.17')) {
     throw new Error(`Stale editor core: ${globalThis.XrayGetVersion()}`)
 }
 if (stock) {
@@ -159,7 +159,7 @@ if (stock) {
         }
     }
     console.log(
-        'Default editor upstream 26.10.31, source provenance, 5 WASM fixtures and 14 Monaco schema cases verified'
+        'Default editor upstream 26.11.9, source provenance, 5 WASM fixtures and 14 Monaco schema cases verified'
     )
     process.exit(0)
 }
@@ -178,6 +178,6 @@ for (const fixture of fixtures.invalid) {
 const schemaCases = await verifyXeraEditorSchemas(fixtures)
 
 console.log(
-    `Editor core 1.1.16 (upstream 26.10.31), ${fixtures.valid.length + fixtures.invalid.length} configuration fixtures and ${schemaCases} Monaco schema cases verified`
+    `Editor core 1.1.17 (upstream 26.11.9), ${fixtures.valid.length + fixtures.invalid.length} configuration fixtures and ${schemaCases} Monaco schema cases verified`
 )
 process.exit(0)

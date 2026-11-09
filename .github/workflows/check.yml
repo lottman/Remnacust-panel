@@ -61,7 +61,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: lottman/Remnacust-node
-          ref: 2e9d572ff2be267893cba3e665be7f8191927058
+          ref: 1fbec6199273998a64150a8a287a82f6da9087c7
           path: node-repository
       - uses: actions/setup-node@v4
         with:
@@ -89,6 +89,10 @@ jobs:
           })().catch(error => { console.error(error); process.exitCode = 1; });
           NODE
           node --test tests/node-route-pool.database.integration.cjs
+      - name: Verify subscription domain access schema under a restricted owner
+        env:
+          DOMAIN_ACCESS_TEST_DATABASE_URL: postgresql://postgres@127.0.0.1:55439/postgres
+        run: node --test tests/subscription-domain-access.database.integration.cjs
       - name: Check private Xray IPC and certificate files on Linux
         run: sudo --preserve-env=REMNACUST_NODE_SOURCE "$(command -v node)" --test tests/node-api-socket.test.cjs tests/pem-file-security.test.cjs tests/node-upgrade-script.test.cjs tests/node-install-script.test.cjs
       - name: Verify documentation against freshly generated backend contract

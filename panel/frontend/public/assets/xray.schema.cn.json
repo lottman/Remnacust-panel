@@ -6221,6 +6221,12 @@
             "string"
           ]
         },
+        "delay": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
         "ip": {
           "anyOf": [
             {
@@ -6233,6 +6239,9 @@
               "type": "array"
             }
           ]
+        },
+        "logLevel": {
+          "type": "string"
         },
         "network": {
           "anyOf": [
@@ -6697,7 +6706,7 @@
         "error": {
           "type": "string"
         },
-        "loglevel": {
+        "logLevel": {
           "type": "string"
         },
         "maskAddress": {
@@ -9122,6 +9131,9 @@
           "type": "integer"
         },
         "template": {},
+        "useSlots": {
+          "type": "boolean"
+        },
         "xmux": {
           "$ref": "#/definitions/RemnacustCoreXmuxConfig"
         }
@@ -10634,9 +10646,9 @@
     }
   },
   "x-remnacust-upstream": {
-    "version": "v26.10.31",
-    "commit": "a4a3dff5b20c2faae567b742c172c7b95e75c083",
+    "version": "v26.11.9",
+    "commit": "676eaf66f8f05d4d558ee7a74b4736623d3feeb9",
     "patchCommit": null,
-    "coreVersion": "1.1.16"
+    "coreVersion": "1.1.17"
   }
 }

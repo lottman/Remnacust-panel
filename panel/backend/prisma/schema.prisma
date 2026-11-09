@@ -798,9 +798,14 @@ model SubscriptionDomains {
   kind String @db.VarChar(7)
   parentUuid String? @map("parent_uuid") @db.Uuid
   isDefault Boolean @default(false) @map("is_default")
+  accessMode String @default("OPEN") @map("access_mode") @db.VarChar(8)
+  redirectDomainUuid String? @map("redirect_domain_uuid") @db.Uuid
+  redirectDomain SubscriptionDomains? @relation("DomainRedirect", fields: [redirectDomainUuid], references: [uuid], onDelete: NoAction)
+  redirectedFrom SubscriptionDomains[] @relation("DomainRedirect")
   parent SubscriptionDomains? @relation("DomainAliases", fields: [parentUuid], references: [uuid], onDelete: Restrict)
   aliases SubscriptionDomains[] @relation("DomainAliases")
   users Users[]
   @@index([parentUuid])
+  @@index([redirectDomainUuid])
   @@map("subscription_domains")
 }

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DeleteSubscriptionDomainCommand = exports.UpdateSubscriptionDomainCommand = exports.CreateSubscriptionDomainCommand = exports.GetSubscriptionDomainCommand = exports.ListSubscriptionDomainsCommand = void 0;
+exports.GetSubscriptionDomainCredentialsCommand = exports.DeleteSubscriptionDomainCommand = exports.UpdateSubscriptionDomainCommand = exports.CreateSubscriptionDomainCommand = exports.GetSubscriptionDomainCommand = exports.ListSubscriptionDomainsCommand = void 0;
 const zod_1 = require("zod");
 const api_1 = require("../../api");
 const constants_1 = require("../../constants");
@@ -57,3 +57,13 @@ var DeleteSubscriptionDomainCommand;
     DeleteSubscriptionDomainCommand.TSQ_url = DeleteSubscriptionDomainCommand.url;
     DeleteSubscriptionDomainCommand.endpointDetails = (0, constants_1.getEndpointDetails)(api_1.SUBSCRIPTION_DOMAINS_ROUTES.DELETE(':uuid'), 'delete', 'Delete an unused subscription domain', { scope: 'delete', kind: 'write' });
 })(DeleteSubscriptionDomainCommand || (exports.DeleteSubscriptionDomainCommand = DeleteSubscriptionDomainCommand = {}));
+var GetSubscriptionDomainCredentialsCommand;
+(function (GetSubscriptionDomainCredentialsCommand) {
+    GetSubscriptionDomainCredentialsCommand.url = '/api/subscription-domains/:uuid/credentials';
+    GetSubscriptionDomainCredentialsCommand.TSQ_url = GetSubscriptionDomainCredentialsCommand.url;
+    GetSubscriptionDomainCredentialsCommand.endpointDetails = (0, constants_1.getEndpointDetails)(':uuid/credentials', 'post', 'Get private CDN origin credentials', { scope: 'credentials', kind: 'write' });
+    GetSubscriptionDomainCredentialsCommand.ResponseSchema = zod_1.z.object({ response: zod_1.z.object({
+            requestHeaderName: zod_1.z.string().regex(/^X-[a-f0-9]{24}$/),
+            requestHeaderValue: zod_1.z.string().max(101),
+        }) });
+})(GetSubscriptionDomainCredentialsCommand || (exports.GetSubscriptionDomainCredentialsCommand = GetSubscriptionDomainCredentialsCommand = {}));

@@ -341,6 +341,8 @@ export type SubscriptionDomains = {
     kind: string;
     parentUuid: string | null;
     isDefault: Generated<boolean>;
+    accessMode: Generated<string>;
+    redirectDomainUuid: string | null;
 };
 export type SubscriptionPageConfig = {
     uuid: Generated<string>;

@@ -10,6 +10,12 @@ export declare const SubscriptionDomainInputSchema: z.ZodObject<{
     }>;
     parentUuid: z.ZodDefault<z.ZodNullable<z.ZodUUID>>;
     isDefault: z.ZodDefault<z.ZodBoolean>;
+    accessMode: z.ZodOptional<z.ZodEnum<{
+        CDN_ONLY: "CDN_ONLY";
+        OPEN: "OPEN";
+        REDIRECT: "REDIRECT";
+    }>>;
+    redirectDomainUuid: z.ZodOptional<z.ZodNullable<z.ZodUUID>>;
 }, z.core.$strict>;
 export declare const SubscriptionDomainSchema: z.ZodObject<{
     uuid: z.ZodUUID;
@@ -22,6 +28,12 @@ export declare const SubscriptionDomainSchema: z.ZodObject<{
     }>;
     parentUuid: z.ZodNullable<z.ZodUUID>;
     isDefault: z.ZodBoolean;
+    accessMode: z.ZodEnum<{
+        CDN_ONLY: "CDN_ONLY";
+        OPEN: "OPEN";
+        REDIRECT: "REDIRECT";
+    }>;
+    redirectDomainUuid: z.ZodNullable<z.ZodUUID>;
     usersCount: z.ZodNumber;
     aliasesCount: z.ZodNumber;
     publicBaseUrl: z.ZodString;

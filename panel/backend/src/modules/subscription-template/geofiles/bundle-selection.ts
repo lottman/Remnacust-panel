@@ -7,6 +7,7 @@ export interface BundleSelection {
     kind: 'geoip' | 'geosite';
     ids: string[];
     namespace: 2;
+    revision?: string;
     categories: Record<string, string[]>;
 }
 
@@ -19,6 +20,8 @@ export function validateBundleSelection(value: BundleSelection): BundleSelection
         !value ||
         !['geoip', 'geosite'].includes(value.kind) ||
         value.namespace !== 2 ||
+        (value.revision !== undefined &&
+            (typeof value.revision !== 'string' || !/^[a-f0-9]{64}$/.test(value.revision))) ||
         !Array.isArray(value.ids) ||
         !value.ids.length ||
         value.ids.length > 32 ||

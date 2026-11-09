@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-11-07T21:50:03.473Z",
-  "backendVersion": "1.1.7.100",
-  "coreVersion": "1.1.16",
-  "nodeVersion": "1.1.26",
+  "generatedAt": "2026-11-09T13:53:27.252Z",
+  "backendVersion": "1.1.7.103",
+  "coreVersion": "1.1.17",
+  "nodeVersion": "1.1.27",
   "upstreamPanelVersion": "3.4.7",
   "upstreamBackendPatches": [
     {
@@ -71,13 +71,13 @@
   "upstreamNodeCommit": "2ad154f8f1016c94c1872f337268af878af61b18",
   "upstreamCorePatchCommit": null,
   "upstreamNodeVersion": "3.4.3",
-  "upstreamCoreVersion": "26.10.31",
-  "upstreamCoreCommit": "a4a3dff5b20c2faae567b742c172c7b95e75c083",
+  "upstreamCoreVersion": "26.11.9",
+  "upstreamCoreCommit": "676eaf66f8f05d4d558ee7a74b4736623d3feeb9",
   "upstreamCorePrerelease": false,
   "articles": 57,
-  "endpoints": 247,
-  "apiTokenEndpoints": 219,
-  "controls": 237,
-  "sourceFiles": 3904,
-  "specSha256": "ca48518b3e3d119c36f29b72d117c9fa58db1a57992f1c7383e508c7fc02bf98"
+  "endpoints": 248,
+  "apiTokenEndpoints": 220,
+  "controls": 239,
+  "sourceFiles": 3907,
+  "specSha256": "3e3fc317b85228194c6a6ed706918dfab78f1fa54459900221d159fad16179ab"
 }

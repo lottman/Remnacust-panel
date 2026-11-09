@@ -65,7 +65,12 @@ export class SubscriptionController {
         @Param('clientType') clientType: string,
         @IsBrowser() isBrowser: boolean,
     ) {
-        if (isBrowser) {
+        if (
+            clientType &&
+            !REQUEST_TEMPLATE_TYPE_VALUES.includes(clientType as TRequestTemplateTypeKeys)
+        )
+            return response.status(404).send('Subscription not found');
+        if (isBrowser && !clientType) {
             return this.webpageService.serveWebpage(
                 clientIp,
                 request,

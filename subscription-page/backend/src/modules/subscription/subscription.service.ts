@@ -39,7 +39,9 @@ export class SubscriptionService {
                 abort.signal,
                 personalToken,
                 publicGeofileOrigin(req.headers.host),
-                currentSubscriptionDomain()?.uuid,
+                currentSubscriptionDomain()?.requestHeaderName
+                    ? currentSubscriptionDomain()?.uuid
+                    : undefined,
             );
 
             if (!subscriptionDataResponse) {

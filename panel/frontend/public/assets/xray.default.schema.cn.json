@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Xray v26.10.31 (official upstream)",
+  "title": "Xray v26.11.9 (official upstream)",
   "$ref": "#/definitions/XrayDefaultConfig",
   "definitions": {
     "XrayDefaultAPIConfig": {
@@ -722,6 +722,12 @@
             "string"
           ]
         },
+        "delay": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
         "ip": {
           "anyOf": [
             {
@@ -734,6 +740,9 @@
               "type": "array"
             }
           ]
+        },
+        "logLevel": {
+          "type": "string"
         },
         "network": {
           "anyOf": [
@@ -1443,7 +1452,7 @@
         "error": {
           "type": "string"
         },
-        "loglevel": {
+        "logLevel": {
           "type": "string"
         },
         "maskAddress": {

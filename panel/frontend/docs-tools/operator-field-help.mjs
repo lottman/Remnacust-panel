@@ -1,5 +1,17 @@
 // Each tuple is RU, EN, FA, ZH. Keep field names aligned with the actual forms.
 export const operatorFieldHelp = {
+    accessMode: [
+        'Доступ напрямую, только через CDN с секретным заголовком или перенаправление на выбранный CDN. Перед ограничением обновите страницу подписки и проверьте заголовок CDN.',
+        'Allow direct access, require a secret CDN request header, or redirect to a selected CDN. Update the subscription page and verify the CDN header before restricting access.',
+        'دسترسی مستقیم، الزام سرآیند محرمانه CDN یا هدایت به CDN انتخابی. ابتدا صفحه اشتراک را به‌روز و سرآیند CDN را آزمایش کنید.',
+        '允许直接访问、要求 CDN 请求密钥标头或重定向到所选 CDN。限制访问前请更新订阅页面并验证 CDN 标头。'
+    ],
+    redirectDomainUuid: [
+        'CDN этого же основного домена для перенаправления. Пути подписок и геофайлов сохраняются; на сторонний домен перенаправить нельзя.',
+        'A CDN belonging to this primary domain. Redirects preserve subscription and geofile paths and cannot target unrelated domains.',
+        'CDN مرتبط با همین دامنه اصلی. مسیر اشتراک و فایل حفظ می‌شود و هدایت به دامنه نامرتبط مجاز نیست.',
+        '属于当前主域名的 CDN。重定向保留订阅和地理文件路径，不能指向无关域名。'
+    ],
     kind: [
         'Основной домен или CDN-адрес подписки. CDN должен быть связан с основным доменом.',
         'Primary subscription domain or CDN address. A CDN must belong to a primary domain.',

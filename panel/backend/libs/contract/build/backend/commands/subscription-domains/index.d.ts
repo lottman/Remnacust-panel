@@ -23,6 +23,12 @@ export declare namespace ListSubscriptionDomainsCommand {
             }>;
             parentUuid: z.ZodNullable<z.ZodUUID>;
             isDefault: z.ZodBoolean;
+            accessMode: z.ZodEnum<{
+                CDN_ONLY: "CDN_ONLY";
+                OPEN: "OPEN";
+                REDIRECT: "REDIRECT";
+            }>;
+            redirectDomainUuid: z.ZodNullable<z.ZodUUID>;
             usersCount: z.ZodNumber;
             aliasesCount: z.ZodNumber;
             publicBaseUrl: z.ZodString;
@@ -52,6 +58,12 @@ export declare namespace GetSubscriptionDomainCommand {
             }>;
             parentUuid: z.ZodNullable<z.ZodUUID>;
             isDefault: z.ZodBoolean;
+            accessMode: z.ZodEnum<{
+                CDN_ONLY: "CDN_ONLY";
+                OPEN: "OPEN";
+                REDIRECT: "REDIRECT";
+            }>;
+            redirectDomainUuid: z.ZodNullable<z.ZodUUID>;
             usersCount: z.ZodNumber;
             aliasesCount: z.ZodNumber;
             publicBaseUrl: z.ZodString;
@@ -73,6 +85,12 @@ export declare namespace CreateSubscriptionDomainCommand {
         }>;
         parentUuid: z.ZodDefault<z.ZodNullable<z.ZodUUID>>;
         isDefault: z.ZodDefault<z.ZodBoolean>;
+        accessMode: z.ZodOptional<z.ZodEnum<{
+            CDN_ONLY: "CDN_ONLY";
+            OPEN: "OPEN";
+            REDIRECT: "REDIRECT";
+        }>>;
+        redirectDomainUuid: z.ZodOptional<z.ZodNullable<z.ZodUUID>>;
     }, z.core.$strict>;
     const ResponseSchema: z.ZodObject<{
         response: z.ZodObject<{
@@ -86,6 +104,12 @@ export declare namespace CreateSubscriptionDomainCommand {
             }>;
             parentUuid: z.ZodNullable<z.ZodUUID>;
             isDefault: z.ZodBoolean;
+            accessMode: z.ZodEnum<{
+                CDN_ONLY: "CDN_ONLY";
+                OPEN: "OPEN";
+                REDIRECT: "REDIRECT";
+            }>;
+            redirectDomainUuid: z.ZodNullable<z.ZodUUID>;
             usersCount: z.ZodNumber;
             aliasesCount: z.ZodNumber;
             publicBaseUrl: z.ZodString;
@@ -107,6 +131,12 @@ export declare namespace UpdateSubscriptionDomainCommand {
         }>;
         parentUuid: z.ZodDefault<z.ZodNullable<z.ZodUUID>>;
         isDefault: z.ZodDefault<z.ZodBoolean>;
+        accessMode: z.ZodOptional<z.ZodEnum<{
+            CDN_ONLY: "CDN_ONLY";
+            OPEN: "OPEN";
+            REDIRECT: "REDIRECT";
+        }>>;
+        redirectDomainUuid: z.ZodOptional<z.ZodNullable<z.ZodUUID>>;
     }, z.core.$strict>;
     const ResponseSchema: z.ZodObject<{
         response: z.ZodObject<{
@@ -120,6 +150,12 @@ export declare namespace UpdateSubscriptionDomainCommand {
             }>;
             parentUuid: z.ZodNullable<z.ZodUUID>;
             isDefault: z.ZodBoolean;
+            accessMode: z.ZodEnum<{
+                CDN_ONLY: "CDN_ONLY";
+                OPEN: "OPEN";
+                REDIRECT: "REDIRECT";
+            }>;
+            redirectDomainUuid: z.ZodNullable<z.ZodUUID>;
             usersCount: z.ZodNumber;
             aliasesCount: z.ZodNumber;
             publicBaseUrl: z.ZodString;
@@ -131,5 +167,16 @@ export declare namespace DeleteSubscriptionDomainCommand {
     const url: string;
     const TSQ_url: string;
     const endpointDetails: import("../../constants").EndpointDetails;
+}
+export declare namespace GetSubscriptionDomainCredentialsCommand {
+    const url = "/api/subscription-domains/:uuid/credentials";
+    const TSQ_url = "/api/subscription-domains/:uuid/credentials";
+    const endpointDetails: import("../../constants").EndpointDetails;
+    const ResponseSchema: z.ZodObject<{
+        response: z.ZodObject<{
+            requestHeaderName: z.ZodString;
+            requestHeaderValue: z.ZodString;
+        }, z.core.$strip>;
+    }, z.core.$strip>;
 }
 //# sourceMappingURL=index.d.ts.map

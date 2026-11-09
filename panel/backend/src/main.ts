@@ -10,7 +10,7 @@ import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import timezone from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
-import { NextFunction, Request, Response } from 'express';
+import { json, NextFunction, Request, Response } from 'express';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import { utilities as nestWinstonModuleUtilities, WinstonModule } from 'nest-winston';
@@ -20,6 +20,7 @@ import * as winston from 'winston';
 
 import { NestFactory } from '@nestjs/core';
 import { QueryBus } from '@nestjs/cqrs';
+import { JwtService } from '@nestjs/jwt';
 import { NestExpressApplication } from '@nestjs/platform-express';
 
 import { TypedConfigService } from '@common/config/app-config/typed-config.service';
@@ -33,11 +34,14 @@ import { authResponseCache } from '@common/middlewares/auth-response-cache.middl
 import { boundedJsonParser } from '@common/middlewares/bounded-json.middleware';
 import { subscriptionBudget } from '@common/middlewares/subscription-budget.middleware';
 import { subscriptionDomainGateway } from '@common/middlewares/subscription-domain-gateway.middleware';
-import { SubscriptionDomainsService } from '@modules/subscription-domains/subscription-domains.service';
 import { RawCacheService } from '@common/raw-cache';
 import { customLogFilter } from '@common/utils/filter-logs';
+import { relayGeofileContext } from '@common/utils/geofile-relay-origin';
 import { httpLogPath } from '@common/utils/http-log-path';
 import { getDocs, isDevelopment, isDevOrDebugLogsEnabled } from '@common/utils/startup-app';
+
+import { GetTokenByUuidQuery } from '@modules/api-tokens/queries/get-token-by-uuid/get-token-by-uuid.query';
+import { SubscriptionDomainsService } from '@modules/subscription-domains/subscription-domains.service';
 
 import { AppModule } from './app.module';
 
@@ -88,10 +92,40 @@ async function bootstrap(): Promise<void> {
     const config = app.get(TypedConfigService);
     app.use(authResponseCache);
     app.use(subscriptionBudget());
-    app.use(subscriptionDomainGateway(
-        uuid => app.get(SubscriptionDomainsService).gatewayBase(uuid),
-        uuid => app.get(SubscriptionDomainsService).gatewayHeaderName(uuid),
-    ));
+    app.use(
+        subscriptionDomainGateway(
+            (uuid) => app.get(SubscriptionDomainsService).gatewayBase(uuid),
+            (uuid) => app.get(SubscriptionDomainsService).gatewayHeaderName(uuid),
+            async (input, request) => {
+                const domains = app.get(SubscriptionDomainsService);
+                const decision = await domains.access(input);
+                if (
+                    decision.action === 'allow' ||
+                    input.proof ||
+                    !request.headers['x-remnacust-geofile-origin']
+                )
+                    return decision;
+                const relayed = await relayGeofileContext(
+                    request.headers,
+                    (token) =>
+                        new JwtService().verifyAsync(token, {
+                            secret: config.getOrThrow('APP_SECRET'),
+                            algorithms: ['HS256'],
+                        }),
+                    async (uuid) => {
+                        const token = await app
+                            .get(QueryBus)
+                            .execute(new GetTokenByUuidQuery(uuid));
+                        return token?.isOk ? token.response : undefined;
+                    },
+                );
+                return relayed?.origin
+                    ? domains.access({ ...input, host: new URL(relayed.origin).host })
+                    : decision;
+            },
+        ),
+    );
+    app.use('/api/sub/domains/access', json({ limit: '16kb' }));
     app.use(boundedJsonParser(config.getOrThrow('APP_SECRET')));
 
     const helmetMiddleware = helmet({

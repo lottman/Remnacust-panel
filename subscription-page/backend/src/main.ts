@@ -1,10 +1,9 @@
 process.title = 'rc-subpage';
 
+import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import { Request, Response, NextFunction } from 'express';
 import helmet from 'helmet';
-import compression from 'compression';
-import { dynamicRequestBudget, DynamicRequestBudgetInterceptor } from '@common/middlewares/request-budget.middleware';
 import morgan from 'morgan';
 import { utilities as nestWinstonModuleUtilities, WinstonModule } from 'nest-winston';
 import path from 'node:path';
@@ -17,6 +16,7 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 
 import { APP_CONFIG_ROUTE_WO_LEADING_PATH } from '@remnawave/subscription-page-types';
 
+import { AxiosService } from '@common/axios';
 import { TypedConfigService } from '@common/config/app-config';
 import { NotFoundExceptionFilter } from '@common/exception/not-found-exception.filter';
 import {
@@ -26,13 +26,17 @@ import {
     checkAssetsCookieMiddleware,
     getRealIp,
 } from '@common/middlewares';
+import {
+    dynamicRequestBudget,
+    DynamicRequestBudgetInterceptor,
+} from '@common/middlewares/request-budget.middleware';
+import { subscriptionDomainAccess } from '@common/middlewares/subscription-domain-access.middleware';
+import { subscriptionDomainGateway } from '@common/middlewares/subscription-domain-gateway.middleware';
 import { customLogFilter } from '@common/utils/filter-logs/filter-logs';
 import { getAssetsPath, isDevelopment, isDevOrDebugLogsEnabled } from '@common/utils/startup-app';
 import { getStartMessage } from '@common/utils/startup-app/get-start-message';
 
 import { AppModule } from './app.module';
-import { AxiosService } from '@common/axios';
-import { subscriptionDomainGateway } from '@common/middlewares/subscription-domain-gateway.middleware';
 
 // const levels = {
 //     error: 0,
@@ -103,14 +107,27 @@ async function bootstrap(): Promise<void> {
 
     // Only hashed static assets may be cached; account pages contain credentials.
     app.use((req: Request, res: Response, next: NextFunction) => {
-        if (!req.path.startsWith('/assets/') || req.path === `/${APP_CONFIG_ROUTE_WO_LEADING_PATH}`) {
+        if (
+            !req.path.startsWith('/assets/') ||
+            req.path === `/${APP_CONFIG_ROUTE_WO_LEADING_PATH}`
+        ) {
             res.set('Cache-Control', 'private, no-store');
             res.set('Referrer-Policy', 'no-referrer');
         }
         next();
     });
     app.use(noRobotsMiddleware, getRealIp, headerFilterMiddleware);
-    app.use(subscriptionDomainGateway(uuid => app.get(AxiosService).resolveSubscriptionDomain(uuid), customSubPrefix ?? ''));
+    app.use(
+        subscriptionDomainAccess((input) =>
+            app.get(AxiosService).checkSubscriptionDomainAccess(input),
+        ),
+    );
+    app.use(
+        subscriptionDomainGateway(
+            (uuid) => app.get(AxiosService).resolveSubscriptionDomain(uuid),
+            customSubPrefix ?? '',
+        ),
+    );
 
     app.use(
         '/assets',

@@ -1,3 +1,7 @@
+import type {
+    DomainAccessRequest,
+    DomainAccessDecision,
+} from '../middlewares/subscription-domain-access.middleware';
 import type { SubscriptionDomainContext } from '../utils/subscription-domain-context';
 
 import axios, { AxiosError, AxiosInstance, RawAxiosResponseHeaders } from 'axios';
@@ -25,6 +29,7 @@ import { IGNORED_HEADERS } from '@common/constants';
 import { ICommandResponse } from '../types/command-response.type';
 import { isCdnSelectorHeader } from '../utils/cdn-request-header';
 import { publicGeofileOrigin } from '../utils/public-geofile-origin';
+import { subscriptionDomainRequestHeaders } from '../utils/subscription-domain-context';
 import { subscriptionRequestHeaders } from './subscription-request-headers';
 
 @Injectable()
@@ -291,6 +296,7 @@ export class AxiosService implements OnModuleInit, OnModuleDestroy {
                     signal,
                     url: GetSubscriptionInfoByShortUuidCommand.url(encodeURIComponent(shortUuid)),
                     headers: {
+                        ...subscriptionDomainRequestHeaders(),
                         [REMNAWAVE_REAL_IP_HEADER]: clientIp,
                     },
                 });
@@ -340,6 +346,63 @@ export class AxiosService implements OnModuleInit, OnModuleDestroy {
                 status: axios.isAxiosError(error) ? error.response?.status : undefined,
             };
         }
+    }
+
+    public async checkSubscriptionDomainAccess(
+        input: DomainAccessRequest,
+    ): Promise<DomainAccessDecision> {
+        const response = await this.axiosInstance.post('api/sub/domains/access', input, {
+            timeout: 3000,
+            maxContentLength: 4096,
+            maxBodyLength: 16384,
+            validateStatus: (status) => status === 200 || status === 404,
+            headers: { 'Cache-Control': 'no-store', 'Accept-Encoding': 'identity' },
+        });
+        if (response.status === 404) return { action: 'allow' };
+        const result = response.data?.response;
+        if (!result || !['allow', 'block', 'redirect'].includes(result.action))
+            throw new Error('Invalid domain policy');
+        if (result.action === 'redirect') {
+            if (typeof result.location !== 'string' || result.location.length > 9000)
+                throw new Error('Invalid domain policy');
+            const target = new URL(result.location);
+            if (
+                target.protocol !== 'https:' ||
+                target.username ||
+                target.password ||
+                target.hash ||
+                publicGeofileOrigin(target.host) !== target.origin ||
+                this.containsPrivatePanelAddress(result.location)
+            )
+                throw new Error('Invalid domain policy');
+        }
+        if (result.domain) {
+            const domain = result.domain;
+            if (
+                typeof domain.uuid !== 'string' ||
+                !/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/.test(domain.uuid) ||
+                typeof domain.publicBaseUrl !== 'string' ||
+                domain.publicBaseUrl.length > 600 ||
+                (domain.requestHeaderName !== undefined &&
+                    (typeof domain.requestHeaderName !== 'string' ||
+                        !/^X-[a-f0-9]{24}$/.test(domain.requestHeaderName)))
+            )
+                throw new Error('Invalid domain policy');
+            const base = new URL(domain.publicBaseUrl);
+            if (
+                base.protocol !== 'https:' ||
+                base.username ||
+                base.password ||
+                base.search ||
+                base.hash ||
+                publicGeofileOrigin(base.host) !== base.origin ||
+                !/^(?:\/[A-Za-z0-9._~-]+)*$/.test(base.pathname.replace(/\/$/, '')) ||
+                base.pathname.split('/').some((part) => part === '.' || part === '..') ||
+                this.containsPrivatePanelAddress(domain.publicBaseUrl)
+            )
+                throw new Error('Invalid domain policy');
+        }
+        return result;
     }
 
     public async resolveSubscriptionDomain(uuid: string): Promise<SubscriptionDomainContext> {
@@ -446,6 +509,7 @@ export class AxiosService implements OnModuleInit, OnModuleDestroy {
                 responseType: 'arraybuffer',
                 headers: {
                     ...subscriptionRequestHeaders(headers),
+                    ...subscriptionDomainRequestHeaders(),
                     'Accept-Encoding': undefined,
                     Accept: '*/*',
                     'Cache-Control': 'no-cache, no-store, must-revalidate, private, max-age=0',

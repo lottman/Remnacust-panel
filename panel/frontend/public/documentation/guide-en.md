@@ -887,7 +887,7 @@ Ready-made datasets is one library for every template: PC uploads, URL imports a
 
 ### Checking delivery in Happ and INCY
 
-No download animation is expected for a small subscription: its rules are already in JSON. Large profiles require full JSON and client routing support. Use /json or enable JSON at the base subscription path. Save the template actually assigned to the subscription, then refresh it. Routing profiles use the subscription title; a previously imported Remnacust name may remain as a separate entry that can be removed in the app. Check device preview and app logs to confirm delivery. Reconnect yourself if needed; the server never starts the tunnel.
+No download animation is expected for a small subscription: its rules are already in JSON. Large profiles require full JSON and client routing support. Use /json or enable “Serve JSON at base subscription path” in the Geofiles tab or main subscription settings. Both controls share one global setting, saved immediately without changing other subscription options. Save the template actually assigned to the subscription, then refresh it. Routing profiles use the subscription title; a previously imported Remnacust name may remain as a separate entry that can be removed in the app. Check device preview and app logs to confirm delivery. Reconnect yourself if needed; the server never starts the tunnel.
 
 ### Refresh and file integrity
 

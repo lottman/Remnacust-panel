@@ -4,7 +4,6 @@ import type { GetHostsCommand } from '@remnawave/backend-contract'
 import {
     Accordion,
     Alert,
-    Anchor,
     Badge,
     Button,
     Card,
@@ -29,14 +28,13 @@ import { useTranslation } from 'react-i18next'
 import { TbPencil, TbPlus, TbTrash } from 'react-icons/tb'
 
 import { instance } from '@shared/api'
-import { useGetSubscriptionSettings } from '@shared/api/hooks/subscription-settings/subscription-settings.query.hooks'
-import { ROUTES } from '@shared/constants/routes'
 
 import { type JsonObject } from './autoselect-model'
 import styles from './autoselect-panel.module.css'
 import { editClientTemplate, readClientTemplate, type ClientFormat } from './client-template-model'
 import { GeofileAddressRules } from './geofile-address-rules-panel'
 import { GeofileEditorModal } from './geofile-editor-modal'
+import { GeofileJsonDelivery } from './geofile-json-delivery'
 import {
     attachLibraryGeofile,
     compatibleGeofile,
@@ -174,15 +172,6 @@ export function GeofilesPanel({
     const refs: Reference[] = Array.isArray(config.remnacust?.geofiles)
         ? config.remnacust.geofiles
         : []
-    const needsJsonDelivery = format === 'XRAY_JSON' && refs.length > 0
-    const subscriptionSettings = useGetSubscriptionSettings({
-        rQueryParams: {
-            enabled: needsJsonDelivery,
-            refetchOnMount: 'always',
-            refetchOnWindowFocus: 'always'
-        }
-    })
-    const jsonAtBase = subscriptionSettings.data?.serveJsonAtBaseSubscription
     const targetAliases = geofileTargetAliases(config, format)
     const hostLabels = new Map(hosts.map((host) => [`host:${host.uuid}`, host.remark]))
     const targets = [
@@ -329,28 +318,7 @@ export function GeofilesPanel({
                     {t('geofiles.help')}
                 </Text>
             </Card>
-            {needsJsonDelivery && subscriptionSettings.isSuccess && jsonAtBase === false && (
-                <Alert
-                    role="status"
-                    aria-live="polite"
-                    color="yellow"
-                    title={t('geofiles.json-delivery-title')}
-                >
-                    <Stack gap="xs">
-                        <Text size="sm">
-                            {t('geofiles.json-setting-disabled', { setting: jsonSettingName })}
-                        </Text>
-                        <Anchor
-                            href={ROUTES.DASHBOARD.MANAGEMENT.SUBSCRIPTION_SETTINGS}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            size="sm"
-                        >
-                            {t('geofiles.open-subscription-settings')}
-                        </Anchor>
-                    </Stack>
-                </Alert>
-            )}
+            {format === 'XRAY_JSON' && <GeofileJsonDelivery />}
             {(error || filesQuery.isError) && (
                 <Alert color="red" withCloseButton onClose={() => setError(null)}>
                     {t(error ?? 'geofiles.operation-failed')}{' '}

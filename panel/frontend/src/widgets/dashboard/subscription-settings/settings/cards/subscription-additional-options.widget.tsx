@@ -7,6 +7,7 @@ import { PiGear } from 'react-icons/pi'
 import { queryClient } from '@shared/api'
 import { QueryKeys, useUpdateSubscriptionSettings } from '@shared/api/hooks'
 import { SettingsCardShared } from '@shared/ui/settings-card'
+import { SubscriptionJsonDelivery } from '@shared/ui/subscription-json-delivery'
 import { handleFormErrors } from '@shared/utils/misc'
 
 interface IProps {
@@ -23,7 +24,6 @@ export const SubscriptionAdditionalOptionsWidget = (props: IProps) => {
         validate: schemaResolver(UpdateSubscriptionSettingsCommand.RequestBodySchema),
         initialValues: {
             uuid: subscriptionSettings.uuid,
-            serveJsonAtBaseSubscription: subscriptionSettings.serveJsonAtBaseSubscription,
             randomizeHosts: subscriptionSettings.randomizeHosts,
             isShowCustomRemarks: subscriptionSettings.isShowCustomRemarks
         }
@@ -48,7 +48,6 @@ export const SubscriptionAdditionalOptionsWidget = (props: IProps) => {
         mutate({
             variables: {
                 uuid: values.uuid,
-                serveJsonAtBaseSubscription: values.serveJsonAtBaseSubscription,
                 randomizeHosts: values.randomizeHosts,
                 isShowCustomRemarks: values.isShowCustomRemarks
             }
@@ -68,17 +67,7 @@ export const SubscriptionAdditionalOptionsWidget = (props: IProps) => {
 
                 <SettingsCardShared.Content>
                     <Stack gap="md">
-                        <Switch
-                            description={t('subscription-settings.widget.serve-json-description')}
-                            key={form.key('serveJsonAtBaseSubscription')}
-                            label={t(
-                                'subscription-settings.widget.serve-json-at-base-subscription'
-                            )}
-                            size="sm"
-                            {...form.getInputProps('serveJsonAtBaseSubscription', {
-                                type: 'checkbox'
-                            })}
-                        />
+                        <SubscriptionJsonDelivery />
 
                         <Switch
                             description={t('subscription-tabs.widget.randomize-hosts-description')}

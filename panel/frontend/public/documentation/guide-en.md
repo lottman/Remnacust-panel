@@ -1027,8 +1027,8 @@ During page installation or migration, choose the local panel or another panelâ€
 
 ### Fields and controls
 
+- **Serve JSON at base subscription**: Shared subscription setting. Saved immediately; refresh the subscription in the app after changing it.
 - **Additional options**: Configure additional subscription options
-- **Serve JSON at base subscription**: Selects JSON output for the base subscription URL. Check it in the application that will import that URL.
 - **Randomize hosts**: Enables random host ordering in subscription output. The order can change on the next refresh.
 - **Show custom remarks**: Shows configured subscription status messages, such as expiry or exhausted quota notices.
 - **HWID settings**: Carefully review the documentation before enabling the HWID feature. Not all client applications support this feature.

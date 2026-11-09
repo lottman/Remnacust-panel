@@ -877,7 +877,11 @@ add(
     'subscriptions',
     'Глобальные настройки подписки',
     'Global subscription settings',
-    ['src/pages/dashboard/subscription-settings/', 'src/widgets/dashboard/subscription-settings/'],
+    [
+        'src/pages/dashboard/subscription-settings/',
+        'src/widgets/dashboard/subscription-settings/',
+        'src/shared/ui/subscription-json-delivery/'
+    ],
     '/dashboard/management/subscription-settings',
     ['subscription-settings'],
     [

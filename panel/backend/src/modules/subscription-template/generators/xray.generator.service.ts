@@ -17,6 +17,16 @@ interface ShareLink {
 
 const LINK_TARGET_PREFIX = '$link.';
 const LINK_ALLOWED_TARGETS = new Set(['address', 'method', 'password', 'port', 'remark']);
+const LINK_TRANSPORTS = new Set([
+    'tcp',
+    'ws',
+    'httpupgrade',
+    'grpc',
+    'xhttp',
+    'xera-http',
+    'kcp',
+    'hysteria',
+]);
 
 interface Hysteria2FinalMask {
     quicParams?: {
@@ -81,7 +91,8 @@ export class XrayGeneratorService {
     }
 
     private generateLink(host: ResolvedProxyConfig): ShareLink | null {
-        if (host.transport === 'xdrive' || host.transport === 'masque') return null;
+        if (!LINK_TRANSPORTS.has(host.transport)) return null;
+        if (host.transport === 'hysteria' && host.protocol !== 'hysteria') return null;
         switch (host.protocol) {
             case 'vless':
                 return this.buildVlessLink(host);

@@ -35,7 +35,7 @@ function harness(language = 'en', initial = { uuid: 'settings-id', serveJsonAtBa
             useUpdateSubscriptionSettings: options => { callbacks = options.mutationFns; return update; },
         },
     };
-    const source = fs.readFileSync(path.join(__dirname, '../src/widgets/dashboard/templates/subscription-template-editor/geofile-json-delivery.tsx'), 'utf8');
+    const source = fs.readFileSync(path.join(__dirname, '../src/shared/ui/subscription-json-delivery/subscription-json-delivery.tsx'), 'utf8');
     const compiled = ts.transpileModule(source, { compilerOptions: { jsx: ts.JsxEmit.ReactJSX, module: ts.ModuleKind.CommonJS } }).outputText;
     const ref = { exports: {} };
     new Function('require', 'module', 'exports', compiled)(name => Object.hasOwn(mocks, name) ? mocks[name] : require(name), ref, ref.exports);
@@ -44,7 +44,7 @@ function harness(language = 'en', initial = { uuid: 'settings-id', serveJsonAtBa
         if (!value || typeof value !== 'object') return [];
         return [value, ...elements(value.props?.children)];
     }
-    return { render: () => elements(ref.exports.GeofileJsonDelivery()), settings, update, requests, events, t, confirm: data => callbacks.onSuccess(data), options: () => queryOptions };
+    return { render: () => elements(ref.exports.SubscriptionJsonDelivery()), settings, update, requests, events, t, confirm: data => callbacks.onSuccess(data), options: () => queryOptions };
 }
 
 for (const language of ['ru', 'en', 'fa', 'zh']) test(`${language}: switch saves only the global JSON flag and shows server-confirmed state`, async () => {
@@ -104,4 +104,49 @@ test('pending mutation cannot submit another change; rejection retains confirmed
     assert.equal(view.find(element => element.type === 'Switch').props.checked, false);
     assert(view.some(element => element.props.role === 'alert' && element.props.children === panel.t('geofiles.json-setting-save-failed')));
     assert.equal(view.find(element => element.type === 'Switch').props.disabled, false);
+});
+
+
+test('both settings locations use one shared switch and saving other options cannot overwrite its confirmed value', () => {
+    const requests = [];
+    let initialValues;
+    const sharedSwitch = () => null;
+    const apiHooks = { QueryKeys: { subscriptionSettings: { getSubscriptionSettings: { queryKey: [] } } },
+        useUpdateSubscriptionSettings: () => ({ mutate: value => requests.push(value), isPending: false }) };
+    const mocks = {
+        '@mantine/core': Object.fromEntries(['Button', 'Card', 'Group', 'Stack', 'Switch'].map(name => [name, name])),
+        '@mantine/form': { schemaResolver: () => () => ({}), useForm: options => {
+            initialValues = options.initialValues;
+            return { onSubmit: callback => () => callback({ ...options.initialValues, serveJsonAtBaseSubscription: false }),
+                key: value => value, getInputProps: () => ({}) };
+        } },
+        '@remnawave/backend-contract': { UpdateSubscriptionSettingsCommand: { RequestBodySchema: {} } },
+        'react-i18next': { useTranslation: () => ({ t: value => value }) },
+        'react-icons/pi': { PiGear: 'PiGear' },
+        '@shared/api': { queryClient: { setQueryData() {} } },
+        '@shared/api/hooks': apiHooks,
+        '@shared/ui/settings-card': { SettingsCardShared: Object.fromEntries(['Container', 'Header', 'Content', 'Bottom'].map(name => [name, name])) },
+        '@shared/ui/subscription-json-delivery': { SubscriptionJsonDelivery: sharedSwitch },
+        '@shared/utils/misc': { handleFormErrors() {} }
+    };
+    function load(file) {
+        const source = fs.readFileSync(path.join(__dirname, '../src', file), 'utf8');
+        const compiled = ts.transpileModule(source, { compilerOptions: { jsx: ts.JsxEmit.ReactJSX, module: ts.ModuleKind.CommonJS } }).outputText;
+        const ref = { exports: {} };
+        new Function('require', 'module', 'exports', compiled)(name => Object.hasOwn(mocks, name) ? mocks[name] : require(name), ref, ref.exports);
+        return ref.exports;
+    }
+    function elements(value) {
+        if (Array.isArray(value)) return value.flatMap(elements);
+        if (!value || typeof value !== 'object') return [];
+        return [value, ...elements(value.props?.children)];
+    }
+    const main = load('widgets/dashboard/subscription-settings/settings/cards/subscription-additional-options.widget.tsx');
+    const geo = load('widgets/dashboard/templates/subscription-template-editor/geofile-json-delivery.tsx');
+    const view = main.SubscriptionAdditionalOptionsWidget({ subscriptionSettings: { uuid: 'settings-id', serveJsonAtBaseSubscription: true, randomizeHosts: true, isShowCustomRemarks: false } });
+    assert.equal(Object.hasOwn(initialValues, 'serveJsonAtBaseSubscription'), false);
+    assert.equal(elements(view).filter(element => element.type === sharedSwitch).length, 1);
+    assert.equal(elements(geo.GeofileJsonDelivery()).filter(element => element.type === sharedSwitch).length, 1);
+    view.props.onSubmit();
+    assert.deepEqual(requests, [{ variables: { uuid: 'settings-id', randomizeHosts: true, isShowCustomRemarks: false } }]);
 });

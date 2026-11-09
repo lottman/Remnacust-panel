@@ -175,7 +175,7 @@ test(
 );
 
 test(
-    'real Redis retirement is conditional, isolated and stable across concurrent workers',
+    'real Redis retirement also handles missing history and remains stable across concurrent workers',
     { skip: !process.env.NODE_INCIDENT_TEST_REDIS_URL },
     async () => {
         const redis = new Redis(process.env.NODE_INCIDENT_TEST_REDIS_URL, {
@@ -188,8 +188,9 @@ test(
             other = randomBytes(32).toString('hex');
         const stored = 'remnacust:routing-profile:v1:' + key;
         try {
-            assert.equal(await cache.retireRoutingProfileRevision(key, 'b'.repeat(64), 0), null);
-            assert.equal(await redis.exists(stored), 0);
+            const initial = await cache.retireRoutingProfileRevision(key, 'b'.repeat(64), 0);
+            assert(Number.isSafeInteger(initial) && initial >= Math.floor(Date.now() / 1000) - 2);
+            assert.equal(await redis.exists(stored), 1);
             const first = await cache.routingProfileRevision(key, 'a'.repeat(64), 2000000000);
             const revisions = await Promise.all(
                 Array.from({ length: 20 }, () =>
@@ -201,15 +202,20 @@ test(
                 ),
             );
             assert(revisions.every((value) => value === first + 1));
-            assert.equal(await cache.retireRoutingProfileRevision(other, 'b'.repeat(64), 0), null);
-            assert.equal(await redis.exists('remnacust:routing-profile:v1:' + other), 0);
+            const otherRevision = await cache.retireRoutingProfileRevision(
+                other,
+                'b'.repeat(64),
+                0,
+            );
+            assert(Number.isSafeInteger(otherRevision) && otherRevision >= initial);
+            assert.equal(await redis.exists('remnacust:routing-profile:v1:' + other), 1);
             assert.equal(
                 await cache.retireRoutingProfileRevision(key, 'b'.repeat(64), 0),
                 first + 1,
             );
             assert.equal(await cache.routingProfileRevision(key, 'a'.repeat(64), 0), first + 2);
         } finally {
-            await redis.del(stored);
+            await redis.del(stored, 'remnacust:routing-profile:v1:' + other);
             redis.disconnect();
         }
     },

@@ -633,7 +633,7 @@ test('unused resources do not emit a profile and large tag mirrors keep full JSO
     assert.deepEqual(JSON.parse(body)[0].routing.rules[0].domain, values);
 });
 
-test('removing the last custom geofile clears only an existing provider profile and preserves manual routing rules', async () => {
+test('removing the last custom geofile clears the provider profile even without server history and preserves manual routing rules', async () => {
     const { stabilizeRoutingProfile } = load(
         path.join(root, 'geofiles/stabilize-routing-profile.ts'),
     );
@@ -648,8 +648,7 @@ test('removing the last custom geofile clears only an existing provider profile 
         };
         const cache = {
             routingProfileRevision: revision,
-            retireRoutingProfileRevision: (key, fingerprint, minimum) =>
-                states.has(key) ? revision(key, fingerprint, minimum) : Promise.resolve(null),
+            retireRoutingProfileRevision: revision,
         };
         const previous = new XrayGeofileDelivery(client, 'remote', 'Provider');
         const domains = previous.register(
@@ -724,7 +723,10 @@ test('removing the last custom geofile clears only an existing provider profile 
         assert.equal(again.headersToApply.routing, ctx.headersToApply.routing);
         const fresh = context();
         await run(fresh, 'unrelated-device');
-        assert.equal(fresh.headersToApply, undefined);
+        assert.equal(decode(fresh.headersToApply.routing).Geositeurl, '');
+        assert.equal(decode(fresh.headersToApply.routing).Geoipurl, '');
+        assert.equal(decode(fresh.headersToApply.routing).Name, cleared.Name);
+        assert.equal(states.size, 2, 'registered device revision state is isolated');
         const explicit = context();
         explicit.headersToApply = { Routing: client + '://routing/off' };
         await run(explicit);

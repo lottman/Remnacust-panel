@@ -30,6 +30,48 @@ function host(uuid, isHidden = true) {
     };
 }
 
+test('rendered fallback balancers contain their required observer for every injected member', async () => {
+    const members = [host('first'), host('second')];
+    for (const type of ['roundRobin', 'random', 'leastLoad']) {
+        const template = {
+            outbounds: [{ tag: 'direct', protocol: 'freedom' }],
+            remnawave: {
+                injectHosts: [
+                    {
+                        mode: 'all',
+                        selectFrom: 'HIDDEN',
+                        tagPrefix: 'pool',
+                        selector: { type: 'uuids', values: ['first', 'second'] },
+                    },
+                ],
+            },
+            routing: {
+                balancers: [
+                    { tag: 'auto', selector: ['pool'], fallbackTag: 'pool', strategy: { type } },
+                ],
+                rules: [{ type: 'field', network: 'tcp,udp', balancerTag: 'auto' }],
+            },
+        };
+        const original = structuredClone(template);
+        const generator = new XrayJsonGeneratorService({
+            getCachedTemplateByType: async () => template,
+        });
+        const [config] = JSON.parse(
+            await generator.generateConfig({
+                hosts: [host('recipient', false), ...members],
+                isExtendedClient: false,
+            }),
+        );
+        assert.deepEqual(config.observatory.subjectSelector, ['pool']);
+        assert.deepEqual(
+            config.outbounds.filter((o) => o.tag.startsWith('pool')).map((o) => o.tag),
+            ['pool', 'pool-2'],
+        );
+        assert.equal(config.routing.balancers[0].strategy.type, type);
+        assert.deepEqual(template, original);
+    }
+});
+
 test('recipient proxy is optional and disabling a plaintext placeholder keeps the TLS pool and balancer', async () => {
     const recipient = host('automatic', false);
     recipient.security = 'none';

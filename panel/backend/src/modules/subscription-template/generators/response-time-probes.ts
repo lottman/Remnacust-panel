@@ -11,7 +11,12 @@ export function ensureResponseTimeProbes<T extends object>(input: T): T {
     const prefixes = new Set<string>();
     for (const balancer of routing.balancers) {
         if (!object(balancer) || !object(balancer.strategy)) continue;
-        if (balancer.strategy.type !== 'leastPing' || !Array.isArray(balancer.selector)) continue;
+        const measured = ['leastPing', 'leastLoad'].includes(String(balancer.strategy.type));
+        const observedFallback =
+            ['random', 'roundRobin'].includes(String(balancer.strategy.type)) &&
+            typeof balancer.fallbackTag === 'string' &&
+            balancer.fallbackTag.length > 0;
+        if ((!measured && !observedFallback) || !Array.isArray(balancer.selector)) continue;
         for (const prefix of balancer.selector)
             if (typeof prefix === 'string' && prefix.length) prefixes.add(prefix);
     }

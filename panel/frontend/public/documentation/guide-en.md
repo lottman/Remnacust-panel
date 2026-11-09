@@ -797,6 +797,8 @@ For leastPing, the panel supplies a missing observer and enrolls every balancer 
 
 After initial measurements, the app refreshes results on its configured interval. New connections use the current selection without refreshing the subscription; existing streams do not move. Burst uses the sample mean; native url-test/urltest tolerance reduces frequent switching. Probe settings and supported values depend on the client core. Probe timeout and fallback configure failure behavior. Pool membership still respects user access and applicable quotas.
 
+Least load, and round robin or random with a fallback outbound, require HTTP observations. The panel supplies missing probes while preserving the selected strategy and custom probe address. Plain round-robin/random without a fallback do not gain extra requests. An unreachable probe site can exclude an otherwise working server.
+
 ### Autoselect in code and UI
 
 The Xray JSON Editing and Autoselect tabs share one draft. Editing an existing pool or balancer immediately updates its JSON. A new pool adds injectHosts, a balancer, routing and observation for leastPing or leastLoad. Adding a balancer for the same pool again does not create a second card. An unfinished balancer named after its pool is completed in place. Created and copied templates appear in the list immediately. Other outbounds, rules and settings remain intact. The changes panel compares against the last save; on phones it appears below the form. Save publishes a valid draft; text with errors is saved on the server with warnings and remains available in history.

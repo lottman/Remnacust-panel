@@ -221,6 +221,13 @@ const routeReferenceNotes = {
     zh: ' 通过 API 保存时也会检查规则引用的出站和均衡器。不存在的名称不会被替换为 DIRECT 或其他路由：编辑器文本作为草稿保留并显示准确的错误路径，生效模板保持不变。由主机备注或标签生成的名称在生成订阅时确定。'
 }
 
+const observerNotes = {
+    ru: 'Для «Наиболее стабильного соединения», а также «По очереди» и «Случайного подключения» с резервным выходом нужны HTTP-проверки. Панель добавляет отсутствующие проверки, сохраняя выбранную стратегию и пользовательский адрес проверки. Обычные round-robin/random без резервного выхода не получают дополнительных запросов. Недоступный сайт проверки может сделать рабочий сервер недоступным для выбора.',
+    en: 'Least load, and round robin or random with a fallback outbound, require HTTP observations. The panel supplies missing probes while preserving the selected strategy and custom probe address. Plain round-robin/random without a fallback do not gain extra requests. An unreachable probe site can exclude an otherwise working server.',
+    fa: 'حالت پایدارترین اتصال و همچنین حالت چرخشی یا تصادفی همراه خروجی پشتیبان به پایش HTTP نیاز دارند. پنل پایش غایب را با حفظ راهبرد و نشانی دلخواه اضافه می‌کند. حالت چرخشی یا تصادفی بدون خروجی پشتیبان درخواست اضافه ندارد. در دسترس نبودن سایت بررسی می‌تواند سرور سالم را از انتخاب خارج کند.',
+    zh: '最低负载模式以及带备用出站的轮询或随机模式需要 HTTP 观测。面板会补全缺失的探测，同时保留所选策略和自定义探测地址。不带备用出站的普通轮询或随机模式不会增加请求。探测网站不可达可能使正常服务器被排除。'
+}
+
 const orderNotes = {
     ru: 'Порядок серверов настраивается в отдельном окне кнопкой «Порядок серверов»: стрелки меняют позиции, длинный список разбит на страницы. Для точного порядка отдельных серверов выберите хосты и все выбранные хосты. «По очереди» распределяет новые соединения по кругу; это не резервирование до отказа первого сервера. Для такого поведения выберите «По приоритету: первый доступный». Явно настроенный порядок round-robin сохраняется и после сортировки тегов ядром. До 128 участников одного балансера и 256 на конфигурацию. После изменения сохраните шаблон и обновите подписку.',
     en: 'Use Server order to open the ordering dialog. Arrows move members and long lists are paginated. Select explicit hosts and all selected hosts for precise per-server order. Round robin rotates new connections; it does not retain the first server until failure. Use Priority: first available for failover. Explicit round-robin order is retained after native tag sorting, with up to 128 members per balancer and 256 per configuration. Save the template and refresh the subscription after changing the order.',
@@ -241,7 +248,10 @@ export function explainAutoselect(articles) {
                         body:
                             translations[index][1] +
                             (id === 'templates-assignments' ? routeReferenceNotes[language] : '') +
-                            (id === 'templates-priority' ? '\n\n' + orderNotes[language] : '')
+                            (id === 'templates-priority' ? '\n\n' + orderNotes[language] : '') +
+                            (id === 'templates-http-response-time'
+                                ? '\n\n' + observerNotes[language]
+                                : '')
                     }
                 ])
             )

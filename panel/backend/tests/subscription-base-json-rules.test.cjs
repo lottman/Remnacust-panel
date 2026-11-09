@@ -20,7 +20,7 @@ const { SubscriptionService } = load(file, mocks);
 
 test('the base JSON setting upgrades app fallback on either domain and preserves explicit rule opt-out', async () => {
     for (const domain of ['https://main.example.test', 'https://cdn.example.test']) {
-        for (const agent of ['Happ/6.2.0', 'INCY/2.6.2/iOS']) {
+        for (const agent of ['Happ/6.2.0', 'INCY/2.6.2/iOS', 'v2RayTun/2.0', 'v2raytun/3.10.15', 'v2raytun/android', 'v2raytun/ios', 'v2raytun/windows']) {
             for (const [enabled, ignore, expected] of [[false, false, 'XRAY_BASE64'], [true, false, 'XRAY_JSON'], [true, true, 'XRAY_BASE64']]) {
                 const settings = { serveJsonAtBaseSubscription: enabled, hwidSettings: { enabled: false }, customRemarks: { emptyHosts: [] } };
                 const request = { matchedResponseType: 'XRAY_BASE64', userAgent: agent, subscriptionSettings: settings, ignoreServeJsonAtBaseSubscription: ignore };

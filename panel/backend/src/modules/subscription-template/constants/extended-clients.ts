@@ -14,6 +14,7 @@ export function isExtendedClient(userAgent: string): boolean {
 
 export const JSON_SUBSCRIPTION_FALLBACK_CLIENTS = [
     /^(?:PanicVPN|EraVPN|ЭраVPN)\//i,
+    /^v2raytun\/(?:\d+(?:\.\d+)+\b|(?:android|ios|windows|macos|linux)(?:\/|$))/i,
     /^[Ss]treisand/,
     /^Happ\//,
     /^INCY\//,

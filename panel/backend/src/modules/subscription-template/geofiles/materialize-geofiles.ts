@@ -18,6 +18,7 @@ export interface GeofileReference {
     clientRefreshIntervalSeconds?: number;
 }
 type ObjectValue = Record<string, any>;
+const XRAY_COMPAT_INLINE_RULE_LIMIT = 50_000;
 
 export function geofileReferences(config: ObjectValue): GeofileReference[] {
     const references = config.remnacust?.geofiles;
@@ -101,6 +102,8 @@ export async function materializeGeofiles(
         inlineBytes = 0;
     const sing = type === 'SINGBOX',
         xray = type === 'XRAY_JSON';
+    const inlineRuleLimit =
+        xray && !happ ? XRAY_COMPAT_INLINE_RULE_LIMIT : GEOFILE_INLINE_RULE_LIMIT;
     for (const reference of references) {
         const file = await fileById(reference.id);
         if (
@@ -259,7 +262,7 @@ export async function materializeGeofiles(
                     inlineBytes +=
                         rules.ips.reduce((sum, value) => sum + value.length, 0) +
                         rules.domains.reduce((sum, item) => sum + Buffer.byteLength(item.value), 0);
-                    if (inlineRecords > GEOFILE_INLINE_RULE_LIMIT || inlineBytes > 4 * 1024 * 1024)
+                    if (inlineRecords > inlineRuleLimit || inlineBytes > 4 * 1024 * 1024)
                         throw new Error('geofile-inline-limit');
                 }
                 continue;
@@ -303,7 +306,7 @@ export async function materializeGeofiles(
             inlineBytes +=
                 rules.ips.reduce((sum, value) => sum + value.length, 0) +
                 rules.domains.reduce((sum, item) => sum + Buffer.byteLength(item.value), 0);
-            if (inlineRecords > GEOFILE_INLINE_RULE_LIMIT || inlineBytes > 4 * 1024 * 1024)
+            if (inlineRecords > inlineRuleLimit || inlineBytes > 4 * 1024 * 1024)
                 throw new Error('geofile-inline-limit');
             if (xray) {
                 generated.push({

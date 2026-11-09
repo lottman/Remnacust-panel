@@ -6,7 +6,10 @@ const { mocks, pool } = require('./client-pool-fixture.cjs');
 const fixture = require('./geofiles-fixture.cjs');
 const root = path.join(__dirname, '../src/modules/subscription-template');
 const modules = { ...mocks, '../generators/client-pool': pool };
-const revisionCache = { routingProfileRevision: async (_key, _fingerprint, minimum) => minimum };
+const revisionCache = {
+    routingProfileRevision: async (_key, _fingerprint, minimum) => minimum,
+    retireRoutingProfileRevision: async () => null,
+};
 const { XrayGeofileDelivery, XrayGeofileFallback, datCategory, xrayGeofileClient } = load(
     path.join(root, 'geofiles/xray-geofile-delivery.ts'),
     modules,
@@ -628,4 +631,107 @@ test('unused resources do not emit a profile and large tag mirrors keep full JSO
     assert.equal(decode(header).Geositeurl.split('?')[0], 'https://sub.test/file.dat');
     assert.deepEqual(decode(header).DirectSites, []);
     assert.deepEqual(JSON.parse(body)[0].routing.rules[0].domain, values);
+});
+
+test('removing the last custom geofile clears only an existing provider profile and preserves manual routing rules', async () => {
+    const { stabilizeRoutingProfile } = load(
+        path.join(root, 'geofiles/stabilize-routing-profile.ts'),
+    );
+    for (const client of ['happ', 'incy']) {
+        const states = new Map();
+        const revision = async (key, fingerprint, minimum) => {
+            const old = states.get(key);
+            if (old?.fingerprint === fingerprint) return old.revision;
+            const value = Math.max(minimum, (old?.revision ?? 0) + 1);
+            states.set(key, { fingerprint, revision: value });
+            return value;
+        };
+        const cache = {
+            routingProfileRevision: revision,
+            retireRoutingProfileRevision: (key, fingerprint, minimum) =>
+                states.has(key) ? revision(key, fingerprint, minimum) : Promise.resolve(null),
+        };
+        const previous = new XrayGeofileDelivery(client, 'remote', 'Provider');
+        const domains = previous.register(
+            'geosite',
+            { id, categories: ['example'], target: 'DIRECT' },
+            async () => 'https://sub.example.test/old.dat',
+        );
+        const original = await stabilizeRoutingProfile(
+            await previous.header(
+                JSON.stringify([{ routing: { rules: [{ domain: domains }] } }]),
+                'provider-key',
+            ),
+            24,
+            revision,
+            'device-key',
+        );
+        const manual = JSON.stringify([
+            {
+                routing: {
+                    rules: [
+                        { type: 'field', domain: ['geosite:category-ru'], outboundTag: 'direct' },
+                    ],
+                },
+                outbounds: [{ tag: 'direct', protocol: 'freedom' }],
+            },
+        ]);
+        let body = manual;
+        const renderer = new RenderTemplatesService(
+            { resolveProxyConfig: async () => [] },
+            null,
+            null,
+            null,
+            null,
+            { generateConfig: async () => body },
+            cache,
+        );
+        const context = () => ({
+            userAgent: client === 'happ' ? 'Happ/6.3.0' : 'INCY/3.9.7',
+            matchedResponseType: 'XRAY_JSON',
+            isExtendedClient: true,
+            subscriptionSettings: {},
+        });
+        const run = (ctx, credential = 'device-key') =>
+            renderer.generateSubscription({
+                srrContext: ctx,
+                user: { id: 42, vlessUuid: credential },
+                hosts: [],
+                profileTitle: 'Provider',
+                profileKey: 'provider-key',
+            });
+        const ctx = context();
+        const output = await run(ctx);
+        const cleared = decode(ctx.headersToApply.routing);
+        assert.equal(cleared.Name, decode(original).Name);
+        assert(Number(cleared.LastUpdated) > Number(decode(original).LastUpdated));
+        assert.equal(cleared.Geositeurl, '');
+        assert.equal(cleared.Geoipurl, '');
+        for (const key of [
+            'DirectSites',
+            'DirectIp',
+            'ProxySites',
+            'ProxyIp',
+            'BlockSites',
+            'BlockIp',
+        ])
+            assert.deepEqual(cleared[key], []);
+        assert.deepEqual(JSON.parse(output.subscription), JSON.parse(manual));
+        assert.equal(ctx.headersToApply.routing.includes('/routing/off'), false);
+        if (client === 'incy') assert.equal(ctx.headersToApply['routing-geo-update-interval'], '0');
+        const again = context();
+        await run(again);
+        assert.equal(again.headersToApply.routing, ctx.headersToApply.routing);
+        const fresh = context();
+        await run(fresh, 'unrelated-device');
+        assert.equal(fresh.headersToApply, undefined);
+        const explicit = context();
+        explicit.headersToApply = { Routing: client + '://routing/off' };
+        await run(explicit);
+        assert.deepEqual(explicit.headersToApply, { Routing: client + '://routing/off' });
+        body = JSON.stringify([{ geodata: { assets: [] }, routing: { rules: [] } }]);
+        const manualGeo = context();
+        await run(manualGeo);
+        assert.equal(manualGeo.headersToApply, undefined);
+    }
 });

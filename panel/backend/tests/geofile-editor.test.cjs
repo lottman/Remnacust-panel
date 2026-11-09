@@ -224,10 +224,10 @@ test('metadata ENOSPC after blob rename leaves no orphan current blobs and retai
 test('multipart copy supplier runs only inside bounded editor admission and validates before creating a copy', async () =>
     fixture(async ({ service }) => {
         const source = await service.ingest('Multipart budget', 'geosite', async () => f.geosite);
-        const pending = [];
-        const supplier = () => new Promise((resolve) => pending.push(resolve));
-        const a = service.copyData(source.id, source.sha256, supplier);
-        const b = service.copyData(source.id, source.sha256, supplier);
+        const pending = new Map();
+        const supplier = (key) => () => new Promise((resolve) => pending.set(key, resolve));
+        const a = service.copyData(source.id, source.sha256, supplier('a'));
+        const b = service.copyData(source.id, source.sha256, supplier('b'));
         const rejected = assert.rejects(() => b, /copy-selections/);
         let invoked = false;
         await assert.rejects(
@@ -239,13 +239,13 @@ test('multipart copy supplier runs only inside bounded editor admission and vali
             /busy/,
         );
         assert.equal(invoked, false);
-        while (pending.length < 2) await new Promise((resolve) => setImmediate(resolve));
-        pending[0]({
+        while (pending.size < 2) await new Promise((resolve) => setImmediate(resolve));
+        pending.get('a')({
             name: 'Copy A',
             data: f.geosite,
             selections: [{ format: 'SINGBOX', categories: ['example@ads'] }],
         });
-        pending[1]({
+        pending.get('b')({
             name: 'Copy B',
             data: f.geosite,
             selections: [{ format: 'SINGBOX', categories: ['missing'] }],

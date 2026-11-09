@@ -157,6 +157,10 @@ export class XrayGeofileDelivery {
         // Absence of a routing header leaves the previous provider profile on
         // the device. Replace that profile's old URLs instead of disabling
         // the client's routing feature or deleting unrelated profiles.
+        return this.retirementHeader(profileKey, now);
+    }
+
+    public retirementHeader(profileKey: string, now = Date.now()): string {
         this.inlineOnly = true;
         this.intervalHours = 0;
         const profile = {

@@ -8,7 +8,15 @@ const { RenderTemplatesService } = source(
         './constants/config-types': {
             SUBSCRIPTION_CONFIG_TYPES: { XRAY_JSON: { CONTENT_TYPE: 'application/json' } },
         },
-        './geofiles/xray-geofile-delivery': { xrayGeofileClient: () => 'incy' },
+        './geofiles/xray-geofile-delivery': {
+            ...source('modules/subscription-template/geofiles/xray-geofile-delivery.ts', {
+                '../generators/client-pool': require('./client-pool-fixture.cjs').pool,
+            }),
+            xrayGeofileClient: () => 'incy',
+        },
+        './geofiles/stabilize-routing-profile': source(
+            'modules/subscription-template/geofiles/stabilize-routing-profile.ts',
+        ),
         './geofiles/automatic-xray-delivery': {
             automaticXrayDelivery: async ({ generate }) => {
                 await generate();
@@ -40,6 +48,7 @@ const params = () => ({
 
 test('first routed subscription refreshes direct credentials once and reuses pool selection across DAT rerenders', async () => {
     const service = Object.create(RenderTemplatesService.prototype);
+    service.rawCache = { retireRoutingProfileRevision: async () => null };
     let bound = false,
         preparations = 0,
         selections = 0,
@@ -91,6 +100,7 @@ test('first routed subscription refreshes direct credentials once and reuses poo
 
 test('ordinary JSON does not resolve source candidates or register route credentials', async () => {
     const service = Object.create(RenderTemplatesService.prototype);
+    service.rawCache = { retireRoutingProfileRevision: async () => null };
     let reads = 0;
     service.resolveProxyConfigService = {
         resolveProxyConfig: async (options) => {

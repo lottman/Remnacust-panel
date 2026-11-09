@@ -121,7 +121,9 @@ function templateService(repository, cache) {
 function subscriptionService(templates, hosts = [host()]) {
     const [sing, mihomo, clash, xray] = generators(templates);
     const resolver = { resolveProxyConfig: async () => hosts };
-    const render = new RenderTemplatesService(resolver, mihomo, clash, {}, sing, xray, {});
+    const render = new RenderTemplatesService(resolver, mihomo, clash, {}, sing, xray, {
+        retireRoutingProfileRevision: async () => null,
+    });
     const service = Object.create(SubscriptionService.prototype);
     const settings = {
         hwidSettings: { enabled: false },

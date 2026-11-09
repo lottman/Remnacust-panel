@@ -211,18 +211,43 @@ export class RenderTemplatesService {
                     profileKey: params.profileKey ?? String(user.id),
                     generate,
                 });
-                if (output.header)
+                const retiring =
+                    !output.header &&
+                    client &&
+                    !hasRouting &&
+                    output.subscription &&
+                    !JSON.parse(output.subscription).some(
+                        (config: { geodata?: unknown }) => config?.geodata,
+                    );
+                if (retiring) {
+                    output.header = new XrayGeofileDelivery(
+                        client,
+                        'inline',
+                        params.profileTitle ?? 'Subscription',
+                    ).retirementHeader(params.profileKey ?? String(user.id));
+                    output.intervalHours = 0;
+                }
+                const routing = output.header
+                    ? await stabilizeRoutingProfile(
+                          output.header,
+                          output.intervalHours,
+                          (key, fingerprint, minimum) =>
+                              retiring
+                                  ? this.rawCache.retireRoutingProfileRevision(
+                                        key,
+                                        fingerprint,
+                                        minimum,
+                                    )
+                                  : this.rawCache.routingProfileRevision(key, fingerprint, minimum),
+                          // Use the resolved credential identity, never an unregistered request HWID.
+                          user.vlessUuid ?? '',
+                          output.sourceRevision,
+                      )
+                    : undefined;
+                if (routing)
                     srrContext.headersToApply = {
                         ...srrContext.headersToApply,
-                        routing: await stabilizeRoutingProfile(
-                            output.header,
-                            output.intervalHours,
-                            (key, fingerprint, minimum) =>
-                                this.rawCache.routingProfileRevision(key, fingerprint, minimum),
-                            // Use the resolved credential identity, never an unregistered request HWID.
-                            user.vlessUuid ?? '',
-                            output.sourceRevision,
-                        ),
+                        routing,
                         ...(output.inline ? { 'x-remnacust-geofiles-delivery': 'inline' } : {}),
                         ...(client === 'incy' &&
                         !Object.keys(configuredHeaders).some(

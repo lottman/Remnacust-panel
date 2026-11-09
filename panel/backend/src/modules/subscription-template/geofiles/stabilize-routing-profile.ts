@@ -3,10 +3,10 @@ import { createHash } from 'node:crypto';
 export async function stabilizeRoutingProfile(
     header: string,
     intervalHours: number | undefined,
-    revision: (key: string, fingerprint: string, minimum: number) => Promise<number>,
+    revision: (key: string, fingerprint: string, minimum: number) => Promise<number | null>,
     credentialScope = '',
     sourceRevision?: string,
-): Promise<string> {
+): Promise<string | undefined> {
     const match = /^(happ|incy):\/\/routing\/onadd\/(.+)$/.exec(header);
     if (!match || Buffer.byteLength(header) > 3000)
         throw new Error('Invalid generated routing profile');
@@ -24,8 +24,11 @@ export async function stabilizeRoutingProfile(
     const key = digest(JSON.stringify([match[1], profile.Name, credentialScope]));
     if (sourceRevision !== undefined && !/^[a-f0-9]{64}$/.test(sourceRevision))
         throw new Error('Invalid geofile source revision');
-    const fingerprint = digest(JSON.stringify({ profile, intervalHours, ...(sourceRevision ? { sourceRevision } : {}) }));
+    const fingerprint = digest(
+        JSON.stringify({ profile, intervalHours, ...(sourceRevision ? { sourceRevision } : {}) }),
+    );
     const value = await revision(key, fingerprint, minimum);
+    if (value === null) return undefined;
     if (!Number.isSafeInteger(value) || value < 0 || value >= 1e12)
         throw new Error('Invalid stored routing revision');
     profile.LastUpdated = String(value);

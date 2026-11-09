@@ -7,6 +7,7 @@ if raw then
  local ok,value=pcall(cjson.decode,raw)
  if ok and type(value)=='table' and type(value.revision)=='number' and value.revision>=0 and value.revision<1000000000000 and value.revision==math.floor(value.revision) then old=value end
 end
+if ARGV[3]=='1' and not old then return -1 end
 if old and old.fingerprint==ARGV[1] then
  redis.call('EXPIRE',KEYS[1],7776000)
  return old.revision

@@ -76,6 +76,7 @@ export class RenderTemplatesService {
                     subscription: await this.clashGeneratorService.generateConfig(
                         formattedHosts,
                         srrContext.overrideTemplateName,
+                        srrContext.subscriptionSettings.geofilesEnabled === true,
                     ),
                     contentType: SUBSCRIPTION_CONFIG_TYPES['CLASH'].CONTENT_TYPE,
                 };
@@ -87,6 +88,7 @@ export class RenderTemplatesService {
                         false,
                         srrContext.isExtendedClient,
                         srrContext.overrideTemplateName,
+                        srrContext.subscriptionSettings.geofilesEnabled === true,
                     ),
                     contentType: SUBSCRIPTION_CONFIG_TYPES['MIHOMO'].CONTENT_TYPE,
                 };
@@ -96,6 +98,7 @@ export class RenderTemplatesService {
                     subscription: await this.singBoxGeneratorService.generateConfig(
                         formattedHosts,
                         srrContext.overrideTemplateName,
+                        srrContext.subscriptionSettings.geofilesEnabled === true,
                     ),
                     contentType: SUBSCRIPTION_CONFIG_TYPES['SINGBOX'].CONTENT_TYPE,
                 };
@@ -107,6 +110,7 @@ export class RenderTemplatesService {
                         true,
                         false,
                         srrContext.overrideTemplateName,
+                        srrContext.subscriptionSettings.geofilesEnabled === true,
                     ),
                     contentType: SUBSCRIPTION_CONFIG_TYPES['STASH'].CONTENT_TYPE,
                 };
@@ -178,6 +182,7 @@ export class RenderTemplatesService {
                         subscriptionInactive:
                             user.status !== USERS_STATUS.ACTIVE || user.expireAt <= new Date(),
                         geofileDelivery,
+                        geofilesEnabled: srrContext.subscriptionSettings.geofilesEnabled === true,
                     });
                 const generate = async (geofileDelivery?: XrayGeofileDelivery) => {
                     let output = await renderXray(geofileDelivery);
@@ -205,7 +210,10 @@ export class RenderTemplatesService {
                     return output;
                 };
                 const output = await automaticXrayDelivery({
-                    client,
+                    client:
+                        srrContext.subscriptionSettings.geofilesEnabled === true
+                            ? client
+                            : undefined,
                     manualRouting: hasRouting,
                     title: params.profileTitle ?? 'Subscription',
                     profileKey: params.profileKey ?? String(user.id),

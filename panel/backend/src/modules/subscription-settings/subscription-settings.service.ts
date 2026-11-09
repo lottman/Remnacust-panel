@@ -1,10 +1,10 @@
-import { SubscriptionActionSchema } from '@libs/contracts/models/subscription-settings/custom-remarks.schema';
 import { Injectable, Logger } from '@nestjs/common';
 
 import { RawCacheService } from '@common/raw-cache';
 import { fail, ok, TResult } from '@common/types';
 import { CACHE_KEYS, ERRORS } from '@libs/contracts/constants';
 import { ResolvedProxyConfigSchema } from '@libs/contracts/models';
+import { SubscriptionActionSchema } from '@libs/contracts/models/subscription-settings/custom-remarks.schema';
 
 import { ResponseRulesParserService } from '@modules/subscription-response-rules/services/response-rules-parser.service';
 
@@ -98,6 +98,10 @@ export class SubscriptionSettingsService {
 
             return ok(updatedSettings);
         } catch (error) {
+            if (error instanceof Error && error.message === 'GEOFILES_REQUIRE_BASE_JSON')
+                return fail(
+                    ERRORS.CONFIG_VALIDATION_ERROR.withMessage('GEOFILES_REQUIRE_BASE_JSON'),
+                );
             this.logger.error(error);
             return fail(ERRORS.UPDATE_SUBSCRIPTION_SETTINGS_ERROR);
         }

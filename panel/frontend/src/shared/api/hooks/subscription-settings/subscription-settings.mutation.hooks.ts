@@ -1,7 +1,8 @@
-import { translateMutationMessage } from '@shared/utils/translate-mutation-message'
 import { notifications } from '@mantine/notifications'
 import { UpdateSubscriptionSettingsCommand } from '@remnawave/backend-contract'
 import i18next from 'i18next'
+
+import { translateMutationMessage } from '@shared/utils/translate-mutation-message'
 
 import { createMutationHook } from '../../tsq-helpers'
 
@@ -23,7 +24,9 @@ export const useUpdateSubscriptionSettings = createMutationHook({
                 title: i18next.t('common.message.error'),
                 message:
                     error instanceof Error
-                        ? error.message
+                        ? error.message.includes('GEOFILES_REQUIRE_BASE_JSON')
+                            ? i18next.t('geofiles.requires-json')
+                            : error.message
                         : i18next.t('common.message.unknown-error'),
                 color: 'red'
             })

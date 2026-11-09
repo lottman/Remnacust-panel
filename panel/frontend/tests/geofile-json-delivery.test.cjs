@@ -44,7 +44,7 @@ function harness(language = 'en', initial = { uuid: 'settings-id', serveJsonAtBa
         if (!value || typeof value !== 'object') return [];
         return [value, ...elements(value.props?.children)];
     }
-    return { render: () => elements(ref.exports.SubscriptionJsonDelivery()), settings, update, requests, events, t, confirm: data => callbacks.onSuccess(data), options: () => queryOptions };
+    return { render: () => elements(ref.exports.SubscriptionJsonDelivery()), settings, update, requests, events, t, confirm: data => callbacks.onSuccess(data), reject: () => callbacks.onError(), options: () => queryOptions };
 }
 
 for (const language of ['ru', 'en', 'fa', 'zh']) test(`${language}: switch saves only the global JSON flag and shows server-confirmed state`, async () => {
@@ -107,7 +107,7 @@ test('pending mutation cannot submit another change; rejection retains confirmed
 });
 
 
-test('both settings locations use one shared switch and saving other options cannot overwrite its confirmed value', () => {
+test('additional settings owns the shared controls and saving other options cannot overwrite its confirmed value', () => {
     const requests = [];
     let initialValues;
     const sharedSwitch = () => null;
@@ -142,11 +142,45 @@ test('both settings locations use one shared switch and saving other options can
         return [value, ...elements(value.props?.children)];
     }
     const main = load('widgets/dashboard/subscription-settings/settings/cards/subscription-additional-options.widget.tsx');
-    const geo = load('widgets/dashboard/templates/subscription-template-editor/geofile-json-delivery.tsx');
     const view = main.SubscriptionAdditionalOptionsWidget({ subscriptionSettings: { uuid: 'settings-id', serveJsonAtBaseSubscription: true, randomizeHosts: true, isShowCustomRemarks: false } });
     assert.equal(Object.hasOwn(initialValues, 'serveJsonAtBaseSubscription'), false);
     assert.equal(elements(view).filter(element => element.type === sharedSwitch).length, 1);
-    assert.equal(elements(geo.GeofileJsonDelivery()).filter(element => element.type === sharedSwitch).length, 1);
+    const geoSource = fs.readFileSync(path.join(__dirname, '../src/widgets/dashboard/templates/subscription-template-editor/geofiles-panel.tsx'), 'utf8');
+    assert.equal(geoSource.includes('GeofileJsonDelivery'), false);
     view.props.onSubmit();
     assert.deepEqual(requests, [{ variables: { uuid: 'settings-id', randomizeHosts: true, isShowCustomRemarks: false } }]);
+});
+
+for (const language of ['ru', 'en', 'fa', 'zh']) test(`${language}: geofiles require JSON and cannot silently disable it`, async () => {
+    const panel = harness(language);
+    let controls = panel.render().filter(element => element.type === 'Switch');
+    assert.equal(controls[1].props.checked, false);
+    assert.equal(controls[1].props.disabled, true);
+    controls[1].props.onChange({ currentTarget: { checked: true } });
+    assert.equal(panel.requests.length, 0);
+    await panel.confirm({ ...panel.settings.data, serveJsonAtBaseSubscription: true, geofilesEnabled: false });
+    controls = panel.render().filter(element => element.type === 'Switch');
+    assert.equal(controls[1].props.disabled, false);
+    controls[1].props.onChange({ currentTarget: { checked: true } });
+    assert.deepEqual(panel.requests[0], { variables: { uuid: 'settings-id', geofilesEnabled: true } });
+    assert.equal(panel.settings.data.geofilesEnabled, false);
+    await panel.confirm({ ...panel.settings.data, geofilesEnabled: true });
+    controls = panel.render().filter(element => element.type === 'Switch');
+    assert.equal(controls[0].props.disabled, true);
+    controls[0].props.onChange({ currentTarget: { checked: false } });
+    assert.equal(panel.requests.length, 1);
+    controls[1].props.onChange({ currentTarget: { checked: false } });
+    assert.deepEqual(panel.requests[1], { variables: { uuid: 'settings-id', geofilesEnabled: false } });
+    await panel.confirm({ ...panel.settings.data, geofilesEnabled: false });
+    assert.equal(panel.render().find(element => element.type === 'Switch').props.disabled, false);
+});
+
+test('failed or conflicting writes refresh authoritative settings without silently switching flags', () => {
+    const panel = harness('en', { uuid: 'settings-id', serveJsonAtBaseSubscription: true, geofilesEnabled: true });
+    panel.render();
+    panel.reject();
+    assert.deepEqual(panel.events, ['invalidate']);
+    const controls = panel.render().filter(element => element.type === 'Switch');
+    assert.equal(controls[0].props.checked, true);
+    assert.equal(controls[1].props.checked, true);
 });

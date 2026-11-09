@@ -24,27 +24,76 @@ export function SubscriptionJsonDelivery() {
                 await client.cancelQueries({ queryKey })
                 client.setQueryData(queryKey, data)
                 void client.invalidateQueries({ queryKey })
+            },
+            onError: () => {
+                void client.invalidateQueries({ queryKey })
             }
         }
     })
     return (
         <Stack gap="xs">
             {settings.data ? (
-                <Switch
-                    checked={settings.data.serveJsonAtBaseSubscription}
-                    disabled={!settings.isSuccess || update.isPending}
-                    label={t('subscription-settings.widget.serve-json-at-base-subscription')}
-                    description={t('geofiles.json-setting-help')}
-                    onChange={(event) => {
-                        if (!settings.isSuccess || update.isPending || !settings.data) return
-                        update.mutate({
-                            variables: {
-                                uuid: settings.data.uuid,
-                                serveJsonAtBaseSubscription: event.currentTarget.checked
-                            }
-                        })
-                    }}
-                />
+                <Stack gap="md">
+                    <Switch
+                        checked={settings.data.serveJsonAtBaseSubscription}
+                        disabled={
+                            !settings.isSuccess ||
+                            update.isPending ||
+                            settings.data.geofilesEnabled === true
+                        }
+                        label={t('subscription-settings.widget.serve-json-at-base-subscription')}
+                        description={t('geofiles.json-setting-help')}
+                        onChange={(event) => {
+                            if (
+                                !settings.isSuccess ||
+                                update.isPending ||
+                                !settings.data ||
+                                settings.data.geofilesEnabled
+                            )
+                                return
+                            update.mutate({
+                                variables: {
+                                    uuid: settings.data.uuid,
+                                    serveJsonAtBaseSubscription: event.currentTarget.checked
+                                }
+                            })
+                        }}
+                    />
+                    {settings.data.geofilesEnabled && (
+                        <Text size="sm" c="dimmed">
+                            {t('geofiles.disable-before-json')}
+                        </Text>
+                    )}
+                    <Switch
+                        checked={settings.data.geofilesEnabled === true}
+                        disabled={
+                            !settings.isSuccess ||
+                            update.isPending ||
+                            !settings.data.serveJsonAtBaseSubscription
+                        }
+                        label={t('geofiles.enabled-label')}
+                        description={t('geofiles.enabled-help')}
+                        onChange={(event) => {
+                            if (
+                                !settings.isSuccess ||
+                                update.isPending ||
+                                !settings.data?.serveJsonAtBaseSubscription
+                            )
+                                return
+                            update.mutate({
+                                variables: {
+                                    uuid: settings.data.uuid,
+                                    geofilesEnabled: event.currentTarget.checked
+                                }
+                            })
+                        }}
+                    />
+                    {!settings.data.serveJsonAtBaseSubscription && (
+                        <Text size="sm" c="dimmed">
+                            {t('geofiles.requires-json')}
+                        </Text>
+                    )}
+                </Stack>
             ) : settings.isPending ? (
                 <Text role="status" size="sm">
                     <Loader size="xs" mr="xs" />

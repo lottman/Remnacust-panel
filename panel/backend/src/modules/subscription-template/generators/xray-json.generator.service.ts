@@ -227,6 +227,7 @@ export class XrayJsonGeneratorService {
                       'XRAY_JSON',
                       overrideTemplateName,
                       params.geofileDelivery,
+                      params.geofilesEnabled === true,
                   )) as unknown as XrayJsonConfig;
 
             const configs: string[] = [];
@@ -271,6 +272,7 @@ export class XrayJsonGeneratorService {
                                   selectedTemplate as unknown as Record<string, unknown>,
                                   'XRAY_JSON',
                                   params.geofileDelivery,
+                                  params.geofilesEnabled === true,
                               )) as unknown as XrayJsonConfig);
 
                     if (

@@ -11,12 +11,12 @@ import { fail, ok, TResult } from '@common/types';
 import { prettyBytesUtil } from '@common/utils/bytes/pretty-bytes.util';
 import { hasContent } from '@common/utils/convert-type';
 import { HwidHeaders } from '@common/utils/extract-hwid-headers';
-import { XrayModeService } from '@common/xray-mode/xray-mode.service';
 import { effectiveUserExpiry, frozenRemainingMs } from '@common/utils/frozen-user-lifetime';
 import { isTextRemark } from '@common/utils/templates/is-text-remark';
 import { renderSubscriptionAction } from '@common/utils/templates/render-subscription-action';
 import { TemplateEngine } from '@common/utils/templates/replace-templates-values';
 import { safeTemplateHeader } from '@common/utils/templates/safe-template-header';
+import { XrayModeService } from '@common/xray-mode/xray-mode.service';
 import { ERRORS, EVENTS, TSubscriptionTemplateType, USERS_STATUS } from '@libs/contracts/constants';
 import { THwidSettings } from '@libs/contracts/models';
 
@@ -121,7 +121,9 @@ export class SubscriptionService {
     > {
         try {
             if (this.xrayModes && !this.xrayModes.hasSnapshot())
-                return await this.xrayModes.withSnapshot(() => this.getSubscriptionByShortUuid(srrContext, shortUuid, personalToken, preview));
+                return await this.xrayModes.withSnapshot(() =>
+                    this.getSubscriptionByShortUuid(srrContext, shortUuid, personalToken, preview),
+                );
             const { userAgent } = srrContext;
             let { hwidHeaders } = srrContext;
 
@@ -1429,6 +1431,7 @@ export class SubscriptionService {
                         patchedSubscriptionSettings = {
                             ...patchedSubscriptionSettings,
                             ...externalSquadSubscriptionSettings.subscriptionSettings,
+                            geofilesEnabled: subscriptionSettings.geofilesEnabled,
                         };
                     }
 

@@ -98,6 +98,17 @@ export class RawCacheService {
         fingerprint: string,
         minimum: number,
     ): Promise<number> {
+        const revision = await this.profileRevision(key, fingerprint, minimum, false);
+        if (revision === null) throw new Error('Invalid routing profile revision response');
+        return revision;
+    }
+
+    private async profileRevision(
+        key: string,
+        fingerprint: string,
+        minimum: number,
+        retiring: boolean,
+    ): Promise<number | null> {
         if (
             !/^[a-f0-9]{64}$/.test(key) ||
             !/^[a-f0-9]{64}$/.test(fingerprint) ||
@@ -112,7 +123,9 @@ export class RawCacheService {
             `remnacust:routing-profile:v1:${key}`,
             fingerprint,
             minimum,
+            retiring ? 'retire' : 'active',
         );
+        if (retiring && revision === -1) return null;
         if (
             typeof revision !== 'number' ||
             !Number.isSafeInteger(revision) ||
@@ -130,7 +143,7 @@ export class RawCacheService {
     ): Promise<number | null> {
         try {
             return await this.templateCacheOperation(
-                this.routingProfileRevision(key, fingerprint, minimum),
+                this.profileRevision(key, fingerprint, minimum, true),
             );
         } catch {
             this.logger.warn('Geofile profile cleanup deferred');

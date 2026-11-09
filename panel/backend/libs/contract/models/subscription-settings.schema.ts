@@ -7,6 +7,7 @@ import { HwidSettingsSchema } from './subscription-settings/hwid-settings.schema
 export const SubscriptionSettingsSchema = z.object({
     uuid: z.uuid(),
     serveJsonAtBaseSubscription: z.boolean(),
+    geofilesEnabled: z.boolean(),
 
     isShowCustomRemarks: z.boolean(),
     customRemarks: CustomRemarksSchema,

@@ -12,6 +12,7 @@ import { useDeferredValue, useLayoutEffect, useMemo, useRef, useState } from 're
 import { useTranslation } from 'react-i18next'
 import { TbArrowsShuffle, TbCode, TbDatabaseImport, TbHistory } from 'react-icons/tb'
 
+import { useGetSubscriptionSettings } from '@shared/api/hooks/subscription-settings/subscription-settings.query.hooks'
 import { usePseudoFullscreen, useViewportFillHeight } from '@shared/hooks'
 import { useEditorRecovery } from '@shared/hooks/use-editor-recovery'
 import { fullscreenClasses, FullscreenToggleButton } from '@shared/ui'
@@ -55,8 +56,14 @@ export function SubscriptionTemplateEditorWidget(props: Props) {
     const { editorType, hosts, template } = props
     const { t } = useTranslation()
     const isXray = template.templateType === 'XRAY_JSON'
+    const subscriptionSettings = useGetSubscriptionSettings({
+        rQueryParams: { refetchOnMount: 'always', refetchOnWindowFocus: 'always' }
+    })
+    const geofilesEnabled =
+        subscriptionSettings.isSuccess && subscriptionSettings.data?.geofilesEnabled === true
     const format = template.templateType as ClientFormat
-    const [activeTab, setActiveTab] = useState<string | null>('code')
+    const [selectedTab, setActiveTab] = useState<string | null>('code')
+    const activeTab = !geofilesEnabled && selectedTab === 'geofiles' ? 'code' : selectedTab
 
     const { isFullscreen, toggle: toggleFullscreen } = usePseudoFullscreen()
     const { containerRef: editorWrapperRef, footerRef } = useViewportFillHeight({
@@ -167,9 +174,11 @@ export function SubscriptionTemplateEditorWidget(props: Props) {
                     <Tabs.Tab value="autoselect" leftSection={<TbArrowsShuffle size={17} />}>
                         {t('autoselect.title')}
                     </Tabs.Tab>
-                    <Tabs.Tab value="geofiles" leftSection={<TbDatabaseImport size={17} />}>
-                        {t('geofiles.title')}
-                    </Tabs.Tab>
+                    {geofilesEnabled && (
+                        <Tabs.Tab value="geofiles" leftSection={<TbDatabaseImport size={17} />}>
+                            {t('geofiles.title')}
+                        </Tabs.Tab>
+                    )}
                     <Tabs.Tab value="history" leftSection={<TbHistory size={17} />}>
                         {t('template-history.title')}
                     </Tabs.Tab>
@@ -246,7 +255,8 @@ export function SubscriptionTemplateEditorWidget(props: Props) {
                     )}
                 </Tabs.Panel>
                 <Tabs.Panel value="geofiles">
-                    {activeTab === 'geofiles' &&
+                    {geofilesEnabled &&
+                        activeTab === 'geofiles' &&
                         (draft.config ? (
                             <div className={panelStyles.layout}>
                                 <div className={panelStyles.main}>

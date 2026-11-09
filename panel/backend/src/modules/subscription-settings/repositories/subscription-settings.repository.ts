@@ -1,4 +1,4 @@
-import { TransactionHost } from '@nestjs-cls/transactional';
+import { Transactional, TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { Prisma } from '@prisma/client';
 
@@ -40,10 +40,21 @@ export class SubscriptionSettingsRepository implements ICrud<SubscriptionSetting
         return this.converter.fromPrismaModelToEntity(result);
     }
 
+    @Transactional()
     public async update({
         uuid,
         ...data
     }: Partial<SubscriptionSettingsEntity>): Promise<SubscriptionSettingsEntity> {
+        await this.prisma.tx
+            .$queryRaw`SELECT uuid FROM subscription_settings WHERE uuid = ${uuid}::uuid FOR UPDATE`;
+        const before = await this.prisma.tx.subscriptionSettings.findUniqueOrThrow({
+            where: { uuid },
+        });
+        if (
+            (data.geofilesEnabled ?? before.geofilesEnabled) &&
+            !(data.serveJsonAtBaseSubscription ?? before.serveJsonAtBaseSubscription)
+        )
+            throw new Error('GEOFILES_REQUIRE_BASE_JSON');
         const model = this.converter.fromEntityToPrismaModel({
             uuid,
             ...data,

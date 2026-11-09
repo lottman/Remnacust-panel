@@ -122,11 +122,14 @@ export class SingBoxGeneratorService {
     public async generateConfig(
         hosts: ResolvedProxyConfig[],
         overrideTemplateName?: string,
+        geofilesEnabled = false,
     ): Promise<string> {
         try {
             const template = (await this.subscriptionTemplateService.getCachedTemplateByType(
                 'SINGBOX',
                 overrideTemplateName,
+                undefined,
+                geofilesEnabled,
             )) as Record<string, unknown>;
 
             const userOutbounds: OutboundConfig[] = [];

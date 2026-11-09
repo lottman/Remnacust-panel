@@ -34,7 +34,6 @@ import styles from './autoselect-panel.module.css'
 import { editClientTemplate, readClientTemplate, type ClientFormat } from './client-template-model'
 import { GeofileAddressRules } from './geofile-address-rules-panel'
 import { GeofileEditorModal } from './geofile-editor-modal'
-import { GeofileJsonDelivery } from './geofile-json-delivery'
 import {
     attachLibraryGeofile,
     compatibleGeofile,
@@ -318,7 +317,6 @@ export function GeofilesPanel({
                     {t('geofiles.help')}
                 </Text>
             </Card>
-            {format === 'XRAY_JSON' && <GeofileJsonDelivery />}
             {(error || filesQuery.isError) && (
                 <Alert color="red" withCloseButton onClose={() => setError(null)}>
                     {t(error ?? 'geofiles.operation-failed')}{' '}

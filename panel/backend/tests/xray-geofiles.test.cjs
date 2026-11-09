@@ -342,7 +342,7 @@ test('request-local renderer delivers Happ and INCY profiles, preserves manual h
         userAgent: ua,
         matchedResponseType: 'XRAY_JSON',
         isExtendedClient: true,
-        subscriptionSettings: {},
+        subscriptionSettings: { geofilesEnabled: true },
     });
     const run = (ctx) =>
         renderer.generateSubscription({ srrContext: ctx, user: { id: 42 }, hosts: [] });
@@ -458,7 +458,7 @@ test('INCY compaction runs after geofile collection, including manual routing an
             userAgent: mode === 'other-client' ? 'Happ/4.0.0' : 'INCY/2.6.2/iOS',
             matchedResponseType: 'XRAY_JSON',
             isExtendedClient: true,
-            subscriptionSettings: {},
+            subscriptionSettings: { geofilesEnabled: true },
         };
         if (mode === 'manual') context.headersToApply = { Routing: 'off' };
         if (mode === 'settings')
@@ -518,7 +518,7 @@ test('oversized unmanaged StringLists are rejected instead of disguised by wire 
                 userAgent: client,
                 matchedResponseType: 'XRAY_JSON',
                 isExtendedClient: true,
-                subscriptionSettings: {},
+                subscriptionSettings: { geofilesEnabled: true },
             };
             if (manual) context.headersToApply = { Routing: 'off' };
             await assert.rejects(
@@ -633,7 +633,7 @@ test('unused resources do not emit a profile and large tag mirrors keep full JSO
     assert.deepEqual(JSON.parse(body)[0].routing.rules[0].domain, values);
 });
 
-test('removing the last custom geofile clears the provider profile even without server history and preserves manual routing rules', async () => {
+test('removing the last custom geofile clears only a previously issued provider profile and preserves manual routing rules', async () => {
     const { stabilizeRoutingProfile } = load(
         path.join(root, 'geofiles/stabilize-routing-profile.ts'),
     );
@@ -648,7 +648,8 @@ test('removing the last custom geofile clears the provider profile even without 
         };
         const cache = {
             routingProfileRevision: revision,
-            retireRoutingProfileRevision: revision,
+            retireRoutingProfileRevision: async (...args) =>
+                states.has(args[0]) ? revision(...args) : null,
         };
         const previous = new XrayGeofileDelivery(client, 'remote', 'Provider');
         const domains = previous.register(
@@ -689,7 +690,7 @@ test('removing the last custom geofile clears the provider profile even without 
             userAgent: client === 'happ' ? 'Happ/6.3.0' : 'INCY/3.9.7',
             matchedResponseType: 'XRAY_JSON',
             isExtendedClient: true,
-            subscriptionSettings: {},
+            subscriptionSettings: { geofilesEnabled: true },
         });
         const run = (ctx, credential = 'device-key') =>
             renderer.generateSubscription({
@@ -723,10 +724,8 @@ test('removing the last custom geofile clears the provider profile even without 
         assert.equal(again.headersToApply.routing, ctx.headersToApply.routing);
         const fresh = context();
         await run(fresh, 'unrelated-device');
-        assert.equal(decode(fresh.headersToApply.routing).Geositeurl, '');
-        assert.equal(decode(fresh.headersToApply.routing).Geoipurl, '');
-        assert.equal(decode(fresh.headersToApply.routing).Name, cleared.Name);
-        assert.equal(states.size, 2, 'registered device revision state is isolated');
+        assert.equal(fresh.headersToApply, undefined);
+        assert.equal(states.size, 1, 'no cleanup profile is created for unrelated devices');
         const explicit = context();
         explicit.headersToApply = { Routing: client + '://routing/off' };
         await run(explicit);

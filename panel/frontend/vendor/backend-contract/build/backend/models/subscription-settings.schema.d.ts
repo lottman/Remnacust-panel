@@ -2,6 +2,7 @@ import { z } from 'zod';
 export declare const SubscriptionSettingsSchema: z.ZodObject<{
     uuid: z.ZodUUID;
     serveJsonAtBaseSubscription: z.ZodBoolean;
+    geofilesEnabled: z.ZodBoolean;
     isShowCustomRemarks: z.ZodBoolean;
     customRemarks: z.ZodObject<{
         alwaysAvailableHostsPosition: z.ZodOptional<z.ZodEnum<{

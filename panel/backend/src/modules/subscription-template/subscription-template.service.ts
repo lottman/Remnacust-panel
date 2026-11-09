@@ -300,6 +300,7 @@ export class SubscriptionTemplateService {
                                   template.templateType === 'XRAY_JSON'
                                       ? new XrayGeofileDelivery('happ', 'remote')
                                       : undefined,
+                                  true,
                               );
                           } catch (error) {
                               rethrowXrayModeConflict(error);
@@ -509,6 +510,7 @@ export class SubscriptionTemplateService {
         type: TSubscriptionTemplateType,
         name: string = DEFAULT_TEMPLATE_NAME,
         happ?: XrayGeofileDelivery,
+        geofilesEnabled = false,
     ): Promise<object> {
         const cacheKey = CACHE_KEYS.SUBSCRIPTION_TEMPLATE(name, type);
         let cached: object | null = null;
@@ -522,7 +524,12 @@ export class SubscriptionTemplateService {
         }
 
         if (cached) {
-            return this.prepareClientTemplate(cached as Record<string, unknown>, type, happ);
+            return this.prepareClientTemplate(
+                cached as Record<string, unknown>,
+                type,
+                happ,
+                geofilesEnabled,
+            );
         }
 
         const loadRaw = () => this.loadRawTemplate(type, name, cacheKey, generation);
@@ -540,7 +547,7 @@ export class SubscriptionTemplateService {
                 pending = tracked;
             } else pending = loadRaw();
         } else pending = loadRaw();
-        return this.prepareClientTemplate(await pending, type, happ);
+        return this.prepareClientTemplate(await pending, type, happ, geofilesEnabled);
     }
 
     private async loadRawTemplate(
@@ -605,8 +612,14 @@ export class SubscriptionTemplateService {
         config: Record<string, unknown>,
         type: string,
         happ?: XrayGeofileDelivery,
+        geofilesEnabled = false,
     ): Promise<object> {
         if (!config?.remnacust) return config;
+        if (!geofilesEnabled) {
+            const clean = structuredClone(config);
+            delete clean.remnacust;
+            return clean;
+        }
         return this.geofiles.prepare(config, type, happ);
     }
 

@@ -8,6 +8,7 @@ const hwid_settings_schema_1 = require("./subscription-settings/hwid-settings.sc
 exports.SubscriptionSettingsSchema = zod_1.z.object({
     uuid: zod_1.z.uuid(),
     serveJsonAtBaseSubscription: zod_1.z.boolean(),
+    geofilesEnabled: zod_1.z.boolean(),
     isShowCustomRemarks: zod_1.z.boolean(),
     customRemarks: custom_remarks_schema_1.CustomRemarksSchema,
     customResponseHeaders: zod_1.z.nullable(zod_1.z.record(zod_1.z.string(), zod_1.z.string())),

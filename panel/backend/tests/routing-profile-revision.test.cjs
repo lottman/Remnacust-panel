@@ -175,7 +175,7 @@ test(
 );
 
 test(
-    'real Redis retirement also handles missing history and remains stable across concurrent workers',
+    'real Redis retirement skips missing history and remains stable across concurrent workers',
     { skip: !process.env.NODE_INCIDENT_TEST_REDIS_URL },
     async () => {
         const redis = new Redis(process.env.NODE_INCIDENT_TEST_REDIS_URL, {
@@ -189,8 +189,17 @@ test(
         const stored = 'remnacust:routing-profile:v1:' + key;
         try {
             const initial = await cache.retireRoutingProfileRevision(key, 'b'.repeat(64), 0);
-            assert(Number.isSafeInteger(initial) && initial >= Math.floor(Date.now() / 1000) - 2);
-            assert.equal(await redis.exists(stored), 1);
+            assert.equal(initial, null);
+            assert.equal(await redis.exists(stored), 0);
+            for (const malformed of ['bad', '{"revision":10}', '{"revision":10,"fingerprint":"bad"}']) {
+                await redis.set(stored, malformed);
+                assert.equal(await cache.retireRoutingProfileRevision(key, 'b'.repeat(64), 0), null);
+                assert.equal(await redis.get(stored), malformed);
+            }
+            const legacyEmpty = JSON.stringify({ fingerprint: 'b'.repeat(64), revision: 123 });
+            await redis.set(stored, legacyEmpty);
+            assert.equal(await cache.retireRoutingProfileRevision(key, 'b'.repeat(64), 0), null);
+            assert.equal(await redis.get(stored), legacyEmpty);
             const first = await cache.routingProfileRevision(key, 'a'.repeat(64), 2000000000);
             const revisions = await Promise.all(
                 Array.from({ length: 20 }, () =>
@@ -207,8 +216,8 @@ test(
                 'b'.repeat(64),
                 0,
             );
-            assert(Number.isSafeInteger(otherRevision) && otherRevision >= initial);
-            assert.equal(await redis.exists('remnacust:routing-profile:v1:' + other), 1);
+            assert.equal(otherRevision, null);
+            assert.equal(await redis.exists('remnacust:routing-profile:v1:' + other), 0);
             assert.equal(
                 await cache.retireRoutingProfileRevision(key, 'b'.repeat(64), 0),
                 first + 1,

@@ -141,6 +141,7 @@ export class MihomoGeneratorService {
         isStash = false,
         isExtendedClient = false,
         overrideTemplateName?: string,
+        geofilesEnabled = false,
     ): Promise<string> {
         try {
             const templateType = isStash ? 'STASH' : 'MIHOMO';
@@ -148,6 +149,8 @@ export class MihomoGeneratorService {
             const yamlConfigDb = await this.subscriptionTemplateService.getCachedTemplateByType(
                 templateType,
                 overrideTemplateName,
+                undefined,
+                geofilesEnabled,
             );
 
             const yamlConfig = yamlConfigDb as Record<string, unknown>;

@@ -6,6 +6,7 @@ export declare namespace UpdateSubscriptionSettingsCommand {
     const RequestBodySchema: z.ZodObject<{
         uuid: z.ZodUUID;
         serveJsonAtBaseSubscription: z.ZodOptional<z.ZodBoolean>;
+        geofilesEnabled: z.ZodOptional<z.ZodBoolean>;
         isShowCustomRemarks: z.ZodOptional<z.ZodBoolean>;
         customRemarks: z.ZodOptional<z.ZodObject<{
             alwaysAvailableHostsPosition: z.ZodOptional<z.ZodEnum<{
@@ -117,6 +118,7 @@ export declare namespace UpdateSubscriptionSettingsCommand {
         response: z.ZodObject<{
             uuid: z.ZodUUID;
             serveJsonAtBaseSubscription: z.ZodBoolean;
+            geofilesEnabled: z.ZodBoolean;
             isShowCustomRemarks: z.ZodBoolean;
             customRemarks: z.ZodObject<{
                 alwaysAvailableHostsPosition: z.ZodOptional<z.ZodEnum<{

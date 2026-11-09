@@ -470,6 +470,11 @@ jobs:
             }
           })().catch(error => { console.error(error); process.exitCode = 1; });
           NODE
+      - name: Verify geofile opt-in invariants and concurrent changes
+        run: node --test tests/geofiles-opt-in.database.integration.cjs
+        env:
+          GEOFILES_OPTIN_TEST_DATABASE_URL: ${{ env.DATABASE_URL }}
+          GEOFILES_OPTIN_TEST_DISPOSABLE: '1'
       - name: Verify quota scope migration semantics
         run: node tests/quota-scope-indexes.database.integration.cjs
       - name: Verify transactional template cache revisions

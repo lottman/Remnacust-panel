@@ -72,11 +72,14 @@ export class ClashGeneratorService {
     public async generateConfig(
         hosts: ResolvedProxyConfig[],
         overrideTemplateName?: string,
+        geofilesEnabled = false,
     ): Promise<string> {
         try {
             const yamlConfig = (await this.subscriptionTemplateService.getCachedTemplateByType(
                 'CLASH',
                 overrideTemplateName,
+                undefined,
+                geofilesEnabled,
             )) as Record<string, unknown>;
             const withPools =
                 Array.isArray(yamlConfig['proxy-groups']) &&

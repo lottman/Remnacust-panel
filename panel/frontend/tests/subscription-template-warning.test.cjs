@@ -6,6 +6,7 @@ const ts = require('typescript');
 
 function harness(template, editorType = 'json') {
     const states = [], refs = [];
+    const settings = { isSuccess: true, data: { geofilesEnabled: false } };
     let stateIndex, refIndex;
     const recoveries = [];
     const components = new Proxy({}, { get: (_, name) => name });
@@ -19,6 +20,7 @@ function harness(template, editorType = 'json') {
             useRef(initial) { const index = refIndex++; return refs[index] ??= { current: initial }; },
             useMemo: callback => callback(), useDeferredValue: value => value, useLayoutEffect() {},
         },
+        '@shared/api/hooks/subscription-settings/subscription-settings.query.hooks': { useGetSubscriptionSettings: () => settings },
         'react-i18next': { useTranslation: () => ({ t: key => key }) },
         '@mantine/core': { ...Object.fromEntries(['Box', 'Alert', 'Button', 'Paper'].map(name => [name, name])),
             Tabs: Object.assign(() => {}, { List: 'TabList', Tab: 'Tab', Panel: 'TabPanel' }) },
@@ -53,6 +55,7 @@ function harness(template, editorType = 'json') {
     return {
         render,
         recoveries,
+        settings,
         confirm(data, submitted) { return render().find(element => element.type === 'TemplateEditorActionsFeature').props.onSaved(data, submitted); },
         edit(value) { render().find(element => element.type === 'CodeEditor').props.onChange(value); },
         reveal() {
@@ -122,4 +125,19 @@ test('saved server drafts and YAML retain their actual text as the recovery base
     y.edit(yaml + 'rules: []\n');
     await y.confirm({ uuid: 'yaml-template', templateType: 'MIHOMO', encodedTemplateYaml: Buffer.from(yaml + 'rules: []\n').toString('base64'), draftContent: null }, yaml + 'rules: []\n');
     assert.deepEqual(y.recoveries, [[yaml + 'rules: []\n', yaml + 'rules: []\n']]);
+});
+
+test('geofiles tab follows confirmed global settings and preserves the unsaved editor value', () => {
+    const h = harness(template());
+    const tabs = () => h.render().filter(element => element.type === 'Tab').map(element => element.props.value);
+    assert(!tabs().includes('geofiles'));
+    h.edit('{"unsaved":"kept"}');
+    h.settings.data.geofilesEnabled = true;
+    assert(tabs().includes('geofiles'));
+    h.settings.data.geofilesEnabled = false;
+    assert(!tabs().includes('geofiles'));
+    assert.equal(h.render().find(element => element.type === 'CodeEditor').props.value, '{"unsaved":"kept"}');
+    h.settings.data.geofilesEnabled = true;
+    h.settings.isSuccess = false;
+    assert(!tabs().includes('geofiles'));
 });

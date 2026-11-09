@@ -1,5 +1,26 @@
 const sections = [
     [
+        'geofile-global-opt-in',
+        [
+            [
+                'Геофайлы: включение и выключение',
+                'Настройки подписки → Основные настройки → Дополнительные настройки: сначала включите JSON на базовом пути, затем «Геофайлы Remnacust». Система по умолчанию выключена. Кнопка геофайлов в редакторе видна только при включённой системе. Выключение сохраняет библиотеку, назначения и настройки обновления, но исключает их из новых подписок и останавливает фоновое автообновление. Обычные ручные правила остаются без изменений. Для отключения JSON сначала выключите геофайлы; панель не выключает их автоматически. После переключения обновите подписку в приложении. Уже начатая обработка может завершиться с прежними настройками. Ранее выданные подписанные ссылки остаются действительны.'
+            ],
+            [
+                'Geofiles: enabling and disabling',
+                'Subscription settings → Main settings → Additional settings: enable JSON at the base URL, then Remnacust geofiles. The system is off by default. The editor geofiles tab is visible only while enabled. Disabling retains the library, assignments and refresh settings, but omits them from new subscriptions and stops background automatic refresh. Ordinary manual rules remain unchanged. Disable geofiles before turning off JSON; the panel never silently disables them. Refresh the subscription in the app after switching. An in-flight operation may finish using its previous settings. Previously signed download links remain valid.'
+            ],
+            [
+                'فعال‌سازی و غیرفعال‌سازی فایل‌های جغرافیایی',
+                'در تنظیمات اشتراک ← تنظیمات اصلی ← تنظیمات اضافی، ابتدا JSON در آدرس اصلی و سپس فایل‌های جغرافیایی Remnacust را روشن کنید. این قابلیت به‌طور پیش‌فرض خاموش است. زبانه فایل‌ها فقط هنگام فعال‌بودن دیده می‌شود. خاموش‌کردن، کتابخانه، انتساب‌ها و تنظیمات به‌روزرسانی را حفظ می‌کند، اما آن‌ها را از اشتراک‌های جدید حذف و تازه‌سازی خودکار پس‌زمینه را متوقف می‌کند. قواعد دستی عادی تغییر نمی‌کنند. پیش از خاموش‌کردن JSON، فایل‌های جغرافیایی را غیرفعال کنید؛ پنل خودکار آن‌ها را خاموش نمی‌کند. سپس اشتراک برنامه را تازه کنید. عملیات در حال اجرا ممکن است با تنظیمات قبلی پایان یابد. پیوندهای امضاشده قبلی معتبر می‌مانند.'
+            ],
+            [
+                '启用和关闭地理文件',
+                '订阅设置 → 主要设置 → 附加设置：先启用基础地址 JSON，再启用 Remnacust 地理文件。此功能默认关闭。启用后编辑器才显示地理文件标签。关闭后保留文件库、关联及更新设置，但不再用于新订阅，并停止后台自动刷新。普通手动规则保持不变。关闭 JSON 前必须先关闭地理文件；面板不会自动关闭。切换后请在应用中刷新订阅。已开始的操作可能仍按原设置完成。此前签发的下载链接仍然有效。'
+            ]
+        ]
+    ],
+    [
         'geofile-cold-start',
         [
             [
@@ -25,19 +46,19 @@ const sections = [
         [
             [
                 'Удаление геофайла из шаблона',
-                'Сохраните шаблон и обновите подписку в приложении. При отключении последнего кастомного геофайла панель выдаёт пустой профиль этой подписки даже при утраченной серверной истории: очищает его ссылки и списки правил, отключает периодическую загрузку. Обычные geosite/geoip-правила, вручную записанные в JSON, сохраняются и используют стандартные файлы приложения. Ручной заголовок маршрутизации имеет приоритет; отключение кастомных файлов не отключает всю маршрутизацию клиента. Профиль сохраняет прежнее имя; ссылка и все списки правил удалённого вида GeoIP или GeoSite передаются пустыми. Если удалён один из нескольких файлов одного вида, объединённый DAT содержит только оставшиеся источники. Другие профили приложения и общая библиотека файлов не удаляются. При изменении содержимого DAT меняется его подписанный адрес; неизменённый файл сохраняет адрес. Старые ссылки и проверки .sha256 остаются действительными. После обновления панели обновите подписку в приложении, чтобы заменить сохранённый DAT.'
+                'Сохраните шаблон и обновите подписку в приложении. При отключении последнего кастомного геофайла панель очищает ранее выданный этой подписке профиль, только если сохранилась его серверная история: очищает его ссылки и списки правил, отключает периодическую загрузку. Обычные geosite/geoip-правила, вручную записанные в JSON, сохраняются и используют стандартные файлы приложения. Ручной заголовок маршрутизации имеет приоритет; отключение кастомных файлов не отключает всю маршрутизацию клиента. Профиль сохраняет прежнее имя; ссылка и все списки правил удалённого вида GeoIP или GeoSite передаются пустыми. Если удалён один из нескольких файлов одного вида, объединённый DAT содержит только оставшиеся источники. Другие профили приложения и общая библиотека файлов не удаляются. При изменении содержимого DAT меняется его подписанный адрес; неизменённый файл сохраняет адрес. Старые ссылки и проверки .sha256 остаются действительными. После обновления панели обновите подписку в приложении, чтобы заменить сохранённый DAT.'
             ],
             [
                 'Removing a geofile from a template',
-                'Save the template and refresh the subscription in the app. Disabling the last custom geofile issues an empty profile for this subscription even when server history is missing: its file URLs and rule lists are cleared and periodic downloads are disabled. Ordinary geosite/geoip rules written manually in JSON remain and use the app standard files. An explicit routing header takes precedence; disabling custom files does not disable all client routing. The profile keeps its name; the URL and all rule lists for the removed GeoIP or GeoSite kind are explicitly empty. If one of several files of the same kind is removed, the combined DAT contains only the remaining sources. Other app profiles and the shared file library are preserved. Changed DAT content receives a new signed download address; unchanged content keeps its address. Existing links and .sha256 checks remain valid. Refresh the subscription after updating the panel to replace the saved DAT.'
+                'Save the template and refresh the subscription in the app. Disabling the last custom geofile clears a previously issued profile only when its server history exists: its file URLs and rule lists are cleared and periodic downloads are disabled. Ordinary geosite/geoip rules written manually in JSON remain and use the app standard files. An explicit routing header takes precedence; disabling custom files does not disable all client routing. The profile keeps its name; the URL and all rule lists for the removed GeoIP or GeoSite kind are explicitly empty. If one of several files of the same kind is removed, the combined DAT contains only the remaining sources. Other app profiles and the shared file library are preserved. Changed DAT content receives a new signed download address; unchanged content keeps its address. Existing links and .sha256 checks remain valid. Refresh the subscription after updating the panel to replace the saved DAT.'
             ],
             [
                 'حذف فایل جغرافیایی از قالب',
-                'قالب را ذخیره و اشتراک را در برنامه تازه کنید. با غیرفعال‌کردن آخرین فایل سفارشی، پروفایل خالی همین اشتراک حتی بدون سابقه سرور صادر می‌شود: نشانی فایل‌ها و فهرست قواعد پاک و دانلود دوره‌ای غیرفعال می‌شود. قواعد دستی geosite/geoip در JSON حفظ می‌شوند و از فایل‌های استاندارد برنامه استفاده می‌کنند. هدر دستی مسیریابی اولویت دارد؛ غیرفعال‌کردن فایل سفارشی کل مسیریابی را خاموش نمی‌کند. نام پروفایل ثابت می‌ماند؛ نشانی و همه فهرست‌های قوانین نوع حذف‌شده GeoIP یا GeoSite به‌صورت خالی ارسال می‌شوند. اگر یکی از چند فایل هم‌نوع حذف شود، فایل DAT ترکیبی فقط منابع باقی‌مانده را دارد. پروفایل‌های دیگر برنامه و کتابخانه مشترک فایل‌ها حفظ می‌شوند. با تغییر محتوای DAT نشانی امضاشده جدید صادر می‌شود؛ محتوای ثابت همان نشانی را نگه می‌دارد. پیوندهای قبلی و بررسی .sha256 معتبر می‌مانند. پس از به‌روزرسانی پنل اشتراک را در برنامه تازه کنید.'
+                'قالب را ذخیره و اشتراک را در برنامه تازه کنید. با غیرفعال‌کردن آخرین فایل سفارشی، پروفایل قبلی همین اشتراک تنها در صورت وجود سابقه سرور پاک می‌شود: نشانی فایل‌ها و فهرست قواعد پاک و دانلود دوره‌ای غیرفعال می‌شود. قواعد دستی geosite/geoip در JSON حفظ می‌شوند و از فایل‌های استاندارد برنامه استفاده می‌کنند. هدر دستی مسیریابی اولویت دارد؛ غیرفعال‌کردن فایل سفارشی کل مسیریابی را خاموش نمی‌کند. نام پروفایل ثابت می‌ماند؛ نشانی و همه فهرست‌های قوانین نوع حذف‌شده GeoIP یا GeoSite به‌صورت خالی ارسال می‌شوند. اگر یکی از چند فایل هم‌نوع حذف شود، فایل DAT ترکیبی فقط منابع باقی‌مانده را دارد. پروفایل‌های دیگر برنامه و کتابخانه مشترک فایل‌ها حفظ می‌شوند. با تغییر محتوای DAT نشانی امضاشده جدید صادر می‌شود؛ محتوای ثابت همان نشانی را نگه می‌دارد. پیوندهای قبلی و بررسی .sha256 معتبر می‌مانند. پس از به‌روزرسانی پنل اشتراک را در برنامه تازه کنید.'
             ],
             [
                 '从模板移除地理文件',
-                '保存模板并在应用内刷新订阅。禁用最后一个自定义地理文件后，即使服务器历史记录丢失，面板也会签发此订阅的空配置：清空文件地址及规则列表，并关闭定期下载。手动写入 JSON 的普通 geosite/geoip 规则仍保留并使用应用标准文件。显式路由头优先；禁用自定义文件不会关闭客户端全部路由。配置名称保持不变；移除的 GeoIP 或 GeoSite 类型会显式发送空下载地址及所有空规则列表。同一类型的多个文件中移除一个后，合并 DAT 仅包含剩余来源。应用中的其他配置和共享文件库不会被删除。DAT 内容变化时会生成新的签名下载地址；内容不变时地址保持稳定。旧链接及 .sha256 校验仍然有效。面板更新后，请在应用中刷新订阅以替换已保存的 DAT。'
+                '保存模板并在应用内刷新订阅。禁用最后一个自定义地理文件后，仅当服务器保留历史记录时，面板才会清除此订阅此前签发的配置：清空文件地址及规则列表，并关闭定期下载。手动写入 JSON 的普通 geosite/geoip 规则仍保留并使用应用标准文件。显式路由头优先；禁用自定义文件不会关闭客户端全部路由。配置名称保持不变；移除的 GeoIP 或 GeoSite 类型会显式发送空下载地址及所有空规则列表。同一类型的多个文件中移除一个后，合并 DAT 仅包含剩余来源。应用中的其他配置和共享文件库不会被删除。DAT 内容变化时会生成新的签名下载地址；内容不变时地址保持稳定。旧链接及 .sha256 校验仍然有效。面板更新后，请在应用中刷新订阅以替换已保存的 DAT。'
             ]
         ]
     ],

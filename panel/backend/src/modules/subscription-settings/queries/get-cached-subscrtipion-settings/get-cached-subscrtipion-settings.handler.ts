@@ -2,7 +2,7 @@ import { Logger } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 
 import { RawCacheService } from '@common/raw-cache';
-import { CACHE_KEYS, CACHE_KEYS_TTL } from '@libs/contracts/constants';
+import { CACHE_KEYS } from '@libs/contracts/constants';
 
 import { SubscriptionSettingsEntity } from '@modules/subscription-settings/entities';
 
@@ -19,14 +19,17 @@ export class GetCachedSubscriptionSettingsHandler implements IQueryHandler<GetCa
     ) {}
 
     async execute() {
+        let generation: string | undefined;
         try {
-            const cached = await this.rawCacheService.get<SubscriptionSettingsEntity>(
-                CACHE_KEYS.SUBSCRIPTION_SETTINGS,
-                true,
-            );
+            const snapshot =
+                await this.rawCacheService.templateSnapshot<SubscriptionSettingsEntity>(
+                    CACHE_KEYS.SUBSCRIPTION_SETTINGS,
+                );
+            generation = snapshot.generation;
+            const cached = snapshot.value;
 
             if (cached) {
-                return cached;
+                return structuredClone(cached);
             }
         } catch (error) {
             this.logger.warn(
@@ -42,11 +45,12 @@ export class GetCachedSubscriptionSettingsHandler implements IQueryHandler<GetCa
             }
 
             try {
-                await this.rawCacheService.set(
-                    CACHE_KEYS.SUBSCRIPTION_SETTINGS,
-                    settings,
-                    CACHE_KEYS_TTL.SUBSCRIPTION_SETTINGS,
-                );
+                if (generation)
+                    await this.rawCacheService.setTemplateSnapshot(
+                        CACHE_KEYS.SUBSCRIPTION_SETTINGS,
+                        generation,
+                        settings,
+                    );
             } catch (error) {
                 this.logger.warn(
                     `Subscription settings cache write failed: ${error instanceof Error ? error.name : 'unknown'}`,

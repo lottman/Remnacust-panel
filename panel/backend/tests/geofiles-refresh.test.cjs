@@ -198,21 +198,28 @@ test('native JSON and YAML can be embedded without a URL; binary SRS cannot pret
             async () => {},
             { read: async () => Buffer.from('payload: ["+.example.com"]'), datUrl: () => '' },
         );
-        if (format === 'CLASH') assert.equal(yaml['rule-providers']['geo_' + id].url, 'https://sub.test/domains.yaml');
-        else assert.deepEqual(yaml['rule-providers']['geo_' + id], {
-            type: 'inline',
-            behavior: 'domain',
-            payload: ['+.example.com'],
-        });
+        if (format === 'CLASH')
+            assert.equal(yaml['rule-providers']['geo_' + id].url, 'https://sub.test/domains.yaml');
+        else
+            assert.deepEqual(yaml['rule-providers']['geo_' + id], {
+                type: 'inline',
+                behavior: 'domain',
+                payload: ['+.example.com'],
+            });
         assert.match(yaml.rules[0], /,REJECT$/);
     }
     const binary = await materializeGeofiles(
-                { remnacust: { geofiles: [ref] } },
-                'SINGBOX',
-                async () => ({ id, kind: 'singbox-srs', url: 'https://sub.test/rules.srs' }),
-                async () => {},
-                { read: async () => { throw Error('binary is never inlined'); }, datUrl: () => '' },
-            );
+        { remnacust: { geofiles: [ref] } },
+        'SINGBOX',
+        async () => ({ id, kind: 'singbox-srs', url: 'https://sub.test/rules.srs' }),
+        async () => {},
+        {
+            read: async () => {
+                throw Error('binary is never inlined');
+            },
+            datUrl: () => '',
+        },
+    );
     assert.equal(binary.route.rule_set[0].type, 'remote');
     assert.equal(binary.route.rule_set[0].format, 'binary');
     assert.equal(binary.route.rule_set[0].url, 'https://sub.test/rules.srs');
@@ -257,6 +264,14 @@ test('refresh survives restart, keeps immutable bytes, honors cooldown and retai
         return Buffer.concat(data);
     };
     let service = create();
+    const withSettings = (instance) => {
+        instance.prisma = {
+            ...instance.prisma,
+            subscriptionSettings: { findFirst: async () => ({ geofilesEnabled: true }) },
+        };
+        return instance;
+    };
+    withSettings(service);
     try {
         const file = await service.ingest('Sites', 'geosite', async () => fixtures.geosite);
         const happ = new XrayGeofileDelivery();
@@ -343,7 +358,7 @@ test('refresh survives restart, keeps immutable bytes, honors cooldown and retai
         );
         assert.deepEqual(await read((await service.download(file.id, 'latest.dat')).stream), body);
         assert.equal(await service.refreshNow(file.id), false);
-        service = create();
+        service = withSettings(create());
         await service.refreshDue();
         assert.equal(reads, 1, 'Restart does not reset persisted cooldown');
         const expected = body;

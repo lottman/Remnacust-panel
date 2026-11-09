@@ -23,6 +23,7 @@ export namespace UpdateSubscriptionSettingsCommand {
     export const RequestBodySchema = z.object({
         uuid: z.uuid(),
         serveJsonAtBaseSubscription: z.optional(z.boolean()),
+        geofilesEnabled: z.optional(z.boolean()),
         isShowCustomRemarks: z.optional(z.boolean()),
         customRemarks: z.optional(CustomRemarksSchema),
         customResponseHeaders: z.optional(

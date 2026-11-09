@@ -356,6 +356,7 @@ export type SubscriptionPageConfig = {
 export type SubscriptionSettings = {
     uuid: Generated<string>;
     serveJsonAtBaseSubscription: Generated<boolean>;
+    geofilesEnabled: Generated<boolean>;
     isShowCustomRemarks: Generated<boolean>;
     customRemarks: object;
     customResponseHeaders: object | null;

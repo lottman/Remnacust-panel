@@ -441,6 +441,7 @@ model SubscriptionTemplateRevisions {
 model SubscriptionSettings {
   uuid                        String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   serveJsonAtBaseSubscription Boolean @default(false) @map("serve_json_at_base_subscription")
+  geofilesEnabled             Boolean @default(false) @map("geofiles_enabled")
   isShowCustomRemarks         Boolean @default(true) @map("is_show_custom_remarks")
   customRemarks               Json    @map("custom_remarks")
   customResponseHeaders       Json?   @map("custom_response_headers")

@@ -686,6 +686,10 @@ export class GeofilesService {
         return this.refreshStore.refresh(id, true);
     }
     public async refreshDue() {
+        const settings = await this.prisma.subscriptionSettings.findFirst({
+            select: { geofilesEnabled: true },
+        });
+        if (!settings?.geofilesEnabled) return [];
         return this.refreshStore.refreshDue();
     }
 

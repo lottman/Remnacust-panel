@@ -7,6 +7,7 @@ export declare namespace GetSubscriptionSettingsCommand {
         response: z.ZodObject<{
             uuid: z.ZodUUID;
             serveJsonAtBaseSubscription: z.ZodBoolean;
+            geofilesEnabled: z.ZodBoolean;
             isShowCustomRemarks: z.ZodBoolean;
             customRemarks: z.ZodObject<{
                 alwaysAvailableHostsPosition: z.ZodOptional<z.ZodEnum<{

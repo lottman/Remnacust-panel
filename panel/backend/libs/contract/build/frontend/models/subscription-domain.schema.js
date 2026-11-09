@@ -57,15 +57,21 @@ exports.SubscriptionDomainInputSchema = zod_1.z
     kind: zod_1.z.enum(['PRIMARY', 'CDN']),
     parentUuid: zod_1.z.uuid().nullable().default(null),
     isDefault: zod_1.z.boolean().default(false),
-    accessMode: zod_1.z.enum(['OPEN', 'CDN_ONLY', 'REDIRECT']).optional(),
+    accessMode: zod_1.z.enum(['OPEN', 'CDN_ONLY', 'REDIRECT', 'BLOCKED']).optional(),
     redirectDomainUuid: zod_1.z.uuid().nullable().optional(),
 })
     .strict()
     .superRefine((data, ctx) => {
-    if ((data.kind === 'CDN' && (data.accessMode && data.accessMode !== 'OPEN' || data.redirectDomainUuid)) ||
+    if ((data.kind === 'CDN' &&
+        ((data.accessMode && !['OPEN', 'BLOCKED'].includes(data.accessMode)) ||
+            data.redirectDomainUuid)) ||
         (data.accessMode === 'REDIRECT' && !data.redirectDomainUuid) ||
         (data.accessMode && data.accessMode !== 'REDIRECT' && data.redirectDomainUuid))
-        ctx.addIssue({ code: 'custom', message: 'Invalid domain access policy', path: ['accessMode'] });
+        ctx.addIssue({
+            code: 'custom',
+            message: 'Invalid domain access policy',
+            path: ['accessMode'],
+        });
     if ((data.kind === 'CDN') !== !!data.parentUuid || (data.kind === 'CDN' && data.isDefault))
         ctx.addIssue({
             code: 'custom',
@@ -81,7 +87,7 @@ exports.SubscriptionDomainSchema = zod_1.z.object({
     kind: zod_1.z.enum(['PRIMARY', 'CDN']),
     parentUuid: zod_1.z.uuid().nullable(),
     isDefault: zod_1.z.boolean(),
-    accessMode: zod_1.z.enum(['OPEN', 'CDN_ONLY', 'REDIRECT']),
+    accessMode: zod_1.z.enum(['OPEN', 'CDN_ONLY', 'REDIRECT', 'BLOCKED']),
     redirectDomainUuid: zod_1.z.uuid().nullable(),
     usersCount: zod_1.z.number().int().nonnegative(),
     aliasesCount: zod_1.z.number().int().nonnegative(),

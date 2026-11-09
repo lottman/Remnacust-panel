@@ -70,9 +70,18 @@ export namespace DeleteSubscriptionDomainCommand {
     export const endpointDetails = getEndpointDetails(
         SUBSCRIPTION_DOMAINS_ROUTES.DELETE(':uuid'),
         'delete',
-        'Delete an unused subscription domain',
+        'Delete a subscription domain with optional user reassignment',
         { scope: 'delete', kind: 'write' },
     );
+    export const RequestQuerySchema = z
+        .object({
+            reassignUsers: z
+                .enum(['true', 'false'])
+                .transform((value) => value === 'true')
+                .optional(),
+        })
+        .strict();
+    export type RequestQuery = z.infer<typeof RequestQuerySchema>;
 }
 
 export namespace GetSubscriptionDomainCredentialsCommand {

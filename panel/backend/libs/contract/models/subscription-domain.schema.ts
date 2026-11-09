@@ -57,14 +57,15 @@ export const SubscriptionDomainInputSchema = z
         kind: z.enum(['PRIMARY', 'CDN']),
         parentUuid: z.uuid().nullable().default(null),
         isDefault: z.boolean().default(false),
-        accessMode: z.enum(['OPEN', 'CDN_ONLY', 'REDIRECT']).optional(),
+        accessMode: z.enum(['OPEN', 'CDN_ONLY', 'REDIRECT', 'BLOCKED']).optional(),
         redirectDomainUuid: z.uuid().nullable().optional(),
     })
     .strict()
     .superRefine((data, ctx) => {
         if (
             (data.kind === 'CDN' &&
-                ((data.accessMode && data.accessMode !== 'OPEN') || data.redirectDomainUuid)) ||
+                ((data.accessMode && !['OPEN', 'BLOCKED'].includes(data.accessMode)) ||
+                    data.redirectDomainUuid)) ||
             (data.accessMode === 'REDIRECT' && !data.redirectDomainUuid) ||
             (data.accessMode && data.accessMode !== 'REDIRECT' && data.redirectDomainUuid)
         )
@@ -88,7 +89,7 @@ export const SubscriptionDomainSchema = z.object({
     kind: z.enum(['PRIMARY', 'CDN']),
     parentUuid: z.uuid().nullable(),
     isDefault: z.boolean(),
-    accessMode: z.enum(['OPEN', 'CDN_ONLY', 'REDIRECT']),
+    accessMode: z.enum(['OPEN', 'CDN_ONLY', 'REDIRECT', 'BLOCKED']),
     redirectDomainUuid: z.uuid().nullable(),
     usersCount: z.number().int().nonnegative(),
     aliasesCount: z.number().int().nonnegative(),

@@ -1,10 +1,10 @@
+import { githubDarkTheme } from '@json-edit-react/themes'
 import { ActionIcon, Box, Group, Paper, Stack, Text, Tooltip } from '@mantine/core'
 import { modals } from '@mantine/modals'
 import { GetUserByIdCommand, USERS_STATUS } from '@remnawave/backend-contract'
 import { UserStatusBadge } from '@widgets/dashboard/users/user-status-badge'
 import dayjs from 'dayjs'
 import { JsonViewer } from 'json-edit-react'
-import { githubDarkTheme } from '@json-edit-react/themes'
 import { ForwardRefComponent, HTMLMotionProps, Variants } from 'motion/react'
 import { memo } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -35,7 +35,7 @@ import {
     getTimeAgoUtil
 } from '@shared/utils/time-utils'
 
-import { UserDomainLinks } from './user-domain-links'
+import { UserDomainLinks, useUserDomainLinks } from './user-domain-links'
 import { getUserExpirationState } from './user-expiration'
 import classes from './user-identification-card.module.css'
 
@@ -66,6 +66,11 @@ export const UserIdentificationCard = memo((props: IProps) => {
     const { t, i18n } = useTranslation()
 
     const { cardVariants, lastConnectedNode, motionWrapper, user } = props
+
+    const domainLinks = useUserDomainLinks(user)
+    const subscriptionUrl =
+        domainLinks.data?.links.find((link) => link.isSelected)?.url ??
+        domainLinks.data?.links[0]?.url
 
     const MotionWrapper = motionWrapper
 
@@ -127,9 +132,11 @@ export const UserIdentificationCard = memo((props: IProps) => {
                                 <ActionIcon
                                     aria-label={t('view-user-modal.widget.qr-code')}
                                     color="teal"
+                                    disabled={!subscriptionUrl}
                                     onClick={() => {
+                                        if (!subscriptionUrl) return
                                         showModal('users_subscriptionQrCodeModal', {
-                                            subscriptionUrl: user.subscriptionUrl,
+                                            subscriptionUrl,
                                             username: user.username
                                         })
                                     }}

@@ -4334,7 +4334,7 @@
         "usage": "使用情况",
         "users": "用户：{{count}}",
         "aliases": "CDN 域名：{{count}}",
-        "remove-disabled": "该域名正在使用中或为默认域名",
+        "remove-disabled": "不能删除默认域名或仍有子 CDN 的域名。",
         "setup": "配置 CDN",
         "cdn-setup": "CDN 连接",
         "public-link": "订阅链接模板",
@@ -4351,7 +4351,16 @@
         "request-header-value": "请求头值",
         "without-request-header": "CDN 不支持添加请求头时",
         "cdn-limit": "每个普通域名最多可关联三个 CDN。请删除多余的 CDN 或选择其他普通域名。",
-        "link-tools": "检查使用此域名的链接"
+        "link-tools": "检查使用此域名的链接",
+        "access-BLOCKED": "已关闭",
+        "block-family-warning": "此域名及其所有 CDN 的请求将返回 HTTP 403，不会重定向。",
+        "block-cdn-warning": "此 CDN 的请求将返回 HTTP 403，其他域名仍可使用。",
+        "last-primary": "不能关闭或删除最后一个可用主域名。请先添加或重新开放另一个主域名。",
+        "remove-title": "删除域名",
+        "remove-confirm": "删除域名 {{domain}}？该域名的旧链接将不再受支持。",
+        "remove-reassign": "已绑定用户：{{count}}。他们将使用当前默认域名。凭据、设备、到期时间和限额保持不变。",
+        "remove-failed": "无法删除域名。请检查默认域名和子 CDN 后重试。",
+        "parent-blocked": "此 CDN 因主域名关闭而不可用。请先重新开放主域名。"
     },
     "nodes-usage-chart": {
         "show-legend": "显示图例",
@@ -4372,7 +4381,8 @@
         "preset-cdn": "仅 CDN 链接",
         "scope-all": "获取用户的所有订阅链接",
         "scope-primary": "仅获取用户的普通订阅链接",
-        "scope-cdn": "仅获取用户的 CDN 订阅链接"
+        "scope-cdn": "仅获取用户的 CDN 订阅链接",
+        "none-available": "没有可用链接。请开放主域名或合适的 CDN。"
     },
     "qr-code-builder": {
         "unavailable": "无法生成二维码。请复制订阅链接或连接密钥。"

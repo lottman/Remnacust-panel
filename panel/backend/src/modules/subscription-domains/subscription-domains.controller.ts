@@ -45,6 +45,9 @@ export class SubscriptionDomainsResponseDto extends createZodDto(
 export class SubscriptionDomainsQueryDto extends createZodDto(
     ListSubscriptionDomainsCommand.RequestQuerySchema,
 ) {}
+export class DeleteSubscriptionDomainQueryDto extends createZodDto(
+    DeleteSubscriptionDomainCommand.RequestQuerySchema,
+) {}
 @ApiBearerAuth('Authorization')
 @ApiTags(CONTROLLERS_INFO.SUBSCRIPTION_DOMAINS.tag)
 @ApiScopeResource(CONTROLLERS_INFO.SUBSCRIPTION_DOMAINS.resource)
@@ -103,7 +106,10 @@ export class SubscriptionDomainsController {
     }
     @Header('Cache-Control', 'no-store')
     @Endpoint({ command: DeleteSubscriptionDomainCommand, httpCode: HttpStatus.NO_CONTENT })
-    async remove(@Param('uuid', new ParseUUIDPipe()) uuid: string) {
-        await this.service.remove(uuid);
+    async remove(
+        @Param('uuid', new ParseUUIDPipe()) uuid: string,
+        @Query() query: DeleteSubscriptionDomainQueryDto,
+    ) {
+        await this.service.remove(uuid, query);
     }
 }

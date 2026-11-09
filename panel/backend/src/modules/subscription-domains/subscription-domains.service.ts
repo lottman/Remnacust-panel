@@ -236,15 +236,30 @@ export class SubscriptionDomainsService implements OnModuleInit, OnModuleDestroy
                             where: { isDefault: true },
                             data: { isDefault: false },
                         });
+                    const previousAccess = current?.accessMode;
                     const accessMode =
-                        input.kind === 'CDN'
+                        input.accessMode ??
+                        (input.kind === 'CDN' &&
+                        !['OPEN', 'BLOCKED'].includes(previousAccess ?? 'OPEN')
                             ? 'OPEN'
-                            : (input.accessMode ?? current?.accessMode ?? 'OPEN');
+                            : previousAccess) ??
+                        'OPEN';
                     const redirectDomainUuid =
                         accessMode === 'REDIRECT'
                             ? (input.redirectDomainUuid ?? current?.redirectDomainUuid ?? null)
                             : null;
-                    if (accessMode !== 'OPEN') {
+                    if (input.kind === 'PRIMARY' && accessMode === 'BLOCKED') {
+                        const remaining = await tx.subscriptionDomains.count({
+                            where: {
+                                kind: 'PRIMARY',
+                                accessMode: { not: 'BLOCKED' },
+                                ...(uuid ? { uuid: { not: uuid } } : {}),
+                            },
+                        });
+                        if (!remaining)
+                            throw new ConflictException('SUBSCRIPTION_DOMAIN_LAST_PRIMARY');
+                    }
+                    if (accessMode === 'CDN_ONLY' || accessMode === 'REDIRECT') {
                         if (
                             !uuid ||
                             !(await tx.subscriptionDomains.count({
@@ -256,7 +271,12 @@ export class SubscriptionDomainsService implements OnModuleInit, OnModuleDestroy
                             const target = await tx.subscriptionDomains.findUnique({
                                 where: { uuid: redirectDomainUuid },
                             });
-                            if (!target || target.kind !== 'CDN' || target.parentUuid !== uuid)
+                            if (
+                                !target ||
+                                target.kind !== 'CDN' ||
+                                target.parentUuid !== uuid ||
+                                target.accessMode === 'BLOCKED'
+                            )
                                 throw new BadRequestException('SUBSCRIPTION_DOMAIN_ACCESS_INVALID');
                         } else if (accessMode === 'REDIRECT')
                             throw new BadRequestException('SUBSCRIPTION_DOMAIN_ACCESS_INVALID');
@@ -277,8 +297,7 @@ export class SubscriptionDomainsService implements OnModuleInit, OnModuleDestroy
                               })
                             : null;
                         if (
-                            oldParent?.accessMode &&
-                            oldParent.accessMode !== 'OPEN' &&
+                            ['CDN_ONLY', 'REDIRECT'].includes(oldParent?.accessMode ?? '') &&
                             (await tx.subscriptionDomains.count({
                                 where: { parentUuid: current.parentUuid, kind: 'CDN' },
                             })) <= 1
@@ -343,7 +362,7 @@ export class SubscriptionDomainsService implements OnModuleInit, OnModuleDestroy
             throw error;
         }
     }
-    async remove(uuid: string) {
+    async remove(uuid: string, options: { reassignUsers?: boolean } = {}) {
         try {
             await this.prisma.$transaction(async (tx) => {
                 await tx.$executeRawUnsafe(`SELECT pg_advisory_xact_lock(${LOCK})`);
@@ -356,16 +375,36 @@ export class SubscriptionDomainsService implements OnModuleInit, OnModuleDestroy
                         where: { uuid: row.parentUuid },
                     });
                     if (
-                        parent?.accessMode &&
-                        parent.accessMode !== 'OPEN' &&
+                        ['CDN_ONLY', 'REDIRECT'].includes(parent?.accessMode ?? '') &&
                         (await tx.subscriptionDomains.count({
-                            where: { parentUuid: parent.uuid, kind: 'CDN' },
+                            where: { parentUuid: row.parentUuid, kind: 'CDN' },
                         })) <= 1
                     )
                         throw new ConflictException('SUBSCRIPTION_DOMAIN_IN_USE');
                 }
                 if (row.isDefault)
                     throw new ConflictException('SUBSCRIPTION_DOMAIN_DEFAULT_REQUIRED');
+                if (row.kind === 'PRIMARY' && row.accessMode !== 'BLOCKED') {
+                    const remaining = await tx.subscriptionDomains.count({
+                        where: {
+                            kind: 'PRIMARY',
+                            accessMode: { not: 'BLOCKED' },
+                            uuid: { not: uuid },
+                        },
+                    });
+                    if (!remaining) throw new ConflictException('SUBSCRIPTION_DOMAIN_LAST_PRIMARY');
+                }
+                if (options.reassignUsers) {
+                    const fallback = await tx.subscriptionDomains.findFirst({
+                        where: { isDefault: true, kind: 'PRIMARY', accessMode: { not: 'BLOCKED' } },
+                    });
+                    if (!fallback || fallback.uuid === uuid)
+                        throw new ConflictException('SUBSCRIPTION_DOMAIN_DEFAULT_REQUIRED');
+                    await tx.users.updateMany({
+                        where: { subscriptionDomainUuid: uuid },
+                        data: { subscriptionDomainUuid: null },
+                    });
+                }
                 await tx.subscriptionDomains.delete({ where: { uuid } });
             });
             this.invalidate();
@@ -476,6 +515,9 @@ export class SubscriptionDomainsService implements OnModuleInit, OnModuleDestroy
             links: family
                 .filter(
                     (row) =>
+                        primary.accessMode !== 'BLOCKED' &&
+                        row.accessMode !== 'BLOCKED' &&
+                        (row.kind !== 'PRIMARY' || !row.accessMode || row.accessMode === 'OPEN') &&
                         (!query.kind || row.kind === query.kind) &&
                         (!query.domainUuid || row.uuid === query.domainUuid),
                 )

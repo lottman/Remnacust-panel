@@ -4334,7 +4334,7 @@
         "usage": "Usage",
         "users": "Users: {{count}}",
         "aliases": "CDN domains: {{count}}",
-        "remove-disabled": "The domain is in use or is the default",
+        "remove-disabled": "The default domain or a domain with child CDNs cannot be deleted.",
         "setup": "Set up CDN",
         "cdn-setup": "CDN connection",
         "public-link": "Subscription URL template",
@@ -4351,7 +4351,16 @@
         "request-header-value": "Header value",
         "without-request-header": "If the CDN cannot add a request header",
         "cdn-limit": "A regular domain can have at most three CDNs. Remove an extra CDN or choose another regular domain.",
-        "link-tools": "Check a link with this domain"
+        "link-tools": "Check a link with this domain",
+        "access-BLOCKED": "Closed",
+        "block-family-warning": "Requests to this domain and all its CDNs will return HTTP 403 without redirection.",
+        "block-cdn-warning": "Requests to this CDN will return HTTP 403. Other domains remain available.",
+        "last-primary": "The last available primary domain cannot be closed or deleted. Add or reopen another primary domain first.",
+        "remove-title": "Delete domain",
+        "remove-confirm": "Delete {{domain}}? Old links to this domain will no longer be supported.",
+        "remove-reassign": "Assigned users: {{count}}. They will use the current default domain. Credentials, devices, expiry dates and limits are preserved.",
+        "remove-failed": "Could not delete the domain. Check the default domain and child CDNs, then retry.",
+        "parent-blocked": "This CDN is closed by its primary domain. Reopen the primary domain to restore access."
     },
     "nodes-usage-chart": {
         "show-legend": "Show legend",
@@ -4372,7 +4381,8 @@
         "preset-cdn": "CDN only",
         "scope-all": "Get all user subscription URLs",
         "scope-primary": "Get only the user regular subscription URL",
-        "scope-cdn": "Get only the user CDN subscription URLs"
+        "scope-cdn": "Get only the user CDN subscription URLs",
+        "none-available": "No available links. Open the primary domain or an appropriate CDN."
     },
     "qr-code-builder": {
         "unavailable": "Unable to generate the QR code. Copy the subscription URL or connection key."

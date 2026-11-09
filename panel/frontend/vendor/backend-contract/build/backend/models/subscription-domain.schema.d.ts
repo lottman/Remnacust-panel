@@ -5,14 +5,15 @@ export declare const SubscriptionDomainInputSchema: z.ZodObject<{
     domain: z.ZodPipe<z.ZodString, z.ZodTransform<string, string>>;
     path: z.ZodPipe<z.ZodDefault<z.ZodString>, z.ZodTransform<string, string>>;
     kind: z.ZodEnum<{
-        CDN: "CDN";
         PRIMARY: "PRIMARY";
+        CDN: "CDN";
     }>;
     parentUuid: z.ZodDefault<z.ZodNullable<z.ZodUUID>>;
     isDefault: z.ZodDefault<z.ZodBoolean>;
     accessMode: z.ZodOptional<z.ZodEnum<{
-        CDN_ONLY: "CDN_ONLY";
+        BLOCKED: "BLOCKED";
         OPEN: "OPEN";
+        CDN_ONLY: "CDN_ONLY";
         REDIRECT: "REDIRECT";
     }>>;
     redirectDomainUuid: z.ZodOptional<z.ZodNullable<z.ZodUUID>>;
@@ -23,14 +24,15 @@ export declare const SubscriptionDomainSchema: z.ZodObject<{
     domain: z.ZodString;
     path: z.ZodString;
     kind: z.ZodEnum<{
-        CDN: "CDN";
         PRIMARY: "PRIMARY";
+        CDN: "CDN";
     }>;
     parentUuid: z.ZodNullable<z.ZodUUID>;
     isDefault: z.ZodBoolean;
     accessMode: z.ZodEnum<{
-        CDN_ONLY: "CDN_ONLY";
+        BLOCKED: "BLOCKED";
         OPEN: "OPEN";
+        CDN_ONLY: "CDN_ONLY";
         REDIRECT: "REDIRECT";
     }>;
     redirectDomainUuid: z.ZodNullable<z.ZodUUID>;

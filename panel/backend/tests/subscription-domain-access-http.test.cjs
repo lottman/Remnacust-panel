@@ -272,6 +272,29 @@ test('real Page and Panel enforce origin policy on HTML, JSON, info, DAT, checks
     rows[0].accessMode = 'OPEN';
     rows[0].redirectDomainUuid = null;
     assert.equal((await request(pageServer, '/key/json')).status, 200);
+    rows[0].accessMode = 'BLOCKED';
+    for (const url of [
+        '/key',
+        '/key/json',
+        `/geofiles/${id}/${filename}`,
+        `/geofiles/${id}/bundle-${'d'.repeat(64)}.dat.sha256?revision=4`,
+        `/cdn/${cdn.uuid}/key/json`,
+    ]) {
+        for (const head of [{}, headers(cdn), headers(cdn2)]) {
+            const result = await request(pageServer, url, head);
+            const conflicting =
+                url.startsWith(`/cdn/${cdn.uuid}/`) &&
+                Object.hasOwn(head, cdnRequestHeaderName(cdn2.uuid, key));
+            assert.equal(result.status, conflicting ? 404 : 403);
+            assert.equal(result.headers.location, undefined);
+        }
+    }
+    assert.equal((await request(panelServer, '/api/sub/key/json', headers(cdn))).status, 403);
+    rows[0].accessMode = 'OPEN';
+    cdn.accessMode = 'BLOCKED';
+    assert.equal((await request(pageServer, '/key/json', headers(cdn))).status, 403);
+    assert.equal((await request(pageServer, '/key/json', headers(cdn2))).status, 200);
+    cdn.accessMode = 'OPEN';
     activeToken = false;
     rows[0].accessMode = 'CDN_ONLY';
     assert.equal(

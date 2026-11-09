@@ -40,7 +40,7 @@ type SubscriptionDomain = {
     kind: DomainKind
     parentUuid: string | null
     isDefault: boolean
-    accessMode: 'OPEN' | 'CDN_ONLY' | 'REDIRECT'
+    accessMode: 'OPEN' | 'CDN_ONLY' | 'REDIRECT' | 'BLOCKED'
     redirectDomainUuid: string | null
     usersCount: number
     aliasesCount: number
@@ -55,7 +55,7 @@ type DomainForm = {
     kind: DomainKind
     parentUuid: string | null
     isDefault: boolean
-    accessMode: 'OPEN' | 'CDN_ONLY' | 'REDIRECT'
+    accessMode: 'OPEN' | 'CDN_ONLY' | 'REDIRECT' | 'BLOCKED'
     redirectDomainUuid: string | null
 }
 
@@ -79,6 +79,7 @@ export function SubscriptionDomainsWidget() {
     const [editing, setEditing] = useState<SubscriptionDomain | null>(null)
     const [setupDomain, setSetupDomain] = useState<SubscriptionDomain | null>(null)
     const [existingLink, setExistingLink] = useState('')
+    const [removeTarget, setRemoveTarget] = useState<SubscriptionDomain | null>(null)
     const form = useForm<DomainForm>({ initialValues: emptyForm })
     const domains = useQuery({
         queryKey,
@@ -111,7 +112,7 @@ export function SubscriptionDomainsWidget() {
                 ...values,
                 parentUuid: values.kind === 'CDN' ? values.parentUuid : null,
                 isDefault: values.kind === 'PRIMARY' && values.isDefault,
-                accessMode: values.kind === 'PRIMARY' ? values.accessMode : 'OPEN',
+                accessMode: values.accessMode,
                 redirectDomainUuid:
                     values.kind === 'PRIMARY' && values.accessMode === 'REDIRECT'
                         ? values.redirectDomainUuid
@@ -124,12 +125,20 @@ export function SubscriptionDomainsWidget() {
         },
         onSuccess: () => {
             void cache.invalidateQueries({ queryKey })
+            void cache.invalidateQueries({ queryKey: ['user-domain-links'] })
             setOpened(false)
         }
     })
     const remove = useMutation({
-        mutationFn: async (uuid: string) => instance.delete(`/api/subscription-domains/${uuid}`),
-        onSuccess: () => void cache.invalidateQueries({ queryKey })
+        mutationFn: async (domain: SubscriptionDomain) =>
+            instance.delete(`/api/subscription-domains/${domain.uuid}`, {
+                params: domain.usersCount > 0 ? { reassignUsers: 'true' } : undefined
+            }),
+        onSuccess: () => {
+            void cache.invalidateQueries({ queryKey })
+            void cache.invalidateQueries({ queryKey: ['user-domain-links'] })
+            setRemoveTarget(null)
+        }
     })
 
     const openCreate = () => {
@@ -183,6 +192,11 @@ export function SubscriptionDomainsWidget() {
         isAxiosError(save.error) &&
         ['SUBSCRIPTION_DOMAIN_ENV_UNAVAILABLE', 'SUBSCRIPTION_DOMAIN_ENV_CHANGED'].includes(
             save.error.response?.data?.errorCode
+        )
+    const lastPrimaryError =
+        isAxiosError(save.error) &&
+        [save.error.response?.data?.errorCode, save.error.response?.data?.message].includes(
+            'SUBSCRIPTION_DOMAIN_LAST_PRIMARY'
         )
     const cdnLimitError =
         isAxiosError(save.error) &&
@@ -241,9 +255,24 @@ export function SubscriptionDomainsWidget() {
                                             const parent = rows.find(
                                                 (item) => item.uuid === domain.parentUuid
                                             )
+                                            const lastPrimary =
+                                                domain.kind === 'PRIMARY' &&
+                                                domain.accessMode !== 'BLOCKED' &&
+                                                !rows.some(
+                                                    (row) =>
+                                                        row.kind === 'PRIMARY' &&
+                                                        row.uuid !== domain.uuid &&
+                                                        row.accessMode !== 'BLOCKED'
+                                                )
                                             const inUse =
                                                 domain.isDefault ||
-                                                domain.usersCount > 0 ||
+                                                lastPrimary ||
+                                                (domain.usersCount > 0 &&
+                                                    !rows.some(
+                                                        (row) =>
+                                                            row.isDefault &&
+                                                            row.uuid !== domain.uuid
+                                                    )) ||
                                                 domain.aliasesCount > 0
                                             return (
                                                 <Table.Tr key={domain.uuid}>
@@ -293,6 +322,15 @@ export function SubscriptionDomainsWidget() {
                                                                 <Badge color="cyan" variant="light">
                                                                     {t(
                                                                         'subscription-domains.default'
+                                                                    )}
+                                                                </Badge>
+                                                            )}
+                                                            {(domain.accessMode === 'BLOCKED' ||
+                                                                parent?.accessMode ===
+                                                                    'BLOCKED') && (
+                                                                <Badge color="red" variant="light">
+                                                                    {t(
+                                                                        'subscription-domains.access-BLOCKED'
                                                                     )}
                                                                 </Badge>
                                                             )}
@@ -385,7 +423,9 @@ export function SubscriptionDomainsWidget() {
                                                                 label={
                                                                     inUse
                                                                         ? t(
-                                                                              'subscription-domains.remove-disabled'
+                                                                              lastPrimary
+                                                                                  ? 'subscription-domains.last-primary'
+                                                                                  : 'subscription-domains.remove-disabled'
                                                                           )
                                                                         : t('common.action.delete')
                                                                 }
@@ -398,9 +438,10 @@ export function SubscriptionDomainsWidget() {
                                                                     disabled={
                                                                         inUse || remove.isPending
                                                                     }
-                                                                    onClick={() =>
-                                                                        remove.mutate(domain.uuid)
-                                                                    }
+                                                                    onClick={() => {
+                                                                        remove.reset()
+                                                                        setRemoveTarget(domain)
+                                                                    }}
                                                                     variant="subtle"
                                                                 >
                                                                     <TbTrash size={17} />
@@ -418,6 +459,51 @@ export function SubscriptionDomainsWidget() {
                     </Stack>
                 </SectionCard.Section>
             </SectionCard.Root>
+
+            <Modal
+                centered
+                opened={!!removeTarget}
+                onClose={() => {
+                    if (!remove.isPending) setRemoveTarget(null)
+                }}
+                title={t('subscription-domains.remove-title')}
+            >
+                {removeTarget && (
+                    <Stack>
+                        <Text>
+                            {t('subscription-domains.remove-confirm', {
+                                domain: removeTarget.domain
+                            })}
+                        </Text>
+                        {removeTarget.usersCount > 0 && (
+                            <Alert color="yellow">
+                                {t('subscription-domains.remove-reassign', {
+                                    count: removeTarget.usersCount
+                                })}
+                            </Alert>
+                        )}
+                        {remove.isError && (
+                            <Alert color="red">{t('subscription-domains.remove-failed')}</Alert>
+                        )}
+                        <Group justify="flex-end">
+                            <Button
+                                variant="default"
+                                disabled={remove.isPending}
+                                onClick={() => setRemoveTarget(null)}
+                            >
+                                {t('common.action.cancel')}
+                            </Button>
+                            <Button
+                                color="red"
+                                loading={remove.isPending}
+                                onClick={() => remove.mutate(removeTarget)}
+                            >
+                                {t('common.action.delete')}
+                            </Button>
+                        </Group>
+                    </Stack>
+                )}
+            </Modal>
 
             <Modal
                 centered
@@ -594,20 +680,37 @@ export function SubscriptionDomainsWidget() {
                                 />
                                 <Select
                                     label={t('subscription-domains.access-mode')}
-                                    description={t('subscription-domains.access-help')}
-                                    data={(['OPEN', 'CDN_ONLY', 'REDIRECT'] as const).map(
-                                        (value) => ({
+                                    description={
+                                        t('subscription-domains.access-help') +
+                                        ' ' +
+                                        t('subscription-domains.last-primary')
+                                    }
+                                    data={(['OPEN', 'CDN_ONLY', 'REDIRECT', 'BLOCKED'] as const)
+                                        .filter(
+                                            (value) =>
+                                                form.values.kind === 'PRIMARY' ||
+                                                value === 'OPEN' ||
+                                                value === 'BLOCKED'
+                                        )
+                                        .map((value) => ({
                                             value,
                                             label: t(`subscription-domains.access-${value}`),
                                             disabled:
-                                                value !== 'OPEN' &&
-                                                !rows.some(
-                                                    (row) =>
-                                                        row.kind === 'CDN' &&
-                                                        row.parentUuid === editing?.uuid
-                                                )
-                                        })
-                                    )}
+                                                (value === 'BLOCKED' &&
+                                                    form.values.kind === 'PRIMARY' &&
+                                                    !rows.some(
+                                                        (row) =>
+                                                            row.kind === 'PRIMARY' &&
+                                                            row.uuid !== editing?.uuid &&
+                                                            row.accessMode !== 'BLOCKED'
+                                                    )) ||
+                                                ((value === 'CDN_ONLY' || value === 'REDIRECT') &&
+                                                    !rows.some(
+                                                        (row) =>
+                                                            row.kind === 'CDN' &&
+                                                            row.parentUuid === editing?.uuid
+                                                    ))
+                                        }))}
                                     {...form.getInputProps('accessMode')}
                                     onChange={(value) => {
                                         form.setFieldValue(
@@ -626,7 +729,8 @@ export function SubscriptionDomainsWidget() {
                                             .filter(
                                                 (row) =>
                                                     row.kind === 'CDN' &&
-                                                    row.parentUuid === editing?.uuid
+                                                    row.parentUuid === editing?.uuid &&
+                                                    row.accessMode !== 'BLOCKED'
                                             )
                                             .map((row) => ({
                                                 value: row.uuid,
@@ -637,19 +741,37 @@ export function SubscriptionDomainsWidget() {
                                 )}
                                 {form.values.accessMode !== 'OPEN' && (
                                     <Alert color="yellow">
-                                        {t('subscription-domains.access-warning')}
+                                        {t(
+                                            form.values.accessMode === 'BLOCKED'
+                                                ? form.values.kind === 'PRIMARY'
+                                                    ? 'subscription-domains.block-family-warning'
+                                                    : 'subscription-domains.block-cdn-warning'
+                                                : 'subscription-domains.access-warning'
+                                        )}
                                     </Alert>
                                 )}
                             </>
                         )}
+                        {form.values.kind === 'CDN' &&
+                            rows.some(
+                                (row) =>
+                                    row.uuid === form.values.parentUuid &&
+                                    row.accessMode === 'BLOCKED'
+                            ) && (
+                                <Alert color="yellow">
+                                    {t('subscription-domains.parent-blocked')}
+                                </Alert>
+                            )}
                         {save.isError && (
                             <Alert color="red">
                                 {t(
-                                    cdnLimitError
-                                        ? 'subscription-domains.cdn-limit'
-                                        : environmentError
-                                          ? 'subscription-domains.environment-save-failed'
-                                          : 'subscription-domains.failed'
+                                    lastPrimaryError
+                                        ? 'subscription-domains.last-primary'
+                                        : cdnLimitError
+                                          ? 'subscription-domains.cdn-limit'
+                                          : environmentError
+                                            ? 'subscription-domains.environment-save-failed'
+                                            : 'subscription-domains.failed'
                                 )}
                             </Alert>
                         )}

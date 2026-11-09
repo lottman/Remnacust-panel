@@ -92,7 +92,25 @@ jobs:
       - name: Verify subscription domain access schema under a restricted owner
         env:
           DOMAIN_ACCESS_TEST_DATABASE_URL: postgresql://postgres@127.0.0.1:55439/postgres
-        run: node --test tests/subscription-domain-access.database.integration.cjs
+        run: node --test tests/subscription-domain-access.database.integration.cjs tests/subscription-domain-retirement.database.integration.cjs
+      - name: Verify domain retirement and competing close requests with restricted Prisma clients
+        env:
+          DATABASE_URL: postgresql://rc_retirement_ci@127.0.0.1:55439/remnacust_test_domain_retirement
+          DOMAIN_RETIREMENT_SERVICE_DATABASE_URL: postgresql://rc_retirement_ci@127.0.0.1:55439/remnacust_test_domain_retirement
+        run: |
+          node <<'NODE'
+          const { Client } = require('pg');
+          (async () => {
+            const client = new Client({ connectionString: 'postgresql://postgres@127.0.0.1:55439/postgres' });
+            await client.connect();
+            try {
+              await client.query('CREATE ROLE rc_retirement_ci LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE');
+              await client.query('CREATE DATABASE remnacust_test_domain_retirement OWNER rc_retirement_ci');
+            } finally { await client.end(); }
+          })().catch(error => { console.error(error); process.exitCode = 1; });
+          NODE
+          npm run migrate:deploy
+          node --test tests/subscription-domain-retirement-service.database.integration.cjs
       - name: Check private Xray IPC and certificate files on Linux
         run: sudo --preserve-env=REMNACUST_NODE_SOURCE "$(command -v node)" --test tests/node-api-socket.test.cjs tests/pem-file-security.test.cjs tests/node-upgrade-script.test.cjs tests/node-install-script.test.cjs
       - name: Verify documentation against freshly generated backend contract

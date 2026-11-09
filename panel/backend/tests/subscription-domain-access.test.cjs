@@ -186,3 +186,38 @@ test('mixed signed and unsigned selectors are rejected regardless of header orde
     ])
         assert.equal(consumeCdnSelector(headers).invalid, true);
 });
+
+test('BLOCKED primary closes the whole family, including authenticated CDN and API requests', () => {
+    const closed = [{ ...primary, accessMode: 'BLOCKED' }, cdn, cdn2];
+    for (const api of [false, true])
+        for (const host of [primary.domain, cdn.domain, cdn2.domain, 'backend:3000']) {
+            for (const selector of [{}, proof(cdn), proof(cdn2), { uuid: cdn.uuid }])
+                assert.equal(
+                    decide(
+                        { ...selector, host, api, url: api ? '/api/sub/key/json' : '/key/json' },
+                        closed,
+                    ).action,
+                    'block',
+                );
+        }
+});
+test('a blocked CDN cannot be reopened by its valid proof and does not close siblings', () => {
+    const closed = [{ ...primary, accessMode: 'OPEN' }, { ...cdn, accessMode: 'BLOCKED' }, cdn2];
+    assert.equal(decide({ ...proof(cdn) }, closed).action, 'block');
+    assert.equal(decide({ host: cdn.domain }, closed).action, 'block');
+    assert.equal(decide({ ...proof(cdn2) }, closed).action, 'allow');
+    assert.equal(decide({}, closed).action, 'allow');
+    assert.equal(
+        decide({}, [
+            { ...primary, accessMode: 'REDIRECT', redirectDomainUuid: cdn.uuid },
+            { ...cdn, accessMode: 'BLOCKED' },
+        ]).action,
+        'block',
+    );
+});
+test('removed public hostnames do not fall through to the remaining default domain', () => {
+    assert.equal(
+        decide({ host: 'retired.example.test' }, [{ ...primary, accessMode: 'OPEN' }]).action,
+        'block',
+    );
+});

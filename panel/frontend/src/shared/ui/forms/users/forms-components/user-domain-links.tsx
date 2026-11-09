@@ -30,9 +30,8 @@ type Props = {
     }
 }
 
-export function UserDomainLinks({ user }: Props) {
-    const { t } = useTranslation()
-    const links = useQuery({
+export function useUserDomainLinks(user: Props['user']) {
+    return useQuery({
         queryKey: [
             'user-domain-links',
             user.id,
@@ -49,6 +48,11 @@ export function UserDomainLinks({ user }: Props) {
         refetchOnMount: 'always',
         refetchOnWindowFocus: 'always'
     })
+}
+
+export function UserDomainLinks({ user }: Props) {
+    const { t } = useTranslation()
+    const links = useUserDomainLinks(user)
     const overLimit =
         isAxiosError(links.error) &&
         [links.error.response?.data?.code, links.error.response?.data?.errorCode].includes(
@@ -139,30 +143,10 @@ export function UserDomainLinks({ user }: Props) {
                     </Tooltip>
                 </Group>
             ))}
-            {!links.data?.links.length && (
-                <Group align="flex-end" gap="xs" wrap="nowrap">
-                    <Box style={{ flex: 1, minWidth: 0 }}>
-                        <CopyableFieldShared
-                            label={t('user-domain-links.current')}
-                            value={user.subscriptionUrl}
-                            leftSection={<PiLinkDuotone size={16} />}
-                        />
-                    </Box>
-                    <Tooltip label={t('view-user-modal.widget.qr-code')}>
-                        <ActionIcon
-                            size={36}
-                            variant="light"
-                            disabled={!user.subscriptionUrl}
-                            aria-label={t('view-user-modal.widget.qr-code')}
-                            onClick={() => showModal('users_subscriptionQrCodeModal', {
-                                subscriptionUrl: user.subscriptionUrl,
-                                username: user.username
-                            })}
-                        >
-                            <TbQrcode size={19} />
-                        </ActionIcon>
-                    </Tooltip>
-                </Group>
+            {links.isSuccess && !links.data.links.length && (
+                <Text size="sm" c="dimmed">
+                    {t('user-domain-links.none-available')}
+                </Text>
             )}
         </Stack>
     )

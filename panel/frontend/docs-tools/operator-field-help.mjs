@@ -1,10 +1,10 @@
 // Each tuple is RU, EN, FA, ZH. Keep field names aligned with the actual forms.
 export const operatorFieldHelp = {
     accessMode: [
-        'Доступ напрямую, только через CDN с секретным заголовком или перенаправление на выбранный CDN. Перед ограничением обновите страницу подписки и проверьте заголовок CDN.',
-        'Allow direct access, require a secret CDN request header, or redirect to a selected CDN. Update the subscription page and verify the CDN header before restricting access.',
-        'دسترسی مستقیم، الزام سرآیند محرمانه CDN یا هدایت به CDN انتخابی. ابتدا صفحه اشتراک را به‌روز و سرآیند CDN را آزمایش کنید.',
-        '允许直接访问、要求 CDN 请求密钥标头或重定向到所选 CDN。限制访问前请更新订阅页面并验证 CDN 标头。'
+        'Режим «Закрыт» отклоняет запросы с HTTP 403 без перенаправления. Закрытие основного домена распространяется на все его CDN; закрытие отдельного CDN не затрагивает соседние адреса. Последний работающий основной домен нельзя закрыть или удалить, даже при наличии CDN. В карточке пользователя, QR и API ссылок показываются только доступные адреса: основные домены с перенаправлением или режимом только CDN скрыты. При удалении прежнего домена можно явно подтвердить перевод его пользователей на текущий домен по умолчанию. Привязка меняется и домен удаляется одной транзакцией; ключи, устройства, заморозка, сроки и квоты не меняются. Дочерние CDN сначала нужно перенести или удалить.',
+        'Closed mode returns HTTP 403 without redirection. Closing a primary closes all its CDNs; closing one CDN leaves siblings available. The last available primary cannot be closed or deleted, even when CDNs exist. User cards, QR codes and link APIs show only available addresses, hiding CDN-only and redirecting primary addresses. Deleting a former primary can explicitly move its users to the current default in the same transaction. Credentials, devices, frozen state, expiry dates and quotas are preserved. Move or remove child CDNs first.',
+        'حالت بسته بدون تغییر مسیر HTTP 403 برمی\u200cگرداند. بستن دامنه اصلی همه CDNهای آن را می\u200cبندد؛ بستن یک CDN بر بقیه اثری ندارد. آخرین دامنه اصلی فعال حتی با وجود CDN بسته یا حذف نمی\u200cشود. کارت کاربر، کد QR و API پیوندها فقط آدرس\u200cهای فعال را نمایش می\u200cدهند و دامنه اصلی محدود به CDN یا هدایت را پنهان می\u200cکنند. حذف دامنه قبلی با تأیید صریح، کاربران را در یک تراکنش به دامنه پیش\u200cفرض فعلی منتقل می\u200cکند. کلیدها، دستگاه\u200cها، انجماد، تاریخ انقضا و سهمیه\u200cها حفظ می\u200cشوند. ابتدا CDNهای وابسته را منتقل یا حذف کنید.',
+        '关闭模式返回 HTTP 403，不会重定向。关闭主域名将关闭其全部 CDN；关闭单个 CDN 不影响其他地址。即使存在 CDN，也不能关闭或删除最后一个可用主域名。用户卡片、二维码和链接 API 仅显示可用地址，隐藏仅限 CDN 或重定向的主域名。删除旧主域名时，可明确确认将其用户转至当前默认域名；转移和删除在同一事务中完成。凭据、设备、冻结状态、到期时间和限额保持不变。请先移动或删除其子 CDN。'
     ],
     redirectDomainUuid: [
         'CDN этого же основного домена для перенаправления. Пути подписок и геофайлов сохраняются; на сторонний домен перенаправить нельзя.',

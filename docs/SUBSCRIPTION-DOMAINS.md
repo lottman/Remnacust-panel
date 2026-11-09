@@ -107,3 +107,16 @@ Test CDN HTML, the base link, /json and geofile downloads before restricting acc
 With JSON enabled at the base subscription URL, recognized Throne 1.x clients from stable 1.2.0 receive full Xray JSON without a suffix; explicitly reported beta builds are supported from 1.2.0-beta.5. Primary and CDN domains behave identically. Older or unrecognized versions retain their existing format. Explicit `/json` and `/v2ray-json` override browser detection on the subscription page, while access controls and the response-rule setting that disables format paths remain effective. Explicit Mihomo/Clash/sing-box formats and base-JSON opt-outs are preserved. Throne is not automatically granted Happ/INCY extensions or separate DAT delivery.
 
 Основание / Sources: [Throne changelog](https://github.com/throneproj/Throne/blob/dev/CHANGELOG.md), [subscription parser](https://github.com/throneproj/Throne/blob/dev/src/configs/sub/SubscriptionParser.cpp), [User-Agent implementation](https://github.com/throneproj/Throne/blob/dev/src/database/SettingsRepo.cpp).
+
+
+## Закрытие и удаление домена
+
+Режим «Закрыт» отклоняет запросы с HTTP 403 без перенаправления. Закрытие основного домена распространяется на все его CDN; закрытие отдельного CDN не затрагивает соседние адреса. Последний работающий основной домен нельзя закрыть или удалить, даже при наличии CDN. В карточке пользователя, QR и API ссылок показываются только доступные адреса: основные домены с перенаправлением или режимом только CDN скрыты. При удалении прежнего домена можно явно подтвердить перевод его пользователей на текущий домен по умолчанию. Привязка меняется и домен удаляется одной транзакцией; ключи, устройства, заморозка, сроки и квоты не меняются. Дочерние CDN сначала нужно перенести или удалить.
+
+API: `DELETE /api/subscription-domains/:uuid?reassignUsers=true` явно разрешает перевод привязанных пользователей на текущий домен по умолчанию. Без параметра и при `false` существующие привязки блокируют удаление. `accessMode: BLOCKED` закрывает основной домен вместе с CDN либо отдельный CDN. На странице пользователя закрытые, CDN-only и перенаправляющие основные адреса не выводятся.
+
+## Closing and retiring domains
+
+Closed mode returns HTTP 403 without redirection. Closing a primary closes all its CDNs; closing one CDN leaves siblings available. The last available primary cannot be closed or deleted, even when CDNs exist. User cards, QR codes and link APIs show only available addresses, hiding CDN-only and redirecting primary addresses. Deleting a former primary can explicitly move its users to the current default in the same transaction. Credentials, devices, frozen state, expiry dates and quotas are preserved. Move or remove child CDNs first.
+
+Use `DELETE /api/subscription-domains/:uuid?reassignUsers=true` to explicitly reassign users to the current default; omitted or false does not authorize reassignment. `accessMode: BLOCKED` closes a primary family or an individual CDN.

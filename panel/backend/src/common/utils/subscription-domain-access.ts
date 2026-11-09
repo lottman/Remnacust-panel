@@ -86,6 +86,7 @@ export function decideDomainAccess(
         ? rows.find((row) => row.uuid === input.uuid && row.kind === 'CDN')
         : undefined;
     if (input.uuid && !selected) return block;
+    if (rows.length && !addressed && !selected && !input.api) return block;
     const primary = selected
         ? rows.find((row) => row.uuid === selected.parentUuid && row.kind === 'PRIMARY')
         : addressed?.kind === 'PRIMARY'
@@ -94,6 +95,12 @@ export function decideDomainAccess(
             ? rows.find((row) => row.uuid === addressed.parentUuid && row.kind === 'PRIMARY')
             : rows.find((row) => row.isDefault && row.kind === 'PRIMARY');
     if (!primary) return input.uuid || input.proof ? block : { action: 'allow' };
+    if (
+        primary.accessMode === 'BLOCKED' ||
+        selected?.accessMode === 'BLOCKED' ||
+        addressed?.accessMode === 'BLOCKED'
+    )
+        return block;
     if (
         selected &&
         addressed &&
@@ -135,7 +142,7 @@ export function decideDomainAccess(
             row.kind === 'CDN' &&
             row.parentUuid === primary.uuid,
     );
-    if (!target || target.domain === host) return block;
+    if (!target || target.domain === host || target.accessMode === 'BLOCKED') return block;
     const [pathname] = input.url.split('?', 1);
     if (
         !input.api &&

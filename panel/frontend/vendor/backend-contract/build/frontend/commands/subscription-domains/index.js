@@ -55,15 +55,25 @@ var DeleteSubscriptionDomainCommand;
 (function (DeleteSubscriptionDomainCommand) {
     DeleteSubscriptionDomainCommand.url = api_1.REST_API.SUBSCRIPTION_DOMAINS.DELETE(':uuid');
     DeleteSubscriptionDomainCommand.TSQ_url = DeleteSubscriptionDomainCommand.url;
-    DeleteSubscriptionDomainCommand.endpointDetails = (0, constants_1.getEndpointDetails)(api_1.SUBSCRIPTION_DOMAINS_ROUTES.DELETE(':uuid'), 'delete', 'Delete an unused subscription domain', { scope: 'delete', kind: 'write' });
+    DeleteSubscriptionDomainCommand.endpointDetails = (0, constants_1.getEndpointDetails)(api_1.SUBSCRIPTION_DOMAINS_ROUTES.DELETE(':uuid'), 'delete', 'Delete a subscription domain with optional user reassignment', { scope: 'delete', kind: 'write' });
+    DeleteSubscriptionDomainCommand.RequestQuerySchema = zod_1.z
+        .object({
+        reassignUsers: zod_1.z
+            .enum(['true', 'false'])
+            .transform((value) => value === 'true')
+            .optional(),
+    })
+        .strict();
 })(DeleteSubscriptionDomainCommand || (exports.DeleteSubscriptionDomainCommand = DeleteSubscriptionDomainCommand = {}));
 var GetSubscriptionDomainCredentialsCommand;
 (function (GetSubscriptionDomainCredentialsCommand) {
     GetSubscriptionDomainCredentialsCommand.url = '/api/subscription-domains/:uuid/credentials';
     GetSubscriptionDomainCredentialsCommand.TSQ_url = GetSubscriptionDomainCredentialsCommand.url;
     GetSubscriptionDomainCredentialsCommand.endpointDetails = (0, constants_1.getEndpointDetails)(':uuid/credentials', 'post', 'Get private CDN origin credentials', { scope: 'credentials', kind: 'write' });
-    GetSubscriptionDomainCredentialsCommand.ResponseSchema = zod_1.z.object({ response: zod_1.z.object({
+    GetSubscriptionDomainCredentialsCommand.ResponseSchema = zod_1.z.object({
+        response: zod_1.z.object({
             requestHeaderName: zod_1.z.string().regex(/^X-[a-f0-9]{24}$/),
             requestHeaderValue: zod_1.z.string().max(101),
-        }) });
+        }),
+    });
 })(GetSubscriptionDomainCredentialsCommand || (exports.GetSubscriptionDomainCredentialsCommand = GetSubscriptionDomainCredentialsCommand = {}));

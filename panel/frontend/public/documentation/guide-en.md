@@ -1005,6 +1005,8 @@ Update both the panel and our subscription page first. In Configure CDN, copy it
 
 Test CDN HTML, the base link, /json and geofile downloads before restricting access. A CDN request without the correct key returns 403 instead of looping. Direct access returns 403 in CDN-only mode or an uncacheable 307 in redirect mode. Give clients the CDN link directly if they do not follow redirects. Changes may take up to five seconds across processes. Existing domains remain open after upgrade. Old pages work in open mode; restricted mode needs our updated page or direct CDN access to the panel subscription API with the same request header. This protects delivery; it does not hide network IPs or change VPN transports.
 
+Closed mode returns HTTP 403 without redirection. Closing a primary closes all its CDNs; closing one CDN leaves siblings available. The last available primary cannot be closed or deleted, even when CDNs exist. User cards, QR codes and link APIs show only available addresses, hiding CDN-only and redirecting primary addresses. Deleting a former primary can explicitly move its users to the current default in the same transaction. Credentials, devices, frozen state, expiry dates and quotas are preserved. Move or remove child CDNs first.
+
 ### Subscription refresh and HWID
 
 Subscription delivery checks the user, device, registration policy and device limit in the database without waiting for nodes. Personal keys are delivered separately through persistent jobs with retries. If a node is unavailable, the subscription is still returned; a new connection on that node becomes usable after its key arrives. Known devices do not wait for the lock used to register new devices. Refreshing a known device does not resend keys to every node, but rechecks authorization: HWID blocks and registration restrictions remain enforced.
@@ -1041,7 +1043,7 @@ During page installation or migration, choose the local panel or another panelâ€
 - **Type**: Primary subscription domain or CDN address. A CDN must belong to a primary domain.
 - **Primary domain**: UUID of the primary domain associated with this CDN.
 - **Make the primary domain**: Use this primary domain for users without an explicit domain assignment.
-- **Primary domain access**: Allow direct access, require a secret CDN request header, or redirect to a selected CDN. Update the subscription page and verify the CDN header before restricting access.
+- **Primary domain access**: Closed mode returns HTTP 403 without redirection. Closing a primary closes all its CDNs; closing one CDN leaves siblings available. The last available primary cannot be closed or deleted, even when CDNs exist. User cards, QR codes and link APIs show only available addresses, hiding CDN-only and redirecting primary addresses. Deleting a former primary can explicitly move its users to the current default in the same transaction. Credentials, devices, frozen state, expiry dates and quotas are preserved. Move or remove child CDNs first.
 - **Redirect destination**: A CDN belonging to this primary domain. Redirects preserve subscription and geofile paths and cannot target unrelated domains.
 - **Subscription pages**: Manage local subscription pages on this server. Updates preserve settings and stopped pages remain stopped.
 

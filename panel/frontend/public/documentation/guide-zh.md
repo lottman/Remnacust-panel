@@ -1083,6 +1083,105 @@ INCY 获得不含查询参数的稳定 DAT URL。经过签名的文件选择位�
 - **导入平台**: 替换平台、本地、翻译 + 合并SVG 库
 - **导入基础翻译**: 替换基础翻译和语言
 
+## 在独立服务器上代理订阅
+
+### 代理的流量
+
+客户端 → 独立代理 sub.example.net → 订阅页面服务器 198.51.100.20 → 面板 API。这是订阅交付代理，不是节点 VPN 流量代理。连接固定 IP 可绕过源站 DNS 查询；Host 选择源站站点，SNI 与证书验证确认其身份。本例中 origin.example.net 是页面主域名，sub.example.net 是它的 CDN/代理域名。地址和密钥均为示例。面板私有地址只供页面服务器使用，不要向客户端公开。
+
+### 准备面板与服务器
+
+在“订阅 → 设置 → 订阅页面”中添加主域名 origin.example.net 和子 CDN sub.example.net。从“配置 CDN”复制该域名专用的请求头名称和值。X-… 名称及 UUID/签名值因 CDN 而异。将 sub.example.net 的 DNS 指向独立代理，源站证书应匹配 origin.example.net。源站 HTTPS 站点必须将完整路径转发给已更新的订阅页面。页面的 REMNAWAVE_PANEL_URL 和 API 令牌只保存在服务器私有 .env 中。独立部署的页面需单独更新。
+
+### 服务商 CDN、独立源站与旧链接
+
+服务商 CDN 方案：客户端 → CDN → 独立服务器上的 origin.example.net → Caddy → 本地订阅页面 → 面板私有 API，响应沿原路返回。按服务商要求，使用 A 或 CNAME 将公网 sub.example.net 指向 CDN。CDN 源站设为页面的 HTTPS 域名或 IP，Host 与 SNI 均为 origin.example.net。面板专用头应添加到 CDN 请求，不能添加到响应。源站 Caddy 将完整请求交给本地页面。3010 只是示例，请使用实际发布端口并仅绑定 loopback。该块假定 Caddy 运行于同一主机；独立 Docker 网络中应使用服务名和对应端口，而不是 127.0.0.1。
+
+```caddyfile
+origin.example.net {
+    reverse_proxy 127.0.0.1:3010
+}
+```
+
+平滑迁移时，将 legacy.example.net 保留为已注册的 OPEN 主域名，并保持 HTTPS 到页面的转发。保留 DNS 与证书，使已导入链接继续工作。将 origin.example.net 设为默认主域名，从用户卡片或链接 API 向新客户端发放 sub.example.net 的 CDN 链接。显式绑定旧域名的用户需另行修改，密钥无需改变。SUB_PUBLIC_DOMAIN 应保持为与面板设置同步的源站主域名，不应改为子 CDN。若不希望向客户端列出新源站，可选择“仅 CDN”或“重定向到 CDN”。已导入的旧 URL 不会自动消失。只保留 Caddy 块而不在面板注册旧域名并不充分，未知主机名可能被拒绝。待客户端迁移完成后再停用旧域名。
+
+### 转发完整路径
+
+转发 /KEY、/KEY/json、设备链接及全部 /geofiles/... 路径，包括 .dat、.sha256 与查询参数。保留订阅前缀；下列示例假定前缀为空。不要统一添加 /api/sub：那是直接访问面板 API 的另一种架构。不要截断 URI 或重定向到内部服务地址。保留客户端 User-Agent、Accept、HWID 请求头，以及 Routing、Profile-Title、Subscription-Userinfo、Content-Type、ETag 响应头。仅覆盖本 CDN 的专用头。不要强制缓存页面、订阅或错误；DAT 应遵循源站 Cache-Control。HTML 返回 200 并不证明 JSON 和地理文件可用。
+
+### Caddy：通过 HTTPS 连接源站 IP
+
+将此块放入独立服务器的 Caddyfile。在 Caddy 服务环境中设置从“配置 CDN”获得的 SUB_ORIGIN_HEADER 和 SUB_ORIGIN_VALUE，私密保存，不要发布展开后的配置。ACME 可达时 Caddy 获取公网域名证书；示例不配置 DNS 或防火墙。显式 Host 也适用于 Caddy 2.9/2.10。源站 TLS 验证保持开启，无需 tls_insecure_skip_verify。
+
+```caddyfile
+sub.example.net {
+    reverse_proxy https://198.51.100.20 {
+        header_up Host origin.example.net
+        header_up {$SUB_ORIGIN_HEADER} {$SUB_ORIGIN_VALUE}
+        transport http {
+            tls_server_name origin.example.net
+            dial_timeout 5s
+            response_header_timeout 30s
+        }
+    }
+}
+```
+
+### Nginx：验证源站主机名
+
+请先提供有效的公网域名证书。在私有文件 /etc/nginx/private/sub-origin-header.conf 中仅保存一条使用面板专用名称和值的 proxy_set_header 指令，并替换下方示例值。文件应位于 webroot 外且仅管理员可读；标准 Nginx root 主进程在启动时读取它。无特权部署仅授权所需服务读取。没有 URI 的 proxy_pass 保留原始路径和查询参数，证书验证与 SNI 均显式开启。
+
+```nginx
+server {
+    listen 443 ssl;
+    server_name sub.example.net;
+    access_log off;
+    ssl_certificate /etc/letsencrypt/live/sub.example.net/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/sub.example.net/privkey.pem;
+    location / {
+        proxy_pass https://198.51.100.20;
+        proxy_http_version 1.1;
+        proxy_set_header Host origin.example.net;
+        proxy_set_header Connection "";
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header X-Forwarded-For $remote_addr;
+        include /etc/nginx/private/sub-origin-header.conf;
+        proxy_ssl_server_name on;
+        proxy_ssl_name origin.example.net;
+        proxy_ssl_verify on;
+        proxy_ssl_trusted_certificate /etc/ssl/certs/ca-certificates.crt;
+        proxy_connect_timeout 5s;
+        proxy_read_timeout 30s;
+        proxy_cache off;
+        proxy_buffering off;
+    }
+}
+```
+
+```nginx
+proxy_set_header X-0123456789abcdef01234567 "00000000-0000-4000-8000-000000000001.0000000000000000000000000000000000000000000000000000000000000000";
+```
+
+### 验证与排错
+
+示例关闭 Nginx 访问日志，避免订阅密钥进入常规请求日志。错误日志也可能含 URI，应限制读取权限。验证时隐藏输入测试 KEY 并按 Enter，JSON 将保存到独立私有目录，完成后请删除。
+
+限制源站前运行 caddy validate --config /etc/caddy/Caddyfile 或 nginx -t。命令中的 KEY 是自己的私有测试订阅密钥，不要写入公开日志。首个 --resolve 命令绕过源站 DNS 验证 IP、SNI 和证书，不绕过访问策略。启用“仅 CDN”后，没有签名头的直连应返回 403。第二条命令验证代理。还应使用各支持应用的真实 User-Agent 测试基础链接。从 Routing 响应头获取真实 DAT URL，再下载文件与校验和；虚构 /geofiles/test.dat 不是有效测试。仅 DAT 返回 404：检查 /geofiles 转发与源站页面版本。403：检查策略和 CDN 头名称/值。502/504：检查 origin 连通性、TLS 和日志。不要使用无限超时。
+
+```bash
+umask 077
+CHECK_DIR=$(mktemp -d)
+IFS= read -r -s KEY
+curl --fail --silent --show-error --resolve origin.example.net:443:198.51.100.20 "https://origin.example.net/${KEY}/json" -H 'User-Agent: INCY/2.6.2/ios' -o "$CHECK_DIR/origin.json"
+curl --fail --silent --show-error https://sub.example.net/KEY/json -H 'User-Agent: INCY/2.6.2/ios' -o "$CHECK_DIR/proxy.json"
+```
+
+### 限制源站与保护隐私
+
+验证成功后，在主域名启用“仅 CDN”，正确签名头允许源站请求。“重定向到 CDN”向客户端返回 307；“关闭”则拒绝整个家族，包括 CDN，三者不同。最后一个主域名不可完全关闭。网络隔离需另行限制源站 HTTPS 仅允许代理/CDN IP，同时保留 SSH、管理 API 和证书签发续期，并检查主机商防火墙。通过受保护的私有网络，可使用公网域名 Host 直接向页面端口发送 HTTP，替代源站 HTTPS；不要公网开放该端口，也不要在公网 HTTP 上传输凭据。CDN 头不是 API 令牌，也不能从 DNS/历史记录抹除源站 IP。私有地址、Authorization 和 CDN 密钥不可出现在响应正文、Location、响应头或 webroot 中。
+
+[Caddy reverse_proxy](https://caddyserver.com/docs/caddyfile/directives/reverse_proxy) · [Nginx proxy module](https://nginx.org/en/docs/http/ngx_http_proxy_module.html)
+
 ## 限额：范围与用户表格
 
 ### 显示范围

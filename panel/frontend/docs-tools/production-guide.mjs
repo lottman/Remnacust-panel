@@ -36,6 +36,7 @@ export const panelArticleIds = [
     'subscription-settings',
     'response-rules',
     'subscription-page',
+    'subscription-proxy',
     'limits',
     'limit-actions',
     'unlimited',

@@ -1,6 +1,6 @@
 # Remnacust Panel
 
-Release **Panel/Page 1.1.7.104** belongs to Installer bundle **1.2.150**, with Node **1.1.27** and Core/WASM **1.1.17**. [Changes in this release](docs/releases/1.1.7.104.md). Installed servers require a separate update.
+Release **Panel/Page 1.1.7.105** belongs to Installer bundle **1.2.151**, with Node **1.1.27** and Core/WASM **1.1.17**. [Changes in this release](docs/releases/1.1.7.105.md). Installed servers require a separate update.
 
 
 [Русский](README.md) · [English](README.en.md)
@@ -37,8 +37,8 @@ Matching bundle as of **November 7, 2026**. Components use separate version numb
 
 | Component | Current stable release |
 | --- | --- |
-| Panel and subscription website | [1.1.7.104](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.104) |
-| Installer / Docker bundle | [1.2.150](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.150) |
+| Panel and subscription website | [1.1.7.105](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.105) |
+| Installer / Docker bundle | [1.2.151](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.151) |
 | Node agent | [1.1.27](https://github.com/lottman/Remnacust-node/releases/tag/v1.1.27) |
 | Core / editor validator | [1.1.17](https://github.com/lottman/Remnacust-core/releases/tag/v1.1.17), Xray v26.11.9 |
 
@@ -58,7 +58,7 @@ When sharing a server, leave headroom for all components. Panel/node requirement
 
 | Software | Requirement |
 | --- | --- |
-| Installer 1.2.150 OS | Ubuntu 22.04 / 24.04 / 26.04 LTS and Debian 12 / 13; Linux amd64 or arm64 |
+| Installer 1.2.151 OS | Ubuntu 22.04 / 24.04 / 26.04 LTS and Debian 12 / 13; Linux amd64 or arm64 |
 | Containers | Docker Engine with a current Docker Compose v2 plugin; legacy `docker-compose` v1 is unsupported |
 | PostgreSQL | 14.24 / 15.19 / 16.15 / 17.11 / 18.6; 197 migrations, HWID and access boundaries |
 | Prebuilt-image installation | Root, APT and GitHub/GHCR access, working DNS; no host Node.js or Go needed |
@@ -128,8 +128,10 @@ If a subscription temporarily fails to load, check logs, panel reachability, web
 - [Backups](docs/BACKUPS.md) · [User migration](docs/USER-MIGRATION.md) · [Node updates](docs/UPDATE-PROGRESS-AND-NODE-HEALTH.md).
 - [Development/building](docs/BUILDING.md) · [Subscription website](subscription-page/README.en.md) · [Release history](docs/releases).
 
-Release 1.1.7.104 fixes HWID subscription delivery without waiting for nodes, adds the global custom/default Xray selection and updates dependencies. Node 1.1.27 includes both cores. Installer 1.2.150 delivers the matching bundle. [Release changes](docs/releases/1.1.7.104.md). Updating the README does not replace installed software.
+Release 1.1.7.105 fixes HWID subscription delivery without waiting for nodes, adds the global custom/default Xray selection and updates dependencies. Node 1.1.27 includes both cores. Installer 1.2.151 delivers the matching bundle. [Release changes](docs/releases/1.1.7.105.md). Updating the README does not replace installed software.
 
 ## License and support
 
 AGPL-3.0 and Remnawave attribution are preserved. [NOTICE.md](NOTICE.md) · [Remnawave](https://github.com/remnawave) · [Project support](https://t.me/lottman).
+
+[Subscription proxy on a separate server](docs/SUBSCRIPTION-PROXY.en.md) · [Русский](docs/SUBSCRIPTION-PROXY.md)

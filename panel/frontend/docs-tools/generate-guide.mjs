@@ -15,9 +15,15 @@ import { explainOperations } from './operations-guide.mjs'
 import { explainOperatorWorkflows, supportGuide } from './operator-guide.mjs'
 import { productionArticles } from './production-guide.mjs'
 import { explainRelease1171 } from './release-1171-guide.mjs'
+import { subscriptionProxyGuide } from './subscription-proxy-guide.mjs'
 import { xeraGuide } from './xera-guide.mjs'
 
-const articles = productionArticles([...sourceArticles, xeraGuide, supportGuide])
+const articles = productionArticles([
+    ...sourceArticles,
+    xeraGuide,
+    supportGuide,
+    subscriptionProxyGuide
+])
 const translations = { fa, zh }
 for (const language of ['fa', 'zh']) {
     for (const article of articles) {

@@ -1083,6 +1083,105 @@ Xray JSON، Singbox، Mihomo، Clash و Stash آخرین ۳۰ نسخهٔ ذخی�
 - **درون‌ریزی پلتفرم‌ها**: پلتفرم‌ها، زبان‌ها و ترجمه‌ها را جایگزین و کتابخانه SVG را ادغام می‌کند
 - **درون‌ریزی ترجمه‌های پایه**: جایگزین کردن ترجمه‌های پایه و لیست زبان‌ها
 
+## پراکسی اشتراک روی سرور جداگانه
+
+### چه چیزی پراکسی می‌شود
+
+کلاینت → پراکسی جداگانه sub.example.net → سرور صفحه اشتراک 198.51.100.20 → API پنل. این مسیر برای دریافت اشتراک است، نه ترافیک VPN نود. اتصال به IP ثابت، وابستگی به DNS مبدأ را حذف می‌کند؛ Host سایت مبدأ را انتخاب می‌کند و SNI همراه بررسی گواهی نام آن را تأیید می‌کند. در مثال origin.example.net دامنه اصلی صفحه و sub.example.net دامنه CDN/پراکسی آن است. همه آدرس‌ها و کلیدها نمونه هستند. آدرس خصوصی پنل فقط در سمت سرور صفحه لازم است و نباید به کلاینت داده شود.
+
+### آماده‌سازی پنل و سرورها
+
+در اشتراک → تنظیمات → صفحات اشتراک، origin.example.net را اصلی و sub.example.net را CDN فرزند ثبت کنید. نام و مقدار هدر درخواست اختصاصی را از تنظیم CDN کپی کنید. نام X-… و مقدار UUID/امضا برای هر CDN متفاوت است. DNS دامنه sub.example.net باید به پراکسی جداگانه برسد و گواهی مبدأ با origin.example.net مطابقت داشته باشد. سایت HTTPS مبدأ باید مسیر کامل را به صفحه اشتراک به‌روز هدایت کند. REMNAWAVE_PANEL_URL و توکن API صفحه فقط در .env خصوصی سرور نگهداری شوند. صفحه روی سرور دیگر را جدا از پنل به‌روز کنید.
+
+### CDN ارائه‌دهنده، مبدأ جدا و پیوندهای قدیمی
+
+در حالت CDN ارائه‌دهنده: کلاینت → CDN → origin.example.net روی سرور جدا → Caddy → صفحه اشتراک محلی → API خصوصی پنل؛ پاسخ در مسیر معکوس می‌رود. DNS دامنه عمومی sub.example.net با رکورد A یا CNAME موردنیاز ارائه‌دهنده به CDN برسد. مبدأ CDN نام HTTPS صفحه یا IP آن و Host و SNI برابر origin.example.net باشد. زوج هدر اختصاصی پنل را روی درخواست CDN قرار دهید نه پاسخ. Caddy مبدأ درخواست کامل را به صفحه محلی می‌فرستد. پورت 3010 نمونه است؛ پورت منتشرشده خود را فقط به loopback متصل کنید. مثال Caddy روی همان میزبان است؛ در شبکه Docker جدا نام سرویس و پورت آن را به‌جای 127.0.0.1 بگذارید.
+
+```caddyfile
+origin.example.net {
+    reverse_proxy 127.0.0.1:3010
+}
+```
+
+برای انتقال بدون قطع کلاینت، legacy.example.net را دامنه اصلی ثبت‌شده OPEN با HTTPS فعال به صفحه نگه دارید. DNS و گواهی باقی بمانند تا پیوندهای واردشده کار کنند. origin.example.net را اصلی پیش‌فرض کنید و لینک CDN دامنه sub.example.net را از کارت کاربر یا API لینک‌ها به کاربران جدید بدهید. اتصال صریح کاربران قدیمی جدا تغییر می‌کند و نیازی به تغییر کلید نیست. SUB_PUBLIC_DOMAIN دامنه اصلی مبدأ هماهنگ با پنل است، نه CDN فرزند. برای حذف مبدأ جدید از فهرست لینک‌های کلاینت، فقط CDN یا ریدایرکت به CDN را انتخاب کنید. URL قدیمی واردشده خودکار ناپدید نمی‌شود. بلوک Caddy بدون ثبت دامنه قدیمی در پنل کافی نیست چون نام ناشناخته ممکن است رد شود. پس از انتقال کلاینت‌ها دامنه قدیمی را بازنشسته کنید.
+
+### مسیر کامل را عبور دهید
+
+مسیرهای /KEY، /KEY/json، پیوندهای دستگاه و همه /geofiles/... از جمله .dat و .sha256 و پارامترهای پرس‌وجو باید عبور کنند. پیشوند اشتراک را حفظ کنید؛ مثال‌ها پیشوند خالی دارند. /api/sub را به همه درخواست‌ها اضافه نکنید؛ دسترسی مستقیم API پنل معماری دیگری است. URI را نبرید و به آدرس خصوصی سرویس ریدایرکت نکنید. هدرهای User-Agent، Accept و HWID کلاینت و پاسخ‌های Routing، Profile-Title، Subscription-Userinfo، Content-Type و ETag حفظ شوند. فقط هدر CDN خود را بازنویسی کنید. صفحه، اشتراک و خطا را اجباری کش نکنید؛ Cache-Control مبدأ برای DAT رعایت شود. پاسخ HTML با 200 موفقیت JSON و ژئوفایل را ثابت نمی‌کند.
+
+### Caddy: اتصال HTTPS به IP مبدأ
+
+این بلوک را در Caddyfile سرور جداگانه بگذارید. SUB_ORIGIN_HEADER و SUB_ORIGIN_VALUE محیط سرویس Caddy را از تنظیم CDN بگیرید؛ خصوصی نگه دارید و پیکربندی بازشده را منتشر نکنید. در صورت دسترسی ACME، Caddy گواهی عمومی را دریافت می‌کند؛ مثال DNS یا firewall را تنظیم نمی‌کند. Host برای Caddy 2.9/2.10 نیز صریح است. بررسی TLS مبدأ فعال می‌ماند؛ tls_insecure_skip_verify لازم نیست.
+
+```caddyfile
+sub.example.net {
+    reverse_proxy https://198.51.100.20 {
+        header_up Host origin.example.net
+        header_up {$SUB_ORIGIN_HEADER} {$SUB_ORIGIN_VALUE}
+        transport http {
+            tls_server_name origin.example.net
+            dial_timeout 5s
+            response_header_timeout 30s
+        }
+    }
+}
+```
+
+### Nginx: HTTPS با بررسی نام
+
+گواهی معتبر دامنه عمومی لازم است. در فایل خصوصی /etc/nginx/private/sub-origin-header.conf دقیقاً یک دستور proxy_set_header با نام و مقدار اختصاصی پنل قرار دهید. زوج نمونه زیر را جایگزین کنید. فایل خارج webroot و فقط برای مدیر خواندنی باشد؛ master معمول root در Nginx آن را هنگام شروع می‌خواند. در اجرای بدون root فقط سرویس لازم اجازه خواندن داشته باشد. proxy_pass بدون URI مسیر و query را نگه می‌دارد؛ بررسی گواهی و SNI صریح فعال‌اند.
+
+```nginx
+server {
+    listen 443 ssl;
+    server_name sub.example.net;
+    access_log off;
+    ssl_certificate /etc/letsencrypt/live/sub.example.net/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/sub.example.net/privkey.pem;
+    location / {
+        proxy_pass https://198.51.100.20;
+        proxy_http_version 1.1;
+        proxy_set_header Host origin.example.net;
+        proxy_set_header Connection "";
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header X-Forwarded-For $remote_addr;
+        include /etc/nginx/private/sub-origin-header.conf;
+        proxy_ssl_server_name on;
+        proxy_ssl_name origin.example.net;
+        proxy_ssl_verify on;
+        proxy_ssl_trusted_certificate /etc/ssl/certs/ca-certificates.crt;
+        proxy_connect_timeout 5s;
+        proxy_read_timeout 30s;
+        proxy_cache off;
+        proxy_buffering off;
+    }
+}
+```
+
+```nginx
+proxy_set_header X-0123456789abcdef01234567 "00000000-0000-4000-8000-000000000001.0000000000000000000000000000000000000000000000000000000000000000";
+```
+
+### بررسی و خطایابی
+
+در مثال، access log در Nginx خاموش است تا کلید اشتراک در گزارش درخواست ثبت نشود. دسترسی به error log نیز محدود شود چون URI ممکن است ثبت شود. برای آزمون KEY را بدون نمایش وارد و Enter بزنید؛ JSON در پوشه خصوصی جدا ذخیره می‌شود. پس از بررسی آن را حذف کنید.
+
+پیش از محدودکردن مبدأ، caddy validate --config /etc/caddy/Caddyfile یا nginx -t اجرا کنید. KEY در فرمان‌ها کلید خصوصی اشتراک آزمایشی خودتان است؛ در گزارش عمومی ننویسید. فرمان --resolve، IP و SNI و گواهی را بدون DNS مبدأ بررسی می‌کند، نه دورزدن سیاست دسترسی. پس از فعال‌سازی فقط CDN، درخواست مستقیم بدون هدر امضاشده باید 403 باشد. فرمان دوم پراکسی را بررسی می‌کند. آدرس پایه را نیز با User-Agent واقعی هر برنامه پشتیبانی‌شده آزمایش کنید. URL واقعی DAT را از هدر Routing بگیرید و فایل‌ها و checksumها را دانلود کنید؛ /geofiles/test.dat ساختگی آزمون معتبر نیست. خطای 404 فقط ژئوفایل: مسیر /geofiles و نسخه صفحه مبدأ؛ 403: سیاست و زوج هدر CDN؛ 502/504: اتصال origin، TLS و گزارش‌ها بررسی شوند. timeout نامحدود نگذارید.
+
+```bash
+umask 077
+CHECK_DIR=$(mktemp -d)
+IFS= read -r -s KEY
+curl --fail --silent --show-error --resolve origin.example.net:443:198.51.100.20 "https://origin.example.net/${KEY}/json" -H 'User-Agent: INCY/2.6.2/ios' -o "$CHECK_DIR/origin.json"
+curl --fail --silent --show-error https://sub.example.net/KEY/json -H 'User-Agent: INCY/2.6.2/ios' -o "$CHECK_DIR/proxy.json"
+```
+
+### محدودکردن مبدأ و محرمانگی
+
+پس از آزمون موفق، فقط CDN را روی دامنه اصلی فعال کنید؛ زوج امضاشده درست درخواست مبدأ را مجاز می‌کند. ریدایرکت به CDN پاسخ 307 به کلاینت می‌دهد، اما بسته کل خانواده شامل CDN را رد می‌کند. این حالت‌ها متفاوت‌اند؛ آخرین دامنه اصلی را نمی‌توان کامل بست. برای ایزولاسیون شبکه، HTTPS مبدأ را جداگانه فقط از IP پراکسی/CDN مجاز کنید و SSH، API مدیریت و صدور/تمدید گواهی را حفظ کنید؛ firewall میزبان هم بررسی شود. روی شبکه خصوصی محافظت‌شده می‌توان HTTP را با Host دامنه عمومی مستقیم به پورت صفحه فرستاد؛ پورت را عمومی باز نکنید و اعتبارنامه را روی HTTP عمومی نفرستید. هدر CDN توکن API نیست و IP مبدأ را از DNS/تاریخچه پاک نمی‌کند. آدرس خصوصی، Authorization و راز CDN نباید در بدنه، Location، هدر پاسخ یا webroot ظاهر شوند.
+
+[Caddy reverse_proxy](https://caddyserver.com/docs/caddyfile/directives/reverse_proxy) · [Nginx proxy module](https://nginx.org/en/docs/http/ngx_http_proxy_module.html)
+
 ## محدودیت: حوزه و جدول کاربران
 
 ### حوزه‌های نمایش‌داده‌شده

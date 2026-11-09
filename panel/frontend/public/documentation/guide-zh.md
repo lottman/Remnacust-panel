@@ -879,7 +879,7 @@ Xray JSON、sing-box、Mihomo、Clash 和 Stash 均提供自动选择。sing-box
 
 ### 服务端自动下载与更新保护
 
-在库中选择文件，设置 HTTPS 来源、自动更新和 15 分钟至 30 天的服务端间隔。设置立即保存，并作用于使用此文件的所有模板。URL 导入会保存来源；电脑上传需另设来源 URL。自动更新默认关闭。调度器每分钟检查一次，持久租约避免同一文件重复并发下载。来源失败、面板重启和手动重试均不重置间隔。会验证地址、重定向、大小、格式以及活动模板使用的分类。出错时保留上一份可用副本；库中显示状态和下次检查时间。原始哈希 URL 保持不变；可更新链接和已签名 URL 返回当前版本，且不使用 immutable 缓存。服务端与客户端计划独立，因此更改不一定立即传入客户端。
+在库中选择文件，设置 HTTPS 来源、自动更新和 15 分钟至 30 天的服务端间隔。设置立即保存，并作用于使用此文件的所有模板。URL 导入会保存来源；电脑上传需另设来源 URL。自动更新默认关闭。调度器每分钟检查一次，持久租约避免同一文件重复并发下载。来源失败、面板重启和手动重试均不重置间隔。会验证地址、重定向、大小、格式以及活动模板使用的分类。出错时保留上一份可用副本；库中显示状态和下次检查时间。原始哈希 URL 保持不变；可更新链接和已签名 URL 返回当前版本，且不使用 immutable 缓存。服务端与客户端计划独立，因此更改不一定立即传入客户端。 源站更新成功后，新生成的订阅使用当前文件。内嵌规则需刷新订阅，DAT 还需在应用中刷新；未刷新的已保存配置仍是旧快照。手动上传的文件不会随第三方网站变化，需配置来源并启用自动更新。将大型列表展开到每个配置只会增加体积，不能刷新已导入规则。
 
 ### 共享目录和池成员
 
@@ -1091,7 +1091,7 @@ INCY 获得不含查询参数的稳定 DAT URL。经过签名的文件选择位�
 
 ### 准备面板与服务器
 
-在“订阅 → 设置 → 订阅页面”中添加主域名 origin.example.net 和子 CDN sub.example.net。从“配置 CDN”复制该域名专用的请求头名称和值。X-… 名称及 UUID/签名值因 CDN 而异。将 sub.example.net 的 DNS 指向独立代理，源站证书应匹配 origin.example.net。源站 HTTPS 站点必须将完整路径转发给已更新的订阅页面。页面的 REMNAWAVE_PANEL_URL 和 API 令牌只保存在服务器私有 .env 中。独立部署的页面需单独更新。
+在“订阅 → 设置 → 订阅页面”中添加主域名 origin.example.net 和子 CDN sub.example.net。从“配置 CDN”复制该域名专用的请求头名称和值。X-… 名称及 UUID/签名值因 CDN 而异。将 sub.example.net 的 DNS 指向独立代理，源站证书应匹配 origin.example.net。源站 HTTPS 站点必须将完整路径转发给已更新的订阅页面。页面的 REMNAWAVE_PANEL_URL 和 API 令牌只保存在服务器私有 .env 中。独立部署的页面需单独更新。现有 Remnawave 页面可在安装器“迁移”中选择“从 Remnawave 迁移订阅页面”（migrate-remnawave-subscription-page）；保留面板连接及设置。
 
 ### 服务商 CDN、独立源站与旧链接
 
@@ -1173,7 +1173,7 @@ umask 077
 CHECK_DIR=$(mktemp -d)
 IFS= read -r -s KEY
 curl --fail --silent --show-error --resolve origin.example.net:443:198.51.100.20 "https://origin.example.net/${KEY}/json" -H 'User-Agent: INCY/2.6.2/ios' -o "$CHECK_DIR/origin.json"
-curl --fail --silent --show-error https://sub.example.net/KEY/json -H 'User-Agent: INCY/2.6.2/ios' -o "$CHECK_DIR/proxy.json"
+curl --fail --silent --show-error "https://sub.example.net/${KEY}/json" -H 'User-Agent: INCY/2.6.2/ios' -o "$CHECK_DIR/proxy.json"
 ```
 
 ### 限制源站与保护隐私

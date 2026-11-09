@@ -879,7 +879,7 @@ With JSON enabled on the base link, Throne 1.x from stable 1.2.0 receives full X
 
 ### Server auto downloads and update safety
 
-Select a library file and configure its HTTPS source, automatic updates and server interval from 15 minutes to 30 days. Settings save immediately for every template using that file. URL imports retain their source; PC uploads need a source URL. Auto updates default to off. The scheduler checks once a minute; a persisted lease prevents concurrent duplicate downloads. Source failure, panel restart and manual retries do not reset the interval. Addresses, redirects, size, format and categories used by active templates are validated. Errors retain the last working copy; status and next check are shown in the library. Original hashed URLs remain immutable; Updatable links and signed URLs return the active version without immutable caching. Server and client schedules are separate, so changes need not reach clients immediately.
+Select a library file and configure its HTTPS source, automatic updates and server interval from 15 minutes to 30 days. Settings save immediately for every template using that file. URL imports retain their source; PC uploads need a source URL. Auto updates default to off. The scheduler checks once a minute; a persisted lease prevents concurrent duplicate downloads. Source failure, panel restart and manual retries do not reset the interval. Addresses, redirects, size, format and categories used by active templates are validated. Errors retain the last working copy; status and next check are shown in the library. Original hashed URLs remain immutable; Updatable links and signed URLs return the active version without immutable caching. Server and client schedules are separate, so changes need not reach clients immediately. After a successful source update, newly generated subscriptions use the active file. Inline rules change when the subscription refreshes; downloaded DAT also needs to refresh in the app. An unrefreshed saved profile remains a snapshot. Manually uploaded files cannot follow third-party changes without a configured source and automatic updates. Expanding large lists into every profile increases size and does not update already imported rules.
 
 ### Shared catalog and pool members
 
@@ -1091,7 +1091,7 @@ Client → separate proxy sub.example.net → subscription-page server 198.51.10
 
 ### Prepare the panel and servers
 
-In Subscription → Settings → Subscription pages, add primary origin.example.net and child CDN sub.example.net. Copy the individual request-header name and value from Configure CDN. The X-… name and UUID/signature value are different for each CDN. Point sub.example.net DNS at the separate proxy; the origin certificate must match origin.example.net. The origin HTTPS site must forward complete paths to an updated subscription page. Keep its REMNAWAVE_PANEL_URL and API token in the private server-side .env. Update separately hosted pages independently of the panel.
+In Subscription → Settings → Subscription pages, add primary origin.example.net and child CDN sub.example.net. Copy the individual request-header name and value from Configure CDN. The X-… name and UUID/signature value are different for each CDN. Point sub.example.net DNS at the separate proxy; the origin certificate must match origin.example.net. The origin HTTPS site must forward complete paths to an updated subscription page. Keep its REMNAWAVE_PANEL_URL and API token in the private server-side .env. Update separately hosted pages independently of the panel. For an existing Remnawave page, choose Migration → Subscription page from Remnawave (migrate-remnawave-subscription-page) in the installer; its panel connection and settings are retained.
 
 ### Provider CDN, separate origin and legacy links
 
@@ -1173,7 +1173,7 @@ umask 077
 CHECK_DIR=$(mktemp -d)
 IFS= read -r -s KEY
 curl --fail --silent --show-error --resolve origin.example.net:443:198.51.100.20 "https://origin.example.net/${KEY}/json" -H 'User-Agent: INCY/2.6.2/ios' -o "$CHECK_DIR/origin.json"
-curl --fail --silent --show-error https://sub.example.net/KEY/json -H 'User-Agent: INCY/2.6.2/ios' -o "$CHECK_DIR/proxy.json"
+curl --fail --silent --show-error "https://sub.example.net/${KEY}/json" -H 'User-Agent: INCY/2.6.2/ios' -o "$CHECK_DIR/proxy.json"
 ```
 
 ### Restrict the origin and protect secrets

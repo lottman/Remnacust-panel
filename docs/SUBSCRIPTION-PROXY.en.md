@@ -8,7 +8,7 @@ Client → separate proxy sub.example.net → subscription-page server 198.51.10
 
 ## Prepare the panel and servers
 
-In Subscription → Settings → Subscription pages, add primary origin.example.net and child CDN sub.example.net. Copy the individual request-header name and value from Configure CDN. The X-… name and UUID/signature value are different for each CDN. Point sub.example.net DNS at the separate proxy; the origin certificate must match origin.example.net. The origin HTTPS site must forward complete paths to an updated subscription page. Keep its REMNAWAVE_PANEL_URL and API token in the private server-side .env. Update separately hosted pages independently of the panel.
+In Subscription → Settings → Subscription pages, add primary origin.example.net and child CDN sub.example.net. Copy the individual request-header name and value from Configure CDN. The X-… name and UUID/signature value are different for each CDN. Point sub.example.net DNS at the separate proxy; the origin certificate must match origin.example.net. The origin HTTPS site must forward complete paths to an updated subscription page. Keep its REMNAWAVE_PANEL_URL and API token in the private server-side .env. Update separately hosted pages independently of the panel. For an existing Remnawave page, choose Migration → Subscription page from Remnawave (migrate-remnawave-subscription-page) in the installer; its panel connection and settings are retained.
 
 ## Provider CDN, separate origin and legacy links
 
@@ -90,7 +90,7 @@ umask 077
 CHECK_DIR=$(mktemp -d)
 IFS= read -r -s KEY
 curl --fail --silent --show-error --resolve origin.example.net:443:198.51.100.20 "https://origin.example.net/${KEY}/json" -H 'User-Agent: INCY/2.6.2/ios' -o "$CHECK_DIR/origin.json"
-curl --fail --silent --show-error https://sub.example.net/KEY/json -H 'User-Agent: INCY/2.6.2/ios' -o "$CHECK_DIR/proxy.json"
+curl --fail --silent --show-error "https://sub.example.net/${KEY}/json" -H 'User-Agent: INCY/2.6.2/ios' -o "$CHECK_DIR/proxy.json"
 ```
 
 ## Restrict the origin and protect secrets

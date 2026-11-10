@@ -62,7 +62,7 @@ When sharing a server, leave headroom for all components. Panel/node requirement
 | --- | --- |
 | Installer 1.2.157 OS | Ubuntu 22.04 / 24.04 / 26.04 LTS and Debian 12 / 13; Linux amd64 or arm64 |
 | Containers | Docker Engine with a current Docker Compose v2 plugin; legacy `docker-compose` v1 is unsupported |
-| PostgreSQL | 14.24 / 15.19 / 16.15 / 17.11 / 18.6; 201 migrations; validation scope is listed in Compatibility |
+| PostgreSQL | 14.24 / 15.19 / 16.15 / 17.11 / 18.6; 202 migrations; validation scope is listed in Compatibility |
 | Prebuilt-image installation | Root, APT and GitHub/GHCR access, working DNS; no host Node.js or Go needed |
 | Building from source | Node.js 26.13 LTS; Go 1.27.3 separately for Core/editor |
 
@@ -99,7 +99,7 @@ Standard Remnawave nodes and pages retain basic operation within their protocols
 
 Pool members and the hosts displaying an autoselect are configured separately. Select pool members by hosts or tags. Membership refreshes with the subscription; the client strategy selects a server for a new connection. Strategies vary by application and format. [Autoselect](docs/XRAY-AUTOSELECT.md).
 
-Upload a geofile from your computer or HTTPS into the shared library. Small sets are embedded into JSON; large sets can be delivered as combined DAT files to supported Happ/INCY clients. Full routing requires a JSON subscription: enable JSON on the base path or use `/json`. URI/Base64 cannot carry the complete ruleset. Save the template, then refresh the subscription in the application. [Geofiles](docs/GEOFILES.md).
+Enable GEO separately from the template menu (⋯); the adjacent icon shows its state. New templates default to off. Upload a geofile from your computer or HTTPS into the shared library. Small sets are embedded into JSON; large sets can be delivered as combined DAT files to supported Happ/INCY clients. Full routing requires a JSON subscription: enable JSON on the base path or use `/json`. URI/Base64 cannot carry the complete ruleset. Save the template, then refresh the subscription in the application. [Geofiles](docs/GEOFILES.md).
 
 Edit library files directly; presets are saved as copies with a new name. Add individual addresses below them and choose DIRECT, blocking or an existing VPN route.
 

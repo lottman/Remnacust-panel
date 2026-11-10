@@ -11,7 +11,7 @@ function harness(language='en') {
  const update={isPending:false,isError:false,mutate:r=>requests.push(r)};
  const mocks={
  '@mantine/core':Object.fromEntries(['Alert','Button','Group','Loader','NumberInput','Stack','Text'].map(k=>[k,k])),
- '@remnawave/backend-contract':{GEOFILE_INLINE_RULE_LIMIT:20000,GEOFILE_INLINE_RULE_LIMIT_MIN:1,GEOFILE_INLINE_RULE_LIMIT_MAX:50000},
+ '@remnawave/backend-contract':{GEOFILE_INLINE_RULE_LIMIT:20000,GEOFILE_INLINE_RULE_LIMIT_MIN:1,GEOFILE_INLINE_RULE_LIMIT_MAX:250000},
  react:{useState:()=>[draft,v=>{draft=v;}]},'react-i18next':{useTranslation:()=>({t})},
  '@tanstack/react-query':{useQueryClient:()=>({cancelQueries:async()=>events.push('cancel'),setQueryData:(k,v)=>{assert.deepEqual(k,key);settings.data=v;events.push('confirmed');},invalidateQueries:async()=>events.push('invalidate')})},
  '@shared/api/hooks/subscription-settings/subscription-settings.query.hooks':{subscriptionSettingsQueryKeys:{getSubscriptionSettings:{queryKey:key}},useGetSubscriptionSettings:()=>settings},
@@ -32,10 +32,17 @@ for(const language of ['ru','en','fa','zh'])test(`${language}: explicit save pre
  assert.equal(h.render().find(e=>e.type==='Button').props.disabled,true);
 });
 test('invalid numeric drafts cannot dispatch through UI or direct callback',()=>{
- const h=harness();for(const v of ['',0,-1,50001,1.5,'100',NaN,Infinity]){h.change(v);assert.equal(h.render().find(e=>e.type==='Button').props.disabled,true);assert.equal(typeof h.render().find(e=>e.type==='NumberInput').props.error,'string');h.save();}assert.deepEqual(h.requests,[]);
+ const h=harness();for(const v of ['',0,-1,250001,1.5,'100',NaN,Infinity]){h.change(v);assert.equal(h.render().find(e=>e.type==='Button').props.disabled,true);assert.equal(typeof h.render().find(e=>e.type==='NumberInput').props.error,'string');h.save();}assert.deepEqual(h.requests,[]);
 });
 test('pending and missing settings block submission; failed save retains retryable draft',()=>{
  const h=harness();h.change(100);h.update.isPending=true;h.save();assert.deepEqual(h.requests,[]);assert.equal(h.render().find(e=>e.type==='NumberInput').props.disabled,true);
  h.update.isPending=false;h.update.isError=true;assert.equal(h.render().find(e=>e.type==='NumberInput').props.value,100);assert(h.render().some(e=>e.type==='Alert'));
  h.settings.data=undefined;h.settings.isSuccess=false;h.settings.isError=true;h.save();assert.deepEqual(h.requests,[]);
+});
+
+
+test('the shared upper threshold is configurable up to 250000 without changing automatic delivery flags',()=>{
+ const h=harness();h.change(250000);assert.equal(h.render().find(e=>e.type==='Button').props.disabled,false);h.save();
+ assert.deepEqual(h.requests,[{variables:{uuid:'settings',geofilesInlineRuleLimit:250000}}]);
+ h.change(250001);assert.equal(h.render().find(e=>e.type==='Button').props.disabled,true);h.save();assert.equal(h.requests.length,1);
 });

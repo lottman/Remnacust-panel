@@ -1,6 +1,6 @@
 # Remnacust Panel
 
-Configure the inline threshold under Geofiles: 1–50,000 addresses/conditions, default 20,000. Manual Xray settings remain intact when automatic geofile delivery is disabled.
+Configure the inline threshold under Geofiles: 1–250,000 addresses/conditions, default 20,000. Size and complexity safeguards remain and may switch delivery to DAT before the configured threshold. Manual Xray settings remain intact when automatic geofile delivery is disabled.
 
 Release **Panel/Page 1.1.7.109** belongs to Installer bundle **1.2.155**, with Node **1.1.27** and Core/WASM **1.1.17**. [Changes in this release](docs/releases/1.1.7.109.md). Installed servers require a separate update.
 

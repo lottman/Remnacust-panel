@@ -21609,8 +21609,8 @@
             "nullable": true
           },
           "telegramId": {
-            "type": "number",
             "description": "Optional. Telegram user ID for notifications. Must be an integer.",
+            "type": "number",
             "nullable": true
           },
           "email": {
@@ -22563,8 +22563,8 @@
                 }
               },
               "nextCursor": {
-                "type": "string",
                 "description": "Cursor to fetch the next page, or null if there are no more results",
+                "type": "string",
                 "nullable": true
               },
               "hasMore": {
@@ -31854,8 +31854,8 @@
                 }
               },
               "nextCursor": {
-                "type": "string",
                 "description": "Cursor to fetch the next page, or null if there are no more results",
+                "type": "string",
                 "nullable": true
               },
               "hasMore": {
@@ -36101,8 +36101,8 @@
                 "maximum": 10
               },
               "lastRotatedAt": {
-                "type": "string",
                 "default": null,
+                "type": "string",
                 "nullable": true
               }
             },
@@ -37388,8 +37388,8 @@
                 "nullable": true
               },
               "trafficMultiplier": {
-                "type": "number",
                 "default": null,
+                "type": "number",
                 "nullable": true
               },
               "serverSpeedLimitMbps": {
@@ -37486,8 +37486,8 @@
                     "maximum": 10
                   },
                   "lastRotatedAt": {
-                    "type": "string",
                     "default": null,
+                    "type": "string",
                     "nullable": true
                   }
                 },
@@ -38928,8 +38928,8 @@
                 "maximum": 10
               },
               "lastRotatedAt": {
-                "type": "string",
                 "default": null,
+                "type": "string",
                 "nullable": true
               }
             },
@@ -40208,8 +40208,8 @@
                   "nullable": true
                 },
                 "trafficMultiplier": {
-                  "type": "number",
                   "default": null,
+                  "type": "number",
                   "nullable": true
                 },
                 "serverSpeedLimitMbps": {
@@ -40306,8 +40306,8 @@
                       "maximum": 10
                     },
                     "lastRotatedAt": {
-                      "type": "string",
                       "default": null,
+                      "type": "string",
                       "nullable": true
                     }
                   },
@@ -41854,8 +41854,8 @@
                 "maximum": 10
               },
               "lastRotatedAt": {
-                "type": "string",
                 "default": null,
+                "type": "string",
                 "nullable": true
               }
             },
@@ -46133,7 +46133,7 @@
                 "default": 20000,
                 "type": "integer",
                 "minimum": 1,
-                "maximum": 50000
+                "maximum": 250000
               },
               "isShowCustomRemarks": {
                 "type": "boolean"
@@ -46733,7 +46733,7 @@
           "geofilesInlineRuleLimit": {
             "type": "integer",
             "minimum": 1,
-            "maximum": 50000
+            "maximum": 250000
           },
           "isShowCustomRemarks": {
             "type": "boolean"
@@ -47306,7 +47306,7 @@
                 "default": 20000,
                 "type": "integer",
                 "minimum": 1,
-                "maximum": 50000
+                "maximum": 250000
               },
               "isShowCustomRemarks": {
                 "type": "boolean"

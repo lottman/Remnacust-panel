@@ -3,16 +3,21 @@ const assert = require('node:assert/strict');
 const path = require('node:path');
 const load = require('./load-typescript.cjs');
 const { pool } = require('./client-pool-fixture.cjs');
-const { compactIncySubscription, xrayProfileFormattedBytes, xrayProfilesFit, INCY_FORMATTED_CONFIG_BUDGET } = load(
-    path.join(__dirname, '../src/modules/subscription-template/geofiles/incy-config.ts'),
-    {
-        '../generators/client-pool': pool,
-        '../generators/subscription-output': load(
-            path.join(__dirname, '../src/modules/subscription-template/generators/subscription-output.ts'),
-            { './client-pool': pool },
+const {
+    compactIncySubscription,
+    xrayProfileFormattedBytes,
+    xrayProfilesFit,
+    INCY_FORMATTED_CONFIG_BUDGET,
+} = load(path.join(__dirname, '../src/modules/subscription-template/geofiles/incy-config.ts'), {
+    '../generators/client-pool': pool,
+    '../generators/subscription-output': load(
+        path.join(
+            __dirname,
+            '../src/modules/subscription-template/generators/subscription-output.ts',
         ),
-    },
-);
+        { './client-pool': pool },
+    ),
+});
 const networks = Array.from({ length: 26000 }, (_, i) => `100.${i >> 8}.${i & 255}.0/24`);
 
 test('wire compaction preserves entries but cannot hide an oversized expanded profile', () => {
@@ -24,7 +29,10 @@ test('wire compaction preserves entries but cannot hide an oversized expanded pr
         meta: { preserved: true },
     };
     assert.ok(Buffer.byteLength(JSON.stringify(original, null, 4)) > 900_000);
-    assert.throws(() => compactIncySubscription(JSON.stringify([original])), /incy-configuration-size-limit/);
+    assert.throws(
+        () => compactIncySubscription(JSON.stringify([original])),
+        /incy-configuration-size-limit/,
+    );
     const compacted = compactIncySubscription(JSON.stringify([original]), false);
     assert.equal(xrayProfilesFit(compacted), false);
     const result = JSON.parse(compacted)[0];
@@ -68,10 +76,34 @@ test('oversized uncompactable configs fail explicitly without dropping rules or 
 });
 
 test('semantic size matches real StringList expansion without allocating expanded arrays', () => {
-    for (const values of [['domain:a.test'], ['domain:пример.рф','regexp:^a{1,3}\\.test$','full:two.test'], Array(1000).fill('10.0.0.0/8')]) {
-        const compact = {routing:{rules:[{domain:values.join(','),ip:'geoip:private'}]}};
+    for (const values of [
+        ['domain:a.test'],
+        ['domain:пример.рф', 'regexp:^a{1,3}\\.test$', 'full:two.test'],
+        Array(1000).fill('10.0.0.0/8'),
+    ]) {
+        const compact = { routing: { rules: [{ domain: values.join(','), ip: 'geoip:private' }] } };
         const expanded = structuredClone(compact);
-        for (const rule of expanded.routing.rules) for (const key of ['domain','ip']) rule[key] = rule[key].split(',');
-        assert.equal(xrayProfileFormattedBytes(compact), Buffer.byteLength(JSON.stringify(expanded, null, 4)));
+        for (const rule of expanded.routing.rules)
+            for (const key of ['domain', 'ip']) rule[key] = rule[key].split(',');
+        assert.equal(
+            xrayProfileFormattedBytes(compact),
+            Buffer.byteLength(JSON.stringify(expanded, null, 4)),
+        );
     }
+});
+
+test('250000 condition preference is inclusive across arrays and StringList without disabling byte budgets', () => {
+    const rules = Array.from({ length: 5 }, () => ({ domain: Array(50000).fill('domain:a.test') }));
+    const arrayBody = JSON.stringify([{ routing: { rules } }]);
+    const stringBody = compactIncySubscription(arrayBody, false);
+    for (const body of [arrayBody, stringBody]) {
+        assert.equal(xrayProfilesFit(body, Infinity, 250000), true);
+        assert.equal(xrayProfilesFit(body, Infinity, 249999), false);
+        assert.equal(xrayProfilesFit(body, INCY_FORMATTED_CONFIG_BUDGET, 250000), false);
+    }
+    rules[4].domain.push('domain:overflow.test');
+    assert.equal(
+        xrayProfilesFit(JSON.stringify([{ routing: { rules } }]), Infinity, 250000),
+        false,
+    );
 });

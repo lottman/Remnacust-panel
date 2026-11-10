@@ -353,7 +353,7 @@ test('configured inline threshold is inclusive and changes both directions witho
 });
 
 test('invalid configured thresholds fail before template or file processing', async () => {
-    for (const value of [0, -1, 50001, 1.1, NaN, Infinity, null, '20', true]) {
+    for (const value of [0, -1, 250001, 1.1, NaN, Infinity, null, '20', true]) {
         let calls = 0;
         await assert.rejects(
             automaticXrayDelivery({
@@ -383,7 +383,7 @@ test('configured count never removes byte caps or forces unsupported Xray client
         ]),
     );
     const f = setup({ rules, refs: 2 });
-    assert.equal((await render(f, { inlineRuleLimit: 50000 })).inline, false);
+    assert.equal((await render(f, { inlineRuleLimit: 250000 })).inline, false);
     const generic = await render(setup({ rules }), { client: undefined, inlineRuleLimit: 1 });
     assert.equal(generic.header, undefined);
     assert.equal(JSON.parse(generic.subscription)[0].routing.rules[0].domain.length, 1000);
@@ -437,7 +437,7 @@ test('API threshold contract accepts exact integer bounds and rejects coercion o
         SubscriptionSettingsSchema,
     } = require('../libs/contract/build/backend/models/subscription-settings.schema');
     const uuid = '00000000-0000-4000-8000-000000000001';
-    for (const value of [1, 20000, 50000])
+    for (const value of [1, 20000, 50000, 50001, 250000])
         assert.equal(
             UpdateSubscriptionSettingsCommand.RequestBodySchema.parse({
                 uuid,
@@ -445,7 +445,7 @@ test('API threshold contract accepts exact integer bounds and rejects coercion o
             }).geofilesInlineRuleLimit,
             value,
         );
-    for (const value of [0, -1, 50001, 1.5, null, '20000', true, NaN, Infinity])
+    for (const value of [0, -1, 250001, 1.5, null, '20000', true, NaN, Infinity])
         assert.equal(
             UpdateSubscriptionSettingsCommand.RequestBodySchema.safeParse({
                 uuid,

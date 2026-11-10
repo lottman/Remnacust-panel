@@ -19,6 +19,10 @@ function source(relative, overrides = {}) {
             mocks[match[1]] = {};
         }
     }
+    for (const name of Object.keys(mocks)) {
+        if (name.endsWith('/template-geofile-policy'))
+            mocks[name] = load(path.resolve(path.dirname(filename), name + '.ts'));
+    }
     if (Object.hasOwn(mocks, './client-pool'))
         mocks['./client-pool'] = require('./client-pool-fixture.cjs').pool;
     if (Object.hasOwn(mocks, './subscription-output'))

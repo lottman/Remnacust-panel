@@ -11,6 +11,7 @@ export class BaseTemplateResponseModel {
     public templateJson: object | null;
     public encodedTemplateYaml: string | null;
     public draftContent: string | null;
+    public geofilesEnabled: boolean;
     public validationWarnings?: string[];
 
     constructor(entity: SubscriptionTemplateEntity) {
@@ -21,6 +22,7 @@ export class BaseTemplateResponseModel {
         this.templateType = entity.templateType;
         this.templateJson = entity.templateJson ?? null;
         this.draftContent = entity.draftContent ?? null;
+        this.geofilesEnabled = entity.geofilesEnabled === true;
         this.encodedTemplateYaml = entity.templateYaml
             ? Buffer.from(entity.templateYaml, 'utf8').toString('base64')
             : null;

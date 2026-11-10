@@ -24,7 +24,10 @@ const template = (value) => ({
     inbounds: [],
     outbounds: [],
     routing: { rules: [] },
-    remnacust: { geofiles: [{ id: id(value), categories: ['example'], target: 'DIRECT' }] },
+    remnacust: {
+        geofilesEnabled: true,
+        geofiles: [{ id: id(value), categories: ['example'], target: 'DIRECT' }],
+    },
 });
 
 function setup(counts, profiles = counts.map((_, i) => i)) {

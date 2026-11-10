@@ -20,31 +20,4 @@
     filter: drop-shadow(
         0 0 2px color-mix(in srgb, var(--panel-update-color, var(--panel-accent)) 22%, transparent)
     );
-    animation: updatePulse 4.8s ease-in-out infinite;
-}
-@keyframes updatePulse {
-    0%,
-    100% {
-        filter: drop-shadow(
-            0 0 2px
-                color-mix(in srgb, var(--panel-update-color, var(--panel-accent)) 22%, transparent)
-        );
-    }
-    50% {
-        filter: drop-shadow(
-            0 0 4px
-                color-mix(in srgb, var(--panel-update-color, var(--panel-accent)) 45%, transparent)
-        );
-    }
-}
-@media (prefers-reduced-motion: reduce) {
-    .newVersion,
-    .version[data-update-available] .icon {
-        animation: none;
-    }
-}
-
-:global(html[data-panel-reduced-motion='true']) .newVersion,
-:global(html[data-panel-reduced-motion='true']) .version[data-update-available] .icon {
-    animation: none;
 }

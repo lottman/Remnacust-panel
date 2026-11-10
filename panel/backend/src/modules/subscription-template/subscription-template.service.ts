@@ -21,6 +21,10 @@ import { ReorderSubscriptionTemplatesBodyDto } from './dtos';
 import { SubscriptionTemplateEntity } from './entities/subscription-template.entity';
 import { validateClientTemplate } from './generators/validate-client-template';
 import { GeofilesService } from './geofiles/geofiles.service';
+import {
+    templateGeofilesEnabled,
+    withTemplateGeofilePolicy,
+} from './geofiles/template-geofile-policy';
 import { XrayGeofileDelivery } from './geofiles/xray-geofile-delivery';
 import { BaseTemplateResponseModel } from './models/base-template.response.model';
 import { GetSubscriptionTemplatesResponseModel } from './models/get-templates.response.model';
@@ -96,6 +100,7 @@ export class SubscriptionTemplateService {
         templateJson: object | undefined,
         encodedTemplateYaml: string | undefined,
         draftContent?: string,
+        geofilesEnabled?: boolean,
     ): Promise<TResult<BaseTemplateResponseModel>> {
         try {
             const template = await this.subscriptionTemplateRepository.findByUUID(uuid);
@@ -256,6 +261,7 @@ export class SubscriptionTemplateService {
                     uuid: template.uuid,
                     name: name ?? undefined,
                     templateJson: templateJson ?? undefined,
+                    geofilesEnabled,
                     draftContent:
                         templateJson !== undefined || encodedTemplateYaml !== undefined
                             ? null
@@ -272,11 +278,17 @@ export class SubscriptionTemplateService {
                     ? Buffer.from(encodedTemplateYaml, 'base64').toString('utf8')
                     : (template.templateYaml ?? ''));
             let invalidGeofiles = false;
+            const onlyDisable =
+                geofilesEnabled === false &&
+                templateJson === undefined &&
+                encodedTemplateYaml === undefined &&
+                draftContent === undefined;
             const updatedTemplate =
-                oldContent.includes('/geofiles/') ||
-                nextContent.includes('/geofiles/') ||
-                oldContent.includes('"geofiles"') ||
-                nextContent.includes('"geofiles"')
+                !onlyDisable &&
+                (oldContent.includes('/geofiles/') ||
+                    nextContent.includes('/geofiles/') ||
+                    oldContent.includes('"geofiles"') ||
+                    nextContent.includes('"geofiles"'))
                     ? await this.geofiles.withReferenceLock(async () => {
                           try {
                               await this.geofiles.assertReferences(nextContent);
@@ -295,7 +307,10 @@ export class SubscriptionTemplateService {
                                     )
                                   : (templateJson ?? template.templateJson);
                               await this.prepareClientTemplate(
-                                  source as Record<string, unknown>,
+                                  withTemplateGeofilePolicy(
+                                      source as Record<string, unknown>,
+                                      true,
+                                  ),
                                   template.templateType,
                                   template.templateType === 'XRAY_JSON'
                                       ? new XrayGeofileDelivery('happ', 'remote')
@@ -602,6 +617,11 @@ export class SubscriptionTemplateService {
             throw new Error('Template content is null');
         }
 
+        templateContent = withTemplateGeofilePolicy(
+            templateContent as Record<string, unknown>,
+            template.geofilesEnabled === true,
+        );
+
         try {
             if (generation)
                 await this.rawCacheService.setTemplateSnapshot(
@@ -624,8 +644,9 @@ export class SubscriptionTemplateService {
         inlineRuleLimit?: number,
     ): Promise<object> {
         if (!config?.remnacust) return config;
-        if (geofilesEnabled && happ?.deferTemplates) return config;
-        if (!geofilesEnabled) {
+        const enabled = geofilesEnabled && templateGeofilesEnabled(config);
+        if (enabled && happ?.deferTemplates) return config;
+        if (!enabled) {
             const clean = structuredClone(config);
             delete clean.remnacust;
             return clean;
@@ -640,6 +661,7 @@ export class SubscriptionTemplateService {
     ): Promise<void> {
         try {
             await this.rawCacheService.invalidateTemplateSnapshots();
+            await this.rawCacheService.del(CACHE_KEYS.SUBSCRIPTION_SETTINGS);
         } catch {
             this.logger.warn('Template cache cleanup deferred');
         }

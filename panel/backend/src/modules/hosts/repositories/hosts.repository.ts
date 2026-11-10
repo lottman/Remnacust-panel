@@ -321,11 +321,11 @@ export class HostsRepository implements ICrud<HostsEntity> {
     }
 
     public async getAssignedXrayTemplates(): Promise<
-        Array<{ uuid: string; name: string; templateJson: object | null }>
+        Array<{ uuid: string; name: string; templateJson: object | null; geofilesEnabled: boolean }>
     > {
         const result = await this.qb.kysely
             .selectFrom('subscriptionTemplates')
-            .select(['uuid', 'name', 'templateJson'])
+            .select(['uuid', 'name', 'templateJson', 'geofilesEnabled'])
             .where('templateType', '=', 'XRAY_JSON')
             .where(
                 sql<boolean>`(template_json->'remnawave'->'assignTo' IS NOT NULL OR template_json->'remnawave'->'assignments' IS NOT NULL)`,
@@ -333,7 +333,12 @@ export class HostsRepository implements ICrud<HostsEntity> {
             .orderBy('viewPosition', 'asc')
             .orderBy('uuid', 'asc')
             .execute();
-        return result as Array<{ uuid: string; name: string; templateJson: object | null }>;
+        return result as Array<{
+            uuid: string;
+            name: string;
+            templateJson: object | null;
+            geofilesEnabled: boolean;
+        }>;
     }
 
     public async getTemplatesByUuids(uuids: string[]) {
@@ -343,7 +348,7 @@ export class HostsRepository implements ICrud<HostsEntity> {
 
         return await this.qb.kysely
             .selectFrom('subscriptionTemplates')
-            .select(['uuid', 'templateJson'])
+            .select(['uuid', 'templateJson', 'geofilesEnabled'])
             .where(
                 'uuid',
                 'in',

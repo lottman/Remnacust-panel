@@ -392,7 +392,6 @@
 .iconSelectItem:hover {
     background: rgba(34, 211, 238, 0.08);
     border-color: rgba(34, 211, 238, 0.25);
-    transform: scale(1.05);
 }
 
 .iconSelectItem[data-selected='true'] {

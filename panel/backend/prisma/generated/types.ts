@@ -376,6 +376,7 @@ export type SubscriptionTemplate = {
     templateYaml: string | null;
     templateJson: object | null;
     draftContent: string | null;
+    geofilesEnabled: Generated<boolean>;
     createdAt: Generated<Timestamp>;
     updatedAt: Generated<Timestamp>;
 };

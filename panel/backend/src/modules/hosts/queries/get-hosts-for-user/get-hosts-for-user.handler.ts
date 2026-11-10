@@ -2,13 +2,14 @@ import { Logger } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 
 import { RawCacheService } from '@common/raw-cache';
-import { XrayModeService } from '@common/xray-mode/xray-mode.service';
-import { stockHostPolicy } from '@common/xray-mode/stock-host-policy';
 import { fail, ok } from '@common/types';
+import { stockHostPolicy } from '@common/xray-mode/stock-host-policy';
+import { XrayModeService } from '@common/xray-mode/xray-mode.service';
 import { CACHE_KEYS, CACHE_KEYS_TTL, ERRORS } from '@libs/contracts/constants';
 
 import { HostWithRawInbound } from '@modules/hosts/entities/host-with-inbound-tag.entity';
 
+import { withTemplateGeofilePolicy } from '../../../subscription-template/geofiles/template-geofile-policy';
 import { HostTagLimitsRepository } from '../../repositories/host-tag-limits.repository';
 import { HostsRepository } from '../../repositories/hosts.repository';
 import {
@@ -21,6 +22,10 @@ import { GetHostsForUserQuery } from './get-hosts-for-user.query';
 @QueryHandler(GetHostsForUserQuery)
 export class GetHostsForUserHandler implements IQueryHandler<GetHostsForUserQuery> {
     private readonly logger = new Logger(GetHostsForUserHandler.name);
+    private assignedTemplateLoads?: Map<
+        string,
+        Promise<Awaited<ReturnType<HostsRepository['getAssignedXrayTemplates']>>>
+    >;
     constructor(
         private readonly hostsRepository: HostsRepository,
         private readonly tagLimitsRepository: HostTagLimitsRepository,
@@ -30,7 +35,7 @@ export class GetHostsForUserHandler implements IQueryHandler<GetHostsForUserQuer
 
     async execute(query: GetHostsForUserQuery) {
         try {
-            const custom = !this.xrayModes || await this.xrayModes.isCustom();
+            const custom = !this.xrayModes || (await this.xrayModes.isCustom());
             const hostsEntities = await this.hostsRepository.findActiveHostsByUserId(
                 query.userId,
                 query.returnDisabledHosts,
@@ -39,7 +44,7 @@ export class GetHostsForUserHandler implements IQueryHandler<GetHostsForUserQuer
             if (hostsEntities.length === 0) return ok([]);
             const [tagUsage, assignedTemplates] = await Promise.all([
                 custom ? this.tagLimitsRepository.usageForUser(query.userId) : Promise.resolve([]),
-                this.hostsRepository.getAssignedXrayTemplates(),
+                this.getAssignedTemplates(),
             ]);
             const assignments = indexXrayTemplateAssignments(assignedTemplates);
 
@@ -65,7 +70,13 @@ export class GetHostsForUserHandler implements IQueryHandler<GetHostsForUserQuer
                 ttlSeconds: CACHE_KEYS_TTL.XRAY_JSON_TEMPLATE,
                 fetch: (m) => this.hostsRepository.getTemplatesByUuids(m),
                 rowId: (r) => r.uuid,
-                toValue: (r) => r.templateJson,
+                toValue: (r) =>
+                    r.templateJson
+                        ? withTemplateGeofilePolicy(
+                              r.templateJson as Record<string, unknown>,
+                              r.geofilesEnabled === true,
+                          )
+                        : null,
             });
 
             return ok(
@@ -114,5 +125,39 @@ export class GetHostsForUserHandler implements IQueryHandler<GetHostsForUserQuer
             this.logger.error(error);
             return fail(ERRORS.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    private async getAssignedTemplates() {
+        type Inventory = Awaited<ReturnType<HostsRepository['getAssignedXrayTemplates']>>;
+        const key = 'remnacust:assigned-xray-template-inventory:v1';
+        let generation: string;
+        try {
+            const snapshot = await this.rawCache.templateSnapshot<Inventory>(key);
+            if (Array.isArray(snapshot.value)) return snapshot.value;
+            generation = snapshot.generation;
+        } catch {
+            return this.hostsRepository.getAssignedXrayTemplates();
+        }
+        const loads = (this.assignedTemplateLoads ??= new Map());
+        const pending = loads.get(generation);
+        if (pending) return pending;
+        if (loads.size >= 4) return this.hostsRepository.getAssignedXrayTemplates();
+        const load = this.hostsRepository
+            .getAssignedXrayTemplates()
+            .then(async (rows) => {
+                if (Buffer.byteLength(JSON.stringify(rows)) <= 4 * 1024 * 1024) {
+                    try {
+                        await this.rawCache.setTemplateSnapshot(key, generation, rows);
+                    } catch {
+                        return rows;
+                    }
+                }
+                return rows;
+            })
+            .finally(() => {
+                if (loads.get(generation) === load) loads.delete(generation);
+            });
+        loads.set(generation, load);
+        return load;
     }
 }

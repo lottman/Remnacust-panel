@@ -1,4 +1,11 @@
-type Template = { uuid: string; name?: string; templateJson: object | null };
+import { withTemplateGeofilePolicy } from '../../subscription-template/geofiles/template-geofile-policy';
+
+type Template = {
+    uuid: string;
+    name?: string;
+    templateJson: object | null;
+    geofilesEnabled?: boolean;
+};
 export type XrayTemplateVariant = { key: string; name: string; template: object };
 type Assignments = {
     hosts: Map<string, XrayTemplateVariant[]>;
@@ -68,7 +75,12 @@ export function recipientXrayTemplates(
 export function indexXrayTemplateAssignments(templates: Template[]): Assignments {
     const result: Assignments = { hosts: new Map(), tags: new Map(), rank: new Map() };
     for (const template of templates) {
-        const content = template.templateJson as Config | null;
+        const content = template.templateJson
+            ? withTemplateGeofilePolicy(
+                  template.templateJson as Config,
+                  template.geofilesEnabled === true,
+              )
+            : null;
         if (!content) continue;
         for (const assignment of entries(content)) {
             const selected = {

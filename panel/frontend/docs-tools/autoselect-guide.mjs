@@ -1,3 +1,10 @@
+const assignmentMeaning = {
+    ru: '\n\nПример назначения: `remnawave.assignments = [{hosts: ["UUID_ХОСТА_ПОЛУЧАТЕЛЯ"], balancerTag: "auto-eu"}]`. Поле hosts здесь — получатели готового автовыбора, а не серверы внутри его пула. Участники выбираются отдельно в remnawave.injectHosts; auto-eu должен совпадать с routing.balancers[].tag. В GUI это блок «Где использовать автовыбор»; вручную писать JSON не требуется.',
+    en: '\n\nAssignment example: `remnawave.assignments = [{hosts: ["RECIPIENT_HOST_UUID"], balancerTag: "auto-eu"}]`. Here hosts identifies recipients of the generated autoselect, not its pool members. Pool servers are selected separately in remnawave.injectHosts; auto-eu must match routing.balancers[].tag. The GUI calls this Where to use autoselect; editing JSON manually is optional.',
+    fa: '\n\nنمونه انتساب: `remnawave.assignments = [{hosts: ["RECIPIENT_HOST_UUID"], balancerTag: "auto-eu"}]`. hosts گیرنده پروفایل انتخاب خودکار را مشخص می‌کند، نه اعضای مجموعه. اعضا جداگانه در remnawave.injectHosts انتخاب می‌شوند؛ auto-eu باید با routing.balancers[].tag یکی باشد. در رابط از بخش محل استفاده انتخاب خودکار استفاده کنید؛ نوشتن JSON الزامی نیست.',
+    zh: '\n\n关联示例：`remnawave.assignments = [{hosts: ["RECIPIENT_HOST_UUID"], balancerTag: "auto-eu"}]`。此处 hosts 表示接收自动选择配置的主机，并非池成员。池服务器另由 remnawave.injectHosts 选择；auto-eu 必须与 routing.balancers[].tag 一致。界面对应“在哪里使用自动选择”，无需手动编写 JSON。'
+}
+
 const sections = [
     [
         'templates-http-response-time',
@@ -247,7 +254,9 @@ export function explainAutoselect(articles) {
                         title: translations[index][0],
                         body:
                             translations[index][1] +
-                            (id === 'templates-assignments' ? routeReferenceNotes[language] : '') +
+                            (id === 'templates-assignments'
+                                ? routeReferenceNotes[language] + assignmentMeaning[language]
+                                : '') +
                             (id === 'templates-priority' ? '\n\n' + orderNotes[language] : '') +
                             (id === 'templates-http-response-time'
                                 ? '\n\n' + observerNotes[language]

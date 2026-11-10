@@ -5,6 +5,7 @@ export declare namespace UpdateSubscriptionTemplateCommand {
     const endpointDetails: import("../../constants").EndpointDetails;
     const RequestBodySchema: z.ZodObject<{
         uuid: z.ZodUUID;
+        geofilesEnabled: z.ZodOptional<z.ZodBoolean>;
         name: z.ZodOptional<z.ZodString>;
         templateJson: z.ZodOptional<z.ZodObject<{}, z.core.$loose>>;
         encodedTemplateYaml: z.ZodOptional<z.ZodString>;
@@ -16,6 +17,7 @@ export declare namespace UpdateSubscriptionTemplateCommand {
             viewPosition: z.ZodNumber;
             name: z.ZodString;
             tags: z.ZodArray<z.ZodString>;
+            geofilesEnabled: z.ZodPrefault<z.ZodBoolean>;
             templateType: z.ZodEnum<{
                 readonly XRAY_JSON: 'XRAY_JSON';
                 readonly XRAY_BASE64: 'XRAY_BASE64';

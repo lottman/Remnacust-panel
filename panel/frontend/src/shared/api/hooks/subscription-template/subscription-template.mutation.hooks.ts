@@ -20,7 +20,25 @@ export const useUpdateSubscriptionTemplate = createMutationHook({
     responseSchema: UpdateSubscriptionTemplateCommand.ResponseSchema,
     requestMethod: UpdateSubscriptionTemplateCommand.endpointDetails.REQUEST_METHOD,
     rMutationParams: {
-        onSuccess: (data) => {
+        onSuccess: (data, variables) => {
+            const policyChange =
+                typeof variables.variables?.geofilesEnabled === 'boolean' &&
+                variables.variables.templateJson === undefined &&
+                variables.variables.encodedTemplateYaml === undefined &&
+                variables.variables.draftContent === undefined
+            if (policyChange) {
+                notifications.show({
+                    title: i18next.t('common.message.success'),
+                    message: i18next.t(
+                        data.geofilesEnabled
+                            ? 'geofiles.template-enabled-message'
+                            : 'geofiles.template-disabled-message',
+                        { name: data.name }
+                    ),
+                    color: 'teal'
+                })
+                return
+            }
             const draft = data.draftContent !== undefined && data.draftContent !== null
             const warnings = !!data.validationWarnings?.length
             notifications.show({

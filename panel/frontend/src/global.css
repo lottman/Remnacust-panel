@@ -606,7 +606,6 @@ html.panel-themed
     display: block;
     flex-shrink: 0;
     transform-origin: center;
-    transition: transform 160ms ease;
 }
 html[data-panel-reduced-motion='true']
     :is(.mantine-ActionIcon-icon, .mantine-Button-section, .mantine-ThemeIcon-root)
@@ -648,7 +647,6 @@ html.panel-themed :is([data-panel-control], .mantine-Menu-itemSection) > svg {
     display: block;
     flex-shrink: 0;
     transform-origin: center;
-    transition: transform 160ms ease;
 }
 html[data-panel-reduced-motion='true'] :is([data-panel-control], .mantine-Menu-itemSection) > svg {
     transform: none !important;
@@ -756,8 +754,10 @@ html.panel-themed
     transform: translateX(
         calc(
             var(--panel-switch-direction) *
-                (var(--switch-width) - var(--switch-thumb-size) - 2 *
-                    var(--switch-track-label-padding))
+                (
+                    var(--switch-width) - var(--switch-thumb-size) - 2 *
+                        var(--switch-track-label-padding)
+                )
         )
     );
 }
@@ -789,17 +789,6 @@ html.panel-themed [data-panel-page] {
         opacity: 1;
     }
 }
-@keyframes workspace-check {
-    0% {
-        scale: 0.7;
-    }
-    60% {
-        scale: 1.12;
-    }
-    100% {
-        scale: 1;
-    }
-}
 html.panel-themed [data-panel-value] {
     animation: workspace-value 300ms var(--panel-motion-ease);
 }
@@ -813,8 +802,28 @@ html.panel-themed [data-panel-value] {
         translate: 0 0;
     }
 }
-html.panel-themed .mantine-Checkbox-input:checked + .mantine-Checkbox-icon {
-    animation: workspace-check 240ms var(--panel-motion-ease);
+html.panel-themed .mantine-Checkbox-input:checked + .mantine-Checkbox-icon :is(path, polyline) {
+    animation: panel-check-trace 240ms var(--panel-motion-ease);
+}
+@keyframes panel-check-trace {
+    from {
+        stroke-dasharray: 30 30;
+        stroke-dashoffset: 30;
+        opacity: 0.4;
+    }
+    to {
+        stroke-dasharray: 30 30;
+        stroke-dashoffset: 0;
+        opacity: 1;
+    }
+}
+html[data-panel-reduced-motion='true'] .mantine-Checkbox-icon :is(path, polyline) {
+    animation: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+    .mantine-Checkbox-icon :is(path, polyline) {
+        animation: none !important;
+    }
 }
 @media (hover: hover) and (pointer: fine) {
     html.panel-themed [data-panel-motion='metric']:hover {
@@ -857,36 +866,6 @@ html.panel-themed .mantine-Checkbox-input:checked + .mantine-Checkbox-icon {
     }
 }
 
-/* Individual transforms preserve SVG rotations, refresh spinners and disclosure arrows. */
-html.panel-themed [data-panel-icon-motion] {
-    transform-box: border-box;
-    transform-origin: center;
-    translate: 0 0;
-    scale: 1;
-    transition:
-        translate 200ms cubic-bezier(0.22, 0.8, 0.24, 1),
-        scale 180ms cubic-bezier(0.22, 0.8, 0.24, 1),
-        filter 100ms ease;
-}
-
-html.panel-themed [data-panel-icon-pressed] {
-    translate: 0 -1px;
-    scale: 1.08;
-    filter: brightness(1.06);
-    transition-duration: 80ms;
-}
-html[data-panel-reduced-motion='true'] [data-panel-icon-motion] {
-    translate: none !important;
-    scale: none !important;
-    filter: none !important;
-}
-@media (prefers-reduced-motion: reduce) {
-    html.panel-themed [data-panel-icon-motion] {
-        translate: none !important;
-        scale: none !important;
-        filter: none !important;
-    }
-}
 html.panel-themed
     :is(.mantine-Button-root, .mantine-ActionIcon-root, [data-panel-control]):not(
         :disabled,

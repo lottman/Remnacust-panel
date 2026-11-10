@@ -12,6 +12,7 @@ var UpdateSubscriptionTemplateCommand;
     UpdateSubscriptionTemplateCommand.endpointDetails = (0, constants_1.getEndpointDetails)(api_1.SUBSCRIPTION_TEMPLATE_ROUTES.UPDATE, 'patch', 'Update subscription template', { scope: 'update', kind: 'write' });
     UpdateSubscriptionTemplateCommand.RequestBodySchema = zod_1.z.object({
         uuid: zod_1.z.uuid(),
+        geofilesEnabled: zod_1.z.boolean().optional(),
         name: zod_1.z
             .string()
             .min(2)

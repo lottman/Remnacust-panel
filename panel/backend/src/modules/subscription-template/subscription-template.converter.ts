@@ -20,6 +20,7 @@ const entityToModel = (entity: SubscriptionTemplateEntity): SubscriptionTemplate
         templateYaml: entity.templateYaml,
         templateJson: entity.templateJson,
         draftContent: entity.draftContent,
+        geofilesEnabled: entity.geofilesEnabled,
 
         createdAt: entity.createdAt,
         updatedAt: entity.updatedAt,

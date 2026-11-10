@@ -2,22 +2,29 @@
     cursor: progress;
     opacity: 0.8;
 }
-.control[data-refreshing] :global(.mantine-ActionIcon-icon) > svg,
-.control[data-refreshing] :global(.mantine-Button-section)[data-position='left'] > svg {
-    animation: refresh-turn 720ms linear infinite;
-    transform-origin: center;
+.control[data-refreshing]
+    :global(.mantine-ActionIcon-icon)
+    > svg
+    :is(path, circle, line, polyline, rect),
+.control[data-refreshing]
+    :global(.mantine-Button-section)[data-position='left']
+    > svg
+    :is(path, circle, line, polyline, rect) {
+    animation: refresh-trace 900ms ease-in-out infinite;
 }
-@keyframes refresh-turn {
-    to {
-        transform: rotate(360deg);
+@keyframes refresh-trace {
+    50% {
+        opacity: 0.3;
+        stroke-dasharray: 10 4;
+        stroke-dashoffset: -14;
     }
 }
-html[data-panel-reduced-motion='true'] .control[data-refreshing] svg {
+html[data-panel-reduced-motion='true'] .control[data-refreshing] svg * {
     animation: none !important;
     transform: none !important;
 }
 @media (prefers-reduced-motion: reduce) {
-    .control[data-refreshing] svg {
+    .control[data-refreshing] svg * {
         animation: none !important;
         transform: none !important;
     }

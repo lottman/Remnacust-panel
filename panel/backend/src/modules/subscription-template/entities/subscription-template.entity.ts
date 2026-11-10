@@ -11,6 +11,7 @@ export class SubscriptionTemplateEntity implements SubscriptionTemplate {
     templateYaml: string | null;
     templateJson: object | null;
     draftContent: string | null;
+    geofilesEnabled: boolean;
 
     createdAt: Date;
     updatedAt: Date;

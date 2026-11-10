@@ -28,7 +28,7 @@ const { RenderTemplatesService } = source(
 test('off by default skips every saved custom reference without mutating raw templates or manual rules', async () => {
     for (const type of ['XRAY_JSON', 'SINGBOX', 'CLASH', 'MIHOMO', 'STASH']) {
         const raw = {
-            remnacust: { geofiles: [{ id: 'missing', target: 'DIRECT' }] },
+            remnacust: { geofilesEnabled: true, geofiles: [{ id: 'missing', target: 'DIRECT' }] },
             remnawave: { includeHiddenHosts: true },
             routing: { rules: [{ domain: ['geosite:category-ru'], outboundTag: 'direct' }] },
         };
@@ -55,7 +55,9 @@ test('off by default skips every saved custom reference without mutating raw tem
 });
 
 test('cached raw templates respect concurrent per-request opt-in and retain saved assignments', async () => {
-    const raw = { remnacust: { geofiles: [{ id: 'a'.repeat(34), target: 'DIRECT' }] } };
+    const raw = {
+        remnacust: { geofilesEnabled: true, geofiles: [{ id: 'a'.repeat(34), target: 'DIRECT' }] },
+    };
     const templates = templateService(
         {},
         { templateSnapshot: async () => ({ generation: 'a'.repeat(32), value: raw }) },
@@ -77,9 +79,9 @@ test('cached raw templates respect concurrent per-request opt-in and retain save
     assert.equal(raw.remnacust.geofiles.length, 1);
 });
 
-test('real format generators receive the global switch through the renderer', async () => {
+test('real format generators enforce the JSON prerequisite and per-template policy through the renderer', async () => {
     const template = {
-        remnacust: { geofiles: [{ id: 'a'.repeat(34), target: 'DIRECT' }] },
+        remnacust: { geofilesEnabled: true, geofiles: [{ id: 'a'.repeat(34), target: 'DIRECT' }] },
         inbounds: [],
         outbounds: [{ tag: 'direct', protocol: 'freedom' }],
         proxies: [],
@@ -114,7 +116,11 @@ test('real format generators receive the global switch through the renderer', as
             const context = {
                 matchedResponseType: type,
                 userAgent: 'ordinary-client',
-                subscriptionSettings: { geofilesEnabled: enabled, geofilesInlineRuleLimit: 347 },
+                subscriptionSettings: {
+                    geofilesEnabled: enabled,
+                    serveJsonAtBaseSubscription: enabled,
+                    geofilesInlineRuleLimit: 347,
+                },
             };
             const result = await renderer.generateSubscription({
                 srrContext: context,
@@ -140,7 +146,7 @@ test('disabled system never creates Happ or INCY routing state for ordinary clie
                         routing: {
                             rules: [{ domain: ['geosite:category-ru'], outboundTag: 'direct' }],
                         },
-                        remnacust: { geofiles: ['invalid-but-disabled'] },
+                        remnacust: { geofilesEnabled: true, geofiles: ['invalid-but-disabled'] },
                     },
                 }),
             },
@@ -175,7 +181,7 @@ test('disabled system never creates Happ or INCY routing state for ordinary clie
     }
 });
 
-test('automatic refresh has no file or network operations while global opt-in is off', async () => {
+test('automatic refresh has no file or network operations when no template is enabled', async () => {
     const { GeofilesService } = source(
         'modules/subscription-template/geofiles/geofiles.service.ts',
     );
@@ -183,7 +189,9 @@ test('automatic refresh has no file or network operations while global opt-in is
     let enabled = false,
         calls = 0;
     service.prisma = {
-        subscriptionSettings: { findFirst: async () => ({ geofilesEnabled: enabled }) },
+        subscriptionTemplate: {
+            findFirst: async () => (enabled ? { uuid: 'enabled-template' } : null),
+        },
     };
     service.refreshStore = {
         refreshDue: async () => {
@@ -225,7 +233,10 @@ test('disabled automation preserves manual Xray files and selectors without star
                 },
             ],
         },
-        remnacust: { geofiles: [{ id: 'missing-disabled-library-file', target: 'DIRECT' }] },
+        remnacust: {
+            geofilesEnabled: true,
+            geofiles: [{ id: 'missing-disabled-library-file', target: 'DIRECT' }],
+        },
     };
     for (const client of ['Happ/6.3.0', 'INCY/3.9.7']) {
         const raw = structuredClone(manual);
@@ -332,7 +343,7 @@ test('explicit administrator refresh remains available while scheduled library r
     );
     const service = Object.create(GeofilesService.prototype);
     service.prisma = {
-        subscriptionSettings: { findFirst: async () => ({ geofilesEnabled: false }) },
+        subscriptionTemplate: { findFirst: async () => null },
     };
     const calls = [];
     service.refreshStore = {
@@ -348,7 +359,7 @@ test('explicit administrator refresh remains available while scheduled library r
     assert.deepEqual(await service.refreshDue(), []);
 });
 
-test('repository rejects invalid merged settings before mutation and allows explicit paired transitions', async () => {
+test('repository rejects global geofile changes and disabling JSON while any template is enabled', async () => {
     const { SubscriptionSettingsRepository } = load(
         path.join(
             __dirname,
@@ -385,26 +396,29 @@ test('repository rejects invalid merged settings before mutation and allows expl
     );
     await assert.rejects(
         repo.update({ uuid: 'settings', geofilesEnabled: true }),
-        /GEOFILES_REQUIRE_BASE_JSON/,
+        /GEOFILES_PER_TEMPLATE/,
     );
     assert.equal(writes, 0);
     await repo.update({
         uuid: 'settings',
         serveJsonAtBaseSubscription: true,
-        geofilesEnabled: true,
     });
+    state = { ...state, geofilesEnabled: true };
     await assert.rejects(
         repo.update({ uuid: 'settings', serveJsonAtBaseSubscription: false }),
         /GEOFILES_REQUIRE_BASE_JSON/,
     );
     await repo.update({ uuid: 'settings', randomizeHosts: true });
     assert.equal(state.geofilesEnabled, true);
-    await repo.update({
-        uuid: 'settings',
-        serveJsonAtBaseSubscription: false,
-        geofilesEnabled: false,
-    });
-    assert.equal(state.geofilesEnabled, false);
+    await assert.rejects(
+        repo.update({
+            uuid: 'settings',
+            serveJsonAtBaseSubscription: false,
+            geofilesEnabled: false,
+        }),
+        /GEOFILES_PER_TEMPLATE/,
+    );
+    assert.equal(state.geofilesEnabled, true);
     assert.equal(locks, 5);
 });
 
@@ -504,7 +518,9 @@ test('cached global settings are copied before entering request-local subscripti
 });
 
 test('concurrent raw cache hits materialize each requested threshold independently', async () => {
-    const raw = { remnacust: { geofiles: [{ id: 'a'.repeat(34), target: 'DIRECT' }] } };
+    const raw = {
+        remnacust: { geofilesEnabled: true, geofiles: [{ id: 'a'.repeat(34), target: 'DIRECT' }] },
+    };
     const templates = templateService(
         {},
         { templateSnapshot: async () => ({ generation: 'a'.repeat(32), value: raw }) },

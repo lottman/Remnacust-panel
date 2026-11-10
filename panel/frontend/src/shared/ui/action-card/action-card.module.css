@@ -48,12 +48,19 @@
     }
 }
 
-.loading :global(.mantine-ThemeIcon-root) > svg {
-    animation: operation-pulse 900ms ease-in-out infinite;
+.loading :global(.mantine-ThemeIcon-root) > svg :is(path, circle, line, polyline, rect) {
+    animation: operation-trace 900ms ease-in-out infinite;
 }
-@keyframes operation-pulse {
+@keyframes operation-trace {
     50% {
-        transform: scale(1.12);
-        opacity: 0.6;
+        opacity: 0.4;
+    }
+}
+:global(html[data-panel-reduced-motion='true']) .loading svg * {
+    animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+    .loading svg * {
+        animation: none;
     }
 }

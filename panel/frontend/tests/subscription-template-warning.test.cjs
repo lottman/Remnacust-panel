@@ -127,17 +127,18 @@ test('saved server drafts and YAML retain their actual text as the recovery base
     assert.deepEqual(y.recoveries, [[yaml + 'rules: []\n', yaml + 'rules: []\n']]);
 });
 
-test('geofiles tab follows confirmed global settings and preserves the unsaved editor value', () => {
-    const h = harness(template());
+test('geofiles tab follows its confirmed template flag and preserves the unsaved editor value', () => {
+    const saved = template();
+    const h = harness(saved);
     const tabs = () => h.render().filter(element => element.type === 'Tab').map(element => element.props.value);
     assert(!tabs().includes('geofiles'));
     h.edit('{"unsaved":"kept"}');
-    h.settings.data.geofilesEnabled = true;
+    saved.geofilesEnabled = true;
     assert(tabs().includes('geofiles'));
-    h.settings.data.geofilesEnabled = false;
+    saved.geofilesEnabled = false;
     assert(!tabs().includes('geofiles'));
     assert.equal(h.render().find(element => element.type === 'CodeEditor').props.value, '{"unsaved":"kept"}');
-    h.settings.data.geofilesEnabled = true;
+    saved.geofilesEnabled = true;
     h.settings.isSuccess = false;
-    assert(!tabs().includes('geofiles'));
+    assert(tabs().includes('geofiles'));
 });

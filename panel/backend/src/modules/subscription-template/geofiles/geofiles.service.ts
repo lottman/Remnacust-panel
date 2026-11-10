@@ -747,10 +747,11 @@ export class GeofilesService {
         return this.refreshStore.refresh(id, true);
     }
     public async refreshDue() {
-        const settings = await this.prisma.subscriptionSettings.findFirst({
-            select: { geofilesEnabled: true },
+        const template = await this.prisma.subscriptionTemplate.findFirst({
+            where: { geofilesEnabled: true },
+            select: { uuid: true },
         });
-        if (!settings?.geofilesEnabled) return [];
+        if (!template) return [];
         return this.refreshStore.refreshDue();
     }
 

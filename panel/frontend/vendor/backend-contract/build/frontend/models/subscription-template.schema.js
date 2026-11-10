@@ -11,6 +11,7 @@ exports.SubscriptionTemplateSchema = zod_1.default.object({
     viewPosition: zod_1.default.number().int(),
     name: zod_1.default.string(),
     tags: zod_1.default.array(zod_1.default.string()),
+    geofilesEnabled: zod_1.default.boolean().prefault(false),
     templateType: zod_1.default.enum(constants_1.SUBSCRIPTION_TEMPLATE_TYPE),
     templateJson: zod_1.default.nullable(zod_1.default.unknown()),
     encodedTemplateYaml: zod_1.default.nullable(zod_1.default.string()),

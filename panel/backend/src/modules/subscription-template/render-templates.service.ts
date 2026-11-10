@@ -76,7 +76,7 @@ export class RenderTemplatesService {
                     subscription: await this.clashGeneratorService.generateConfig(
                         formattedHosts,
                         srrContext.overrideTemplateName,
-                        srrContext.subscriptionSettings.geofilesEnabled === true,
+                        srrContext.subscriptionSettings.serveJsonAtBaseSubscription === true,
                         srrContext.subscriptionSettings.geofilesInlineRuleLimit,
                     ),
                     contentType: SUBSCRIPTION_CONFIG_TYPES['CLASH'].CONTENT_TYPE,
@@ -89,7 +89,7 @@ export class RenderTemplatesService {
                         false,
                         srrContext.isExtendedClient,
                         srrContext.overrideTemplateName,
-                        srrContext.subscriptionSettings.geofilesEnabled === true,
+                        srrContext.subscriptionSettings.serveJsonAtBaseSubscription === true,
                         srrContext.subscriptionSettings.geofilesInlineRuleLimit,
                     ),
                     contentType: SUBSCRIPTION_CONFIG_TYPES['MIHOMO'].CONTENT_TYPE,
@@ -100,7 +100,7 @@ export class RenderTemplatesService {
                     subscription: await this.singBoxGeneratorService.generateConfig(
                         formattedHosts,
                         srrContext.overrideTemplateName,
-                        srrContext.subscriptionSettings.geofilesEnabled === true,
+                        srrContext.subscriptionSettings.serveJsonAtBaseSubscription === true,
                         srrContext.subscriptionSettings.geofilesInlineRuleLimit,
                     ),
                     contentType: SUBSCRIPTION_CONFIG_TYPES['SINGBOX'].CONTENT_TYPE,
@@ -113,7 +113,7 @@ export class RenderTemplatesService {
                         true,
                         false,
                         srrContext.overrideTemplateName,
-                        srrContext.subscriptionSettings.geofilesEnabled === true,
+                        srrContext.subscriptionSettings.serveJsonAtBaseSubscription === true,
                         srrContext.subscriptionSettings.geofilesInlineRuleLimit,
                     ),
                     contentType: SUBSCRIPTION_CONFIG_TYPES['STASH'].CONTENT_TYPE,
@@ -186,7 +186,8 @@ export class RenderTemplatesService {
                         subscriptionInactive:
                             user.status !== USERS_STATUS.ACTIVE || user.expireAt <= new Date(),
                         geofileDelivery,
-                        geofilesEnabled: srrContext.subscriptionSettings.geofilesEnabled === true,
+                        geofilesEnabled:
+                            srrContext.subscriptionSettings.serveJsonAtBaseSubscription === true,
                         geofilesInlineRuleLimit:
                             srrContext.subscriptionSettings.geofilesInlineRuleLimit,
                     });
@@ -217,7 +218,7 @@ export class RenderTemplatesService {
                 };
                 const output = await automaticXrayDelivery({
                     client:
-                        srrContext.subscriptionSettings.geofilesEnabled === true
+                        srrContext.subscriptionSettings.serveJsonAtBaseSubscription === true
                             ? client
                             : undefined,
                     inlineRuleLimit: srrContext.subscriptionSettings.geofilesInlineRuleLimit,

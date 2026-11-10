@@ -151,26 +151,14 @@ test('additional settings owns the shared controls and saving other options cann
     assert.deepEqual(requests, [{ variables: { uuid: 'settings-id', randomizeHosts: true, isShowCustomRemarks: false } }]);
 });
 
-for (const language of ['ru', 'en', 'fa', 'zh']) test(`${language}: geofiles require JSON and cannot silently disable it`, async () => {
+for (const language of ['ru', 'en', 'fa', 'zh']) test(`${language}: settings expose only JSON and enabled templates prevent disabling it`, async () => {
     const panel = harness(language);
-    let controls = panel.render().filter(element => element.type === 'Switch');
-    assert.equal(controls[1].props.checked, false);
-    assert.equal(controls[1].props.disabled, true);
-    controls[1].props.onChange({ currentTarget: { checked: true } });
+    assert.equal(panel.render().filter(element => element.type === 'Switch').length, 1);
+    await panel.confirm({ ...panel.settings.data, serveJsonAtBaseSubscription: true, geofilesEnabled: true });
+    const control = panel.render().find(element => element.type === 'Switch');
+    assert.equal(control.props.disabled, true);
+    control.props.onChange({ currentTarget: { checked: false } });
     assert.equal(panel.requests.length, 0);
-    await panel.confirm({ ...panel.settings.data, serveJsonAtBaseSubscription: true, geofilesEnabled: false });
-    controls = panel.render().filter(element => element.type === 'Switch');
-    assert.equal(controls[1].props.disabled, false);
-    controls[1].props.onChange({ currentTarget: { checked: true } });
-    assert.deepEqual(panel.requests[0], { variables: { uuid: 'settings-id', geofilesEnabled: true } });
-    assert.equal(panel.settings.data.geofilesEnabled, false);
-    await panel.confirm({ ...panel.settings.data, geofilesEnabled: true });
-    controls = panel.render().filter(element => element.type === 'Switch');
-    assert.equal(controls[0].props.disabled, true);
-    controls[0].props.onChange({ currentTarget: { checked: false } });
-    assert.equal(panel.requests.length, 1);
-    controls[1].props.onChange({ currentTarget: { checked: false } });
-    assert.deepEqual(panel.requests[1], { variables: { uuid: 'settings-id', geofilesEnabled: false } });
     await panel.confirm({ ...panel.settings.data, geofilesEnabled: false });
     assert.equal(panel.render().find(element => element.type === 'Switch').props.disabled, false);
 });
@@ -182,5 +170,5 @@ test('failed or conflicting writes refresh authoritative settings without silent
     assert.deepEqual(panel.events, ['invalidate']);
     const controls = panel.render().filter(element => element.type === 'Switch');
     assert.equal(controls[0].props.checked, true);
-    assert.equal(controls[1].props.checked, true);
+    assert.equal(controls.length, 1);
 });

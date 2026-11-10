@@ -50,6 +50,8 @@ export class SubscriptionSettingsRepository implements ICrud<SubscriptionSetting
         const before = await this.prisma.tx.subscriptionSettings.findUniqueOrThrow({
             where: { uuid },
         });
+        if (data.geofilesEnabled !== undefined && data.geofilesEnabled !== before.geofilesEnabled)
+            throw new Error('GEOFILES_PER_TEMPLATE');
         if (
             (data.geofilesEnabled ?? before.geofilesEnabled) &&
             !(data.serveJsonAtBaseSubscription ?? before.serveJsonAtBaseSubscription)

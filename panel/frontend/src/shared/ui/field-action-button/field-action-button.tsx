@@ -20,7 +20,6 @@ export function FieldActionButton({ children, compact = true, disabled, label, o
                 classNames={{ icon: classes.icon }}
                 data-compact={compact || undefined}
                 data-field-action
-                data-icon-motion="off"
                 disabled={disabled}
                 onClick={onClick}
                 size={compact ? 28 : 36}

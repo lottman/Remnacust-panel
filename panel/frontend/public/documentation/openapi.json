@@ -29234,6 +29234,10 @@
                         "type": "string"
                       }
                     },
+                    "geofilesEnabled": {
+                      "default": false,
+                      "type": "boolean"
+                    },
                     "templateType": {
                       "type": "string",
                       "enum": [
@@ -29357,6 +29361,10 @@
                   "type": "string"
                 }
               },
+              "geofilesEnabled": {
+                "default": false,
+                "type": "boolean"
+              },
               "templateType": {
                 "type": "string",
                 "enum": [
@@ -29409,6 +29417,9 @@
             "format": "uuid",
             "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
           },
+          "geofilesEnabled": {
+            "type": "boolean"
+          },
           "name": {
             "type": "string",
             "minLength": 2,
@@ -29456,6 +29467,10 @@
                 "items": {
                   "type": "string"
                 }
+              },
+              "geofilesEnabled": {
+                "default": false,
+                "type": "boolean"
               },
               "templateType": {
                 "type": "string",
@@ -29556,6 +29571,10 @@
                 "items": {
                   "type": "string"
                 }
+              },
+              "geofilesEnabled": {
+                "default": false,
+                "type": "boolean"
               },
               "templateType": {
                 "type": "string",
@@ -29663,6 +29682,10 @@
                       "items": {
                         "type": "string"
                       }
+                    },
+                    "geofilesEnabled": {
+                      "default": false,
+                      "type": "boolean"
                     },
                     "templateType": {
                       "type": "string",

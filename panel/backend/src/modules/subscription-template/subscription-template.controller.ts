@@ -82,10 +82,14 @@ export class SubscriptionTemplateController {
                     '*',
                     buildResourceScope(resource),
                     buildActionScope(resource, 'read'),
-                    buildEndpointScope(resource, GetSubscriptionTemplateCommand.endpointDetails.SCOPE!),
+                    buildEndpointScope(
+                        resource,
+                        GetSubscriptionTemplateCommand.endpointDetails.SCOPE!,
+                    ),
                 ].includes(scope),
             )
-        ) throw new ForbiddenException();
+        )
+            throw new ForbiddenException();
     }
 
     @Endpoint({
@@ -174,6 +178,7 @@ export class SubscriptionTemplateController {
             body.templateJson ?? undefined,
             body.encodedTemplateYaml ?? undefined,
             body.draftContent,
+            body.geofilesEnabled,
         );
 
         const data = errorHandler(result);

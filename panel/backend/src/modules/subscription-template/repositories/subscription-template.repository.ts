@@ -185,6 +185,7 @@ export class SubscriptionTemplateRepository implements ICrud<SubscriptionTemplat
                 templateType: true,
                 uuid: true,
                 tags: true,
+                geofilesEnabled: true,
                 ...(withContent
                     ? {
                           templateYaml: true,

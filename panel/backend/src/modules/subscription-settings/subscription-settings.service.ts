@@ -98,10 +98,11 @@ export class SubscriptionSettingsService {
 
             return ok(updatedSettings);
         } catch (error) {
-            if (error instanceof Error && error.message === 'GEOFILES_REQUIRE_BASE_JSON')
-                return fail(
-                    ERRORS.CONFIG_VALIDATION_ERROR.withMessage('GEOFILES_REQUIRE_BASE_JSON'),
-                );
+            if (
+                error instanceof Error &&
+                ['GEOFILES_REQUIRE_BASE_JSON', 'GEOFILES_PER_TEMPLATE'].includes(error.message)
+            )
+                return fail(ERRORS.CONFIG_VALIDATION_ERROR.withMessage(error.message));
             this.logger.error(error);
             return fail(ERRORS.UPDATE_SUBSCRIPTION_SETTINGS_ERROR);
         }

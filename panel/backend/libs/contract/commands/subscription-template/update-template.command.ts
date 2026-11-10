@@ -17,6 +17,7 @@ export namespace UpdateSubscriptionTemplateCommand {
 
     export const RequestBodySchema = z.object({
         uuid: z.uuid(),
+        geofilesEnabled: z.boolean().optional(),
         name: z
             .string()
             .min(2)

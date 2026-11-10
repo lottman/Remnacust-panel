@@ -342,7 +342,7 @@ test('request-local renderer delivers Happ and INCY profiles, preserves manual h
         userAgent: ua,
         matchedResponseType: 'XRAY_JSON',
         isExtendedClient: true,
-        subscriptionSettings: { geofilesEnabled: true },
+        subscriptionSettings: { geofilesEnabled: true, serveJsonAtBaseSubscription: true },
     });
     const run = (ctx) =>
         renderer.generateSubscription({ srrContext: ctx, user: { id: 42 }, hosts: [] });
@@ -458,7 +458,7 @@ test('INCY compaction runs after geofile collection, including manual routing an
             userAgent: mode === 'other-client' ? 'Happ/4.0.0' : 'INCY/2.6.2/iOS',
             matchedResponseType: 'XRAY_JSON',
             isExtendedClient: true,
-            subscriptionSettings: { geofilesEnabled: true },
+            subscriptionSettings: { geofilesEnabled: true, serveJsonAtBaseSubscription: true },
         };
         if (mode === 'manual') context.headersToApply = { Routing: 'off' };
         if (mode === 'settings')
@@ -518,7 +518,7 @@ test('oversized unmanaged StringLists are rejected instead of disguised by wire 
                 userAgent: client,
                 matchedResponseType: 'XRAY_JSON',
                 isExtendedClient: true,
-                subscriptionSettings: { geofilesEnabled: true },
+                subscriptionSettings: { geofilesEnabled: true, serveJsonAtBaseSubscription: true },
             };
             if (manual) context.headersToApply = { Routing: 'off' };
             await assert.rejects(
@@ -690,7 +690,7 @@ test('removing the last custom geofile clears only a previously issued provider 
             userAgent: client === 'happ' ? 'Happ/6.3.0' : 'INCY/3.9.7',
             matchedResponseType: 'XRAY_JSON',
             isExtendedClient: true,
-            subscriptionSettings: { geofilesEnabled: true },
+            subscriptionSettings: { geofilesEnabled: true, serveJsonAtBaseSubscription: true },
         });
         const run = (ctx, credential = 'device-key') =>
             renderer.generateSubscription({

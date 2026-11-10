@@ -7,6 +7,7 @@ import {
     useDeleteSubscriptionTemplate,
     useReorderSubscriptionTemplates
 } from '@shared/api/hooks'
+import { useGetSubscriptionSettings } from '@shared/api/hooks/subscription-settings/subscription-settings.query.hooks'
 import { queryClient } from '@shared/api/query-client'
 import { useUiText } from '@shared/i18n/interface-text'
 import { filterByTag, TagFilterBar } from '@shared/ui'
@@ -28,6 +29,8 @@ export function TemplatesGridWidget(props: IProps) {
     const uiText = useUiText()
 
     const { templates, type } = props
+    const settings = useGetSubscriptionSettings()
+    const allowGeofiles = settings.isSuccess && settings.data?.serveJsonAtBaseSubscription === true
 
     const sectionKey = `templates:${type}`
 
@@ -123,6 +126,7 @@ export function TemplatesGridWidget(props: IProps) {
                 <TemplatesCardWidget
                     handleDeleteTemplate={handleDeleteTemplate}
                     isDragOverlay
+                    allowGeofiles={allowGeofiles}
                     template={template}
                     themeLogo={themeLogo}
                 />
@@ -130,6 +134,7 @@ export function TemplatesGridWidget(props: IProps) {
             renderItem={(template) => (
                 <TemplatesCardWidget
                     disableReordering={activeTag !== null}
+                    allowGeofiles={allowGeofiles}
                     handleDeleteTemplate={handleDeleteTemplate}
                     template={template}
                     themeLogo={themeLogo}

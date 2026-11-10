@@ -11,12 +11,15 @@ import { ROUTES } from '@shared/constants'
 import { WithDndSortable } from '@shared/hocs/with-dnd-sortable'
 import { EntityCardShared } from '@shared/ui/entity-card'
 
+import { TemplateGeofilesMenuItem, TemplateGeofilesStatus } from './template-geofiles-control'
+
 interface IProps {
     disableReordering?: boolean
     handleDeleteTemplate: (templateUuid: string) => void
     isDragOverlay?: boolean
     template: GetSubscriptionTemplatesCommand.Response['response']['templates'][number]
     themeLogo: ReactNode
+    allowGeofiles?: boolean
 }
 
 export function TemplatesCardWidget(props: IProps) {
@@ -24,6 +27,7 @@ export function TemplatesCardWidget(props: IProps) {
         disableReordering = false,
         template,
         themeLogo,
+        allowGeofiles = false,
         handleDeleteTemplate,
         isDragOverlay = false
     } = props
@@ -59,7 +63,14 @@ export function TemplatesCardWidget(props: IProps) {
                 </EntityCardShared.Header>
 
                 <EntityCardShared.Actions>
+                    <TemplateGeofilesStatus enabled={template.geofilesEnabled === true} />
                     <EntityCardShared.Menu>
+                        <TemplateGeofilesMenuItem
+                            template={template}
+                            allowEnable={allowGeofiles}
+                            inactive={isDragOverlay}
+                        />
+                        <Menu.Divider />
                         <Menu.Item
                             leftSection={<PiCopy size={18} />}
                             onClick={(event) => {

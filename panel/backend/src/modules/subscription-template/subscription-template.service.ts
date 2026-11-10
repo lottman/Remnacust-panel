@@ -336,6 +336,8 @@ export class SubscriptionTemplateService {
             return ok(response);
         } catch (error) {
             rethrowXrayModeConflict(error);
+            if (error instanceof Error && error.message === 'GEOFILES_REQUIRE_BASE_JSON')
+                return fail(ERRORS.CONFIG_VALIDATION_ERROR.withMessage(error.message));
             this.logger.error(error);
 
             if (

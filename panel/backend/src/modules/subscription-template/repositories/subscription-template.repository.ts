@@ -64,6 +64,13 @@ export class SubscriptionTemplateRepository implements ICrud<SubscriptionTemplat
         const before = await this.prisma.tx.subscriptionTemplate.findUniqueOrThrow({
             where: { uuid },
         });
+        if (data.geofilesEnabled === true) {
+            const settings = await this.prisma.tx.$queryRaw<Array<{ enabled: boolean }>>`
+                SELECT serve_json_at_base_subscription AS enabled
+                FROM subscription_settings ORDER BY uuid FOR UPDATE`;
+            if (!settings.some((item) => item.enabled === true))
+                throw new Error('GEOFILES_REQUIRE_BASE_JSON');
+        }
         await this.saveRevision(before);
         const model = this.converter.fromEntityToPrismaModel({
             uuid,

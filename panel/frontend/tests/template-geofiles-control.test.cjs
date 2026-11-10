@@ -30,7 +30,7 @@ function fixture(language = 'en') {
     const compiled = ts.transpileModule(fs.readFileSync(filename, 'utf8'), { compilerOptions: { jsx: ts.JsxEmit.ReactJSX, module: ts.ModuleKind.CommonJS } }).outputText;
     const ref = { exports: {} };
     new Function('require', 'module', 'exports', compiled)(name => Object.hasOwn(mocks, name) ? mocks[name] : require(name), ref, ref.exports);
-    return { ...ref.exports, requests, changes, update, t, confirm: value => callbacks.onSuccess(value) };
+    return { ...ref.exports, requests, changes, update, t, confirm: value => callbacks.onSuccess(value), reject: () => callbacks.onError() };
 }
 
 for (const language of ['ru', 'en', 'fa', 'zh']) test(`${language}: both states are visible and translated without opening the menu`, () => {
@@ -77,4 +77,33 @@ test('unknown JSON availability, pending updates and drag overlays cannot enable
     assert.equal(item.props.disabled, false);
     item.props.onClick({ stopPropagation() {} });
     assert.deepEqual(f.requests, [{ variables: { uuid: 'a', geofilesEnabled: false } }]);
+});
+
+test('a rejected flag change refreshes authoritative state without writing a false success', async () => {
+    const f = fixture();
+    const template = { uuid: 'changed-concurrently', geofilesEnabled: false };
+    f.TemplateGeofilesMenuItem({ template, allowEnable: true });
+    await f.reject();
+    assert.deepEqual(f.changes.map(value => value[1].queryKey), [['settings'], ['templates'], ['template', template.uuid]]);
+    assert.equal(template.geofilesEnabled, false);
+    assert.equal(f.changes.some(value => ['detail', 'list'].includes(value[0])), false);
+});
+
+for (const language of ['ru', 'en', 'fa', 'zh']) test(`${language}: JSON prerequisite errors use a translated notification`, () => {
+    const f = fixture(language), notices = [];
+    const file = path.join(__dirname, '../src/shared/api/hooks/subscription-template/subscription-template.mutation.hooks.ts');
+    const compiled = ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, esModuleInterop: true } }).outputText;
+    const ref = { exports: {} };
+    const mocks = {
+        '@mantine/notifications': { notifications: { show: value => notices.push(value) } },
+        i18next: { t: f.t },
+        '../../tsq-helpers': { createMutationHook: value => value },
+        '@shared/utils/translate-mutation-message': { translateMutationMessage: value => value },
+        './subscription-template-cache': {},
+        './subscription-template.query.hooks': {},
+    };
+    new Function('require', 'module', 'exports', compiled)(name => Object.hasOwn(mocks, name) ? mocks[name] : require(name), ref, ref.exports);
+    ref.exports.useUpdateSubscriptionTemplate.rMutationParams.onError(new Error('GEOFILES_REQUIRE_BASE_JSON'));
+    assert.equal(notices[0].message, f.t('geofiles.requires-json'));
+    assert(!notices[0].message.includes('GEOFILES_'));
 });

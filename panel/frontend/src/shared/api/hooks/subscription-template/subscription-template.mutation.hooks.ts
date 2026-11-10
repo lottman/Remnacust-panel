@@ -62,7 +62,9 @@ export const useUpdateSubscriptionTemplate = createMutationHook({
                 title: i18next.t('common.message.error'),
                 message:
                     error instanceof Error
-                        ? error.message
+                        ? error.message.includes('GEOFILES_REQUIRE_BASE_JSON')
+                            ? i18next.t('geofiles.requires-json')
+                            : error.message
                         : i18next.t('common.message.unknown-error'),
                 color: 'red'
             })

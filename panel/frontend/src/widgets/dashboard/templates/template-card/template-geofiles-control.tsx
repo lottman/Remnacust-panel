@@ -59,6 +59,21 @@ export function TemplateGeofilesMenuItem({
                 await client.invalidateQueries({
                     queryKey: subscriptionSettingsQueryKeys.getSubscriptionSettings.queryKey
                 })
+            },
+            onError: async () => {
+                await Promise.all([
+                    client.invalidateQueries({
+                        queryKey: subscriptionSettingsQueryKeys.getSubscriptionSettings.queryKey
+                    }),
+                    client.invalidateQueries({
+                        queryKey: subscriptionTemplateQueryKeys.getSubscriptionTemplates.queryKey
+                    }),
+                    client.invalidateQueries({
+                        queryKey: subscriptionTemplateQueryKeys.getSubscriptionTemplate({
+                            uuid: template.uuid
+                        }).queryKey
+                    })
+                ])
             }
         }
     })

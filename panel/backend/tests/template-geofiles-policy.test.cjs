@@ -138,3 +138,108 @@ test('the existing JSON prerequisite still disables automated delivery without e
     assert.deepEqual(result.routing.rules, raw().routing.rules);
     assert(!result.remnacust);
 });
+
+test('template enable validates locked JSON settings before writing revisions and disable still works without them', async () => {
+    const { SubscriptionTemplateRepository } = load(
+        path.join(root, 'repositories/subscription-template.repository.ts'),
+        {
+            '@nestjs-cls/transactional': {
+                TransactionHost: class {},
+                Transactional: () => () => {},
+            },
+            '@common/database/tx-kysely.service': {},
+            '@common/helpers/kysely/values': {},
+            '@common/types/crud-port': {},
+            '../entities/subscription-template.entity': {},
+            '../subscription-template.converter': {},
+            '@libs/contracts/constants': {},
+        },
+    );
+    const calls = [];
+    let settings = [];
+    const tx = {
+        $queryRaw: async (parts) => {
+            const query = parts.join('');
+            calls.push(query);
+            return query.includes('subscription_settings') ? settings : [];
+        },
+        subscriptionTemplate: {
+            findUniqueOrThrow: async () => ({ uuid: 'test', geofilesEnabled: false }),
+            update: async ({ data }) => {
+                calls.push('write');
+                return data;
+            },
+        },
+    };
+    const repo = new SubscriptionTemplateRepository(
+        { tx },
+        { fromEntityToPrismaModel: (value) => value, fromPrismaModelToEntity: (value) => value },
+        {},
+    );
+    repo.saveRevision = async () => calls.push('history');
+    for (const rows of [[], [{ enabled: false }]]) {
+        settings = rows;
+        calls.length = 0;
+        await assert.rejects(
+            repo.update({ uuid: 'test', geofilesEnabled: true }),
+            /GEOFILES_REQUIRE_BASE_JSON/,
+        );
+        assert.equal(calls.length, 2);
+        assert(calls.every((value) => value.includes('FOR UPDATE')));
+    }
+    settings = [{ enabled: true }];
+    calls.length = 0;
+    await repo.update({ uuid: 'test', geofilesEnabled: true });
+    assert.deepEqual(calls.slice(-3), ['history', 'write', 'history']);
+    settings = [];
+    calls.length = 0;
+    await repo.update({ uuid: 'test', geofilesEnabled: false });
+    assert.equal(
+        calls.some((value) => value.includes('subscription_settings')),
+        false,
+    );
+    assert(calls.includes('write'));
+});
+
+test('template JSON conflicts are validation responses and never publish cache invalidation', async () => {
+    const constants = require('../libs/contract/build/backend/constants');
+    const { SubscriptionTemplateService } = source(
+        'modules/subscription-template/subscription-template.service.ts',
+        {
+            '@libs/contracts/constants': constants,
+            '@common/types': {
+                fail: (error) => ({ isOk: false, error }),
+                ok: (response) => ({ isOk: true, response }),
+            },
+        },
+    );
+    const service = new SubscriptionTemplateService(
+        {
+            findByUUID: async () => ({
+                uuid: 'test',
+                name: 'Saved',
+                templateType: 'XRAY_JSON',
+                templateJson: {},
+            }),
+            update: async () => {
+                throw new Error('GEOFILES_REQUIRE_BASE_JSON');
+            },
+        },
+        {
+            invalidateTemplateSnapshots: () =>
+                assert.fail('failed update cannot publish a new cache generation'),
+        },
+        {},
+    );
+    const result = await service.updateTemplate(
+        'test',
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        true,
+    );
+    assert.equal(result.isOk, false);
+    assert.equal(result.error.code, constants.ERRORS.CONFIG_VALIDATION_ERROR.code);
+    assert.equal(result.error.message, 'GEOFILES_REQUIRE_BASE_JSON');
+});

@@ -1,3 +1,4 @@
+import { GEOFILE_INLINE_RULE_LIMIT } from '../../../../libs/contract/constants/subscription-template/geofile-limits';
 import { ClientPoolError } from '../generators/client-pool';
 import { assertSubscriptionSize } from '../generators/subscription-output';
 
@@ -7,7 +8,7 @@ import { assertSubscriptionSize } from '../generators/subscription-output';
 export const INCY_FORMATTED_CONFIG_BUDGET = 900_000;
 export const XRAY_FORMATTED_CONFIG_BUDGET = 900_000;
 export const GEOFILE_INLINE_CONFIG_BUDGET = XRAY_FORMATTED_CONFIG_BUDGET / 10;
-export const GEOFILE_INLINE_RULE_LIMIT = 20_000;
+export { GEOFILE_INLINE_RULE_LIMIT };
 const MIN_COMPACT_LIST_ENTRIES = 64;
 const STRING_LIST_FIELDS = ['ip', 'domain', 'domains', 'source', 'sourceIP', 'localIP'] as const;
 

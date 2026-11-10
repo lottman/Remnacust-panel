@@ -79,4 +79,5 @@ export interface IGenerateConfigParams {
     subscriptionInactive?: boolean;
     geofileDelivery?: XrayGeofileDelivery;
     geofilesEnabled?: boolean;
+    geofilesInlineRuleLimit?: number;
 }

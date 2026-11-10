@@ -14,6 +14,9 @@ var UpdateSubscriptionSettingsCommand;
         uuid: zod_1.z.uuid(),
         serveJsonAtBaseSubscription: zod_1.z.optional(zod_1.z.boolean()),
         geofilesEnabled: zod_1.z.optional(zod_1.z.boolean()),
+        geofilesInlineRuleLimit: models_1.SubscriptionSettingsSchema.shape.geofilesInlineRuleLimit
+            .removeDefault()
+            .optional(),
         isShowCustomRemarks: zod_1.z.optional(zod_1.z.boolean()),
         customRemarks: zod_1.z.optional(models_1.CustomRemarksSchema),
         customResponseHeaders: zod_1.z.optional(zod_1.z.record(zod_1.z

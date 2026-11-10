@@ -77,6 +77,7 @@ export class RenderTemplatesService {
                         formattedHosts,
                         srrContext.overrideTemplateName,
                         srrContext.subscriptionSettings.geofilesEnabled === true,
+                        srrContext.subscriptionSettings.geofilesInlineRuleLimit,
                     ),
                     contentType: SUBSCRIPTION_CONFIG_TYPES['CLASH'].CONTENT_TYPE,
                 };
@@ -89,6 +90,7 @@ export class RenderTemplatesService {
                         srrContext.isExtendedClient,
                         srrContext.overrideTemplateName,
                         srrContext.subscriptionSettings.geofilesEnabled === true,
+                        srrContext.subscriptionSettings.geofilesInlineRuleLimit,
                     ),
                     contentType: SUBSCRIPTION_CONFIG_TYPES['MIHOMO'].CONTENT_TYPE,
                 };
@@ -99,6 +101,7 @@ export class RenderTemplatesService {
                         formattedHosts,
                         srrContext.overrideTemplateName,
                         srrContext.subscriptionSettings.geofilesEnabled === true,
+                        srrContext.subscriptionSettings.geofilesInlineRuleLimit,
                     ),
                     contentType: SUBSCRIPTION_CONFIG_TYPES['SINGBOX'].CONTENT_TYPE,
                 };
@@ -111,6 +114,7 @@ export class RenderTemplatesService {
                         false,
                         srrContext.overrideTemplateName,
                         srrContext.subscriptionSettings.geofilesEnabled === true,
+                        srrContext.subscriptionSettings.geofilesInlineRuleLimit,
                     ),
                     contentType: SUBSCRIPTION_CONFIG_TYPES['STASH'].CONTENT_TYPE,
                 };
@@ -183,6 +187,8 @@ export class RenderTemplatesService {
                             user.status !== USERS_STATUS.ACTIVE || user.expireAt <= new Date(),
                         geofileDelivery,
                         geofilesEnabled: srrContext.subscriptionSettings.geofilesEnabled === true,
+                        geofilesInlineRuleLimit:
+                            srrContext.subscriptionSettings.geofilesInlineRuleLimit,
                     });
                 const generate = async (geofileDelivery?: XrayGeofileDelivery) => {
                     let output = await renderXray(geofileDelivery);
@@ -214,6 +220,7 @@ export class RenderTemplatesService {
                         srrContext.subscriptionSettings.geofilesEnabled === true
                             ? client
                             : undefined,
+                    inlineRuleLimit: srrContext.subscriptionSettings.geofilesInlineRuleLimit,
                     manualRouting: hasRouting,
                     title: params.profileTitle ?? 'Subscription',
                     profileKey: params.profileKey ?? String(user.id),

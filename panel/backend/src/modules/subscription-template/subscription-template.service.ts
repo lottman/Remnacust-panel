@@ -511,6 +511,7 @@ export class SubscriptionTemplateService {
         name: string = DEFAULT_TEMPLATE_NAME,
         happ?: XrayGeofileDelivery,
         geofilesEnabled = false,
+        inlineRuleLimit?: number,
     ): Promise<object> {
         const cacheKey = CACHE_KEYS.SUBSCRIPTION_TEMPLATE(name, type);
         let cached: object | null = null;
@@ -529,6 +530,7 @@ export class SubscriptionTemplateService {
                 type,
                 happ,
                 geofilesEnabled,
+                inlineRuleLimit,
             );
         }
 
@@ -547,7 +549,13 @@ export class SubscriptionTemplateService {
                 pending = tracked;
             } else pending = loadRaw();
         } else pending = loadRaw();
-        return this.prepareClientTemplate(await pending, type, happ, geofilesEnabled);
+        return this.prepareClientTemplate(
+            await pending,
+            type,
+            happ,
+            geofilesEnabled,
+            inlineRuleLimit,
+        );
     }
 
     private async loadRawTemplate(
@@ -613,6 +621,7 @@ export class SubscriptionTemplateService {
         type: string,
         happ?: XrayGeofileDelivery,
         geofilesEnabled = false,
+        inlineRuleLimit?: number,
     ): Promise<object> {
         if (!config?.remnacust) return config;
         if (!geofilesEnabled) {
@@ -620,7 +629,7 @@ export class SubscriptionTemplateService {
             delete clean.remnacust;
             return clean;
         }
-        return this.geofiles.prepare(config, type, happ);
+        return this.geofiles.prepare(config, type, happ, undefined, inlineRuleLimit);
     }
 
     private async removeCachedTemplate(

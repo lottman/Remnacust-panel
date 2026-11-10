@@ -357,6 +357,7 @@ export type SubscriptionSettings = {
     uuid: Generated<string>;
     serveJsonAtBaseSubscription: Generated<boolean>;
     geofilesEnabled: Generated<boolean>;
+    geofilesInlineRuleLimit: Generated<number>;
     isShowCustomRemarks: Generated<boolean>;
     customRemarks: object;
     customResponseHeaders: object | null;

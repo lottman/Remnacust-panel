@@ -1,5 +1,10 @@
 import { z } from 'zod';
 
+import {
+    GEOFILE_INLINE_RULE_LIMIT,
+    GEOFILE_INLINE_RULE_LIMIT_MIN,
+    GEOFILE_INLINE_RULE_LIMIT_MAX,
+} from '../constants/subscription-template/geofile-limits';
 import { ResponseRulesConfigSchema } from './response-rules';
 import { CustomRemarksSchema } from './subscription-settings/custom-remarks.schema';
 import { HwidSettingsSchema } from './subscription-settings/hwid-settings.schema';
@@ -8,6 +13,11 @@ export const SubscriptionSettingsSchema = z.object({
     uuid: z.uuid(),
     serveJsonAtBaseSubscription: z.boolean(),
     geofilesEnabled: z.boolean(),
+    geofilesInlineRuleLimit: z
+        .int()
+        .min(GEOFILE_INLINE_RULE_LIMIT_MIN)
+        .max(GEOFILE_INLINE_RULE_LIMIT_MAX)
+        .default(GEOFILE_INLINE_RULE_LIMIT),
 
     isShowCustomRemarks: z.boolean(),
     customRemarks: CustomRemarksSchema,

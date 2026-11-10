@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SubscriptionSettingsSchema = void 0;
 const zod_1 = require("zod");
+const geofile_limits_1 = require("../constants/subscription-template/geofile-limits");
 const response_rules_1 = require("./response-rules");
 const custom_remarks_schema_1 = require("./subscription-settings/custom-remarks.schema");
 const hwid_settings_schema_1 = require("./subscription-settings/hwid-settings.schema");
@@ -9,6 +10,11 @@ exports.SubscriptionSettingsSchema = zod_1.z.object({
     uuid: zod_1.z.uuid(),
     serveJsonAtBaseSubscription: zod_1.z.boolean(),
     geofilesEnabled: zod_1.z.boolean(),
+    geofilesInlineRuleLimit: zod_1.z
+        .int()
+        .min(geofile_limits_1.GEOFILE_INLINE_RULE_LIMIT_MIN)
+        .max(geofile_limits_1.GEOFILE_INLINE_RULE_LIMIT_MAX)
+        .default(geofile_limits_1.GEOFILE_INLINE_RULE_LIMIT),
     isShowCustomRemarks: zod_1.z.boolean(),
     customRemarks: custom_remarks_schema_1.CustomRemarksSchema,
     customResponseHeaders: zod_1.z.nullable(zod_1.z.record(zod_1.z.string(), zod_1.z.string())),

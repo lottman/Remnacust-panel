@@ -3,6 +3,7 @@ import type { GeofileReference } from './materialize-geofiles';
 import { createHash } from 'node:crypto';
 
 import { ClientPoolError } from '../generators/client-pool';
+import { geofileInlineRuleLimit } from './geofile-inline-limit';
 
 export type DatKind = 'geoip' | 'geosite';
 export type DatBundleUrl = (
@@ -51,7 +52,11 @@ export class XrayGeofileDelivery {
         public readonly client: 'happ' | 'incy' = 'happ',
         public readonly mode: 'inline' | 'remote' = 'remote',
         private readonly title = 'Subscription',
-    ) {}
+        inlineRuleLimit?: number,
+    ) {
+        this.inlineRuleLimit = geofileInlineRuleLimit(inlineRuleLimit);
+    }
+    public readonly inlineRuleLimit: number;
 
     private profileName(profileKey: string): string {
         let name = this.title.slice(0, 8192);

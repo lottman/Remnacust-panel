@@ -45,6 +45,48 @@ test(
                 geofiles_enabled: false,
                 serve_json_at_base_subscription: false,
             });
+            const threshold = async () =>
+                (
+                    await db.query(
+                        'SELECT geofiles_inline_rule_limit AS value FROM subscription_settings WHERE uuid=$1',
+                        [id],
+                    )
+                ).rows[0].value;
+            assert.equal(await threshold(), 20000);
+            const beforeLimit = await epoch();
+            for (const value of [0, -1, 50001]) {
+                await assert.rejects(
+                    db.query(
+                        'UPDATE subscription_settings SET geofiles_inline_rule_limit=$2 WHERE uuid=$1',
+                        [id, value],
+                    ),
+                    (error) =>
+                        error.code === '23514' &&
+                        error.constraint === 'geofiles_inline_rule_limit_range',
+                );
+                assert.equal(await epoch(), beforeLimit);
+            }
+            for (const value of [1, 50000, 20000]) {
+                const before = await epoch();
+                await writer.query('BEGIN');
+                await writer.query(
+                    'UPDATE subscription_settings SET geofiles_inline_rule_limit=$2 WHERE uuid=$1',
+                    [id, value],
+                );
+                assert.equal(await threshold(), 20000);
+                await writer.query('ROLLBACK');
+                assert.equal(await epoch(), before);
+                await db.query(
+                    'UPDATE subscription_settings SET geofiles_inline_rule_limit=$2 WHERE uuid=$1',
+                    [id, value],
+                );
+                assert.equal(await threshold(), value);
+                assert.notEqual(await epoch(), before);
+                await db.query(
+                    'UPDATE subscription_settings SET geofiles_inline_rule_limit=20000 WHERE uuid=$1',
+                    [id],
+                );
+            }
             const initial = await epoch();
             await assert.rejects(
                 db.query('UPDATE subscription_settings SET geofiles_enabled=true WHERE uuid=$1', [

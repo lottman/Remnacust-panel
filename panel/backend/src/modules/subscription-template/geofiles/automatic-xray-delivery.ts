@@ -1,16 +1,17 @@
 import { ClientPoolError } from '../generators/client-pool';
+import { geofileInlineRuleLimit } from './geofile-inline-limit';
 import {
     compactIncySubscription,
     xrayProfilesFit,
     INCY_FORMATTED_CONFIG_BUDGET,
     XRAY_FORMATTED_CONFIG_BUDGET,
     GEOFILE_INLINE_CONFIG_BUDGET,
-    GEOFILE_INLINE_RULE_LIMIT,
 } from './incy-config';
 import { XrayGeofileDelivery, XrayGeofileFallback } from './xray-geofile-delivery';
 
 export async function automaticXrayDelivery(options: {
     client?: 'happ' | 'incy';
+    inlineRuleLimit?: number;
     manualRouting: boolean;
     title: string;
     profileKey: string;
@@ -23,9 +24,12 @@ export async function automaticXrayDelivery(options: {
     sourceRevision?: string;
 }> {
     const { client, manualRouting, title, profileKey, generate } = options;
+    const limit = geofileInlineRuleLimit(options.inlineRuleLimit);
     const budget = client === 'incy' ? INCY_FORMATTED_CONFIG_BUDGET : XRAY_FORMATTED_CONFIG_BUDGET;
     const inline =
-        client && !manualRouting ? new XrayGeofileDelivery(client, 'inline', title) : undefined;
+        client && !manualRouting
+            ? new XrayGeofileDelivery(client, 'inline', title, limit)
+            : undefined;
     const compact = (body: string) =>
         client === 'incy' ? compactIncySubscription(body, false) : body;
     let subscription: string;
@@ -37,7 +41,7 @@ export async function automaticXrayDelivery(options: {
             !xrayProfilesFit(
                 subscription,
                 inline?.hasManagedRules ? GEOFILE_INLINE_CONFIG_BUDGET : budget,
-                inline?.hasManagedRules ? GEOFILE_INLINE_RULE_LIMIT : Number.POSITIVE_INFINITY,
+                inline?.hasManagedRules ? limit : Number.POSITIVE_INFINITY,
             )
         )
             throw new ClientPoolError('geofile-client-config-size-limit');
@@ -54,7 +58,7 @@ export async function automaticXrayDelivery(options: {
         if (!size || !client || manualRouting) throw error;
         // One oversized profile triggers a second render with compact DAT
         // references. Do not emit headers from the abandoned inline render.
-        const remote = new XrayGeofileDelivery(client, 'remote', title);
+        const remote = new XrayGeofileDelivery(client, 'remote', title, limit);
         try {
             const body = remote.resolveLegacyReferences(await generate(remote));
             const header = body ? await remote.header(body, profileKey) : undefined;

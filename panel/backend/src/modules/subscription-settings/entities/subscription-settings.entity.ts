@@ -8,6 +8,7 @@ export class SubscriptionSettingsEntity implements SubscriptionSettings {
     uuid: string;
     serveJsonAtBaseSubscription: boolean;
     geofilesEnabled: boolean;
+    geofilesInlineRuleLimit: number;
     isShowCustomRemarks: boolean;
     customRemarks: TCustomRemarks;
     customResponseHeaders: Record<string, string> | null;

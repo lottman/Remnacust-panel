@@ -34,6 +34,7 @@ import styles from './autoselect-panel.module.css'
 import { editClientTemplate, readClientTemplate, type ClientFormat } from './client-template-model'
 import { GeofileAddressRules } from './geofile-address-rules-panel'
 import { GeofileEditorModal } from './geofile-editor-modal'
+import { GeofileInlineSettings } from './geofile-inline-settings'
 import {
     attachLibraryGeofile,
     compatibleGeofile,
@@ -316,6 +317,9 @@ export function GeofilesPanel({
                 <Text size="sm" c="dimmed" mt={4}>
                     {t('geofiles.help')}
                 </Text>
+            </Card>
+            <Card p="md">
+                <GeofileInlineSettings />
             </Card>
             {(error || filesQuery.isError) && (
                 <Alert color="red" withCloseButton onClose={() => setError(null)}>

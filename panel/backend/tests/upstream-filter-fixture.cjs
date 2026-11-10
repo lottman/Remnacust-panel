@@ -41,6 +41,10 @@ function source(relative, overrides = {}) {
             path.join(path.dirname(filename), 'rendered-xray-routes.ts'),
             { './client-pool': require('./client-pool-fixture.cjs').pool },
         );
+    if (Object.hasOwn(mocks, './geofile-inline-limit'))
+        mocks['./geofile-inline-limit'] = load(
+            path.join(path.dirname(filename), 'geofile-inline-limit.ts'),
+        );
     return load(filename, { ...mocks, ...overrides });
 }
 

@@ -8,6 +8,7 @@ export class SubscriptionSettingsResponseModel {
     public uuid: string;
     public serveJsonAtBaseSubscription: boolean;
     public geofilesEnabled: boolean;
+    public geofilesInlineRuleLimit: number;
     public isShowCustomRemarks: boolean;
     public customRemarks: TCustomRemarks;
 
@@ -25,6 +26,7 @@ export class SubscriptionSettingsResponseModel {
         this.uuid = entity.uuid;
         this.serveJsonAtBaseSubscription = entity.serveJsonAtBaseSubscription;
         this.geofilesEnabled = entity.geofilesEnabled;
+        this.geofilesInlineRuleLimit = entity.geofilesInlineRuleLimit;
         this.isShowCustomRemarks = entity.isShowCustomRemarks;
         this.customRemarks = entity.customRemarks;
         this.customResponseHeaders = entity.customResponseHeaders;

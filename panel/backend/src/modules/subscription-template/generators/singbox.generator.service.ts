@@ -123,6 +123,7 @@ export class SingBoxGeneratorService {
         hosts: ResolvedProxyConfig[],
         overrideTemplateName?: string,
         geofilesEnabled = false,
+        inlineRuleLimit?: number,
     ): Promise<string> {
         try {
             const template = (await this.subscriptionTemplateService.getCachedTemplateByType(
@@ -130,6 +131,7 @@ export class SingBoxGeneratorService {
                 overrideTemplateName,
                 undefined,
                 geofilesEnabled,
+                inlineRuleLimit,
             )) as Record<string, unknown>;
 
             const userOutbounds: OutboundConfig[] = [];

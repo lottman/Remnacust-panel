@@ -8,7 +8,7 @@ import {
     geofileInterval,
     nativePayload,
 } from './geofile-delivery';
-import { GEOFILE_INLINE_RULE_LIMIT } from './incy-config';
+import { geofileInlineRuleLimit } from './geofile-inline-limit';
 
 export interface GeofileReference {
     id: string;
@@ -64,7 +64,9 @@ export async function materializeGeofiles(
     },
     happ?: XrayGeofileDelivery,
     mode: 'auto' | 'inline' | 'remote' = type === 'XRAY_JSON' ? 'inline' : 'auto',
+    requestedInlineRuleLimit?: number,
 ): Promise<ObjectValue> {
+    const limit = geofileInlineRuleLimit(happ?.inlineRuleLimit ?? requestedInlineRuleLimit);
     if (mode === 'auto') {
         try {
             const inline = await materializeGeofiles(
@@ -75,6 +77,7 @@ export async function materializeGeofiles(
                 resources,
                 happ,
                 'inline',
+                limit,
             );
             if (Buffer.byteLength(JSON.stringify(inline, null, 4)) > 900_000)
                 throw new Error('geofile-config-size');
@@ -89,7 +92,16 @@ export async function materializeGeofiles(
                 ].includes(error.message)
             )
                 throw error;
-            return materializeGeofiles(config, type, fileById, dat, resources, happ, 'remote');
+            return materializeGeofiles(
+                config,
+                type,
+                fileById,
+                dat,
+                resources,
+                happ,
+                'remote',
+                limit,
+            );
         }
     }
     const references = geofileReferences(config);
@@ -102,8 +114,7 @@ export async function materializeGeofiles(
         inlineBytes = 0;
     const sing = type === 'SINGBOX',
         xray = type === 'XRAY_JSON';
-    const inlineRuleLimit =
-        xray && !happ ? XRAY_COMPAT_INLINE_RULE_LIMIT : GEOFILE_INLINE_RULE_LIMIT;
+    const inlineRuleLimit = xray && !happ ? XRAY_COMPAT_INLINE_RULE_LIMIT : limit;
     for (const reference of references) {
         const file = await fileById(reference.id);
         if (

@@ -1432,6 +1432,7 @@ export class SubscriptionService {
                             ...patchedSubscriptionSettings,
                             ...externalSquadSubscriptionSettings.subscriptionSettings,
                             geofilesEnabled: subscriptionSettings.geofilesEnabled,
+                            geofilesInlineRuleLimit: subscriptionSettings.geofilesInlineRuleLimit,
                         };
                     }
 

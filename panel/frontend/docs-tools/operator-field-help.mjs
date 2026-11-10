@@ -222,6 +222,12 @@ export const operatorFieldHelp = {
         'خروجی JSON را برای آدرس پایه اشتراک انتخاب می‌کند؛ در برنامه واردکننده آزمایش کنید.',
         '为基础订阅地址选择 JSON 输出，请在实际导入该地址的应用中验证。'
     ],
+    geofilesInlineRuleLimit: [
+        'Общий порог встроенных адресов/условий для геофайлов: 1–50 000, по умолчанию 20 000. Не число строк JSON. Размер профиля ограничивается отдельно; применяется после обновления подписки без пересохранения шаблонов.',
+        'Shared inline geofile address/condition threshold: 1–50,000, default 20,000. Not JSON line count. Profile size has an independent limit; applies on subscription refresh without re-saving templates.',
+        'آستانه مشترک آدرس‌ها و شرط‌های فایل جغرافیایی: 1 تا 50,000، پیش‌فرض 20,000. تعداد خطوط JSON نیست. حجم پروفایل سقف مستقل دارد؛ با به‌روزرسانی اشتراک و بدون ذخیره دوباره قالب اعمال می‌شود.',
+        '全局地理文件内联地址或条件阈值：1–50,000，默认 20,000，并非 JSON 行数。配置大小有独立限制；更新订阅后应用，无需重新保存模板。'
+    ],
     isShowCustomRemarks: [
         'Показывает настроенные сообщения о состоянии подписки, например об истёкшем сроке или исчерпанной квоте.',
         'Shows configured subscription status messages, such as expiry or exhausted quota notices.',

@@ -142,6 +142,7 @@ export class MihomoGeneratorService {
         isExtendedClient = false,
         overrideTemplateName?: string,
         geofilesEnabled = false,
+        inlineRuleLimit?: number,
     ): Promise<string> {
         try {
             const templateType = isStash ? 'STASH' : 'MIHOMO';
@@ -151,6 +152,7 @@ export class MihomoGeneratorService {
                 overrideTemplateName,
                 undefined,
                 geofilesEnabled,
+                inlineRuleLimit,
             );
 
             const yamlConfig = yamlConfigDb as Record<string, unknown>;

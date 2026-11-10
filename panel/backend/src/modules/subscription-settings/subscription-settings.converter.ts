@@ -15,6 +15,7 @@ const entityToModel = (entity: SubscriptionSettingsEntity): SubscriptionSettings
         uuid: entity.uuid,
         serveJsonAtBaseSubscription: entity.serveJsonAtBaseSubscription,
         geofilesEnabled: entity.geofilesEnabled,
+        geofilesInlineRuleLimit: entity.geofilesInlineRuleLimit,
         isShowCustomRemarks: entity.isShowCustomRemarks,
         customRemarks: entity.customRemarks,
         customResponseHeaders: entity.customResponseHeaders,

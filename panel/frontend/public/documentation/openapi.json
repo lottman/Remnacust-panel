@@ -20136,9 +20136,9 @@
     }
   },
   "info": {
-    "title": "Remnacust API v1.1.7.108",
+    "title": "Remnacust API v1.1.7.109",
     "description": "\nRemnacust manages Xray users, nodes, configuration profiles and subscriptions.\n\n## Resources\n* https://t.me/lottman\n* https://github.com/lottman/Remnacust-panel\n",
-    "version": "1.1.7.108",
+    "version": "1.1.7.109",
     "contact": {},
     "license": {
       "name": "AGPL-3.0",
@@ -46129,6 +46129,12 @@
               "geofilesEnabled": {
                 "type": "boolean"
               },
+              "geofilesInlineRuleLimit": {
+                "default": 20000,
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 50000
+              },
               "isShowCustomRemarks": {
                 "type": "boolean"
               },
@@ -46724,6 +46730,11 @@
           "geofilesEnabled": {
             "type": "boolean"
           },
+          "geofilesInlineRuleLimit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 50000
+          },
           "isShowCustomRemarks": {
             "type": "boolean"
           },
@@ -47290,6 +47301,12 @@
               },
               "geofilesEnabled": {
                 "type": "boolean"
+              },
+              "geofilesInlineRuleLimit": {
+                "default": 20000,
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 50000
               },
               "isShowCustomRemarks": {
                 "type": "boolean"

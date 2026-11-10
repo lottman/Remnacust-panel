@@ -93,7 +93,8 @@ test('real format generators receive the global switch through the renderer', as
             );
             let prepares = 0;
             templates.geofiles = {
-                prepare: async (config) => {
+                prepare: async (config, _type, _delivery, _mode, limit) => {
+                    assert.equal(limit, 347);
                     prepares++;
                     const result = structuredClone(config);
                     delete result.remnacust;
@@ -113,7 +114,7 @@ test('real format generators receive the global switch through the renderer', as
             const context = {
                 matchedResponseType: type,
                 userAgent: 'ordinary-client',
-                subscriptionSettings: { geofilesEnabled: enabled },
+                subscriptionSettings: { geofilesEnabled: enabled, geofilesInlineRuleLimit: 347 },
             };
             const result = await renderer.generateSubscription({
                 srrContext: context,
@@ -448,18 +449,31 @@ test('external squad overrides cannot turn on the global geofile system', async 
     service.logger = { error: () => assert.fail('unexpected override failure') };
     service.queryBus = {
         execute: async () => ({
-            subscriptionSettings: { geofilesEnabled: true, serveJsonAtBaseSubscription: true },
+            subscriptionSettings: {
+                geofilesEnabled: true,
+                geofilesInlineRuleLimit: 1,
+                serveJsonAtBaseSubscription: true,
+            },
             responseHeadersRemove: [],
             responseHeadersAdd: {},
             hwidSettings: {},
             customRemarks: {},
         }),
     };
-    const settings = { geofilesEnabled: false, serveJsonAtBaseSubscription: false };
+    const settings = {
+        geofilesEnabled: false,
+        geofilesInlineRuleLimit: 20000,
+        serveJsonAtBaseSubscription: false,
+    };
     const result = await service.applyMaybeExternalSquadOverrides(settings, 'external-squad');
     assert.equal(result.subscriptionSettings.geofilesEnabled, false);
+    assert.equal(result.subscriptionSettings.geofilesInlineRuleLimit, 20000);
     assert.equal(result.subscriptionSettings.serveJsonAtBaseSubscription, true);
-    assert.deepEqual(settings, { geofilesEnabled: false, serveJsonAtBaseSubscription: false });
+    assert.deepEqual(settings, {
+        geofilesEnabled: false,
+        geofilesInlineRuleLimit: 20000,
+        serveJsonAtBaseSubscription: false,
+    });
 });
 
 test('cached global settings are copied before entering request-local subscription processing', async () => {
@@ -487,4 +501,22 @@ test('cached global settings are copied before entering request-local subscripti
     assert.equal(two.geofilesEnabled, false);
     assert.equal(two.customResponseHeaders.routing, 'manual');
     assert.notEqual(two, cached);
+});
+
+test('concurrent raw cache hits materialize each requested threshold independently', async () => {
+    const raw = { remnacust: { geofiles: [{ id: 'a'.repeat(34), target: 'DIRECT' }] } };
+    const templates = templateService(
+        {},
+        { templateSnapshot: async () => ({ generation: 'a'.repeat(32), value: raw }) },
+    );
+    templates.geofiles = {
+        prepare: async (_config, _type, _delivery, _mode, limit) => ({ limit }),
+    };
+    const result = await Promise.all(
+        Array.from({ length: 100 }, (_, n) =>
+            templates.getCachedTemplateByType('XRAY_JSON', 'Saved', undefined, true, n + 1),
+        ),
+    );
+    result.forEach((value, n) => assert.deepEqual(value, { limit: n + 1 }));
+    assert.equal(raw.remnacust.geofiles.length, 1);
 });

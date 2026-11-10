@@ -57,6 +57,8 @@ import { DatKind, XrayGeofileDelivery, XrayGeofileFallback } from './xray-geofil
 const MAX_FILES = 32;
 const MAX_BUNDLED_CACHE_BYTES = 32 * 1024 * 1024;
 const MAX_BUNDLED_CACHE_ENTRIES = 16;
+const MAX_COMPILED_CACHE_BYTES = 16 * 1024 * 1024;
+const MAX_COMPILED_CACHE_RECORDS = 250_000;
 const ID = /^[0-9a-f]{34}$/;
 export interface StoredGeofile {
     id: string;
@@ -84,7 +86,10 @@ export class GeofilesService {
     );
     private active = 0;
     private compiling = 0;
-    private readonly compiled = new Map<string, DatRules>();
+    private readonly compiled = new Map<
+        string,
+        { rules: DatRules; bytes: number; records: number }
+    >();
     private readonly compilingByKey = new Map<string, Promise<DatRules>>();
     private readonly compileQueue = new BoundedWorkQueue(2, 32);
     private readonly bundled = new Map<string, Buffer>();
@@ -645,7 +650,11 @@ export class GeofilesService {
                 JSON.stringify(categories) +
                 (validateOnly ? ':validate' : ''),
             cached = this.compiled.get(key);
-        if (cached) return cached;
+        if (cached) {
+            this.compiled.delete(key);
+            this.compiled.set(key, cached);
+            return cached.rules;
+        }
         const pending = this.compilingByKey.get(key);
         if (pending) return pending;
         const submitted = this.compileQueue.submit(async () => {
@@ -657,9 +666,31 @@ export class GeofilesService {
                     categories,
                     validateOnly,
                 );
-                if (this.compiled.size >= 32)
-                    this.compiled.delete(this.compiled.keys().next().value!);
-                this.compiled.set(key, rules);
+                const bytes =
+                    rules.ips.reduce((sum, value) => sum + Buffer.byteLength(value), 0) +
+                    rules.domains.reduce((sum, item) => sum + Buffer.byteLength(item.value), 0);
+                const records = rules.ips.length + rules.domains.length;
+                if (bytes <= MAX_COMPILED_CACHE_BYTES && records <= MAX_COMPILED_CACHE_RECORDS) {
+                    let totalBytes = bytes,
+                        totalRecords = records;
+                    for (const entry of this.compiled.values()) {
+                        totalBytes += entry.bytes;
+                        totalRecords += entry.records;
+                    }
+                    while (
+                        this.compiled.size &&
+                        (this.compiled.size >= 32 ||
+                            totalBytes > MAX_COMPILED_CACHE_BYTES ||
+                            totalRecords > MAX_COMPILED_CACHE_RECORDS)
+                    ) {
+                        const oldest = this.compiled.keys().next().value!;
+                        const entry = this.compiled.get(oldest)!;
+                        totalBytes -= entry.bytes;
+                        totalRecords -= entry.records;
+                        this.compiled.delete(oldest);
+                    }
+                    this.compiled.set(key, { rules, bytes, records });
+                }
                 return rules;
             } finally {
                 this.compiling--;
@@ -1005,6 +1036,7 @@ export class GeofilesService {
         type: string,
         happ?: XrayGeofileDelivery,
         mode?: 'inline' | 'remote',
+        inlineRuleLimit?: number,
     ): Promise<Record<string, unknown>> {
         try {
             return await materializeGeofiles(
@@ -1022,6 +1054,7 @@ export class GeofilesService {
                 },
                 happ,
                 mode,
+                inlineRuleLimit,
             );
         } catch (error) {
             if (error instanceof XrayGeofileFallback) throw error;

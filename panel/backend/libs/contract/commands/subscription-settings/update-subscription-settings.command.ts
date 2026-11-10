@@ -24,6 +24,9 @@ export namespace UpdateSubscriptionSettingsCommand {
         uuid: z.uuid(),
         serveJsonAtBaseSubscription: z.optional(z.boolean()),
         geofilesEnabled: z.optional(z.boolean()),
+        geofilesInlineRuleLimit: SubscriptionSettingsSchema.shape.geofilesInlineRuleLimit
+            .removeDefault()
+            .optional(),
         isShowCustomRemarks: z.optional(z.boolean()),
         customRemarks: z.optional(CustomRemarksSchema),
         customResponseHeaders: z.optional(

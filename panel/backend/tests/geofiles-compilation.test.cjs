@@ -146,7 +146,7 @@ test('concurrent bundle and checksum requests share cold work and preserve every
             __dirname,
             '../src/modules/subscription-template/geofiles/xray-geofile-delivery.ts',
         ),
-        { '../generators/client-pool': pool },
+        { '../generators/client-pool': pool, './client-pool': pool },
     );
     const { compileDat } = load(
         path.join(__dirname, '../src/modules/subscription-template/geofiles/compile-dat.ts'),

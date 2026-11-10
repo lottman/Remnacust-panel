@@ -7,7 +7,6 @@ import { assertSubscriptionSize } from '../generators/subscription-output';
 // only the minified HTTP response.
 export const INCY_FORMATTED_CONFIG_BUDGET = 900_000;
 export const XRAY_FORMATTED_CONFIG_BUDGET = 900_000;
-export const GEOFILE_INLINE_CONFIG_BUDGET = XRAY_FORMATTED_CONFIG_BUDGET / 10;
 export { GEOFILE_INLINE_RULE_LIMIT };
 const MIN_COMPACT_LIST_ENTRIES = 64;
 const STRING_LIST_FIELDS = ['ip', 'domain', 'domains', 'source', 'sourceIP', 'localIP'] as const;

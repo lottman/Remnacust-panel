@@ -3975,7 +3975,7 @@
     "geofiles": {
     "inline-limit-title": "Shared inline rule threshold",
     "inline-limit-label": "Maximum addresses per profile before DAT delivery",
-    "inline-limit-help": "For all templates: an integer from {{min}} to {{max}}. Default: 20,000. Counts addresses and conditions, not JSON lines.",
+    "inline-limit-help": "For all templates: an integer from {{min}} to {{max}}. Default: 20,000. Counts addresses and conditions, not JSON lines. The setting applies to all templates, but conditions are counted independently in each final host profile, never across the subscription.",
     "inline-limit-invalid": "Enter an integer from {{min}} to {{max}}.",
     "inline-limit-safety": "Large profiles may switch to DAT earlier due to size or compilation complexity limits. The threshold does not remove per-file safety bounds. Applies to supported clients on subscription refresh; other clients retain a compatible format. Manual rules are not converted.",
         "via-host": "Via host: {{name}}",

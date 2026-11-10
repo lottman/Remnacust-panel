@@ -10,12 +10,10 @@ const { automaticXrayDelivery } = load(path.join(root, 'automatic-xray-delivery.
 const { materializeGeofiles } = load(path.join(root, 'materialize-geofiles.ts'), modules);
 const { compileDat } = load(path.join(root, 'compile-dat.ts'), modules);
 const { XrayGeofileDelivery } = load(path.join(root, 'xray-geofile-delivery.ts'), modules);
-const {
-    xrayProfilesFit,
-    xrayRuleEntries,
-    GEOFILE_INLINE_CONFIG_BUDGET,
-    GEOFILE_INLINE_RULE_LIMIT,
-} = load(path.join(root, 'incy-config.ts'), modules);
+const { xrayProfilesFit, xrayRuleEntries, GEOFILE_INLINE_RULE_LIMIT } = load(
+    path.join(root, 'incy-config.ts'),
+    modules,
+);
 const source = (n) => String(n).padStart(2, '0') + 'a'.repeat(32);
 const decode = (h) => JSON.parse(Buffer.from(h.split('/onadd/')[1], 'base64'));
 
@@ -115,7 +113,6 @@ test('20,000 rule conditions are counted per profile, including comma lists and 
         routing: { rules: [{ domain: Array(10000).fill('x') }, { ip: Array(10000).fill('1') }] },
     };
     assert.equal(GEOFILE_INLINE_RULE_LIMIT, 20000);
-    assert.equal(GEOFILE_INLINE_CONFIG_BUDGET, 90000);
     assert.equal(xrayRuleEntries(config), 20000);
     assert(xrayProfilesFit(JSON.stringify([config, config]), Infinity, 20000));
     config.routing.rules.push({ domain: 'one,two' });
@@ -173,7 +170,7 @@ test('the independent transport cap is not misclassified as a per-host geofile l
     assert.deepEqual(f.calls, ['inline']);
 });
 test('two individually small files can exceed the complete profile budget and trigger one DAT bundle', async () => {
-    const records = Array.from({ length: 1000 }, (_, i) =>
+    const records = Array.from({ length: 10000 }, (_, i) =>
         fixture.bytes(2, fixture.domain(2, `host-${i}.example.test`)),
     );
     const rules = fixture.bytes(1, Buffer.concat([fixture.bytes(1, 'EXAMPLE'), ...records]));
@@ -312,7 +309,7 @@ test('profile identity is stable across automatic delivery transitions, sanitize
 });
 
 test('automatic DAT fallback forwards active file hashes while keeping stable download URLs', async () => {
-    const records = Array.from({ length: 1000 }, (_, i) =>
+    const records = Array.from({ length: 10000 }, (_, i) =>
         fixture.bytes(2, fixture.domain(2, `host-${i}.example.test`)),
     );
     const rules = fixture.bytes(1, Buffer.concat([fixture.bytes(1, 'EXAMPLE'), ...records]));
@@ -382,7 +379,7 @@ test('configured count never removes byte caps or forces unsupported Xray client
             ),
         ]),
     );
-    const f = setup({ rules, refs: 2 });
+    const f = setup({ rules, refs: 2, extra: 'x'.repeat(850000) });
     assert.equal((await render(f, { inlineRuleLimit: 250000 })).inline, false);
     const generic = await render(setup({ rules }), { client: undefined, inlineRuleLimit: 1 });
     assert.equal(generic.header, undefined);

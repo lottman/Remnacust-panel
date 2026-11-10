@@ -5,7 +5,6 @@ import {
     xrayProfilesFit,
     INCY_FORMATTED_CONFIG_BUDGET,
     XRAY_FORMATTED_CONFIG_BUDGET,
-    GEOFILE_INLINE_CONFIG_BUDGET,
 } from './incy-config';
 import { XrayGeofileDelivery, XrayGeofileFallback } from './xray-geofile-delivery';
 
@@ -28,7 +27,7 @@ export async function automaticXrayDelivery(options: {
     const budget = client === 'incy' ? INCY_FORMATTED_CONFIG_BUDGET : XRAY_FORMATTED_CONFIG_BUDGET;
     const inline =
         client && !manualRouting
-            ? new XrayGeofileDelivery(client, 'inline', title, limit)
+            ? new XrayGeofileDelivery(client, 'inline', title, limit, true)
             : undefined;
     const compact = (body: string) =>
         client === 'incy' ? compactIncySubscription(body, false) : body;
@@ -40,8 +39,10 @@ export async function automaticXrayDelivery(options: {
             client &&
             !xrayProfilesFit(
                 subscription,
-                inline?.hasManagedRules ? GEOFILE_INLINE_CONFIG_BUDGET : budget,
-                inline?.hasManagedRules ? limit : Number.POSITIVE_INFINITY,
+                budget,
+                inline?.hasManagedRules && !inline.scopedProfiles
+                    ? limit
+                    : Number.POSITIVE_INFINITY,
             )
         )
             throw new ClientPoolError('geofile-client-config-size-limit');
@@ -55,7 +56,7 @@ export async function automaticXrayDelivery(options: {
                 'geofile-client-config-size-limit',
                 'geofile-xray-size',
             ].includes(error.message);
-        if (!size || !client || manualRouting) throw error;
+        if (!size || !client || manualRouting || inline?.scopedProfiles) throw error;
         // One oversized profile triggers a second render with compact DAT
         // references. Do not emit headers from the abandoned inline render.
         const remote = new XrayGeofileDelivery(client, 'remote', title, limit);
@@ -78,5 +79,11 @@ export async function automaticXrayDelivery(options: {
             throw failure;
         }
     }
-    return { subscription, header, intervalHours: inline?.intervalHours, inline: true };
+    return {
+        subscription,
+        header,
+        intervalHours: inline?.intervalHours,
+        inline: !inline?.hasRemoteRules,
+        sourceRevision: inline?.sourceRevision,
+    };
 }

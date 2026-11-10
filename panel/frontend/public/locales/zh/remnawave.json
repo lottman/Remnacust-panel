@@ -3975,7 +3975,7 @@
     "geofiles": {
     "inline-limit-title": "全局内联规则阈值",
     "inline-limit-label": "切换为 DAT 前每个配置允许的最大地址数",
-    "inline-limit-help": "适用于所有模板：{{min}} 至 {{max}} 之间的整数，默认 20,000。统计地址和匹配条件，而非 JSON 行数。",
+    "inline-limit-help": "适用于所有模板：{{min}} 至 {{max}} 之间的整数，默认 20,000。统计地址和匹配条件，而非 JSON 行数。 该设置适用于所有模板，但条件数量独立统计每个最终主机配置，不累加整个订阅。",
     "inline-limit-invalid": "请输入 {{min}} 至 {{max}} 之间的整数。",
     "inline-limit-safety": "较大的配置可能因大小或编译复杂度限制提前使用 DAT。阈值不会取消单个文件的安全限制。支持的客户端会在更新订阅后应用；其他客户端仍使用兼容格式。手动规则不会被转换。",
         "via-host": "通过主机：{{name}}",

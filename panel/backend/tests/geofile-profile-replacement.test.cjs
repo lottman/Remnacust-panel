@@ -6,6 +6,7 @@ const { pool } = require('./client-pool-fixture.cjs');
 const root = path.join(__dirname, '../src/modules/subscription-template/geofiles');
 const { XrayGeofileDelivery } = load(path.join(root, 'xray-geofile-delivery.ts'), {
     '../generators/client-pool': pool,
+    './client-pool': pool,
 });
 const { stabilizeRoutingProfile } = load(path.join(root, 'stabilize-routing-profile.ts'));
 const decode = header => JSON.parse(Buffer.from(header.split('/onadd/')[1], 'base64'));

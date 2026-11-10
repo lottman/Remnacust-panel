@@ -233,12 +233,14 @@ export class XrayJsonGeneratorService {
 
             const configs: string[] = [];
             let outputBytes = 2;
-            const append = (config: XrayJsonConfig) => {
+            const serialize = (config: XrayJsonConfig) => {
                 const rendered = ensureResponseTimeProbes(
                     materializePriority(this.addHostRoutes(config, hosts)),
                 );
                 assertRenderedXrayRoutes(rendered);
-                const serialized = JSON.stringify({ ...rendered, xray: mode });
+                return JSON.stringify({ ...rendered, xray: mode });
+            };
+            const append = (serialized: string) => {
                 outputBytes += Buffer.byteLength(serialized) + (configs.length ? 1 : 0);
                 assertSubscriptionSize(outputBytes);
                 configs.push(serialized);
@@ -266,57 +268,61 @@ export class XrayJsonGeneratorService {
                             : ((variant?.template as XrayJsonConfig) ??
                               (host.clientOverrides.xrayJsonTemplate as XrayJsonConfig) ??
                               templateContent);
-                    const baseTemplate =
-                        selectedTemplate === templateContent || !('remnacust' in selectedTemplate)
+                    const render = async (delivery = params.geofileDelivery) => {
+                        const baseTemplate = !('remnacust' in selectedTemplate)
                             ? selectedTemplate
                             : ((await this.subscriptionTemplateService.prepareClientTemplate(
                                   selectedTemplate as unknown as Record<string, unknown>,
                                   'XRAY_JSON',
-                                  params.geofileDelivery,
+                                  delivery,
                                   params.geofilesEnabled === true,
                                   params.geofilesInlineRuleLimit,
                               )) as unknown as XrayJsonConfig);
 
-                    if (
-                        baseTemplate.remnawave &&
-                        (baseTemplate.remnawave.injectHosts !== undefined ||
-                            baseTemplate.remnawave.addVirtualHostAsOutbound)
-                    ) {
-                        const injected = await this.applyRemnawaveInjector(
-                            baseTemplate,
+                        if (
+                            baseTemplate.remnawave &&
+                            (baseTemplate.remnawave.injectHosts !== undefined ||
+                                baseTemplate.remnawave.addVirtualHostAsOutbound)
+                        ) {
+                            const injected = await this.applyRemnawaveInjector(
+                                baseTemplate,
+                                host,
+                                hosts,
+                                isExtendedClient,
+                                regexBudget,
+                                params.autoselectCandidates
+                                    ? await params.autoselectCandidates()
+                                    : undefined,
+                                params.bindAutoselect,
+                                params.autoselectSelections,
+                                variant?.key ?? 'default',
+                            );
+                            return injected ? serialize(injected) : undefined;
+                        }
+
+                        const outboundConfig = this.buildOutboundConfig(host, isExtendedClient);
+                        if (!outboundConfig) return undefined;
+
+                        const templateOutbounds = [...(baseTemplate.outbounds ?? [])];
+                        const routing = this.buildDomainRulesRouting(
                             host,
-                            hosts,
-                            isExtendedClient,
-                            regexBudget,
-                            params.autoselectCandidates
-                                ? await params.autoselectCandidates()
-                                : undefined,
-                            params.bindAutoselect,
-                            params.autoselectSelections,
-                            variant?.key ?? 'default',
+                            templateOutbounds,
+                            baseTemplate.routing,
                         );
-                        if (injected) append(injected);
-                        continue;
-                    }
 
-                    const outboundConfig = this.buildOutboundConfig(host, isExtendedClient);
-                    if (!outboundConfig) continue;
-
-                    const templateOutbounds = [...(baseTemplate.outbounds ?? [])];
-                    const routing = this.buildDomainRulesRouting(
-                        host,
-                        templateOutbounds,
-                        baseTemplate.routing,
-                    );
-
-                    const { remnawave: _injector, ...clientTemplate } = baseTemplate;
-                    append({
-                        ...clientTemplate,
-                        outbounds: [...outboundConfig.outbounds, ...templateOutbounds],
-                        ...(routing ? { routing } : {}),
-                        remarks: outboundConfig.remarks,
-                        meta: outboundConfig.meta,
-                    });
+                        const { remnawave: _injector, ...clientTemplate } = baseTemplate;
+                        return serialize({
+                            ...clientTemplate,
+                            outbounds: [...outboundConfig.outbounds, ...templateOutbounds],
+                            ...(routing ? { routing } : {}),
+                            remarks: outboundConfig.remarks,
+                            meta: outboundConfig.meta,
+                        });
+                    };
+                    const serialized = params.geofileDelivery?.deferTemplates
+                        ? await params.geofileDelivery.renderProfile(render)
+                        : await render();
+                    if (serialized !== undefined) append(serialized);
                 }
             }
 

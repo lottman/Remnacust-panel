@@ -624,6 +624,7 @@ export class SubscriptionTemplateService {
         inlineRuleLimit?: number,
     ): Promise<object> {
         if (!config?.remnacust) return config;
+        if (geofilesEnabled && happ?.deferTemplates) return config;
         if (!geofilesEnabled) {
             const clean = structuredClone(config);
             delete clean.remnacust;

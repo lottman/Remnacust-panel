@@ -4,6 +4,11 @@ import { createHash } from 'node:crypto';
 
 import { ClientPoolError } from '../generators/client-pool';
 import { geofileInlineRuleLimit } from './geofile-inline-limit';
+import {
+    compactIncySubscription,
+    xrayProfilesFit,
+    XRAY_FORMATTED_CONFIG_BUDGET,
+} from './incy-config';
 
 export type DatKind = 'geoip' | 'geosite';
 export type DatBundleUrl = (
@@ -82,6 +87,7 @@ export class XrayGeofileDelivery {
     public intervalHours?: number;
     public sourceRevision?: string;
     public inlineOnly = false;
+    public scopedProfiles = false;
     private containsInline = false;
     public get hasManagedRules(): boolean {
         return this.containsInline || this.references.size > 0;
@@ -96,10 +102,70 @@ export class XrayGeofileDelivery {
         public readonly mode: 'inline' | 'remote' = 'remote',
         private readonly title = 'Subscription',
         inlineRuleLimit?: number,
+        public readonly deferTemplates = false,
     ) {
         this.inlineRuleLimit = geofileInlineRuleLimit(inlineRuleLimit);
     }
     public readonly inlineRuleLimit: number;
+
+    public get hasRemoteRules(): boolean {
+        return this.references.size > 0;
+    }
+
+    public async renderProfile(
+        generate: (delivery: XrayGeofileDelivery) => Promise<string | undefined>,
+    ): Promise<string | undefined> {
+        this.scopedProfiles = true;
+        const render = async (mode: 'inline' | 'remote') => {
+            const delivery = new XrayGeofileDelivery(
+                this.client,
+                mode,
+                this.title,
+                this.inlineRuleLimit,
+            );
+            const generated = await generate(delivery);
+            if (generated === undefined) return;
+            const resolved = delivery.resolveLegacyReferences(`[${generated}]`);
+            const body =
+                this.client === 'incy' ? compactIncySubscription(resolved, false) : resolved;
+            if (
+                !xrayProfilesFit(
+                    body,
+                    XRAY_FORMATTED_CONFIG_BUDGET,
+                    mode === 'inline' && delivery.hasManagedRules ? this.inlineRuleLimit : Infinity,
+                )
+            )
+                throw new ClientPoolError('geofile-client-config-size-limit');
+            return { delivery, serialized: body.slice(1, -1) };
+        };
+        let result;
+        try {
+            result = await render('inline');
+        } catch (error) {
+            if (!isXrayGeofileSizeError(error)) throw error;
+            result = await render('remote');
+            if (result && !result.delivery.hasRemoteRules)
+                throw new ClientPoolError('geofile-client-config-size-limit');
+        }
+        if (!result) return;
+        const { delivery, serialized } = result;
+        this.containsInline ||= delivery.containsInline;
+        for (const [key, entry] of delivery.references) {
+            const previous = this.references.get(key);
+            if (previous && previous.sourceSha256 !== entry.sourceSha256)
+                throw new XrayGeofileFallback('source-revision');
+            this.references.set(key, {
+                ...entry,
+                interval: Math.max(previous?.interval ?? 0, entry.interval),
+                ambiguous:
+                    entry.ambiguous ||
+                    (!!previous && (previous.ambiguous || previous.target !== entry.target)),
+            });
+        }
+        if (this.references.size > 1024) throw new XrayGeofileFallback('size');
+        this.bundleUrl ??= delivery.bundleUrl;
+        return serialized;
+    }
 
     private profileName(profileKey: string): string {
         let name = this.title.slice(0, 8192);
@@ -333,6 +399,18 @@ export class XrayGeofileDelivery {
         this.intervalHours = Math.ceil(interval / 3600);
         return header;
     }
+}
+
+export function isXrayGeofileSizeError(error: unknown): boolean {
+    return (
+        error instanceof Error &&
+        [
+            'geofile-inline-limit',
+            'geofile-config-size',
+            'geofile-client-config-size-limit',
+            'geofile-xray-size',
+        ].includes(error.message)
+    );
 }
 
 export function xrayGeofileClient(userAgent: string): 'happ' | 'incy' | undefined {

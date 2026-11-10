@@ -4060,7 +4060,7 @@
         "json-setting-enabled": "The global “{{setting}}” setting is enabled. Response rules and external squad settings can override the format.",
         "json-setting-disabled": "The global “{{setting}}” setting is disabled. Enable it for the regular subscription URL, or use a URL ending in /json.",
         "enabled-label": "Remnacust geofiles",
-        "enabled-help": "Off by default. Enables the geofile library and its subscription rules. Up to 20,000 entries use inline rules; larger lists use supported file delivery.",
+        "enabled-help": "Off by default. Automatically processes library files: up to 20,000 entries use inline rules; larger lists use supported file delivery. Manual Xray and routing settings are preserved even with this switch off.",
         "requires-json": "Enable JSON at the base subscription URL first.",
         "disable-before-json": "Disable geofiles before turning off JSON. Saved file assignments remain in templates.",
         "json-setting-help": "Shared subscription setting. Saved immediately; refresh the subscription in the app after changing it.",

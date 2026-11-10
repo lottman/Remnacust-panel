@@ -198,6 +198,155 @@ test('automatic refresh has no file or network operations while global opt-in is
     assert.equal(calls, 1);
 });
 
+test('disabled automation preserves manual Xray files and selectors without starting library processing or retirement', async () => {
+    const manual = {
+        inbounds: [],
+        outbounds: [{ tag: 'direct', protocol: 'freedom' }],
+        geodata: {
+            cron: '0 4 * * *',
+            outbound: 'direct',
+            assets: [
+                { url: 'https://files.example.test/geosite.dat.gz', file: 'geosite.dat' },
+                { url: 'https://files.example.test/geoip.dat.gz', file: 'geoip.dat' },
+            ],
+        },
+        routing: {
+            rules: [
+                {
+                    type: 'field',
+                    domain: ['geosite:example', 'ext:manual-sites.dat:example'],
+                    outboundTag: 'direct',
+                },
+                {
+                    type: 'field',
+                    ip: ['geoip:private', 'ext:manual-ips.dat:example'],
+                    outboundTag: 'direct',
+                },
+            ],
+        },
+        remnacust: { geofiles: [{ id: 'missing-disabled-library-file', target: 'DIRECT' }] },
+    };
+    for (const client of ['Happ/6.3.0', 'INCY/3.9.7']) {
+        const raw = structuredClone(manual);
+        const templates = templateService(
+            {},
+            { templateSnapshot: async () => ({ generation: 'a'.repeat(32), value: raw }) },
+        );
+        templates.geofiles = { prepare: () => assert.fail('disabled library processing') };
+        const [sing, mihomo, clash, xray] = generators(templates);
+        const renderer = new RenderTemplatesService(
+            { resolveProxyConfig: async () => [host()] },
+            mihomo,
+            clash,
+            {},
+            sing,
+            xray,
+            {
+                retireRoutingProfileRevision: () => assert.fail('manual geodata was retired'),
+                routingProfileRevision: () => assert.fail('automatic profile was created'),
+            },
+        );
+        const context = {
+            matchedResponseType: 'XRAY_JSON',
+            userAgent: client,
+            subscriptionSettings: { geofilesEnabled: false },
+        };
+        const result = await renderer.generateSubscription({
+            srrContext: context,
+            user: { id: 1, status: 'ACTIVE', expireAt: new Date('2099-01-01') },
+            hosts: [],
+        });
+        const profiles = JSON.parse(result.subscription);
+        assert(profiles.length > 0);
+        for (const profile of profiles) {
+            assert.deepEqual(profile.geodata, manual.geodata);
+            assert.deepEqual(profile.routing.rules, manual.routing.rules);
+            assert.equal(profile.remnacust, undefined);
+        }
+        assert.equal(context.headersToApply, undefined);
+        assert.deepEqual(raw, manual);
+    }
+});
+
+test('manual routing headers take priority while automation is off even when an earlier managed profile exists', async () => {
+    for (const client of ['happ', 'incy']) {
+        for (const source of ['settings', 'request']) {
+            const routing =
+                `${client}://routing/onadd/` +
+                Buffer.from(
+                    JSON.stringify({
+                        Name: 'Manually configured profile',
+                        Geositeurl: 'https://files.example.test/geosite.dat',
+                        Geoipurl: 'https://files.example.test/geoip.dat',
+                        LastUpdated: '2000000000',
+                    }),
+                ).toString('base64');
+            const headers = { RoUtInG: routing, 'Routing-Geo-Update-Interval': '12' };
+            const context = {
+                matchedResponseType: 'XRAY_JSON',
+                userAgent: `${client}/6.3.0`,
+                subscriptionSettings: {
+                    geofilesEnabled: false,
+                    customResponseHeaders: source === 'settings' ? headers : {},
+                },
+                ...(source === 'request' ? { headersToApply: headers } : {}),
+            };
+            const before = structuredClone(context);
+            const subscription = JSON.stringify([
+                { routing: { rules: [{ domain: ['geosite:example'], outboundTag: 'direct' }] } },
+            ]);
+            const renderer = new RenderTemplatesService(
+                { resolveProxyConfig: async () => [] },
+                null,
+                null,
+                null,
+                null,
+                {
+                    generateConfig: async (options) => {
+                        assert.equal(options.geofilesEnabled, false);
+                        assert.equal(options.geofileDelivery, undefined);
+                        return subscription;
+                    },
+                },
+                {
+                    retireRoutingProfileRevision: () => assert.fail('manual routing was retired'),
+                    routingProfileRevision: () =>
+                        assert.fail('manual routing revision was changed'),
+                },
+            );
+            const result = await renderer.generateSubscription({
+                srrContext: context,
+                user: { id: 1, status: 'ACTIVE', expireAt: new Date('2099-01-01') },
+                hosts: [],
+            });
+            assert.equal(result.subscription, subscription);
+            assert.deepEqual(context, before);
+        }
+    }
+});
+
+test('explicit administrator refresh remains available while scheduled library refresh is disabled', async () => {
+    const { GeofilesService } = source(
+        'modules/subscription-template/geofiles/geofiles.service.ts',
+    );
+    const service = Object.create(GeofilesService.prototype);
+    service.prisma = {
+        subscriptionSettings: { findFirst: async () => ({ geofilesEnabled: false }) },
+    };
+    const calls = [];
+    service.refreshStore = {
+        refreshDue: () => assert.fail('disabled scheduled refresh'),
+        refresh: async (...args) => {
+            calls.push(args);
+            return true;
+        },
+    };
+    assert.deepEqual(await service.refreshDue(), []);
+    assert.equal(await service.refreshNow('manual-file'), true);
+    assert.deepEqual(calls, [['manual-file', true]]);
+    assert.deepEqual(await service.refreshDue(), []);
+});
+
 test('repository rejects invalid merged settings before mutation and allows explicit paired transitions', async () => {
     const { SubscriptionSettingsRepository } = load(
         path.join(

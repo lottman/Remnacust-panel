@@ -863,7 +863,7 @@ With JSON enabled on the base link, Throne 1.x from stable 1.2.0 receives full X
 
 ### Geofiles: enabling and disabling
 
-Subscription settings → Main settings → Additional settings: enable JSON at the base URL, then Remnacust geofiles. The system is off by default. The editor geofiles tab is visible only while enabled. Disabling retains the library, assignments and refresh settings, but omits them from new subscriptions and stops background automatic refresh. Ordinary manual rules remain unchanged. Disable geofiles before turning off JSON; the panel never silently disables them. Refresh the subscription in the app after switching. An in-flight operation may finish using its previous settings. Previously signed download links remain valid.
+Subscription settings → Main settings → Additional settings: enable JSON at the base URL, then Remnacust geofiles. The system is off by default. The editor geofiles tab is visible only while enabled. Disabling retains the library, assignments and refresh settings, but omits them from new subscriptions and stops background automatic refresh. Administrator-defined Xray JSON settings (geodata, geosite:, geoip:, ext:) and DAT URLs in the routing header are retained even with the switch off; retirement of the earlier automatic profile does not replace them. The core or app performs explicitly configured downloads and refreshes if it supports that mechanism. A geosite:, geoip: or ext: reference reads a category from a local DAT file and does not download that file itself. Configure the URL and refresh separately. Explicit administrator uploads and refreshes in the library remain available, but do not attach files to subscriptions on their own. Disable geofiles before turning off JSON; the panel never silently disables them. Refresh the subscription in the app after switching. An in-flight operation may finish using its previous settings. Previously signed download links remain valid.
 
 ### Startup and concurrent requests
 
@@ -1032,7 +1032,7 @@ During page installation or migration, choose the local panel or another panel�
 ### Fields and controls
 
 - **Serve JSON at base subscription**: Shared subscription setting. Saved immediately; refresh the subscription in the app after changing it.
-- **Remnacust geofiles**: Off by default. Enables the geofile library and its subscription rules. Up to 20,000 entries use inline rules; larger lists use supported file delivery.
+- **Remnacust geofiles**: Off by default. Automatically processes library files: up to 20,000 entries use inline rules; larger lists use supported file delivery. Manual Xray and routing settings are preserved even with this switch off.
 - **Additional options**: Configure additional subscription options
 - **Randomize hosts**: Enables random host ordering in subscription output. The order can change on the next refresh.
 - **Show custom remarks**: Shows configured subscription status messages, such as expiry or exhausted quota notices.

@@ -4060,7 +4060,7 @@
         "json-setting-enabled": "全局“{{setting}}”设置已开启。响应规则和外部组设置可能覆盖响应格式。",
         "json-setting-disabled": "全局“{{setting}}”设置已关闭。普通订阅链接需开启此设置，或使用以 /json 结尾的链接。",
         "enabled-label": "Remnacust 地理文件",
-        "enabled-help": "默认关闭。启用地理文件库及其订阅规则。最多 20,000 条记录使用内联规则；更大的列表使用受支持的文件下载方式。",
+        "enabled-help": "默认关闭。自动处理文件库：最多 20,000 条记录使用内联规则，更大的列表使用受支持的文件下载方式。关闭此开关仍保留手动设置的 Xray 和 routing 配置。",
         "requires-json": "请先启用订阅基础地址的 JSON。",
         "disable-before-json": "关闭 JSON 前，请先关闭地理文件。已保存的文件关联仍保留在模板中。",
         "json-setting-help": "这是订阅的全局设置，修改后立即保存；请在应用内刷新订阅。",

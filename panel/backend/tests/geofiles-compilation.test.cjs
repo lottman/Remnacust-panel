@@ -234,3 +234,19 @@ test('compiled matcher cache is LRU and bounded by records and UTF-8 payload as 
         assert.equal(reads, 10, 'evicted rules rebuild without truncation');
     }
 });
+
+test('remote category validation does not evict hot inline compilations', async () => {
+    const s = service();
+    let reads = 0;
+    s.readActive = async () => {
+        reads++;
+        return geosite;
+    };
+    const first = await s.compile(file, ['example']);
+    for (let i = 0; i < 32; i++)
+        await s.compile({ ...file, id: i.toString(16).padStart(34, '0') }, ['example'], true);
+    assert.equal(reads, 33);
+    const repeated = await s.compile(file, ['example']);
+    assert.equal(reads, 33, 'successful category checks must not force inline recompilation');
+    assert.equal(repeated, first);
+});

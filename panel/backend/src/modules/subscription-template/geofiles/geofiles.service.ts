@@ -90,6 +90,7 @@ export class GeofilesService {
         string,
         { rules: DatRules; bytes: number; records: number }
     >();
+    private readonly validated = new Map<string, DatRules>();
     private readonly compilingByKey = new Map<string, Promise<DatRules>>();
     private readonly compileQueue = new BoundedWorkQueue(2, 32);
     private readonly bundled = new Map<string, Buffer>();
@@ -643,13 +644,19 @@ export class GeofilesService {
         validateOnly = false,
     ): Promise<DatRules> {
         const key =
-                file.id +
-                ':' +
-                file.sha256 +
-                ':' +
-                JSON.stringify(categories) +
-                (validateOnly ? ':validate' : ''),
-            cached = this.compiled.get(key);
+            file.id +
+            ':' +
+            file.sha256 +
+            ':' +
+            JSON.stringify(categories) +
+            (validateOnly ? ':validate' : '');
+        const validated = validateOnly ? this.validated.get(key) : undefined;
+        if (validated) {
+            this.validated.delete(key);
+            this.validated.set(key, validated);
+            return validated;
+        }
+        const cached = validateOnly ? undefined : this.compiled.get(key);
         if (cached) {
             this.compiled.delete(key);
             this.compiled.set(key, cached);
@@ -666,6 +673,12 @@ export class GeofilesService {
                     categories,
                     validateOnly,
                 );
+                if (validateOnly) {
+                    if (this.validated.size >= 32)
+                        this.validated.delete(this.validated.keys().next().value!);
+                    this.validated.set(key, rules);
+                    return rules;
+                }
                 const bytes =
                     rules.ips.reduce((sum, value) => sum + Buffer.byteLength(value), 0) +
                     rules.domains.reduce((sum, item) => sum + Buffer.byteLength(item.value), 0);
@@ -1176,6 +1189,7 @@ export class GeofilesService {
             // The directory is derived exclusively from a validated, bounded slot ID.
             await rm(directory, { recursive: true });
             this.compiled.clear();
+            this.validated.clear();
         });
     }
 

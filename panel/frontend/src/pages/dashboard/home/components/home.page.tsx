@@ -4,16 +4,16 @@ import { notifications } from '@mantine/notifications'
 import i18next from 'i18next'
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { TbCamera, TbInfoCircle, TbLayoutDashboard } from 'react-icons/tb'
+import { TbCamera, TbInfoCircle, TbLayoutDashboard, TbRefresh } from 'react-icons/tb'
 
 import { useIsMobile } from '@shared/hooks'
 import { LoadingScreen, PageHeaderShared } from '@shared/ui'
 import { MetricCardShared, MetricCardWithTrendShared } from '@shared/ui/metrics/metric-card'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { Page } from '@shared/ui/page'
+import { RefreshActionIcon } from '@shared/ui/refresh-control/refresh-control'
 import { copyScreenshotToClipboard } from '@shared/utils/copy-screenshot.util'
 
-import { DatabaseDiagnosticsWidget } from './database-diagnostics.widget'
 import classes from './home.module.css'
 import { IProps } from './interfaces'
 import {
@@ -45,7 +45,7 @@ export const HomePage = (props: IProps) => {
     const runtimeRef = useRef<HTMLDivElement>(null)
     const [copying, setCopying] = useState(false)
 
-    const { systemInfo, bandwidthStats, remnawaveHealth } = props
+    const { systemInfo, bandwidthStats, remnawaveHealth, onRefresh, isRefreshing } = props
 
     const copyRuntimeScreenshot = async () => {
         if (!runtimeRef.current || copying) return
@@ -82,11 +82,23 @@ export const HomePage = (props: IProps) => {
 
     return (
         <Page title={t('constants.home')}>
-            <PageHeaderShared icon={<TbLayoutDashboard size={24} />} title={t('constants.home')} />
+            <PageHeaderShared
+                actions={
+                    <RefreshActionIcon
+                        aria-label={t('common.action.refresh')}
+                        title={t('common.action.refresh')}
+                        loading={isRefreshing}
+                        onClick={onRefresh}
+                        size="lg"
+                        variant="light"
+                    >
+                        <TbRefresh size={20} />
+                    </RefreshActionIcon>
+                }
+                icon={<TbLayoutDashboard size={24} />}
+                title={t('constants.home')}
+            />
             <Stack gap="sm">
-                <div className={classes.section}>
-                    <DatabaseDiagnosticsWidget />
-                </div>
                 {runtimeSummaryMetrics.length > 0 && (
                     <div className={classes.section}>
                         <Title className={classes.title} m="xs" ml={0} order={4}>

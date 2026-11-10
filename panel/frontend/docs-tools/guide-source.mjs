@@ -1321,9 +1321,9 @@ add(
         ],
         [
             'Анимации и телефон',
-            'Наведение подчёркивает интерактивные элементы. После короткой задержки иконка немного увеличивается и притягивается к курсору; нажатие вдавливает её, а отпускание возвращает с пружинным отскоком. Кнопка сохраняет своё положение и область нажатия. Обновление вращает значок до завершения, переходы и меню плавно открываются. «Уменьшить анимацию» и системное prefers-reduced-motion отключают декоративное движение. На сенсорном экране притяжение не используется, а обратная связь нажатия сохраняется, если анимации разрешены.',
+            'Анимированные иконки используются только в боковом меню. Контурные значки прорисовываются, заполненные проявляются по частям; положение и размер иконки не меняются. У кнопок, карточек, вкладок и редакторов эти декоративные эффекты отключены. «Уменьшить анимацию» и системное prefers-reduced-motion отключают также анимации бокового меню. Индикаторы загрузки по-прежнему показывают состояние операции.',
             'Motion and phones',
-            'Hover highlights interactive controls. After a short delay, an icon grows slightly and moves toward the cursor; pressing sinks it inward and releasing produces a spring rebound. The button keeps its position and hit area. Refresh spins until completion, and pages/menus transition smoothly. Reduce motion and OS prefers-reduced-motion suppress decorative motion. Touch uses press feedback without cursor attraction when motion is enabled.'
+            'Animated icons are limited to the sidebar. Outline details draw in and filled shapes reveal without moving or resizing the glyph. Buttons, cards, tabs and editors do not use these decorative effects. Reduce motion and the OS prefers-reduced-motion setting also disable sidebar icon animations. Loading indicators continue to show operation status.'
         ]
     ]
 )

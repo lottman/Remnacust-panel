@@ -23,6 +23,12 @@ export const HomePageConnector = () => {
     return (
         <HomePage
             bandwidthStats={bandwidthStats}
+            isRefreshing={pageQueries.some((query) => query.isFetching)}
+            onRefresh={() =>
+                Promise.allSettled(
+                    pageQueries.map((query) => query.refetch({ cancelRefetch: false }))
+                )
+            }
             remnawaveHealth={remnawaveHealth}
             systemInfo={systemInfo}
         />

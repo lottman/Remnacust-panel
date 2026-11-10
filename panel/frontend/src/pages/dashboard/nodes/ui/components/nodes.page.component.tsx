@@ -5,6 +5,7 @@ import { Grid, Stack } from '@mantine/core'
 import { GetNodesCommand } from '@remnawave/backend-contract'
 import { NodesDataTableWidget } from '@widgets/dashboard/nodes/nodes-datatable/nodes-datatable.widget'
 import { NodesRealtimeUsageMetrics } from '@widgets/dashboard/nodes/nodes-realtime-metrics'
+import { NodesSpotlightSearchWidget } from '@widgets/dashboard/nodes/nodes-spotlight-search'
 import { NodesTableWidget } from '@widgets/dashboard/nodes/nodes-table'
 import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -12,6 +13,7 @@ import { HiServer } from 'react-icons/hi'
 
 import { queryClient } from '@shared/api'
 import { nodesQueryKeys, useReorderNodes } from '@shared/api/hooks'
+import { usePageSearchShortcut } from '@shared/hooks/use-page-search-shortcut'
 import { LoadingScreen, Page, PageHeaderShared } from '@shared/ui'
 import { NodeHealthOverview } from '@shared/ui/node-health/node-health'
 import { ViewModeTransition } from '@shared/ui/view-mode-transition/view-mode-transition'
@@ -25,6 +27,7 @@ import {
 import { IProps } from './interfaces'
 
 export default function NodesPageComponent(props: IProps) {
+    usePageSearchShortcut()
     const { nodes, isLoading, nodePlugins, nodeIntegrations } = props
 
     const { t } = useTranslation()
@@ -125,6 +128,7 @@ export default function NodesPageComponent(props: IProps) {
                 </Grid.Col>
             </Grid>
 
+            <NodesSpotlightSearchWidget nodes={nodes ?? []} />
             <MultiSelectNodesFeature
                 moveSelected={moveSelected}
                 selectedRecords={selectedRecords}

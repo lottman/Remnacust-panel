@@ -30,7 +30,6 @@ import {
 } from '@entities/dashboard/view-preferences-store'
 
 import { NodeCardWidget } from '../node-card'
-import { NodesSpotlightSearchWidget } from '../nodes-spotlight-search'
 import { IProps } from './interfaces'
 import styles from './NodesTable.module.css'
 
@@ -308,7 +307,6 @@ export const NodesTableWidget = memo((props: IProps) => {
                     )}
                 </DragOverlay>
             </DragDropProvider>
-            {nodes && nodes.length > 0 && <NodesSpotlightSearchWidget nodes={nodes} />}
         </>
     )
 })

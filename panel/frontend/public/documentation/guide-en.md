@@ -105,11 +105,9 @@ Home shows transferred traffic, current bandwidth, online users and nodes, accou
 
 Open a status card for details. If data has not appeared, wait for loading or refresh. A spinning icon indicates that the request is still in progress.
 
-### Database diagnostics
+### Home refresh and diagnostics
 
-Home shows application connections, active queries, lock waits and idle transactions. The snapshot covers only the current role and panel database; the diagnostics query excludes itself. SQL text, addresses and keys are not shown. An administrator session is required; API tokens cannot use this endpoint. Unknown statistics appear as “—”, not zero. A diagnostics failure leaves the other Home sections working.
-
-The interface polls every 30 seconds in a visible tab; the server coalesces concurrent requests and retains a sample for 15 seconds per process. Total traffic charts also use a bounded 15-second snapshot. This display cache does not change access checks, quotas or blocks. Rising wait counts or query times call for log and SQL-plan inspection; a connection count alone does not prove overload.
+The Home refresh button requests system/user statistics, bandwidth and panel health/runtime together. Another refresh is blocked while requests are pending. The database block and its automatic polling are removed from Home. Internal diagnostics remain administrator-only; see the API reference for access details. It never returns SQL text, addresses or keys. Its snapshot covers the current role and database, coalesces simultaneous requests and lasts up to 15 seconds per process. This cache does not change access, quotas or blocks.
 
 ## Creating and editing users
 
@@ -249,6 +247,8 @@ Changing external squad templates or settings can change delivery for all member
 A node is a server agent running our Xray. Create the record, set its management address/port, configure connection credentials and select a profile with active inbounds. The management port is separate from a host client port. Verify reachability from the panel server and correct connection parameters.
 
 In card view, nodes can be dragged with a tag selected. Only visible nodes are reordered; other records keep their positions. Form actions stay at the bottom of the window while scrolling.
+
+On Hosts and Nodes, Ctrl+F, Cmd+F on macOS and F3 open panel search instead of browser find. Search works in card and table views and from ordinary form fields. Monaco keeps its own editor search. The override is removed when leaving these pages.
 
 ### Fields and accounting
 
@@ -640,6 +640,8 @@ Remark names a subscription connection. Address and port are the client endpoint
 
 Above the list, choose Enabled, Disabled, Visible or Hidden. Visible includes hosts with isHidden = false, including disabled hosts. Enabled includes hosts with isDisabled = false, including hidden hosts. The filter combines with the selected tag in card and table views. In card view, drag hosts within a tag; other records keep their positions. Save, copy and delete actions remain available at the bottom of the form while scrolling.
 
+On Hosts and Nodes, Ctrl+F, Cmd+F on macOS and F3 open panel search instead of browser find. Search works in card and table views and from ordinary form fields. Monaco keeps its own editor search. The override is removed when leaving these pages.
+
 ### Visibility and actions
 
 A hidden host is omitted from new subscription responses, but hiding alone does not revoke credentials already issued. Disabling a host controls access through node policy. Internal squads restrict who receives the host. Cloning creates another host record with the original settings; it does not create a server. After saving, wait for policy application and test a user’s subscription.
@@ -793,7 +795,7 @@ Create or select a template for the required format. When renaming it, choose a 
 
 Lowest response time (ping + TTFB) selects by an HTTP probe through each pool server. Xray uses leastPing with observatory or burstObservatory; Mihomo/Clash/Stash use url-test and sing-box uses urltest. The user app measures the route, not the panel. Timing includes connection setup, TLS for HTTPS and waiting for the HTTP response. It is not separate ICMP ping or a sum of two independently measured values.
 
-For leastPing, the panel supplies a missing observer and enrolls every balancer selector in HTTP checks, including hand-written JSON. Custom URLs, intervals and explicit HTTP methods are preserved. Defaults are https://www.gstatic.com/generate_204 and 30s; burstObservatory uses HEAD, a 5s timeout and sampling 2. HEAD does not download the response body; an explicit burstObservatory GET includes reading the body in its delay. Choose the same small response, preferably 204, reachable through the entire pool. Measuring from the panel cannot bypass a blocked probe site.
+For leastPing and leastLoad, the panel supplies a missing observer and enrolls those balancer selectors in HTTP checks, including hand-written JSON. Random and roundRobin need observations when a fallback outbound is configured; without a fallback no extra probes are added. Custom URLs, intervals and explicit HTTP methods are preserved. Defaults are https://www.gstatic.com/generate_204 and 30s; burstObservatory uses HEAD, a 5s timeout and sampling 2. HEAD does not download the response body; an explicit burstObservatory GET includes reading the body in its delay. Choose the same small response, preferably 204, reachable through the entire pool. Measuring from the panel cannot bypass a blocked probe site.
 
 After initial measurements, the app refreshes results on its configured interval. New connections use the current selection without refreshing the subscription; existing streams do not move. Burst uses the sample mean; native url-test/urltest tolerance reduces frequent switching. Probe settings and supported values depend on the client core. Probe timeout and fallback configure failure behavior. Pool membership still respects user access and applicable quotas.
 

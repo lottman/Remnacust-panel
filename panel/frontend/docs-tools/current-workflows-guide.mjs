@@ -2,30 +2,94 @@ const languages = ['ru', 'en', 'fa', 'zh']
 
 // Keep scope and units identical in all four operator guides.
 const sections = [
-    ['nodes', 'nodes-start-queue-pause', [
-        ['Пауза очереди запуска', 'Пакетное применение профиля не приостанавливает общую очередь запуска: операции согласуются отдельно для каждой ноды. Существующая ручная или оставшаяся от старого обновления пауза автоматически не снимается. Если задания остаются приостановлены, проверьте завершение обслуживания и снимите паузу в Bull Board. Перезапуск панели не должен отменять намеренную паузу администратора.'],
-        ['Paused start queue', 'Applying a profile in bulk does not pause the global start queue; operations are coordinated per node. An existing manual pause or one left by an older update is not automatically resumed. If jobs remain paused, confirm that maintenance is complete and resume the queue in Bull Board. Restarting the panel must not override an intentional administrative pause.'],
-        ['توقف صف راه‌اندازی', 'اعمال گروهی پروفایل، صف عمومی راه‌اندازی را متوقف نمی‌کند؛ عملیات برای هر نود جداگانه هماهنگ می‌شوند. توقف دستی موجود یا توقف باقی‌مانده از به‌روزرسانی قدیمی خودکار رفع نمی‌شود. اگر کارها متوقف مانده‌اند، پایان نگهداری را تأیید و صف را در Bull Board از سر بگیرید. بازراه‌اندازی پنل نباید توقف عمدی مدیر را لغو کند.'],
-        ['启动队列暂停', '批量应用配置不会暂停全局启动队列；操作按节点分别协调。已有的手动暂停或旧版更新遗留的暂停不会自动解除。如果任务仍处于暂停状态，请确认维护已结束，再在 Bull Board 中恢复队列。重启面板不应取消管理员有意设置的暂停。']
-    ]],
-    ['nodes', 'nodes-local-core-recovery', [
-        ['Восстановление после падения ядра', 'При подтверждённом падении совместимого ядра агент восстанавливает последнюю приватную конфигурацию без панели. Рабочий процесс не перезапускается; неизвестное состояние и занятое управление откладывают проверку. Пауза администратора и проверки квот сохраняются. Автоматические попытки ограничены: не более трёх восстановлений за час процесса агента. Новое падение после лимита или ошибка восстановления прекращают попытки; проверьте журнал и выполните явный запуск после устранения причины. Обычное применение настроек без перезапуска бюджет попыток не сбрасывает. Повреждённый журнал не обнуляется. Нужны сборки Node и Core с этим исправлением; обновление только панели их не заменяет.'],
-        ['Recovery after a core crash', 'After a confirmed crash of a compatible core, the agent restores the last private configuration without the panel. A working process is left running; unknown status or busy management defers the check. Administrative pause and quota checks remain enforced. Automatic attempts are limited to three recoveries per hour of the agent process. A further crash after that limit or a recovery error stops retries; check the log, correct the cause and explicitly start a new process. Hot application of settings does not reset the attempt budget. A corrupt journal is never cleared. Both Node and Core builds must include this fix; updating only the panel does not replace them.'],
-        ['بازیابی پس از خرابی هسته', 'پس از خرابی تأییدشده هسته سازگار، عامل آخرین پیکربندی خصوصی را بدون پنل بازیابی می‌کند. فرایند سالم بازراه‌اندازی نمی‌شود و وضعیت نامشخص یا مدیریت مشغول، بررسی را عقب می‌اندازد. توقف مدیر و کنترل سهمیه حفظ می‌شوند. حداکثر سه بازیابی خودکار در هر ساعت فرایند عامل مجاز است. خرابی بعدی پس از حد یا خطای بازیابی، تلاش را متوقف می‌کند؛ گزارش را بررسی و علت را رفع کنید، سپس فرایند جدید را صریح راه‌اندازی کنید. اعمال تنظیمات بدون راه‌اندازی مجدد بودجه تلاش را بازنشانی نمی‌کند. ژورنال خراب هرگز پاک نمی‌شود. ساخت Node و Core هر دو باید این اصلاح را داشته باشند؛ به‌روزرسانی پنل به‌تنهایی آن‌ها را جایگزین نمی‌کند.'],
-        ['内核崩溃后的恢复', '确认兼容内核崩溃后，代理可在没有面板时恢复最后的私有配置。正常进程不会重启；状态未知或管理忙碌时会推迟检查。管理员暂停和配额检查仍有效。每个代理进程每小时最多自动恢复三次。达到上限后再次崩溃，或恢复出错，都会停止重试；请检查日志、排除原因并显式启动新进程。热应用设置不会重置尝试次数。损坏的日志不会被清空。Node 和 Core 都需要包含此修复的新构建；只更新面板不会替换它们。']
-    ]],
-    ['architecture', 'architecture-offline-day', [
-        ['Сутки без панели', 'Автономная политика не отключается просто из-за отсутствия панели. Для планируемых суток нужны применённая политика, постоянные тома, действующие ключи и достаточный локальный резерв каждого лимита пользователя, хоста и тега. Общий остаток пользователя распределён между нодами и не равен запасу каждой ноды. Срок подписки, исчерпание резерва или конец периода квоты продолжают закрывать доступ. После календарного сброса новый резерв выдаёт панель; текущая реализация не финансирует следующий период без связи. CDN, DNS, прокси и сертификаты ноды должны работать независимо. Пересоздание контейнера требует постоянных каталогов состояния. При загрузке ядра через CUSTOM_CORE_URL его источник также должен быть доступен. Изменения блокировки или заморозки во время разрыва доходят после восстановления связи. Проверка готовности перед обслуживанием подтверждает текущее состояние, но не обещает сутки трафика.'],
-        ['A day without the panel', 'Autonomous policy does not stop merely because the panel is unreachable. A planned day requires an applied policy, persistent volumes, valid credentials and enough local credit for every user, host and tag limit. A user’s total remaining quota is distributed across nodes and is not the credit of each node. Subscription expiry, exhausted credit and quota-period boundaries still deny access. The panel must fund the next period after a reset; the current implementation does not fund it offline. CDN, DNS, proxy and node certificates must remain independent. Recreating a container requires persistent state directories. A core loaded through CUSTOM_CORE_URL also needs its source to be reachable. Blocks or freezes changed during the outage arrive after reconnection. A maintenance readiness check proves current state, not a guaranteed day of traffic.'],
-        ['یک روز بدون پنل', 'سیاست مستقل صرفاً به دلیل قطع پنل متوقف نمی‌شود. برای یک روز برنامه‌ریزی‌شده، سیاست اعمال‌شده، حجم‌های پایدار، کلیدهای معتبر و اعتبار محلی کافی برای هر محدودیت کاربر، میزبان و برچسب لازم است. مانده کل کاربر میان نودها تقسیم می‌شود و اعتبار هر نود نیست. پایان اشتراک، اتمام اعتبار یا مرز دوره سهمیه همچنان دسترسی را می‌بندد. اعتبار دوره بعد پس از بازنشانی باید توسط پنل تأمین شود؛ نسخه فعلی آن را آفلاین تأمین نمی‌کند. CDN، DNS، پروکسی و گواهی نود باید مستقل باشند. ایجاد دوباره کانتینر به مسیرهای پایدار وضعیت نیاز دارد. هسته دانلودشده با CUSTOM_CORE_URL نیز به دسترسی منبع نیاز دارد. مسدودسازی یا تعلیق جدید پس از اتصال مجدد می‌رسد. بررسی آمادگی نگهداری فقط وضعیت فعلی را تأیید می‌کند، نه یک روز ترافیک تضمینی.'],
-        ['面板离线一天', '自主策略不会仅因面板不可达而停止。计划离线一天需要已应用的策略、持久卷、有效密钥，以及用户、主机和标签每项限制的足够本地额度。用户总剩余额度分配在各节点之间，不等于每个节点的额度。订阅到期、额度耗尽及配额周期结束仍会拒绝访问。重置后的下一周期需要面板重新分配额度；当前实现不会在离线时为下一周期授信。CDN、DNS、代理及节点证书必须独立工作。重建容器需要持久状态目录。通过 CUSTOM_CORE_URL 下载的内核还需要源站可达。断连期间新增的封禁或冻结在恢复连接后同步。维护就绪检查只确认当前状态，并不保证一天的流量。']
-    ]],
-    ['templates', 'subscription-transient-query-errors', [
-        ['Временная ошибка выдачи', 'Ошибка чтения пользователя, устройства или хостов не означает, что подписка удалена. Конфигурационная выдача возвращает временную ошибку с предложением повторить запрос через 30 секунд; настоящий отсутствующий пользователь по-прежнему даёт 404. Ошибочная выборка хостов не считается успешной пустой подпиской. Если доступных хостов действительно нет, дополнительные запросы шаблонов и квот пропускаются. При повторяющемся сбое проверьте журнал и связь с базой данных; не создавайте пользователю новые ключи для устранения сетевой ошибки.'],
-        ['Temporary delivery errors', 'A failed user, device or host query does not mean the subscription was deleted. Configuration delivery returns a temporary error asking the client to retry after 30 seconds; a genuinely missing user still returns 404. A failed host query is not reported as a successful empty subscription. If there truly are no available hosts, extra template and quota queries are skipped. For repeated failures, check the log and database connectivity; do not replace a user’s keys to solve a network error.'],
-        ['خطای موقت دریافت', 'خطای خواندن کاربر، دستگاه یا میزبان به معنی حذف اشتراک نیست. دریافت پیکربندی خطای موقت با درخواست تلاش دوباره پس از 30 ثانیه می‌دهد؛ کاربر واقعاً ناموجود همچنان 404 می‌گیرد. خطای جست‌وجوی میزبان، اشتراک خالی موفق محسوب نمی‌شود. اگر واقعاً میزبانی موجود نباشد، درخواست‌های اضافی قالب و سهمیه انجام نمی‌شود. برای خطای تکراری، گزارش و اتصال پایگاه داده را بررسی کنید؛ برای رفع خطای شبکه کلید کاربر را عوض نکنید.'],
-        ['临时分发错误', '读取用户、设备或主机失败不代表订阅已被删除。配置分发返回临时错误并建议 30 秒后重试；用户确实不存在时仍返回 404。主机查询失败不会被当作成功的空订阅。确实没有可用主机时，会跳过额外的模板和配额查询。重复失败时检查日志及数据库连接，不要为修复网络问题而替换用户密钥。']
-    ]],
+    [
+        'nodes',
+        'nodes-start-queue-pause',
+        [
+            [
+                'Пауза очереди запуска',
+                'Пакетное применение профиля не приостанавливает общую очередь запуска: операции согласуются отдельно для каждой ноды. Существующая ручная или оставшаяся от старого обновления пауза автоматически не снимается. Если задания остаются приостановлены, проверьте завершение обслуживания и снимите паузу в Bull Board. Перезапуск панели не должен отменять намеренную паузу администратора.'
+            ],
+            [
+                'Paused start queue',
+                'Applying a profile in bulk does not pause the global start queue; operations are coordinated per node. An existing manual pause or one left by an older update is not automatically resumed. If jobs remain paused, confirm that maintenance is complete and resume the queue in Bull Board. Restarting the panel must not override an intentional administrative pause.'
+            ],
+            [
+                'توقف صف راه‌اندازی',
+                'اعمال گروهی پروفایل، صف عمومی راه‌اندازی را متوقف نمی‌کند؛ عملیات برای هر نود جداگانه هماهنگ می‌شوند. توقف دستی موجود یا توقف باقی‌مانده از به‌روزرسانی قدیمی خودکار رفع نمی‌شود. اگر کارها متوقف مانده‌اند، پایان نگهداری را تأیید و صف را در Bull Board از سر بگیرید. بازراه‌اندازی پنل نباید توقف عمدی مدیر را لغو کند.'
+            ],
+            [
+                '启动队列暂停',
+                '批量应用配置不会暂停全局启动队列；操作按节点分别协调。已有的手动暂停或旧版更新遗留的暂停不会自动解除。如果任务仍处于暂停状态，请确认维护已结束，再在 Bull Board 中恢复队列。重启面板不应取消管理员有意设置的暂停。'
+            ]
+        ]
+    ],
+    [
+        'nodes',
+        'nodes-local-core-recovery',
+        [
+            [
+                'Восстановление после падения ядра',
+                'При подтверждённом падении совместимого ядра агент восстанавливает последнюю приватную конфигурацию без панели. Рабочий процесс не перезапускается; неизвестное состояние и занятое управление откладывают проверку. Пауза администратора и проверки квот сохраняются. Автоматические попытки ограничены: не более трёх восстановлений за час процесса агента. Новое падение после лимита или ошибка восстановления прекращают попытки; проверьте журнал и выполните явный запуск после устранения причины. Обычное применение настроек без перезапуска бюджет попыток не сбрасывает. Повреждённый журнал не обнуляется. Нужны сборки Node и Core с этим исправлением; обновление только панели их не заменяет.'
+            ],
+            [
+                'Recovery after a core crash',
+                'After a confirmed crash of a compatible core, the agent restores the last private configuration without the panel. A working process is left running; unknown status or busy management defers the check. Administrative pause and quota checks remain enforced. Automatic attempts are limited to three recoveries per hour of the agent process. A further crash after that limit or a recovery error stops retries; check the log, correct the cause and explicitly start a new process. Hot application of settings does not reset the attempt budget. A corrupt journal is never cleared. Both Node and Core builds must include this fix; updating only the panel does not replace them.'
+            ],
+            [
+                'بازیابی پس از خرابی هسته',
+                'پس از خرابی تأییدشده هسته سازگار، عامل آخرین پیکربندی خصوصی را بدون پنل بازیابی می‌کند. فرایند سالم بازراه‌اندازی نمی‌شود و وضعیت نامشخص یا مدیریت مشغول، بررسی را عقب می‌اندازد. توقف مدیر و کنترل سهمیه حفظ می‌شوند. حداکثر سه بازیابی خودکار در هر ساعت فرایند عامل مجاز است. خرابی بعدی پس از حد یا خطای بازیابی، تلاش را متوقف می‌کند؛ گزارش را بررسی و علت را رفع کنید، سپس فرایند جدید را صریح راه‌اندازی کنید. اعمال تنظیمات بدون راه‌اندازی مجدد بودجه تلاش را بازنشانی نمی‌کند. ژورنال خراب هرگز پاک نمی‌شود. ساخت Node و Core هر دو باید این اصلاح را داشته باشند؛ به‌روزرسانی پنل به‌تنهایی آن‌ها را جایگزین نمی‌کند.'
+            ],
+            [
+                '内核崩溃后的恢复',
+                '确认兼容内核崩溃后，代理可在没有面板时恢复最后的私有配置。正常进程不会重启；状态未知或管理忙碌时会推迟检查。管理员暂停和配额检查仍有效。每个代理进程每小时最多自动恢复三次。达到上限后再次崩溃，或恢复出错，都会停止重试；请检查日志、排除原因并显式启动新进程。热应用设置不会重置尝试次数。损坏的日志不会被清空。Node 和 Core 都需要包含此修复的新构建；只更新面板不会替换它们。'
+            ]
+        ]
+    ],
+    [
+        'architecture',
+        'architecture-offline-day',
+        [
+            [
+                'Сутки без панели',
+                'Автономная политика не отключается просто из-за отсутствия панели. Для планируемых суток нужны применённая политика, постоянные тома, действующие ключи и достаточный локальный резерв каждого лимита пользователя, хоста и тега. Общий остаток пользователя распределён между нодами и не равен запасу каждой ноды. Срок подписки, исчерпание резерва или конец периода квоты продолжают закрывать доступ. После календарного сброса новый резерв выдаёт панель; текущая реализация не финансирует следующий период без связи. CDN, DNS, прокси и сертификаты ноды должны работать независимо. Пересоздание контейнера требует постоянных каталогов состояния. При загрузке ядра через CUSTOM_CORE_URL его источник также должен быть доступен. Изменения блокировки или заморозки во время разрыва доходят после восстановления связи. Проверка готовности перед обслуживанием подтверждает текущее состояние, но не обещает сутки трафика.'
+            ],
+            [
+                'A day without the panel',
+                'Autonomous policy does not stop merely because the panel is unreachable. A planned day requires an applied policy, persistent volumes, valid credentials and enough local credit for every user, host and tag limit. A user’s total remaining quota is distributed across nodes and is not the credit of each node. Subscription expiry, exhausted credit and quota-period boundaries still deny access. The panel must fund the next period after a reset; the current implementation does not fund it offline. CDN, DNS, proxy and node certificates must remain independent. Recreating a container requires persistent state directories. A core loaded through CUSTOM_CORE_URL also needs its source to be reachable. Blocks or freezes changed during the outage arrive after reconnection. A maintenance readiness check proves current state, not a guaranteed day of traffic.'
+            ],
+            [
+                'یک روز بدون پنل',
+                'سیاست مستقل صرفاً به دلیل قطع پنل متوقف نمی‌شود. برای یک روز برنامه‌ریزی‌شده، سیاست اعمال‌شده، حجم‌های پایدار، کلیدهای معتبر و اعتبار محلی کافی برای هر محدودیت کاربر، میزبان و برچسب لازم است. مانده کل کاربر میان نودها تقسیم می‌شود و اعتبار هر نود نیست. پایان اشتراک، اتمام اعتبار یا مرز دوره سهمیه همچنان دسترسی را می‌بندد. اعتبار دوره بعد پس از بازنشانی باید توسط پنل تأمین شود؛ نسخه فعلی آن را آفلاین تأمین نمی‌کند. CDN، DNS، پروکسی و گواهی نود باید مستقل باشند. ایجاد دوباره کانتینر به مسیرهای پایدار وضعیت نیاز دارد. هسته دانلودشده با CUSTOM_CORE_URL نیز به دسترسی منبع نیاز دارد. مسدودسازی یا تعلیق جدید پس از اتصال مجدد می‌رسد. بررسی آمادگی نگهداری فقط وضعیت فعلی را تأیید می‌کند، نه یک روز ترافیک تضمینی.'
+            ],
+            [
+                '面板离线一天',
+                '自主策略不会仅因面板不可达而停止。计划离线一天需要已应用的策略、持久卷、有效密钥，以及用户、主机和标签每项限制的足够本地额度。用户总剩余额度分配在各节点之间，不等于每个节点的额度。订阅到期、额度耗尽及配额周期结束仍会拒绝访问。重置后的下一周期需要面板重新分配额度；当前实现不会在离线时为下一周期授信。CDN、DNS、代理及节点证书必须独立工作。重建容器需要持久状态目录。通过 CUSTOM_CORE_URL 下载的内核还需要源站可达。断连期间新增的封禁或冻结在恢复连接后同步。维护就绪检查只确认当前状态，并不保证一天的流量。'
+            ]
+        ]
+    ],
+    [
+        'templates',
+        'subscription-transient-query-errors',
+        [
+            [
+                'Временная ошибка выдачи',
+                'Ошибка чтения пользователя, устройства или хостов не означает, что подписка удалена. Конфигурационная выдача возвращает временную ошибку с предложением повторить запрос через 30 секунд; настоящий отсутствующий пользователь по-прежнему даёт 404. Ошибочная выборка хостов не считается успешной пустой подпиской. Если доступных хостов действительно нет, дополнительные запросы шаблонов и квот пропускаются. При повторяющемся сбое проверьте журнал и связь с базой данных; не создавайте пользователю новые ключи для устранения сетевой ошибки.'
+            ],
+            [
+                'Temporary delivery errors',
+                'A failed user, device or host query does not mean the subscription was deleted. Configuration delivery returns a temporary error asking the client to retry after 30 seconds; a genuinely missing user still returns 404. A failed host query is not reported as a successful empty subscription. If there truly are no available hosts, extra template and quota queries are skipped. For repeated failures, check the log and database connectivity; do not replace a user’s keys to solve a network error.'
+            ],
+            [
+                'خطای موقت دریافت',
+                'خطای خواندن کاربر، دستگاه یا میزبان به معنی حذف اشتراک نیست. دریافت پیکربندی خطای موقت با درخواست تلاش دوباره پس از 30 ثانیه می‌دهد؛ کاربر واقعاً ناموجود همچنان 404 می‌گیرد. خطای جست‌وجوی میزبان، اشتراک خالی موفق محسوب نمی‌شود. اگر واقعاً میزبانی موجود نباشد، درخواست‌های اضافی قالب و سهمیه انجام نمی‌شود. برای خطای تکراری، گزارش و اتصال پایگاه داده را بررسی کنید؛ برای رفع خطای شبکه کلید کاربر را عوض نکنید.'
+            ],
+            [
+                '临时分发错误',
+                '读取用户、设备或主机失败不代表订阅已被删除。配置分发返回临时错误并建议 30 秒后重试；用户确实不存在时仍返回 404。主机查询失败不会被当作成功的空订阅。确实没有可用主机时，会跳过额外的模板和配额查询。重复失败时检查日志及数据库连接，不要为修复网络问题而替换用户密钥。'
+            ]
+        ]
+    ],
     [
         'profiles',
         'editor-unsaved-recovery',
@@ -583,39 +647,119 @@ sections.push([
 ])
 
 sections.push(
-    ['profiles', 'profile-certificate-file-safety', [
-        ['Файлы сертификатов', 'Если панель должна прочитать PEM-файл для подготовки конфигурации, подключите его только для чтения внутри /var/lib/remnawave и укажите этот путь. Чтение вне каталога, включая выход через символическую ссылку, запрещено. Обычные текстовые файлы, FIFO и PEM больше 128 KiB не принимаются. Это правило относится к файлам, которые читает панель; оно не переносит сертификаты ноды и не настраивает её HTTPS автоматически.'],
-        ['Certificate files', 'If the panel needs to read a PEM file while preparing configuration, mount it read-only under /var/lib/remnawave and use that path. Reads outside this directory, including symlink escapes, are denied. Ordinary text files, FIFOs and PEM files over 128 KiB are rejected. This applies to files read by the panel; it does not relocate node certificates or configure node HTTPS automatically.'],
-        ['فایل‌های گواهی', 'اگر پنل برای آماده‌سازی پیکربندی باید فایل PEM بخواند، آن را فقط‌خواندنی داخل /var/lib/remnawave متصل و همان مسیر را وارد کنید. خواندن بیرون این پوشه، از جمله خروج از طریق پیوند نمادین، ممنوع است. فایل متن عادی، FIFO و PEM بزرگ‌تر از 128 KiB پذیرفته نمی‌شود. این قاعده مربوط به فایل‌هایی است که پنل می‌خواند؛ گواهی نود را جابه‌جا یا HTTPS آن را خودکار تنظیم نمی‌کند.'],
-        ['证书文件', '如果面板在准备配置时需要读取 PEM 文件，请将其以只读方式挂载到 /var/lib/remnawave 下并使用该路径。禁止读取此目录以外的文件，包括通过符号链接逃逸。普通文本、FIFO 以及超过 128 KiB 的 PEM 文件会被拒绝。此规则只适用于面板读取的文件，不会移动节点证书或自动配置节点 HTTPS。']
-    ]],
-    ['overview', 'overview-database-diagnostics', [
-        ['Диагностика базы данных', 'На главной показаны подключения приложения, активные запросы, ожидания блокировок и простаивающие транзакции. Снимок относится только к текущей роли и базе панели; собственный диагностический запрос исключён. Тексты SQL, адреса и ключи не показываются. Для доступа нужна сессия администратора, API-токен не подходит. Неизвестная статистика обозначается «—», а не нулём. При ошибке остальные блоки главной продолжают работать.\n\nИнтерфейс проверяет снимок каждые 30 секунд только в открытой вкладке; сервер объединяет одновременные запросы и хранит результат 15 секунд на процесс. Графики общего трафика также используют ограниченный снимок на 15 секунд. Это кеш отображения, который не меняет проверки доступа, квоты или блокировки. Рост ожиданий или времени запроса требует проверки журнала и плана SQL; число подключений само по себе не означает перегрузку.'],
-        ['Database diagnostics', 'Home shows application connections, active queries, lock waits and idle transactions. The snapshot covers only the current role and panel database; the diagnostics query excludes itself. SQL text, addresses and keys are not shown. An administrator session is required; API tokens cannot use this endpoint. Unknown statistics appear as “—”, not zero. A diagnostics failure leaves the other Home sections working.\n\nThe interface polls every 30 seconds in a visible tab; the server coalesces concurrent requests and retains a sample for 15 seconds per process. Total traffic charts also use a bounded 15-second snapshot. This display cache does not change access checks, quotas or blocks. Rising wait counts or query times call for log and SQL-plan inspection; a connection count alone does not prove overload.'],
-        ['عیب‌یابی پایگاه داده', 'صفحه خانه اتصال‌های برنامه، پرس‌وجوهای فعال، انتظار قفل و تراکنش‌های بیکار را نشان می‌دهد. نمونه فقط نقش فعلی و پایگاه داده پنل را پوشش می‌دهد و پرس‌وجوی تشخیصی خودش را حذف می‌کند. متن SQL، آدرس‌ها و کلیدها نمایش داده نمی‌شوند. نشست مدیر لازم است؛ توکن API به این مسیر دسترسی ندارد. آمار نامشخص با «—» نشان داده می‌شود، نه صفر. خطای این بخش سایر بخش‌های خانه را متوقف نمی‌کند.\n\nرابط هر ۳۰ ثانیه در زبانه قابل مشاهده نمونه می‌گیرد؛ سرور درخواست‌های هم‌زمان را ادغام و نتیجه را برای هر فرایند ۱۵ ثانیه نگه می‌دارد. نمودار ترافیک کل نیز نمونه محدود ۱۵ ثانیه‌ای دارد. این کش نمایشی بررسی دسترسی، سهمیه یا مسدودسازی را تغییر نمی‌دهد. افزایش انتظار یا زمان پرس‌وجو نیازمند بررسی گزارش و طرح SQL است؛ تعداد اتصال به‌تنهایی نشانه اضافه‌بار نیست.'],
-        ['数据库诊断', '主页显示应用连接、活动查询、锁等待和空闲事务。快照仅涵盖面板数据库中的当前角色，并排除诊断查询本身。不显示 SQL 文本、地址或密钥。必须使用管理员会话；API 令牌不能访问此端点。未知统计显示为“—”，而不是零。诊断失败不会影响主页其他区块。\n\n界面仅在可见标签页中每 30 秒轮询；服务端合并并发请求，每个进程保留快照 15 秒。总流量图也使用有界的 15 秒快照。这些显示缓存不会改变访问检查、配额或封禁。等待数或查询时间升高时应检查日志与 SQL 执行计划；连接数量本身不能证明过载。']
-    ]],
-    ['architecture', 'architecture-platform-compatibility', [
-        ['Поддерживаемые ОС и PostgreSQL', 'Комплект Installer 1.2.141 принимает Ubuntu 22.04/24.04/26.04 LTS и Debian 12/13, amd64/arm64. Для Docker выбирается официальный репозиторий своего дистрибутива. Промежуточные версии Ubuntu и производные системы не принимаются автоматически. Матрица на amd64 проверяет настоящий userspace, Bash, Python, OpenSSL и модульные сценарии; она не заменяет загрузочный тест ядра, systemd, firewall или arm64.\n\nВсе 195 миграций и сценарии квот, срока доступа и диагностики проверены на PostgreSQL 14.24/15.19/16.15/17.11/18.6 под владельцем БД без superuser. Для новой установки выбирайте поддерживаемую major-версию с текущими исправлениями. Поддержка PostgreSQL 14 заканчивается 12 ноября 2026 года; PostgreSQL 13 не проверен и снят с поддержки. Смена major-версии требует отдельного pg_upgrade или dump/restore. Не открывайте старый data volume новым major-образом; сначала проверьте перенос на копии.'],
-        ['Supported operating systems and PostgreSQL', 'Installer 1.2.141 accepts Ubuntu 22.04/24.04/26.04 LTS and Debian 12/13, amd64/arm64. Docker uses the official repository for the installed distribution. Interim Ubuntu releases and derivative distributions are not accepted automatically. The amd64 matrix checks real userspace, Bash, Python, OpenSSL and unit workflows; it does not replace kernel boot, systemd, firewall or arm64 tests.\n\nAll 195 migrations, quota, expiry and diagnostics scenarios were checked on PostgreSQL 14.24/15.19/16.15/17.11/18.6 as a non-superuser database owner. For new installations, choose a supported major version with current fixes. PostgreSQL 14 support ends on November 12, 2026; PostgreSQL 13 was not tested and is end-of-life. Major upgrades require a separate pg_upgrade or dump/restore. Do not open an old data volume with a new major image; verify the migration on a copy first.'],
-        ['سیستم‌عامل‌ها و PostgreSQL پشتیبانی‌شده', 'نصب‌کننده 1.2.141 Ubuntu 22.04/24.04/26.04 LTS و Debian 12/13 را برای amd64/arm64 می‌پذیرد. Docker از مخزن رسمی همان توزیع استفاده می‌کند. نسخه‌های میانی Ubuntu و توزیع‌های مشتق خودکار پذیرفته نمی‌شوند. ماتریس amd64 محیط کاربری واقعی، Bash، Python، OpenSSL و سناریوهای واحد را بررسی می‌کند؛ جایگزین آزمون بوت کرنل، systemd، فایروال یا arm64 نیست.\n\nتمام ۱۹۵ مهاجرت و سناریوهای سهمیه، انقضا و عیب‌یابی روی PostgreSQL 14.24/15.19/16.15/17.11/18.6 با مالک پایگاه داده بدون superuser بررسی شدند. برای نصب جدید نسخه اصلی پشتیبانی‌شده با اصلاحات جاری را انتخاب کنید. پشتیبانی PostgreSQL 14 در ۱۲ نوامبر ۲۰۲۶ تمام می‌شود؛ نسخه ۱۳ آزمایش نشده و پایان پشتیبانی است. ارتقای نسخه اصلی به pg_upgrade یا dump/restore جداگانه نیاز دارد. حجم داده قدیمی را با تصویر نسخه اصلی جدید باز نکنید و ابتدا انتقال را روی یک کپی بررسی کنید.'],
-        ['受支持的系统与 PostgreSQL', '安装器 1.2.141 支持 Ubuntu 22.04/24.04/26.04 LTS 与 Debian 12/13，架构为 amd64/arm64。Docker 使用当前发行版的官方仓库。不会自动接受 Ubuntu 中间发行版或衍生系统。amd64 矩阵检查真实用户空间、Bash、Python、OpenSSL 与单元流程，不能代替内核启动、systemd、防火墙或 arm64 测试。\n\n已使用非超级用户数据库所有者，在 PostgreSQL 14.24/15.19/16.15/17.11/18.6 上检查全部 195 项迁移以及配额、到期和诊断场景。新安装请选择仍受支持并安装当前修复的主版本。PostgreSQL 14 将于 2026 年 11 月 12 日结束支持；版本 13 未测试且已结束支持。跨主版本升级需要单独使用 pg_upgrade 或导出/恢复。不要让新主版本镜像直接打开旧数据卷，请先在副本上验证迁移。']
-    ]]
+    [
+        'profiles',
+        'profile-certificate-file-safety',
+        [
+            [
+                'Файлы сертификатов',
+                'Если панель должна прочитать PEM-файл для подготовки конфигурации, подключите его только для чтения внутри /var/lib/remnawave и укажите этот путь. Чтение вне каталога, включая выход через символическую ссылку, запрещено. Обычные текстовые файлы, FIFO и PEM больше 128 KiB не принимаются. Это правило относится к файлам, которые читает панель; оно не переносит сертификаты ноды и не настраивает её HTTPS автоматически.'
+            ],
+            [
+                'Certificate files',
+                'If the panel needs to read a PEM file while preparing configuration, mount it read-only under /var/lib/remnawave and use that path. Reads outside this directory, including symlink escapes, are denied. Ordinary text files, FIFOs and PEM files over 128 KiB are rejected. This applies to files read by the panel; it does not relocate node certificates or configure node HTTPS automatically.'
+            ],
+            [
+                'فایل‌های گواهی',
+                'اگر پنل برای آماده‌سازی پیکربندی باید فایل PEM بخواند، آن را فقط‌خواندنی داخل /var/lib/remnawave متصل و همان مسیر را وارد کنید. خواندن بیرون این پوشه، از جمله خروج از طریق پیوند نمادین، ممنوع است. فایل متن عادی، FIFO و PEM بزرگ‌تر از 128 KiB پذیرفته نمی‌شود. این قاعده مربوط به فایل‌هایی است که پنل می‌خواند؛ گواهی نود را جابه‌جا یا HTTPS آن را خودکار تنظیم نمی‌کند.'
+            ],
+            [
+                '证书文件',
+                '如果面板在准备配置时需要读取 PEM 文件，请将其以只读方式挂载到 /var/lib/remnawave 下并使用该路径。禁止读取此目录以外的文件，包括通过符号链接逃逸。普通文本、FIFO 以及超过 128 KiB 的 PEM 文件会被拒绝。此规则只适用于面板读取的文件，不会移动节点证书或自动配置节点 HTTPS。'
+            ]
+        ]
+    ],
+    [
+        'overview',
+        'overview-database-diagnostics',
+        [
+            [
+                'Диагностика и обновление главной',
+                'Общая кнопка обновления на главной заново запрашивает системную и пользовательскую статистику, трафик и здоровье/runtime панели. Пока запросы выполняются, повторное обновление не запускается. Блок базы данных и его автоматические запросы на главной отключены. Служебная диагностика остаётся доступна только администратору; подробности — в справочнике API. Он не выдаёт тексты SQL, адреса или ключи. Диагностический снимок ограничен текущей ролью и базой, объединяет одновременные запросы и хранится до 15 секунд на процесс. Этот кеш не меняет доступ, квоты или блокировки.'
+            ],
+            [
+                'Home refresh and diagnostics',
+                'The Home refresh button requests system/user statistics, bandwidth and panel health/runtime together. Another refresh is blocked while requests are pending. The database block and its automatic polling are removed from Home. Internal diagnostics remain administrator-only; see the API reference for access details. It never returns SQL text, addresses or keys. Its snapshot covers the current role and database, coalesces simultaneous requests and lasts up to 15 seconds per process. This cache does not change access, quotas or blocks.'
+            ],
+            [
+                'تازه‌سازی صفحه اصلی و عیب‌یابی',
+                'دکمه تازه‌سازی صفحه اصلی آمار سیستم و کاربران، ترافیک و سلامت/runtime پنل را با هم دریافت می‌کند. تا پایان درخواست‌ها تازه‌سازی تکراری اجرا نمی‌شود. بخش پایگاه داده و دریافت خودکار آن از صفحه اصلی حذف شده است. عیب‌یابی داخلی فقط برای مدیر در دسترس است؛ جزئیات در راهنمای API آمده است. متن SQL، آدرس و کلید برگردانده نمی‌شود. نمونه به نقش و پایگاه فعلی محدود است، درخواست‌های هم‌زمان را ادغام می‌کند و تا ۱۵ ثانیه در هر فرایند نگه داشته می‌شود. این کش دسترسی، سهمیه یا مسدودسازی را تغییر نمی‌دهد.'
+            ],
+            [
+                '首页刷新与诊断',
+                '首页刷新按钮同时重新请求系统和用户统计、流量以及面板健康/runtime 数据。请求未完成时不会重复刷新。首页已移除数据库区块及其自动轮询。内部诊断仍仅限管理员访问，权限细节请参阅 API 文档。响应不包含 SQL 文本、地址或密钥。快照仅覆盖当前角色和数据库，合并并发请求，每个进程最多缓存 15 秒。此缓存不会改变权限、配额或封禁。'
+            ]
+        ]
+    ],
+    [
+        'architecture',
+        'architecture-platform-compatibility',
+        [
+            [
+                'Поддерживаемые ОС и PostgreSQL',
+                'Комплект Installer 1.2.141 принимает Ubuntu 22.04/24.04/26.04 LTS и Debian 12/13, amd64/arm64. Для Docker выбирается официальный репозиторий своего дистрибутива. Промежуточные версии Ubuntu и производные системы не принимаются автоматически. Матрица на amd64 проверяет настоящий userspace, Bash, Python, OpenSSL и модульные сценарии; она не заменяет загрузочный тест ядра, systemd, firewall или arm64.\n\nВсе 195 миграций и сценарии квот, срока доступа и диагностики проверены на PostgreSQL 14.24/15.19/16.15/17.11/18.6 под владельцем БД без superuser. Для новой установки выбирайте поддерживаемую major-версию с текущими исправлениями. Поддержка PostgreSQL 14 заканчивается 12 ноября 2026 года; PostgreSQL 13 не проверен и снят с поддержки. Смена major-версии требует отдельного pg_upgrade или dump/restore. Не открывайте старый data volume новым major-образом; сначала проверьте перенос на копии.'
+            ],
+            [
+                'Supported operating systems and PostgreSQL',
+                'Installer 1.2.141 accepts Ubuntu 22.04/24.04/26.04 LTS and Debian 12/13, amd64/arm64. Docker uses the official repository for the installed distribution. Interim Ubuntu releases and derivative distributions are not accepted automatically. The amd64 matrix checks real userspace, Bash, Python, OpenSSL and unit workflows; it does not replace kernel boot, systemd, firewall or arm64 tests.\n\nAll 195 migrations, quota, expiry and diagnostics scenarios were checked on PostgreSQL 14.24/15.19/16.15/17.11/18.6 as a non-superuser database owner. For new installations, choose a supported major version with current fixes. PostgreSQL 14 support ends on November 12, 2026; PostgreSQL 13 was not tested and is end-of-life. Major upgrades require a separate pg_upgrade or dump/restore. Do not open an old data volume with a new major image; verify the migration on a copy first.'
+            ],
+            [
+                'سیستم‌عامل‌ها و PostgreSQL پشتیبانی‌شده',
+                'نصب‌کننده 1.2.141 Ubuntu 22.04/24.04/26.04 LTS و Debian 12/13 را برای amd64/arm64 می‌پذیرد. Docker از مخزن رسمی همان توزیع استفاده می‌کند. نسخه‌های میانی Ubuntu و توزیع‌های مشتق خودکار پذیرفته نمی‌شوند. ماتریس amd64 محیط کاربری واقعی، Bash، Python، OpenSSL و سناریوهای واحد را بررسی می‌کند؛ جایگزین آزمون بوت کرنل، systemd، فایروال یا arm64 نیست.\n\nتمام ۱۹۵ مهاجرت و سناریوهای سهمیه، انقضا و عیب‌یابی روی PostgreSQL 14.24/15.19/16.15/17.11/18.6 با مالک پایگاه داده بدون superuser بررسی شدند. برای نصب جدید نسخه اصلی پشتیبانی‌شده با اصلاحات جاری را انتخاب کنید. پشتیبانی PostgreSQL 14 در ۱۲ نوامبر ۲۰۲۶ تمام می‌شود؛ نسخه ۱۳ آزمایش نشده و پایان پشتیبانی است. ارتقای نسخه اصلی به pg_upgrade یا dump/restore جداگانه نیاز دارد. حجم داده قدیمی را با تصویر نسخه اصلی جدید باز نکنید و ابتدا انتقال را روی یک کپی بررسی کنید.'
+            ],
+            [
+                '受支持的系统与 PostgreSQL',
+                '安装器 1.2.141 支持 Ubuntu 22.04/24.04/26.04 LTS 与 Debian 12/13，架构为 amd64/arm64。Docker 使用当前发行版的官方仓库。不会自动接受 Ubuntu 中间发行版或衍生系统。amd64 矩阵检查真实用户空间、Bash、Python、OpenSSL 与单元流程，不能代替内核启动、systemd、防火墙或 arm64 测试。\n\n已使用非超级用户数据库所有者，在 PostgreSQL 14.24/15.19/16.15/17.11/18.6 上检查全部 195 项迁移以及配额、到期和诊断场景。新安装请选择仍受支持并安装当前修复的主版本。PostgreSQL 14 将于 2026 年 11 月 12 日结束支持；版本 13 未测试且已结束支持。跨主版本升级需要单独使用 pg_upgrade 或导出/恢复。不要让新主版本镜像直接打开旧数据卷，请先在副本上验证迁移。'
+            ]
+        ]
+    ]
 )
 
-sections.push(['nodes', 'nodes-global-xray-mode', [
-    ['Настройка Xray', 'Раздел «Настройка Xray» выбирает ядро сразу для всей панели. По умолчанию используется кастомное ядро Remnacust. Обычный Xray подходит для стандартных протоколов и транспортов. Пользователи, заморозка, подписки, геофайлы и клиентский автовыбор работают в обоих режимах. Лимиты хостов и устройств, отдельный учёт получателя автовыбора, правила доступа к сайтам, хосты для неактивного доступа, планы портов и Xera HTTP требуют кастомного ядра. В обычном режиме их настройки недоступны и не применяются; сохранённые значения не удаляются.\n\nПеред переходом на обычный Xray панель проверяет активные профили, планы портов и журналы квот. Устраните показанные препятствия: данные учёта и резервы нельзя просто удалять ради переключения. Для выбора двух ядер на нашей ноде нужен обновлённый образ Node; обычные Remnawave-ноды сохраняют базовую совместимость. Применение ставится в очередь, а при временной недоступности очереди повторяется планировщиком. Выбор режима не подтверждает успешное применение на каждой ноде: проверьте её состояние.\n\nСмена ядра перезапускает его и может прервать подключения. Сначала сохраните изменения редактора. При смене режима открытый редактор обновляется и загружает валидатор и схему соответствующего ядра. Общий выбор имеет приоритет над старым полем geodata.core в профиле; сохранённый профиль при этом не переписывается. Управление версиями кастомного ядра доступно только в кастомном режиме.'],
-    ['Xray settings', 'Xray settings selects one core flavor for the entire panel. The default is the custom Remnacust core. Stock Xray supports standard protocols and transports. Users, freezing, subscriptions, geofiles and client-side autoselect work in both modes. Host/device limits, separate autoselect recipient accounting, destination access rules, inactive-access hosts, port plans and Xera HTTP require the custom core. Stock mode disables their controls and effective policies without deleting saved settings.\n\nBefore switching to stock Xray, the panel checks active profiles, port plans and quota journals. Resolve the listed blockers; never delete accounting data or reserves merely to switch. Dual-core selection on a custom node requires an updated Node image; native Remnawave nodes retain baseline compatibility. Changes are queued and the scheduler retries delivery if the queue is temporarily unavailable. Selection does not prove every node applied it: check node status.\n\nSwitching cores restarts the core and may interrupt connections. Save editor changes first. An open editor refreshes on a mode change and loads the matching validator and schema. The global choice overrides the legacy geodata.core profile selector without rewriting the saved profile. Custom core version management is available only in custom mode.'],
-    ['تنظیمات Xray', 'بخش تنظیمات Xray یک نوع هسته را برای کل پنل انتخاب می‌کند. پیش‌فرض هسته سفارشی Remnacust است. Xray معمولی پروتکل‌ها و انتقال‌های استاندارد را پشتیبانی می‌کند. کاربران، انجماد، اشتراک، فایل‌های جغرافیایی و انتخاب خودکار سمت کلاینت در هر دو حالت کار می‌کنند. محدودیت میزبان و دستگاه، حسابداری مستقل گیرنده انتخاب خودکار، قواعد مقصد، میزبان دسترسی غیرفعال، طرح پورت و Xera HTTP به هسته سفارشی نیاز دارند. در حالت معمولی کنترل‌ها و سیاست‌های آن‌ها غیرفعال می‌شوند، اما تنظیمات ذخیره‌شده حذف نمی‌شوند.\n\nپیش از تغییر، پروفایل‌های فعال، طرح پورت و دفترهای سهمیه بررسی می‌شوند. موانع نمایش‌داده‌شده را رفع کنید؛ داده حسابداری و ذخایر را برای تغییر هسته حذف نکنید. انتخاب دو هسته روی نود سفارشی به تصویر Node به‌روز نیاز دارد؛ نود Remnawave معمولی سازگاری پایه را حفظ می‌کند. تغییر در صف قرار می‌گیرد و زمان‌بند هنگام اختلال صف دوباره تلاش می‌کند. انتخاب به‌معنی اعمال موفق روی همه نودها نیست؛ وضعیت نود را بررسی کنید.\n\nتعویض هسته آن را بازراه‌اندازی می‌کند و ممکن است اتصال را قطع کند. ابتدا تغییرات ویرایشگر را ذخیره کنید. ویرایشگر باز نوسازی شده و اعتبارسنج و طرح همان هسته را می‌گیرد. انتخاب عمومی بر geodata.core قدیمی اولویت دارد، بدون بازنویسی پروفایل ذخیره‌شده. مدیریت نسخه هسته سفارشی فقط در حالت سفارشی فعال است.'],
-    ['Xray 设置', '“Xray 设置”为整个面板选择统一内核，默认使用 Remnacust 自定义内核。标准 Xray 支持标准协议和传输。用户、冻结、订阅、地理文件和客户端自动选择在两种模式下均可使用。主机和设备限制、自动选择接收对象独立计费、目标访问规则、非活跃访问主机、端口计划和 Xera HTTP 需要自定义内核。标准模式会禁用相关控件和有效策略，但不会删除已保存设置。\n\n切换前会检查活动配置、端口计划和配额日志。请解决列出的阻碍，不要为切换而删除计费数据或预留额度。自定义节点需更新 Node 镜像才能选择双内核；标准 Remnawave 节点保留基本兼容性。更改进入队列，队列暂时不可用时由调度器重试。选中模式并不代表所有节点均已应用，请检查节点状态。\n\n切换内核需要重启内核，可能中断连接。请先保存编辑器修改。打开的编辑器会刷新并加载对应验证器和配置架构。全局选择优先于旧的 geodata.core 字段，但不会重写已保存配置。自定义内核版本管理仅在自定义模式下可用。']
-]])
+sections.push([
+    'nodes',
+    'nodes-global-xray-mode',
+    [
+        [
+            'Настройка Xray',
+            'Раздел «Настройка Xray» выбирает ядро сразу для всей панели. По умолчанию используется кастомное ядро Remnacust. Обычный Xray подходит для стандартных протоколов и транспортов. Пользователи, заморозка, подписки, геофайлы и клиентский автовыбор работают в обоих режимах. Лимиты хостов и устройств, отдельный учёт получателя автовыбора, правила доступа к сайтам, хосты для неактивного доступа, планы портов и Xera HTTP требуют кастомного ядра. В обычном режиме их настройки недоступны и не применяются; сохранённые значения не удаляются.\n\nПеред переходом на обычный Xray панель проверяет активные профили, планы портов и журналы квот. Устраните показанные препятствия: данные учёта и резервы нельзя просто удалять ради переключения. Для выбора двух ядер на нашей ноде нужен обновлённый образ Node; обычные Remnawave-ноды сохраняют базовую совместимость. Применение ставится в очередь, а при временной недоступности очереди повторяется планировщиком. Выбор режима не подтверждает успешное применение на каждой ноде: проверьте её состояние.\n\nСмена ядра перезапускает его и может прервать подключения. Сначала сохраните изменения редактора. При смене режима открытый редактор обновляется и загружает валидатор и схему соответствующего ядра. Общий выбор имеет приоритет над старым полем geodata.core в профиле; сохранённый профиль при этом не переписывается. Управление версиями кастомного ядра доступно только в кастомном режиме.'
+        ],
+        [
+            'Xray settings',
+            'Xray settings selects one core flavor for the entire panel. The default is the custom Remnacust core. Stock Xray supports standard protocols and transports. Users, freezing, subscriptions, geofiles and client-side autoselect work in both modes. Host/device limits, separate autoselect recipient accounting, destination access rules, inactive-access hosts, port plans and Xera HTTP require the custom core. Stock mode disables their controls and effective policies without deleting saved settings.\n\nBefore switching to stock Xray, the panel checks active profiles, port plans and quota journals. Resolve the listed blockers; never delete accounting data or reserves merely to switch. Dual-core selection on a custom node requires an updated Node image; native Remnawave nodes retain baseline compatibility. Changes are queued and the scheduler retries delivery if the queue is temporarily unavailable. Selection does not prove every node applied it: check node status.\n\nSwitching cores restarts the core and may interrupt connections. Save editor changes first. An open editor refreshes on a mode change and loads the matching validator and schema. The global choice overrides the legacy geodata.core profile selector without rewriting the saved profile. Custom core version management is available only in custom mode.'
+        ],
+        [
+            'تنظیمات Xray',
+            'بخش تنظیمات Xray یک نوع هسته را برای کل پنل انتخاب می‌کند. پیش‌فرض هسته سفارشی Remnacust است. Xray معمولی پروتکل‌ها و انتقال‌های استاندارد را پشتیبانی می‌کند. کاربران، انجماد، اشتراک، فایل‌های جغرافیایی و انتخاب خودکار سمت کلاینت در هر دو حالت کار می‌کنند. محدودیت میزبان و دستگاه، حسابداری مستقل گیرنده انتخاب خودکار، قواعد مقصد، میزبان دسترسی غیرفعال، طرح پورت و Xera HTTP به هسته سفارشی نیاز دارند. در حالت معمولی کنترل‌ها و سیاست‌های آن‌ها غیرفعال می‌شوند، اما تنظیمات ذخیره‌شده حذف نمی‌شوند.\n\nپیش از تغییر، پروفایل‌های فعال، طرح پورت و دفترهای سهمیه بررسی می‌شوند. موانع نمایش‌داده‌شده را رفع کنید؛ داده حسابداری و ذخایر را برای تغییر هسته حذف نکنید. انتخاب دو هسته روی نود سفارشی به تصویر Node به‌روز نیاز دارد؛ نود Remnawave معمولی سازگاری پایه را حفظ می‌کند. تغییر در صف قرار می‌گیرد و زمان‌بند هنگام اختلال صف دوباره تلاش می‌کند. انتخاب به‌معنی اعمال موفق روی همه نودها نیست؛ وضعیت نود را بررسی کنید.\n\nتعویض هسته آن را بازراه‌اندازی می‌کند و ممکن است اتصال را قطع کند. ابتدا تغییرات ویرایشگر را ذخیره کنید. ویرایشگر باز نوسازی شده و اعتبارسنج و طرح همان هسته را می‌گیرد. انتخاب عمومی بر geodata.core قدیمی اولویت دارد، بدون بازنویسی پروفایل ذخیره‌شده. مدیریت نسخه هسته سفارشی فقط در حالت سفارشی فعال است.'
+        ],
+        [
+            'Xray 设置',
+            '“Xray 设置”为整个面板选择统一内核，默认使用 Remnacust 自定义内核。标准 Xray 支持标准协议和传输。用户、冻结、订阅、地理文件和客户端自动选择在两种模式下均可使用。主机和设备限制、自动选择接收对象独立计费、目标访问规则、非活跃访问主机、端口计划和 Xera HTTP 需要自定义内核。标准模式会禁用相关控件和有效策略，但不会删除已保存设置。\n\n切换前会检查活动配置、端口计划和配额日志。请解决列出的阻碍，不要为切换而删除计费数据或预留额度。自定义节点需更新 Node 镜像才能选择双内核；标准 Remnawave 节点保留基本兼容性。更改进入队列，队列暂时不可用时由调度器重试。选中模式并不代表所有节点均已应用，请检查节点状态。\n\n切换内核需要重启内核，可能中断连接。请先保存编辑器修改。打开的编辑器会刷新并加载对应验证器和配置架构。全局选择优先于旧的 geodata.core 字段，但不会重写已保存配置。自定义内核版本管理仅在自定义模式下可用。'
+        ]
+    ]
+])
 
-sections.push(['subscription-settings', 'subscription-hwid-delivery', [
-    ['Обновление подписки и HWID', 'Выдача подписки приложению проверяет пользователя, устройство, блокировку регистрации и лимит устройств в базе данных, но не ждёт ответа нод. Доставка персональных ключей выполняется отдельно с сохранением задания и повторными попытками. Если нода недоступна, конфигурация всё равно выдаётся; новое подключение на этой ноде станет доступно после доставки ключа. Уже известное устройство не занимает очередь блокировки регистрации нового устройства. Повторные обновления известного устройства не запускают рассылку ключей на все ноды, но заново проверяют права: блокировки HWID и запрет новых устройств не обходятся.\n\nОткрытие сайта или curl без заголовков устройства не проверяет тот же путь, что Happ или INCY. При диагностике сравнивайте одинаковую ссылку с User-Agent и HWID приложения. Не публикуйте ссылку подписки или HWID в открытых журналах.'],
-    ['Subscription refresh and HWID', 'Subscription delivery checks the user, device, registration policy and device limit in the database without waiting for nodes. Personal keys are delivered separately through persistent jobs with retries. If a node is unavailable, the subscription is still returned; a new connection on that node becomes usable after its key arrives. Known devices do not wait for the lock used to register new devices. Refreshing a known device does not resend keys to every node, but rechecks authorization: HWID blocks and registration restrictions remain enforced.\n\nA website visit or curl request without device headers does not exercise the same path as Happ or INCY. Compare the same URL with the application User-Agent and HWID when diagnosing failures. Do not publish subscription URLs or HWIDs in public logs.'],
-    ['تازه‌سازی اشتراک و HWID', 'ارسال اشتراک، کاربر، دستگاه، سیاست ثبت و سقف دستگاه‌ها را در پایگاه داده بررسی می‌کند و منتظر پاسخ نودها نمی‌ماند. کلیدهای شخصی با کارهای پایدار و تلاش مجدد جداگانه ارسال می‌شوند. اگر نود در دسترس نباشد، اشتراک همچنان برگردانده می‌شود؛ اتصال جدید روی آن نود پس از دریافت کلید ممکن می‌شود. دستگاه شناخته‌شده منتظر قفل ثبت دستگاه جدید نمی‌ماند. تازه‌سازی دستگاه شناخته‌شده کلید را دوباره به همه نودها نمی‌فرستد، اما مجوزها دوباره بررسی می‌شوند و مسدودی HWID و محدودیت ثبت حفظ می‌شود.\n\nبازکردن سایت یا curl بدون سرآیند دستگاه همان مسیر Happ یا INCY را آزمایش نمی‌کند. برای عیب‌یابی، همان نشانی را با User-Agent و HWID برنامه مقایسه کنید. لینک اشتراک و HWID را در گزارش عمومی منتشر نکنید.'],
-    ['订阅刷新与 HWID', '向应用返回订阅前，会在数据库中检查用户、设备、注册策略和设备数量限制，无需等待节点响应。个人密钥通过持久化任务单独下发，失败后重试。节点不可用时仍会返回订阅；该节点收到密钥后，新连接才能使用。已知设备无需等待注册新设备使用的锁。已知设备刷新时不会向所有节点重复下发密钥，但每次仍重新检查权限，不会绕过 HWID 封禁或注册限制。\n\n打开网站或不带设备请求头的 curl 请求，与 Happ、INCY 的处理路径不同。排查时应使用相同链接及应用的 User-Agent、HWID 进行对比。不要在公开日志中泄露订阅链接或 HWID。']
-]])
+sections.push([
+    'subscription-settings',
+    'subscription-hwid-delivery',
+    [
+        [
+            'Обновление подписки и HWID',
+            'Выдача подписки приложению проверяет пользователя, устройство, блокировку регистрации и лимит устройств в базе данных, но не ждёт ответа нод. Доставка персональных ключей выполняется отдельно с сохранением задания и повторными попытками. Если нода недоступна, конфигурация всё равно выдаётся; новое подключение на этой ноде станет доступно после доставки ключа. Уже известное устройство не занимает очередь блокировки регистрации нового устройства. Повторные обновления известного устройства не запускают рассылку ключей на все ноды, но заново проверяют права: блокировки HWID и запрет новых устройств не обходятся.\n\nОткрытие сайта или curl без заголовков устройства не проверяет тот же путь, что Happ или INCY. При диагностике сравнивайте одинаковую ссылку с User-Agent и HWID приложения. Не публикуйте ссылку подписки или HWID в открытых журналах.'
+        ],
+        [
+            'Subscription refresh and HWID',
+            'Subscription delivery checks the user, device, registration policy and device limit in the database without waiting for nodes. Personal keys are delivered separately through persistent jobs with retries. If a node is unavailable, the subscription is still returned; a new connection on that node becomes usable after its key arrives. Known devices do not wait for the lock used to register new devices. Refreshing a known device does not resend keys to every node, but rechecks authorization: HWID blocks and registration restrictions remain enforced.\n\nA website visit or curl request without device headers does not exercise the same path as Happ or INCY. Compare the same URL with the application User-Agent and HWID when diagnosing failures. Do not publish subscription URLs or HWIDs in public logs.'
+        ],
+        [
+            'تازه‌سازی اشتراک و HWID',
+            'ارسال اشتراک، کاربر، دستگاه، سیاست ثبت و سقف دستگاه‌ها را در پایگاه داده بررسی می‌کند و منتظر پاسخ نودها نمی‌ماند. کلیدهای شخصی با کارهای پایدار و تلاش مجدد جداگانه ارسال می‌شوند. اگر نود در دسترس نباشد، اشتراک همچنان برگردانده می‌شود؛ اتصال جدید روی آن نود پس از دریافت کلید ممکن می‌شود. دستگاه شناخته‌شده منتظر قفل ثبت دستگاه جدید نمی‌ماند. تازه‌سازی دستگاه شناخته‌شده کلید را دوباره به همه نودها نمی‌فرستد، اما مجوزها دوباره بررسی می‌شوند و مسدودی HWID و محدودیت ثبت حفظ می‌شود.\n\nبازکردن سایت یا curl بدون سرآیند دستگاه همان مسیر Happ یا INCY را آزمایش نمی‌کند. برای عیب‌یابی، همان نشانی را با User-Agent و HWID برنامه مقایسه کنید. لینک اشتراک و HWID را در گزارش عمومی منتشر نکنید.'
+        ],
+        [
+            '订阅刷新与 HWID',
+            '向应用返回订阅前，会在数据库中检查用户、设备、注册策略和设备数量限制，无需等待节点响应。个人密钥通过持久化任务单独下发，失败后重试。节点不可用时仍会返回订阅；该节点收到密钥后，新连接才能使用。已知设备无需等待注册新设备使用的锁。已知设备刷新时不会向所有节点重复下发密钥，但每次仍重新检查权限，不会绕过 HWID 封禁或注册限制。\n\n打开网站或不带设备请求头的 curl 请求，与 Happ、INCY 的处理路径不同。排查时应使用相同链接及应用的 User-Agent、HWID 进行对比。不要在公开日志中泄露订阅链接或 HWID。'
+        ]
+    ]
+])
 
 export function explainCurrentWorkflows(articles) {
     const tagSettings = [

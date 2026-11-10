@@ -1,5 +1,4 @@
 import {
-    Accordion,
     Alert,
     Badge,
     Button,
@@ -23,8 +22,6 @@ import { LottieLinkShared } from '@shared/ui/lotties'
 import { LottieCheckmarkShared } from '@shared/ui/lotties/checkmark'
 import { LottieStopShared } from '@shared/ui/lotties/stop'
 import { getNodeErrorMessage } from '@shared/utils/node-error-message'
-
-import { NodeDiagnostics } from '../../edit-node-modal/node-diagnostics'
 
 interface IProps {
     nodeUuid?: string
@@ -128,14 +125,6 @@ export const CreateNodeStep3Status = ({ nodeUuid, onClose, installMode }: IProps
                         </Button>
                     </Stack>
                 </Alert>
-            )}
-            {nodeUuid && (installStarted || status === STATUS.CONNECTED || installMode === 'manual') && (
-                <Accordion variant="contained">
-                    <Accordion.Item value="diagnostics">
-                        <Accordion.Control>{t('operations.nodeDiagnostics')}</Accordion.Control>
-                        <Accordion.Panel><NodeDiagnostics nodeUuid={nodeUuid} /></Accordion.Panel>
-                    </Accordion.Item>
-                </Accordion>
             )}
             {(installMode !== 'ssh' || installStarted || status === STATUS.CONNECTED) && (
                 <Paper

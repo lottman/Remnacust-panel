@@ -1,11 +1,12 @@
 const controls =
     'button,a,[role="button"],[data-icon-motion-target],.mantine-ThemeIcon-root,.mantine-Menu-item,.mantine-Tabs-tab'
+const sidebar = '[data-sidebar-icon-motion]'
 const excluded = '[data-icon-motion="off"],[data-drag-handle],.monaco-editor,.recharts-surface'
 const unavailable =
     ':disabled,[data-disabled],[data-loading],[data-refreshing],[aria-disabled="true"],[aria-busy="true"]'
-const shapes = 'path,circle,ellipse,line,polyline,polygon,rect'
+const shapes = 'path,circle,ellipse,line,polyline,polygon,rect,use,image'
 
-export function iconPartFrames(stroked: boolean, length: number): Keyframe[] {
+export function iconPartFrames(stroked: boolean, length: number, preserveClip = false): Keyframe[] {
     if (stroked && Number.isFinite(length) && length > 0)
         return [
             {
@@ -22,12 +23,19 @@ export function iconPartFrames(stroked: boolean, length: number): Keyframe[] {
             },
             { strokeDasharray: `${length} ${length}`, strokeDashoffset: 0, opacity: 1, offset: 1 }
         ]
-    return [
+    const frames: Keyframe[] = [
         { opacity: 0.55, filter: 'brightness(1)', offset: 0 },
         { opacity: 1, filter: 'brightness(1.2)', offset: 0.45 },
         { opacity: 0.8, filter: 'brightness(1.05)', offset: 0.7 },
         { opacity: 1, filter: 'brightness(1)', offset: 1 }
     ]
+    if (!preserveClip) {
+        frames[0].clipPath = 'inset(0 0 100% 0)'
+        frames[1].clipPath = 'inset(0 0 0 0)'
+        frames[2].clipPath = 'inset(0 0 0 0)'
+        frames[3].clipPath = 'inset(0 0 0 0)'
+    }
+    return frames
 }
 
 export function installIconMotion(document: Document): () => void {
@@ -43,7 +51,9 @@ export function installIconMotion(document: Document): () => void {
         active.clear()
     }
     const ownerFor = (target: EventTarget | null) =>
-        target instanceof Element ? (target.closest(controls) ?? target.closest('svg')) : null
+        target instanceof Element && target.closest(sidebar)
+            ? (target.closest(controls) ?? target.closest('svg'))
+            : null
     const play = (target: EventTarget | null) => {
         if (reduced() || document.hidden || !(target instanceof Element)) return
         const owner = ownerFor(target)
@@ -90,11 +100,14 @@ export function installIconMotion(document: Document): () => void {
                         oldest[1].cancel()
                     }
                 }
-                const animation = part.animate(iconPartFrames(stroked, length), {
-                    duration: stroked ? 420 : 360,
-                    delay: index * 16,
-                    easing: 'cubic-bezier(.2,.7,.3,1)'
-                })
+                const animation = part.animate(
+                    iconPartFrames(stroked, length, style.clipPath !== 'none'),
+                    {
+                        duration: stroked ? 420 : 360,
+                        delay: index * 16,
+                        easing: 'cubic-bezier(.2,.7,.3,1)'
+                    }
+                )
                 active.set(part, animation)
                 animation.onfinish = animation.oncancel = () => {
                     if (active.get(part) === animation) active.delete(part)

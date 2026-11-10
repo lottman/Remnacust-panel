@@ -15,6 +15,9 @@ test('stroke and filled glyph details have distinct animations without moving or
     assert.equal(stroke[0].strokeDashoffset, 42);
     assert.equal(stroke.at(-1).strokeDashoffset, 0);
     assert.equal(fill.at(-1).filter, 'brightness(1)');
+    assert.equal(fill[0].clipPath, 'inset(0 0 100% 0)');
+    assert.equal(fill.at(-1).clipPath, 'inset(0 0 0 0)');
+    assert(iconPartFrames(false, 0, true).every(frame => !Object.hasOwn(frame, 'clipPath')));
     assert.notDeepEqual(stroke, fill);
     for (const frames of [stroke, fill, iconPartFrames(true, NaN), iconPartFrames(true, 0)])
         for (const frame of frames) {

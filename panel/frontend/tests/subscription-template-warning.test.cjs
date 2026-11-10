@@ -103,6 +103,7 @@ test('applied numeric tolerance warnings never show a saved-draft banner', () =>
     saved.validationWarnings = ['routing.balancers.0.strategy.settings.tolerance'];
     const alerts = harness(saved).render().filter(element => element.type === 'Alert');
     assert.deepEqual(alerts.map(element => element.props.title), ['template-draft.warning']);
+    assert(alerts[0].props.children.includes('template-draft.applied-warning-help'));
 });
 
 test('confirmed template saves clear their own recovery but retain text typed after submission', async () => {

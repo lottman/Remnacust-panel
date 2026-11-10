@@ -155,6 +155,7 @@ export const SidebarShellLayout = ({
             <FocusTrap active={mobile && opened}>
                 <AppShell.Navbar
                     id="panel-navigation"
+                    data-sidebar-icon-motion
                     aria-hidden={!opened}
                     inert={!opened}
                     className={clsx(classes.sidebarWrapper, { [classes.sidebarClosed]: !opened })}

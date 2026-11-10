@@ -483,6 +483,11 @@ jobs:
           TEMPLATE_CACHE_TEST_DATABASE_URL: ${{ env.DATABASE_URL }}
           TEMPLATE_CACHE_TEST_DISPOSABLE: '1'
           TEMPLATE_CACHE_TEST_PG_VERSION: ${{ matrix.postgres }}
+      - name: Verify host metadata freshness and bounded identity scans
+        run: node --test tests/host-policy-metadata.database.integration.cjs
+        env:
+          HOST_POLICY_METADATA_TEST_DATABASE_URL: ${{ env.DATABASE_URL }}
+          HOST_POLICY_METADATA_TEST_DISPOSABLE: '1'
       - name: Verify UTC access and expiry boundaries
         run: node tests/access-expiry-timezone.database.integration.cjs
       - name: Verify actual diagnostics SQL with restricted roles

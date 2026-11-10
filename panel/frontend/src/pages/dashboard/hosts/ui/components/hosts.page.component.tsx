@@ -11,10 +11,11 @@ import { useTranslation } from 'react-i18next'
 import { TbListCheck } from 'react-icons/tb'
 
 import { queryClient } from '@shared/api'
-import { type HostStatusFilter, matchesHostStatus } from '@shared/utils/host-status-filter'
 import { hostsQueryKeys, useReorderHosts } from '@shared/api/hooks'
+import { usePageSearchShortcut } from '@shared/hooks/use-page-search-shortcut'
 import { LoadingScreen, Page, PageHeaderShared } from '@shared/ui'
 import { ViewModeTransition } from '@shared/ui/view-mode-transition/view-mode-transition'
+import { type HostStatusFilter, matchesHostStatus } from '@shared/utils/host-status-filter'
 
 import {
     HOSTS_VIEW_MODE,
@@ -26,6 +27,7 @@ import { HostTagLimitsCard } from './host-tag-limits.card'
 import { IProps } from './interfaces'
 
 export default function HostsPageComponent(props: IProps) {
+    usePageSearchShortcut()
     const { t } = useTranslation()
     const { configProfiles, hosts, hostTags, isLoading } = props
     const [statusFilter, setStatusFilter] = useState<HostStatusFilter>('all')
@@ -55,7 +57,8 @@ export default function HostsPageComponent(props: IProps) {
             }
 
             const positions = new Map(state.map((item, index) => [item.uuid, index]))
-            if (hosts.length !== state.length || hosts.some(host => !positions.has(host.uuid))) return
+            if (hosts.length !== state.length || hosts.some((host) => !positions.has(host.uuid)))
+                return
             const hostsToReorder = hosts
 
             const updatedHosts = hostsToReorder.map((host) => ({
@@ -123,9 +126,11 @@ export default function HostsPageComponent(props: IProps) {
             <HostTagLimitsCard tags={hostTags ?? []} />
             <Select
                 aria-label={t('hosts-status-filter.label')}
-                data={(['all', 'enabled', 'disabled', 'visible', 'hidden'] as const).map(value => ({ value, label: t(`hosts-status-filter.${value}`) }))}
+                data={(['all', 'enabled', 'disabled', 'visible', 'hidden'] as const).map(
+                    (value) => ({ value, label: t(`hosts-status-filter.${value}`) })
+                )}
                 value={statusFilter}
-                onChange={value => setStatusFilter((value ?? 'all') as HostStatusFilter)}
+                onChange={(value) => setStatusFilter((value ?? 'all') as HostStatusFilter)}
                 w={220}
                 maw="100%"
                 mb="sm"
@@ -153,7 +158,7 @@ export default function HostsPageComponent(props: IProps) {
                             hostTags={hostTags}
                             selectedHosts={selectedHosts}
                             setSelectedHosts={setSelectedHosts}
-                            state={state.filter(host => matchesHostStatus(host, statusFilter))}
+                            state={state.filter((host) => matchesHostStatus(host, statusFilter))}
                         />
                     )}
                 </ViewModeTransition>

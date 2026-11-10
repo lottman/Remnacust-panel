@@ -133,6 +133,11 @@ export function SubscriptionTemplateEditorWidget(props: Props) {
     const isDisplayedSavedDraft = hasSavedDraft && value === template.draftContent
     const warningPath =
         (isDisplayedSavedDraft ? template.validationWarnings?.[0] : undefined) ?? draft.error
+    const isAppliedToleranceWarning =
+        !hasSavedDraft &&
+        value === baseline &&
+        warningPath?.endsWith('.tolerance') &&
+        template.validationWarnings?.includes(warningPath)
     const revealIssue = () => {
         setActiveTab('code')
         requestAnimationFrame(() => {
@@ -325,11 +330,13 @@ export function SubscriptionTemplateEditorWidget(props: Props) {
                         {t(
                             isDisplayedSavedDraft
                                 ? 'template-draft.saved-help'
-                                : warningPath?.endsWith('.tolerance')
-                                  ? 'template-draft.tolerance-help'
-                                  : warningPath?.endsWith('.tagPrefix')
-                                    ? 'autoselect.prefix-conflict-help'
-                                    : 'template-draft.warning-help'
+                                : isAppliedToleranceWarning
+                                  ? 'template-draft.applied-warning-help'
+                                  : warningPath?.endsWith('.tolerance')
+                                    ? 'template-draft.tolerance-help'
+                                    : warningPath?.endsWith('.tagPrefix')
+                                      ? 'autoselect.prefix-conflict-help'
+                                      : 'template-draft.warning-help'
                         )}
                     </Alert>
                 )}

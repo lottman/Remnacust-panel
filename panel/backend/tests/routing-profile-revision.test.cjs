@@ -191,9 +191,16 @@ test(
             const initial = await cache.retireRoutingProfileRevision(key, 'b'.repeat(64), 0);
             assert.equal(initial, null);
             assert.equal(await redis.exists(stored), 0);
-            for (const malformed of ['bad', '{"revision":10}', '{"revision":10,"fingerprint":"bad"}']) {
+            for (const malformed of [
+                'bad',
+                '{"revision":10}',
+                '{"revision":10,"fingerprint":"bad"}',
+            ]) {
                 await redis.set(stored, malformed);
-                assert.equal(await cache.retireRoutingProfileRevision(key, 'b'.repeat(64), 0), null);
+                assert.equal(
+                    await cache.retireRoutingProfileRevision(key, 'b'.repeat(64), 0),
+                    null,
+                );
                 assert.equal(await redis.get(stored), malformed);
             }
             const legacyEmpty = JSON.stringify({ fingerprint: 'b'.repeat(64), revision: 123 });

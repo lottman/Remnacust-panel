@@ -78,7 +78,7 @@ for (const [file, exported, method] of cases) {
                 { [method]: async () => assert.fail('database must not be read') },
                 cache({ get: async () => expected }),
             );
-        assert.deepEqual(await hit.execute({ externalSquadUuid: 'squad' }), expected);
+            assert.deepEqual(await hit.execute({ externalSquadUuid: 'squad' }), expected);
             for (const db of [
                 async () => null,
                 async () => {

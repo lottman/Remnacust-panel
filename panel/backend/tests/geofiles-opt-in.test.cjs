@@ -259,14 +259,26 @@ test('repository rejects invalid merged settings before mutation and allows expl
 });
 
 test('API returns a validation error for an invalid switch combination without clearing caches', async () => {
-    const { SubscriptionSettingsService } = source('modules/subscription-settings/subscription-settings.service.ts', {
-        '@libs/contracts/constants': constants,
-        '@common/types': { fail: error => ({ isOk: false, error }), ok: response => ({ isOk: true, response }) },
-    });
-    const service = new SubscriptionSettingsService({ del: () => assert.fail('failed update must not publish cache invalidation') }, {}, {
-        findByUUID: async () => ({ uuid: 'settings' }),
-        update: async () => { throw Error('GEOFILES_REQUIRE_BASE_JSON'); },
-    });
+    const { SubscriptionSettingsService } = source(
+        'modules/subscription-settings/subscription-settings.service.ts',
+        {
+            '@libs/contracts/constants': constants,
+            '@common/types': {
+                fail: (error) => ({ isOk: false, error }),
+                ok: (response) => ({ isOk: true, response }),
+            },
+        },
+    );
+    const service = new SubscriptionSettingsService(
+        { del: () => assert.fail('failed update must not publish cache invalidation') },
+        {},
+        {
+            findByUUID: async () => ({ uuid: 'settings' }),
+            update: async () => {
+                throw Error('GEOFILES_REQUIRE_BASE_JSON');
+            },
+        },
+    );
     const result = await service.updateSettings({ uuid: 'settings', geofilesEnabled: true });
     assert.equal(result.isOk, false);
     assert.equal(result.error.message, 'GEOFILES_REQUIRE_BASE_JSON');
@@ -275,13 +287,25 @@ test('API returns a validation error for an invalid switch combination without c
 
 test('external squad overrides cannot turn on the global geofile system', async () => {
     const { SubscriptionService } = source('modules/subscription/subscription.service.ts', {
-        '@common/utils/convert-type': load(path.join(__dirname, '../src/common/utils/convert-type.ts')),
+        '@common/utils/convert-type': load(
+            path.join(__dirname, '../src/common/utils/convert-type.ts'),
+        ),
         '@integration-modules/notifications/interfaces': {},
-        '@modules/external-squads/queries/get-cached-external-squad-settings': { GetCachedExternalSquadSettingsQuery: class {} },
+        '@modules/external-squads/queries/get-cached-external-squad-settings': {
+            GetCachedExternalSquadSettingsQuery: class {},
+        },
     });
     const service = Object.create(SubscriptionService.prototype);
     service.logger = { error: () => assert.fail('unexpected override failure') };
-    service.queryBus = { execute: async () => ({ subscriptionSettings: { geofilesEnabled: true, serveJsonAtBaseSubscription: true }, responseHeadersRemove: [], responseHeadersAdd: {}, hwidSettings: {}, customRemarks: {} }) };
+    service.queryBus = {
+        execute: async () => ({
+            subscriptionSettings: { geofilesEnabled: true, serveJsonAtBaseSubscription: true },
+            responseHeadersRemove: [],
+            responseHeadersAdd: {},
+            hwidSettings: {},
+            customRemarks: {},
+        }),
+    };
     const settings = { geofilesEnabled: false, serveJsonAtBaseSubscription: false };
     const result = await service.applyMaybeExternalSquadOverrides(settings, 'external-squad');
     assert.equal(result.subscriptionSettings.geofilesEnabled, false);
@@ -290,12 +314,22 @@ test('external squad overrides cannot turn on the global geofile system', async 
 });
 
 test('cached global settings are copied before entering request-local subscription processing', async () => {
-    const { GetCachedSubscriptionSettingsHandler } = source('modules/subscription-settings/queries/get-cached-subscrtipion-settings/get-cached-subscrtipion-settings.handler.ts', {
-        '@libs/contracts/constants': constants,
-        '@nestjs/cqrs': { QueryHandler: () => () => {} },
-    });
-    const cached = { geofilesEnabled: false, serveJsonAtBaseSubscription: false, customResponseHeaders: { routing: 'manual' } };
-    const handler = new GetCachedSubscriptionSettingsHandler({ findFirst: () => assert.fail('unexpected DB read') }, { templateSnapshot: async () => ({ generation: 'a'.repeat(32), value: cached }) });
+    const { GetCachedSubscriptionSettingsHandler } = source(
+        'modules/subscription-settings/queries/get-cached-subscrtipion-settings/get-cached-subscrtipion-settings.handler.ts',
+        {
+            '@libs/contracts/constants': constants,
+            '@nestjs/cqrs': { QueryHandler: () => () => {} },
+        },
+    );
+    const cached = {
+        geofilesEnabled: false,
+        serveJsonAtBaseSubscription: false,
+        customResponseHeaders: { routing: 'manual' },
+    };
+    const handler = new GetCachedSubscriptionSettingsHandler(
+        { findFirst: () => assert.fail('unexpected DB read') },
+        { templateSnapshot: async () => ({ generation: 'a'.repeat(32), value: cached }) },
+    );
     const one = await handler.execute();
     one.geofilesEnabled = true;
     one.customResponseHeaders.routing = 'changed';

@@ -30,7 +30,7 @@ import {
     renameBalancer,
     editTemplate,
     observerFor,
-    needsProbes,
+    needsBalancerProbes,
     setBalancerStrategy,
     removeUnusedProbes,
     parseTemplate,
@@ -963,9 +963,7 @@ export function AutoselectPanel({
                                     </Text>
                                 )}
                                 {(config.observatory || config.burstObservatory) &&
-                                    !balancers.some((balance) =>
-                                        needsProbes(balance.strategy?.type)
-                                    ) && (
+                                    !balancers.some(needsBalancerProbes) && (
                                         <Alert>
                                             <Text size="sm">
                                                 {t('autoselect.probes-not-needed')}
@@ -980,9 +978,7 @@ export function AutoselectPanel({
                                         </Alert>
                                     )}
                                 {(config.observatory || config.burstObservatory) &&
-                                    balancers.some((balance) =>
-                                        needsProbes(balance.strategy?.type)
-                                    ) && (
+                                    balancers.some(needsBalancerProbes) && (
                                         <Card withBorder p="md">
                                             <Title order={4} mb="sm">
                                                 {t('autoselect.probes')}

@@ -18,6 +18,173 @@ const host = (n, tags = ['LTE']) => ({ protocol: 'vless', address: `${n}.example
 const candidates = [host(1, ['LTE', 'VK']), host(2, ['LTE', 'YC']), host(3, ['LTE2']), host(4, ['LTE'])];
 const pool = { selector: { type: 'uuids', values: candidates.map(h => h.metadata.uuid), expected: 2 }, mode: 'random', tagPrefix: 'g' };
 
+function regionalTemplate() {
+    return {
+        outbounds: [{ tag: 'direct', protocol: 'freedom' }],
+        remnawave: {
+            injectHosts: ['DE', 'NL'].map(tag => ({ mode: 'all', selectFrom: 'HIDDEN', tagPrefix: tag, selector: { type: 'tags', values: [tag] } })),
+            assignments: [{ hosts: [id(0)], balancerTag: 'auto-de' }],
+        },
+        routing: {
+            balancers: ['DE', 'NL'].map(tag => ({ tag: 'auto-' + tag.toLowerCase(), selector: [tag], strategy: { type: 'leastPing' } })),
+            rules: [{ type: 'field', network: 'tcp,udp', balancerTag: 'auto-nl' }],
+        },
+        burstObservatory: { subjectSelector: ['DE', 'NL'], pingConfig: { interval: '1m', sampling: 3 } },
+    };
+}
+
+test('assigned regional profiles inject and probe only reachable pools, without changing the saved template', async () => {
+    const template = regionalTemplate(), before = structuredClone(template);
+    const selected = recipientXrayTemplate({ uuid: id(0), tags: [] }, template);
+    assert.deepEqual(selected.routing.balancers.map(value => value.tag), ['auto-de']);
+    assert.deepEqual(selected.remnawave.injectHosts.map(value => value.tagPrefix), ['DE']);
+    assert.deepEqual(selected.burstObservatory.subjectSelector, ['DE']);
+    const generator = new XrayJsonGeneratorService({ getCachedTemplateByType: async () => selected });
+    const [generated] = JSON.parse(await generator.generateConfig({ hosts: [host(0), host(1, ['DE']), host(2, ['NL'])], isExtendedClient: false }));
+    assert.deepEqual(generated.outbounds.map(value => value.tag), ['DE', 'direct']);
+    assert.deepEqual(generated.burstObservatory.subjectSelector, ['DE']);
+    assert.equal(generated.burstObservatory.pingConfig.interval, '1m');
+    assert.equal(generated.burstObservatory.pingConfig.sampling, 3);
+    assert.deepEqual(template, before);
+});
+
+test('an inaccessible unrelated regional pool cannot remove a valid assigned profile', async () => {
+    const selected = recipientXrayTemplate({ uuid: id(0), tags: [] }, regionalTemplate());
+    const generator = new XrayJsonGeneratorService({ getCachedTemplateByType: async () => selected });
+    const generated = JSON.parse(await generator.generateConfig({ hosts: [host(0), host(1, ['DE'])], isExtendedClient: false }));
+    assert.equal(generated.length, 1);
+    assert.equal(generated[0].outbounds[0].tag, 'DE');
+});
+
+test('assignment indexing scopes only matching recipients and reuses each balancer variant', () => {
+    const template = regionalTemplate();
+    template.remnawave.assignments.push({ hosts: [id(1)], balancerTag: 'auto-de' });
+    const unrelated = { remnawave: { assignments: [{ hosts: [id(99)], balancerTag: 'unused' }] } };
+    Object.defineProperty(unrelated, 'routing', { get() { throw Error('unrelated routing must not be walked'); } });
+    const recipients = [{ uuid: id(0), tags: [] }, { uuid: id(1), tags: [] }];
+    const index = indexXrayTemplateAssignments([
+        { uuid: id(8), templateJson: unrelated },
+        { uuid: id(9), templateJson: template },
+    ], recipients);
+    const first = assignedXrayTemplates(recipients[0], index)[0];
+    const second = assignedXrayTemplates(recipients[1], index)[0];
+    assert.strictEqual(first.template, second.template);
+    assert.equal(index.rank.size, 2);
+    assert.equal(index.hosts.has(id(99)), false);
+    assert.equal(indexXrayTemplateAssignments([{ uuid: id(8), templateJson: unrelated }], []).rank.size, 0);
+    const tagTemplate = regionalTemplate();
+    tagTemplate.remnawave.assignments = [{ tags: ['NL'], balancerTag: 'auto-nl' }];
+    const tagged = { uuid: id(10), tags: ['NL'] };
+    assert.equal(assignedXrayTemplates(tagged, indexXrayTemplateAssignments([
+        { uuid: id(9), templateJson: tagTemplate },
+    ], [tagged]))[0].template.routing.rules[0].balancerTag, 'auto-nl');
+    template.remnawave.assignments = [
+        { tags: ['first'], balancerTag: 'auto-de' },
+        { tags: ['second'], balancerTag: 'auto-nl' },
+        { tags: ['third'], balancerTag: 'auto-de' },
+    ];
+    const ordered = { uuid: id(10), tags: ['second', 'third'] };
+    assert.deepEqual(assignedXrayTemplates(ordered, indexXrayTemplateAssignments([
+        { uuid: id(9), templateJson: template },
+    ])).map(item => item.key), [id(9) + ':auto-nl', id(9) + ':auto-de']);
+});
+
+test('regional scoping retains other balancers used by site rules and explicit fallback outbounds', () => {
+    const template = regionalTemplate();
+    template.routing.rules.unshift({ type: 'field', domain: ['example.test'], balancerTag: 'auto-nl' });
+    let selected = recipientXrayTemplate({ uuid: id(0), tags: [] }, template);
+    assert.equal(selected.routing.balancers.length, 2);
+    assert.equal(selected.remnawave.injectHosts.length, 2);
+    template.routing.rules.shift();
+    template.routing.balancers[0].fallbackTag = 'NL';
+    selected = recipientXrayTemplate({ uuid: id(0), tags: [] }, template);
+    assert.deepEqual(selected.routing.balancers.map(value => value.tag), ['auto-de']);
+    assert.equal(selected.remnawave.injectHosts.length, 2);
+    template.remnacust = { geofiles: [{ target: 'auto-nl' }] };
+    selected = recipientXrayTemplate({ uuid: id(0), tags: [] }, template);
+    assert.equal(selected.routing.balancers.length, 2);
+});
+
+test('regional optimization preserves manual proxy dependencies, geodata and dynamic or Lua configurations', () => {
+    const template = regionalTemplate();
+    template.geodata = { outbound: 'NL' };
+    assert.equal(recipientXrayTemplate({ uuid: id(0), tags: [] }, template).remnawave.injectHosts.length, 2);
+    delete template.geodata;
+    template.outbounds[0].proxySettings = { tag: 'NL-2' };
+    assert.equal(recipientXrayTemplate({ uuid: id(0), tags: [] }, template).remnawave.injectHosts.length, 2);
+    delete template.outbounds[0].proxySettings;
+    template.outbounds[0].streamSettings = { sockopt: { dialerProxy: 'NL' } };
+    assert.equal(recipientXrayTemplate({ uuid: id(0), tags: [] }, template).remnawave.injectHosts.length, 2);
+    delete template.outbounds[0].streamSettings;
+    template.remnawave.injectHosts[1].useHostRemarkAsTag = true;
+    assert.equal(recipientXrayTemplate({ uuid: id(0), tags: [] }, template).remnawave.injectHosts.length, 2);
+    delete template.remnawave.injectHosts[1].useHostRemarkAsTag;
+    template.routing.rules.unshift({ type: 'lua', script: 'custom dynamic routing' });
+    assert.equal(recipientXrayTemplate({ uuid: id(0), tags: [] }, template).routing.balancers.length, 2);
+    template.routing.rules.shift();
+    template.custom = Array.from({ length: 80 }).reduce(value => ({ nested: value }), {});
+    assert.equal(recipientXrayTemplate({ uuid: id(0), tags: [] }, template).remnawave.injectHosts.length, 2);
+});
+
+test('saved assignment descriptions follow rendering precedence and expose no template content', () => {
+    const { describeXrayTemplateAssignments: describe } = source('modules/hosts/utils/xray-template-assignments.ts');
+    const tagged = regionalTemplate(), direct = regionalTemplate();
+    tagged.remnawave.assignments = [{ tags: ['EU'], balancerTag: 'auto-nl' }];
+    const rows = [{ uuid: id(10), name: 'Tags', templateJson: tagged }, { uuid: id(11), name: 'Direct', templateJson: direct }];
+    const before = structuredClone(rows);
+    assert.deepEqual(describe({ uuid: id(0), tags: ['EU'] }, rows), { source: 'HOST_ASSIGNMENT', templates: [{ uuid: id(11), name: 'Direct', balancerTag: 'auto-de' }] });
+    assert.deepEqual(describe({ uuid: id(0), tags: ['EU'], xrayJsonTemplateUuid: id(10) }, rows), { source: 'HOST', templates: [{ uuid: id(10), name: 'Tags', balancerTag: 'auto-nl' }] });
+    assert.equal(describe({ uuid: id(3), tags: ['EU'] }, rows).source, 'TAG_ASSIGNMENT');
+    assert.deepEqual(describe({ uuid: id(3), tags: [] }, rows), { source: 'DEFAULT', templates: [] });
+    assert.deepEqual(rows, before);
+});
+
+test('assignment inspection is an authenticated administrator-only read', () => {
+    const { endpoints, authorize, ROLE } = require('./api-permissions-fixture.cjs');
+    const endpoint = endpoints.find(item => item.method === 'GET' && item.url === '/api/hosts/panel-template-assignments/{uuid}');
+    assert(endpoint);
+    assert.equal(authorize(endpoint, ROLE.ADMIN), true);
+    assert.equal(authorize(endpoint, ROLE.API, ['*']), false);
+    assert.equal(authorize(endpoint, ROLE.API, ['hosts:template-assignments', 'subscription-templates:read']), false);
+    assert.equal(authorize(endpoint, undefined), false);
+    const { HEADERS_METADATA } = require('@nestjs/common/constants');
+    assert(Reflect.getMetadata(HEADERS_METADATA, endpoint.handler).some(item => item.name === 'Cache-Control' && item.value === 'no-store'));
+});
+
+test('assignment inspection reads lightweight metadata once and never queries templates for an unknown host', async () => {
+    const { describeXrayTemplateAssignments } = source('modules/hosts/utils/xray-template-assignments.ts');
+    const constants = require('../libs/contract/build/backend/constants');
+    const { HostsService } = source('modules/hosts/hosts.service.ts', {
+        './utils/xray-template-assignments': { describeXrayTemplateAssignments },
+        '@common/types': { ok: response => ({ isOk: true, response }), fail: error => ({ isOk: false, error }) },
+        '@libs/contracts/constants': constants,
+    });
+    let current = null, reads = 0;
+    const service = Object.create(HostsService.prototype);
+    service.hostsRepository = {
+        findByUUID: async value => { assert.equal(value, id(0)); return current; },
+        getXrayAssignmentCatalog: async () => { reads++; return [{ uuid: id(9), name: 'Region', templateJson: regionalTemplate() }]; },
+    };
+    assert.equal((await service.getTemplateAssignments(id(0))).error.code, constants.ERRORS.HOST_NOT_FOUND.code);
+    assert.equal(reads, 0);
+    current = { uuid: id(0), tags: [], xrayJsonTemplateUuid: null };
+    const result = await service.getTemplateAssignments(id(0));
+    assert.equal(result.response.source, 'HOST_ASSIGNMENT');
+    assert.equal(reads, 1);
+    const k = require('kysely'), queries = [];
+    const driver = { init: async () => {}, acquireConnection: async () => ({ executeQuery: async query => { queries.push(query); return { rows: [] }; } }), releaseConnection: async () => {}, destroy: async () => {} };
+    const db = new k.Kysely({ dialect: { createDriver: () => driver, createAdapter: () => new k.PostgresAdapter(), createIntrospector: value => new k.PostgresIntrospector(value), createQueryCompiler: () => new k.PostgresQueryCompiler() }, plugins: [new k.CamelCasePlugin()] });
+    const { HostsRepository } = source('modules/hosts/repositories/hosts.repository.ts');
+    const repo = Object.create(HostsRepository.prototype);
+    repo.qb = { kysely: db };
+    try { await repo.getXrayAssignmentCatalog(); } finally { await db.destroy(); }
+    assert.equal(queries.length, 1);
+    assert(queries[0].sql.includes("template_json #> '{remnawave,assignments}'"));
+    assert(queries[0].sql.includes("template_json #> '{remnawave,assignTo}'"));
+    assert(!queries[0].sql.includes('select *'));
+    assert.deepEqual(queries[0].parameters, ['XRAY_JSON']);
+});
+
 test('empty host resolution skips global template, quota and raw-cache reads without hiding query failures',async()=>{
  const {GetHostsForUserHandler}=source('modules/hosts/queries/get-hosts-for-user/get-hosts-for-user.handler.ts',{
   './get-hosts-for-user.query':{GetHostsForUserQuery:class{}},

@@ -161,6 +161,7 @@ function renderSelection(initialValues, configProfiles = profiles) {
         '@shared/ui/section-card': { SectionCard: { Root: passthrough, Section: passthrough } },
         './host-limits-and-rules': { HostLimitsAndRules: () => null },
         './host-visibility': { HostVisibility: () => null },
+        './host-template-assignments': { HostTemplateAssignments: () => null },
         './json-fields': { getHostJsonFields: () => [] },
         './options': { HostFormDataProvider: passthrough, HostOptionsProvider: passthrough, HostOptionsSection: () => null }
     }).BaseHostForm

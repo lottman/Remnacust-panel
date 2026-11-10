@@ -29,6 +29,7 @@ import { PopoverWithInfoShared } from '@shared/ui/popovers/popover-with-info'
 import { SectionCard } from '@shared/ui/section-card'
 
 import { HostLimitsAndRules } from './host-limits-and-rules'
+import { HostTemplateAssignments } from './host-template-assignments'
 import { HostVisibility } from './host-visibility'
 import { IProps } from './interfaces'
 import { getHostJsonFields } from './json-fields'
@@ -256,6 +257,11 @@ export const BaseHostForm = <
                             <SectionCard.Section>
                                 <HostVisibility />
                             </SectionCard.Section>
+                            {!isBulkEdit && hostUuid && (
+                                <SectionCard.Section>
+                                    <HostTemplateAssignments uuid={hostUuid} />
+                                </SectionCard.Section>
+                            )}
                             <SectionCard.Section>
                                 <Stack gap="md">
                                     <FlagTextInput

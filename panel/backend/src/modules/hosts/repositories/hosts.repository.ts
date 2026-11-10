@@ -320,6 +320,23 @@ export class HostsRepository implements ICrud<HostsEntity> {
             .execute();
     }
 
+    public async getXrayAssignmentCatalog() {
+        return this.qb.kysely
+            .selectFrom('subscriptionTemplates')
+            .select([
+                'uuid',
+                'name',
+                sql<object>`jsonb_build_object('remnawave', jsonb_build_object(
+                'assignments', template_json #> '{remnawave,assignments}',
+                'assignTo', template_json #> '{remnawave,assignTo}'
+            ))`.as('templateJson'),
+            ])
+            .where('templateType', '=', 'XRAY_JSON')
+            .orderBy('viewPosition', 'asc')
+            .orderBy('uuid', 'asc')
+            .execute();
+    }
+
     public async getAssignedXrayTemplates(): Promise<
         Array<{ uuid: string; name: string; templateJson: object | null; geofilesEnabled: boolean }>
     > {

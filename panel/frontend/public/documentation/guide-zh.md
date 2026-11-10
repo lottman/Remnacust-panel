@@ -813,6 +813,10 @@ selector.type 支持 uuids、精确标签 tags、tagRegex、remarkRegex 和 same
 
 关联示例：`remnawave.assignments = [{hosts: ["RECIPIENT_HOST_UUID"], balancerTag: "auto-eu"}]`。此处 hosts 表示接收自动选择配置的主机，并非池成员。池服务器另由 remnawave.injectHosts 选择；auto-eu 必须与 routing.balancers[].tag 一致。界面对应“在哪里使用自动选择”，无需手动编写 JSON。
 
+主机编辑表单显示已保存的 JSON 关联：主机显式指定、模板按 UUID 关联、按标签关联或没有单独关联。点击模板名打开编辑器，均衡器名称显示在旁边。查看不会修改配置；未保存的标签及用户特定响应规则不替代此状态。关联配置会排除未使用的均衡器，以及可证明无用的显式前缀池。保留站点路由、备用 outbound 及地理文件目标。动态 remark/标签名称与未确认的复杂依赖不会被截断。同一 JSON 内均衡器标签必须唯一，不同配置可复用。
+
+random 和 roundRobin 未配置 fallbackTag 时不要求探测器。配置备用出口后，Xray 使用探测结果排除不可用服务器；编辑器会保留这些检查。observatory 与 burstObservatory 是可选方案。前者使用间隔和 enableConcurrency；burst 将探测分散到不同时间并保存 sampling 结果窗口。sampling 不是简单的每次触发请求数；周期与 interval × sampling 有关，会影响故障检测及恢复。Burst 不保证流量更少或不可识别。已有探测器类型、URL、方法及间隔不会自动替换。请在探测设置中选择并通过客户端验证。
+
 ### 自动选择限额
 
 流量与速度限制在接收主机上设置。通过自动选择使用池成员时，不扣除成员主机配额，也不继承其速度限制。同一接收主机的多个自动选择共享额度。未设置接收主机限制且未启用其标签限制时，不设主机级上限。账户总配额仍然生效。 Xray JSON 使用不同凭据区分直连和自动选择。直连扣除成员主机配额，自动选择只按接收主机的倍率及已启用标签限额计费。切换成员仍共享用户和设备上限，不同接收主机限额独立。访问权限、设备封禁、账户状态和目标限制始终有效。独立路由计费需要支持 remnacust-routed-device-speed-v1 的 Node/Core，旧版拒绝应用路由策略。启用前请更新 Node/Core，再在应用内刷新订阅。旧凭据仍按原方式计费，已记录的历史不会重新分配。若一台主机的 DENY 与另一台主机更宽泛的 ALLOW_ONLY 条目重叠，将移除整个重叠的允许条目。

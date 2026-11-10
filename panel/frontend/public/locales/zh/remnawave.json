@@ -4466,5 +4466,14 @@
             "live-port-plans": "独立端口和无需重启的配置更新",
             "xera-http": "Xera HTTP 传输"
         }
+    },
+    "host-template-assignments": {
+        "title": "已保存的 JSON 关联",
+        "HOST": "主机上指定的模板",
+        "HOST_ASSIGNMENT": "模板按主机关联",
+        "TAG_ASSIGNMENT": "模板按标签关联",
+        "DEFAULT": "没有单独关联",
+        "error": "无法检查关联，请重试。错误不表示未关联模板。",
+        "help": "此处显示已保存的关联。主机上指定的模板优先。标签修改保存后才会显示；响应规则及组设置可能选择其他模板。"
     }
 }

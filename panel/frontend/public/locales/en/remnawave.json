@@ -4466,5 +4466,14 @@
             "live-port-plans": "Independent ports and live configuration updates",
             "xera-http": "Xera HTTP transport"
         }
+    },
+    "host-template-assignments": {
+        "title": "Saved JSON assignment",
+        "HOST": "Template selected on the host",
+        "HOST_ASSIGNMENT": "Template assignment by host",
+        "TAG_ASSIGNMENT": "Template assignment by tag",
+        "DEFAULT": "No explicit assignment",
+        "error": "Could not check the assignment. Retry; an error does not mean no template is assigned.",
+        "help": "These are saved assignments. A template selected on the host takes priority. Tag edits appear after saving; response rules and squad settings may select another template."
     }
 }

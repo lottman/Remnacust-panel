@@ -1,4 +1,3 @@
-import { rethrowXrayModeConflict } from '@common/xray-mode/xray-mode-conflict';
 import { Transactional } from '@nestjs-cls/transactional';
 import { randomBytes } from 'node:crypto';
 
@@ -22,6 +21,7 @@ import { RawCacheService } from '@common/raw-cache';
 import { fail, ok, TResult } from '@common/types';
 import { cloneString } from '@common/utils/clone-string.util';
 import { nullifyEmpty, wrapBigIntNullable } from '@common/utils/convert-type';
+import { rethrowXrayModeConflict } from '@common/xray-mode/xray-mode-conflict';
 import { CACHE_KEYS } from '@libs/contracts/constants';
 import { ERRORS } from '@libs/contracts/constants';
 import { THostSniRegeneration } from '@libs/contracts/models';
@@ -43,6 +43,7 @@ import { HostTagLimitsRepository } from './repositories/host-tag-limits.reposito
 import { HostsRepository } from './repositories/hosts.repository';
 import { requiresHostPolicy } from './utils/validate-host-policy';
 import { validateHostPolicies } from './utils/validate-host-policy';
+import { describeXrayTemplateAssignments } from './utils/xray-template-assignments';
 
 @Injectable()
 export class HostsService {
@@ -356,6 +357,13 @@ export class HostsService {
             this.logger.error(JSON.stringify(error));
             return fail(ERRORS.DELETE_HOST_ERROR);
         }
+    }
+
+    public async getTemplateAssignments(hostUuid: string) {
+        const host = await this.hostsRepository.findByUUID(hostUuid);
+        if (!host) return fail(ERRORS.HOST_NOT_FOUND);
+        const templates = await this.hostsRepository.getXrayAssignmentCatalog();
+        return ok(describeXrayTemplateAssignments(host, templates));
     }
 
     public async getHosts(): Promise<TResult<HostsEntity[]>> {

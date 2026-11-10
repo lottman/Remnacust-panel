@@ -46,7 +46,7 @@ export class GetHostsForUserHandler implements IQueryHandler<GetHostsForUserQuer
                 custom ? this.tagLimitsRepository.usageForUser(query.userId) : Promise.resolve([]),
                 this.getAssignedTemplates(),
             ]);
-            const assignments = indexXrayTemplateAssignments(assignedTemplates);
+            const assignments = indexXrayTemplateAssignments(assignedTemplates, hostsEntities);
 
             const inboundUuids = new Set<string>();
             const templateUuids = new Set<string>();

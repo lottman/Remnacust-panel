@@ -6,8 +6,10 @@ import {
     Controller,
     Delete,
     Get,
+    Header,
     HttpStatus,
     Param,
+    ParseUUIDPipe,
     Put,
     UseFilters,
     UseGuards,
@@ -69,6 +71,21 @@ export class HostsController {
         private readonly hostsRepository: HostsRepository,
         private readonly tagLimitsRepository: HostTagLimitsRepository,
     ) {}
+
+    @Get('panel-template-assignments/:uuid')
+    @Header('Cache-Control', 'no-store')
+    @AdminOnlyEndpoint()
+    @ApiScopeEndpoint(
+        getEndpointDetails(
+            'panel-template-assignments/:uuid',
+            'get',
+            'Get saved host template assignments',
+            { scope: 'template-assignments', kind: 'read' },
+        ),
+    )
+    async getTemplateAssignments(@Param('uuid', new ParseUUIDPipe()) uuid: string) {
+        return { response: errorHandler(await this.hostsService.getTemplateAssignments(uuid)) };
+    }
 
     @Get('panel-tag-limits')
     @AdminOnlyEndpoint()

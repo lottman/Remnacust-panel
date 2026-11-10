@@ -266,8 +266,21 @@ export function newPrefix(config: JsonObject): string {
 }
 
 export function observerFor(text: string, prefixes: string[], strategy: string): string {
-    if (!needsProbes(strategy)) return text
     const config = parseTemplate(text)
+    if (
+        !needsProbes(strategy) &&
+        !(config.routing?.balancers ?? []).some(
+            (balance: JsonObject) =>
+                balance.strategy?.type === strategy &&
+                needsBalancerProbes(balance) &&
+                (balance.selector ?? []).some((selector: string) =>
+                    prefixes.some(
+                        (prefix) => prefix.startsWith(selector) || selector.startsWith(prefix)
+                    )
+                )
+        )
+    )
+        return text
     const key =
         config.observatory !== undefined
             ? 'observatory'
@@ -347,6 +360,12 @@ export function observerFor(text: string, prefixes: string[], strategy: string):
 export const needsProbes = (strategy: string) =>
     ['leastPing', 'leastLoad', 'priority'].includes(strategy)
 
+export const needsBalancerProbes = (balance: JsonObject) =>
+    needsProbes(balance.strategy?.type) ||
+    (['random', 'roundRobin'].includes(balance.strategy?.type) &&
+        typeof balance.fallbackTag === 'string' &&
+        balance.fallbackTag.length > 0)
+
 export function setBalancerStrategy(text: string, index: number, strategy: string): string {
     const before = parseTemplate(text)
     const oldSelectors: string[] = before.routing.balancers[index].selector ?? []
@@ -365,10 +384,11 @@ export function setBalancerStrategy(text: string, index: number, strategy: strin
         oldSelectors.includes(before.routing.balancers[index].fallbackTag)
     )
         next = editTemplate(next, ['routing', 'balancers', index, 'fallbackTag'], undefined)
-    if (needsProbes(strategy)) return observerFor(next, oldSelectors, strategy)
     const after = parseTemplate(next)
+    if (needsBalancerProbes(after.routing.balancers[index]))
+        return observerFor(next, oldSelectors, strategy)
     const required: string[] = (after.routing.balancers ?? [])
-        .filter((balance: JsonObject) => needsProbes(balance.strategy?.type))
+        .filter(needsBalancerProbes)
         .flatMap((balance: JsonObject) => balance.selector ?? [])
     for (const key of ['observatory', 'burstObservatory']) {
         const selected = after[key]?.subjectSelector
@@ -390,12 +410,7 @@ export function setBalancerStrategy(text: string, index: number, strategy: strin
 
 export function removeUnusedProbes(text: string): string {
     const config = parseTemplate(text)
-    if (
-        (config.routing?.balancers ?? []).some((balance: JsonObject) =>
-            needsProbes(balance.strategy?.type)
-        )
-    )
-        return text
+    if ((config.routing?.balancers ?? []).some(needsBalancerProbes)) return text
     return editTemplate(
         editTemplate(text, ['observatory'], undefined),
         ['burstObservatory'],

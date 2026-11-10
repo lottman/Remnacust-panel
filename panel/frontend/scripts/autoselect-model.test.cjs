@@ -121,6 +121,15 @@ test('random and roundRobin remove their own unused probes but keep manual field
  assert.deepEqual(m.parseTemplate(m.setBalancerStrategy(JSON.stringify(manual),0,'random')).burstObservatory.subjectSelector,['manual']);
 });
 
+test('random and roundRobin with fallback retain their configured burst checks and cannot remove them as unused', () => {
+ const base={outbounds:[],routing:{balancers:[{tag:'a',selector:['p'],fallbackTag:'p',strategy:{type:'leastLoad'}}]},burstObservatory:{subjectSelector:['p'],pingConfig:{destination:'https://allowed.example.test/204',interval:'2m',timeout:'8s',sampling:4,httpMethod:'GET'}}};
+ for(const type of ['random','roundRobin']){
+  const next=m.setBalancerStrategy(JSON.stringify(base),0,type);
+  assert.deepEqual(m.parseTemplate(next).burstObservatory,base.burstObservatory);
+  assert.deepEqual(m.parseTemplate(m.removeUnusedProbes(next)),m.parseTemplate(next));
+ }
+});
+
 test('leastLoad edits preserve manual settings and validate expected/tolerance/duration bounds', () => {
  const base={routing:{balancers:[{tag:'a',selector:['p'],strategy:{type:'leastLoad',settings:{expected:1,tolerance:0.5,maxRTT:'8000ms',baselines:['50ms','1s'],costs:[{regexp:true,match:'p',value:1}]}}}]}};
  assert.equal(m.validationPath(base),null);

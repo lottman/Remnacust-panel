@@ -4239,6 +4239,7 @@
         "host_trafficLimit": "Excluded by traffic quota or pause.",
         "host_formatExcluded": "Excluded for the selected format.",
         "host_ruleExcluded": "Excluded by the response rule.",
+        "host_invalidConfiguration": "Profile omitted: a template route refers to a missing outbound. Check the balancer and pool membership/visibility.",
         "delivery_downloadProfile": "A client routing/download profile is present in the response. Actual download must be confirmed in the app.",
         "delivery_inlineFallback": "The generator fell back to inline rules.",
         "delivery_inlineOrNative": "Inline rules or native format delivery; no Xray routing download header.",

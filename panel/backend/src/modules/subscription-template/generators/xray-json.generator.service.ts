@@ -205,6 +205,7 @@ function buildRealitySettings(host: ResolvedProxyConfig): Record<string, unknown
 @Injectable()
 export class XrayJsonGeneratorService {
     private readonly logger = new Logger(XrayJsonGeneratorService.name);
+    private nextRouteWarningAt = 0;
 
     constructor(
         private readonly subscriptionTemplateService: SubscriptionTemplateService,
@@ -232,6 +233,8 @@ export class XrayJsonGeneratorService {
                   )) as unknown as XrayJsonConfig;
 
             const configs: string[] = [];
+            const renderedHostUuids = new Set<string>();
+            const invalidHostUuids = new Set<string>();
             let outputBytes = 2;
             const serialize = (config: XrayJsonConfig) => {
                 const rendered = ensureResponseTimeProbes(
@@ -319,13 +322,47 @@ export class XrayJsonGeneratorService {
                             meta: outboundConfig.meta,
                         });
                     };
-                    const serialized = params.geofileDelivery?.deferTemplates
-                        ? await params.geofileDelivery.renderProfile(render)
-                        : await render();
-                    if (serialized !== undefined) append(serialized);
+                    let serialized: string | undefined;
+                    try {
+                        serialized = params.geofileDelivery?.deferTemplates
+                            ? await params.geofileDelivery.renderProfile(render)
+                            : await render();
+                    } catch (error) {
+                        if (
+                            !(error instanceof ClientPoolError) ||
+                            error.message !== 'xray-route-reference' ||
+                            (params.geofileDelivery && !params.geofileDelivery.deferTemplates)
+                        )
+                            throw error;
+                        invalidHostUuids.add(source.metadata.uuid);
+                        if (Date.now() >= this.nextRouteWarningAt) {
+                            this.nextRouteWarningAt = Date.now() + 60000;
+                            const uuid = /^[0-9a-f-]{36}$/i.test(source.metadata.uuid)
+                                ? source.metadata.uuid
+                                : 'unknown';
+                            this.logger.warn(
+                                `Omitted invalid Xray profile: host=${uuid} code=xray-route-reference`,
+                            );
+                        }
+                        continue;
+                    }
+                    if (serialized !== undefined) {
+                        append(serialized);
+                        if (
+                            source.metadata.uuid !== '00000000-0000-0000-0000-000000000000' &&
+                            !source.metadata.isDisabled
+                        )
+                            renderedHostUuids.add(source.metadata.uuid);
+                    }
                 }
             }
 
+            params.onProfileReport?.({
+                renderedHostUuids: [...renderedHostUuids],
+                invalidHostUuids: [...invalidHostUuids],
+            });
+            if (invalidHostUuids.size && !renderedHostUuids.size)
+                throw new ClientPoolError('xray-route-reference');
             return `[${configs.join(',')}]`;
         } catch (error) {
             if (error instanceof ClientPoolError) throw error;

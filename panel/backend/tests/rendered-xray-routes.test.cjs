@@ -145,7 +145,7 @@ function generator(config) {
         },
     );
     const service = new XrayJsonGeneratorService({ getCachedTemplateByType: async () => config });
-    service.logger = { error() {} };
+    service.logger = { error() {}, warn() {} };
     return service;
 }
 
@@ -205,22 +205,66 @@ test('actual generator retains the implicit proxy but rejects native balancer da
     await assert.rejects(generator(config).generateConfig(params), invalid);
 });
 
-test('actual generator rejects the whole delivery when a later profile has a dangling route', async () => {
+test('actual generator omits a complete invalid profile while retaining valid profiles and reporting their identities', async () => {
     const config = {
         outbounds: [{ tag: 'direct', protocol: 'freedom' }],
         routing: { rules: [{ type: 'field', network: 'tcp,udp', outboundTag: 'proxy' }] },
     };
-    const hosts = [host(0), host(1)];
+    const hosts = [host(0), host(1), host(2)];
     hosts[1].clientOverrides.xrayJsonTemplate = {
         outbounds: [{ tag: 'direct', protocol: 'freedom' }],
         routing: { rules: [{ type: 'field', network: 'tcp,udp', outboundTag: 'removed-pool' }] },
     };
     const before = structuredClone(hosts);
-    await assert.rejects(
-        generator(config).generateConfig({ hosts, isExtendedClient: false }),
-        invalid,
-    );
+    let report;
+    const result = JSON.parse(await generator(config).generateConfig({ hosts, isExtendedClient: false,
+        onProfileReport: value => { report = value; } }));
+    assert.equal(result.length, 2);
+    assert.deepEqual(result.map(value => value.remarks), [hosts[0].finalRemark, hosts[2].finalRemark]);
+    assert.deepEqual(report, { renderedHostUuids: [hosts[0].metadata.uuid, hosts[2].metadata.uuid],
+        invalidHostUuids: [hosts[1].metadata.uuid] });
+    for (const rendered of result) assertRenderedXrayRoutes(rendered);
     assert.deepEqual(hosts, before);
+});
+
+test('invalid and valid variants remain independent and repeated route warnings are throttled without exposing configuration', async () => {
+    const good = { outbounds: [{ tag: 'direct', protocol: 'freedom' }],
+        routing: { rules: [{ network: 'tcp,udp', outboundTag: 'proxy' }] } };
+    const bad = { ...good, routing: { rules: [{ network: 'tcp,udp', outboundTag: 'missing-secret-value' }] } };
+    const recipient = host(0);
+    recipient.clientOverrides.xrayJsonVariants = [
+        { key: 'bad', name: 'bad', template: bad },
+        { key: 'good', name: 'good', template: good },
+    ];
+    const service = generator(good), warnings = [];
+    service.logger = { error() {}, warn: value => warnings.push(value) };
+    for (let attempt = 0; attempt < 3; attempt++) {
+        let report;
+        const result = JSON.parse(await service.generateConfig({ hosts: [recipient], isExtendedClient: false,
+            onProfileReport: value => { report = value; } }));
+        assert.equal(result.length, 1);
+        assert.match(result[0].remarks, /good$/);
+        assert.deepEqual(report, { renderedHostUuids: [recipient.metadata.uuid], invalidHostUuids: [recipient.metadata.uuid] });
+    }
+    assert.equal(warnings.length, 1);
+    assert(!warnings[0].includes('missing-secret-value'));
+    assert(!warnings[0].includes('protocolOptions'));
+});
+
+test('profile reports never count notice placeholders or disabled records as usable hosts', async () => {
+    const config = { outbounds: [{ tag: 'direct', protocol: 'freedom' }] };
+    const notice = host(0), disabled = host(1);
+    notice.metadata.uuid = '00000000-0000-0000-0000-000000000000';
+    disabled.metadata.isDisabled = true;
+    let report;
+    const result = JSON.parse(await generator(config).generateConfig({
+        hosts: [notice, disabled], isExtendedClient: false, onProfileReport: value => { report = value; }
+    }));
+    assert.equal(result.length, 2);
+    assert.deepEqual(report, { renderedHostUuids: [], invalidHostUuids: [] });
+    const broken = host(2);
+    broken.clientOverrides.xrayJsonTemplate = { ...config, routing: { rules: [{ outboundTag: 'missing' }] } };
+    await assert.rejects(generator(config).generateConfig({ hosts: [notice, broken], isExtendedClient: false }), invalid);
 });
 
 test('shared generator fixture loads the real route guard and preserves ClientPoolError identity', async () => {
@@ -241,7 +285,7 @@ test('shared generator fixture loads the real route guard and preserves ClientPo
             },
         }),
     });
-    service.logger = { error() {} };
+    service.logger = { error() {}, warn() {} };
     await assert.rejects(
         service.generateConfig({ hosts: [host()], isExtendedClient: false }),
         invalid,

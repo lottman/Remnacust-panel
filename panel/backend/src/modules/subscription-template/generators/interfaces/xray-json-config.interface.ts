@@ -69,6 +69,7 @@ export interface XrayJsonConfig {
 }
 
 export interface IGenerateConfigParams {
+    onProfileReport?: (report: { renderedHostUuids: string[]; invalidHostUuids: string[] }) => void;
     hosts: ResolvedProxyConfig[];
     autoselectCandidates?: () => Promise<ResolvedProxyConfig[]>;
     autoselectSelections?: Map<string, ResolvedProxyConfig[]>;

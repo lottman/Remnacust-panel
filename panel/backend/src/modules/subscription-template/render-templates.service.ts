@@ -176,6 +176,11 @@ export class RenderTemplatesService {
                 };
                 const renderXray = (geofileDelivery?: XrayGeofileDelivery) =>
                     this.xrayJsonGeneratorService.generateConfig({
+                        onProfileReport: (report) =>
+                            params.onResolvedHosts?.(
+                                report.renderedHostUuids,
+                                report.invalidHostUuids,
+                            ),
                         hosts: formattedHosts,
                         autoselectCandidates,
                         autoselectSelections,

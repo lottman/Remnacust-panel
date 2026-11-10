@@ -452,8 +452,21 @@ export class SubscriptionService {
                         ? presentationHosts
                         : undefined,
                 onResolvedHosts: preview
-                    ? (hostUuids) => {
+                    ? (hostUuids, invalidHostUuids = []) => {
                           preview.resolvedHostCount = hostUuids.length;
+                          const rendered = new Set(hostUuids);
+                          const invalid = new Set(invalidHostUuids);
+                          preview.hosts = preview.hosts?.map((host) =>
+                              ['candidate', 'invalidConfiguration'].includes(host.reason)
+                                  ? {
+                                        ...host,
+                                        included: rendered.has(host.uuid),
+                                        reason: invalid.has(host.uuid)
+                                            ? 'invalidConfiguration'
+                                            : 'candidate',
+                                    }
+                                  : host,
+                          );
                       }
                     : undefined,
                 hosts: subscriptionSettings.randomizeHosts

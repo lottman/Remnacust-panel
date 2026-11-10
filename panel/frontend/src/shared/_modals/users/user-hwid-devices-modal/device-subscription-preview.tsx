@@ -50,6 +50,7 @@ type Report = {
             | 'trafficLimit'
             | 'formatExcluded'
             | 'ruleExcluded'
+            | 'invalidConfiguration'
         speedLimitMbps: number | null
         deviceSpeedLimitMbps: number | null
     }[]

@@ -168,10 +168,18 @@ test('final generated host additions count toward its own threshold', async () =
     assert.match(rules[1].domain[0], /^geosite:/);
 });
 
+test('a broken route discards only its whole profile and never publishes its geofile references', async () => {
+    const fixture = setup([9, 10]);
+    fixture.hosts[1].clientOverrides.xrayJsonTemplate.routing.rules = [{ outboundTag: 'removed' }];
+    const result = await fixture.render('happ', 8);
+    assert.equal(JSON.parse(result.subscription).length, 1);
+    assert.deepEqual(fixture.bundles, [[id(0)]]);
+});
+
 test('unrelated errors are never retried as DAT or returned as partial subscriptions', async () => {
     const fixture = setup([2, 2]);
-    fixture.hosts[1].clientOverrides.xrayJsonTemplate.routing.rules = [{ outboundTag: 'removed' }];
-    await assert.rejects(fixture.render(), /xray-route-reference/);
+    fixture.templates.geofiles.prepare = async () => { throw Error('fixture dependency unavailable'); };
+    await assert.rejects(fixture.render(), /fixture dependency unavailable/);
     assert.deepEqual(fixture.bundles, []);
     assert(fixture.calls.every(([, mode]) => mode === 'inline'));
 });

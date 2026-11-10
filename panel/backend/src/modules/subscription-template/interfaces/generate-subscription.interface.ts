@@ -4,7 +4,7 @@ import { ISRRContext } from '@modules/subscription-response-rules/interfaces';
 import { UserEntity } from '@modules/users/entities/user.entity';
 
 export interface IGenerateSubscription {
-    onResolvedHosts?: (hostUuids: string[]) => void;
+    onResolvedHosts?: (hostUuids: string[], invalidHostUuids?: string[]) => void;
     profileTitle?: string;
     profileKey?: string;
     srrContext: ISRRContext;

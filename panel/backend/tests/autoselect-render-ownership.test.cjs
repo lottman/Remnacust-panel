@@ -114,3 +114,16 @@ test('ordinary JSON does not resolve source candidates or register route credent
     await service.generateSubscription(params());
     assert.equal(reads, 1);
 });
+
+test('JSON rendering forwards the final complete profile report to administrator preview consumers', async () => {
+    const service = Object.create(RenderTemplatesService.prototype);
+    service.resolveProxyConfigService = { resolveProxyConfig: async () => [make('good'), make('invalid')] };
+    service.rawCache = { retireRoutingProfileRevision: async () => null };
+    service.xrayJsonGeneratorService = { generateConfig: async options => {
+        options.onProfileReport({ renderedHostUuids: ['good'], invalidHostUuids: ['invalid'] });
+        return '[{"outbounds":[{"tag":"direct","protocol":"freedom"}]}]';
+    } };
+    let report;
+    await service.generateSubscription({ ...params(), onResolvedHosts: (ids, invalid) => { report = { ids, invalid }; } });
+    assert.deepEqual(report, { ids: ['good'], invalid: ['invalid'] });
+});

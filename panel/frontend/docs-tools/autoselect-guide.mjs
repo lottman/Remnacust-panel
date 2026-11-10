@@ -229,10 +229,18 @@ sections.push([
 ])
 
 const routeReferenceNotes = {
-    ru: ' Ссылки правил на выходы и балансеры проверяются также при сохранении через API. Несуществующее имя не подменяется DIRECT или другим маршрутом: текст редактора сохраняется как черновик с точным путём ошибки, а рабочий шаблон остаётся прежним. Имена, получаемые из названий или тегов хостов, окончательно определяются при формировании подписки.',
-    en: ' Rule references to outbounds and balancers are also checked on API saves. An unknown name is not replaced with DIRECT or another route: editor text is kept as a draft with the exact error path while the live template remains unchanged. Names derived from host remarks or tags are resolved when generating the subscription.',
-    fa: ' ارجاع قوانین به خروجی‌ها و متعادل‌کننده‌ها هنگام ذخیره از API نیز بررسی می‌شود. نام ناموجود با DIRECT یا مسیر دیگری جایگزین نمی‌شود: متن ویرایشگر با مسیر دقیق خطا به‌عنوان پیش‌نویس ذخیره می‌شود و قالب فعال تغییر نمی‌کند. نام‌های برگرفته از عنوان یا تگ میزبان هنگام تولید اشتراک تعیین می‌شوند.',
-    zh: ' 通过 API 保存时也会检查规则引用的出站和均衡器。不存在的名称不会被替换为 DIRECT 或其他路由：编辑器文本作为草稿保留并显示准确的错误路径，生效模板保持不变。由主机备注或标签生成的名称在生成订阅时确定。'
+    ru:
+        ' Ссылки правил на выходы и балансеры проверяются также при сохранении через API. Несуществующее имя не подменяется DIRECT или другим маршрутом: текст редактора сохраняется как черновик с точным путём ошибки, а рабочий шаблон остаётся прежним. Имена, получаемые из названий или тегов хостов, окончательно определяются при формировании подписки.' +
+        ' Если при выдаче ссылка перестала существовать после изменения состава или видимости пула, профиль исключается целиком; другие рабочие профили остаются доступны. В предпросмотре устройства администратор увидит причину. Для балансировки используйте balancerTag, а outboundTag с номером участника — только когда этот участник действительно присутствует. Если все профили некорректны, сохраняется 503. Ошибки прав, хранилища, размеров и компиляции не скрываются.',
+    en:
+        ' Rule references to outbounds and balancers are also checked on API saves. An unknown name is not replaced with DIRECT or another route: editor text is kept as a draft with the exact error path while the live template remains unchanged. Names derived from host remarks or tags are resolved when generating the subscription.' +
+        ' If pool membership or visibility changes leave a route unresolved, its complete profile is omitted while other valid profiles remain available. Administrator device preview shows the reason. Use balancerTag for balancing; a numbered outboundTag requires that exact member to exist. If every profile is invalid, the response remains 503. Authorization, storage, size and compilation failures are not suppressed.',
+    fa:
+        ' ارجاع قوانین به خروجی‌ها و متعادل‌کننده‌ها هنگام ذخیره از API نیز بررسی می‌شود. نام ناموجود با DIRECT یا مسیر دیگری جایگزین نمی‌شود: متن ویرایشگر با مسیر دقیق خطا به‌عنوان پیش‌نویس ذخیره می‌شود و قالب فعال تغییر نمی‌کند. نام‌های برگرفته از عنوان یا تگ میزبان هنگام تولید اشتراک تعیین می‌شوند.' +
+        ' اگر تغییر اعضا یا نمایش مجموعه ارجاع مسیر را نامعتبر کند، کل همان پروفایل حذف می‌شود و پروفایل‌های سالم باقی می‌مانند. پیش‌نمایش دستگاه مدیر علت را نشان می‌دهد. برای توزیع از balancerTag استفاده کنید؛ outboundTag شماره‌دار به وجود همان عضو نیاز دارد. اگر همه پروفایل‌ها نامعتبر باشند، پاسخ 503 باقی می‌ماند. خطای مجوز، ذخیره‌سازی، حجم و کامپایل پنهان نمی‌شود.',
+    zh:
+        ' 通过 API 保存时也会检查规则引用的出站和均衡器。不存在的名称不会被替换为 DIRECT 或其他路由：编辑器文本作为草稿保留并显示准确的错误路径，生效模板保持不变。由主机备注或标签生成的名称在生成订阅时确定。' +
+        ' 若池成员或可见性变化导致路由引用失效，会排除整份受影响配置，其余有效配置仍可获取。管理员可在设备预览中查看原因。负载均衡应使用 balancerTag；带编号的 outboundTag 要求对应成员实际存在。全部配置无效时仍返回 503，不会隐藏权限、存储、大小或编译错误。'
 }
 
 const observerNotes = {

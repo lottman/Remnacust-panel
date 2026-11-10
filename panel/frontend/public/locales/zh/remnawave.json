@@ -4239,6 +4239,7 @@
         "host_trafficLimit": "因流量配额或暂停被排除。",
         "host_formatExcluded": "被所选格式排除。",
         "host_ruleExcluded": "被响应规则排除。",
+        "host_invalidConfiguration": "配置已排除：模板路由引用不存在的出口。请检查均衡器、池成员及可见性。",
         "delivery_downloadProfile": "响应中包含客户端路由/下载配置。实际下载仍须在应用内确认。",
         "delivery_inlineFallback": "生成器已回退至内嵌规则。",
         "delivery_inlineOrNative": "使用内嵌规则或该格式的原生分发；没有 Xray 路由下载响应头。",

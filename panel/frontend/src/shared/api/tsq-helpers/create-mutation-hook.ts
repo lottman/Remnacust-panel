@@ -4,9 +4,9 @@ import { z } from 'zod'
 
 import { instance } from '../axios'
 import { createUrl, handleRequestError } from '../helpers'
+import { affectsHosts, cancelHostReads, invalidateHosts } from '../host-invalidation'
 import { CreateMutationHookArgs, MutationResponse } from '../interfaces'
 import { affectsLimits, invalidateLimits } from '../limit-invalidation'
-import { affectsHosts, cancelHostReads, invalidateHosts } from '../host-invalidation'
 
 export function createMutationHook<
     RouteParamsSchema extends z.ZodType<Record<string, unknown>>,
@@ -87,7 +87,15 @@ export function createMutationHook<
             ...params?.mutationFns,
             mutationFn,
             onSuccess: async (data, variables, context) => {
-                if (affectsHosts(baseUrl)) await invalidateHosts(queryClient)
+                if (affectsHosts(baseUrl)) {
+                    const deletedHostUuid =
+                        requestMethod.toLowerCase() === 'delete'
+                            ? /^\/?(?:api\/)?hosts\/([0-9a-f-]{36})\/?$/i.exec(
+                                  createUrl(baseUrl, undefined, variables.route)
+                              )?.[1]
+                            : undefined
+                    await invalidateHosts(queryClient, deletedHostUuid)
+                }
                 if (affectsLimits(baseUrl)) void invalidateLimits(queryClient)
                 await rMutationParams?.onSuccess?.(data, variables, context, queryClient)
                 await params?.mutationFns?.onSuccess?.(data, variables, context, queryClient)

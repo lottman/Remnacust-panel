@@ -33,7 +33,9 @@ function harness(language = 'en') {
     const providers = []
     const errors = []
     const setup = load(setupPath, {
-        '@shared/api/hooks/xray-mode': { loadXrayMode: async () => ({mode:'custom',revision:0}) },
+        '@shared/api/hooks/xray-mode': {
+            loadXrayMode: async () => ({ mode: 'custom', revision: 0 })
+        },
         '@remnawave/backend-contract': {
             SUBSCRIPTION_TEMPLATE_TYPE: { XRAY_JSON: 'XRAY_JSON', SINGBOX: 'SINGBOX' }
         },
@@ -42,6 +44,10 @@ function harness(language = 'en') {
         '@shared/utils/monaco/json-schema-registry': {
             registerJsonSchema: (value) => registrations.push(value)
         },
+        '@shared/utils/monaco/host-hover': load(
+            fileURLToPath(new URL('../src/shared/utils/monaco/host-hover.ts', import.meta.url)),
+            { 'monaco-editor/editor': {} }
+        ),
         '@shared/utils/monaco/schema-cache': {
             loadEditorSchema: async (url) => {
                 requests.push(url)
@@ -102,6 +108,11 @@ for (const language of ['en', 'zh']) {
             tags: [],
             address: 'example.test',
             port: 443,
+            sni: null,
+            path: null,
+            host: null,
+            isHidden: false,
+            isDisabled: false,
             inbound: {}
         }
         await h.setup.configureMonaco(h.monaco, 'json', [host], 'XRAY_JSON')
@@ -172,6 +183,10 @@ for (const language of ['en', 'zh']) {
             { lineNumber: 1, column: offset + 1 }
         )
         assert.ok(injector.suggestions.some((item) => item.label === host.uuid))
+        const suggestion = injector.suggestions.find((item) => item.label === host.uuid)
+        assert.ok(suggestion.filterText.includes(host.remark))
+        assert.ok(suggestion.filterText.includes(host.uuid))
+        assert.equal(suggestion.insertText, JSON.stringify(host.uuid))
         const valid = editorDocument(
             { ...fixtures.valid.find((fixture) => fixture.editorContract).config, remnawave: {} },
             uri

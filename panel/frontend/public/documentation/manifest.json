@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-10T10:25:12.403Z",
+  "generatedAt": "2026-11-10T10:43:19.184Z",
   "backendVersion": "1.1.7.109",
   "coreVersion": "1.1.17",
   "nodeVersion": "1.1.27",
@@ -78,6 +78,6 @@
   "endpoints": 248,
   "apiTokenEndpoints": 220,
   "controls": 240,
-  "sourceFiles": 3913,
+  "sourceFiles": 3914,
   "specSha256": "27fd396233d881768d1a625198f5dba4f615d71564ea154fa73a4217bae0c31c"
 }

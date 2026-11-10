@@ -111,6 +111,29 @@ const additions = [
     ]
 ]
 
+additions.push([
+    'templates',
+    'templates-host-hover',
+    [
+        [
+            'Подсказки хостов в редакторе',
+            'Наведите курсор на UUID хоста в значении JSON/YAML: появятся название, адрес, порт, SNI, путь, теги, состояние и привязка к профилю. Поддерживаются назначения, значения и группы селекторов, ссылки host:UUID и окно сравнения истории. Подсказка использует уже загруженный список хостов, без запроса на каждое наведение. Удалённый или недоступный в списке хост не раскрывается. Автодополнение ищет по UUID и названию. Содержимое можно выделить и скопировать; Escape закрывает подсказку. Комментарии и имена свойств не считаются ссылками. Для защиты отзывчивости разбор подсказки ограничен документами до 2 MiB; длинные поля предварительного просмотра сокращаются.'
+        ],
+        [
+            'Host previews in the editor',
+            'Hover over a host UUID in a JSON/YAML value to see its name, address, port, SNI, path, tags, state and profile assignment. Assignments, selector values and groups, host:UUID references and history comparisons are supported. Previews use the already loaded host list without requesting it on each hover. Deleted or unavailable hosts are not disclosed. Completion searches both UUID and name. Select and copy preview content; Escape closes it. Comments and property names are not references. To preserve responsiveness, hover parsing is limited to documents up to 2 MiB; long preview fields are shortened.'
+        ],
+        [
+            'پیش‌نمایش میزبان در ویرایشگر',
+            'روی UUID میزبان در مقدار JSON/YAML نگه دارید تا نام، آدرس، پورت، SNI، مسیر، برچسب‌ها، وضعیت و پروفایل دیده شوند. انتساب‌ها، مقادیر و گروه‌های انتخاب‌گر، ارجاع host:UUID و مقایسه تاریخچه پشتیبانی می‌شوند. داده از فهرست ازپیش‌بارشده خوانده می‌شود و هر اشاره درخواست جدید نمی‌فرستد. میزبان حذف‌شده یا ناموجود در فهرست نمایش داده نمی‌شود. تکمیل با UUID و نام جست‌وجو می‌کند. متن قابل انتخاب و کپی است؛ Escape پیش‌نمایش را می‌بندد. توضیحات و نام کلیدها ارجاع نیستند. برای حفظ پاسخ‌گویی، پردازش اشاره به سندهای حداکثر 2 MiB محدود و فیلدهای طولانی کوتاه می‌شوند.'
+        ],
+        [
+            '编辑器中的主机预览',
+            '将指针悬停在 JSON/YAML 值中的主机 UUID 上，可查看名称、地址、端口、SNI、路径、标签、状态和配置关联。支持分配、选择器值及分组、host:UUID 引用和历史比较。预览使用已加载的主机列表，不会在每次悬停时发送请求。已删除或列表中不可用的主机不会显示。自动补全支持 UUID 和名称搜索。可以选择并复制内容，按 Escape 关闭。注释和属性名不视为引用。为保持响应速度，悬停解析仅处理不超过 2 MiB 的文档，较长的预览字段会被截短。'
+        ]
+    ]
+])
+
 export function explainEditorWorkflows(articles) {
     for (const [articleId, id, translations] of additions) {
         const article = articles.find((item) => item.id === articleId)

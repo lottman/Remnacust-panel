@@ -23,6 +23,7 @@ export const BASE_MONACO_OPTIONS: editor.IStandaloneEditorConstructionOptions = 
         indentation: true
     },
     insertSpaces: true,
+    hover: { enabled: 'on', delay: 250, sticky: true, above: false },
     minimap: { enabled: true },
     padding: {
         top: 10,

@@ -33,6 +33,7 @@ import jsonWorker from 'monaco-editor/languages/features/json/json.worker?worker
 export { jsonDefaults } from 'monaco-editor/languages/features/json/register'
 
 import { MONACO_THEME_NAME, monacoTheme } from '@shared/constants/monaco-theme'
+import { installHostHoverProvider } from '@shared/utils/monaco/host-hover'
 import { installSnippetHoverProvider } from '@shared/utils/monaco/snippet-hover'
 
 import yamlWorker from './yaml-worker.js?worker'
@@ -97,6 +98,7 @@ monaco.languages.setMonarchTokensProvider('yaml', {
 
 loader.config({ monaco })
 installSnippetHoverProvider()
+installHostHoverProvider()
 
 monaco.editor.defineTheme(MONACO_THEME_NAME, {
     ...monacoTheme,

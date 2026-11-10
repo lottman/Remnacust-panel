@@ -18,6 +18,7 @@ import { useEditorRecovery } from '@shared/hooks/use-editor-recovery'
 import { fullscreenClasses, FullscreenToggleButton } from '@shared/ui'
 import { CodeEditor, editorClasses, EditorFooter } from '@shared/ui/code-editor'
 import { preventBackScroll } from '@shared/utils/misc'
+import { registerHostHoverData } from '@shared/utils/monaco/host-hover'
 import { setupSuggestWidget } from '@shared/utils/setup-monaco/setup-suggest-monaco'
 
 import { parseTemplate, poolsOf, templateChanges, validationPath } from './autoselect-model'
@@ -54,6 +55,7 @@ function templateSource(template: Props['template'], editorType: Props['editorTy
 
 export function SubscriptionTemplateEditorWidget(props: Props) {
     const { editorType, hosts, template } = props
+    useLayoutEffect(() => registerHostHoverData(hosts), [hosts])
     const { t } = useTranslation()
     const isXray = template.templateType === 'XRAY_JSON'
     const subscriptionSettings = useGetSubscriptionSettings({

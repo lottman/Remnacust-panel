@@ -13,8 +13,7 @@ const pending = [];
 // update with different contents requires reviewing and regenerating the manifest.
 for (const patch of manifest) {
     const allowedPath =
-        /^node_modules\/(nestjs-zod|xray-typed)\/dist\/[\w./-]+$/.test(patch.path) ||
-        /^node_modules\/deepmerge\/(index\.js|dist\/(cjs|umd)\.js)$/.test(patch.path) ||
+        /^node_modules\/xray-typed\/dist\/[\w./-]+$/.test(patch.path) ||
         /^node_modules\/sirv\/build\.(js|mjs)$/.test(patch.path) ||
         /^node_modules\/@prisma\/adapter-pg\/dist\/index\.(js|mjs)$/.test(patch.path);
     if (!allowedPath || patch.path.includes('..')) {

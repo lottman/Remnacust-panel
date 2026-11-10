@@ -97,7 +97,7 @@
     "nanoid": "6.0.2",
     "nest-winston": "2.0.0",
     "nestjs-cls": "7.0.2",
-    "nestjs-zod": "5.5.0",
+    "nestjs-zod": "5.6.0",
     "node-object-hash": "^3.1.1",
     "p-map": "7.1.1",
     "parse-prometheus-text-format": "^1.1.1",

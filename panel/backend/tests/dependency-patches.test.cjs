@@ -6,55 +6,14 @@ const { spawnSync } = require('node:child_process');
 const { test } = require('node:test');
 const manifest = require('../patches/manifest.json');
 
-for (const entry of ['deepmerge', 'deepmerge/dist/umd.js']) {
-    const merge = require(entry);
-    test(`${entry}: own __proto__ data cannot change the result prototype`, () => {
-        const payload = JSON.parse('{"__proto__":{"injected":true},"title":"schema"}');
-        for (const result of [
-            merge(payload, {}),
-            merge(Object.create(null), payload),
-            merge(payload, payload),
-            merge({ nested: payload }, { nested: {} }).nested,
-            merge([payload], [])[0],
-            merge.all([payload, { description: 'valid' }]),
-        ]) {
-            assert.equal(Object.getPrototypeOf(result), Object.prototype);
-            assert.equal(result.injected, undefined);
-            assert.equal(result.title, 'schema');
-        }
-        assert.equal(Object.prototype.injected, undefined);
-    });
-
-    test(`${entry}: schema merging preserves arrays, symbols and custom merging`, () => {
-        const symbol = Symbol('metadata');
-        const left = {
-            properties: { name: { type: 'string' } },
-            required: ['name'],
-            [symbol]: { a: 1 },
-        };
-        const right = {
-            properties: { age: { type: 'number' } },
-            required: ['age'],
-            [symbol]: { b: 2 },
-        };
-        assert.deepEqual(merge(left, right), {
-            properties: { name: { type: 'string' }, age: { type: 'number' } },
-            required: ['name', 'age'],
-            [symbol]: { a: 1, b: 2 },
-        });
-        assert.deepEqual(merge(left, right, { arrayMerge: (_, source) => source }).required, [
-            'age',
-        ]);
-        assert.deepEqual(
-            merge(left, right, {
-                customMerge: (key) => (key === 'required' ? (a, b) => [...b, ...a] : undefined),
-            }).required,
-            ['age', 'name'],
-        );
-        assert.deepEqual(left.required, ['name']);
-        assert.deepEqual(right.required, ['age']);
-    });
-}
+test('runtime dependencies no longer include deepmerge or adapter patches', () => {
+    const lock = require('../package-lock.json');
+    assert.equal(lock.packages['node_modules/deepmerge'], undefined);
+    assert.equal(
+        manifest.some((patch) => /\/(?:deepmerge|nestjs-zod)\//.test(patch.path)),
+        false,
+    );
+});
 
 test('malformed compressed JSON cannot terminate the HTTP process after parsing', () => {
     const result = spawnSync(

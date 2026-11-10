@@ -239,6 +239,28 @@ sections.push(
     ]
 )
 
+sections.push([
+    'geofile-reference-consistency',
+    [
+        [
+            'Проверка ссылок на категории',
+            'При автоматической выдаче DAT панель проверяет ссылки GeoIP/GeoSite в массивах и строковых списках через запятую, включая правила DNS. Категория из ручного правила сопоставляется только с единственным подключённым источником; отсутствующая или неоднозначная категория останавливает выдачу вместо создания нерабочей конфигурации. Элементы массивов, включая regexp с запятыми, не разделяются. При заполнении хранилища выборок небольшая выборка включается в подписанную ссылку; если она не помещается в безопасный размер ссылки, сохраняется совместимая выдача полного DAT. Отключённая автоматизация ручные правила не изменяет.'
+        ],
+        [
+            'Category reference checks',
+            'Automatic DAT delivery checks GeoIP/GeoSite references in arrays and comma-separated StringLists, including DNS rules. A manual category is mapped only to a unique attached source; missing or ambiguous categories stop delivery instead of creating a broken configuration. Array elements, including regexps containing commas, are never split. When selection storage fills up, a small selection is included in the signed URL; selections exceeding the safe URL budget retain compatible full-DAT delivery. Disabled automation leaves manual rules unchanged.'
+        ],
+        [
+            'بررسی ارجاع دسته‌ها',
+            'تحویل خودکار DAT ارجاع‌های GeoIP/GeoSite را در آرایه‌ها و فهرست‌های رشته‌ای جداشده با ویرگول، از جمله قواعد DNS، بررسی می‌کند. دسته دستی فقط به یک منبع متصل و یکتا نگاشت می‌شود؛ دسته ناموجود یا مبهم به‌جای ساخت پیکربندی خراب، تحویل را متوقف می‌کند. عناصر آرایه، حتی عبارت منظم دارای ویرگول، تقسیم نمی‌شوند. با پرشدن مخزن انتخاب‌ها، انتخاب کوچک در پیوند امضاشده قرار می‌گیرد؛ انتخاب بزرگ‌تر از حد امن پیوند، تحویل سازگار DAT کامل را حفظ می‌کند. خاموش‌بودن خودکارسازی قواعد دستی را تغییر نمی‌دهد.'
+        ],
+        [
+            '分类引用检查',
+            '自动 DAT 分发会检查数组和逗号分隔字符串列表中的 GeoIP/GeoSite 引用，包括 DNS 规则。手动分类只能映射到唯一的已关联来源；缺失或歧义分类会停止分发，避免生成无法运行的配置。数组元素不会被拆分，包括含逗号的正则表达式。选择存储已满时，小型选择会包含在签名链接中；超过安全链接长度的选择仍使用兼容的完整 DAT 分发。关闭自动化不会修改手动规则。'
+        ]
+    ]
+])
+
 const addressWorkflowNotes = {
     ru: 'Дополнительные адреса и импорт находятся только на вкладке «Геофайлы». Кроме адреса на каждой строке можно вставить JSON-массив строк или строки в кавычках через запятую, включая фрагмент списка без квадратных скобок. Настоящие объекты правил импортируются отдельной кнопкой «Импорт». Для Xray JSON действие «Через хост» направляет выбранные адреса или категории файла через конкретный хост. Он должен быть доступен пользователю; действуют собственные ключи, ограничения и квоты этого хоста. Выбор не выдаёт дополнительный доступ и не подменяется DIRECT при недоступном хосте. Другие форматы используют свои существующие группы и маршруты. Пустая панель изменений после сохранения не отображается. При переходе на DAT старые ссылки geosite/geoip из других профилей используют категорию выбранного файла только при единственном совпадении; действие и порядок исходного правила сохраняются. Неизвестные или неоднозначные категории и собственные геоданные не подменяются.',
     en: 'Additional addresses and import are available only on the Geofiles tab. Paste one address per line, a JSON array of strings, or comma-separated quoted strings, including a fragment without brackets. Use Import for actual routing-rule objects. In Xray JSON, Via host routes selected addresses or file categories through a particular host. The host must be available to that user; its own credentials, restrictions and quotas apply. Selecting it grants no additional access and never falls back to DIRECT when unavailable. Other formats use their existing groups and routes. The empty changes panel disappears after saving. When switching to DAT, legacy geosite/geoip references in other profiles use a selected file category only when the match is unique; the original rule action and order remain intact. Unknown or ambiguous categories and custom geodata are never substituted.',

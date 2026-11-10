@@ -23,7 +23,11 @@ import { requestGeofileBase } from '../../../common/utils/geofile-request-contex
 import { ClientPoolError } from '../generators/client-pool';
 import { SubscriptionTemplateRepository } from '../repositories/subscription-template.repository';
 import { bundleDat } from './bundle-dat';
-import { readBundleSelection, storeBundleSelection } from './bundle-selection';
+import {
+    readBundleSelection,
+    storeBundleSelection,
+    validateBundleSelection,
+} from './bundle-selection';
 import { compileDat, datCategories, DatRules } from './compile-dat';
 import { downloadGeofile, MAX_GEOFILE_BYTES } from './download-geofile';
 import { datClientFile } from './geofile-delivery';
@@ -531,17 +535,28 @@ export class GeofilesService {
         const ordered = [...ids].sort();
         const content = await this.bundleContent(kind, ordered, 2, categories);
         const revision = createHash('sha256').update(content).digest('hex');
+        let payload: string | undefined;
         if (categories) {
             const selection = { kind, ids: ordered, namespace: 2 as const, categories, revision };
             const key = await storeBundleSelection(this.directory(ordered[0]), selection);
             if (key) {
                 return `${this.base}${ordered[0]}/bundles/${key}/bundle-${this.bundleSignature(ordered[0], key)}.dat`;
             }
+            const raw = Buffer.from(JSON.stringify(selection));
+            const candidate = raw.toString('base64url');
+            if (
+                raw.length <= 2048 &&
+                `${this.base}${ordered[0]}/bundles/${candidate}/bundle-${'0'.repeat(64)}.dat`
+                    .length <= 512
+            )
+                payload = candidate;
         }
-        await this.bundleContent(kind, ordered);
-        const payload = Buffer.from(
-            JSON.stringify({ kind, ids: ordered, namespace: 2, revision }),
-        ).toString('base64url');
+        if (!payload) {
+            await this.bundleContent(kind, ordered);
+            payload = Buffer.from(
+                JSON.stringify({ kind, ids: ordered, namespace: 2, revision }),
+            ).toString('base64url');
+        }
         if (payload.length > 2732) throw new Error('geofile-bundle-size');
         // Some clients append .sha256 to the entire URL, including its query.
         // Put the authenticated selection in the path so both requests stay valid.
@@ -578,10 +593,12 @@ export class GeofilesService {
             const raw = Buffer.from(selection, 'base64url');
             if (raw.length > 2048 || raw.toString('base64url') !== selection)
                 throw new Error('geofile-bundle');
-            const { kind, ids, namespace = 1 } = JSON.parse(raw.toString('utf8'));
+            const parsed = JSON.parse(raw.toString('utf8'));
+            const { kind, ids, namespace = 1, categories } = parsed;
             if (!Array.isArray(ids) || ids[0] !== id || ![1, 2].includes(namespace))
                 throw new Error('geofile-bundle');
-            const data = await this.bundleContent(kind, ids, namespace);
+            if (categories !== undefined) validateBundleSelection(parsed);
+            const data = await this.bundleContent(kind, ids, namespace, categories);
             return filename.endsWith('.sha256')
                 ? Buffer.from(createHash('sha256').update(data).digest('hex'))
                 : data;

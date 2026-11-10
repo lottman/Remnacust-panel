@@ -79,3 +79,69 @@ test('DAT content changes rotate the signed download path while unchanged render
         await fs.rm(directory, { recursive: true, force: true });
     }
 });
+
+test('full selection storage keeps subsets in signed URLs instead of silently downloading unused categories', async () => {
+    const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'rc-dat-capacity-'));
+    const previous = process.env.XERA_BACKUPS_DIR;
+    process.env.XERA_BACKUPS_DIR = directory;
+    try {
+        const service = new GeofilesService(
+            {
+                getOrThrow: (key) =>
+                    key === 'APP_SECRET' ? 'test-private-key' : 'sub.example.test',
+            },
+            {},
+            {},
+        );
+        const id = '00' + 'b'.repeat(32);
+        const unused = fixture.bytes(
+            1,
+            Buffer.concat([
+                fixture.bytes(1, 'UNUSED'),
+                fixture.bytes(2, fixture.domain(2, 'unused.example')),
+            ]),
+        );
+        const data = Buffer.concat([fixture.geosite, unused]);
+        service.fileById = async () => ({
+            id,
+            kind: 'geosite',
+            size: data.length,
+            sha256: digest(data),
+        });
+        service.readActive = async () => data;
+        const slot = service.directory(id);
+        await fs.mkdir(slot, { recursive: true });
+        await Promise.all(
+            Array.from({ length: 128 }, (_, i) =>
+                fs.writeFile(
+                    path.join(slot, 'selection-' + digest(Buffer.from(String(i))) + '.json'),
+                    '{}',
+                ),
+            ),
+        );
+        const url = new URL(await service.bundleUrl('geosite', [id], { [id]: ['example'] }));
+        const selection = url.pathname.split('/').at(-2);
+        const filename = url.pathname.split('/').at(-1);
+        assert(!selection.startsWith('m-'));
+        const dat = await service.bundle(id, filename, selection);
+        assert.deepEqual(datCategories(dat), [datCategory(id, 'example')]);
+        assert.equal(
+            (await service.bundle(id, filename + '.sha256', selection)).toString(),
+            digest(dat),
+        );
+        assert.equal((await fs.readdir(slot)).length, 128);
+        const decoded = JSON.parse(Buffer.from(selection, 'base64url'));
+        decoded.categories[id] = ['unused'];
+        await assert.rejects(
+            service.bundle(
+                id,
+                filename,
+                Buffer.from(JSON.stringify(decoded)).toString('base64url'),
+            ),
+        );
+    } finally {
+        if (previous === undefined) delete process.env.XERA_BACKUPS_DIR;
+        else process.env.XERA_BACKUPS_DIR = previous;
+        await fs.rm(directory, { recursive: true, force: true });
+    }
+});

@@ -34,6 +34,49 @@ export class XrayGeofileFallback extends ClientPoolError {
     }
 }
 
+const GEOFILE_STRING_LIST_FIELDS = new Set([
+    'domain',
+    'domains',
+    'ip',
+    'source',
+    'sourceIP',
+    'localIP',
+    'expectedIPs',
+    'expectIPs',
+    'unexpectedIPs',
+]);
+
+function mapGeofileReferences(config: unknown, resolve: (value: string) => string): boolean {
+    const stack: unknown[] = [config];
+    let visited = 0;
+    let changed = false;
+    while (stack.length) {
+        const value = stack.pop();
+        if (!value || typeof value !== 'object') continue;
+        for (const [field, item] of Object.entries(value)) {
+            if (++visited > 200_000) throw new XrayGeofileFallback('size');
+            if (typeof item !== 'string') {
+                if (item && typeof item === 'object') stack.push(item);
+                continue;
+            }
+            const list = !Array.isArray(value) && GEOFILE_STRING_LIST_FIELDS.has(field);
+            if (list)
+                for (let index = 0; index < item.length; index++)
+                    if (item.charCodeAt(index) === 44 && ++visited > 200_000)
+                        throw new XrayGeofileFallback('size');
+            const parts = list ? item.split(',') : [item];
+            const mapped = parts
+                .map((part) => (/^(?:geoip|geosite):/i.test(part) ? resolve(part) : part))
+                .join(',');
+            if (mapped !== item) {
+                (value as Record<string, unknown>)[field] = mapped;
+                changed = true;
+            }
+        }
+    }
+    return changed;
+}
+
 // One collector belongs to one subscription response, never to a cached template.
 export class XrayGeofileDelivery {
     public intervalHours?: number;
@@ -133,26 +176,14 @@ export class XrayGeofileDelivery {
         let changed = false;
         for (const config of configs) {
             if (config?.geodata) throw new XrayGeofileFallback('existing-geodata');
-            const stack: unknown[] = [config];
-            let visited = 0;
-            while (stack.length) {
-                if (++visited > 200_000) throw new XrayGeofileFallback('size');
-                const value = stack.pop();
-                if (!value || typeof value !== 'object') continue;
-                for (const [field, item] of Object.entries(value)) {
-                    if (typeof item !== 'string') {
-                        if (item && typeof item === 'object') stack.push(item);
-                        continue;
-                    }
-                    const match = /^(geoip|geosite):(.+)$/i.exec(item);
-                    if (!match || this.references.has(item.toLowerCase())) continue;
-                    const key = aliases.get(item.toLowerCase());
-                    if (!key) throw new XrayGeofileFallback('existing-geodata');
-                    (value as Record<string, unknown>)[field] = key;
-                    this.references.get(key)!.ambiguous = true;
-                    changed = true;
-                }
-            }
+            const mapped = mapGeofileReferences(config, (item) => {
+                if (this.references.has(item.toLowerCase())) return item;
+                const key = aliases.get(item.toLowerCase());
+                if (!key) throw new XrayGeofileFallback('existing-geodata');
+                this.references.get(key)!.ambiguous = true;
+                return key;
+            });
+            changed ||= mapped;
         }
         return changed ? JSON.stringify(configs) : subscription;
     }
@@ -203,21 +234,12 @@ export class XrayGeofileDelivery {
         // Like the size budget, complexity belongs to one client profile.
         // A valid subscription may repeat the same rules on many hosts.
         for (const config of configs) {
-            const stack: unknown[] = [config];
-            let visited = 0;
-            while (stack.length) {
-                if (++visited > 200_000) throw new XrayGeofileFallback('size');
-                const value = stack.pop();
-                if (typeof value === 'string' && /^(?:geoip|geosite):/i.test(value)) {
-                    const key = value.toLowerCase();
-                    if (this.references.has(key)) used.add(key);
-                    else existingGeodata = true;
-                } else if (Array.isArray(value)) {
-                    for (const item of value) stack.push(item);
-                } else if (value && typeof value === 'object') {
-                    for (const item of Object.values(value)) stack.push(item);
-                }
-            }
+            mapGeofileReferences(config, (item) => {
+                const key = item.toLowerCase();
+                if (this.references.has(key)) used.add(key);
+                else existingGeodata = true;
+                return item;
+            });
         }
         if (!used.size) return existingGeodata ? undefined : this.inlineHeader(profileKey, now);
         if (existingGeodata) throw new XrayGeofileFallback('existing-geodata');

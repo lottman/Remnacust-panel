@@ -90,7 +90,15 @@ export const NodeStatusBadgeWidget = memo(
                     maw="min(300px, calc(100vw - 24px))"
                     withArrow
                 >
-                    <ActionIcon aria-label={status} color={color} radius="md" size={26} {...rest}>
+                    <ActionIcon
+                        component="span"
+                        role="img"
+                        aria-label={status}
+                        color={color}
+                        radius="md"
+                        size={26}
+                        {...rest}
+                    >
                         {icon}
                     </ActionIcon>
                 </Tooltip>

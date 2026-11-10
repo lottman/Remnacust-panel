@@ -132,8 +132,11 @@ export const CreateUserModal = NiceModal.create(() => {
                     // @ts-expect-error - TODO: fix ZOD schema
                     telegramId: values.telegramId === '' ? undefined : values.telegramId,
                     email: values.email === '' ? undefined : values.email,
-                    // @ts-expect-error - TODO: fix ZOD schema
-                    hwidDeviceLimit: values.hwidDeviceLimit === '' ? null : values.hwidDeviceLimit,
+                    hwidDeviceLimit:
+                        // @ts-expect-error - TODO: fix ZOD schema
+                        values.hwidDeviceLimit === ''
+                            ? undefined
+                            : (values.hwidDeviceLimit ?? undefined),
                     tag: values.tag,
                     activeInternalSquads: values.activeInternalSquads,
                     externalSquadUuid: values.externalSquadUuid,

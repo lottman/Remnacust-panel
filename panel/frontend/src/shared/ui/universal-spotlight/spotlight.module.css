@@ -1,0 +1,124 @@
+.content {
+    overflow: hidden;
+    border: 1px solid var(--mantine-color-default-border);
+    border-radius: 14px;
+    box-shadow: 0 24px 80px rgb(0 0 0 / 24%);
+}
+
+.body {
+    padding: 0;
+}
+
+.search {
+    min-height: 60px;
+    font-size: 15px;
+}
+
+input.search {
+    padding-inline-start: 54px;
+    padding-inline-end: 18px;
+}
+
+.actionsList {
+    padding: 8px;
+    margin-inline-end: 0;
+}
+
+.actionsList :global(.mantine-ScrollArea-content) {
+    min-width: 0;
+    width: 100%;
+}
+
+.action {
+    min-height: 66px;
+    gap: 12px;
+    padding: 12px;
+    border: 1px solid transparent;
+    border-radius: 9px;
+    transition:
+        background-color 120ms ease,
+        border-color 120ms ease;
+}
+
+.action[data-selected],
+.action:focus-visible {
+    background: var(--mantine-primary-color-light);
+    border-color: var(--mantine-primary-color-light-color);
+    color: var(--mantine-color-text);
+    --action-description-color: var(--mantine-color-dimmed);
+    --action-description-opacity: 1;
+}
+
+.actionBody {
+    min-width: 0;
+    overflow: hidden;
+}
+
+.actionLabel {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.4;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.actionDescription {
+    margin-top: 3px;
+    font-size: 12px;
+    line-height: 1.45;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.actionSection {
+    flex-shrink: 0;
+    margin: 0;
+    opacity: 1;
+}
+
+.actionSection[data-position='left'] {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border: 1px solid var(--mantine-color-default-border);
+    border-radius: 8px;
+    background: var(--mantine-color-default);
+}
+
+.actionSection[data-position='right'] {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-variant-numeric: tabular-nums;
+}
+
+.actionSection :global(.mantine-Badge-root) {
+    height: 25px;
+    min-width: 36px;
+    padding-inline: 8px;
+    border: 0;
+    border-radius: 6px;
+    font-size: 12px;
+}
+
+@media (max-width: 480px) {
+    .action {
+        gap: 9px;
+        padding: 10px 8px;
+    }
+
+    .actionSection[data-position='left'] {
+        width: 30px;
+        height: 30px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .action {
+        transition: none;
+    }
+}

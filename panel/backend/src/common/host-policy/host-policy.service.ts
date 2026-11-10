@@ -460,10 +460,7 @@ export class HostPolicyService {
         const custom = !this.xrayModes || await this.xrayModes.isCustom();
         if (!custom) userQuota = false;
         const [hosts, tags, identities, routes] = await Promise.all([
-            sql<PolicyHost>`WITH issued_hosts AS MATERIALIZED (
-                SELECT DISTINCT host_uuid FROM xera_host_identities
-            )
-    SELECT h.uuid,h.tags,h.config_profile_inbound_uuid AS "inboundUuid",i.tag AS "inboundTag",i.profile_uuid AS "profileUuid",
+            sql<PolicyHost>`SELECT h.uuid,h.tags,h.config_profile_inbound_uuid AS "inboundUuid",i.tag AS "inboundTag",i.profile_uuid AS "profileUuid",
     h.always_available AS "alwaysAvailable",h.only_when_inactive AS "onlyWhenInactive",
     h.user_traffic_limit_bytes::text AS "userLimit",h.traffic_multiplier AS "trafficMultiplier",
     h.server_speed_limit_mbps AS "userSpeed",h.device_speed_limit_mbps AS "deviceSpeed",h.total_speed_limit_mbps AS "totalSpeed",
@@ -474,7 +471,10 @@ export class HostPolicyService {
     (issued.host_uuid IS NOT NULL) AS issued,
     EXISTS(SELECT 1 FROM xera_limit_scopes c WHERE c.kind='HOST' AND c.key=h.uuid::text) AS managed
     FROM hosts h LEFT JOIN config_profile_inbounds i ON i.uuid=h.config_profile_inbound_uuid
-    LEFT JOIN issued_hosts issued ON issued.host_uuid=h.uuid`.execute(
+    LEFT JOIN LATERAL (
+        SELECT k.host_uuid FROM xera_host_identities k
+        WHERE k.host_uuid >= h.uuid ORDER BY k.host_uuid LIMIT 1
+    ) issued ON issued.host_uuid=h.uuid`.execute(
                 this.db.kysely,
             ),
             sql<PolicyTag>`

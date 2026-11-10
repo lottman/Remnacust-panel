@@ -2,7 +2,7 @@
 
 Configure the inline threshold under Geofiles: 1–250,000 addresses/conditions, default 20,000. Size and complexity safeguards remain and may switch delivery to DAT before the configured threshold. Manual Xray settings remain intact when automatic geofile delivery is disabled.
 
-Release **Panel/Page 1.1.7.112** belongs to Installer bundle **1.2.159**, with Node **1.1.29** and Core/WASM **1.1.18**. [Changes in this release](docs/releases/1.1.7.112.md). Installed servers require a separate update.
+Release **Panel/Page 1.1.7.113** belongs to Installer bundle **1.2.160**, with Node **1.1.30** and Core/WASM **1.1.18**. [Changes in this release](docs/releases/1.1.7.113.md). Installed servers require a separate update.
 
 
 [Русский](README.md) · [English](README.en.md)
@@ -39,9 +39,9 @@ Matching bundle as of **November 10, 2026**. Components use separate version num
 
 | Component | Current stable release |
 | --- | --- |
-| Panel and subscription website | [1.1.7.112](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.112) |
-| Installer / Docker bundle | [1.2.159](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.159) |
-| Node agent | [1.1.29](https://github.com/lottman/Remnacust-node/releases/tag/v1.1.29) |
+| Panel and subscription website | [1.1.7.113](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.113) |
+| Installer / Docker bundle | [1.2.160](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.160) |
+| Node agent | [1.1.30](https://github.com/lottman/Remnacust-node/releases/tag/v1.1.30) |
 | Core / editor validator | [1.1.18](https://github.com/lottman/Remnacust-core/releases/tag/v1.1.18), Xray v26.11.9 |
 
 Use a matching bundle. Updating the panel does not automatically update remote Node, managed Core or the Linux kernel. Advanced limits depend on confirmed Node/Core capabilities, not just the displayed version. [Compatibility](docs/COMPATIBILITY.md).
@@ -60,7 +60,7 @@ When sharing a server, leave headroom for all components. Panel/node requirement
 
 | Software | Requirement |
 | --- | --- |
-| Installer 1.2.159 OS | Ubuntu 22.04 / 24.04 / 26.04 LTS and Debian 12 / 13; Linux amd64 or arm64 |
+| Installer 1.2.160 OS | Ubuntu 22.04 / 24.04 / 26.04 LTS and Debian 12 / 13; Linux amd64 or arm64 |
 | Containers | Docker Engine with a current Docker Compose v2 plugin; legacy `docker-compose` v1 is unsupported |
 | PostgreSQL | 14.24 / 15.19 / 16.15 / 17.11 / 18.6; 202 migrations; validation scope is listed in Compatibility |
 | Prebuilt-image installation | Root, APT and GitHub/GHCR access, working DNS; no host Node.js or Go needed |
@@ -130,7 +130,7 @@ If a subscription temporarily fails to load, check logs, panel reachability, web
 - [Backups](docs/BACKUPS.md) · [User migration](docs/USER-MIGRATION.md) · [Node updates](docs/UPDATE-PROGRESS-AND-NODE-HEALTH.md).
 - [Development/building](docs/BUILDING.md) · [Subscription website](subscription-page/README.en.md) · [Release history](docs/releases).
 
-Release 1.1.7.112 fixes premature DAT downloads: the configured threshold (20,000 conditions by default) is evaluated separately for each final profile. Switching a large profile to DAT no longer switches smaller profiles. Independent safety budgets remain enforced. [Release changes](docs/releases/1.1.7.112.md). Installed servers require a separate update.
+Release 1.1.7.113 fixes premature DAT downloads: the configured threshold (20,000 conditions by default) is evaluated separately for each final profile. Switching a large profile to DAT no longer switches smaller profiles. Independent safety budgets remain enforced. [Release changes](docs/releases/1.1.7.113.md). Installed servers require a separate update.
 
 ## License and support
 

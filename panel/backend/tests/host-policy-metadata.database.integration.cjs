@@ -20,7 +20,7 @@ visit(tree);
 assert.equal(queries.length, 1);
 const query = queries[0];
 
-test('host policy metadata scans issued identities once and remains fresh without an authorization cache', {
+test('host policy metadata uses bounded indexed lookups and remains fresh without an authorization cache', {
     skip: !connectionString,
     timeout: 30000,
 }, async () => {
@@ -68,6 +68,13 @@ test('host policy metadata scans issued identities once and remains fresh withou
         await client.query('DELETE FROM xera_host_identities WHERE host_uuid=$1', [fresh]);
         expected.delete(fresh);
         assertRows((await client.query(query)).rows);
+        await client.query('SAVEPOINT empty_identities');
+        await client.query('TRUNCATE xera_host_identities');
+        const empty = (await client.query(query)).rows;
+        assert.equal(empty.length, 96);
+        assert(empty.every(row => row.issued === false));
+        await client.query('ROLLBACK TO SAVEPOINT empty_identities');
+        assertRows((await client.query(query)).rows);
         const plan = (await client.query('EXPLAIN (ANALYZE,BUFFERS,FORMAT JSON) ' + query)).rows[0]['QUERY PLAN'][0];
         const scans = [];
         function walk(node) {
@@ -76,9 +83,10 @@ test('host policy metadata scans issued identities once and remains fresh withou
         }
         walk(plan.Plan);
         assert.equal(scans.length, 1);
-        assert.equal(scans[0]['Actual Loops'], 1);
-        assert(scans[0]['Actual Rows'] <= 60000);
-        process.stdout.write(JSON.stringify({ test: 'host-policy-metadata', hosts: 96, identities: 60000, identityScanLoops: 1, executionMs: plan['Execution Time'] }) + '\n');
+        assert.match(scans[0]['Node Type'], /^Index(?: Only)? Scan$/);
+        assert.equal(scans[0]['Actual Loops'], 96);
+        assert(scans[0]['Actual Rows'] <= 1);
+        process.stdout.write(JSON.stringify({ test: 'host-policy-metadata', hosts: 96, identities: 60000, identityScanLoops: 96, maxRowsPerLookup: 1, executionMs: plan['Execution Time'] }) + '\n');
     } finally {
         await client.query('ROLLBACK').catch(() => {});
         await client.end();

@@ -61,7 +61,7 @@ export const HostsSpotlightWidget = (props: IProps) => {
         return {
             id: host.uuid,
             label: host.remark,
-            keywords: [host.address, host.uuid, meta, host.uuid],
+            keywords: [host.address, host.uuid, meta],
             onClick: () => handleViewHost(host.uuid),
 
             children: (
@@ -69,11 +69,11 @@ export const HostsSpotlightWidget = (props: IProps) => {
                     <Group gap="sm" style={{ minWidth: 0 }} wrap="nowrap">
                         {getHostIcon(host.isDisabled, host.isHidden)}
                         <Stack gap={1} style={{ minWidth: 0 }}>
-                            <Text fw={500} size="sm">
+                            <Text fw={600} size="sm" truncate>
                                 {host.remark}
                             </Text>
-                            <Text c="dimmed" size="xs">
-                                {host.address} · {host.uuid}
+                            <Text c="dimmed" size="xs" truncate>
+                                {host.address}:{host.port}
                             </Text>
                             {meta && (
                                 <Text c="dimmed" size="xs" truncate>

@@ -17,10 +17,12 @@ const variables = load(path.join(directory, 'template-variables.ts'), {
 const parser = load(path.join(directory, 'template-parser.ts'), { './template-variables': variables });
 const bytes = load(path.join(directory, '../bytes/pretty-bytes.util.ts'));
 const locationReset = load(path.join(directory, 'get-next-location-reset-at.ts'));
+const requestContext = load(path.join(directory, '../geofile-request-context.ts'));
 const { TemplateEngine } = load(path.join(directory, 'replace-templates-values.ts'), {
     '@common/utils/frozen-user-lifetime': load(path.join(directory, '../frozen-user-lifetime.ts')),
     '@libs/contracts/constants': constants,
     '../bytes': bytes,
+    '../geofile-request-context': requestContext,
     '../get-next-traffic-reset-at.util': load(path.join(directory, '../get-next-traffic-reset-at.util.ts'), { '@libs/contracts/constants': constants }),
     './get-next-location-reset-at': locationReset,
     './template-parser': parser,
@@ -42,6 +44,20 @@ const user = {
 };
 const settings = { hwidSettings: { fallbackDeviceLimit: 3 } };
 const map = (hosts = [], host, override = {}) => TemplateEngine.createUserValueMap({ ...user, ...override }, settings, 'sub.example.test', hosts, host);
+
+test('subscription URL uses the validated request domain and path without leaking between requests', async () => {
+    const assigned = { uuid: 'fixture', kind: 'PRIMARY', domain: 'origin.example.test', path: '/legacy' };
+    const render = () => TemplateEngine.replace('{{SUBSCRIPTION_URL}}', map([], undefined, { subscriptionDomain: assigned }));
+    assert.equal(render(), 'https://origin.example.test/legacy/short42');
+    const domains = ['https://cdn-a.example.test/public', 'https://cdn-b.example.test:8443'];
+    const results = await Promise.all(domains.map((domain, index) => requestContext.withGeofileOrigin(domain, async () => {
+        await new Promise(resolve => setTimeout(resolve, index ? 1 : 5));
+        return render();
+    })));
+    assert.deepEqual(results, domains.map(domain => `${domain}/short42`));
+    assert.equal(render(), 'https://origin.example.test/legacy/short42');
+    assert.equal(TemplateEngine.replace('{{SUBSCRIPTION_URL}}', map()), 'https://sub.example.test/short42');
+});
 
 test('every advertised template variable has a working resolver; zero and missing optional data stay valid', () => {
     const resolvers = map();

@@ -9,6 +9,13 @@ const subload = require('../../../subscription-page/backend/tests/load-typescrip
 const utils = path.join(__dirname, '../src/common/utils');
 const { cdnRequestHeaderName, isCdnSelectorHeader } = load(path.join(utils, 'cdn-request-header.ts'));
 const ctx = load(path.join(utils, 'geofile-request-context.ts'));
+const { TemplateEngine } = load(path.join(utils, 'templates/replace-templates-values.ts'), {
+    '@common/utils/frozen-user-lifetime': load(path.join(utils, 'frozen-user-lifetime.ts')),
+    '@libs/contracts/constants': { USERS_STATUS_VALUES: ['ACTIVE'], RESET_PERIODS_VALUES: [], RESET_PERIODS: {} },
+    '@libs/contracts/constants/templates/template-keys': load(path.join(__dirname, '../libs/contract/constants/templates/template-keys.ts')),
+    '../bytes': load(path.join(utils, 'bytes/pretty-bytes.util.ts')),
+    '../geofile-request-context': ctx,
+});
 const origin = load(path.join(utils, 'public-geofile-origin.ts'));
 const relay = load(path.join(utils, 'geofile-relay-origin.ts'));
 const { mocks, pool } = require('./client-pool-fixture.cjs');
@@ -173,6 +180,13 @@ test('real page-to-panel HTTP keeps CDN authority for routing, JSON, DAT and che
             },
         ]);
         res.set('routing', await delivery.header(body, 'fixture'));
+        const values = TemplateEngine.createUserValueMap({
+            id: 1n, shortUuid: 'fixture', username: 'fixture', status: 'ACTIVE',
+            expireAt: new Date('2100-01-01'), trafficLimitBytes: 0n,
+            userTraffic: { usedTrafficBytes: 0n, lifetimeUsedTrafficBytes: 0n },
+            subscriptionDomain: { domain: 'private-origin.example.test', path: '/internal' },
+        }, { hwidSettings: {} }, 'canonical.example.test');
+        res.set('profile-web-page-url', TemplateEngine.replace('{{SUBSCRIPTION_URL}}', values));
         res.type('json').send(body);
     });
     upstream.get('/api/sub/geofiles/:id/:filename', async (req, res) => {
@@ -259,6 +273,7 @@ test('real page-to-panel HTTP keeps CDN authority for routing, JSON, DAT and che
                 url.origin,
                 i ? 'https://cdn-b.example.test:8443' : 'https://cdn-a.example.test',
             );
+            assert.equal(response.headers['profile-web-page-url'], `${url.origin}/fixture`);
             assert(!response.body.includes('evil.test'));
             const download = await request(url.host, url.pathname);
             assert.equal(download.status, 200);
@@ -281,6 +296,7 @@ test('real page-to-panel HTTP keeps CDN authority for routing, JSON, DAT and che
             const profile = JSON.parse(Buffer.from(result.headers.routing.split('/onadd/')[1], 'base64'));
             const url = new URL(profile.Geositeurl);
             assert.equal(url.hostname, id === domainId ? 'cdn-a.example.test' : 'cdn-b.example.test');
+            assert.equal(result.headers['profile-web-page-url'], `${url.origin}/fixture`);
             const downloaded = await request('canonical.example.test', url.pathname + url.search, id, true);
             assert.equal(downloaded.status, 200);
             assert.deepEqual(downloaded.body, dat);
@@ -294,6 +310,7 @@ test('real page-to-panel HTTP keeps CDN authority for routing, JSON, DAT and che
             const profile = JSON.parse(Buffer.from(result.headers.routing.split('/onadd/')[1], 'base64'));
             const url = new URL(profile.Geositeurl);
             assert.equal(url.hostname, index ? 'cdn-b.example.test' : 'cdn-a.example.test');
+            assert.equal(result.headers['profile-web-page-url'], `${url.origin}/fixture`);
             const downloaded = await request('canonical.example.test', url.pathname + url.search, ids[index]);
             assert.equal(downloaded.status, 200);
             assert.deepEqual(downloaded.body, dat);
@@ -308,6 +325,7 @@ test('real page-to-panel HTTP keeps CDN authority for routing, JSON, DAT and che
             const profile = JSON.parse(Buffer.from(result.headers.routing.split('/onadd/')[1], 'base64'));
             const url = new URL(profile.Geositeurl);
             assert.equal(url.hostname, index % 2 ? 'cdn-b.example.test' : 'cdn-a.example.test');
+            assert.equal(result.headers['profile-web-page-url'], `${url.origin}/fixture`);
             assert.ok(url.pathname.startsWith('/geofiles/'));
             assert.ok(!url.pathname.includes('/cdn/'));
             const withoutSelector = await request('canonical.example.test', url.pathname + url.search);

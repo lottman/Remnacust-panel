@@ -221,7 +221,7 @@ export class SubscriptionDomainsService implements OnModuleInit, OnModuleDestroy
                             })) >= MAX_CDN_PER_PRIMARY
                         )
                             throw new HttpExceptionWithErrorCodeType(
-                                'A primary domain can have at most three CDN domains',
+                                'A primary domain can have at most one CDN domain',
                                 'SUBSCRIPTION_DOMAIN_CDN_LIMIT',
                                 400,
                             );
@@ -496,14 +496,15 @@ export class SubscriptionDomainsService implements OnModuleInit, OnModuleDestroy
         if (!primary) throw new NotFoundException('SUBSCRIPTION_DOMAIN_NOT_FOUND');
         const cdns = rows
             .filter((row) => row.kind === 'CDN' && row.parentUuid === primary.uuid)
-            .sort((a, b) => a.domain.localeCompare(b.domain));
-        if (cdns.length > MAX_CDN_PER_PRIMARY && query.kind !== 'PRIMARY')
-            throw new HttpExceptionWithErrorCodeType(
-                'Remove excess CDN domains before requesting all links',
-                'SUBSCRIPTION_DOMAIN_CDN_LIMIT',
-                409,
-            );
+            .sort((a, b) => (a.domain < b.domain ? -1 : a.domain > b.domain ? 1 : 0));
         const family = [primary, ...cdns];
+        const preferred =
+            cdns.find((row) => row.accessMode !== 'BLOCKED' && row.uuid === assigned?.uuid) ??
+            cdns.find(
+                (row) => row.accessMode !== 'BLOCKED' && row.uuid === primary.redirectDomainUuid,
+            ) ??
+            cdns.find((row) => row.accessMode !== 'BLOCKED') ??
+            primary;
         if (query.domainUuid) {
             const domain = family.find((row) => row.uuid === query.domainUuid);
             if (!domain) throw new NotFoundException('SUBSCRIPTION_DOMAIN_NOT_FOUND');
@@ -527,7 +528,7 @@ export class SubscriptionDomainsService implements OnModuleInit, OnModuleDestroy
                     domain: row.domain,
                     kind: row.kind as 'PRIMARY' | 'CDN',
                     url: `${subscriptionDomainBase(row)}/${shortUuid}`,
-                    isSelected: row.uuid === (assigned?.uuid ?? primary.uuid),
+                    isSelected: row.uuid === preferred.uuid,
                 })),
         };
     }

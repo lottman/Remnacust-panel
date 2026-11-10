@@ -2,7 +2,7 @@
 
 Порог обычных правил настраивается в разделе «Геофайлы»: 1–250 000 адресов/условий, по умолчанию 20 000. Ограничения размера и сложности сохраняются и могут переключить доставку на DAT раньше выбранного порога. При выключенной автоматизации ручные настройки Xray сохраняются.
 
-Выпуск **Panel/Page 1.1.7.113** входит в комплект Installer **1.2.160** с Node **1.1.30** и Core/WASM **1.1.18**. [Изменения выпуска](docs/releases/1.1.7.113.md). Обновление установленного сервера выполняется отдельно.
+Выпуск **Panel/Page 1.1.7.113** входит в комплект Installer **1.2.161** с Node **1.1.30** и Core/WASM **1.1.18**. [Изменения выпуска](docs/releases/1.1.7.113.md). Обновление установленного сервера выполняется отдельно.
 
 
 [Русский](README.md) · [English](README.en.md)
@@ -40,7 +40,7 @@ docker compose up -d --no-build --pull never
 | Компонент | Текущий стабильный выпуск |
 | --- | --- |
 | Панель и сайт подписки | [1.1.7.113](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.113) |
-| Установщик / Docker-комплект | [1.2.160](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.160) |
+| Установщик / Docker-комплект | [1.2.161](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.161) |
 | Агент ноды | [1.1.30](https://github.com/lottman/Remnacust-node/releases/tag/v1.1.30) |
 | Core / валидатор редактора | [1.1.18](https://github.com/lottman/Remnacust-core/releases/tag/v1.1.18), Xray v26.11.9 |
 
@@ -60,7 +60,7 @@ docker compose up -d --no-build --pull never
 
 | ПО | Требование |
 | --- | --- |
-| ОС установщика 1.2.160 | Ubuntu 22.04 / 24.04 / 26.04 LTS и Debian 12 / 13, Linux amd64 или arm64 |
+| ОС установщика 1.2.161 | Ubuntu 22.04 / 24.04 / 26.04 LTS и Debian 12 / 13, Linux amd64 или arm64 |
 | Контейнеры | Docker Engine и актуальный плагин Docker Compose v2; `docker-compose` v1 не поддерживается |
 | PostgreSQL | 14.24 / 15.19 / 16.15 / 17.11 / 18.6; 202 миграции; границы проверки — в таблице совместимости |
 | Установка готовых образов | Root, доступ к APT, GitHub/GHCR и рабочий DNS; Node.js и Go на VPS не нужны |

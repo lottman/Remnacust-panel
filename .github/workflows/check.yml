@@ -488,6 +488,12 @@ jobs:
         env:
           HOST_POLICY_METADATA_TEST_DATABASE_URL: ${{ env.DATABASE_URL }}
           HOST_POLICY_METADATA_TEST_DISPOSABLE: '1'
+      - name: Verify public user URLs and CDN selection with actual SQL
+        run: node --test tests/user-subscription-url.database.integration.cjs
+        env:
+          USER_SUBSCRIPTION_URL_TEST_DATABASE_URL: ${{ env.DATABASE_URL }}
+          USER_SUBSCRIPTION_URL_TEST_DISPOSABLE: '1'
+          USER_SUBSCRIPTION_CDN_LIMIT_TEST: '1'
       - name: Verify UTC access and expiry boundaries
         run: node tests/access-expiry-timezone.database.integration.cjs
       - name: Verify actual diagnostics SQL with restricted roles

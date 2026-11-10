@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SubscriptionDomainSchema = exports.SubscriptionDomainInputSchema = exports.MAX_CDN_PER_PRIMARY = void 0;
 const zod_1 = require("zod");
-exports.MAX_CDN_PER_PRIMARY = 3;
+exports.MAX_CDN_PER_PRIMARY = 1;
 exports.SubscriptionDomainInputSchema = zod_1.z
     .object({
     name: zod_1.z.string().trim().min(1).max(100),

@@ -46,15 +46,21 @@ const service = () => new SubscriptionDomainsService(prisma, { getOrThrow: () =>
         const competing = await Promise.allSettled([1,2,3].map(i => instance.save(undefined, {
             name: `Concurrent ${i}`, domain: `cdn-${i}.example.test`, path: '', kind: 'CDN', parentUuid: main.uuid, isDefault: false,
         })));
-        assert.equal(competing.filter(result => result.status === 'fulfilled').length, 2);
-        assert.equal(competing.filter(result => result.status === 'rejected' && result.reason.errorCode === 'SUBSCRIPTION_DOMAIN_CDN_LIMIT').length, 1);
-        assert.equal(await prisma.subscriptionDomains.count({ where: { parentUuid: main.uuid } }), 3);
+        assert.equal(competing.filter(result => result.status === 'fulfilled').length, 0);
+        assert.equal(competing.filter(result => result.status === 'rejected' && result.reason.errorCode === 'SUBSCRIPTION_DOMAIN_CDN_LIMIT').length, 3);
+        assert.equal(await prisma.subscriptionDomains.count({ where: { parentUuid: main.uuid } }), 1);
         const other = await instance.save(undefined, { name: 'Other', domain: 'other.example.test', path: '', kind: 'PRIMARY', parentUuid: null, isDefault: false });
-        const otherCdn = await instance.save(undefined, { name: 'Other CDN', domain: 'other-cdn.example.test', path: '', kind: 'CDN', parentUuid: other.uuid, isDefault: false });
+        const newFamily = await Promise.allSettled([1, 2, 3].map(i => service().save(undefined, {
+            name: `Other CDN ${i}`, domain: `other-cdn-${i}.example.test`, path: '', kind: 'CDN', parentUuid: other.uuid, isDefault: false,
+        })));
+        assert.equal(newFamily.filter(result => result.status === 'fulfilled').length, 1);
+        assert.equal(newFamily.filter(result => result.status === 'rejected' && result.reason.errorCode === 'SUBSCRIPTION_DOMAIN_CDN_LIMIT').length, 2);
+        assert.equal(await prisma.subscriptionDomains.count({ where: { parentUuid: other.uuid } }), 1);
+        const otherCdn = newFamily.find(result => result.status === 'fulfilled').value;
         await assert.rejects(instance.save(otherCdn.uuid, { name: otherCdn.name, domain: otherCdn.domain, path: '', kind: 'CDN', parentUuid: main.uuid, isDefault: false }), error => error.errorCode === 'SUBSCRIPTION_DOMAIN_CDN_LIMIT');
         assert.equal((await instance.save(cdn.uuid, { name: 'Renamed CDN', domain: cdn.domain, path: '', kind: 'CDN', parentUuid: main.uuid, isDefault: false })).name, 'Renamed CDN');
-        assert.equal((await instance.list({ kind: 'CDN', parentUuid: main.uuid })).length, 3);
-        assert.equal((await instance.userLinks(cdn.uuid, 'fixture_key')).links.length, 4);
+        assert.equal((await instance.list({ kind: 'CDN', parentUuid: main.uuid })).length, 1);
+        assert.equal((await instance.userLinks(cdn.uuid, 'fixture_key')).links.length, 2);
         assert.equal((await instance.userLinks(other.uuid, 'fixture_key', { kind: 'CDN' })).links.length, 1);
         value = cdn.domain; generation++;
         assert.equal((await instance.listing()).environment, 'conflict');

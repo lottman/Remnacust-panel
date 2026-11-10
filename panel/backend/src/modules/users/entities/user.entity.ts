@@ -11,6 +11,7 @@ interface IActiveInternalSquads {
 }
 
 export class UserEntity extends BaseUserEntity {
+    public subscriptionUrlBase?: string | null;
     public subscriptionDomain?: {
         uuid: string;
         name: string;

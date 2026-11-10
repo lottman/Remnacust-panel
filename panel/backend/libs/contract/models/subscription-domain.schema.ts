@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const MAX_CDN_PER_PRIMARY = 3;
+export const MAX_CDN_PER_PRIMARY = 1;
 
 export const SubscriptionDomainInputSchema = z
     .object({

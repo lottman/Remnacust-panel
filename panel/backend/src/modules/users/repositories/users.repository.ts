@@ -36,6 +36,7 @@ import {
 } from '../entities';
 import { UserTrafficEntity } from '../entities/user-traffic.entity';
 import { UserConverter } from '../users.converter';
+import { userSubscriptionDomainSelection } from './user-subscription-domain-query';
 
 const USERS_FILTER_COLUMN_MAP = {
     id: sql.ref('users.id'),
@@ -199,11 +200,7 @@ export class UsersRepository {
     }
 
     private get subscriptionDomainSelection() {
-        return sql<
-            UserEntity['subscriptionDomain']
-        >`(SELECT jsonb_build_object('uuid', d.uuid, 'name', d.name, 'domain', d.domain, 'path', d.path, 'kind', d.kind, 'parentUuid', d.parent_uuid, 'isDefault', d.is_default) FROM subscription_domains d WHERE d.uuid = COALESCE(users.subscription_domain_uuid, (SELECT uuid FROM subscription_domains WHERE is_default LIMIT 1)))`.as(
-            'subscriptionDomain',
-        );
+        return userSubscriptionDomainSelection();
     }
 
     private get baseUsersQb() {

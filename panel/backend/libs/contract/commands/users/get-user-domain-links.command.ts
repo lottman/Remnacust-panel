@@ -3,7 +3,6 @@ import { z } from 'zod';
 import { REST_API, USERS_ROUTES } from '../../api';
 import { getEndpointDetails } from '../../constants';
 import { numberParamSchema } from '../../models';
-import { MAX_CDN_PER_PRIMARY } from '../../models/subscription-domain.schema';
 
 const params = z.object({ userId: numberParamSchema });
 const domainQuery = z.object({ domainUuid: z.uuid().optional() }).strict();
@@ -21,7 +20,7 @@ const linksResponse = z.object({
                     isSelected: z.boolean(),
                 }),
             )
-            .max(MAX_CDN_PER_PRIMARY + 1),
+            .max(128),
     }),
 });
 

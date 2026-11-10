@@ -4366,7 +4366,7 @@
         "request-header-name": "请求头名称",
         "request-header-value": "请求头值",
         "without-request-header": "CDN 不支持添加请求头时",
-        "cdn-limit": "每个普通域名最多可关联三个 CDN。请删除多余的 CDN 或选择其他普通域名。",
+        "cdn-limit": "每个主域名只能关联一个 CDN。请删除多余的 CDN 或选择其他主域名。",
         "link-tools": "检查使用此域名的链接",
         "access-BLOCKED": "已关闭",
         "block-family-warning": "此域名及其所有 CDN 的请求将返回 HTTP 403，不会重定向。",

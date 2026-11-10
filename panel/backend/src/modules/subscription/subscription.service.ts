@@ -528,6 +528,7 @@ export class SubscriptionService {
                       user.response.subscriptionDomain,
                       this.subPublicDomain,
                       shortUuid,
+                      user.response.subscriptionUrlBase,
                   );
             return new SubscriptionWithConfigResponse({
                 headers: {
@@ -1054,6 +1055,7 @@ export class SubscriptionService {
                 user.subscriptionDomain,
                 this.subPublicDomain,
                 user.shortUuid,
+                user.subscriptionUrlBase,
             ),
         });
     }

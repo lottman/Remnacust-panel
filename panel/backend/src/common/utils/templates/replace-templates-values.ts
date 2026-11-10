@@ -10,8 +10,8 @@ import { UserEntity } from '@modules/users/entities';
 
 import { prettyBytesUtil } from '../bytes';
 import { currentGeofileOrigin } from '../geofile-request-context';
-import { subscriptionUserUrl } from '../subscription-domain-url';
 import { getNextTrafficResetAt } from '../get-next-traffic-reset-at.util';
+import { subscriptionUserUrl } from '../subscription-domain-url';
 import { getNextLocationResetAt } from './get-next-location-reset-at';
 import { parseTemplate, renderTemplate } from './template-parser';
 import { DEFAULT_DATE_FORMAT, TemplateResolvers } from './template-variables';
@@ -218,7 +218,12 @@ export class TemplateEngine {
             SUBSCRIPTION_URL: () =>
                 currentGeofileOrigin()
                     ? `${currentGeofileOrigin()}/${user.shortUuid}`
-                    : subscriptionUserUrl(user.subscriptionDomain, subPublicDomain, user.shortUuid),
+                    : subscriptionUserUrl(
+                          user.subscriptionDomain,
+                          subPublicDomain,
+                          user.shortUuid,
+                          user.subscriptionUrlBase,
+                      ),
             TAG: () => user.tag || '',
             EXPIRE_UNIX: () => dayjs(effectiveUserExpiry(user)).unix(),
             SHORT_UUID: () => user.shortUuid,

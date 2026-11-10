@@ -45,13 +45,14 @@ function fixture(rows = [main, ...cdns, other]) {
     );
     return { service, reads: () => reads };
 }
-test('one ordinary URL and three CDN URLs share a user key, with explicit selection and no setup metadata', async () => {
+test('legacy CDN URLs share a user key without setup metadata and prefer the effective CDN', async () => {
     const { service, reads } = fixture();
     const result = await service.userLinks(null, 'fixture_key');
     assert.equal(result.primaryDomainUuid, main.uuid);
     assert.equal(result.links.length, 4);
     assert.equal(result.links[0].url, 'https://sub.example.test/sub/fixture_key');
-    assert.equal(result.links[0].isSelected, true);
+    assert.equal(result.links[0].isSelected, false);
+    assert.equal(result.links[1].isSelected, true);
     assert.equal(result.links[1].url, 'https://cdn2.example.test/sub/fixture_key');
     for (const link of result.links) assert.equal(new URL(link.url).pathname, '/sub/fixture_key');
     for (const link of result.links)
@@ -87,14 +88,22 @@ test('kind and UUID filters cannot select a foreign family or silently substitut
     await assert.rejects(service.userLinks(uuid(99), 'key'), (e) => e.getStatus() === 404);
     assert.deepEqual((await service.userLinks(other.uuid, 'key', { kind: 'CDN' })).links, []);
 });
-test('legacy excess CDNs are reported rather than omitted, and primary-only access remains available', async () => {
+test('legacy excess CDNs remain usable and primary-only access remains available', async () => {
     const extra = { ...cdns[0], uuid: uuid(6), domain: 'extra.example.test' };
     const { service } = fixture([main, ...cdns, extra]);
-    await assert.rejects(
-        service.userLinks(null, 'key'),
-        (e) => e.errorCode === 'SUBSCRIPTION_DOMAIN_CDN_LIMIT' && e.getStatus() === 409,
-    );
+    assert.equal((await service.userLinks(null, 'key')).links.length, 5);
     assert.equal((await service.userLinks(null, 'key', { kind: 'PRIMARY' })).links.length, 1);
+});
+
+test('new domain families allow one CDN and their preferred URL falls back only to an open primary', async () => {
+    assert.equal(schema.MAX_CDN_PER_PRIMARY, 1);
+    for (const mode of ['OPEN', 'CDN_ONLY', 'REDIRECT']) {
+        const { service } = fixture([{ ...main, accessMode: mode }, cdns[0], other]);
+        const links = (await service.userLinks(null, 'key')).links;
+        assert.equal(links.find((link) => link.isSelected)?.domainUuid, cdns[0].uuid);
+    }
+    const { service } = fixture([main, { ...cdns[0], accessMode: 'BLOCKED' }]);
+    assert.equal((await service.userLinks(null, 'key')).links.find((link) => link.isSelected)?.domainUuid, main.uuid);
 });
 
 test('CDN-only and redirecting primaries are never emitted as user links', async () => {

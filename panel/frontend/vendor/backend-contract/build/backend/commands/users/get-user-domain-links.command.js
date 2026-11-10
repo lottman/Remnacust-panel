@@ -5,7 +5,6 @@ const zod_1 = require("zod");
 const api_1 = require("../../api");
 const constants_1 = require("../../constants");
 const models_1 = require("../../models");
-const subscription_domain_schema_1 = require("../../models/subscription-domain.schema");
 const params = zod_1.z.object({ userId: models_1.numberParamSchema });
 const domainQuery = zod_1.z.object({ domainUuid: zod_1.z.uuid().optional() }).strict();
 const linksResponse = zod_1.z.object({
@@ -20,7 +19,7 @@ const linksResponse = zod_1.z.object({
             url: zod_1.z.url(),
             isSelected: zod_1.z.boolean(),
         }))
-            .max(subscription_domain_schema_1.MAX_CDN_PER_PRIMARY + 1),
+            .max(128),
     }),
 });
 var GetUserDomainLinksCommand;

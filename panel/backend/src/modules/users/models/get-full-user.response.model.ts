@@ -3,8 +3,8 @@ import { TResetPeriods, TUsersStatus } from '@libs/contracts/constants';
 
 import { InternalSquadEntity } from '@modules/internal-squads/entities';
 
-import { UserEntity } from '../entities';
 import { subscriptionUserUrl } from '../../../common/utils/subscription-domain-url';
+import { UserEntity } from '../entities';
 
 export class GetFullUserResponseModel {
     public readonly id: number;
@@ -89,7 +89,12 @@ export class GetFullUserResponseModel {
 
         this.subscriptionDomainUuid = entity.subscriptionDomainUuid ?? null;
         this.subscriptionDomain = entity.subscriptionDomain ?? null;
-        this.subscriptionUrl = subscriptionUserUrl(entity.subscriptionDomain, subPublicDomain, entity.shortUuid);
+        this.subscriptionUrl = subscriptionUserUrl(
+            entity.subscriptionDomain,
+            subPublicDomain,
+            entity.shortUuid,
+            entity.subscriptionUrlBase,
+        );
         this.activeInternalSquads = entity.activeInternalSquads;
 
         this.userTraffic = {

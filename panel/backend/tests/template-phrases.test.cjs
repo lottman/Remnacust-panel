@@ -57,6 +57,10 @@ test('subscription URL uses the validated request domain and path without leakin
     assert.deepEqual(results, domains.map(domain => `${domain}/short42`));
     assert.equal(render(), 'https://origin.example.test/legacy/short42');
     assert.equal(TemplateEngine.replace('{{SUBSCRIPTION_URL}}', map()), 'https://sub.example.test/short42');
+    const preferred = () => TemplateEngine.replace('{{SUBSCRIPTION_URL}}', map([], undefined, { subscriptionDomain: assigned, subscriptionUrlBase: 'https://preferred.example.test/sub' }));
+    assert.equal(preferred(), 'https://preferred.example.test/sub/short42');
+    assert.equal(requestContext.withGeofileOrigin(domains[0], preferred), `${domains[0]}/short42`);
+    assert.equal(TemplateEngine.replace('{{SUBSCRIPTION_URL}}', map([], undefined, { subscriptionDomain: assigned, subscriptionUrlBase: '' })), '');
 });
 
 test('every advertised template variable has a working resolver; zero and missing optional data stay valid', () => {

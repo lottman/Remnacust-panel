@@ -4366,7 +4366,7 @@
         "request-header-name": "Request header name",
         "request-header-value": "Header value",
         "without-request-header": "If the CDN cannot add a request header",
-        "cdn-limit": "A regular domain can have at most three CDNs. Remove an extra CDN or choose another regular domain.",
+        "cdn-limit": "A primary domain can have only one CDN. Remove an extra CDN or choose another primary domain.",
         "link-tools": "Check a link with this domain",
         "access-BLOCKED": "Closed",
         "block-family-warning": "Requests to this domain and all its CDNs will return HTTP 403 without redirection.",

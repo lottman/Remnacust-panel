@@ -4305,7 +4305,7 @@
     "subscription-domains": {
         "scope-credentials": "获取 CDN 私密密钥",
         "credentials-failed": "无法获取 CDN 密钥，需要域名写入权限。",
-        "credentials-help": "在 CDN 设置中添加此请求标头及其值。每个 CDN 使用独立密钥，请勿将其添加到响应标头。",
+        "credentials-help": "在 CDN 设置中添加此请求标头及其值。每个 CDN 使用独立密钥，请勿将其添加到响应标头。 每次打开都会重新读取数据，查看不会更改密钥。",
         "access-mode": "主域名访问",
         "access-help": "请先为每个 CDN 配置请求标头。本设置适用于订阅页面、配置和地理文件。",
         "access-OPEN": "开放访问",

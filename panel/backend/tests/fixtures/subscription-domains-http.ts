@@ -76,8 +76,8 @@ async function main() {
         const base = await app.getUrl();
         const jwt = new JwtService({ secret });
         const sign = (payload: Record<string, unknown>) => jwt.sign(payload, { expiresIn: 60 });
-        const request = async (token?: string, browser = false, route = '/api/subscription-domains') => {
-            const response = await fetch(base + route, { headers: {
+        const request = async (token?: string, browser = false, route = '/api/subscription-domains', method = 'GET') => {
+            const response = await fetch(base + route, { method, headers: {
                 ...(token ? { Authorization: 'Bearer ' + token } : {}),
                 ...(browser ? { 'X-Remnawave-Client-Type': 'browser' } : {}),
             }, signal: AbortSignal.timeout(5000) });
@@ -91,6 +91,15 @@ async function main() {
         assert.equal(result.status, 200, JSON.stringify(result.body));
         assert.equal(result.body.response[0].domain, row.domain);
         assert.equal(result.cache, 'no-store');
+        const firstCredentials = await request(browserToken, true, `/api/subscription-domains/${cdn.uuid}/credentials?_request=${randomUUID()}`, 'POST');
+        const nextCredentials = await request(browserToken, true, `/api/subscription-domains/${cdn.uuid}/credentials?_request=${randomUUID()}`, 'POST');
+        assert.equal(firstCredentials.status, 200);
+        assert.equal(nextCredentials.status, 200);
+        assert.equal(firstCredentials.cache, 'no-store');
+        assert.equal(nextCredentials.cache, 'no-store');
+        assert.deepEqual(firstCredentials.body, nextCredentials.body, 'fresh reads must not rotate the configured CDN key');
+        assert.match(firstCredentials.body.response.requestHeaderName, /^X-[a-f0-9]{24}$/);
+        assert.match(firstCredentials.body.response.requestHeaderValue, new RegExp(`^${cdn.uuid}\\.[a-f0-9]{64}$`));
         sessions.clear();
         assert.equal((await request(browserToken, true)).status, 401);
         const uuid = randomUUID();

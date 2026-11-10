@@ -28,6 +28,7 @@ import { instance } from '@shared/api/axios'
 import { SectionCard } from '@shared/ui/section-card'
 import { SettingsCardShared } from '@shared/ui/settings-card'
 
+import { cdnCredentialsQuery, type CdnCredentialsSession } from './subscription-domain-credentials'
 import { cdnSubscriptionLink } from './subscription-domain-link'
 
 type DomainKind = 'PRIMARY' | 'CDN'
@@ -77,7 +78,9 @@ export function SubscriptionDomainsWidget() {
     const cache = useQueryClient()
     const [opened, setOpened] = useState(false)
     const [editing, setEditing] = useState<SubscriptionDomain | null>(null)
-    const [setupDomain, setSetupDomain] = useState<SubscriptionDomain | null>(null)
+    const [setupDomain, setSetupDomain] = useState<
+        (SubscriptionDomain & CdnCredentialsSession) | null
+    >(null)
     const [existingLink, setExistingLink] = useState('')
     const [removeTarget, setRemoveTarget] = useState<SubscriptionDomain | null>(null)
     const form = useForm<DomainForm>({ initialValues: emptyForm })
@@ -93,19 +96,8 @@ export function SubscriptionDomainsWidget() {
         staleTime: 15_000,
         refetchOnWindowFocus: 'always'
     })
-    const credentials = useQuery({
-        queryKey: ['subscription-domain-credentials', setupDomain?.uuid],
-        enabled: !!setupDomain,
-        gcTime: 0,
-        staleTime: 0,
-        retry: false,
-        queryFn: async () =>
-            (
-                await instance.post<{
-                    response: { requestHeaderName: string; requestHeaderValue: string }
-                }>(`/api/subscription-domains/${setupDomain!.uuid}/credentials`)
-            ).data.response
-    })
+    const credentialsOptions = cdnCredentialsQuery(setupDomain)
+    const credentials = useQuery(credentialsOptions)
     const save = useMutation({
         mutationFn: async (values: DomainForm) => {
             const data = {
@@ -293,7 +285,11 @@ export function SubscriptionDomainsWidget() {
                                                                     }
                                                                     onClick={() => {
                                                                         setExistingLink('')
-                                                                        setSetupDomain(domain)
+                                                                        setSetupDomain({
+                                                                            ...domain,
+                                                                            requestId:
+                                                                                crypto.randomUUID()
+                                                                        })
                                                                     }}
                                                                 >
                                                                     {t(
@@ -511,6 +507,7 @@ export function SubscriptionDomainsWidget() {
                 onClose={() => {
                     setSetupDomain(null)
                     setExistingLink('')
+                    cache.removeQueries({ queryKey: credentialsOptions.queryKey, exact: true })
                 }}
                 title={t('subscription-domains.cdn-setup')}
             >

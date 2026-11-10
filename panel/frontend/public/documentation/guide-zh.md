@@ -1096,7 +1096,7 @@ INCY 获得不含查询参数的稳定 DAT URL。经过签名的文件选择位�
 
 ### 准备面板与服务器
 
-在“订阅 → 设置 → 订阅页面”中添加主域名 origin.example.net 和子 CDN sub.example.net。从“配置 CDN”复制该域名专用的请求头名称和值。X-… 名称及 UUID/签名值因 CDN 而异。将 sub.example.net 的 DNS 指向独立代理，源站证书应匹配 origin.example.net。源站 HTTPS 站点必须将完整路径转发给已更新的订阅页面。页面的 REMNAWAVE_PANEL_URL 和 API 令牌只保存在服务器私有 .env 中。独立部署的页面需单独更新。现有 Remnawave 页面可在安装器“迁移”中选择“从 Remnawave 迁移订阅页面”（migrate-remnawave-subscription-page）；保留面板连接及设置。
+在“订阅 → 设置 → 订阅页面”中添加主域名 origin.example.net 和子 CDN sub.example.net。从“配置 CDN”复制该域名专用的请求头名称和值。X-… 名称及 UUID/签名值因 CDN 而异。每次打开窗口都会重新读取凭据，关闭时会从界面缓存中删除；查看不会轮换已配置的凭据。将 sub.example.net 的 DNS 指向独立代理，源站证书应匹配 origin.example.net。源站 HTTPS 站点必须将完整路径转发给已更新的订阅页面。页面的 REMNAWAVE_PANEL_URL 和 API 令牌只保存在服务器私有 .env 中。独立部署的页面需单独更新。现有 Remnawave 页面可在安装器“迁移”中选择“从 Remnawave 迁移订阅页面”（migrate-remnawave-subscription-page）；保留面板连接及设置。
 
 ### 服务商 CDN、独立源站与旧链接
 

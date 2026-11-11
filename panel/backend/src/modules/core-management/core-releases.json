@@ -1,5 +1,20 @@
 [
   {
+    "id": "remnacust-core-1.1.19",
+    "build": "1.1.19",
+    "sourceCommit": "76a16bedcfaa53ccb1dbc9cddbbb2b175349a4ac",
+    "artifacts": {
+      "amd64": {
+        "url": "https://github.com/lottman/Remnacust-core/releases/download/v1.1.19/remnacust-core-1.1.19-linux-amd64",
+        "sha256": "048996c6364cdcc6bf256854fc5b72a426397f52e2c13414f7dcfdf3032879cc"
+      },
+      "arm64": {
+        "url": "https://github.com/lottman/Remnacust-core/releases/download/v1.1.19/remnacust-core-1.1.19-linux-arm64",
+        "sha256": "df51f0edfc4320c61edf9b560679972c5b6fb165afd6763a5cd4917940e0a02f"
+      }
+    }
+  },
+  {
     "id": "remnacust-core-1.1.18",
     "build": "1.1.18",
     "sourceCommit": "e6c902ba975e3e21e3949658ba963bb3d6985342",

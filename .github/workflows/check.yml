@@ -151,7 +151,7 @@ jobs:
           DATABASE_URL="$XRAY_MODE_TEST_DATABASE_URL" DIRECT_URL="$XRAY_MODE_TEST_DATABASE_URL" npm run migrate:deploy
           node --test tests/xray-mode-serialization.database.integration.cjs
       - name: Check access policies and limits with PostgreSQL
-        run: node tests/hwid-default-database.integration.cjs && node tests/host-policy-database.integration.cjs && node tests/limit-management-database.integration.cjs && node tests/device-reconciliation-database.integration.cjs && node tests/node-health-retention-database.integration.cjs
+        run: node tests/hwid-default-database.integration.cjs && node tests/host-policy-database.integration.cjs && node tests/limit-management-database.integration.cjs && node tests/device-reconciliation-database.integration.cjs && node tests/user-access-reconciliation.database.integration.cjs && node tests/node-health-retention-database.integration.cjs
       - name: Check bidirectional subscription domain synchronization with PostgreSQL
         run: |
           node - <<'NODE'

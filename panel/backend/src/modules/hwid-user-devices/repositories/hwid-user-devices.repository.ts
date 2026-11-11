@@ -193,6 +193,44 @@ export class HwidUserDevicesRepository implements Omit<
         return result.rows.map((row) => row.hwid);
     }
 
+    public async claimUserAccessReconciliation(): Promise<
+        Array<{ userId: bigint; revision: string; attempts: number }>
+    > {
+        const result = await sql<{
+            userId: bigint;
+            revision: string;
+            attempts: number;
+        }>`WITH due AS (
+            SELECT user_id FROM xera_user_access_reconciliation WHERE next_attempt_at<=now()
+            ORDER BY next_attempt_at,user_id LIMIT 8 FOR UPDATE SKIP LOCKED
+        ) UPDATE xera_user_access_reconciliation q SET attempts=q.attempts+1,next_attempt_at=now()+interval '10 minutes'
+          FROM due WHERE q.user_id=due.user_id
+          RETURNING q.user_id AS "userId",q.revision::text,q.attempts`.execute(this.qb.kysely);
+        return result.rows;
+    }
+
+    public async finishUserAccessReconciliation(
+        task: { userId: bigint; revision: string; attempts: number },
+        success: boolean,
+    ): Promise<void> {
+        if (success) {
+            await sql`WITH finished AS (
+                DELETE FROM xera_user_access_reconciliation WHERE user_id=${task.userId}
+                AND revision=${task.revision}::uuid RETURNING user_id
+            ) UPDATE xera_device_state SET revision=revision+1 WHERE id=1 AND NOT EXISTS(SELECT 1 FROM finished)`.execute(
+                this.qb.kysely,
+            );
+        } else {
+            const delay = Math.min(300, 10 * 2 ** Math.min(task.attempts - 1, 5));
+            await sql`WITH retried AS (
+                UPDATE xera_user_access_reconciliation SET next_attempt_at=now()+${delay}*interval '1 second'
+                WHERE user_id=${task.userId} AND revision=${task.revision}::uuid RETURNING user_id
+            ) UPDATE xera_device_state SET revision=revision+1 WHERE id=1 AND NOT EXISTS(SELECT 1 FROM retried)`.execute(
+                this.qb.kysely,
+            );
+        }
+    }
+
     public async claimDeviceReconciliation(
         limit = 32,
     ): Promise<Array<{ userId: bigint; hwid: string; revision: string; attempts: number }>> {

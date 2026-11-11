@@ -431,11 +431,8 @@ export class UsersService {
                 );
             }
 
-            if (
-                (statusChanged || status !== undefined) &&
-                !(await this.deviceAccess.synchronizeUserStatus(updatedUser))
-            ) {
-                return fail(ERRORS.UPDATE_USER_ERROR);
+            if (statusChanged || status !== undefined) {
+                this.deviceAccess.kickReconciliation();
             }
 
             this.eventEmitter.emit(
@@ -634,9 +631,7 @@ export class UsersService {
             this.eventBus.publish(
                 new RemoveUserFromNodeEvent(updatedUser.id, updatedUser.vlessUuid),
             );
-            if (!(await this.deviceAccess.synchronizeUserStatus(updatedUser))) {
-                return fail(ERRORS.DISABLE_USER_ERROR);
-            }
+            this.deviceAccess.kickReconciliation();
             this.eventEmitter.emit(
                 EVENTS.USER.DISABLED,
                 new UserEvent({
@@ -674,9 +669,7 @@ export class UsersService {
             if (updatedUser.status === USERS_STATUS.ACTIVE) {
                 this.eventBus.publish(new AddUserToNodeEvent(user.id));
             }
-            if (!(await this.deviceAccess.synchronizeUserStatus(updatedUser))) {
-                return fail(ERRORS.ENABLE_USER_ERROR);
-            }
+            this.deviceAccess.kickReconciliation();
 
             this.eventEmitter.emit(
                 updatedUser.status === USERS_STATUS.ACTIVE
@@ -733,9 +726,7 @@ export class UsersService {
 
             if (user.status === USERS_STATUS.EXPIRED && newStatus === USERS_STATUS.ACTIVE) {
                 this.eventBus.publish(new AddUserToNodeEvent(user.id));
-                if (!(await this.deviceAccess.synchronizeUserStatus(updatedUser))) {
-                    return fail(ERRORS.UPDATE_USER_ERROR);
-                }
+                this.deviceAccess.kickReconciliation();
             }
 
             this.eventEmitter.emit(
@@ -780,9 +771,7 @@ export class UsersService {
             if (!newUser) return fail(ERRORS.USER_NOT_FOUND);
 
             if (user.status === USERS_STATUS.LIMITED) {
-                if (!(await this.deviceAccess.synchronizeUserStatus(newUser))) {
-                    return fail(ERRORS.RESET_USER_TRAFFIC_ERROR);
-                }
+                this.deviceAccess.kickReconciliation();
                 this.eventEmitter.emit(
                     EVENTS.USER.ENABLED,
                     new UserEvent({

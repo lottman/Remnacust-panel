@@ -18,7 +18,13 @@ const { DeviceAccessService } = load(
         '@libs/contracts/constants': {},
         '@modules/nodes/repositories/nodes.repository': {},
         '@modules/users/entities/user.entity': {},
-        '@modules/users/queries/get-user-by-unique-field': {},
+        '@modules/users/queries/get-user-by-unique-field': {
+            GetUserByUniqueFieldQuery: class {
+                constructor(criteria) {
+                    this.criteria = criteria;
+                }
+            },
+        },
         '@modules/users/queries/get-user-with-resolved-inbounds': {},
         './entities/hwid-user-device.entity': {},
         './repositories/hwid-user-devices.repository': {},
@@ -28,6 +34,7 @@ function fixture(tasks = [{ userId: 1n, hwid: 'deleted', revision: 'one', attemp
     const done = [],
         calls = [];
     const repo = {
+        claimUserAccessReconciliation: async () => [],
         claimDeviceReconciliation: async () => tasks,
         checkHwidExists: async () => ({ exists: false, blocked: false }),
         finishDeviceReconciliation: async (...args) => done.push(args),
@@ -40,7 +47,7 @@ function fixture(tasks = [{ userId: 1n, hwid: 'deleted', revision: 'one', attemp
         {},
         {},
     );
-    Object.defineProperty(service, 'enabled', { get: () => true });
+    Object.defineProperty(service, 'enabled', { get: () => true, configurable: true });
     service.syncDevice = async (...args) => {
         calls.push(args);
         return false;
@@ -110,4 +117,80 @@ test('blocked reconciliation revokes personal and shared keys concurrently and r
     service.retireBlockedSharedCredential = async () => true;
     await service.reconcilePendingDevices();
     assert.equal(done[1][1], true);
+});
+
+test('user reconciliation runs without personal HWIDs, reads current status and retries offline nodes', async () => {
+    const { service, repo } = fixture([]);
+    Object.defineProperty(service, 'enabled', { get: () => false, configurable: true });
+    const task = { userId: 7n, revision: 'current', attempts: 1 };
+    const done = [],
+        seen = [];
+    repo.claimUserAccessReconciliation = async () => [task];
+    repo.finishUserAccessReconciliation = async (...args) => done.push(args);
+    let status = 'FROZEN',
+        available = false;
+    service.queryBus = {
+        execute: async (query) => {
+            assert.equal(query.criteria.id, 7n);
+            return { isOk: true, response: { id: 7n, status } };
+        },
+    };
+    service.synchronizeUserStatus = async (user) => {
+        seen.push(user.status);
+        return available;
+    };
+    await service.reconcilePendingDevices();
+    assert.deepEqual(done, [[task, false]]);
+    status = 'ACTIVE';
+    available = true;
+    await service.reconcilePendingDevices();
+    assert.deepEqual(seen, ['FROZEN', 'ACTIVE']);
+    assert.deepEqual(done[1], [task, true]);
+});
+
+test('user reconciliation isolates exceptions and limits simultaneous user jobs', async () => {
+    const { service, repo } = fixture([]);
+    const tasks = Array.from({ length: 8 }, (_, i) => ({
+        userId: BigInt(i + 1),
+        revision: String(i),
+        attempts: 1,
+    }));
+    const done = [];
+    repo.claimUserAccessReconciliation = async () => tasks;
+    repo.finishUserAccessReconciliation = async (...args) => done.push(args);
+    service.queryBus = {
+        execute: async (query) => ({ isOk: true, response: { id: query.criteria.id } }),
+    };
+    let active = 0,
+        peak = 0;
+    service.synchronizeUserStatus = async (user) => {
+        peak = Math.max(peak, ++active);
+        await new Promise((resolve) => setImmediate(resolve));
+        active--;
+        if (user.id === 3n) throw Error('offline');
+        return true;
+    };
+    await service.reconcilePendingDevices();
+    assert.equal(peak, 2);
+    assert.equal(done.length, 8);
+    assert.equal(done.filter(([, success]) => success).length, 7);
+    assert.equal(done.find(([task]) => task.userId === 3n)[1], false);
+});
+
+test('a failing user queue cannot release the single-flight guard while device jobs still run', async () => {
+    const { service, repo } = fixture();
+    repo.claimUserAccessReconciliation = async () => {
+        throw Error('queue unavailable');
+    };
+    let release;
+    service.syncDevice = () =>
+        new Promise((resolve) => {
+            release = resolve;
+        });
+    const running = service.reconcilePendingDevices();
+    const checked = assert.rejects(running, /queue unavailable/);
+    await new Promise((resolve) => setImmediate(resolve));
+    assert.equal(service.reconcilePendingDevices(), running);
+    release(true);
+    await checked;
 });

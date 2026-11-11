@@ -82,7 +82,7 @@ const mocks = {
             }
         },
     },
-    '@modules/nodes/events/add-user-to-node': {},
+    '@modules/nodes/events/add-user-to-node': { AddUserToNodeEvent: class {} },
     '@modules/nodes/events/add-users-to-node': {},
     '@modules/nodes/events/remove-user-from-node': { RemoveUserFromNodeEvent: class {} },
     '@modules/nodes/events/remove-users-from-node': {},
@@ -121,7 +121,7 @@ const record = {
     telegramId: null,
 };
 
-test('repeated explicit freeze retries failed device access synchronization', async () => {
+test('repeated explicit freeze succeeds after commit and wakes durable access reconciliation', async () => {
     const service = makeService();
     const frozen = { ...record, status: 'FROZEN', frozenAt: new Date(), activeInternalSquads: [] };
     service.userRepository = {
@@ -131,8 +131,12 @@ test('repeated explicit freeze retries failed device access synchronization', as
     service.eventBus = { publish() {} };
     service.eventEmitter = { emit() {} };
     let attempts = 0;
-    service.deviceAccess = { synchronizeUserStatus: async () => ++attempts > 1 };
-    assert.equal((await service.updateUser({ id: 1, status: 'FROZEN' })).isOk, false);
+    service.deviceAccess = {
+        kickReconciliation: () => {
+            attempts++;
+        },
+    };
+    assert.equal((await service.updateUser({ id: 1, status: 'FROZEN' })).isOk, true);
     assert.equal((await service.updateUser({ id: 1, status: 'FROZEN' })).isOk, true);
     assert.equal(attempts, 2);
 });
@@ -270,7 +274,7 @@ test('expired subscriptions can be frozen without granting time or accepting a d
         };
         service.eventBus = { publish() {} };
         service.eventEmitter = { emit() {} };
-        service.deviceAccess = { synchronizeUserStatus: async () => true };
+        service.deviceAccess = { kickReconciliation() {} };
         const result = await service.updateUser({
             id: 1,
             status: 'FROZEN',
@@ -280,3 +284,90 @@ test('expired subscriptions can be frozen without granting time or accepting a d
         assert.equal(written.expireAt, undefined);
     }
 });
+
+test('freeze ignores stale client expiry and preserves the database pause clock', async () => {
+    const service = makeService();
+    const current = { ...record, activeInternalSquads: [] };
+    const paused = { ...current, status: 'FROZEN', frozenAt: new Date('2026-11-12T12:00:00Z') };
+    let saved;
+    service.userRepository = {
+        findUniqueByCriteria: async () => current,
+        update: async (data) => {
+            saved = data;
+            return paused;
+        },
+    };
+    let kicks = 0;
+    service.deviceAccess = {
+        kickReconciliation: () => {
+            kicks++;
+        },
+    };
+    service.eventBus = { publish() {} };
+    service.eventEmitter = { emit() {} };
+    const result = await service.updateUser({
+        id: 1,
+        status: 'FROZEN',
+        expireAt: new Date('2099-01-01T00:00:00Z'),
+    });
+    assert.equal(result.isOk, true);
+    assert.equal(saved.expireAt, undefined);
+    assert.equal(result.response.frozenAt, paused.frozenAt);
+    assert.equal(result.response.expireAt, current.expireAt);
+    assert.equal(kicks, 1);
+});
+
+test('failed database update remains an error and never wakes node reconciliation', async () => {
+    const service = makeService();
+    service.userRepository = {
+        findUniqueByCriteria: async () => ({ ...record, activeInternalSquads: [] }),
+        update: async () => {
+            throw Error('transaction rollback');
+        },
+    };
+    service.deviceAccess = {
+        kickReconciliation() {
+            throw Error('must not synchronize a rollback');
+        },
+    };
+    assert.equal((await service.updateUser({ id: 1, status: 'FROZEN' })).isOk, false);
+});
+
+for (const [method, before, after] of [
+    ['disableUser', 'ACTIVE', 'DISABLED'],
+    ['enableUser', 'FROZEN', 'ACTIVE'],
+    ['enableUser', 'EXPIRED', 'EXPIRED'],
+]) {
+    test(
+        method + ' returns committed ' + after + ' without waiting for an offline node',
+        async () => {
+            const service = makeService();
+            let written = 0,
+                kicks = 0;
+            const state = { ...record, status: after };
+            service.userRepository = {
+                getPartialUserByUniqueFields: async () => ({ ...record, status: before }),
+                updateUserStatus: async () => {
+                    written++;
+                    return true;
+                },
+                findUniqueByCriteria: async () => state,
+            };
+            service.deviceAccess = {
+                kickReconciliation: () => {
+                    kicks++;
+                },
+                synchronizeUserStatus: () => {
+                    throw Error('request must not depend on node availability');
+                },
+            };
+            service.eventBus = { publish() {} };
+            service.eventEmitter = { emit() {} };
+            const result = await service[method](1);
+            assert.equal(result.isOk, true);
+            assert.equal(result.response.status, after);
+            assert.equal(written, 1);
+            assert.equal(kicks, 1);
+        },
+    );
+}

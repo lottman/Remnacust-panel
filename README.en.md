@@ -2,7 +2,7 @@
 
 Configure the inline threshold under Geofiles: 1–250,000 addresses/conditions, default 20,000. Size and complexity safeguards remain and may switch delivery to DAT before the configured threshold. Manual Xray settings remain intact when automatic geofile delivery is disabled.
 
-Release **Panel/Page 1.1.7.116** belongs to Installer bundle **1.2.164**, with Node **1.1.31** and Core/WASM **1.1.19**. [Changes in this release](docs/releases/1.1.7.116.md). Installed servers require a separate update.
+Release **Panel/Page 1.1.7.117** belongs to Installer bundle **1.2.165**, with Node **1.1.31** and Core/WASM **1.1.19**. [Changes in this release](docs/releases/1.1.7.117.md). Installed servers require a separate update.
 
 
 [Русский](README.md) · [English](README.en.md)
@@ -39,8 +39,8 @@ Matching bundle as of **November 11, 2026**. Components use separate version num
 
 | Component | Current stable release |
 | --- | --- |
-| Panel and subscription website | [1.1.7.116](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.116) |
-| Installer / Docker bundle | [1.2.164](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.164) |
+| Panel and subscription website | [1.1.7.117](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.117) |
+| Installer / Docker bundle | [1.2.165](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.165) |
 | Node agent | [1.1.31](https://github.com/lottman/Remnacust-node/releases/tag/v1.1.31) |
 | Core / editor validator | [1.1.19](https://github.com/lottman/Remnacust-core/releases/tag/v1.1.19), Xray v26.11.9 |
 

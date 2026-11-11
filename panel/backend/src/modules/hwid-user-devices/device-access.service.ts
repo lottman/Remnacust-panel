@@ -89,11 +89,38 @@ export class DeviceAccessService {
 
     public reconcilePendingDevices(): Promise<void> {
         if (this.reconciliation) return this.reconciliation;
-        const running = this.processPendingDevices().finally(() => {
-            if (this.reconciliation === running) this.reconciliation = null;
-        });
+        const running = Promise.allSettled([
+            this.processPendingUserAccess(),
+            this.processPendingDevices(),
+        ])
+            .then((results) => {
+                const failed = results.find((result) => result.status === 'rejected');
+                if (failed?.status === 'rejected') throw failed.reason;
+            })
+            .finally(() => {
+                if (this.reconciliation === running) this.reconciliation = null;
+            });
         this.reconciliation = running;
         return running;
+    }
+
+    private async processPendingUserAccess(): Promise<void> {
+        const pending = await this.devices.claimUserAccessReconciliation();
+        await settleConcurrent(pending, 2, async (task) => {
+            let success = false;
+            try {
+                const result = await this.queryBus.execute(
+                    new GetUserByUniqueFieldQuery(
+                        { id: task.userId },
+                        { activeInternalSquads: true },
+                    ),
+                );
+                success = result.isOk && (await this.synchronizeUserStatus(result.response));
+            } catch {
+                this.logger.warn(`User access reconciliation pending for user ${task.userId}`);
+            }
+            await this.devices.finishUserAccessReconciliation(task, success);
+        });
     }
 
     private async processPendingDevices(): Promise<void> {
@@ -214,10 +241,14 @@ export class DeviceAccessService {
             inactive || devices.some((device) => device.blocked)
                 ? await this.retireSharedCredential(user.id, user.vlessUuid)
                 : true;
-        const results = await Promise.all(
-            devices.map((device) => this.syncDevice(user.id, device.hwid, device.blocked)),
+        const results = await settleConcurrent(devices, 4, (device) =>
+            this.syncDevice(user.id, device.hwid, device.blocked),
         );
-        return hostSynced && sharedRevoked && results.every(Boolean);
+        return (
+            hostSynced &&
+            sharedRevoked &&
+            results.every((result) => result.status === 'fulfilled' && result.value)
+        );
     }
 
     public async synchronizeCredentialRotation(

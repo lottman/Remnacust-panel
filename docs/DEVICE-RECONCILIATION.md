@@ -13,3 +13,15 @@
 Миграция `20261011010000_device_reconciliation` добавляет очередь и ревизию, не удаляя пользователей, устройства, блокировки и лимиты. Меняется только ревизия разрешений устройств; обновление модели телефона и других метаданных не вызывает обновления всего парка. Для новой схемы используйте штатные `migrate deploy` и запуск/seed панели. Старые ноды сохраняют прежний механизм проверки соединения со стороны панели; самостоятельная сверка требует ноды 1.1.9. Первое назначение ноды выполняет панель, так как до него у агента ещё нет адреса и собственного токена.
 
 Уже работающая физически недоступная нода не может применить новое состояние до восстановления связи. В режиме общих ключей удаление HWID не гарантирует остановку существующего VPN-сеанса: для отзыва конкретного устройства нужны персональные ключи и совместимые ноды/ядро. Это ограничение не скрывается успешным удалением записи в базе.
+
+## Заморозка и изменение статуса
+
+В панели 1.1.7.117 изменение статуса или срока сохраняется вместе с заданием применения. Ошибка связи с нодой не превращает уже сохранённую заморозку в ошибку обновления пользователя. Панель повторяет применение в фоне и после своего перезапуска. Задание работает и без зарегистрированных HWID; персональные ключи используются только при включённом соответствующем режиме. При повторной попытке проверяется текущее состояние пользователя, поэтому устаревшее задание заморозки не отменяет последующую активацию.
+
+Заморозка сохраняет оставшийся срок, повторная заморозка его не увеличивает. Активация возобновляет отсчёт; исчерпанный срок и квота сохраняют ограничения доступа. Сохранённый статус не подтверждает применение на физически недоступной ноде или немедленное прекращение всех открытых соединений.
+
+## Freezing and status changes
+
+In panel 1.1.7.117, a status or expiry change is saved atomically with an application task. Node connectivity failures no longer turn an already saved freeze into a user-update failure. Application retries in the background and survives panel restarts. The task also works without registered HWIDs; personal credentials are used only when their mode is enabled. Each retry reads the current user state, so an old freeze task cannot undo a later activation.
+
+Freezing preserves the remaining lifetime; repeating it does not increase that time. Activation resumes the countdown. Exhausted lifetime or quota continues to restrict access. A saved status does not prove application on an unreachable node or immediate termination of every existing connection.

@@ -89,11 +89,7 @@ export class UserEventsQueueProcessor extends WorkerHost {
                         new RemoveUserFromNodeEvent(user.id, user.vlessUuid),
                     );
 
-                    if (!(await this.deviceAccess.synchronizeUserStatus(user))) {
-                        this.logger.error(
-                            `Could not confirm node-side access removal for user ${user.id}`,
-                        );
-                    }
+                    this.deviceAccess.kickReconciliation();
 
                     break;
 

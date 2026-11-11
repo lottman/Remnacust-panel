@@ -2,7 +2,7 @@
 
 Порог обычных правил настраивается в разделе «Геофайлы»: 1–250 000 адресов/условий, по умолчанию 20 000. Ограничения размера и сложности сохраняются и могут переключить доставку на DAT раньше выбранного порога. При выключенной автоматизации ручные настройки Xray сохраняются.
 
-Выпуск **Panel/Page 1.1.7.116** входит в комплект Installer **1.2.164** с Node **1.1.31** и Core/WASM **1.1.19**. [Изменения выпуска](docs/releases/1.1.7.116.md). Обновление установленного сервера выполняется отдельно.
+Выпуск **Panel/Page 1.1.7.117** входит в комплект Installer **1.2.165** с Node **1.1.31** и Core/WASM **1.1.19**. [Изменения выпуска](docs/releases/1.1.7.117.md). Обновление установленного сервера выполняется отдельно.
 
 
 [Русский](README.md) · [English](README.en.md)
@@ -39,8 +39,8 @@ docker compose up -d --no-build --pull never
 
 | Компонент | Текущий стабильный выпуск |
 | --- | --- |
-| Панель и сайт подписки | [1.1.7.116](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.116) |
-| Установщик / Docker-комплект | [1.2.164](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.164) |
+| Панель и сайт подписки | [1.1.7.117](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.117) |
+| Установщик / Docker-комплект | [1.2.165](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.165) |
 | Агент ноды | [1.1.31](https://github.com/lottman/Remnacust-node/releases/tag/v1.1.31) |
 | Core / валидатор редактора | [1.1.19](https://github.com/lottman/Remnacust-core/releases/tag/v1.1.19), Xray v26.11.9 |
 

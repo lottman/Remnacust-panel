@@ -2,7 +2,7 @@
 
 Configure the inline threshold under Geofiles: 1–250,000 addresses/conditions, default 20,000. Size and complexity safeguards remain and may switch delivery to DAT before the configured threshold. Manual Xray settings remain intact when automatic geofile delivery is disabled.
 
-Release **Panel/Page 1.1.7.114** belongs to Installer bundle **1.2.162**, with Node **1.1.30** and Core/WASM **1.1.18**. [Changes in this release](docs/releases/1.1.7.114.md). Installed servers require a separate update.
+Release **Panel/Page 1.1.7.115** belongs to Installer bundle **1.2.163**, with Node **1.1.30** and Core/WASM **1.1.18**. [Changes in this release](docs/releases/1.1.7.115.md). Installed servers require a separate update.
 
 
 [Русский](README.md) · [English](README.en.md)
@@ -130,7 +130,7 @@ If a subscription temporarily fails to load, check logs, panel reachability, web
 - [Backups](docs/BACKUPS.md) · [User migration](docs/USER-MIGRATION.md) · [Node updates](docs/UPDATE-PROGRESS-AND-NODE-HEALTH.md).
 - [Development/building](docs/BUILDING.md) · [Subscription website](subscription-page/README.en.md) · [Release history](docs/releases).
 
-Release 1.1.7.113 fixes premature DAT downloads: the configured threshold (20,000 conditions by default) is evaluated separately for each final profile. Switching a large profile to DAT no longer switches smaller profiles. Independent safety budgets remain enforced. [Release changes](docs/releases/1.1.7.114.md). Installed servers require a separate update.
+Release 1.1.7.113 fixes premature DAT downloads: the configured threshold (20,000 conditions by default) is evaluated separately for each final profile. Switching a large profile to DAT no longer switches smaller profiles. Independent safety budgets remain enforced. [Release changes](docs/releases/1.1.7.113.md). Installed servers require a separate update.
 
 ## License and support
 

@@ -27,6 +27,10 @@ export const UniversalSpotlightContentShared = (props: IProps) => {
             overlayProps={{ backgroundOpacity: 0.6, blur: 0 }}
             scrollable
             searchProps={{
+                'aria-label': t('common.action.search'),
+                style: { '--input-height': '60px' },
+                leftSectionWidth: 54,
+                leftSectionPointerEvents: 'none',
                 leftSection: searchIcon ?? (
                     <TbSearch color="var(--mantine-color-gray-5)" size={18} />
                 ),

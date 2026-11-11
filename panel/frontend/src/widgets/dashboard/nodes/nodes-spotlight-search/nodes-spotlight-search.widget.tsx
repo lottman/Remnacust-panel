@@ -6,6 +6,7 @@ import { TbServer, TbServer2 } from 'react-icons/tb'
 
 import { showModal } from '@shared/_modals/show-modal'
 import { UniversalSpotlightContentShared } from '@shared/ui/universal-spotlight'
+import { getAdditionalNodeIps } from '@shared/utils/node-addresses'
 
 import { NodeStatusBadgeWidget } from '../node-status-badge'
 
@@ -29,8 +30,19 @@ export const NodesSpotlightSearchWidget = ({ nodes }: IProps) => {
         <UniversalSpotlightContentShared
             actions={nodes.map((node) => ({
                 label: node.name,
-                description: [node.address, node.provider?.name].filter(Boolean).join(' · '),
-                keywords: [node.uuid, node.address, node.provider?.name ?? ''],
+                description: [
+                    node.address,
+                    ...getAdditionalNodeIps(node.ips, node.address).map((entry) => entry.ip),
+                    node.provider?.name
+                ]
+                    .filter(Boolean)
+                    .join(' · '),
+                keywords: [
+                    node.uuid,
+                    node.address,
+                    ...(node.ips ?? []).map((entry) => entry.ip),
+                    node.provider?.name ?? ''
+                ],
                 id: node.uuid,
                 leftSection:
                     node.countryCode && node.countryCode !== 'XX' ? (

@@ -26,6 +26,7 @@ import { TbNetwork, TbPlus } from 'react-icons/tb'
 
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SectionCard } from '@shared/ui/section-card'
+import { getAdditionalNodeIps } from '@shared/utils/node-addresses'
 
 import { NodeIpRow } from './node-ip-row'
 import { isValidNodeIp, MAX_NODE_IPS } from './validate-node-ips'
@@ -66,6 +67,8 @@ export const NodeIpsEditor = <
 
     const [items, setItems] = useState<IEditableNodeIp[]>(() => toEditableIps(form.getValues().ips))
     const [addedRowId, setAddedRowId] = useState<null | string>(null)
+    const address = form.useWatchValue('address')
+    const visibleItems = getAdditionalNodeIps(items, address)
 
     const commit = useCallback(
         (nextItems: IEditableNodeIp[]) => {
@@ -104,7 +107,10 @@ export const NodeIpsEditor = <
     const handleDragEnd = (event: DragEndEvent) => {
         if (event.canceled) return
 
-        commit(move(items, event))
+        const reordered = move(visibleItems, event)
+        const visibleIds = new Set(visibleItems.map((item) => item.id))
+        let index = 0
+        commit(items.map((item) => (visibleIds.has(item.id) ? reordered[index++] : item)))
     }
 
     const resolveRowError = (item: IEditableNodeIp, index: number): ReactNode => {
@@ -156,7 +162,7 @@ export const NodeIpsEditor = <
 
             <SectionCard.Section>
                 <Stack gap="sm">
-                    {items.length === 0 ? (
+                    {visibleItems.length === 0 ? (
                         <Center py="xs">
                             <Stack align="center" gap="xs">
                                 <ThemeIcon color="gray" radius="xl" size={48} variant="soft">
@@ -181,10 +187,10 @@ export const NodeIpsEditor = <
                                 type="auto"
                             >
                                 <Stack gap="xs" px={4}>
-                                    {items.map((item, index) => (
+                                    {visibleItems.map((item, index) => (
                                         <NodeIpRow
                                             autoFocus={item.id === addedRowId}
-                                            error={resolveRowError(item, index)}
+                                            error={resolveRowError(item, items.indexOf(item))}
                                             id={item.id}
                                             index={index}
                                             ip={item.ip}

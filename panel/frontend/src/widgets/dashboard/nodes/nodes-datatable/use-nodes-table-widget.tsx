@@ -242,7 +242,7 @@ export function getNodesTableColumns(
             accessor: 'ips',
             sortable: false,
             title: t('common.field.ip-addresses'),
-            render: ({ ips }) => <NodeIpsCompactView ips={ips} />
+            render: ({ ips, address }) => <NodeIpsCompactView address={address} ips={ips} />
         },
         {
             accessor: 'trafficUsedBytes',

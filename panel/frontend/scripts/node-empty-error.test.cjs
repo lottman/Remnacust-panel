@@ -22,7 +22,10 @@ test('timeouts, missing telemetry and deferred global settings have distinct exp
     assert.equal(nodeConfigurationNeedsRestart(pending), true);
     assert.equal(getNodeErrorMessage(pending, t), 'nodeErrors.maintenanceRestart');
     assert.equal(nodeConfigurationNeedsRestart('failed to parse config'), false);
-    assert.equal(getNodeErrorMessage('unknown-error', t), 'unknown-error');
+    assert.equal(getNodeErrorMessage('unknown-error', t), 'nodeErrors.unknown');
+    const widget = fs.readFileSync(path.join(root, 'src/widgets/dashboard/nodes/node-error-message/node-error-message.widget.tsx'), 'utf8');
+    assert.match(widget, /details=\{node\.lastStatusMessage\}/);
+    assert.match(widget, /copyValue=\{node\.lastStatusMessage\}/);
     const block = fs.readFileSync(path.join(root, 'src/shared/ui/error-message-block/error-message-block.tsx'), 'utf8');
     assert.match(block, /value=\{copyValue\}/);
 });

@@ -25,10 +25,12 @@ const { NodeStatusBadgeWidget } = load('widgets/dashboard/nodes/node-status-badg
     '@shared/utils/node-policy-status': load('shared/utils/node-policy-status.ts')
 })
 const actions = []
+const addresses = load('shared/utils/node-addresses.ts')
 const { NodesSpotlightSearchWidget } = load('widgets/dashboard/nodes/nodes-spotlight-search/nodes-spotlight-search.widget.tsx', {
     '@shared/_modals/show-modal': { showModal: (...args) => actions.push(args) },
     '@shared/ui/universal-spotlight': { UniversalSpotlightContentShared: 'spotlight' },
-    '../node-status-badge': { NodeStatusBadgeWidget }
+    '../node-status-badge': { NodeStatusBadgeWidget },
+    '@shared/utils/node-addresses': addresses
 })
 const node = {
     uuid: '00000000-0000-4000-8000-000000000001', name: 'Example <node>', address: 'node.example.test',
@@ -76,4 +78,31 @@ test('shared search bounds its viewport and applies one presentation to all cons
     assert.equal(result.props.size, 'min(680px, calc(100vw - 24px))')
     assert.equal(result.props.maxHeight, 'min(540px, calc(100dvh - 160px))')
     assert.equal(result.props.searchProps.placeholder, 'common.action.search...')
+    assert.equal(result.props.searchProps.style['--input-height'], '60px')
+    assert.equal(result.props.searchProps.leftSectionWidth, 54)
+    assert.equal(result.props.searchProps.leftSectionPointerEvents, 'none')
+})
+
+test('real spotlight finds secondary IPv4 and IPv6 addresses without duplicating the main address', () => {
+    const main = '192.0.2.10'
+    const secondary = '198.51.100.25'
+    const ipv6 = '2001:db8::25'
+    const original = { ...node, address: main, ips: [
+        { ip: main, status: 'AVAILABLE' },
+        { ip: secondary, status: 'UNKNOWN' },
+        { ip: ipv6, status: 'BLOCKED' }
+    ] }
+    const before = structuredClone(original)
+    const data = NodesSpotlightSearchWidget({ nodes: [original] }).props.actions
+    assert.equal(data[0].description.split(main).length - 1, 1)
+    for (const query of [secondary, '198.51.100.', ipv6, main, node.uuid, node.provider.name]) {
+        const html = renderToStaticMarkup(React.createElement(MantineProvider, { env: 'test' },
+            React.createElement(Spotlight, { actions: data, forceOpened: true, withinPortal: false, query, transitionProps: { duration: 0 } })))
+        assert(html.includes('Example &lt;node&gt;'), query)
+        assert.equal((html.match(/<button\b/g) ?? []).length, 1)
+    }
+    const missing = renderToStaticMarkup(React.createElement(MantineProvider, { env: 'test' },
+        React.createElement(Spotlight, { actions: data, forceOpened: true, withinPortal: false, query: '203.0.113.99', nothingFound: 'No matching node', transitionProps: { duration: 0 } })))
+    assert(missing.includes('No matching node'))
+    assert.deepEqual(original, before)
 })

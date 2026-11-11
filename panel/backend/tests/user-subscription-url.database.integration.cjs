@@ -14,6 +14,14 @@ const { userSubscriptionDomainSelection } = load(
 const { subscriptionUserUrl } = load(
     path.join(__dirname, '../src/common/utils/subscription-domain-url.ts'),
 );
+const { GetFullUserResponseModel } = load(
+    path.join(__dirname, '../src/modules/users/models/get-full-user.response.model.ts'),
+    {
+        '@common/utils/frozen-user-lifetime': load(
+            path.join(__dirname, '../src/common/utils/frozen-user-lifetime.ts'),
+        ),
+    },
+);
 const { SubscriptionDomainsService } = load(
     path.join(__dirname, '../src/modules/subscription-domains/subscription-domains.service.ts'),
     {
@@ -87,21 +95,37 @@ test(
                 const read = async () =>
                     tx
                         .selectFrom('users')
-                        .select(['id'])
+                        .select(['id', 'subscriptionDomainUuid'])
                         .select(userSubscriptionDomainSelection())
                         .orderBy('id')
                         .execute();
                 let rows = await read();
                 assert.equal(rows[0].subscriptionUrlBase, 'https://origin1.example.test/sub');
+                assert.equal(rows[0].subscriptionDomain.uuid, id(1));
                 assert.equal(rows[1].subscriptionUrlBase, 'https://origin2.example.test/sub');
                 await tx.insertInto('subscriptionDomains').values(cdn).execute();
                 await tx
                     .insertInto('users')
-                    .values({ id: 3, subscriptionDomainUuid: cdn.uuid })
+                    .values([
+                        { id: 3, subscriptionDomainUuid: cdn.uuid },
+                        { id: 4, subscriptionDomainUuid: id(1) },
+                    ])
                     .execute();
                 rows = await read();
                 assert.equal(rows[0].subscriptionUrlBase, 'https://cdn.example.test/edge');
-                assert.equal(rows[0].subscriptionDomain.uuid, id(1));
+                assert.deepEqual(rows[0].subscriptionDomain, {
+                    uuid: cdn.uuid,
+                    name: cdn.name,
+                    domain: cdn.domain,
+                    path: cdn.path,
+                    kind: 'CDN',
+                    parentUuid: id(1),
+                    isDefault: false,
+                });
+                assert.equal(rows[0].subscriptionDomainUuid, null);
+                assert.equal(rows[2].subscriptionDomainUuid, cdn.uuid);
+                assert.equal(rows[3].subscriptionDomainUuid, id(1));
+                assert.equal(rows[3].subscriptionDomain.uuid, cdn.uuid);
                 assert.equal(rows[1].subscriptionUrlBase, 'https://origin2.example.test/sub');
                 assert.equal(rows[2].subscriptionUrlBase, 'https://cdn.example.test/edge');
                 await tx
@@ -116,6 +140,8 @@ test(
                     .execute();
                 rows = await read();
                 assert.equal(rows[0].subscriptionUrlBase, 'https://origin2.example.test/sub');
+                assert.equal(rows[0].subscriptionDomain.uuid, id(2));
+                assert.equal(rows[3].subscriptionDomain.uuid, cdn.uuid);
                 assert.equal(rows[2].subscriptionUrlBase, 'https://cdn.example.test/edge');
                 await tx
                     .updateTable('subscriptionDomains')
@@ -157,7 +183,7 @@ test(
                         { getOrThrow: () => 'fallback.example.test' },
                     );
                     for (const row of await read()) {
-                        const assigned = row.id === 2 ? id(2) : row.id === 3 ? cdn.uuid : null;
+                        const assigned = row.subscriptionDomainUuid;
                         const selected = (await service.userLinks(assigned, 'fixture')).links.find(
                             (link) => link.isSelected,
                         );
@@ -170,6 +196,43 @@ test(
                                 row.subscriptionUrlBase,
                             ),
                         );
+                        const response = new GetFullUserResponseModel(
+                            {
+                                ...row,
+                                id: BigInt(row.id),
+                                shortUuid: 'fixture',
+                                status: 'ACTIVE',
+                                expireAt: new Date('2099-01-01'),
+                                trafficLimitBytes: 0n,
+                                activeInternalSquads: [],
+                                userTraffic: { usedTrafficBytes: 0n, lifetimeUsedTrafficBytes: 0n },
+                            },
+                            'fallback.example.test',
+                        );
+                        assert.equal(response.subscriptionDomainUuid, assigned);
+                        assert.equal(response.subscriptionDomain?.uuid, selected?.domainUuid);
+                        assert.equal(response.subscriptionDomain?.domain, selected?.domain);
+                        assert.equal(response.subscriptionDomain?.name, selected?.name);
+                        assert.equal(response.subscriptionDomain?.kind, selected?.kind);
+                        assert.equal(response.subscriptionUrl, selected?.url ?? '');
+                        if (response.subscriptionDomain) {
+                            assert.equal(
+                                new URL(response.subscriptionUrl).pathname,
+                                response.subscriptionDomain.path + '/fixture',
+                            );
+                            assert.deepEqual(
+                                Object.keys(response.subscriptionDomain).sort(),
+                                [
+                                    'uuid',
+                                    'name',
+                                    'domain',
+                                    'path',
+                                    'kind',
+                                    'parentUuid',
+                                    'isDefault',
+                                ].sort(),
+                            );
+                        } else assert.equal(response.subscriptionDomain, null);
                     }
                 };
                 await checkLinks();
@@ -179,6 +242,7 @@ test(
                     .where('kind', '=', 'CDN')
                     .execute();
                 assert.equal((await read())[0].subscriptionUrlBase, '');
+                assert.equal((await read())[0].subscriptionDomain, null);
                 await checkLinks();
                 await tx
                     .updateTable('subscriptionDomains')
@@ -210,6 +274,7 @@ test(
                     .values({ id: 1, subscriptionDomainUuid: null })
                     .execute();
                 assert.equal((await read())[0].subscriptionUrlBase, null);
+                assert.equal((await read())[0].subscriptionDomain, null);
             });
         } finally {
             await db.destroy();

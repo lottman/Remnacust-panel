@@ -1011,7 +1011,7 @@ INCY 获得不含查询参数的稳定 DAT URL。经过签名的文件选择位�
 
 ### 多个订阅链接
 
-每个主域名只能创建一个 CDN。用户 API 的 subscriptionUrl 和首选链接使用所分配主域名下可用的 CDN；没有 CDN 时使用开放的主域名地址。SUB_PUBLIC_DOMAIN 仍为源站，无需替换为 CDN。用户分配、密钥、期限、冻结、设备和配额不变。可用地址支持复制和二维码；关闭主域名隐藏整个域名组。没有可用地址时 subscriptionUrl 为空。旧版额外 CDN 不会自动删除并继续可用，但禁止在已有 CDN 的组内创建或移入第二个 CDN。旧组依次优先选择明确分配且可用的 CDN、重定向目标、按域名排序的首个可用 CDN。普通、CDN 和全部链接的读取权限仍独立，目录权限不会公开订阅密钥。
+每个主域名只能创建一个 CDN。用户 API 的 subscriptionUrl 和首选链接使用所分配主域名下可用的 CDN；没有 CDN 时使用开放的主域名地址。API 的 subscriptionDomain 对象描述与 subscriptionUrl 相同的公开地址，包括 UUID、类型、名称和路径。subscriptionDomainUuid 保留用户的原始分配（null 表示默认域名），选择 CDN 时不会改变。没有可访问地址时，subscriptionDomain 为 null。SUB_PUBLIC_DOMAIN 仍为源站，无需替换为 CDN。用户分配、密钥、期限、冻结、设备和配额不变。可用地址支持复制和二维码；关闭主域名隐藏整个域名组。没有可用地址时 subscriptionUrl 为空。旧版额外 CDN 不会自动删除并继续可用，但禁止在已有 CDN 的组内创建或移入第二个 CDN。旧组依次优先选择明确分配且可用的 CDN、重定向目标、按域名排序的首个可用 CDN。普通、CDN 和全部链接的读取权限仍独立，目录权限不会公开订阅密钥。
 
 ### CDN：一次配置
 

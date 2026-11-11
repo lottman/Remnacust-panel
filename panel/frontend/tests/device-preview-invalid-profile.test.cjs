@@ -30,7 +30,7 @@ for (const language of ['ru', 'en', 'fa', 'zh']) {
         };
         new Function('require', 'module', 'exports', js)(name => Object.hasOwn(mocks, name) ? mocks[name] : require(name), module, module.exports);
         const html = renderToStaticMarkup(React.createElement(MantineProvider, null,
-            React.createElement(module.exports.DeviceSubscriptionPreview, { userId: 1, devices: [] })));
+            React.createElement(module.exports.DeviceSubscriptionPreviewContent, { userId: 1, devices: [] })));
         assert(html.includes(translate('operations.host_invalidConfiguration')));
         assert(!html.includes('operations.host_invalidConfiguration'));
         assert(html.includes('Broken &lt;profile&gt;'));

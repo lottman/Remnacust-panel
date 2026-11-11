@@ -1,5 +1,5 @@
 import { NiceModalHandler } from '@ebay/nice-modal-react'
-import { useCallback, useEffect, useEffectEvent, useState } from 'react'
+import { useCallback, useEffect, useEffectEvent, useLayoutEffect, useRef, useState } from 'react'
 
 import { useIsMobile } from '@shared/hooks/use-is-mobile'
 import { isPseudoFullscreenActive } from '@shared/hooks/use-pseudo-fullscreen'
@@ -62,13 +62,44 @@ export function useNiceMantineModal(props: IProps) {
     const { modal, onClose } = props
     const isMobile = useIsMobile()
     const [entered, setEntered] = useState(false)
+    const current = useRef(modal)
+    useLayoutEffect(() => {
+        current.current = modal
+    }, [modal])
+    const closing = useRef(false)
+    const afterClose = useRef<(() => void) | undefined>(undefined)
 
     const hide = useCallback(() => {
-        onClose?.()
+        if (closing.current || !modal.visible) return
+        closing.current = true
+        afterClose.current = onClose
         modal.hide()
     }, [onClose, modal])
 
+    const finishClose = useCallback(() => {
+        const handler = current.current
+        if (handler.visible) return
+        const callback = afterClose.current
+        afterClose.current = undefined
+        closing.current = false
+        handler.resolveHide()
+        try {
+            callback?.()
+        } finally {
+            if (!handler.keepMounted) handler.remove()
+        }
+    }, [])
+
     const stackHide = useEffectEvent(() => hide())
+
+    useEffect(() => {
+        if (modal.visible) {
+            closing.current = false
+            afterClose.current = undefined
+        } else if (!entered && closing.current) {
+            finishClose()
+        }
+    }, [modal.visible, entered, finishClose])
 
     useEffect(() => {
         const raf = requestAnimationFrame(() => setEntered(true))
@@ -88,7 +119,7 @@ export function useNiceMantineModal(props: IProps) {
         closeOnEscape: false,
         'data-nice-modal': modal.id,
         onClose: hide,
-        onExitTransitionEnd: () => modal.remove()
+        onExitTransitionEnd: finishClose
     }
 
     return { modalProps, hide }

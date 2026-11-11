@@ -2,7 +2,7 @@
   "flavor": "default",
   "upstreamVersion": "v26.11.9",
   "upstreamCommit": "676eaf66f8f05d4d558ee7a74b4736623d3feeb9",
-  "goVersion": "go version go1.27.3 windows/amd64",
+  "goVersion": "go version go1.27.4 windows/amd64",
   "sourceArchiveSha256": "eab6fad20dfabc862c2537552e136e195de93d166c9a0bab72e408b4295eb7dc",
   "configurationSourceSha256": "01666deb53beae1df9df9fccbca8e807dc7405996cc8a368c1be6713c26e7cba",
   "validatorWrapperSha256": "9e62ce85cc2313499697aa1cbc4f74f30c46339574d6373df1e6ee6a59252ee9",
@@ -17,7 +17,7 @@
     "transport/internet/system_listener.go"
   ],
   "files": {
-    "default.wasm": "fcffb39a0dd7ff0ceb18a457a3bac297ea1aac2bcca445a36b3d5380b71cb7e3",
+    "default.wasm": "08304733228e91d5591888a85e4723ea22626973be03cc71294e0d29bf278cc8",
     "xray.default.schema.json": "db4afe648217156e8530da0bcf5820f88d877bc842411d41b53d62b0b06d9070",
     "xray.default.schema.cn.json": "db4afe648217156e8530da0bcf5820f88d877bc842411d41b53d62b0b06d9070"
   }

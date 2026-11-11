@@ -74,8 +74,8 @@
         "device-deleted": "设备已成功删除",
         "delete-failed-check-state": "删除未完成。请检查刷新的设备列表，然后重试。",
         "unblocked-devices-deleted": "未封禁的设备已删除；已封禁的设备已保留。",
-        "subscription-blocked": "HWID 已封禁。已连接节点会立即撤销其密钥；离线节点将在重新连接后应用封禁。",
-        "device-unblocked": "设备已解除封禁",
+        "subscription-blocked": "封禁已保存。节点将在后台应用；不可用的节点会在恢复连接后重试。",
+        "device-unblocked": "解除封禁已保存。节点应用后将恢复访问。",
         "delete-device": "删除设备",
         "delete-all-devices": "删除所有设备",
         "block-device": "封禁设备",
@@ -1244,7 +1244,7 @@
     "copy-docker-compose": {
         "widget": {
             "copy-docker-compose-yml": "复制 docker-compose.yml",
-            "local-image-note": "此 Compose 使用本地构建的 Remnacust Node 镜像。请先按节点说明构建；具体能力取决于应用及内置 Core。公共安装器使用预构建镜像，并创建自己的 Compose。"
+            "local-image-note": "公开 GHCR 镜像无需登录 Docker 即可下载。卷用于在重建容器后保留所选内核、策略、配额与运行状态，升级时请保留。自动安装请使用官方安装器。"
         }
     },
     "create-node-step-1-connection": {
@@ -4534,6 +4534,7 @@
         "basePath": "基础订阅链接",
         "showConfig": "显示生成的配置",
         "configSensitive": "包含该设备的私密密钥和链接，请勿公开分享。",
+        "clearPreview": "清除",
         "generatePreview": "生成预览",
         "responseRule": "响应规则",
         "template": "模板覆盖",

@@ -2,7 +2,7 @@
 
 Configure the inline threshold under Geofiles: 1–250,000 addresses/conditions, default 20,000. Size and complexity safeguards remain and may switch delivery to DAT before the configured threshold. Manual Xray settings remain intact when automatic geofile delivery is disabled.
 
-Release **Panel/Page 1.1.7.115** belongs to Installer bundle **1.2.163**, with Node **1.1.30** and Core/WASM **1.1.18**. [Changes in this release](docs/releases/1.1.7.115.md). Installed servers require a separate update.
+Release **Panel/Page 1.1.7.116** belongs to Installer bundle **1.2.164**, with Node **1.1.31** and Core/WASM **1.1.19**. [Changes in this release](docs/releases/1.1.7.116.md). Installed servers require a separate update.
 
 
 [Русский](README.md) · [English](README.en.md)
@@ -35,14 +35,14 @@ docker compose up -d --no-build --pull never
 
 ## Stable versions
 
-Matching bundle as of **November 10, 2026**. Components use separate version numbers.
+Matching bundle as of **November 11, 2026**. Components use separate version numbers.
 
 | Component | Current stable release |
 | --- | --- |
-| Panel and subscription website | [1.1.7.113](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.113) |
-| Installer / Docker bundle | [1.2.161](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.161) |
-| Node agent | [1.1.30](https://github.com/lottman/Remnacust-node/releases/tag/v1.1.30) |
-| Core / editor validator | [1.1.18](https://github.com/lottman/Remnacust-core/releases/tag/v1.1.18), Xray v26.11.9 |
+| Panel and subscription website | [1.1.7.116](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.116) |
+| Installer / Docker bundle | [1.2.164](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.164) |
+| Node agent | [1.1.31](https://github.com/lottman/Remnacust-node/releases/tag/v1.1.31) |
+| Core / editor validator | [1.1.19](https://github.com/lottman/Remnacust-core/releases/tag/v1.1.19), Xray v26.11.9 |
 
 Use a matching bundle. Updating the panel does not automatically update remote Node, managed Core or the Linux kernel. Advanced limits depend on confirmed Node/Core capabilities, not just the displayed version. [Compatibility](docs/COMPATIBILITY.md).
 

@@ -22,11 +22,13 @@ export const CopyDockerComposeWidget = ({ port }: IProps) => {
   remnanode:
     container_name: remnanode
     hostname: remnanode
-    image: remnacust-node:1.1.1
+    image: ghcr.io/lottman/remnacust-node:latest
     network_mode: host
     restart: always
     volumes:
       - remnanode-core:/var/lib/remnawave/core-manager
+      - remnanode-policy:/var/lib/remnanode
+      - remnanode-runtime:/var/lib/remnacust/run
     cap_add:
       - NET_ADMIN
     ulimits:
@@ -37,7 +39,9 @@ export const CopyDockerComposeWidget = ({ port }: IProps) => {
       NODE_PORT: ${port ?? 2222}
       SECRET_KEY: ${JSON.stringify(secretKey.secretKey.trimEnd().replaceAll('$', '$$'))}
 volumes:
-  remnanode-core:`
+  remnanode-core:
+  remnanode-policy:
+  remnanode-runtime:`
     }
 
     return (

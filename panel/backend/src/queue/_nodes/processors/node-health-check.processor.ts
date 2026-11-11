@@ -1,3 +1,4 @@
+import { ERRORS } from '@contract/constants';
 import { Job } from 'bullmq';
 
 import { Processor, WorkerHost } from '@nestjs/bullmq';
@@ -11,7 +12,6 @@ import { nodeBindingTrafficKey, parseProfileTraffic } from '@common/axios/profil
 import { hostPolicyRetryKey } from '@common/host-policy/sync-host-policy-for-start';
 import { RawCacheService } from '@common/raw-cache';
 import { CACHE_KEYS, CACHE_KEYS_TTL, EVENTS } from '@libs/contracts/constants';
-import { ERRORS } from '@contract/constants';
 
 import { NodeEvent } from '@integration-modules/notifications/interfaces';
 
@@ -60,12 +60,31 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
                     const health = await this.axios.getNodeHealth(connectionOpts);
                     if (!health.isOk && health.code === 'NODE_ROUTE_BUSY') return;
                     if (health.isOk && health.response.isAlive === true) {
-                        await this.healthLog.record({ nodeUuid, status: 'retry',
-                            message: statResult.message ?? 'Node telemetry is temporarily unavailable' });
-                        if (!isConnected) await this.commandBus.execute(new UpdateNodeCommand({
-                            uuid: nodeUuid, isConnected: true,
-                            lastStatusMessage: statResult.message,
-                        }));
+                        await this.healthLog.record({
+                            nodeUuid,
+                            status: 'retry',
+                            message:
+                                statResult.message ?? 'Node telemetry is temporarily unavailable',
+                        });
+                        if (!isConnected)
+                            await this.commandBus.execute(
+                                new UpdateNodeCommand({
+                                    uuid: nodeUuid,
+                                    isConnected: true,
+                                    lastStatusMessage: statResult.message,
+                                }),
+                            );
+                        if (health.response.xrayInternalStatusCached === false) {
+                            const retryAt = await this.rawCacheService.get<number>(
+                                hostPolicyRetryKey(nodeUuid),
+                            );
+                            if (
+                                typeof retryAt !== 'number' ||
+                                !Number.isFinite(retryAt) ||
+                                retryAt <= Date.now()
+                            )
+                                await this.nodesQueuesService.startNode({ nodeUuid });
+                        }
                         await this.reportIncident(nodeUuid, true, isConnected, observedAt);
                         return;
                     }

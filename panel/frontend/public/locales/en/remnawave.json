@@ -74,8 +74,8 @@
         "device-deleted": "Device deleted successfully",
         "delete-failed-check-state": "Deletion did not finish. Check the refreshed device list, then retry.",
         "unblocked-devices-deleted": "Unblocked devices were deleted; blocked devices were kept.",
-        "subscription-blocked": "HWID blocked. Connected nodes revoke its key now; offline nodes apply the block when they reconnect.",
-        "device-unblocked": "Device unblocked successfully",
+        "subscription-blocked": "Block saved. Nodes apply it in the background; unavailable nodes retry after reconnecting.",
+        "device-unblocked": "Unblock saved. Access resumes after the nodes apply it.",
         "delete-device": "Delete device",
         "delete-all-devices": "Delete all devices",
         "block-device": "Block device",
@@ -1244,7 +1244,7 @@
     "copy-docker-compose": {
         "widget": {
             "copy-docker-compose-yml": "Copy docker-compose.yml",
-            "local-image-note": "This Compose uses a locally built Remnacust Node image. Build it using the node instructions first; capabilities depend on the application and bundled Core. The public installer uses prebuilt images and creates its own Compose."
+            "local-image-note": "The public GHCR image downloads without a Docker login. Volumes preserve the selected core, policies, quotas and runtime state across container recreation. Keep them when upgrading. Use the official installer for automatic setup."
         }
     },
     "create-node-step-1-connection": {
@@ -4534,6 +4534,7 @@
         "basePath": "Base subscription URL",
         "showConfig": "Show generated configuration",
         "configSensitive": "Contains private keys/links for this device. Do not share it publicly.",
+        "clearPreview": "Clear",
         "generatePreview": "Generate preview",
         "responseRule": "Response rule",
         "template": "Template override",

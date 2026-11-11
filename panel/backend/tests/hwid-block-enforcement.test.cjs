@@ -28,17 +28,39 @@ const output = ts.transpileModule(source, {
     },
 }).outputText;
 const moduleRef = { exports: {} };
-new Function('require', 'module', 'exports', output)((id) => {
-    if (id === '@nestjs/common') return { Injectable: () => (value) => value, Logger: class { error() {} } };
-    if (id === '@common/types') return { fail: (error) => ({ isOk: false, error }), ok: (response) => ({ isOk: true, response }) };
-    if (id === '@libs/contracts/constants') return { ERRORS: errors, EVENTS: { USER_HWID_DEVICES: { ADDED: 'added', DELETED: 'deleted' } } };
-    if (id.endsWith('/get-user-by-unique-field')) return { GetUserByUniqueFieldQuery };
-    if (id.endsWith('/device-access.service')) return { DeviceAccessService: class {} };
-    if (id.endsWith('/user-hwid-device.event')) return { UserHwidDeviceEvent: class {} };
-    if (id === '@integration-modules/notifications/interfaces') return { UserHwidDeviceEvent: class {} };
-    if (id === '@common/utils/settle-concurrent') return require('./load-typescript.cjs')(path.join(__dirname,'../src/common/utils/settle-concurrent.ts'));
-    return {};
-}, moduleRef, moduleRef.exports);
+new Function('require', 'module', 'exports', output)(
+    (id) => {
+        if (id === '@nestjs/common')
+            return {
+                Injectable: () => (value) => value,
+                Logger: class {
+                    error() {}
+                },
+            };
+        if (id === '@common/types')
+            return {
+                fail: (error) => ({ isOk: false, error }),
+                ok: (response) => ({ isOk: true, response }),
+            };
+        if (id === '@libs/contracts/constants')
+            return {
+                ERRORS: errors,
+                EVENTS: { USER_HWID_DEVICES: { ADDED: 'added', DELETED: 'deleted' } },
+            };
+        if (id.endsWith('/get-user-by-unique-field')) return { GetUserByUniqueFieldQuery };
+        if (id.endsWith('/device-access.service')) return { DeviceAccessService: class {} };
+        if (id.endsWith('/user-hwid-device.event')) return { UserHwidDeviceEvent: class {} };
+        if (id === '@integration-modules/notifications/interfaces')
+            return { UserHwidDeviceEvent: class {} };
+        if (id === '@common/utils/settle-concurrent')
+            return require('./load-typescript.cjs')(
+                path.join(__dirname, '../src/common/utils/settle-concurrent.ts'),
+            );
+        return {};
+    },
+    moduleRef,
+    moduleRef.exports,
+);
 const { HwidUserDevicesService } = moduleRef.exports;
 
 test('does not report an HWID traffic block when personal credentials are disabled', async () => {
@@ -47,11 +69,16 @@ test('does not report an HWID traffic block when personal credentials are disabl
         { emit() {} },
         {
             findFirstByCriteria: async () => ({ hwid: 'device-hwid' }),
-            blockByHwidAndUserId: async () => { blockWritten = true; },
+            blockByHwidAndUserId: async () => {
+                blockWritten = true;
+            },
         },
-        { execute: async (query) => query instanceof GetUserByUniqueFieldQuery
-            ? { isOk: true, response: { id: 42n } }
-            : { isOk: false } },
+        {
+            execute: async (query) =>
+                query instanceof GetUserByUniqueFieldQuery
+                    ? { isOk: true, response: { id: 42n } }
+                    : { isOk: false },
+        },
         { enabled: false },
     );
 
@@ -62,55 +89,126 @@ test('does not report an HWID traffic block when personal credentials are disabl
 });
 
 function deletionFixture() {
-    const records=new Map([['one',{hwid:'one',blocked:false}],['two',{hwid:'two',blocked:false}],['banned',{hwid:'banned',blocked:true}]]);
-    const calls=[];
-    const repo={
-        findFirstByCriteria:async ({hwid})=>records.get(hwid),
-        findByCriteria:async ({blocked})=>[...records.values()].filter(d=>blocked===undefined||d.blocked===blocked),
-        blockByHwidAndUserId:async(hwid,id,blocked)=>{records.get(hwid).blocked=blocked;calls.push('persist:'+hwid);},
-        deleteDevicesAndQueue:async(id,devices,includeBlocked)=>devices.filter(device=>records.has(device.hwid)&&(includeBlocked||!records.get(device.hwid).blocked)).map(({hwid})=>{calls.push('delete:'+hwid);records.delete(hwid);calls.push('queue:'+hwid);return hwid;}),
+    const records = new Map([
+        ['one', { hwid: 'one', blocked: false }],
+        ['two', { hwid: 'two', blocked: false }],
+        ['banned', { hwid: 'banned', blocked: true }],
+    ]);
+    const calls = [];
+    const repo = {
+        findFirstByCriteria: async ({ hwid }) => records.get(hwid),
+        findByCriteria: async ({ blocked }) =>
+            [...records.values()].filter((d) => blocked === undefined || d.blocked === blocked),
+        blockByHwidAndUserId: async (hwid, id, blocked) => {
+            records.get(hwid).blocked = blocked;
+            calls.push('persist:' + hwid);
+        },
+        deleteDevicesAndQueue: async (id, devices, includeBlocked) =>
+            devices
+                .filter(
+                    (device) =>
+                        records.has(device.hwid) &&
+                        (includeBlocked || !records.get(device.hwid).blocked),
+                )
+                .map(({ hwid }) => {
+                    calls.push('delete:' + hwid);
+                    records.delete(hwid);
+                    calls.push('queue:' + hwid);
+                    return hwid;
+                }),
     };
-    const access={enabled:true,kickReconciliation:()=>calls.push('kick'),retireSharedCredential:async()=>true,syncDevice:async(id,hwid)=>{
-        assert.equal(records.get(hwid).blocked,true,'deny must commit before revocation');calls.push('revoke:'+hwid);return true;
-    }};
-    const service=new HwidUserDevicesService({emit(){}},repo,{execute:async()=>({isOk:true,response:{id:42n,vlessUuid:'parent'}})},access);
-    return {service,records,calls,access};
+    const access = {
+        enabled: true,
+        kickReconciliation: () => calls.push('kick'),
+        retireSharedCredential: async () => true,
+        syncDevice: async (id, hwid) => {
+            assert.equal(records.get(hwid).blocked, true, 'deny must commit before revocation');
+            calls.push('revoke:' + hwid);
+            return true;
+        },
+    };
+    const service = new HwidUserDevicesService(
+        { emit() {} },
+        repo,
+        { execute: async () => ({ isOk: true, response: { id: 42n, vlessUuid: 'parent' } }) },
+        access,
+    );
+    return { service, records, calls, access };
 }
-test('deletion removes the device and persists reconciliation before notifying the worker',async()=>{
-    const {service,records,calls}=deletionFixture();
-    assert.equal((await service.deleteUserHwidDevice('one',42)).isOk,true);
-    assert.deepEqual(calls,['delete:one','queue:one','kick']);
-    assert.equal(records.get('two').blocked,false);
+test('deletion removes the device and persists reconciliation before notifying the worker', async () => {
+    const { service, records, calls } = deletionFixture();
+    assert.equal((await service.deleteUserHwidDevice('one', 42)).isOk, true);
+    assert.deepEqual(calls, ['delete:one', 'queue:one', 'kick']);
+    assert.equal(records.get('two').blocked, false);
 });
-test('bulk deletion succeeds while node synchronization is unavailable and preserves prior bans',async()=>{
-    const {service,records,calls,access}=deletionFixture();
-    const sync=access.syncDevice;
-    access.syncDevice=async(id,hwid)=>{await sync(id,hwid);if(hwid==='one')throw Error('offline');return true;};
-    assert.equal((await service.deleteAllUserHwidDevices(42)).isOk,true);
-    assert.equal(records.has('one'),false);
-    assert.equal(records.has('two'),false);
-    assert.equal(records.get('banned').blocked,true);
-    assert.ok(!calls.some(c=>c.includes('banned')));
+test('bulk deletion succeeds while node synchronization is unavailable and preserves prior bans', async () => {
+    const { service, records, calls, access } = deletionFixture();
+    const sync = access.syncDevice;
+    access.syncDevice = async (id, hwid) => {
+        await sync(id, hwid);
+        if (hwid === 'one') throw Error('offline');
+        return true;
+    };
+    assert.equal((await service.deleteAllUserHwidDevices(42)).isOk, true);
+    assert.equal(records.has('one'), false);
+    assert.equal(records.has('two'), false);
+    assert.equal(records.get('banned').blocked, true);
+    assert.ok(!calls.some((c) => c.includes('banned')));
 });
 
-test('single deletion never waits for a hanging node and a repeated request is idempotent',async()=>{
-    const {service,records,access}=deletionFixture();
-    access.syncDevice=()=>new Promise(()=>{});
+test('single deletion never waits for a hanging node and a repeated request is idempotent', async () => {
+    const { service, records, access } = deletionFixture();
+    access.syncDevice = () => new Promise(() => {});
     let timer;
     try {
-        const result=await Promise.race([service.deleteUserHwidDevice('one',42),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('delete waited for node')),200);})]);
-        assert.equal(result.isOk,true);
-        assert.equal(records.has('one'),false);
-        assert.equal((await service.deleteUserHwidDevice('one',42)).isOk,true);
-    } finally {clearTimeout(timer);}
+        const result = await Promise.race([
+            service.deleteUserHwidDevice('one', 42),
+            new Promise((_, reject) => {
+                timer = setTimeout(() => reject(Error('delete waited for node')), 200);
+            }),
+        ]);
+        assert.equal(result.isOk, true);
+        assert.equal(records.has('one'), false);
+        assert.equal((await service.deleteUserHwidDevice('one', 42)).isOk, true);
+    } finally {
+        clearTimeout(timer);
+    }
 });
-test('shared-key revocation cannot delay device-key revocation',async()=>{
-    const {service,access,calls}=deletionFixture();
-    let release;
-    access.retireSharedCredential=()=>new Promise(r=>release=r);
-    const running=service.blockUserHwidDevice('one',42,true);
-    await new Promise(r=>setImmediate(r));
-    assert.ok(calls.includes('revoke:one'));
-    release(true);
-    assert.equal((await running).isOk,true);
+for (const blocked of [true, false]) {
+    test(`HWID ${blocked ? 'block' : 'unblock'} commits before queuing and never waits for node IO`, async () => {
+        const { service, records, calls, access } = deletionFixture();
+        access.syncDevice = access.retireSharedCredential = () => {
+            throw Error('request must not perform node IO');
+        };
+        const result = await service.blockUserHwidDevice('one', 42, blocked);
+        assert.equal(result.isOk, true);
+        assert.equal(records.get('one').blocked, blocked);
+        assert.deepEqual(calls, ['persist:one', 'kick']);
+        assert.equal(result.response.find((d) => d.hwid === 'one').blocked, blocked);
+        assert.equal((await service.blockUserHwidDevice('one', 42, blocked)).isOk, true);
+    });
+}
+
+test('failed durable HWID write does not notify reconciliation or claim success', async () => {
+    let kicked = false;
+    const service = new HwidUserDevicesService(
+        { emit() {} },
+        {
+            findFirstByCriteria: async () => ({ hwid: 'one' }),
+            blockByHwidAndUserId: async () => {
+                throw Error('rollback');
+            },
+        },
+        { execute: async () => ({ isOk: true, response: { id: 42n } }) },
+        {
+            enabled: true,
+            kickReconciliation: () => {
+                kicked = true;
+            },
+        },
+    );
+    const result = await service.blockUserHwidDevice('one', 42, true);
+    assert.equal(result.isOk, false);
+    assert.equal(result.error, errors.HWID_DEVICE_BLOCK_ERROR);
+    assert.equal(kicked, false);
 });

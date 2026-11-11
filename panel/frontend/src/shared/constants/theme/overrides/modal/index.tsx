@@ -15,7 +15,7 @@ export default {
         },
         defaultProps: {
             removeScrollProps: { shards: scrollLockShards },
-            transitionProps: { transition: 'fade', duration: 200 },
+            transitionProps: { transition: 'pop', duration: 200, exitDuration: 200 },
             radius: 'md',
             centered: true
         }

@@ -196,28 +196,7 @@ export class HwidUserDevicesService {
                 user.response.id,
                 blocked,
             );
-            if (
-                this.deviceAccess.enabled &&
-                !blocked &&
-                !(await this.deviceAccess.syncDevice(user.response.id, hwid, false))
-            ) {
-                return fail(ERRORS.HWID_DEVICE_BLOCK_ERROR);
-            }
-            if (this.deviceAccess.enabled && blocked) {
-                const revocations = await Promise.allSettled([
-                    this.deviceAccess.retireSharedCredential(
-                        user.response.id,
-                        user.response.vlessUuid,
-                        true,
-                    ),
-                    this.deviceAccess.syncDevice(user.response.id, hwid, true, true),
-                ]);
-                if (!revocations.every((r) => r.status === 'fulfilled' && r.value)) {
-                    // Keep the deny state durable. Failed or offline nodes are reconciled from
-                    // the authoritative panel config when they reconnect; do not roll back ban.
-                    return fail(ERRORS.HWID_DEVICE_ENFORCEMENT_UNAVAILABLE);
-                }
-            }
+            if (this.deviceAccess.enabled) this.deviceAccess.kickReconciliation();
 
             const devices = await this.getUserHwidDevices(Number(user.response.id));
             return devices.isOk ? ok(devices.response) : fail(ERRORS.INTERNAL_SERVER_ERROR);

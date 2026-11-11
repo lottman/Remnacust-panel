@@ -14,8 +14,8 @@ test('a frozen remainder is localized and independent of the current date', () =
             Date.now = () => Date.parse(at)
             assert.equal(format(2 * 86400000, 'en'), '2 days')
             assert.equal(format(2 * 86400000, 'ru'), '2 дня')
-            assert.equal(format(2 * 86400000, 'fa'), '2 روز')
-            assert.equal(format(2 * 86400000, 'zh'), '2 天')
+            assert.equal(format(2 * 86400000, 'fa'), '۲ روز')
+            assert.equal(format(2 * 86400000, 'zh'), '2天')
         }
     } finally { Date.now = now }
 })
@@ -23,4 +23,15 @@ test('a frozen remainder is localized and independent of the current date', () =
 test('negative and unavailable remainders never produce a future or invalid date', () => {
     const zero = format(0, 'en')
     for (const value of [-1, NaN, Infinity]) assert.equal(format(value, 'en'), zero)
+})
+
+for (const days of [1, 3, 20, 31, 365, 250000]) {
+    test(`remaining ${days} days never rounds to months or years`, () => {
+        assert.equal(format(days * 86400000, 'en'), `${days} ${days === 1 ? 'day' : 'days'}`)
+    })
+}
+test('a partial remaining day is counted as available and a zero remainder stays zero', () => {
+    assert.equal(format(1, 'en'), '1 day')
+    assert.equal(format(3 * 86400000 + 1, 'en'), '4 days')
+    assert.equal(format(0, 'en'), '0 days')
 })

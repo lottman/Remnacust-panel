@@ -46,7 +46,7 @@
     --detail-color: light-dark(var(--mantine-color-blue-8), var(--mantine-color-blue-4));
 }
 .detailTile[data-expiration='soon'] {
-    --detail-color: light-dark(var(--mantine-color-orange-8), var(--mantine-color-yellow-4));
+    --detail-color: light-dark(var(--mantine-color-yellow-8), var(--mantine-color-yellow-4));
 }
 .detailTile[data-expiration='expired'] {
     --detail-color: light-dark(var(--mantine-color-red-8), var(--mantine-color-red-4));

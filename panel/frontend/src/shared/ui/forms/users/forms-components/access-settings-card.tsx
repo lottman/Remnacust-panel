@@ -1,4 +1,4 @@
-import { Select, Stack, Input, Text } from '@mantine/core'
+import { Select, Stack } from '@mantine/core'
 import { DateTimePicker, getTimeRange } from '@mantine/dates'
 import { UseFormReturnType } from '@mantine/form'
 import { notifications } from '@mantine/notifications'
@@ -21,7 +21,8 @@ import { instance } from '@shared/api/axios'
 import { useUiText } from '@shared/i18n/interface-text'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SectionCard } from '@shared/ui/section-card'
-import { formatRemainingDurationUtil } from '@shared/utils/time-utils'
+
+import { getUserExpirationState } from './user-expiration'
 
 interface IProps<T extends CreateUserCommand.RequestBody | UpdateUserCommand.RequestBody> {
     cardVariants: Variants
@@ -66,7 +67,7 @@ export const AccessSettingsCard = <
 
     const MotionWrapper = motionWrapper
     const isFrozen = props.isFrozen || form.values.status === 'FROZEN'
-    const remaining = Math.max(0, props.frozenRemainingMs ?? 0)
+    const expirationState = getUserExpirationState(form.values.expireAt)
 
     const filteredInternalSquads = useMemo(() => {
         const allInternalSquads = internalSquads?.internalSquads || []
@@ -99,19 +100,22 @@ export const AccessSettingsCard = <
                 <SectionCard.Section>
                     <Stack gap="md">
                         {isFrozen ? (
-                            <Input.Wrapper
+                            <DateTimePicker
                                 label={t('create-user-modal.widget.expiry-date')}
                                 description={t('frozen-user.help')}
-                            >
-                                <Text c="blue" fw={600} py="xs" role="status">
-                                    {t('frozen-user.remaining', {
-                                        duration: formatRemainingDurationUtil(
-                                            remaining,
-                                            i18n.language
-                                        )
-                                    })}
-                                </Text>
-                            </Input.Wrapper>
+                                locale={i18n.language}
+                                value={
+                                    form.values.expireAt && dayjs(form.values.expireAt).isValid()
+                                        ? dayjs(form.values.expireAt).format('YYYY-MM-DD HH:mm:ss')
+                                        : null
+                                }
+                                valueFormat="D MMM YYYY, HH:mm"
+                                leftSection={<PiCalendarDuotone size="16px" />}
+                                disabled
+                                styles={{
+                                    input: { color: 'var(--mantine-color-blue-5)', opacity: 1 }
+                                }}
+                            />
                         ) : (
                             <DateTimePicker
                                 dropdownType="modal"
@@ -125,6 +129,14 @@ export const AccessSettingsCard = <
                                     centered: true
                                 }}
                                 styles={{
+                                    input: {
+                                        color:
+                                            expirationState === 'expired'
+                                                ? 'var(--mantine-color-red-6)'
+                                                : expirationState === 'soon'
+                                                  ? 'var(--mantine-color-yellow-6)'
+                                                  : undefined
+                                    },
                                     calendarHeaderLevel: {
                                         justifyContent: 'flex-start',
                                         paddingInlineStart: 8

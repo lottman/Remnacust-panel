@@ -60,7 +60,7 @@ All 195 migrations, quota, expiry and diagnostics scenarios were checked on Post
 
 ### Template freshness
 
-The cache revision is read from one PostgreSQL metadata row and changes in the same transaction as the template. Rollback does not publish a new revision. Redis cleanup failures cannot leave other API processes serving the old template. Reads do not scan users or template rows; personal HWID, permissions and delivery remain independent.
+After saving a template, fetch a test user’s subscription and check it in the app. A profile already imported into an app needs its own subscription refresh. If an old configuration remains, check that the changes were applied, the intended template is selected and the client refreshed the subscription. A failed save keeps the last working version active. Do not clear the database or shared cache merely to refresh one subscription.
 
 ### Network storage and cold caches
 
@@ -129,7 +129,7 @@ The panel scheduler enqueues an expiry check every 30 seconds in USERS_WATCHDOG_
 
 ### Freeze a subscription
 
-Choose Freeze in the user menu: ordinary access is paused and the remaining lifetime is retained. Two days remaining stay two days until activation. Resuming sets the new expiry from that remainder; repeating Freeze does not change it. Zero remaining time or an exhausted quota does not grant access. Extending adds to the remainder. Expired subscriptions can be frozen with zero remaining time; the saved remainder is formatted independently of the current date. A blue saved remainder replaces the date editor. Active expiry warnings turn yellow at three days and red on expiry. Freezing itself does not reset usage; scheduled traffic resets continue. The state survives restarts and export/import. Bulk freezes synchronize each user’s device access through the queue.
+Choose Freeze in the user menu: ordinary access is paused and the remaining lifetime is retained. Two days remaining stay two days until activation. Resuming sets the new expiry from that remainder; repeating Freeze does not change it. Zero remaining time or an exhausted quota does not grant access. Extending adds to the remainder. Expired subscriptions can be frozen with zero remaining time; the saved remainder is formatted independently of the current date. The card shows the exact remaining day count. The date field retains its usual layout, is blue and cannot be edited. Active expiry warnings turn yellow at three days and red on expiry. Freezing itself does not reset usage; scheduled traffic resets continue. The state survives restarts and export/import. Bulk freezes synchronize each user’s device access through the queue.
 
 ### Device subscription preview
 
@@ -208,7 +208,7 @@ HWID is enabled by default on a new installation; an upgrade preserves the saved
 
 ### Deletion versus blocking
 
-Deleting a device removes its registration: the same app can register again if new devices are allowed. To prevent access, block it instead: the record remains and that device’s access is revoked. Unblocking removes the ban. “Delete all unblocked” clears allowed registrations while keeping blocked device records.
+Deleting a device removes its registration: the same app can register again if new devices are allowed. To prevent access, block it instead: the record remains and that device’s access is revoked. Unblocking removes the ban. Remaining time uses day counts rather than rounded months; a partial remaining day counts as one day. The frozen date is blue and cannot be edited. Expired dates are red; dates within three days are yellow. “Delete all unblocked” clears allowed registrations while keeping blocked device records. Blocking and unblocking are saved atomically with an application job. Nodes apply the change in the background and retry failures. A successful save does not confirm an immediate change to existing connections. Device subscription preview is collapsed by default. Clear cancels the request and removes its result; closing the section removes the preview.
 
 ### Requirements
 
@@ -754,7 +754,7 @@ Tag settings affect associated hosts with the corresponding quota, user-speed or
 
 ### Traffic accounting and quota batches
 
-Pending traffic commits at most eight receipts per transaction. A receipt may contain several users. Redis acknowledgements are removed after PostgreSQL commits, and retries do not charge usage twice. Fresh counter collection remains locked until its result is saved. Quota epochs are written in batches of up to 500 rows within the revision transaction. The coordinator commits funding and its cursor per owner, checks the generation and renews its lease between scopes. The budget is checked between owners; one owner with many scopes may take longer than 20 seconds.
+A shared tag quota counts usage on hosts where tag accounting is enabled. Assign the tag, enable the required restrictions, and check the Limits page. Values update after statistics arrive; receiving the same statistics again must not charge usage twice. An unavailable node can leave values behind until connectivity returns. Inspect node health and accounting logs instead of manually resetting database counters.
 
 ### Device speed from tags
 
@@ -991,7 +991,7 @@ Traffic quota exhaustion, the maximum device count and missing HWID support have
 
 ### First start of a mixed node fleet
 
-Before preparing policy and credentials, the panel discovers capabilities of the node and peers sharing its inbounds. Discovery runs outside SQL transactions with bounded concurrency and time. Policy and configuration use the same compatibility snapshot. An unavailable node delays only affected inbounds; independent healthy nodes continue starting. Unknown compatibility keeps the previous configuration and schedules a retry. A network failure never classifies a node as native Remnawave or removes restrictions.
+On first connection, wait for capability checks and profile application. Native Remnawave and custom nodes can coexist, but extensions depend on the core actually running. Nodes sharing an inbound use a compatible mode; independent compatible inbounds retain extensions. Unknown capabilities keep the previous configuration and schedule another check. An unavailable node delays only related connections. Network errors do not remove configured restrictions.
 
 ### Access lifetime and devices: UTC
 
@@ -999,7 +999,7 @@ Access expiry and selected device timestamps use UTC independently of the Postgr
 
 ### Subscription performance and compatibility
 
-Panel 1.1.7.95 checks issued identities and bulk configuration users using SQL sets while preserving expiry, status, squads, HWID blocks and key rotation. Node preflight precedes expensive configuration compilation; limit pauses are read in one query per node. Updates coalesce, at most three nodes synchronize per process, and a busy advisory lock is retried outside the transaction. A confirmed native Remnawave node receives a baseline configuration: new host restrictions, destination rules and inactive-user exceptions are disabled on its inbounds. A custom node sharing such an inbound uses the same compatible baseline credentials; isolated compatible inbounds retain extensions. Older custom cores without autoselect recipient accounting use ordinary pool-server credentials and limits. Upgrade Node/Core and refresh the client subscription for separate recipient accounting. The panel displays compatibility mode. An unknown node or network failure alone never disables restrictions. Existing quota reserves and financial fences are not erased by a downgrade. Older subscription-page APIs remain compatible, and pages hiding connection keys skip unused link generation. This mode needs no new .env variables; the UTC access-expiry migration is described separately.
+Subscription delivery does not wait for node acknowledgements. Profiles appearing in an app do not prove that a server has applied them: check node health and configuration status. Use compatible panel and subscription-page versions. A confirmed native Remnawave node receives a baseline configuration: new host restrictions, destination rules and inactive-user exceptions are disabled on its inbounds. A custom node sharing such an inbound uses the same compatible baseline credentials; isolated compatible inbounds retain extensions. Older custom cores without autoselect recipient accounting use ordinary pool-server credentials and limits. Upgrade Node/Core and refresh the client subscription for separate recipient accounting. The panel displays compatibility mode. An unknown node or network failure alone never disables restrictions. Existing quota reserves and financial fences are not erased by a downgrade. Older subscription-page APIs remain compatible, and pages hiding connection keys skip unused link generation. This mode needs no new .env variables; the UTC access-expiry migration is described separately.
 
 ### Technical update log
 

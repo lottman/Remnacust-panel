@@ -7,6 +7,7 @@ import {
 } from '@remnawave/backend-contract'
 import i18next from 'i18next'
 
+import { RequestError } from '../../helpers/handler-request-error'
 import { createMutationHook } from '../../tsq-helpers'
 
 export const useDeleteUserHwidDevice = createMutationHook({
@@ -66,10 +67,8 @@ const blockNotifications = (blocked: boolean) => ({
         })
     },
     onError: (error: unknown) => {
-        const message = error instanceof Error ? error.message : ''
-        const localizedEnforcementError = message.includes(
-            'HWID traffic blocking requires personal device credentials'
-        )
+        const localizedEnforcementError =
+            error instanceof RequestError && error.errorCode === 'A262'
         notifications.show({
             title: blocked
                 ? i18next.t('hwid-notifications.block-device')

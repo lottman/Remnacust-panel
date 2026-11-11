@@ -1,6 +1,4 @@
 import { Fieldset } from '@mantine/core'
-import { useXrayMode } from '@shared/api/hooks/xray-mode'
-import { XrayModeNotice } from '@shared/ui/xray-mode-notice'
 import {
     ActionIcon,
     Alert,
@@ -25,7 +23,6 @@ import { useDebouncedValue, useLocalStorage } from '@mantine/hooks'
 import { useQueryClient } from '@tanstack/react-query'
 import { UserStatusBadge } from '@widgets/dashboard/users/user-status-badge'
 import { isAxiosError } from 'axios'
-import dayjs from 'dayjs'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiClockCountdown, PiPause, PiProhibit, PiPulse } from 'react-icons/pi'
@@ -45,10 +42,13 @@ import {
 } from 'react-icons/tb'
 
 import { showModal } from '@shared/_modals/show-modal'
+import { useXrayMode } from '@shared/api/hooks/xray-mode'
 import { useUiText } from '@shared/i18n/interface-text'
 import { Page, PageHeaderShared, LoadingScreen } from '@shared/ui'
+import { getUserExpirationState } from '@shared/ui/forms/users/forms-components/user-expiration'
 import { RefreshButton } from '@shared/ui/refresh-control'
-import { getExpirationTextUtil } from '@shared/utils/time-utils'
+import { XrayModeNotice } from '@shared/ui/xray-mode-notice'
+import { formatRemainingDurationUtil, getExpirationTextUtil } from '@shared/utils/time-utils'
 
 import { ConnectedNodeColumnEntity } from '@entities/dashboard/users/ui/table-columns/connected-node'
 import { UsernameCell } from '@entities/dashboard/users/ui/table-columns/username/username.column'
@@ -143,179 +143,183 @@ export function LimitsPage() {
             <QuotaRecoveryPanel />
             <XrayModeNotice />
             <Fieldset disabled={!isCustom} variant="unstyled">
-            {selected ? (
-                <ScopeUsers
-                    key={selected.kind + selected.key}
-                    scope={selected}
-                    back={() => setSelected(null)}
-                />
-            ) : (
-                <Stack gap="lg">
-                    <Text c="dimmed">
-                        {uiText(
-                            'host-and-tag-quotas-and-speeds-manage-all-users-a-squad-or-sel-dedaadc'
-                        )}
-                    </Text>
-                    <Group className={classes.toolbar} wrap="wrap">
-                        <SegmentedControl
-                            className={classes.scopeFilter}
-                            value={filter}
-                            onChange={setFilter}
-                            data={[
-                                { value: 'ALL', label: uiText('all-a52ace4') },
-                                { value: 'HOST', label: uiText('hosts-bba9af1') },
-                                { value: 'TAG', label: uiText('tags-1331275') }
-                            ]}
-                        />
-                        <TextInput
-                            style={{ flex: '1 1 220px' }}
-                            aria-label={uiText('search-scopes-4072c9d')}
-                            placeholder={uiText('find-a-host-or-tag-32f269c')}
-                            value={search}
-                            onChange={(e) => setSearch(e.currentTarget.value)}
-                            leftSection={<TbSearch />}
-                        />
-                        <Group gap="xs" wrap="nowrap" style={{ flex: '0 1 280px', minWidth: 0 }}>
-                            <Select
-                                aria-label={uiText('sort-limits-575f4cc')}
-                                style={{ flex: 1, minWidth: 0 }}
-                                value={sort}
-                                onChange={(value) => {
-                                    if (value) {
-                                        setSort(value as ScopeSort)
-                                        setDirection(value === 'usedBytes' ? 'desc' : 'asc')
-                                    }
-                                }}
-                                allowDeselect={false}
+                {selected ? (
+                    <ScopeUsers
+                        key={selected.kind + selected.key}
+                        scope={selected}
+                        back={() => setSelected(null)}
+                    />
+                ) : (
+                    <Stack gap="lg">
+                        <Text c="dimmed">
+                            {uiText(
+                                'host-and-tag-quotas-and-speeds-manage-all-users-a-squad-or-sel-dedaadc'
+                            )}
+                        </Text>
+                        <Group className={classes.toolbar} wrap="wrap">
+                            <SegmentedControl
+                                className={classes.scopeFilter}
+                                value={filter}
+                                onChange={setFilter}
                                 data={[
-                                    {
-                                        value: 'position',
-                                        label: uiText('host-order-a7a00c3')
-                                    },
-                                    { value: 'name', label: uiText('name-dcd1d52') },
-                                    {
-                                        value: 'usedBytes',
-                                        label: uiText('traffic-used-355b28c')
-                                    },
-                                    { value: 'limitBytes', label: uiText('quota-6c105ca') },
-                                    {
-                                        value: 'speedLimitMbps',
-                                        label: uiText('user-speed-bbb06a4')
-                                    },
-                                    {
-                                        value: 'totalSpeedLimitMbps',
-                                        label: uiText('total-speed-c3c0eb4')
-                                    }
+                                    { value: 'ALL', label: uiText('all-a52ace4') },
+                                    { value: 'HOST', label: uiText('hosts-bba9af1') },
+                                    { value: 'TAG', label: uiText('tags-1331275') }
                                 ]}
                             />
-                            <Tooltip
-                                label={
-                                    direction === 'asc'
-                                        ? uiText('ascending-7718459')
-                                        : uiText('descending-79479a6')
-                                }
+                            <TextInput
+                                style={{ flex: '1 1 220px' }}
+                                aria-label={uiText('search-scopes-4072c9d')}
+                                placeholder={uiText('find-a-host-or-tag-32f269c')}
+                                value={search}
+                                onChange={(e) => setSearch(e.currentTarget.value)}
+                                leftSection={<TbSearch />}
+                            />
+                            <Group
+                                gap="xs"
+                                wrap="nowrap"
+                                style={{ flex: '0 1 280px', minWidth: 0 }}
                             >
-                                <ActionIcon
-                                    size={36}
-                                    variant="light"
-                                    aria-label={uiText('reverse-sort-direction-b4d2088')}
-                                    onClick={() =>
-                                        setDirection(direction === 'asc' ? 'desc' : 'asc')
+                                <Select
+                                    aria-label={uiText('sort-limits-575f4cc')}
+                                    style={{ flex: 1, minWidth: 0 }}
+                                    value={sort}
+                                    onChange={(value) => {
+                                        if (value) {
+                                            setSort(value as ScopeSort)
+                                            setDirection(value === 'usedBytes' ? 'desc' : 'asc')
+                                        }
+                                    }}
+                                    allowDeselect={false}
+                                    data={[
+                                        {
+                                            value: 'position',
+                                            label: uiText('host-order-a7a00c3')
+                                        },
+                                        { value: 'name', label: uiText('name-dcd1d52') },
+                                        {
+                                            value: 'usedBytes',
+                                            label: uiText('traffic-used-355b28c')
+                                        },
+                                        { value: 'limitBytes', label: uiText('quota-6c105ca') },
+                                        {
+                                            value: 'speedLimitMbps',
+                                            label: uiText('user-speed-bbb06a4')
+                                        },
+                                        {
+                                            value: 'totalSpeedLimitMbps',
+                                            label: uiText('total-speed-c3c0eb4')
+                                        }
+                                    ]}
+                                />
+                                <Tooltip
+                                    label={
+                                        direction === 'asc'
+                                            ? uiText('ascending-7718459')
+                                            : uiText('descending-79479a6')
                                     }
                                 >
-                                    {direction === 'asc' ? <TbArrowUp /> : <TbArrowDown />}
-                                </ActionIcon>
-                            </Tooltip>
+                                    <ActionIcon
+                                        size={36}
+                                        variant="light"
+                                        aria-label={uiText('reverse-sort-direction-b4d2088')}
+                                        onClick={() =>
+                                            setDirection(direction === 'asc' ? 'desc' : 'asc')
+                                        }
+                                    >
+                                        {direction === 'asc' ? <TbArrowUp /> : <TbArrowDown />}
+                                    </ActionIcon>
+                                </Tooltip>
+                            </Group>
                         </Group>
-                    </Group>
-                    {scopes.isError ? (
-                        <Alert color="red">
-                            {uiText('could-not-load-limits-press-refresh-8e66afe')}
-                        </Alert>
-                    ) : scopes.isLoading ? (
-                        <LoadingScreen />
-                    ) : list.length === 0 ? (
-                        <Card withBorder>
-                            <Text>{uiText('no-hosts-or-tags-found-5e14329')}</Text>
-                        </Card>
-                    ) : (
-                        <SimpleGrid cols={{ base: 1, sm: 2, xl: 3 }}>
-                            {list.map((s) => (
-                                <Card
-                                    key={s.kind + s.key}
-                                    withBorder
-                                    radius="lg"
-                                    className={classes.scopeCard}
-                                    style={{ minWidth: 0 }}
-                                >
-                                    <Stack gap={14} h="100%">
-                                        <Group justify="space-between">
-                                            <Badge variant="light">
-                                                {s.kind === 'HOST'
-                                                    ? uiText('host-4a82311')
-                                                    : uiText('tag-1503916')}
-                                            </Badge>
-                                            {s.paused && (
-                                                <Badge color="yellow">
-                                                    {uiText('paused-for-all-d332b4f')}
+                        {scopes.isError ? (
+                            <Alert color="red">
+                                {uiText('could-not-load-limits-press-refresh-8e66afe')}
+                            </Alert>
+                        ) : scopes.isLoading ? (
+                            <LoadingScreen />
+                        ) : list.length === 0 ? (
+                            <Card withBorder>
+                                <Text>{uiText('no-hosts-or-tags-found-5e14329')}</Text>
+                            </Card>
+                        ) : (
+                            <SimpleGrid cols={{ base: 1, sm: 2, xl: 3 }}>
+                                {list.map((s) => (
+                                    <Card
+                                        key={s.kind + s.key}
+                                        withBorder
+                                        radius="lg"
+                                        className={classes.scopeCard}
+                                        style={{ minWidth: 0 }}
+                                    >
+                                        <Stack gap={14} h="100%">
+                                            <Group justify="space-between">
+                                                <Badge variant="light">
+                                                    {s.kind === 'HOST'
+                                                        ? uiText('host-4a82311')
+                                                        : uiText('tag-1503916')}
                                                 </Badge>
-                                            )}
-                                        </Group>
-                                        <Text
-                                            fw={700}
-                                            size="lg"
-                                            style={{ overflowWrap: 'anywhere' }}
-                                        >
-                                            {s.name}
-                                        </Text>
-                                        <Text size="sm" c="dimmed">
-                                            {uiText('current-period-usage-73e93ad')}
-                                            {s.usedBytes == null ? '—' : gib(s.usedBytes)}
-                                        </Text>
-                                        <Text size="sm">
-                                            {uiText('quota-per-user-5c0ec2b')}
-                                            {quota(s.limitBytes)}
-                                        </Text>
-                                        <Text size="sm">
-                                            {uiText('speed-per-user-host-f449280')}
-                                            {s.speedLimitMbps
-                                                ? `${s.speedLimitMbps} ${uiText('speed-unit-mbps')}`
-                                                : '∞'}
-                                        </Text>
-                                        <Text size="sm">
-                                            {uiText('device-speed-limit')}
-                                            {': '}
-                                            {s.deviceSpeedLimitMbps
-                                                ? `${s.deviceSpeedLimitMbps} Mbps`
-                                                : '∞'}
-                                        </Text>
-                                        <Text size="sm">
-                                            {uiText('shared-speed-2012ee5')}
-                                            {s.totalSpeedLimitMbps
-                                                ? `${s.totalSpeedLimitMbps} ${uiText('speed-unit-mbps')}`
-                                                : '∞'}{' '}
-                                            · {s.trafficMultiplier ?? uiText('tag-1-266d618')}×
-                                        </Text>
-                                        {s.kind === 'TAG' && (
-                                            <Text size="sm" c="dimmed">
-                                                {uiText('hosts-e365c9f')}
-                                                {s.hostCount}
+                                                {s.paused && (
+                                                    <Badge color="yellow">
+                                                        {uiText('paused-for-all-d332b4f')}
+                                                    </Badge>
+                                                )}
+                                            </Group>
+                                            <Text
+                                                fw={700}
+                                                size="lg"
+                                                style={{ overflowWrap: 'anywhere' }}
+                                            >
+                                                {s.name}
                                             </Text>
-                                        )}
-                                        <Button
-                                            mt="auto"
-                                            variant="light"
-                                            onClick={() => setSelected(s)}
-                                        >
-                                            {uiText('users-and-actions-87dce8a')}
-                                        </Button>
-                                    </Stack>
-                                </Card>
-                            ))}
-                        </SimpleGrid>
-                    )}
-                </Stack>
-            )}
+                                            <Text size="sm" c="dimmed">
+                                                {uiText('current-period-usage-73e93ad')}
+                                                {s.usedBytes == null ? '—' : gib(s.usedBytes)}
+                                            </Text>
+                                            <Text size="sm">
+                                                {uiText('quota-per-user-5c0ec2b')}
+                                                {quota(s.limitBytes)}
+                                            </Text>
+                                            <Text size="sm">
+                                                {uiText('speed-per-user-host-f449280')}
+                                                {s.speedLimitMbps
+                                                    ? `${s.speedLimitMbps} ${uiText('speed-unit-mbps')}`
+                                                    : '∞'}
+                                            </Text>
+                                            <Text size="sm">
+                                                {uiText('device-speed-limit')}
+                                                {': '}
+                                                {s.deviceSpeedLimitMbps
+                                                    ? `${s.deviceSpeedLimitMbps} Mbps`
+                                                    : '∞'}
+                                            </Text>
+                                            <Text size="sm">
+                                                {uiText('shared-speed-2012ee5')}
+                                                {s.totalSpeedLimitMbps
+                                                    ? `${s.totalSpeedLimitMbps} ${uiText('speed-unit-mbps')}`
+                                                    : '∞'}{' '}
+                                                · {s.trafficMultiplier ?? uiText('tag-1-266d618')}×
+                                            </Text>
+                                            {s.kind === 'TAG' && (
+                                                <Text size="sm" c="dimmed">
+                                                    {uiText('hosts-e365c9f')}
+                                                    {s.hostCount}
+                                                </Text>
+                                            )}
+                                            <Button
+                                                mt="auto"
+                                                variant="light"
+                                                onClick={() => setSelected(s)}
+                                            >
+                                                {uiText('users-and-actions-87dce8a')}
+                                            </Button>
+                                        </Stack>
+                                    </Card>
+                                ))}
+                            </SimpleGrid>
+                        )}
+                    </Stack>
+                )}
             </Fieldset>
         </Page>
     )
@@ -758,12 +762,24 @@ function ScopeUsers({ scope: initial, back }: { scope: Scope; back: () => void }
                             <ConnectedNodeColumnEntity node={u.lastConnectedNode ?? undefined} />
                         ),
                         expireAt: (u) => (
-                            <Text c="dimmed" size="xs">
+                            <Text
+                                c={
+                                    u.status === 'FROZEN'
+                                        ? 'blue'
+                                        : getUserExpirationState(u.expireAt) === 'expired'
+                                          ? 'red'
+                                          : getUserExpirationState(u.expireAt) === 'soon'
+                                            ? 'yellow'
+                                            : 'dimmed'
+                                }
+                                size="xs"
+                            >
                                 {u.status === 'FROZEN' && u.frozenRemainingMs != null
                                     ? t('frozen-user.remaining', {
-                                          duration: dayjs(Date.now() + u.frozenRemainingMs)
-                                              .locale(i18n.language)
-                                              .fromNow(true)
+                                          duration: formatRemainingDurationUtil(
+                                              u.frozenRemainingMs,
+                                              i18n.language
+                                          )
                                       })
                                     : getExpirationTextUtil(u.expireAt, t, i18n)}
                             </Text>

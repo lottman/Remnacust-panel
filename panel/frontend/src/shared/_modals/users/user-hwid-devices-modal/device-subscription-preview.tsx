@@ -1,4 +1,5 @@
 import {
+    Accordion,
     Alert,
     Badge,
     Button,
@@ -63,6 +64,30 @@ export function DeviceSubscriptionPreview({
     devices: Device[]
 }) {
     const { t } = useTranslation()
+    return (
+        <Accordion variant="contained" keepMounted={false}>
+            <Accordion.Item value="preview">
+                <Accordion.Control>{t('operations.subscriptionPreview')}</Accordion.Control>
+                <Accordion.Panel>
+                    <DeviceSubscriptionPreviewContent
+                        key={userId}
+                        userId={userId}
+                        devices={devices}
+                    />
+                </Accordion.Panel>
+            </Accordion.Item>
+        </Accordion>
+    )
+}
+
+export function DeviceSubscriptionPreviewContent({
+    userId,
+    devices
+}: {
+    userId: number
+    devices: Device[]
+}) {
+    const { t } = useTranslation()
     const [hwid, setHwid] = useState<string | null>(null)
     const [path, setPath] = useState('base')
     const [agent, setAgent] = useState('')
@@ -70,6 +95,7 @@ export function DeviceSubscriptionPreview({
     const controller = useRef<AbortController | null>(null)
     useEffect(() => () => controller.current?.abort(), [])
     const preview = useMutation({
+        gcTime: 0,
         mutationFn: async (request: {
             hwid: string
             path: string
@@ -93,7 +119,6 @@ export function DeviceSubscriptionPreview({
     return (
         <Paper withBorder p="md">
             <Stack gap="sm">
-                <Text fw={600}>{t('operations.subscriptionPreview')}</Text>
                 <Text size="sm" c="dimmed">
                     {t('operations.previewScope')}
                 </Text>
@@ -132,14 +157,28 @@ export function DeviceSubscriptionPreview({
                     checked={includeConfig}
                     onChange={(e) => setIncludeConfig(e.currentTarget.checked)}
                 />
-                <Button
-                    variant="light"
-                    disabled={!hwid || !agent}
-                    loading={preview.isPending}
-                    onClick={() => preview.mutate(request)}
-                >
-                    {t('operations.generatePreview')}
-                </Button>
+                <Group grow>
+                    <Button
+                        variant="light"
+                        disabled={!hwid || !agent}
+                        loading={preview.isPending}
+                        onClick={() => preview.mutate(request)}
+                    >
+                        {t('operations.generatePreview')}
+                    </Button>
+                    <Button
+                        variant="light"
+                        color="red"
+                        disabled={preview.isIdle}
+                        onClick={() => {
+                            controller.current?.abort()
+                            controller.current = null
+                            preview.reset()
+                        }}
+                    >
+                        {t('operations.clearPreview')}
+                    </Button>
+                </Group>
                 {preview.isError && (
                     <Alert color="red" role="alert">
                         {t('operations.requestError')}

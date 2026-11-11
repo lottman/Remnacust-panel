@@ -24,8 +24,13 @@ const { HwidUserDevicesRepository } = load(
 async function main(timezone) {
     const port = process.env.REMNACUST_TEST_DATABASE_PORT || '55439';
     assert.ok(['55439', '55449'].includes(port), 'Only disposable database ports are accepted');
+    const user = process.env.REMNACUST_TEST_DATABASE_USER || 'postgres';
+    assert.ok(
+        ['postgres', 'rc_device_ci'].includes(user),
+        'Only disposable database roles are accepted',
+    );
     const prisma = new PrismaClient({
-        datasourceUrl: `postgresql://postgres@127.0.0.1:${port}/postgres`,
+        datasourceUrl: `postgresql://${user}@127.0.0.1:${port}/postgres`,
     });
     const context = new AsyncLocalStorage();
     const tx = {
@@ -66,6 +71,29 @@ async function main(timezone) {
         });
         const snapshots = await prisma.hwidUserDevices.findMany({ where: { userId: 992n } });
         await transaction(() => repo.blockByHwidAndUserId('a', 992n, true));
+        const initialBanJob =
+            await prisma.$queryRaw`SELECT revision::text FROM xera_device_reconciliation WHERE user_id=992 AND hwid='a'`;
+        await assert.rejects(
+            transaction(async () => {
+                await repo.blockByHwidAndUserId('a', 992n, false);
+                throw new Error('test-only rollback');
+            }),
+            /test-only rollback/,
+        );
+        assert.equal(
+            (
+                await prisma.hwidUserDevices.findUnique({
+                    where: { hwid_userId: { hwid: 'a', userId: 992n } },
+                })
+            ).blocked,
+            true,
+        );
+        assert.equal(
+            (
+                await prisma.$queryRaw`SELECT revision::text FROM xera_device_reconciliation WHERE user_id=992 AND hwid='a'`
+            )[0].revision,
+            initialBanJob[0].revision,
+        );
         const removed = await transaction(() =>
             repo.deleteDevicesAndQueue(992n, snapshots, false, true),
         );
@@ -130,6 +158,19 @@ async function main(timezone) {
         );
         await prisma.$executeRawUnsafe(
             'CREATE TRIGGER xera_test_reject_reconciliation BEFORE INSERT ON xera_device_reconciliation FOR EACH ROW EXECUTE FUNCTION xera_test_reject_reconciliation()',
+        );
+        await assert.rejects(
+            transaction(() => repo.blockByHwidAndUserId('a', 992n, false)),
+            /test-only queue failure/,
+        );
+        assert.equal(
+            (
+                await prisma.hwidUserDevices.findUnique({
+                    where: { hwid_userId: { hwid: 'a', userId: 992n } },
+                })
+            ).blocked,
+            true,
+            'outbox failure must roll back unblock',
         );
         await assert.rejects(
             transaction(() => repo.deleteDevicesAndQueue(992n, [latest], true, true)),

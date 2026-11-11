@@ -9,7 +9,7 @@
 }
 
 .text {
-    font-family: var(--mantine-font-family-monospace);
+    font-family: var(--mantine-font-family);
     font-size: var(--mantine-font-size-xs);
     line-height: 1.6;
     color: light-dark(var(--mantine-color-red-8), var(--mantine-color-red-3));
@@ -17,6 +17,16 @@
     overflow-wrap: anywhere;
     max-height: 240px;
     overflow-y: auto;
+}
+
+.details {
+    font-family: var(--mantine-font-family-monospace);
+    font-size: var(--mantine-font-size-xs);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    overflow-y: auto;
+    max-height: 240px;
+    margin-block: 8px 0;
 }
 
 .copyButton {

@@ -472,6 +472,8 @@ The generator shows two values: Private key for the server and Password (public 
 
 Open a profile and edit its JSON. Press Ctrl+Space for suggestions, use the up and down arrows to select an option, Enter to insert it or Esc to close the list. The current option is highlighted. Search, formatting and full-screen mode are also available. Before saving, fix marked errors and run configuration validation.
 
+API errors use the interface language; the bracketed code is for diagnostics. For A113, change the duplicate inbound tag: tags must be unique across all profiles. For A114, change the profile name. A tag repeated within the JSON is identified in the editor message. A generic save failure does not prove a name conflict: check the panel log. After a creation error, refresh the list before creating again. For node errors, open “Technical details” to view or copy the original diagnostic; remove secrets before posting it publicly.
+
 ### Generate a shortId
 
 The Short ID tab in Tools generates 16 hex characters from 8 secure random bytes. Copy the value into shortIds in the server realitySettings and use the same value as shortId on the client. Generate creates a new value without changing the saved profile or starting rotation.

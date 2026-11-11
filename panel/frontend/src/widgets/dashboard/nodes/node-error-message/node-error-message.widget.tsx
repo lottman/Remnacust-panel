@@ -4,7 +4,11 @@ import { TbAlertTriangle } from 'react-icons/tb'
 import { ErrorMessageBlock } from '@shared/ui/error-message-block'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SectionCard } from '@shared/ui/section-card'
-import { getNodeErrorMessage, hasNodeErrorMessage, nodeConfigurationNeedsRestart } from '@shared/utils/node-error-message'
+import {
+    getNodeErrorMessage,
+    hasNodeErrorMessage,
+    nodeConfigurationNeedsRestart
+} from '@shared/utils/node-error-message'
 import {
     nodeNeedsCustomUpgrade,
     nodePolicyIsPending,
@@ -60,6 +64,7 @@ export const NodeErrorMessageWidget = (props: IProps) => {
             <SectionCard.Section>
                 <ErrorMessageBlock
                     copyValue={node.lastStatusMessage}
+                    details={node.lastStatusMessage}
                     message={
                         compatibility
                             ? explanation
@@ -70,11 +75,7 @@ export const NodeErrorMessageWidget = (props: IProps) => {
                                 : explanation
                     }
                     tone={
-                        upgradeRequired
-                            ? 'upgrade'
-                            : compatibility || warning
-                              ? 'warning'
-                              : 'error'
+                        upgradeRequired ? 'upgrade' : compatibility || warning ? 'warning' : 'error'
                     }
                 />
             </SectionCard.Section>

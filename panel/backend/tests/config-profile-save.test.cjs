@@ -19,6 +19,7 @@ const config = () => ({ inbounds: [{ tag: 'VLESS', protocol: 'vless', port: 443,
 const error = message => ({ code: 'A061', httpCode: 422, message });
 const { ConfigProfileService } = source('modules/config-profiles/config-profile.service.ts', {
     '@nestjs-cls/transactional': { Transactional: () => () => {} },
+    './config-profile-conflict': source('modules/config-profiles/config-profile-conflict.ts'),
     '@common/helpers/xray-config': validator,
     '@common/types': { fail: e => ({ isOk: false, ...e }), ok: response => ({ isOk: true, response }) },
     '@common/utils/inbounds': source('common/utils/inbounds/diff-inbounds.util.ts'),

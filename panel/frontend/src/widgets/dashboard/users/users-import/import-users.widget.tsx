@@ -3,6 +3,7 @@ import { useForm } from '@mantine/form'
 import { notifications } from '@mantine/notifications'
 import { ImportUsersCommand } from '@remnawave/backend-contract'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { TbAlertCircle, TbUpload } from 'react-icons/tb'
 
 import { useGetInternalSquads, useImportUsers } from '@shared/api/hooks'
@@ -20,6 +21,7 @@ export const ImportUsersModalWidget = (props: {
     lockedSquad?: boolean
 }) => {
     const uiText = useUiText()
+    const { t } = useTranslation()
 
     const { onFinished, defaultSquadUuid, lockedSquad } = props
 
@@ -77,7 +79,14 @@ export const ImportUsersModalWidget = (props: {
         } catch (error) {
             notifications.show({
                 title: uiText('file-error-98f5369'),
-                message: error instanceof Error ? error.message : 'Unknown error',
+                message:
+                    error instanceof Error &&
+                    [
+                        uiText('no-users-array-in-file-f80eb52'),
+                        uiText('too-many-users-max-20000-b30882c')
+                    ].includes(error.message)
+                        ? error.message
+                        : t('requestErrors.fileRead'),
                 color: 'red'
             })
             setFileContent(null)

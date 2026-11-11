@@ -66,10 +66,10 @@ export function RecapContent() {
                 },
                 `remnacust-recap-${dayjs().format('YYYY-MM-DD')}.png`
             )
-        } catch (error) {
+        } catch {
             notifications.show({
                 color: 'red',
-                message: `${error instanceof Error ? error.message : 'Unknown error'}`,
+                message: i18next.t('requestErrors.copyFailed'),
                 title: i18next.t('common.message.error')
             })
         } finally {

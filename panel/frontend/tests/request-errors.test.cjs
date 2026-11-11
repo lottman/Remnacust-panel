@@ -15,6 +15,7 @@ function handler(language) {
     const exports = {}
     vm.runInNewContext(compiled, {
         exports,
+        Error,
         require(name) {
             if (name === 'axios') return { isAxiosError: error => error?.isAxiosError === true }
             if (name === '@remnawave/backend-contract') return { ERRORS }
@@ -82,10 +83,48 @@ for (const language of ['en', 'ru', 'fa', 'zh']) {
             assert.ok(!message.includes('PRIVATE_SQL_OR_SECRET'))
             assert.ok(!message.includes('Request failed (HTTP'))
             assert.ok(!message.includes('requestErrors.codes.'))
+            assert.equal(typeof locale.requestErrors.codes[entry.code], 'string', `${language}: missing ${entry.code}`)
+            assert.notEqual(message, entry.message + ` [${entry.code}]`)
         }
         for (const code of ['A113', 'A114']) {
             assert.equal(getMessage({ response: { status: 409, data: { errorCode: code } } }), locale.requestErrors.codes[code] + ` [${code}]`)
         }
+    })
+    test(`${language}: validation reasons, timeouts and colliding legacy codes are localized without leaking server text`, () => {
+        const { getMessage, locale } = handler(language)
+        const message = (reason, status = 422) => getMessage({ response: { status, data: { errorCode: 'A061', message: reason } } })
+        assert.equal(message('Duplicate inbound tag "EU-1" found. All inbound tags must be unique.'), locale.requestErrors.validation.duplicateTag.replace('{{tag}}', 'EU-1') + ' [A061]')
+        for (const [reason, key] of [
+            ['Invalid JSON input.', 'json'], ["Config doesn't have inbounds.", 'inbounds'], ["Config doesn't have outbounds.", 'outbounds'],
+            ['All inbounds must have a unique tag.', 'tagRequired'], ["Character ',' is not allowed in inbound tag.", 'tagComma'],
+            ['Each inbound must be an object.', 'inboundObject'], ['Shadowsocks settings are required.', 'ssSettings'],
+            ['The masque transport requires the masque protocol.', 'masqueProtocol'], ['MASQUE requires network masque and TLS security.', 'masqueTls']
+        ]) assert.equal(message(reason), locale.requestErrors.validation[key] + ' [A061]')
+        for (const reason of ['PRIVATE_SQL password=secret', 'x'.repeat(3000), '<script>PRIVATE_SECRET</script>']) {
+            assert.equal(message(reason), locale.requestErrors.codes.A061 + ' [A061]')
+        }
+        for (const [code, status, key] of [['A089', 400, 'A089_400'], ['A219', 404, 'A219_404']]) {
+            assert.equal(getMessage({ response: { status, data: { errorCode: code } } }), locale.requestErrors.statusCodes[key] + ` [${code}]`)
+        }
+        assert.equal(getMessage({ code: 'ETIMEDOUT' }), locale.requestErrors.timeout)
+        assert.equal(getMessage({ code: 'ECONNABORTED' }), locale.requestErrors.timeout)
+        assert.equal(getMessage({ code: 'ERR_CANCELED' }), locale.requestErrors.canceled)
+        assert.equal(message('GEOFILES_REQUIRE_BASE_JSON'), locale.geofiles['requires-json'] + ' [A061]')
+        assert.equal(message('GEOFILES_PER_TEMPLATE'), locale.requestErrors.features.geofilesPerTemplate + ' [A061]')
+        for (const field of ['code', 'message', 'errorCode']) {
+            assert.equal(getMessage({ response: { status: 409, data: { [field]: 'CUSTOM_XRAY_REQUIRED' } } }), locale.requestErrors.features.customCore + ' [CUSTOM_XRAY_REQUIRED]')
+        }
+        assert.equal(getMessage({ response: { status: 409, data: { errorCode: 'A113', message: 'CUSTOM_XRAY_REQUIRED' } } }), locale.requestErrors.codes.A113 + ' [A113]')
+        assert.equal(getMessage({ response: { status: 500, data: { code: 'CUSTOM_XRAY_REQUIRED', message: 'PRIVATE_SQL' } } }), locale.requestErrors.serverError + ' [CUSTOM_XRAY_REQUIRED]')
+    })
+    test(`${language}: unexpected request failures never show raw library or server messages`, () => {
+        const {handle,locale,RequestError}=handler(language)
+        const original = new Error('PRIVATE_SQL_OR_LIBRARY_DIAGNOSTIC')
+        assert.throws(()=>handle(original),error=>error.message===locale.requestErrors.unknown && error.cause===original)
+        const wrapped=new RequestError({response:{status:409,data:{errorCode:'A113'}}})
+        assert.throws(()=>handle(wrapped),error=>error===wrapped)
+        const invalid=new Error('PRIVATE_HTML');invalid.name='ApiResponseError'
+        assert.throws(()=>handle(invalid),error=>error.message===locale.requestErrors.invalidResponse && error.cause===invalid)
     })
     test(`${language}: malformed, HTML and unknown responses stay safe and useful`, () => {
         const { getMessage, locale } = handler(language)
@@ -97,6 +136,39 @@ for (const language of ['en', 'ru', 'fa', 'zh']) {
         assert.equal(getMessage({}), locale.requestErrors.unavailable)
     })
 }
+
+test('actual backend Xray validation reasons are translated on every interface language', () => {
+    const load = require('../../backend/tests/load-typescript.cjs')
+    const { XRayConfig } = load(path.join(__dirname, '../../backend/src/common/helpers/xray-config/xray-config.validator.ts'), {
+        '@common/utils/certs': {}, '@common/utils/flow/get-vless-flow': {}, '@modules/users/entities/users-for-config': {}
+    })
+    const base = () => ({ inbounds: [{ tag: 'EU-1', protocol: 'vless', port: 443 }], outbounds: [{ tag: 'direct', protocol: 'freedom' }] })
+    const cases = [
+        [() => null, 'format'], [() => '{', 'json'], [() => ({inbounds:[]}), 'inbounds'],
+        [() => ({inbounds:[null]}), 'inboundObject'],
+        [() => {const c=base();delete c.inbounds[0].tag;return c}, 'tagRequired'],
+        [() => {const c=base();c.inbounds[0].tag='x,y';return c}, 'tagComma'],
+        [() => {const c=base();c.inbounds.push({...c.inbounds[0]});return c}, 'duplicateTag'],
+        [() => {const c=base();c.inbounds[0].protocol='unsupported';return c}, 'protocol'],
+        [() => {const c=base();c.inbounds[0].streamSettings={network:'unsupported'};return c}, 'network'],
+        [() => {const c=base();c.inbounds[0].streamSettings={network:4};return c}, 'networkString'],
+        [() => {const c=base();c.inbounds[0].streamSettings=[];return c}, 'streamObject'],
+        [() => {const c=base();c.inbounds[0].protocol='shadowsocks';return c}, 'ssSettings'],
+        [() => {const c=base();Object.assign(c.inbounds[0],{protocol:'shadowsocks',settings:{method:'unsupported'}});return c}, 'ssMethod'],
+        [() => {const c=base();Object.assign(c.inbounds[0],{protocol:'shadowsocks',settings:{method:'2022-blake3-aes-128-gcm'}});return c}, 'ssPassword'],
+        [() => {const c=base();Object.assign(c.inbounds[0],{protocol:'shadowsocks',settings:{method:'2022-blake3-aes-128-gcm',password:'x'}});return c}, 'ssKey']
+    ]
+    for (const [config, key] of cases) {
+        let reason
+        try { new XRayConfig(config()) } catch (error) { reason=error.message }
+        assert.equal(typeof reason, 'string', key)
+        for (const lang of ['ru','en','fa','zh']) {
+            const {getMessage,locale}=handler(lang)
+            const expected=locale.requestErrors.validation[key].replace('{{tag}}','EU-1')+' [A061]'
+            assert.equal(getMessage({response:{status:422,data:{errorCode:'A061',message:reason}}}),expected,`${lang}: ${key}`)
+        }
+    }
+})
 
 test('query notifications and mutation errors share descriptions; unauthorized errors remain suppressed', () => {
     const { getMessage, RequestError } = handler('ru')

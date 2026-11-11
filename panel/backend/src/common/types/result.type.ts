@@ -1,6 +1,6 @@
 export type TResult<T> =
     | { isOk: true; response: T }
-    | { isOk: false; code?: string; message?: string };
+    | { isOk: false; code?: string; message?: string; httpCode?: number };
 
 export function fail<E extends { code: string; message: string }>(error: E) {
     return { isOk: false as const, ...error };

@@ -5,9 +5,7 @@ import { ERRORS } from '@libs/contracts/constants/errors';
 import { HttpExceptionWithErrorCodeType } from '../exception/http-exeception-with-error-code.type';
 import { TResult } from '../types/result.type';
 
-const ERROR_BY_CODE = new Map<string, (typeof ERRORS)[keyof typeof ERRORS]>(
-    Object.values(ERRORS).map((error) => [error.code, error]),
-);
+const ERROR_CATALOG = Object.values(ERRORS);
 
 export function errorHandler<T>(response: TResult<T>): T {
     if (response.isOk) {
@@ -16,7 +14,15 @@ export function errorHandler<T>(response: TResult<T>): T {
         if (!response.code) {
             throw new InternalServerErrorException('Unknown error');
         }
-        const errorObject = ERROR_BY_CODE.get(response.code);
+        const candidates = ERROR_CATALOG.filter((error) => error.code === response.code);
+        const errorObject =
+            candidates.find(
+                (error) =>
+                    error.message === response.message &&
+                    (response.httpCode === undefined || error.httpCode === response.httpCode),
+            ) ??
+            candidates.find((error) => error.httpCode === response.httpCode) ??
+            (response.httpCode === undefined ? candidates.at(-1) : undefined);
 
         if (!errorObject) {
             throw new InternalServerErrorException('Unknown error');

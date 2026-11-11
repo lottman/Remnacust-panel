@@ -1,6 +1,4 @@
-import { rethrowXrayModeConflict } from '@common/xray-mode/xray-mode-conflict';
 import { Transactional } from '@nestjs-cls/transactional';
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
 
 import { Injectable, Logger } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
@@ -9,11 +7,13 @@ import { XRayConfig, XrayConfigValidationError } from '@common/helpers/xray-conf
 import { RawCacheService } from '@common/raw-cache';
 import { fail, ok, TResult } from '@common/types';
 import { diffInbounds } from '@common/utils/inbounds';
+import { rethrowXrayModeConflict } from '@common/xray-mode/xray-mode-conflict';
 import { CACHE_KEYS } from '@libs/contracts/constants';
 import { ERRORS } from '@libs/contracts/constants/errors';
 
 import { NodesQueuesService } from '@queue/_nodes';
 
+import { configProfileConflict } from './config-profile-conflict';
 import { ReorderConfigProfilesBodyDto } from './dtos';
 import { ConfigProfileWithInboundsAndNodesEntity } from './entities';
 import { ConfigProfileInboundEntity } from './entities/config-profile-inbound.entity';
@@ -70,12 +70,14 @@ export class ConfigProfileService {
             const profile = await this.configProfileRepository.findByUUID(uuid);
             if (!profile) return fail(ERRORS.CONFIG_PROFILE_NOT_FOUND);
             const revisions = await this.configProfileRepository.getRevisions(uuid);
-            return ok(revisions.map((revision) => ({
-                uuid: revision.uuid,
-                name: revision.name,
-                config: revision.config,
-                createdAt: revision.createdAt.toISOString(),
-            })));
+            return ok(
+                revisions.map((revision) => ({
+                    uuid: revision.uuid,
+                    name: revision.name,
+                    config: revision.config,
+                    createdAt: revision.createdAt.toISOString(),
+                })),
+            );
         } catch (error) {
             this.logger.error(error);
             return fail(ERRORS.GET_CONFIG_PROFILE_BY_UUID_ERROR);
@@ -186,21 +188,9 @@ export class ConfigProfileService {
             if (error instanceof XrayConfigValidationError) {
                 return fail(ERRORS.CONFIG_VALIDATION_ERROR.withMessage(error.message));
             }
-            if (
-                error instanceof PrismaClientKnownRequestError &&
-                error.code === 'P2002' &&
-                (error.meta?.modelName === 'ConfigProfileInbounds' ||
-                    error.meta?.modelName === 'ConfigProfiles') &&
-                Array.isArray(error.meta.target)
-            ) {
-                const fields = error.meta.target as string[];
-                if (fields.includes('tag')) {
-                    return fail(ERRORS.INBOUNDS_WITH_SAME_TAG_ALREADY_EXISTS);
-                }
-                if (fields.includes('name')) {
-                    return fail(ERRORS.CONFIG_PROFILE_NAME_ALREADY_EXISTS);
-                }
-            }
+            const conflict = configProfileConflict(error);
+            if (conflict === 'tag') return fail(ERRORS.INBOUNDS_WITH_SAME_TAG_ALREADY_EXISTS);
+            if (conflict === 'name') return fail(ERRORS.CONFIG_PROFILE_NAME_ALREADY_EXISTS);
             this.logger.error(error);
             return fail(ERRORS.CREATE_CONFIG_PROFILE_ERROR);
         }
@@ -229,7 +219,9 @@ export class ConfigProfileService {
             if (config) {
                 try {
                     await this.rawCache.delMany(
-                        existingConfigProfile.inbounds.map((inbound) => CACHE_KEYS.RAW_INBOUND(inbound.uuid)),
+                        existingConfigProfile.inbounds.map((inbound) =>
+                            CACHE_KEYS.RAW_INBOUND(inbound.uuid),
+                        ),
                     );
                     await this.nodesQueuesService.startAllNodesByProfile({
                         profileUuid: existingConfigProfile.uuid,
@@ -237,9 +229,12 @@ export class ConfigProfileService {
                     });
                     applyStatus = 'queued';
                 } catch (error) {
-            rethrowXrayModeConflict(error);
+                    rethrowXrayModeConflict(error);
                     applyStatus = 'failed';
-                    this.logger.error('Profile saved, but node synchronization could not be queued', error);
+                    this.logger.error(
+                        'Profile saved, but node synchronization could not be queued',
+                        error,
+                    );
                 }
             }
 
@@ -250,21 +245,9 @@ export class ConfigProfileService {
             rethrowXrayModeConflict(error);
             this.logger.error(error);
 
-            if (
-                error instanceof PrismaClientKnownRequestError &&
-                error.code === 'P2002' &&
-                (error.meta?.modelName === 'ConfigProfileInbounds' ||
-                    error.meta?.modelName === 'ConfigProfiles') &&
-                Array.isArray(error.meta.target)
-            ) {
-                const fields = error.meta.target as string[];
-                if (fields.includes('tag')) {
-                    return fail(ERRORS.INBOUNDS_WITH_SAME_TAG_ALREADY_EXISTS);
-                }
-                if (fields.includes('name')) {
-                    return fail(ERRORS.CONFIG_PROFILE_NAME_ALREADY_EXISTS);
-                }
-            }
+            const conflict = configProfileConflict(error);
+            if (conflict === 'tag') return fail(ERRORS.INBOUNDS_WITH_SAME_TAG_ALREADY_EXISTS);
+            if (conflict === 'name') return fail(ERRORS.CONFIG_PROFILE_NAME_ALREADY_EXISTS);
 
             if (error instanceof XrayConfigValidationError) {
                 return fail(ERRORS.CONFIG_VALIDATION_ERROR.withMessage(error.message));

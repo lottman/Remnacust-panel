@@ -169,7 +169,7 @@ export const PasskeysDrawer = NiceModal.create(() => {
                         get title() {
                             return uiText('passkey-registration-error-3f734fb')
                         },
-                        message: error.message || 'Unknown error occurred',
+                        message: t('requestErrors.unknown'),
                         color: 'red'
                     })
                 }

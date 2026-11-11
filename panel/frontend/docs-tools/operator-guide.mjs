@@ -105,6 +105,16 @@ const help = {
     ]
 }
 
+const errorHelp = [
+    'Сообщения ошибок API показываются на языке интерфейса; код в квадратных скобках нужен для диагностики. При A113 измените повторяющийся tag входящего подключения: он должен быть уникальным среди всех профилей. При A114 измените имя профиля. Если тег повторён внутри JSON, редактор укажет этот тег. Общая ошибка сохранения не доказывает конфликт имени: проверьте журнал панели. После ошибки создания сначала обновите список, чтобы не создать запись повторно. У ошибки ноды откройте «Технические подробности», чтобы увидеть или скопировать исходную диагностику; перед отправкой в публичный чат удалите секреты.',
+    'API errors use the interface language; the bracketed code is for diagnostics. For A113, change the duplicate inbound tag: tags must be unique across all profiles. For A114, change the profile name. A tag repeated within the JSON is identified in the editor message. A generic save failure does not prove a name conflict: check the panel log. After a creation error, refresh the list before creating again. For node errors, open “Technical details” to view or copy the original diagnostic; remove secrets before posting it publicly.',
+    'خطاهای API به زبان رابط نمایش داده می‌شوند؛ کد داخل براکت برای عیب‌یابی است. در A113 برچسب تکراری ورودی را تغییر دهید؛ tag باید در همه پروفایل‌ها یکتا باشد. در A114 نام پروفایل را تغییر دهید. برچسب تکراری داخل JSON در پیام ویرایشگر مشخص می‌شود. خطای عمومی ذخیره، تکراری بودن نام را ثابت نمی‌کند؛ گزارش پنل را بررسی کنید. پس از خطای ایجاد، پیش از ایجاد دوباره فهرست را تازه‌سازی کنید. برای خطای نود «جزئیات فنی» را باز کنید تا گزارش اصلی را ببینید یا کپی کنید؛ پیش از انتشار عمومی، اسرار را حذف کنید.',
+    'API 错误使用界面语言显示；方括号内的代码用于诊断。遇到 A113 时请修改重复的入站 tag：所有配置文件中的 tag 必须唯一。遇到 A114 时请修改配置文件名称。JSON 内部重复的标签会在编辑器消息中指出。一般保存失败并不代表名称冲突，请检查面板日志。创建失败后，请先刷新列表再尝试创建，以免重复创建。节点错误可通过“技术详情”查看或复制原始诊断；公开发送前请移除敏感信息。'
+]
+languages.forEach((language, index) => {
+    help['xray-editor-1'][index] += '\n\n' + errorHelp[index]
+})
+
 export function explainOperatorWorkflows(articles) {
     for (const article of articles) {
         for (const section of article.sections) {

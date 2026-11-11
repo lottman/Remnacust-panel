@@ -13,6 +13,7 @@ import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
 import { useBulkUpdateUsers, useGetExternalSquads, useGetUserTags } from '@shared/api/hooks'
 import { useIsMobile } from '@shared/hooks'
 import { BulkManyFormsUsersShared } from '@shared/ui/forms/users/bulk-many-forms-components'
+import { validFreezeDeadline } from '@shared/ui/forms/users/forms-components/freeze-schedule-field'
 import { ModalFooter } from '@shared/ui/modal-footer'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { handleFormErrors } from '@shared/utils/misc'
@@ -44,6 +45,7 @@ const originalFieldsSchema = BulkUpdateUsersCommand.RequestBodySchema.shape.fiel
 
 const fieldsWithoutExpireAt = originalFieldsSchema.omit({
     expireAt: true,
+    frozenUntil: true,
     email: true,
     telegramId: true
 })
@@ -101,12 +103,20 @@ export const BulkManyUsersUpdateModal = NiceModal.create((props: IProps) => {
     })
 
     const handleBulkUpdate = form.onSubmit(async (values) => {
+        if (values.fields.status === 'FROZEN' && !validFreezeDeadline(values.fields.frozenUntil)) {
+            form.setFieldError('fields.frozenUntil', t('frozen-user.until-invalid'))
+            return
+        }
         updateUsers(
             {
                 variables: {
                     userIds: actions.getIds(),
                     fields: {
                         ...values.fields,
+                        frozenUntil:
+                            values.fields.status === 'FROZEN'
+                                ? values.fields.frozenUntil
+                                : undefined,
                         trafficLimitBytes: values.fields.trafficLimitBytes,
                         telegramId:
                             // @ts-expect-error - TODO: fix ZOD schema

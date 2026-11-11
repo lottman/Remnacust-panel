@@ -17,6 +17,10 @@ const { DeviceAccessService } = load(
         ),
         '@libs/contracts/constants': {},
         '@modules/nodes/repositories/nodes.repository': {},
+        '@modules/nodes/events/add-user-to-node/add-user-to-node.handler': {},
+        '@modules/nodes/events/add-user-to-node/add-user-to-node.event': {},
+        '@modules/nodes/events/remove-user-from-node/remove-user-from-node.handler': {},
+        '@modules/nodes/events/remove-user-from-node/remove-user-from-node.event': {},
         '@modules/users/entities/user.entity': {},
         '@modules/users/queries/get-user-by-unique-field': {
             GetUserByUniqueFieldQuery: class {
@@ -193,4 +197,57 @@ test('a failing user queue cannot release the single-flight guard while device j
     assert.equal(service.reconcilePendingDevices(), running);
     release(true);
     await checked;
+});
+
+test('custom policy retries do not resend base grants already delivered to the node queue', async () => {
+    const { service, repo } = fixture([]);
+    let basePending = true,
+        baseCalls = 0,
+        customReady = false;
+    const done = [];
+    repo.claimUserAccessReconciliation = async () => [
+        { userId: 8n, revision: 'status', attempts: 1, basePending },
+    ];
+    repo.finishBaseUserReconciliation = async () => {
+        basePending = false;
+    };
+    repo.finishUserAccessReconciliation = async (...args) => done.push(args);
+    service.queryBus = {
+        execute: async () => ({ isOk: true, response: { id: 8n, status: 'ACTIVE' } }),
+    };
+    service.synchronizeBaseUser = async () => {
+        baseCalls++;
+        return true;
+    };
+    service.synchronizeUserStatus = async () => customReady;
+    await service.reconcilePendingDevices();
+    await service.reconcilePendingDevices();
+    assert.equal(baseCalls, 1);
+    assert.deepEqual(
+        done.map(([, ready]) => ready),
+        [false, false],
+    );
+    customReady = true;
+    await service.reconcilePendingDevices();
+    assert.equal(baseCalls, 1);
+    assert.equal(done[2][1], true);
+});
+
+test('failure to enqueue base access leaves the durable task pending', async () => {
+    const { service, repo } = fixture([]);
+    let acknowledged = 0;
+    const done = [];
+    repo.claimUserAccessReconciliation = async () => [
+        { userId: 8n, revision: 'status', attempts: 1, basePending: true },
+    ];
+    repo.finishBaseUserReconciliation = async () => {
+        acknowledged++;
+    };
+    repo.finishUserAccessReconciliation = async (...args) => done.push(args);
+    service.queryBus = { execute: async () => ({ isOk: true, response: { id: 8n } }) };
+    service.synchronizeBaseUser = async () => false;
+    service.synchronizeUserStatus = async () => true;
+    await service.reconcilePendingDevices();
+    assert.equal(acknowledged, 0);
+    assert.equal(done[0][1], false);
 });

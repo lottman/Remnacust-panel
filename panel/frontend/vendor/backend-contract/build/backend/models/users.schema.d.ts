@@ -20,6 +20,7 @@ export declare const UsersSchema: z.ZodObject<{
     }>;
     expireAt: z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>;
     frozenAt: z.ZodOptional<z.ZodNullable<z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>>>;
+    frozenUntil: z.ZodOptional<z.ZodNullable<z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>>>;
     frozenRemainingMs: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
     telegramId: z.ZodNullable<z.ZodNumber>;
     email: z.ZodNullable<z.ZodEmail>;

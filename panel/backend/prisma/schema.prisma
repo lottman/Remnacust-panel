@@ -88,6 +88,7 @@ model Users {
   trafficLimitStrategy   String    @default("NO_RESET") @map("traffic_limit_strategy")
   expireAt               DateTime  @map("expire_at")
   frozenAt               DateTime? @map("frozen_at")
+  frozenUntil            DateTime? @map("frozen_until")
   lastTrafficResetAt     DateTime? @map("last_traffic_reset_at")
   subRevokedAt           DateTime? @map("sub_revoked_at")
   trojanPassword         String    @map("trojan_password")

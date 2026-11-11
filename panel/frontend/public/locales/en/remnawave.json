@@ -2465,7 +2465,9 @@
             "A003": "Authentication failed. Check your credentials.",
             "A004": "You do not have permission for this action.",
             "A068": "You do not have permission for this action.",
-            "A176": "A template of this type already has that name. Choose another name."
+            "A176": "A template of this type already has that name. Choose another name.",
+            "A263": "To freeze this user, provide a future automatic resume date and time.",
+            "A264": "This freeze deadline has already been saved and cannot be changed. You can schedule a new freeze after activation."
         },
         "statusCodes": {
             "A089_400": "LIMITED and EXPIRED are calculated automatically. Choose another status.",
@@ -4596,7 +4598,12 @@
         "resume": "Resume",
         "remaining": "Remaining: {{duration}}",
         "help": "The lifetime and access are paused. The saved remainder resumes on activation. The date cannot be edited while frozen.",
-        "resumeBlocked": "Access remains unavailable: the subscription expired or its traffic quota is exhausted."
+        "resumeBlocked": "Access remains unavailable: the subscription expired or its traffic quota is exhausted.",
+        "until": "Automatic resume",
+        "until-help": "Choose a date and time. The freeze deadline cannot be edited after saving; the remaining subscription lifetime is preserved.",
+        "until-saved-help": "The subscription resumes automatically at this time. The saved freeze deadline cannot be edited.",
+        "until-placeholder": "Choose when to resume",
+        "until-invalid": "Choose a future resume date and time."
     },
     "subscription-pages": {
         "legacy-title": "Existing subscription page",

@@ -19,6 +19,7 @@ import {
     IRecreateTablesPayload,
     IUnblockIpsPayload,
 } from '../interfaces/executor.payload.interface';
+import { UserAccessDeliveryService } from '../user-access-delivery.service';
 
 @Processor(QUEUES_NAMES.NODES.BULK_USERS, {
     concurrency: 25,
@@ -26,7 +27,10 @@ import {
 export class NodeBulkUsersQueueProcessor extends WorkerHost {
     private readonly logger = new Logger(NodeBulkUsersQueueProcessor.name);
 
-    constructor(private readonly axios: AxiosService) {
+    constructor(
+        private readonly axios: AxiosService,
+        private readonly delivery: UserAccessDeliveryService,
+    ) {
         super();
     }
 
@@ -54,43 +58,49 @@ export class NodeBulkUsersQueueProcessor extends WorkerHost {
     }
 
     private async handleAddUsersToNode(job: Job<IAddUsersToNodePayload>) {
-        try {
-            const { data, node } = job.data;
-            const result = await this.axios.addUsers(data, node);
-
-            if (!result.isOk) {
-                this.logger.error(
-                    `Failed to add users to Node ${node.address}:${node.port}: ${result.message}`,
-                );
-            }
-
-            return result;
-        } catch (error) {
-            this.logger.error(
-                `Error handling "${NODES_JOB_NAMES.ADD_USERS_TO_NODE}" job: ${error}`,
-            );
-            return;
-        }
+        const { data, node } = job.data;
+        return this.delivery.deliver(
+            node,
+            data.users.map((user) => ({
+                username: user.userData.userId,
+                hashUuid: user.userData.hashUuid,
+                tags: user.inboundData.map((inbound) => inbound.tag),
+            })),
+            true,
+            (accepted) =>
+                this.axios.addUsers(
+                    {
+                        ...data,
+                        users: data.users.filter((user) => accepted.has(user.userData.userId)),
+                        affectedInboundTags: [
+                            ...new Set(
+                                data.users
+                                    .filter((user) => accepted.has(user.userData.userId))
+                                    .flatMap((user) =>
+                                        user.inboundData.map((inbound) => inbound.tag),
+                                    ),
+                            ),
+                        ],
+                    },
+                    node,
+                ),
+            (job.attemptsMade ?? 0) + 1 >= (job.opts?.attempts ?? 1),
+        );
     }
 
     private async handleRemoveUsersFromNode(job: Job<IRemoveUsersFromNodePayload>) {
-        try {
-            const { data, node } = job.data;
-            const result = await this.axios.deleteUsers(data, node);
-
-            if (!result.isOk) {
-                this.logger.error(
-                    `Failed to remove users from Node ${node.address}:${node.port}: ${result.message}`,
-                );
-            }
-
-            return result;
-        } catch (error) {
-            this.logger.error(
-                `Error handling "${NODES_JOB_NAMES.REMOVE_USERS_FROM_NODE}" job: ${error}`,
-            );
-            return;
-        }
+        const { data, node } = job.data;
+        return this.delivery.deliver(
+            node,
+            data.users.map((user) => ({ username: user.userId, hashUuid: user.hashUuid })),
+            false,
+            (accepted) =>
+                this.axios.deleteUsers(
+                    { ...data, users: data.users.filter((user) => accepted.has(user.userId)) },
+                    node,
+                ),
+            (job.attemptsMade ?? 0) + 1 >= (job.opts?.attempts ?? 1),
+        );
     }
 
     private async handleDropUsersConnections(job: Job<IDropUsersConnectionsPayload>) {

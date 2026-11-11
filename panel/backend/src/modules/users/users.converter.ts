@@ -22,6 +22,7 @@ const entityToModel = (entity: BaseUserEntity): Users => {
 
         expireAt: entity.expireAt,
         frozenAt: entity.frozenAt,
+        frozenUntil: entity.frozenUntil,
         subRevokedAt: entity.subRevokedAt,
 
         trojanPassword: entity.trojanPassword,

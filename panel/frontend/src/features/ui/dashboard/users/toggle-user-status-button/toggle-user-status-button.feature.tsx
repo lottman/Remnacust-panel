@@ -5,16 +5,11 @@ import { PiCellSignalFullDuotone, PiCellSignalSlashDuotone, PiTrashDuotone } fro
 import { TbSnowflake } from 'react-icons/tb'
 
 import { queryClient } from '@shared/api'
-import {
-    useDisableUser,
-    useEnableUser,
-    useUpdateUser,
-    usersQueryKeys,
-    systemQueryKeys
-} from '@shared/api/hooks'
+import { useDisableUser, useEnableUser, usersQueryKeys, systemQueryKeys } from '@shared/api/hooks'
 
 interface IProps {
     user: GetUserByIdCommand.Response['response']
+    onFreeze: () => void
 }
 
 export function ToggleUserStatusButtonFeature(props: IProps) {
@@ -28,9 +23,6 @@ export function ToggleUserStatusButtonFeature(props: IProps) {
         void queryClient.invalidateQueries({ queryKey: systemQueryKeys.getSystemStats.queryKey })
     }
     const canResume = user.status === USERS_STATUS.DISABLED || user.status === USERS_STATUS.FROZEN
-    const { mutate: freezeUser, isPending: isFreezePending } = useUpdateUser({
-        mutationFns: { onSuccess: sync }
-    })
 
     const { mutate: disableUser, isPending: isDisableUserPending } = useDisableUser({
         mutationFns: {
@@ -74,11 +66,9 @@ export function ToggleUserStatusButtonFeature(props: IProps) {
             {user.status !== USERS_STATUS.FROZEN && (
                 <Menu.Item
                     color="blue"
-                    disabled={isFreezePending || isDisableUserPending || isEnableUserPending}
-                    leftSection={
-                        isFreezePending ? <Loader size="1rem" /> : <TbSnowflake size={16} />
-                    }
-                    onClick={() => freezeUser({ variables: { id, status: USERS_STATUS.FROZEN } })}
+                    disabled={isDisableUserPending || isEnableUserPending}
+                    leftSection={<TbSnowflake size={16} />}
+                    onClick={props.onFreeze}
                 >
                     {t('frozen-user.freeze')}
                 </Menu.Item>

@@ -17,6 +17,8 @@ function children(value) {
     if (Array.isArray(value)) return value.flatMap(children)
     return value?.props ? [value, ...children(value.props.children)] : []
 }
+const freezeSchedule = load('shared/ui/forms/users/forms-components/freeze-schedule-field.tsx', {})
+
 function setup() {
     let values, submit, payload
     const form = {
@@ -36,6 +38,7 @@ function setup() {
         '@shared/api/hooks': { useCreateUser: () => ({ mutate: request => { payload = request.variables } }), useGetExternalSquads: () => ({}), useGetInternalSquads: () => ({}), useGetUserTags: () => ({}) },
         '@shared/hooks': { useIsMobile: () => false },
         '@shared/ui/forms/users/forms-components': new Proxy({}, { get: (_, name) => String(name) }),
+        '@shared/ui/forms/users/forms-components/freeze-schedule-field': freezeSchedule,
         '@shared/ui/forms/users/user-form-layout': { UserFormLayout: 'layout' },
         '@shared/ui/loader-modal': { LoaderModalShared: 'loader' },
         '@shared/ui/modal-footer': { ModalFooter: 'footer' },

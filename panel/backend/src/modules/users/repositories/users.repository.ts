@@ -41,7 +41,7 @@ import { userSubscriptionDomainSelection } from './user-subscription-domain-quer
 const USERS_FILTER_COLUMN_MAP = {
     id: sql.ref('users.id'),
     createdAt: sql.ref('users.created_at'),
-    expireAt: sql`CASE WHEN users.status = 'FROZEN' THEN (statement_timestamp() AT TIME ZONE 'UTC') + greatest(users.expire_at - users.frozen_at, interval '0 seconds') ELSE users.expire_at END`,
+    expireAt: sql`CASE WHEN users.status = 'FROZEN' THEN coalesce(users.frozen_until,statement_timestamp() AT TIME ZONE 'UTC') + greatest(users.expire_at - users.frozen_at, interval '0 seconds') ELSE users.expire_at END`,
     lastTrafficResetAt: sql.ref('users.last_traffic_reset_at'),
     subRevokedAt: sql.ref('users.sub_revoked_at'),
     telegramId: sql.ref('users.telegram_id'),
@@ -509,6 +509,16 @@ export class UsersRepository {
         }
 
         return await this.findUniqueByCriteria({ id }, { activeInternalSquads: true });
+    }
+
+    public async resumeScheduledFrozenUsers(): Promise<number> {
+        const result = await sql`WITH due AS (
+            SELECT id FROM users WHERE status='FROZEN' AND frozen_until <= (statement_timestamp() AT TIME ZONE 'UTC')
+            ORDER BY frozen_until,id LIMIT 100 FOR UPDATE SKIP LOCKED
+        ) UPDATE users SET status='ACTIVE' FROM due WHERE users.id=due.id RETURNING users.id`.execute(
+            this.qb.kysely,
+        );
+        return result.rows.length;
     }
 
     public async updateUserStatus(id: bigint, status: TUsersStatus): Promise<boolean> {

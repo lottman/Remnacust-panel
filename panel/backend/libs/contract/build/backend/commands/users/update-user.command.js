@@ -14,7 +14,15 @@ var UpdateUserCommand;
         .object({
         username: zod_1.z.optional(zod_1.z.string().describe('Username of the user')),
         id: zod_1.z.optional(zod_1.z.number().describe('ID of the user')),
-        status: zod_1.z.enum([constants_1.USERS_STATUS.ACTIVE, constants_1.USERS_STATUS.DISABLED, constants_1.USERS_STATUS.FROZEN]).optional(),
+        status: zod_1.z
+            .enum([constants_1.USERS_STATUS.ACTIVE, constants_1.USERS_STATUS.DISABLED, constants_1.USERS_STATUS.FROZEN])
+            .optional(),
+        frozenUntil: zod_1.z.iso
+            .datetime({ offset: true })
+            .transform((value) => new Date(value))
+            .nullable()
+            .optional()
+            .describe('Automatic resume deadline in ISO 8601 with a UTC offset. Required when entering FROZEN; immutable after being set until activation.'),
         trafficLimitBytes: zod_1.z
             .number()
             .min(0)
@@ -42,7 +50,11 @@ var UpdateUserCommand;
         email: zod_1.z.email().nullish(),
         hwidDeviceLimit: zod_1.z.int().min(0).nullish(),
         activeInternalSquads: zod_1.z.array(zod_1.z.uuid()).optional(),
-        subscriptionDomainUuid: zod_1.z.uuid().nullable().optional().describe('Registered subscription domain UUID. Null uses the default domain.'),
+        subscriptionDomainUuid: zod_1.z
+            .uuid()
+            .nullable()
+            .optional()
+            .describe('Registered subscription domain UUID. Null uses the default domain.'),
         externalSquadUuid: zod_1.z
             .optional(zod_1.z.nullable(zod_1.z.uuid()))
             .describe('Optional. External squad UUID.'),

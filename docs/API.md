@@ -330,3 +330,13 @@ The exemption persists until revoked and only affects the selected scope. It doe
 | PUT | `/api/metadata/node/{uuid}` | Update or create Node Metadata | api-token | `metadata:upsert-node` | `metadata` |
 
 Запись подключений и выгрузка пользователей с подписками: [руководство](SESSIONS-RECORDING.md).
+
+## Scheduled freezing / Заморозка по расписанию
+
+`PATCH /api/users` uses the existing user-update permission. New freezes require `status: "FROZEN"` and `frozenUntil`, an ISO 8601 date and time with an explicit UTC offset, for example `2030-01-01T12:00:00Z`. The same field is available when creating users and in both bulk-update formats. User responses expose `frozenUntil` as a nullable date. API-token scopes have not been widened: callers still need the corresponding operation grants and read permissions for protected mutation responses.
+
+A saved deadline cannot be changed during the same freeze. Activation clears it; another freeze can then receive a new deadline. Bulk freezing retains the existing deadline of users who are already frozen. Missing or non-future deadlines for a new freeze return A263; attempting to change a saved deadline returns A264. Both errors have operator descriptions in all four interface languages.
+
+The scheduler checks due freezes every five seconds while running. After downtime it catches up, calculating expiry from the scheduled resume time plus the saved lifetime, without gifting the downtime. Zero lifetime resumes as EXPIRED; exhausted quota resumes as LIMITED. Existing frozen rows without a deadline remain frozen until an administrator assigns a future deadline once. They are not silently activated during migration.
+
+Новая заморозка требует `frozenUntil` с датой, временем и часовым поясом. Сохранённый срок нельзя изменить; после активации можно создать новую заморозку. При массовой заморозке уже назначенные сроки сохраняются. A263 означает, что нужен срок в будущем; A264 — что срок уже сохранён и недоступен для изменения. Старые заморозки без срока не активируются самовольно: администратор может назначить дату один раз. Для доставки нового состояния нодам нужна работающая панель и доступное управляющее соединение.

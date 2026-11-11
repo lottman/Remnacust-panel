@@ -20,6 +20,10 @@ import { settleConcurrent } from '@common/utils/settle-concurrent';
 import { USERS_STATUS } from '@libs/contracts/constants';
 import { THwidSettings } from '@libs/contracts/models';
 
+import { AddUserToNodeEvent } from '@modules/nodes/events/add-user-to-node/add-user-to-node.event';
+import { AddUserToNodeHandler } from '@modules/nodes/events/add-user-to-node/add-user-to-node.handler';
+import { RemoveUserFromNodeEvent } from '@modules/nodes/events/remove-user-from-node/remove-user-from-node.event';
+import { RemoveUserFromNodeHandler } from '@modules/nodes/events/remove-user-from-node/remove-user-from-node.handler';
 import { NodesRepository } from '@modules/nodes/repositories/nodes.repository';
 import { UserEntity } from '@modules/users/entities/user.entity';
 import { GetUserByUniqueFieldQuery } from '@modules/users/queries/get-user-by-unique-field';
@@ -42,6 +46,8 @@ export class DeviceAccessService {
         private readonly axios: AxiosService,
         private readonly hostAccess: HostAccessService,
         private readonly queryBus: QueryBus,
+        private readonly addBaseUser: AddUserToNodeHandler,
+        private readonly removeBaseUser: RemoveUserFromNodeHandler,
     ) {
         this.secret = config.getOrThrow('APP_SECRET');
     }
@@ -115,12 +121,36 @@ export class DeviceAccessService {
                         { activeInternalSquads: true },
                     ),
                 );
-                success = result.isOk && (await this.synchronizeUserStatus(result.response));
+                if (result.isOk) {
+                    const baseSynced =
+                        !task.basePending || (await this.synchronizeBaseUser(result.response));
+                    if (task.basePending && baseSynced)
+                        await this.devices.finishBaseUserReconciliation(task);
+                    const customSynced = await this.synchronizeUserStatus(result.response);
+                    success = baseSynced && customSynced;
+                }
             } catch {
                 this.logger.warn(`User access reconciliation pending for user ${task.userId}`);
             }
             await this.devices.finishUserAccessReconciliation(task, success);
         });
+    }
+
+    private async synchronizeBaseUser(user: UserEntity): Promise<boolean> {
+        const resolved = await this.queryBus.execute(new GetUserWithResolvedInboundsQuery(user.id));
+        if (!resolved.isOk) return false;
+        const sent =
+            resolved.response.inbounds.length > 0
+                ? await this.addBaseUser.handle(
+                      new AddUserToNodeEvent(user.id),
+                      resolved.response,
+                      true,
+                  )
+                : await this.removeBaseUser.handle(
+                      new RemoveUserFromNodeEvent(user.id, resolved.response.vlessUuid),
+                      true,
+                  );
+        return sent === true;
     }
 
     private async processPendingDevices(): Promise<void> {

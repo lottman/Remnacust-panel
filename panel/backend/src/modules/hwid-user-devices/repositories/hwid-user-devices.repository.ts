@@ -194,19 +194,32 @@ export class HwidUserDevicesRepository implements Omit<
     }
 
     public async claimUserAccessReconciliation(): Promise<
-        Array<{ userId: bigint; revision: string; attempts: number }>
+        Array<{ userId: bigint; revision: string; attempts: number; basePending: boolean }>
     > {
         const result = await sql<{
             userId: bigint;
             revision: string;
             attempts: number;
+            basePending: boolean;
         }>`WITH due AS (
             SELECT user_id FROM xera_user_access_reconciliation WHERE next_attempt_at<=now()
             ORDER BY next_attempt_at,user_id LIMIT 8 FOR UPDATE SKIP LOCKED
         ) UPDATE xera_user_access_reconciliation q SET attempts=q.attempts+1,next_attempt_at=now()+interval '10 minutes'
           FROM due WHERE q.user_id=due.user_id
-          RETURNING q.user_id AS "userId",q.revision::text,q.attempts`.execute(this.qb.kysely);
+          RETURNING q.user_id AS "userId",q.revision::text,q.attempts,q.base_pending AS "basePending"`.execute(
+            this.qb.kysely,
+        );
         return result.rows;
+    }
+
+    public async finishBaseUserReconciliation(task: {
+        userId: bigint;
+        revision: string;
+    }): Promise<void> {
+        await sql`UPDATE xera_user_access_reconciliation SET base_pending=false
+            WHERE user_id=${task.userId} AND revision=${task.revision}::uuid`.execute(
+            this.qb.kysely,
+        );
     }
 
     public async finishUserAccessReconciliation(

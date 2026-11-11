@@ -6,8 +6,8 @@ import { QUEUES_NAMES } from '@queue/queue.enum';
 import { createDomainQueueModule } from '@queue/queue.factory';
 
 import { NodeConfigurationService } from './node-configuration.service';
-import { PortPlanLeaseService } from './port-plan-lease.service';
 import { NodesQueuesService } from './nodes-queues.service';
+import { PortPlanLeaseService } from './port-plan-lease.service';
 import {
     NodeHealthCheckQueueProcessor,
     NodeBulkUsersQueueProcessor,
@@ -21,6 +21,7 @@ import {
     QueryNodesQueueProcessor,
     NodePluginsProcessor,
 } from './processors';
+import { UserAccessDeliveryService } from './user-access-delivery.service';
 
 const queues = [
     { name: QUEUES_NAMES.NODES.START, processor: StartNodeProcessor },
@@ -43,5 +44,10 @@ export const NodesQueuesModule = createDomainQueueModule({
     queues,
     service: NodesQueuesService,
     imports: [CqrsModule],
-    extraProviders: [NodeHealthLogService, NodeConfigurationService, PortPlanLeaseService],
+    extraProviders: [
+        NodeHealthLogService,
+        NodeConfigurationService,
+        PortPlanLeaseService,
+        UserAccessDeliveryService,
+    ],
 });

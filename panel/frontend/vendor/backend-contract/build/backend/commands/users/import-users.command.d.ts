@@ -1,8 +1,8 @@
 import { z } from 'zod';
 export declare namespace ImportUsersCommand {
-    const url: "/api/users/import";
-    const TSQ_url: "/api/users/import";
-    const endpointDetails: import("../../constants").EndpointDetails;
+    const url: '/api/users/import';
+    const TSQ_url: '/api/users/import';
+    const endpointDetails: import('../../constants').EndpointDetails;
     const RequestBodySchema: z.ZodObject<{
         users: z.ZodArray<z.ZodObject<{
             username: z.ZodString;
@@ -10,6 +10,7 @@ export declare namespace ImportUsersCommand {
             trojanPassword: z.ZodOptional<z.ZodString>;
             vlessUuid: z.ZodOptional<z.ZodGUID>;
             ssPassword: z.ZodOptional<z.ZodString>;
+            frozenUntil: z.ZodOptional<z.ZodNullable<z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>>>;
             lastTrafficResetAt: z.ZodOptional<z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>>;
             subscriptionDomainUuid: z.ZodOptional<z.ZodNullable<z.ZodUUID>>;
             externalSquadUuid: z.ZodOptional<z.ZodNullable<z.ZodUUID>>;

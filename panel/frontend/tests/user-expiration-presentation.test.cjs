@@ -43,8 +43,12 @@ for (const language of ['ru', 'en', 'fa', 'zh']) {
     });
     test(`${language}: a frozen expiry keeps the date field disabled and blue`, () => {
         const Container = ({ children }) => React.createElement('div', null, children);
+        const freezeSchedule = loadComponent(path.join(__dirname, '../src/shared/ui/forms/users/forms-components/freeze-schedule-field.tsx'), {
+            'react-i18next': { useTranslation: () => ({ t, i18n: { language } }) }
+        });
         const { AccessSettingsCard } = loadComponent(path.join(__dirname, '../src/shared/ui/forms/users/forms-components/access-settings-card.tsx'), {
             './user-expiration': load(path.join(__dirname, '../src/shared/ui/forms/users/forms-components/user-expiration.ts')),
+            './freeze-schedule-field': freezeSchedule,
             '@widgets/dashboard/users/internal-squads-list': { InternalSquadsListWidget: () => null },
             '@shared/api/axios': { instance: { get() { throw Error('render must not request domains'); } } },
             '@shared/i18n/interface-text': { useUiText: () => key => key },
@@ -54,7 +58,7 @@ for (const language of ['ru', 'en', 'fa', 'zh']) {
             'react-i18next': { useTranslation: () => ({ t, i18n: { language } }) }
         });
         const expiry = new Date('2026-12-12T12:34:00Z');
-        const form = { values: { expireAt: expiry, status: 'FROZEN' }, watch() {}, getInputProps: () => ({}), key: value => value };
+        const form = { values: { expireAt: expiry, status: 'FROZEN' }, errors: {}, getValues: () => form.values, watch() {}, getInputProps: () => ({}), key: value => value };
         const html = renderToStaticMarkup(React.createElement(MantineProvider, null,
             React.createElement(AccessSettingsCard, { cardVariants: {}, motionWrapper: Container, form, isFrozen: true, frozenRemainingMs: 31 * day })));
         assert.match(html, /disabled/);

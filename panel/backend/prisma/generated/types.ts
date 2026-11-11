@@ -416,6 +416,7 @@ export type Users = {
     trafficLimitStrategy: Generated<'NO_RESET' | 'DAY' | 'WEEK' | 'MONTH' | 'MONTH_ROLLING'>;
     expireAt: Timestamp;
     frozenAt: Timestamp | null;
+    frozenUntil: Timestamp | null;
     lastTrafficResetAt: Timestamp | null;
     subRevokedAt: Timestamp | null;
     trojanPassword: string;

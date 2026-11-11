@@ -2,7 +2,7 @@ import { z } from 'zod';
 export declare namespace GetUserByShortUuidCommand {
     const url: (shortUuid: string) => string;
     const TSQ_url: string;
-    const endpointDetails: import("../../../constants").EndpointDetails;
+    const endpointDetails: import('../../../constants').EndpointDetails;
     const RequestParamSchema: z.ZodObject<{
         shortUuid: z.ZodString;
     }, z.core.$strip>;
@@ -28,6 +28,7 @@ export declare namespace GetUserByShortUuidCommand {
             }>;
             expireAt: z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>;
             frozenAt: z.ZodOptional<z.ZodNullable<z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>>>;
+            frozenUntil: z.ZodOptional<z.ZodNullable<z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>>>;
             frozenRemainingMs: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
             telegramId: z.ZodNullable<z.ZodNumber>;
             email: z.ZodNullable<z.ZodEmail>;
@@ -51,8 +52,8 @@ export declare namespace GetUserByShortUuidCommand {
                 domain: z.ZodString;
                 path: z.ZodString;
                 kind: z.ZodEnum<{
-                    CDN: "CDN";
-                    PRIMARY: "PRIMARY";
+                    PRIMARY: 'PRIMARY';
+                    CDN: 'CDN';
                 }>;
                 parentUuid: z.ZodNullable<z.ZodUUID>;
                 isDefault: z.ZodBoolean;

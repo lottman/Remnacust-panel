@@ -2,7 +2,7 @@ import { z } from 'zod';
 export declare namespace GetRawSubscriptionByShortUuidCommand {
     const url: (shortUuid: string) => string;
     const TSQ_url: string;
-    const endpointDetails: import("../../../constants").EndpointDetails;
+    const endpointDetails: import('../../../constants').EndpointDetails;
     const RequestParamSchema: z.ZodObject<{
         shortUuid: z.ZodString;
     }, z.core.$strip>;
@@ -32,6 +32,7 @@ export declare namespace GetRawSubscriptionByShortUuidCommand {
                 }>;
                 expireAt: z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>;
                 frozenAt: z.ZodOptional<z.ZodNullable<z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>>>;
+                frozenUntil: z.ZodOptional<z.ZodNullable<z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>>>;
                 frozenRemainingMs: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
                 telegramId: z.ZodNullable<z.ZodNumber>;
                 email: z.ZodNullable<z.ZodEmail>;
@@ -54,8 +55,8 @@ export declare namespace GetRawSubscriptionByShortUuidCommand {
                     domain: z.ZodString;
                     path: z.ZodString;
                     kind: z.ZodEnum<{
-                        CDN: "CDN";
-                        PRIMARY: "PRIMARY";
+                        PRIMARY: 'PRIMARY';
+                        CDN: 'CDN';
                     }>;
                     parentUuid: z.ZodNullable<z.ZodUUID>;
                     isDefault: z.ZodBoolean;
@@ -71,7 +72,7 @@ export declare namespace GetRawSubscriptionByShortUuidCommand {
                     firstConnectedAt: z.ZodNullable<z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>>;
                     lastConnectedNodeUuid: z.ZodNullable<z.ZodUUID>;
                 }, z.core.$strip>;
-                vlessUuid: z.ZodUnion<[z.ZodGUID, z.ZodLiteral<"">]>;
+                vlessUuid: z.ZodUnion<[z.ZodGUID, z.ZodLiteral<''>]>;
             }, z.core.$strip>;
             convertedUserInfo: z.ZodObject<{
                 daysLeft: z.ZodNumber;
@@ -109,53 +110,53 @@ export declare namespace GetRawSubscriptionByShortUuidCommand {
                     xrayJsonTemplate: z.ZodNullable<z.ZodUnknown>;
                     mapper: z.ZodObject<{
                         xrayJson: z.ZodOptional<z.ZodArray<z.ZodDiscriminatedUnion<[z.ZodObject<{
-                            op: z.ZodLiteral<"copy">;
+                            op: z.ZodLiteral<'copy'>;
                             from: z.ZodString;
                             to: z.ZodString;
                         }, z.core.$strip>, z.ZodObject<{
-                            op: z.ZodLiteral<"set">;
+                            op: z.ZodLiteral<'set'>;
                             value: z.ZodUnion<readonly [z.ZodString, z.ZodNumber, z.ZodBoolean, z.ZodArray<z.ZodJSONSchema>, z.ZodRecord<z.ZodString, z.ZodJSONSchema>]>;
                             to: z.ZodString;
                         }, z.core.$strip>, z.ZodObject<{
-                            op: z.ZodLiteral<"unset">;
+                            op: z.ZodLiteral<'unset'>;
                             to: z.ZodString;
-                        }, z.core.$strip>], "op">>>;
+                        }, z.core.$strip>], 'op'>>>;
                         mihomo: z.ZodOptional<z.ZodArray<z.ZodDiscriminatedUnion<[z.ZodObject<{
-                            op: z.ZodLiteral<"copy">;
+                            op: z.ZodLiteral<'copy'>;
                             from: z.ZodString;
                             to: z.ZodString;
                         }, z.core.$strip>, z.ZodObject<{
-                            op: z.ZodLiteral<"set">;
+                            op: z.ZodLiteral<'set'>;
                             value: z.ZodUnion<readonly [z.ZodString, z.ZodNumber, z.ZodBoolean, z.ZodArray<z.ZodJSONSchema>, z.ZodRecord<z.ZodString, z.ZodJSONSchema>]>;
                             to: z.ZodString;
                         }, z.core.$strip>, z.ZodObject<{
-                            op: z.ZodLiteral<"unset">;
+                            op: z.ZodLiteral<'unset'>;
                             to: z.ZodString;
-                        }, z.core.$strip>], "op">>>;
+                        }, z.core.$strip>], 'op'>>>;
                         base64: z.ZodOptional<z.ZodArray<z.ZodDiscriminatedUnion<[z.ZodObject<{
-                            op: z.ZodLiteral<"copy">;
+                            op: z.ZodLiteral<'copy'>;
                             from: z.ZodString;
                             to: z.ZodString;
                         }, z.core.$strip>, z.ZodObject<{
-                            op: z.ZodLiteral<"set">;
+                            op: z.ZodLiteral<'set'>;
                             value: z.ZodUnion<readonly [z.ZodString, z.ZodNumber, z.ZodBoolean, z.ZodArray<z.ZodJSONSchema>, z.ZodRecord<z.ZodString, z.ZodJSONSchema>]>;
                             to: z.ZodString;
                         }, z.core.$strip>, z.ZodObject<{
-                            op: z.ZodLiteral<"unset">;
+                            op: z.ZodLiteral<'unset'>;
                             to: z.ZodString;
-                        }, z.core.$strip>], "op">>>;
+                        }, z.core.$strip>], 'op'>>>;
                         singbox: z.ZodOptional<z.ZodArray<z.ZodDiscriminatedUnion<[z.ZodObject<{
-                            op: z.ZodLiteral<"copy">;
+                            op: z.ZodLiteral<'copy'>;
                             from: z.ZodString;
                             to: z.ZodString;
                         }, z.core.$strip>, z.ZodObject<{
-                            op: z.ZodLiteral<"set">;
+                            op: z.ZodLiteral<'set'>;
                             value: z.ZodUnion<readonly [z.ZodString, z.ZodNumber, z.ZodBoolean, z.ZodArray<z.ZodJSONSchema>, z.ZodRecord<z.ZodString, z.ZodJSONSchema>]>;
                             to: z.ZodString;
                         }, z.core.$strip>, z.ZodObject<{
-                            op: z.ZodLiteral<"unset">;
+                            op: z.ZodLiteral<'unset'>;
                             to: z.ZodString;
-                        }, z.core.$strip>], "op">>>;
+                        }, z.core.$strip>], 'op'>>>;
                     }, z.core.$strip>;
                 }, z.core.$strip>;
                 metadata: z.ZodObject<{
@@ -180,30 +181,30 @@ export declare namespace GetRawSubscriptionByShortUuidCommand {
                     rawInbound: z.ZodNullable<z.ZodUnknown>;
                 }, z.core.$strip>;
             }, z.core.$strip>, z.ZodDiscriminatedUnion<[z.ZodObject<{
-                protocol: z.ZodLiteral<"vless">;
+                protocol: z.ZodLiteral<'vless'>;
                 protocolOptions: z.ZodObject<{
                     encryption: z.ZodString;
                     id: z.ZodString;
                     flow: z.ZodEnum<{
-                        "": "";
-                        "xtls-rprx-vision": "xtls-rprx-vision";
-                        "xtls-rprx-vision-udp443": "xtls-rprx-vision-udp443";
+                        '': '';
+                        'xtls-rprx-vision': 'xtls-rprx-vision';
+                        'xtls-rprx-vision-udp443': 'xtls-rprx-vision-udp443';
                     }>;
                 }, z.core.$strip>;
             }, z.core.$strip>, z.ZodObject<{
-                protocol: z.ZodLiteral<"masque">;
+                protocol: z.ZodLiteral<'masque'>;
                 protocolOptions: z.ZodObject<{
                     username: z.ZodString;
                     password: z.ZodString;
                     remoteDNS: z.ZodArray<z.ZodString>;
                 }, z.core.$strip>;
             }, z.core.$strip>, z.ZodObject<{
-                protocol: z.ZodLiteral<"trojan">;
+                protocol: z.ZodLiteral<'trojan'>;
                 protocolOptions: z.ZodObject<{
                     password: z.ZodString;
                 }, z.core.$strip>;
             }, z.core.$strip>, z.ZodObject<{
-                protocol: z.ZodLiteral<"shadowsocks">;
+                protocol: z.ZodLiteral<'shadowsocks'>;
                 protocolOptions: z.ZodObject<{
                     method: z.ZodString;
                     password: z.ZodString;
@@ -211,17 +212,17 @@ export declare namespace GetRawSubscriptionByShortUuidCommand {
                     uotVersion: z.ZodInt;
                 }, z.core.$strip>;
             }, z.core.$strip>, z.ZodObject<{
-                protocol: z.ZodLiteral<"hysteria">;
+                protocol: z.ZodLiteral<'hysteria'>;
                 protocolOptions: z.ZodObject<{
                     version: z.ZodInt;
                 }, z.core.$strip>;
-            }, z.core.$strip>], "protocol">>, z.ZodDiscriminatedUnion<[z.ZodObject<{
-                transport: z.ZodLiteral<"tcp">;
+            }, z.core.$strip>], 'protocol'>>, z.ZodDiscriminatedUnion<[z.ZodObject<{
+                transport: z.ZodLiteral<'tcp'>;
                 transportOptions: z.ZodObject<{
                     header: z.ZodNullable<z.ZodDiscriminatedUnion<[z.ZodObject<{
-                        type: z.ZodLiteral<"none">;
+                        type: z.ZodLiteral<'none'>;
                     }, z.core.$strip>, z.ZodObject<{
-                        type: z.ZodLiteral<"http">;
+                        type: z.ZodLiteral<'http'>;
                         request: z.ZodOptional<z.ZodObject<{
                             version: z.ZodOptional<z.ZodString>;
                             method: z.ZodOptional<z.ZodString>;
@@ -234,33 +235,33 @@ export declare namespace GetRawSubscriptionByShortUuidCommand {
                             reason: z.ZodOptional<z.ZodString>;
                             headers: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodUnknown>>;
                         }, z.core.$strip>>;
-                    }, z.core.$strip>], "type">>;
+                    }, z.core.$strip>], 'type'>>;
                 }, z.core.$strip>;
             }, z.core.$strip>, ...z.ZodObject<{
-                transport: z.ZodLiteral<"masque" | "xdrive">;
+                transport: z.ZodLiteral<'masque' | 'xdrive'>;
                 transportOptions: z.ZodObject<{
                     settings: z.ZodRecord<z.ZodString, z.ZodUnknown>;
                 }, z.core.$strip>;
             }, z.core.$strip>[], z.ZodObject<{
-                transport: z.ZodLiteral<"xhttp">;
+                transport: z.ZodLiteral<'xhttp'>;
                 transportOptions: z.ZodObject<{
                     path: z.ZodNullable<z.ZodString>;
                     host: z.ZodNullable<z.ZodString>;
                     mode: z.ZodEnum<{
-                        auto: "auto";
-                        "packet-up": "packet-up";
-                        "stream-one": "stream-one";
-                        "stream-up": "stream-up";
+                        auto: 'auto';
+                        'packet-up': 'packet-up';
+                        'stream-up': 'stream-up';
+                        'stream-one': 'stream-one';
                     }>;
                     extra: z.ZodNullable<z.ZodRecord<z.ZodString, z.ZodUnknown>>;
                 }, z.core.$strip>;
             }, z.core.$strip>, z.ZodObject<{
-                transport: z.ZodLiteral<"xera-http">;
+                transport: z.ZodLiteral<'xera-http'>;
                 transportOptions: z.ZodObject<{
                     settings: z.ZodRecord<z.ZodString, z.ZodUnknown>;
                 }, z.core.$strip>;
             }, z.core.$strip>, z.ZodObject<{
-                transport: z.ZodLiteral<"ws">;
+                transport: z.ZodLiteral<'ws'>;
                 transportOptions: z.ZodObject<{
                     path: z.ZodNullable<z.ZodString>;
                     host: z.ZodNullable<z.ZodString>;
@@ -268,34 +269,34 @@ export declare namespace GetRawSubscriptionByShortUuidCommand {
                     heartbeatPeriod: z.ZodNullable<z.ZodNumber>;
                 }, z.core.$strip>;
             }, z.core.$strip>, z.ZodObject<{
-                transport: z.ZodLiteral<"httpupgrade">;
+                transport: z.ZodLiteral<'httpupgrade'>;
                 transportOptions: z.ZodObject<{
                     path: z.ZodNullable<z.ZodString>;
                     host: z.ZodNullable<z.ZodString>;
                     headers: z.ZodNullable<z.ZodRecord<z.ZodString, z.ZodString>>;
                 }, z.core.$strip>;
             }, z.core.$strip>, z.ZodObject<{
-                transport: z.ZodLiteral<"grpc">;
+                transport: z.ZodLiteral<'grpc'>;
                 transportOptions: z.ZodObject<{
                     authority: z.ZodNullable<z.ZodString>;
                     serviceName: z.ZodNullable<z.ZodString>;
                     multiMode: z.ZodBoolean;
                 }, z.core.$strip>;
             }, z.core.$strip>, z.ZodObject<{
-                transport: z.ZodLiteral<"kcp">;
+                transport: z.ZodLiteral<'kcp'>;
                 transportOptions: z.ZodObject<{
                     clientMtu: z.ZodInt;
                     clientTti: z.ZodInt;
                     congestion: z.ZodBoolean;
                 }, z.core.$strip>;
             }, z.core.$strip>, z.ZodObject<{
-                transport: z.ZodLiteral<"hysteria">;
+                transport: z.ZodLiteral<'hysteria'>;
                 transportOptions: z.ZodObject<{
                     version: z.ZodInt;
                     auth: z.ZodString;
                 }, z.core.$strip>;
-            }, z.core.$strip>], "transport">>, z.ZodDiscriminatedUnion<[z.ZodObject<{
-                security: z.ZodLiteral<"tls">;
+            }, z.core.$strip>], 'transport'>>, z.ZodDiscriminatedUnion<[z.ZodObject<{
+                security: z.ZodLiteral<'tls'>;
                 securityOptions: z.ZodObject<{
                     pinnedPeerCertSha256: z.ZodNullable<z.ZodString>;
                     verifyPeerCertByName: z.ZodNullable<z.ZodString>;
@@ -309,7 +310,7 @@ export declare namespace GetRawSubscriptionByShortUuidCommand {
                     cipherSuites: z.ZodNullable<z.ZodString>;
                 }, z.core.$strip>;
             }, z.core.$strip>, z.ZodObject<{
-                security: z.ZodLiteral<"reality">;
+                security: z.ZodLiteral<'reality'>;
                 securityOptions: z.ZodObject<{
                     fingerprint: z.ZodString;
                     publicKey: z.ZodString;
@@ -319,8 +320,8 @@ export declare namespace GetRawSubscriptionByShortUuidCommand {
                     mldsa65Verify: z.ZodNullable<z.ZodString>;
                 }, z.core.$strip>;
             }, z.core.$strip>, z.ZodObject<{
-                security: z.ZodLiteral<"none">;
-            }, z.core.$strip>], "security">>>;
+                security: z.ZodLiteral<'none'>;
+            }, z.core.$strip>], 'security'>>>;
         }, z.core.$strip>;
     }, z.core.$strip>;
     type RequestParam = z.infer<typeof RequestParamSchema>;

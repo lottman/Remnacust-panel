@@ -754,7 +754,11 @@ function ScopeUsers({ scope: initial, back }: { scope: Scope; back: () => void }
                                     })
                                 }
                             >
-                                <UsernameCell username={u.username} onlineAt={u.onlineAt} />
+                                <UsernameCell
+                                    username={u.username}
+                                    onlineAt={u.onlineAt}
+                                    status={u.status}
+                                />
                             </UnstyledButton>
                         ),
                         subscriptionStatus: (u) => <UserStatusBadge miw="13ch" status={u.status} />,

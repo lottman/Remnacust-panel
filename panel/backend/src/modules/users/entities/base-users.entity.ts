@@ -14,6 +14,7 @@ export class BaseUserEntity implements Users {
 
     public expireAt: Date;
     public frozenAt: Date | null;
+    public frozenUntil: Date | null;
     public subRevokedAt: Date | null;
     public lastTrafficResetAt: Date | null;
     public lastTriggeredThreshold: number;

@@ -1325,4 +1325,14 @@ export const ERRORS = {
             'HWID traffic blocking requires personal device credentials and a node with active-session revocation',
         httpCode: 409,
     },
+    USER_FREEZE_DEADLINE_INVALID: {
+        code: 'A263',
+        message: 'A future automatic resume deadline is required when freezing a user',
+        httpCode: 400,
+    },
+    USER_FREEZE_DEADLINE_IMMUTABLE: {
+        code: 'A264',
+        message: 'The saved automatic resume deadline cannot be changed while the user is frozen',
+        httpCode: 409,
+    },
 } as const;

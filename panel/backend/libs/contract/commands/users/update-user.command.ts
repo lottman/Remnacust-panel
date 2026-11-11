@@ -19,7 +19,17 @@ export namespace UpdateUserCommand {
         .object({
             username: z.optional(z.string().describe('Username of the user')),
             id: z.optional(z.number().describe('ID of the user')),
-            status: z.enum([USERS_STATUS.ACTIVE, USERS_STATUS.DISABLED, USERS_STATUS.FROZEN]).optional(),
+            status: z
+                .enum([USERS_STATUS.ACTIVE, USERS_STATUS.DISABLED, USERS_STATUS.FROZEN])
+                .optional(),
+            frozenUntil: z.iso
+                .datetime({ offset: true })
+                .transform((value) => new Date(value))
+                .nullable()
+                .optional()
+                .describe(
+                    'Automatic resume deadline in ISO 8601 with a UTC offset. Required when entering FROZEN; immutable after being set until activation.',
+                ),
             trafficLimitBytes: z
                 .number()
                 .min(0)
@@ -41,10 +51,7 @@ export namespace UpdateUserCommand {
             tag: z.optional(
                 z
                     .string()
-                    .regex(
-                        /^[A-Za-z0-9_]+$/,
-                        'Tag can only contain letters, numbers, underscores',
-                    )
+                    .regex(/^[A-Za-z0-9_]+$/, 'Tag can only contain letters, numbers, underscores')
                     .max(16, 'Tag must be less than 16 characters')
                     .nullable(),
             ),
@@ -52,8 +59,12 @@ export namespace UpdateUserCommand {
             email: z.email().nullish(),
             hwidDeviceLimit: z.int().min(0).nullish(),
             activeInternalSquads: z.array(z.uuid()).optional(),
-            subscriptionDomainUuid: z.uuid().nullable().optional().describe('Registered subscription domain UUID. Null uses the default domain.'),
-        externalSquadUuid: z
+            subscriptionDomainUuid: z
+                .uuid()
+                .nullable()
+                .optional()
+                .describe('Registered subscription domain UUID. Null uses the default domain.'),
+            externalSquadUuid: z
                 .optional(z.nullable(z.uuid()))
                 .describe('Optional. External squad UUID.'),
         })

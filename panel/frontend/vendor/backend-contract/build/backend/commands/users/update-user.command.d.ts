@@ -1,16 +1,17 @@
 import { z } from 'zod';
 export declare namespace UpdateUserCommand {
-    const url: "/api/users/";
-    const TSQ_url: "/api/users/";
-    const endpointDetails: import("../../constants").EndpointDetails;
+    const url: '/api/users/';
+    const TSQ_url: '/api/users/';
+    const endpointDetails: import('../../constants').EndpointDetails;
     const RequestBodySchema: z.ZodObject<{
         username: z.ZodOptional<z.ZodString>;
         id: z.ZodOptional<z.ZodNumber>;
         status: z.ZodOptional<z.ZodEnum<{
-            ACTIVE: "ACTIVE";
-            DISABLED: "DISABLED";
-            FROZEN: "FROZEN";
+            DISABLED: 'DISABLED';
+            ACTIVE: 'ACTIVE';
+            FROZEN: 'FROZEN';
         }>>;
+        frozenUntil: z.ZodOptional<z.ZodNullable<z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>>>;
         trafficLimitBytes: z.ZodOptional<z.ZodNumber>;
         trafficLimitStrategy: z.ZodOptional<z.ZodEnum<{
             readonly NO_RESET: 'NO_RESET';
@@ -51,6 +52,7 @@ export declare namespace UpdateUserCommand {
             }>;
             expireAt: z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>;
             frozenAt: z.ZodOptional<z.ZodNullable<z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>>>;
+            frozenUntil: z.ZodOptional<z.ZodNullable<z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>>>;
             frozenRemainingMs: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
             telegramId: z.ZodNullable<z.ZodNumber>;
             email: z.ZodNullable<z.ZodEmail>;
@@ -74,8 +76,8 @@ export declare namespace UpdateUserCommand {
                 domain: z.ZodString;
                 path: z.ZodString;
                 kind: z.ZodEnum<{
-                    CDN: "CDN";
-                    PRIMARY: "PRIMARY";
+                    PRIMARY: 'PRIMARY';
+                    CDN: 'CDN';
                 }>;
                 parentUuid: z.ZodNullable<z.ZodUUID>;
                 isDefault: z.ZodBoolean;

@@ -11,7 +11,16 @@ exports.UsersSchema = zod_1.z.object({
     trafficLimitBytes: zod_1.z.number(),
     trafficLimitStrategy: zod_1.z.enum(constants_1.RESET_PERIODS).describe('Available reset periods'),
     expireAt: zod_1.z.iso.datetime().transform((str) => new Date(str)),
-    frozenAt: zod_1.z.iso.datetime().transform((str) => new Date(str)).nullable().optional(),
+    frozenAt: zod_1.z.iso
+        .datetime()
+        .transform((str) => new Date(str))
+        .nullable()
+        .optional(),
+    frozenUntil: zod_1.z.iso
+        .datetime()
+        .transform((str) => new Date(str))
+        .nullable()
+        .optional(),
     frozenRemainingMs: zod_1.z.number().int().min(0).nullable().optional(),
     telegramId: zod_1.z.nullable(zod_1.z.number()),
     email: zod_1.z.nullable(zod_1.z.email()),

@@ -20,6 +20,7 @@ export declare const ExtendedUsersSchema: z.ZodObject<{
     }>;
     expireAt: z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>;
     frozenAt: z.ZodOptional<z.ZodNullable<z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>>>;
+    frozenUntil: z.ZodOptional<z.ZodNullable<z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>>>;
     frozenRemainingMs: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
     telegramId: z.ZodNullable<z.ZodNumber>;
     email: z.ZodNullable<z.ZodEmail>;
@@ -43,8 +44,8 @@ export declare const ExtendedUsersSchema: z.ZodObject<{
         domain: z.ZodString;
         path: z.ZodString;
         kind: z.ZodEnum<{
-            CDN: "CDN";
-            PRIMARY: "PRIMARY";
+            PRIMARY: 'PRIMARY';
+            CDN: 'CDN';
         }>;
         parentUuid: z.ZodNullable<z.ZodUUID>;
         isDefault: z.ZodBoolean;

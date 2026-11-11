@@ -2,7 +2,7 @@ import { Job } from 'bullmq';
 
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
-import { CommandBus, EventBus, QueryBus } from '@nestjs/cqrs';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 
 import { usageOwner } from '@common/utils/device-identity';
@@ -13,8 +13,6 @@ import { TorrentBlockerEvent, UserEvent } from '@integration-modules/notificatio
 import { DeviceAccessService } from '@modules/hwid-user-devices/device-access.service';
 import { CreateTorrentReportCommand } from '@modules/node-plugins/commands/create-torrent-report';
 import { BaseTorrentBlockerReportEntity } from '@modules/node-plugins/entities';
-import { AddUserToNodeEvent } from '@modules/nodes/events/add-user-to-node';
-import { RemoveUserFromNodeEvent } from '@modules/nodes/events/remove-user-from-node';
 import { GetNodeByUuidQuery } from '@modules/nodes/queries/get-node-by-uuid';
 import { GetUserByUniqueFieldQuery } from '@modules/users/queries/get-user-by-unique-field';
 
@@ -32,7 +30,6 @@ export class UserEventsQueueProcessor extends WorkerHost {
     constructor(
         private readonly queryBus: QueryBus,
         private readonly commandBus: CommandBus,
-        private readonly eventBus: EventBus,
         private readonly eventEmitter: EventEmitter2,
         private readonly deviceAccess: DeviceAccessService,
     ) {
@@ -83,10 +80,6 @@ export class UserEventsQueueProcessor extends WorkerHost {
                             user,
                             event: userEvent,
                         }),
-                    );
-
-                    await this.eventBus.publish(
-                        new RemoveUserFromNodeEvent(user.id, user.vlessUuid),
                     );
 
                     this.deviceAccess.kickReconciliation();
@@ -146,7 +139,7 @@ export class UserEventsQueueProcessor extends WorkerHost {
                         }),
                     );
 
-                    this.eventBus.publish(new AddUserToNodeEvent(user.id));
+                    this.deviceAccess.kickReconciliation();
                     break;
                 default:
                     this.logger.warn(`User event "${userEvent}" is not implemented.`);

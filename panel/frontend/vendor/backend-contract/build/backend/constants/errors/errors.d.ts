@@ -1354,5 +1354,15 @@ export declare const ERRORS: {
         readonly message: 'HWID traffic blocking requires personal device credentials and a node with active-session revocation';
         readonly httpCode: 409;
     };
+    readonly USER_FREEZE_DEADLINE_INVALID: {
+        readonly code: 'A263';
+        readonly message: 'A future automatic resume deadline is required when freezing a user';
+        readonly httpCode: 400;
+    };
+    readonly USER_FREEZE_DEADLINE_IMMUTABLE: {
+        readonly code: 'A264';
+        readonly message: 'The saved automatic resume deadline cannot be changed while the user is frozen';
+        readonly httpCode: 409;
+    };
 };
 //# sourceMappingURL=errors.d.ts.map

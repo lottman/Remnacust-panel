@@ -39,6 +39,12 @@ var CreateUserCommand;
             .max(32, 'SS password must be less than 32 characters')
             .optional()
             .describe('Optional. Password for Shadowsocks protocol. Must be 8-32 characters.'),
+        frozenUntil: zod_1.z.iso
+            .datetime({ offset: true })
+            .transform((value) => new Date(value))
+            .nullable()
+            .optional()
+            .describe('Automatic resume deadline in ISO 8601 with a UTC offset. Required when entering FROZEN; immutable after being set until activation.'),
         trafficLimitBytes: zod_1.z
             .number()
             .min(0, 'Traffic limit must be greater than 0')
@@ -89,7 +95,11 @@ var CreateUserCommand;
             .array(zod_1.z.uuid())
             .optional()
             .describe('Optional. Array of UUIDs representing enabled internal squads.'),
-        subscriptionDomainUuid: zod_1.z.uuid().nullable().optional().describe('Registered subscription domain UUID. Null uses the default domain.'),
+        subscriptionDomainUuid: zod_1.z
+            .uuid()
+            .nullable()
+            .optional()
+            .describe('Registered subscription domain UUID. Null uses the default domain.'),
         externalSquadUuid: zod_1.z
             .optional(zod_1.z.nullable(zod_1.z.uuid()))
             .describe('Optional. External squad UUID.'),

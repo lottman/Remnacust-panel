@@ -12,6 +12,12 @@ var BulkAllUpdateUsersCommand;
     BulkAllUpdateUsersCommand.endpointDetails = (0, constants_1.getEndpointDetails)(api_1.USERS_ROUTES.BULK.ALL.UPDATE, 'post', 'Bulk update all users', { scope: 'bulk-all-update-users', kind: 'write' });
     BulkAllUpdateUsersCommand.RequestBodySchema = zod_1.z.object({
         status: zod_1.z.enum(constants_1.USERS_STATUS).optional(),
+        frozenUntil: zod_1.z.iso
+            .datetime({ offset: true })
+            .transform((value) => new Date(value))
+            .nullable()
+            .optional()
+            .describe('Automatic resume deadline in ISO 8601 with a UTC offset. Required when entering FROZEN; immutable after being set until activation.'),
         trafficLimitBytes: zod_1.z.optional(zod_1.z.number().min(0).describe('Traffic limit in bytes. 0 - unlimited')),
         trafficLimitStrategy: zod_1.z.optional(zod_1.z.enum(constants_2.RESET_PERIODS).describe('Available reset periods')),
         expireAt: zod_1.z.optional(zod_1.z.iso

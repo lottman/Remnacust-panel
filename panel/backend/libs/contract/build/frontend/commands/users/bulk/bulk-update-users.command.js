@@ -15,6 +15,12 @@ var BulkUpdateUsersCommand;
         userIds: zod_1.z.array(zod_1.z.number()).min(1).max(500),
         fields: zod_1.z.object({
             status: models_1.UsersSchema.shape.status.optional(),
+            frozenUntil: zod_1.z.iso
+                .datetime({ offset: true })
+                .transform((value) => new Date(value))
+                .nullable()
+                .optional()
+                .describe('Automatic resume deadline in ISO 8601 with a UTC offset. Required when entering FROZEN; immutable after being set until activation.'),
             trafficLimitBytes: zod_1.z.optional(zod_1.z.number().min(0).describe('Traffic limit in bytes. 0 - unlimited')),
             trafficLimitStrategy: zod_1.z.optional(zod_1.z.enum(constants_2.RESET_PERIODS).describe('Available reset periods')),
             expireAt: zod_1.z.optional(zod_1.z.iso

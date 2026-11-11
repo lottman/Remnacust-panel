@@ -7,19 +7,25 @@ import { IProps } from '@entities/dashboard/users/ui/table-columns/username/inte
 
 export function UsernameColumnEntity(props: IProps) {
     return (
-        <UsernameCell username={props.user.username} onlineAt={props.user.userTraffic.onlineAt} />
+        <UsernameCell
+            username={props.user.username}
+            onlineAt={props.user.userTraffic.onlineAt}
+            status={props.user.status}
+        />
     )
 }
 
 export function UsernameCell({
     username,
-    onlineAt
+    onlineAt,
+    status
 }: {
     username: string
     onlineAt: Date | string | null
+    status?: string
 }) {
     const { t, i18n } = useTranslation()
-    const color = getConnectionStatusColorUtil(onlineAt)
+    const color = status === 'FROZEN' ? 'blue' : getConnectionStatusColorUtil(onlineAt)
     const timeAgo = getTimeAgoUtil(onlineAt, t, i18n.language)
 
     return (

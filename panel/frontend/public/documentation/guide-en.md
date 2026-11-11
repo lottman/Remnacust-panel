@@ -129,7 +129,11 @@ The panel scheduler enqueues an expiry check every 30 seconds in USERS_WATCHDOG_
 
 ### Freeze a subscription
 
-Choose Freeze in the user menu: ordinary access is paused and the remaining lifetime is retained. Two days remaining stay two days until activation. Resuming sets the new expiry from that remainder; repeating Freeze does not change it. Zero remaining time or an exhausted quota does not grant access. Extending adds to the remainder. Expired subscriptions can be frozen with zero remaining time; the saved remainder is formatted independently of the current date. The card shows the exact remaining day count. The date field retains its usual layout, is blue and cannot be edited. Active expiry warnings turn yellow at three days and red on expiry. Freezing itself does not reset usage; scheduled traffic resets continue. The state survives restarts and export/import. Bulk freezes synchronize each user’s device access through the queue.
+Choose Freeze in the user menu, enter the new Automatic resume date and time, then Save. The status does not change before saving. The saved deadline becomes read-only and cannot be changed for that freeze. Frozen user indicators and dates are blue.
+
+Freezing preserves the remaining subscription lifetime. With two days remaining and a resume date tomorrow, two days remain after resuming. A running panel checks scheduled resumes every five seconds. After a restart, overdue work catches up; expiry is based on the scheduled resume time, so panel downtime does not add time. Nodes apply access after receiving the update. Exhausted lifetime and quota continue to restrict access. Extending a frozen subscription adds lifetime without changing its resume deadline.
+
+Bulk freezing uses the selected deadline while retaining saved deadlines of already frozen users. Legacy freezes without a deadline are not silently activated: open the user and assign a future date once. New frozen users created through the API or import also need a future frozenUntil with a UTC offset. Saving does not confirm immediate termination of connections on an unreachable node.
 
 ### Device subscription preview
 
@@ -148,6 +152,8 @@ Select an already registered device, format and User-Agent in the device card an
 - **Expiry date**: The lifetime and access are paused. The saved remainder resumes on activation. The date cannot be edited while frozen.
 - **Internal squads**: Internal squads granting the user access to selected inbounds. Multiple squads can be assigned.
 - **Subscription domain**: UUID of a registered primary or CDN domain. Empty uses the default domain.
+- **Automatic resume**: The subscription resumes automatically at this time. The saved freeze deadline cannot be edited.
+- **Automatic resume**: Choose a date and time. The freeze deadline cannot be edited after saving; the remaining subscription lifetime is preserved.
 - **Username**: Account name used to find and manage the user. It must be available when creating an account.
 
 ## User actions and details

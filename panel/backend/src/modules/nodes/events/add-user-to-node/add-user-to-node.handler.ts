@@ -33,7 +33,11 @@ export class AddUserToNodeHandler implements IEventHandler<AddUserToNodeEvent> {
         private readonly queryBus: QueryBus,
         private readonly config: TypedConfigService,
     ) {}
-    async handle(event: AddUserToNodeEvent, resolvedUser?: UserWithResolvedInboundEntity) {
+    async handle(
+        event: AddUserToNodeEvent,
+        resolvedUser?: UserWithResolvedInboundEntity,
+        includeDisconnected = false,
+    ) {
         try {
             const userEntity = resolvedUser
                 ? { isOk: true, response: resolvedUser }
@@ -49,11 +53,13 @@ export class AddUserToNodeHandler implements IEventHandler<AddUserToNodeEvent> {
                 return false;
             }
 
-            const nodes = await this.nodesRepository.findConnectedNodes();
+            const nodes = (
+                includeDisconnected
+                    ? await this.nodesRepository.findAllNodes()
+                    : await this.nodesRepository.findConnectedNodes()
+            ).filter((node) => !node.isDisabled);
 
-            if (nodes.length === 0) {
-                return false;
-            }
+            if (nodes.length === 0) return includeDisconnected;
 
             for (const node of nodes) {
                 if (node.activeInbounds.length === 0 || !node.activeConfigProfileUuid) {

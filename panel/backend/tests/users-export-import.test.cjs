@@ -64,6 +64,9 @@ const mocks = {
     '@common/utils/frozen-user-lifetime': load(
         path.join(root, 'src/common/utils/frozen-user-lifetime.ts'),
     ),
+    '@common/utils/user-freeze-schedule': load(
+        path.join(root, 'src/common/utils/user-freeze-schedule.ts'),
+    ),
     '@common/config/app-config': {},
     '@common/utils/xera-crypto': crypto,
     '@common/types': {
@@ -110,6 +113,7 @@ const record = {
     trojanPassword: 'test-trojan-password',
     ssPassword: 'test-ss-password',
     status: 'ACTIVE',
+    frozenUntil: null,
     trafficLimitBytes: 0n,
     trafficLimitStrategy: 'NO_RESET',
     expireAt: new Date('2030-01-01T00:00:00Z'),
@@ -123,7 +127,13 @@ const record = {
 
 test('repeated explicit freeze succeeds after commit and wakes durable access reconciliation', async () => {
     const service = makeService();
-    const frozen = { ...record, status: 'FROZEN', frozenAt: new Date(), activeInternalSquads: [] };
+    const frozen = {
+        ...record,
+        status: 'FROZEN',
+        frozenUntil: new Date('2031-01-01T00:00:00Z'),
+        frozenAt: new Date(),
+        activeInternalSquads: [],
+    };
     service.userRepository = {
         findUniqueByCriteria: async () => frozen,
         update: async () => frozen,
@@ -278,6 +288,7 @@ test('expired subscriptions can be frozen without granting time or accepting a d
         const result = await service.updateUser({
             id: 1,
             status: 'FROZEN',
+            frozenUntil: new Date('2031-01-01T00:00:00Z'),
             expireAt: new Date('2099-01-01'),
         });
         assert.equal(result.isOk, true);
@@ -288,7 +299,12 @@ test('expired subscriptions can be frozen without granting time or accepting a d
 test('freeze ignores stale client expiry and preserves the database pause clock', async () => {
     const service = makeService();
     const current = { ...record, activeInternalSquads: [] };
-    const paused = { ...current, status: 'FROZEN', frozenAt: new Date('2026-11-12T12:00:00Z') };
+    const paused = {
+        ...current,
+        status: 'FROZEN',
+        frozenUntil: new Date('2031-01-01T00:00:00Z'),
+        frozenAt: new Date('2026-11-12T12:00:00Z'),
+    };
     let saved;
     service.userRepository = {
         findUniqueByCriteria: async () => current,
@@ -308,6 +324,7 @@ test('freeze ignores stale client expiry and preserves the database pause clock'
     const result = await service.updateUser({
         id: 1,
         status: 'FROZEN',
+        frozenUntil: new Date('2031-01-01T00:00:00Z'),
         expireAt: new Date('2099-01-01T00:00:00Z'),
     });
     assert.equal(result.isOk, true);
@@ -330,7 +347,16 @@ test('failed database update remains an error and never wakes node reconciliatio
             throw Error('must not synchronize a rollback');
         },
     };
-    assert.equal((await service.updateUser({ id: 1, status: 'FROZEN' })).isOk, false);
+    assert.equal(
+        (
+            await service.updateUser({
+                id: 1,
+                status: 'FROZEN',
+                frozenUntil: new Date('2031-01-01T00:00:00Z'),
+            })
+        ).isOk,
+        false,
+    );
 });
 
 for (const [method, before, after] of [
@@ -371,3 +397,29 @@ for (const [method, before, after] of [
         },
     );
 }
+
+test('import retains a scheduled freeze deadline and saved lifetime', async () => {
+    const service = makeService();
+    service.userRepository = { getSquadUuidsByNames: async () => new Map() };
+    let created;
+    service.createUser = async (body) => {
+        created = body;
+        return { isOk: true };
+    };
+    const deadline = '2031-01-01T00:00:00Z';
+    const request = ImportUsersCommand.RequestBodySchema.parse({
+        users: [
+            {
+                username: 'frozen_import',
+                status: 'FROZEN',
+                frozenUntil: deadline,
+                frozenRemainingMs: 172800000,
+                expireAt: '2035-01-01T00:00:00Z',
+            },
+        ],
+    });
+    const result = await service.importUsers(request);
+    assert.equal(result.response.created, 1);
+    assert.equal(created.frozenUntil.toISOString(), new Date(deadline).toISOString());
+    assert.ok(Math.abs(+created.expireAt - Date.now() - 172800000) < 1000);
+});

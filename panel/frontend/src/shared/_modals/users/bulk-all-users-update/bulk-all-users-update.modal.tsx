@@ -17,6 +17,7 @@ import {
 import { queryClient } from '@shared/api/query-client'
 import { useIsMobile } from '@shared/hooks/use-is-mobile'
 import { BulkFormsUsersShared } from '@shared/ui/forms/users/bulk-forms-components'
+import { validFreezeDeadline } from '@shared/ui/forms/users/forms-components/freeze-schedule-field'
 import { ModalFooter } from '@shared/ui/modal-footer'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { handleFormErrors } from '@shared/utils/misc'
@@ -74,6 +75,7 @@ export const BulkAllUsersUpdateModal = NiceModal.create(() => {
         validate: schemaResolver(
             BulkAllUpdateUsersCommand.RequestBodySchema.omit({
                 expireAt: true,
+                frozenUntil: true,
                 telegramId: true,
                 email: true
             })
@@ -89,10 +91,15 @@ export const BulkAllUsersUpdateModal = NiceModal.create(() => {
     })
 
     const handleBulkUpdate = form.onSubmit(async (values) => {
+        if (values.status === 'FROZEN' && !validFreezeDeadline(values.frozenUntil)) {
+            form.setFieldError('frozenUntil', t('frozen-user.until-invalid'))
+            return
+        }
         updateUsers(
             {
                 variables: {
                     ...values,
+                    frozenUntil: values.status === 'FROZEN' ? values.frozenUntil : undefined,
                     trafficLimitBytes: values.trafficLimitBytes,
                     // @ts-expect-error - TODO: fix ZOD schema
                     telegramId: values.telegramId === '' ? null : values.telegramId,

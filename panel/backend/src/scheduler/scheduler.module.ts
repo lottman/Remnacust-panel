@@ -16,6 +16,7 @@ import { METRIC_PROVIDERS } from './metrics-providers';
 import { JOBS_SERVICES } from './tasks';
 import { DeviceReconciliationTask } from './tasks/device-reconciliation.task';
 import { NodeMetricsSubscriber } from './tasks/export-metrics/node-metrics.subscriber';
+import { FrozenUsersResumeTask } from './tasks/frozen-users-resume.task';
 import { GeofilesRefreshTask } from './tasks/geofiles-refresh.task';
 import { HostPolicyTask } from './tasks/host-policy.task';
 import { NodeHealthLogCleanupTask } from './tasks/node-health-log-cleanup.task';
@@ -45,6 +46,7 @@ import { XrayModeApplyTask } from './tasks/xray-mode-apply.task';
         NodeHealthLogCleanupTask,
         HostPolicyTask,
         DeviceReconciliationTask,
+        FrozenUsersResumeTask,
         GeofilesRefreshTask,
         PortPlanDispatchTask,
         QuotaCoordinatorTask,

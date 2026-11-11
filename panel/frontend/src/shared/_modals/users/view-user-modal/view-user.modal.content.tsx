@@ -31,6 +31,7 @@ import {
     TrafficLimitsCard,
     UserIdentificationCard
 } from '@shared/ui/forms/users/forms-components'
+import { validFreezeDeadline } from '@shared/ui/forms/users/forms-components/freeze-schedule-field'
 import { UserFormLayout } from '@shared/ui/forms/users/user-form-layout'
 import { LoaderModalShared } from '@shared/ui/loader-modal'
 import { ModalFooter } from '@shared/ui/modal-footer'
@@ -87,6 +88,7 @@ export const ViewUserModalContent = (props: IProps) => {
         validate: schemaResolver(
             z.object(UpdateUserCommand.RequestBodySchema.shape).omit({
                 expireAt: true,
+                frozenUntil: true,
                 hwidDeviceLimit: true
             })
         )
@@ -132,6 +134,7 @@ export const ViewUserModalContent = (props: IProps) => {
                 trafficLimitBytes: user.trafficLimitBytes,
                 trafficLimitStrategy: user.trafficLimitStrategy,
                 expireAt: user.expireAt,
+                frozenUntil: user.frozenUntil ?? undefined,
                 activeInternalSquads,
                 description: user.description ?? '',
                 telegramId: user.telegramId ?? undefined,
@@ -144,12 +147,37 @@ export const ViewUserModalContent = (props: IProps) => {
         }
     }, [user, internalSquads])
 
+    useEffect(() => {
+        if (!user) return
+        form.setFieldValue('status', undefined)
+        form.setFieldValue('expireAt', user.expireAt)
+        form.setFieldValue('frozenUntil', user.frozenUntil ?? undefined)
+        form.setTouched({
+            ...form.getTouched(),
+            status: false,
+            frozenUntil: false,
+            expireAt: false
+        })
+    }, [user?.status, user?.frozenUntil?.getTime()])
+
     const handleSubmit = form.onSubmit(async (values) => {
         const touchedFields = form.getTouched()
+        const nextStatus = (touchedFields.status ? values.status : undefined) ?? user?.status
+        if (
+            nextStatus === 'FROZEN' &&
+            !user?.frozenUntil &&
+            ((touchedFields.status && values.status === 'FROZEN') || touchedFields.frozenUntil) &&
+            !validFreezeDeadline(values.frozenUntil)
+        ) {
+            form.setFieldError('frozenUntil', t('frozen-user.until-invalid'))
+            return
+        }
 
         updateUser({
             variables: {
                 id: values.id,
+                status: touchedFields.status ? values.status : undefined,
+                frozenUntil: touchedFields.frozenUntil ? values.frozenUntil : undefined,
                 trafficLimitStrategy: touchedFields.trafficLimitStrategy
                     ? values.trafficLimitStrategy
                     : undefined,
@@ -244,6 +272,7 @@ export const ViewUserModalContent = (props: IProps) => {
                     />
                     <AccessSettingsCard
                         isFrozen={user.status === 'FROZEN'}
+                        frozenUntil={user.frozenUntil}
                         frozenRemainingMs={user.frozenRemainingMs}
                         cardVariants={cardVariants}
                         externalSquads={externalSquads}
@@ -268,7 +297,13 @@ export const ViewUserModalContent = (props: IProps) => {
 
                         <Menu.Divider />
                         <Menu.Label>{t('view-user-modal.widget.management')}</Menu.Label>
-                        <ToggleUserStatusButtonFeature user={user} />
+                        <ToggleUserStatusButtonFeature
+                            user={user}
+                            onFreeze={() => {
+                                form.setFieldValue('status', 'FROZEN')
+                                form.setTouched({ ...form.getTouched(), status: true })
+                            }}
+                        />
                         <ResetUsageUserFeature userId={user.id} />
                         <RevokeSubscriptionUserFeature userId={user.id} />
                     </Menu.Dropdown>

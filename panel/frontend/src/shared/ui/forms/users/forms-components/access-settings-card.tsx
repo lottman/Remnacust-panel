@@ -22,6 +22,7 @@ import { useUiText } from '@shared/i18n/interface-text'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SectionCard } from '@shared/ui/section-card'
 
+import { FreezeScheduleField, freezeDeadlineDate } from './freeze-schedule-field'
 import { getUserExpirationState } from './user-expiration'
 
 interface IProps<T extends CreateUserCommand.RequestBody | UpdateUserCommand.RequestBody> {
@@ -30,6 +31,7 @@ interface IProps<T extends CreateUserCommand.RequestBody | UpdateUserCommand.Req
     form: UseFormReturnType<T>
     isFrozen?: boolean
     frozenRemainingMs?: number | null
+    frozenUntil?: Date | null
     internalSquads: GetInternalSquadsCommand.Response['response'] | undefined
     motionWrapper: ForwardRefComponent<HTMLDivElement, HTMLMotionProps<'div'>>
 }
@@ -66,8 +68,16 @@ export const AccessSettingsCard = <
     })
 
     const MotionWrapper = motionWrapper
-    const isFrozen = props.isFrozen || form.values.status === 'FROZEN'
-    const expirationState = getUserExpirationState(form.values.expireAt)
+    const [selectedStatus, setSelectedStatus] = useState(form.getValues().status)
+    const [freezeDeadline, setFreezeDeadline] = useState(() =>
+        freezeDeadlineDate(form.getValues().frozenUntil)
+    )
+    form.watch('status', ({ value }) => setSelectedStatus(value))
+    form.watch('frozenUntil', ({ value }) => setFreezeDeadline(freezeDeadlineDate(value)))
+    const isFrozen = props.isFrozen || selectedStatus === 'FROZEN'
+    const freezeInput = form.getInputProps('frozenUntil')
+    const expiryValue = localExpireAt ?? form.getValues().expireAt
+    const expirationState = getUserExpirationState(expiryValue)
 
     const filteredInternalSquads = useMemo(() => {
         const allInternalSquads = internalSquads?.internalSquads || []
@@ -105,8 +115,8 @@ export const AccessSettingsCard = <
                                 description={t('frozen-user.help')}
                                 locale={i18n.language}
                                 value={
-                                    form.values.expireAt && dayjs(form.values.expireAt).isValid()
-                                        ? dayjs(form.values.expireAt).format('YYYY-MM-DD HH:mm:ss')
+                                    expiryValue && dayjs(expiryValue).isValid()
+                                        ? dayjs(expiryValue).format('YYYY-MM-DD HH:mm:ss')
                                         : null
                                 }
                                 valueFormat="D MMM YYYY, HH:mm"
@@ -218,6 +228,18 @@ export const AccessSettingsCard = <
                                         label: t('create-user-modal.widget.2099-year')
                                     }
                                 ]}
+                            />
+                        )}
+                        {isFrozen && (
+                            <FreezeScheduleField
+                                value={
+                                    props.isFrozen && props.frozenUntil
+                                        ? props.frozenUntil
+                                        : freezeDeadline
+                                }
+                                readOnly={props.isFrozen && Boolean(props.frozenUntil)}
+                                onChange={(value) => freezeInput.onChange?.(value)}
+                                error={form.errors.frozenUntil}
                             />
                         )}
 

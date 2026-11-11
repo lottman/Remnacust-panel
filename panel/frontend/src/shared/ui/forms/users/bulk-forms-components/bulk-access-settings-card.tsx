@@ -15,6 +15,8 @@ import { useUiText } from '@shared/i18n/interface-text'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SectionCard } from '@shared/ui/section-card'
 
+import { FreezeScheduleField, freezeDeadlineDate } from '../forms-components/freeze-schedule-field'
+
 interface IProps {
     cardVariants: Variants
     externalSquads: GetExternalSquadsCommand.Response['response'] | undefined
@@ -31,6 +33,14 @@ export const BulkAccessSettingsCard = (props: IProps) => {
     const { cardVariants, motionWrapper, form } = props
 
     const [localExpireAt, setLocalExpireAt] = useState<Date | undefined>(undefined)
+
+    const [freezeStatus, setFreezeStatus] = useState(form.getValues().status)
+    const [freezeDeadline, setFreezeDeadline] = useState(() =>
+        freezeDeadlineDate(form.getValues().frozenUntil)
+    )
+    form.watch('status', ({ value }) => setFreezeStatus(value))
+    form.watch('frozenUntil', ({ value }) => setFreezeDeadline(freezeDeadlineDate(value)))
+    const freezeInput = form.getInputProps('frozenUntil')
 
     const MotionWrapper = motionWrapper
 
@@ -70,6 +80,13 @@ export const BulkAccessSettingsCard = (props: IProps) => {
                             {...form.getInputProps('status')}
                         />
 
+                        {freezeStatus === 'FROZEN' && (
+                            <FreezeScheduleField
+                                value={freezeDeadline}
+                                onChange={(value) => freezeInput.onChange?.(value)}
+                                error={form.errors['frozenUntil']}
+                            />
+                        )}
                         <DateTimePicker
                             dropdownType="popover"
                             headerControlsOrder={['previous', 'next', 'level']}

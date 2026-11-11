@@ -17,6 +17,7 @@ import {
     wrapBigIntNullable,
 } from '@common/utils';
 import { effectiveUserExpiry, frozenRemainingMs } from '@common/utils/frozen-user-lifetime';
+import { freezeScheduleError } from '@common/utils/user-freeze-schedule';
 import { decryptSecret } from '@common/utils/xera-crypto';
 import { ERRORS, USERS_STATUS, EVENTS } from '@libs/contracts/constants';
 
@@ -91,6 +92,10 @@ export class UsersService {
                         trojanPassword: decryptSecret(user.trojanPassword as string),
                         ssPassword: decryptSecret(user.ssPassword as string),
                         status: (user.status as string) ?? null,
+                        frozenUntil:
+                            user.frozenUntil instanceof Date
+                                ? user.frozenUntil.toISOString()
+                                : null,
                         trafficLimitBytes:
                             user.trafficLimitBytes == null ? null : Number(user.trafficLimitBytes),
                         trafficLimitStrategy: (user.trafficLimitStrategy as string) ?? null,
@@ -172,6 +177,7 @@ export class UsersService {
                             user.status === 'FROZEN' && user.frozenRemainingMs != null
                                 ? new Date(Date.now() + user.frozenRemainingMs)
                                 : new Date(user.expireAt),
+                        frozenUntil: user.frozenUntil ? new Date(user.frozenUntil) : undefined,
                         createdAt: user.createdAt ? new Date(user.createdAt) : undefined,
                         trafficLimitBytes: user.trafficLimitBytes ?? 0,
                         trafficLimitStrategy:
@@ -224,6 +230,7 @@ export class UsersService {
 
     public async createUser(dto: CreateUserBodyDto): Promise<TResult<UserEntity>> {
         try {
+            if (freezeScheduleError(null, dto)) return fail(ERRORS.USER_FREEZE_DEADLINE_INVALID);
             const userEntity = new BaseUserEntity({
                 username: dto.username,
                 shortUuid: dto.shortUuid || this.generateShortUuid(),
@@ -236,6 +243,7 @@ export class UsersService {
                 email: dto.email,
                 telegramId: wrapBigIntNullable(dto.telegramId),
                 expireAt: dto.expireAt,
+                frozenUntil: dto.frozenUntil,
                 createdAt: dto.createdAt,
                 lastTrafficResetAt: dto.lastTrafficResetAt,
                 description: dto.description,
@@ -296,7 +304,10 @@ export class UsersService {
         }
     }
 
-    public async updateUser(dto: UpdateUserBodyDto): Promise<TResult<UserEntity>> {
+    public async updateUser(
+        dto: UpdateUserBodyDto,
+        preserveFrozenSchedule = false,
+    ): Promise<TResult<UserEntity>> {
         try {
             const {
                 username,
@@ -321,12 +332,25 @@ export class UsersService {
 
             if (!user) return fail(ERRORS.USER_NOT_FOUND);
 
+            const frozenUntil =
+                preserveFrozenSchedule && user.status === USERS_STATUS.FROZEN && user.frozenUntil
+                    ? undefined
+                    : dto.frozenUntil;
+            const freezeError = freezeScheduleError(user, { status, frozenUntil });
+            if (freezeError)
+                return fail(
+                    freezeError === 'immutable'
+                        ? ERRORS.USER_FREEZE_DEADLINE_IMMUTABLE
+                        : ERRORS.USER_FREEZE_DEADLINE_INVALID,
+                );
+
             if (user.status === USERS_STATUS.FROZEN && status === USERS_STATUS.DISABLED) {
                 return fail(ERRORS.USER_FROZEN_NEEDS_RESUME);
             }
 
             const newUserEntity = new BaseUserEntity({
                 ...rest,
+                frozenUntil,
                 id: user.id,
                 // A frozen subscription keeps its saved remainder. Date edits must
                 // never create time while freezing or while it remains frozen.
@@ -419,13 +443,14 @@ export class UsersService {
 
             if (
                 updatedUser.status === USERS_STATUS.ACTIVE &&
-                (addToNode || statusChanged) &&
-                !removeFromNode
+                addToNode &&
+                !removeFromNode &&
+                !statusChanged
             ) {
                 this.eventBus.publish(new AddUserToNodeEvent(updatedUser.id));
             }
 
-            if (removeFromNode || (statusChanged && updatedUser.status !== USERS_STATUS.ACTIVE)) {
+            if (removeFromNode && !statusChanged) {
                 this.eventBus.publish(
                     new RemoveUserFromNodeEvent(updatedUser.id, updatedUser.vlessUuid),
                 );
@@ -628,9 +653,6 @@ export class UsersService {
 
             if (!updatedUser) return fail(ERRORS.USER_NOT_FOUND);
 
-            this.eventBus.publish(
-                new RemoveUserFromNodeEvent(updatedUser.id, updatedUser.vlessUuid),
-            );
             this.deviceAccess.kickReconciliation();
             this.eventEmitter.emit(
                 EVENTS.USER.DISABLED,
@@ -666,9 +688,6 @@ export class UsersService {
 
             if (!updatedUser) return fail(ERRORS.USER_NOT_FOUND);
 
-            if (updatedUser.status === USERS_STATUS.ACTIVE) {
-                this.eventBus.publish(new AddUserToNodeEvent(user.id));
-            }
             this.deviceAccess.kickReconciliation();
 
             this.eventEmitter.emit(
@@ -725,7 +744,6 @@ export class UsersService {
             if (!updatedUser) return fail(ERRORS.USER_NOT_FOUND);
 
             if (user.status === USERS_STATUS.EXPIRED && newStatus === USERS_STATUS.ACTIVE) {
-                this.eventBus.publish(new AddUserToNodeEvent(user.id));
                 this.deviceAccess.kickReconciliation();
             }
 
@@ -756,7 +774,6 @@ export class UsersService {
             let status = undefined;
             if (user.status === USERS_STATUS.LIMITED) {
                 status = USERS_STATUS.ACTIVE;
-                this.eventBus.publish(new AddUserToNodeEvent(user.id));
             }
 
             await this.userRepository.updateStatusAndTrafficAndResetAt(user.id, new Date(), status);
@@ -890,6 +907,11 @@ export class UsersService {
                 return fail(ERRORS.INVALID_USER_STATUS_ERROR);
             }
 
+            if (dto.fields.frozenUntil !== undefined && dto.fields.status !== USERS_STATUS.FROZEN)
+                return fail(ERRORS.USER_FREEZE_DEADLINE_INVALID);
+            if (dto.fields.status === USERS_STATUS.FROZEN && freezeScheduleError(null, dto.fields))
+                return fail(ERRORS.USER_FREEZE_DEADLINE_INVALID);
+
             // handled one by one
             await this.usersQueuesService.updateUsersBulk({
                 userIds: dto.userIds,
@@ -928,6 +950,10 @@ export class UsersService {
 
     public async bulkUpdateAllUsers(dto: BulkAllUpdateUsersBodyDto): Promise<TResult<boolean>> {
         try {
+            if (dto.frozenUntil !== undefined && dto.status !== USERS_STATUS.FROZEN)
+                return fail(ERRORS.USER_FREEZE_DEADLINE_INVALID);
+            if (dto.status === USERS_STATUS.FROZEN && freezeScheduleError(null, dto))
+                return fail(ERRORS.USER_FREEZE_DEADLINE_INVALID);
             if (dto.status === USERS_STATUS.EXPIRED || dto.status === USERS_STATUS.LIMITED) {
                 return fail(ERRORS.INVALID_USER_STATUS_ERROR);
             }

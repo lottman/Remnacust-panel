@@ -17,6 +17,14 @@ export namespace BulkAllUpdateUsersCommand {
 
     export const RequestBodySchema = z.object({
         status: z.enum(USERS_STATUS).optional(),
+        frozenUntil: z.iso
+            .datetime({ offset: true })
+            .transform((value) => new Date(value))
+            .nullable()
+            .optional()
+            .describe(
+                'Automatic resume deadline in ISO 8601 with a UTC offset. Required when entering FROZEN; immutable after being set until activation.',
+            ),
         trafficLimitBytes: z.optional(
             z.number().min(0).describe('Traffic limit in bytes. 0 - unlimited'),
         ),
@@ -36,10 +44,7 @@ export namespace BulkAllUpdateUsersCommand {
         tag: z.optional(
             z
                 .string()
-                .regex(
-                    /^[A-Za-z0-9_]+$/,
-                    'Tag can only contain letters, numbers, underscores',
-                )
+                .regex(/^[A-Za-z0-9_]+$/, 'Tag can only contain letters, numbers, underscores')
                 .max(16, 'Tag must be less than 16 characters')
                 .nullable(),
         ),

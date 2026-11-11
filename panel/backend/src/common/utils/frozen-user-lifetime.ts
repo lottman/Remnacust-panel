@@ -1,4 +1,9 @@
-type Lifetime = { status: string; expireAt: Date; frozenAt?: Date | null };
+type Lifetime = {
+    status: string;
+    expireAt: Date;
+    frozenAt?: Date | null;
+    frozenUntil?: Date | null;
+};
 
 export function frozenRemainingMs(user: Lifetime): number | null {
     if (user.status !== 'FROZEN' || !user.frozenAt) return null;
@@ -7,12 +12,17 @@ export function frozenRemainingMs(user: Lifetime): number | null {
 
 export function effectiveUserExpiry(user: Lifetime, now = Date.now()): Date {
     const remaining = frozenRemainingMs(user);
-    return remaining === null ? user.expireAt : new Date(now + remaining);
+    return remaining === null
+        ? user.expireAt
+        : new Date((user.frozenUntil?.getTime() ?? now) + remaining);
 }
 
 // Frozen rows keep a virtual clock. An explicit date edit is relative to the request time.
 export function frozenDateEdit(user: Lifetime, date: Date, now = Date.now()): Date {
     return user.status === 'FROZEN' && user.frozenAt
-        ? new Date(user.frozenAt.getTime() + Math.max(0, date.getTime() - now))
+        ? new Date(
+              user.frozenAt.getTime() +
+                  Math.max(0, date.getTime() - (user.frozenUntil?.getTime() ?? now)),
+          )
         : date;
 }

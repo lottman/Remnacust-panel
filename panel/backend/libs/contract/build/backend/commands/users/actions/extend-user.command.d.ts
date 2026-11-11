@@ -2,7 +2,7 @@ import { z } from 'zod';
 export declare namespace ExtendUserCommand {
     const url: (userId: string) => string;
     const TSQ_url: string;
-    const endpointDetails: import("../../../constants").EndpointDetails;
+    const endpointDetails: import('../../../constants').EndpointDetails;
     const RequestParamSchema: z.ZodObject<{
         userId: z.ZodCoercedNumber<unknown>;
     }, z.core.$strip>;
@@ -31,6 +31,7 @@ export declare namespace ExtendUserCommand {
             }>;
             expireAt: z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>;
             frozenAt: z.ZodOptional<z.ZodNullable<z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>>>;
+            frozenUntil: z.ZodOptional<z.ZodNullable<z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>>>;
             frozenRemainingMs: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
             telegramId: z.ZodNullable<z.ZodNumber>;
             email: z.ZodNullable<z.ZodEmail>;
@@ -54,8 +55,8 @@ export declare namespace ExtendUserCommand {
                 domain: z.ZodString;
                 path: z.ZodString;
                 kind: z.ZodEnum<{
-                    CDN: "CDN";
-                    PRIMARY: "PRIMARY";
+                    PRIMARY: 'PRIMARY';
+                    CDN: 'CDN';
                 }>;
                 parentUuid: z.ZodNullable<z.ZodUUID>;
                 isDefault: z.ZodBoolean;

@@ -25,6 +25,7 @@ import {
     TrafficLimitsCard,
     UserIdentityCreationCard
 } from '@shared/ui/forms/users/forms-components'
+import { validFreezeDeadline } from '@shared/ui/forms/users/forms-components/freeze-schedule-field'
 import { UserFormLayout } from '@shared/ui/forms/users/user-form-layout'
 import { LoaderModalShared } from '@shared/ui/loader-modal'
 import { ModalFooter } from '@shared/ui/modal-footer'
@@ -98,6 +99,7 @@ export const CreateUserModal = NiceModal.create(() => {
         validate: schemaResolver(
             CreateUserCommand.RequestBodySchema.omit({
                 expireAt: true,
+                frozenUntil: true,
                 hwidDeviceLimit: true
             })
         ),
@@ -119,6 +121,10 @@ export const CreateUserModal = NiceModal.create(() => {
     })
 
     const handleSubmit = form.onSubmit(async (values) => {
+        if (values.status === 'FROZEN' && !validFreezeDeadline(values.frozenUntil)) {
+            form.setFieldError('frozenUntil', t('frozen-user.until-invalid'))
+            return
+        }
         createUser(
             {
                 variables: {
@@ -128,6 +134,7 @@ export const CreateUserModal = NiceModal.create(() => {
                     // @ts-expect-error - TODO: fix ZOD schema
                     expireAt: dayjs(values.expireAt).toISOString(),
                     status: values.status,
+                    frozenUntil: values.status === 'FROZEN' ? values.frozenUntil : undefined,
                     description: values.description,
                     // @ts-expect-error - TODO: fix ZOD schema
                     telegramId: values.telegramId === '' ? undefined : values.telegramId,

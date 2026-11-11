@@ -14,6 +14,12 @@ import { PortPlanLeaseService } from './port-plan-lease.service';
 
 const NODE_DELIVERY_ATTEMPTS = 5;
 const NODE_DELIVERY_BACKOFF_MS = 30000;
+const USER_DELIVERY_OPTIONS = {
+    attempts: NODE_DELIVERY_ATTEMPTS,
+    backoff: { type: 'fixed', delay: NODE_DELIVERY_BACKOFF_MS },
+    removeOnComplete: true,
+    removeOnFail: { count: 1000 },
+};
 import {
     IAddUsersToNodePayload,
     IAddUserToNodePayload,
@@ -141,11 +147,19 @@ export class NodesQueuesService implements OnApplicationBootstrap {
     }
 
     public async addUserToNode(payload: IAddUserToNodePayload) {
-        return this.nodeUsersQueue.add(NODES_JOB_NAMES.ADD_USER_TO_NODE, payload);
+        return this.nodeUsersQueue.add(
+            NODES_JOB_NAMES.ADD_USER_TO_NODE,
+            payload,
+            USER_DELIVERY_OPTIONS,
+        );
     }
 
     public async removeUserFromNode(payload: IRemoveUserFromNodePayload) {
-        return this.nodeUsersQueue.add(NODES_JOB_NAMES.REMOVE_USER_FROM_NODE, payload);
+        return this.nodeUsersQueue.add(
+            NODES_JOB_NAMES.REMOVE_USER_FROM_NODE,
+            payload,
+            USER_DELIVERY_OPTIONS,
+        );
     }
 
     public async removeUserFromNodeBulk(payload: IRemoveUserFromNodePayload[]) {
@@ -153,16 +167,25 @@ export class NodesQueuesService implements OnApplicationBootstrap {
             payload.map((p) => ({
                 name: NODES_JOB_NAMES.REMOVE_USER_FROM_NODE,
                 data: p,
+                opts: USER_DELIVERY_OPTIONS,
             })),
         );
     }
 
     public async addUsersToNode(payload: IAddUsersToNodePayload) {
-        return this.nodeBulkUsersQueue.add(NODES_JOB_NAMES.ADD_USERS_TO_NODE, payload);
+        return this.nodeBulkUsersQueue.add(
+            NODES_JOB_NAMES.ADD_USERS_TO_NODE,
+            payload,
+            USER_DELIVERY_OPTIONS,
+        );
     }
 
     public async removeUsersFromNode(payload: IRemoveUsersFromNodePayload) {
-        return this.nodeBulkUsersQueue.add(NODES_JOB_NAMES.REMOVE_USERS_FROM_NODE, payload);
+        return this.nodeBulkUsersQueue.add(
+            NODES_JOB_NAMES.REMOVE_USERS_FROM_NODE,
+            payload,
+            USER_DELIVERY_OPTIONS,
+        );
     }
 
     public async startAllNodesByProfile(payload: {

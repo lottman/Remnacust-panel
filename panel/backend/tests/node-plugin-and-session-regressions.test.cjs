@@ -42,12 +42,15 @@ test('queued user mutations preserve their original node UUID at dispatch', asyn
     const { NodeUsersQueueProcessor } = mocked(path.join(root, 'queue/_nodes/processors/node-users.processor.ts'), {
         '@queue/queue.enum': { QUEUES_NAMES: { NODES: { USERS: 'test' } } },
         '../constants/nodes-job-name.constant': { NODES_JOB_NAMES: { ADD_USER_TO_NODE: 'add', REMOVE_USER_FROM_NODE: 'remove' } },
+        '../user-access-delivery.service': {},
     });
     const calls = [];
     const capture = async (_data, opts) => { calls.push(opts); return { isOk: true }; };
-    const worker = new NodeUsersQueueProcessor({ addUser: capture, deleteUser: capture });
+    const delivery = { deliver: async (_node, entries, _adding, send) => send(new Set(entries.map(entry => entry.username))) };
+    const worker = new NodeUsersQueueProcessor({ addUser: capture, deleteUser: capture }, delivery);
     for (const name of ['add', 'remove']) await worker.process({ name, data: {
-        node: { uuid: nodes[0].uuid, address: 'reassigned.invalid', port: 2222, proxyUrl: null }, data: {},
+        node: { uuid: nodes[0].uuid, address: 'reassigned.invalid', port: 2222, proxyUrl: null },
+        data: { username: '1', hashData: { vlessUuid: 'test-key' }, data: [{ type: 'vless', username: '1', uuid: 'test-key', tag: 'test' }] },
     } });
     assert.equal(calls.length, 2);
     assert(calls.every(opts => opts.uuid === nodes[0].uuid && opts.address === 'reassigned.invalid'));
@@ -166,7 +169,7 @@ test('torrent reports map device credentials to their owner while preserving raw
         '../constants/users-job-name.constant': { USERS_JOB_NAMES: { FIRE_TORRENT_BLOCKER_EVENT: 'torrent' } },
     });
     const commands = [], queries = [];
-    const worker = new UserEventsQueueProcessor({ execute: async query => { queries.push(query); return { isOk: true, response: { id: query instanceof UserQuery ? query.where.id : 7n } }; } }, { execute: async command => commands.push(command) }, {}, { emit() {} }, {});
+    const worker = new UserEventsQueueProcessor({ execute: async query => { queries.push(query); return { isOk: true, response: { id: query instanceof UserQuery ? query.where.id : 7n } }; } }, { execute: async command => commands.push(command) }, { emit() {} }, {});
     for (const id of ['42', `42~${'a'.repeat(24)}`, `42~${'a'.repeat(24)}~h${'b'.repeat(32)}`]) {
         const report = { actionReport: { userId: id }, xrayReport: { email: id } };
         await worker.process({ name: 'torrent', data: { id, event: 'report', nodeUuid: 'node', report } });

@@ -9,6 +9,7 @@ import { QUEUES_NAMES } from '@queue/queue.enum';
 
 import { NODES_JOB_NAMES } from '../constants/nodes-job-name.constant';
 import { IAddUserToNodePayload, IRemoveUserFromNodePayload } from '../interfaces';
+import { UserAccessDeliveryService } from '../user-access-delivery.service';
 
 @Processor(QUEUES_NAMES.NODES.USERS, {
     concurrency: 75,
@@ -16,7 +17,10 @@ import { IAddUserToNodePayload, IRemoveUserFromNodePayload } from '../interfaces
 export class NodeUsersQueueProcessor extends WorkerHost {
     private readonly logger = new Logger(NodeUsersQueueProcessor.name);
 
-    constructor(private readonly axios: AxiosService) {
+    constructor(
+        private readonly axios: AxiosService,
+        private readonly delivery: UserAccessDeliveryService,
+    ) {
         super();
     }
 
@@ -33,51 +37,33 @@ export class NodeUsersQueueProcessor extends WorkerHost {
     }
 
     private async handleAddUserToNode(job: Job<IAddUserToNodePayload>) {
-        try {
-            const { data, node } = job.data;
-            const result = await this.axios.addUser(data, {
-                uuid: node.uuid,
-                address: node.address,
-                port: node.port,
-                proxyUrl: node.proxyUrl,
-            });
-
-            if (!result.isOk) {
-                this.logger.error(
-                    `Failed to add users to Node ${node.address}:${node.port}: ${result.message}`,
-                );
-            }
-
-            return result;
-        } catch (error) {
-            this.logger.error(`Error handling "${NODES_JOB_NAMES.ADD_USER_TO_NODE}" job: ${error}`);
-            return;
-        }
+        const { data, node } = job.data;
+        const username = data.data[0]?.username;
+        if (!username || data.data.some((item) => item.username !== username))
+            throw new Error('Invalid user delivery identity');
+        return this.delivery.deliver(
+            node,
+            [
+                {
+                    username,
+                    hashUuid: data.hashData.vlessUuid,
+                    tags: data.data.map((item) => item.tag),
+                },
+            ],
+            true,
+            () => this.axios.addUser(data, node),
+            (job.attemptsMade ?? 0) + 1 >= (job.opts?.attempts ?? 1),
+        );
     }
 
     private async handleRemoveUserFromNode(job: Job<IRemoveUserFromNodePayload>) {
-        try {
-            const { data, node } = job.data;
-
-            const result = await this.axios.deleteUser(data, {
-                uuid: node.uuid,
-                address: node.address,
-                port: node.port,
-                proxyUrl: node.proxyUrl,
-            });
-
-            if (!result.isOk) {
-                this.logger.error(
-                    `Failed to remove user from Node ${node.address}:${node.port}: ${result.message}`,
-                );
-            }
-
-            return result;
-        } catch (error) {
-            this.logger.error(
-                `Error handling "${NODES_JOB_NAMES.REMOVE_USER_FROM_NODE}" job: ${error}`,
-            );
-            return;
-        }
+        const { data, node } = job.data;
+        return this.delivery.deliver(
+            node,
+            [{ username: data.username, hashUuid: data.hashData.vlessUuid }],
+            false,
+            () => this.axios.deleteUser(data, node),
+            (job.attemptsMade ?? 0) + 1 >= (job.opts?.attempts ?? 1),
+        );
     }
 }

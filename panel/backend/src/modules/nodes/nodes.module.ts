@@ -5,6 +5,8 @@ import { AxiosModule } from '@common/axios/axios.module';
 
 import { COMMANDS } from './commands';
 import { EVENTS } from './events';
+import { AddUserToNodeHandler } from './events/add-user-to-node/add-user-to-node.handler';
+import { RemoveUserFromNodeHandler } from './events/remove-user-from-node/remove-user-from-node.handler';
 import { NodeDiagnosticsController } from './node-diagnostics.controller';
 import { NodeDiagnosticsService } from './node-diagnostics.service';
 import { NodeHealthLogService } from './node-health-log.service';
@@ -46,6 +48,12 @@ import { NodesRepository } from './repositories/nodes.repository';
         ...QUERIES,
         ...COMMANDS,
     ],
-    exports: [NodesRepository, PortPlanDispatchService, NodePortPlansService],
+    exports: [
+        NodesRepository,
+        PortPlanDispatchService,
+        NodePortPlansService,
+        AddUserToNodeHandler,
+        RemoveUserFromNodeHandler,
+    ],
 })
 export class NodesModule {}

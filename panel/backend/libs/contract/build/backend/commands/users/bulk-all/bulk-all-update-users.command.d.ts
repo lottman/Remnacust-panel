@@ -1,8 +1,8 @@
 import { z } from 'zod';
 export declare namespace BulkAllUpdateUsersCommand {
-    const url: "/api/users/bulk/all/update";
-    const TSQ_url: "/api/users/bulk/all/update";
-    const endpointDetails: import("../../../constants").EndpointDetails;
+    const url: '/api/users/bulk/all/update';
+    const TSQ_url: '/api/users/bulk/all/update';
+    const endpointDetails: import('../../../constants').EndpointDetails;
     const RequestBodySchema: z.ZodObject<{
         status: z.ZodOptional<z.ZodEnum<{
             readonly ACTIVE: 'ACTIVE';
@@ -11,6 +11,7 @@ export declare namespace BulkAllUpdateUsersCommand {
             readonly LIMITED: 'LIMITED';
             readonly EXPIRED: 'EXPIRED';
         }>>;
+        frozenUntil: z.ZodOptional<z.ZodNullable<z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>>>;
         trafficLimitBytes: z.ZodOptional<z.ZodNumber>;
         trafficLimitStrategy: z.ZodOptional<z.ZodEnum<{
             readonly NO_RESET: 'NO_RESET';

@@ -18,6 +18,7 @@ export class GetFullUserResponseModel {
 
     public readonly expireAt: Date;
     public readonly frozenAt: Date | null;
+    public readonly frozenUntil: Date | null;
     public readonly frozenRemainingMs: number | null;
 
     public readonly telegramId: number | null;
@@ -66,6 +67,7 @@ export class GetFullUserResponseModel {
 
         this.expireAt = effectiveUserExpiry(entity);
         this.frozenAt = entity.frozenAt ?? null;
+        this.frozenUntil = entity.frozenUntil ?? null;
         this.frozenRemainingMs = frozenRemainingMs(entity);
 
         this.telegramId = entity.telegramId ? Number(entity.telegramId) : null;

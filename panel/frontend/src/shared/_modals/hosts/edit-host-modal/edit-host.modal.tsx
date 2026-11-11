@@ -41,7 +41,10 @@ export const EditHostDrawer = NiceModal.create((props: IProps) => {
         isError,
         error,
         refetch
-    } = useGetHost({ route: { uuid: hostUuid }, rQueryParams: { enabled: modal.visible } })
+    } = useGetHost({
+        route: { uuid: hostUuid },
+        rQueryParams: { enabled: modal.visible, staleTime: 0 }
+    })
 
     return (
         <Drawer

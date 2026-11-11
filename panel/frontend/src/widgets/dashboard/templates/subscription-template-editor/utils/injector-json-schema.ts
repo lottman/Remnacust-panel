@@ -37,13 +37,48 @@ export function injectorJsonSchema(hostUuids: string[], descriptions: string[], 
     return {
         type: 'object',
         properties: {
+            remnacust: {
+                type: 'object',
+                additionalProperties: false,
+                properties: {
+                    geofiles: {
+                        type: 'array',
+                        maxItems: 32,
+                        items: {
+                            type: 'object',
+                            required: ['id'],
+                            additionalProperties: false,
+                            properties: {
+                                id: { type: 'string', pattern: '^[a-f0-9]{34}$' },
+                                target: { type: 'string', minLength: 1, maxLength: 255 },
+                                categories: { type: 'array', items: { type: 'string' } },
+                                downloadToClient: { type: 'boolean' },
+                                clientRefreshIntervalSeconds: {
+                                    type: 'integer',
+                                    minimum: 300,
+                                    maximum: 2592000
+                                }
+                            },
+                            if: {
+                                properties: { downloadToClient: { const: false } },
+                                required: ['downloadToClient']
+                            },
+                            else: { required: ['target'] }
+                        }
+                    }
+                }
+            },
             remnawave: {
                 type: 'object',
                 properties: {
                     assignTo: {
                         type: 'object',
                         properties: {
-                            balancerTag: { type: 'string', minLength: 1, description: i18next.t('autoselect.assigned-selection') },
+                            balancerTag: {
+                                type: 'string',
+                                minLength: 1,
+                                description: i18next.t('autoselect.assigned-selection')
+                            },
                             hosts: {
                                 type: 'array',
                                 maxItems: 10000,
@@ -62,14 +97,25 @@ export function injectorJsonSchema(hostUuids: string[], descriptions: string[], 
                         additionalProperties: false
                     },
                     assignments: {
-                        type: 'array', maxItems: 1000,
+                        type: 'array',
+                        maxItems: 1000,
                         description: i18next.t('autoselect.assignments-help'),
                         items: {
-                            type: 'object', required: ['balancerTag'], additionalProperties: false,
+                            type: 'object',
+                            required: ['balancerTag'],
+                            additionalProperties: false,
                             properties: {
                                 balancerTag: { type: 'string', minLength: 1, maxLength: 255 },
-                                hosts: { type: 'array', maxItems: 10000, items: { ...host, examples: hostUuids } },
-                                tags: { type: 'array', maxItems: 10000, items: { ...tag, examples: tags } }
+                                hosts: {
+                                    type: 'array',
+                                    maxItems: 10000,
+                                    items: { ...host, examples: hostUuids }
+                                },
+                                tags: {
+                                    type: 'array',
+                                    maxItems: 10000,
+                                    items: { ...tag, examples: tags }
+                                }
                             }
                         }
                     },
@@ -79,12 +125,20 @@ export function injectorJsonSchema(hostUuids: string[], descriptions: string[], 
                         items: {
                             type: 'object',
                             properties: {
-                                mode: { enum: ['all', 'random', 'group'], default: 'all', description: i18next.t('autoselect.mode-help') },
+                                mode: {
+                                    enum: ['all', 'random', 'group'],
+                                    default: 'all',
+                                    description: i18next.t('autoselect.mode-help')
+                                },
                                 selectFrom: {
                                     enum: ['ALL', 'HIDDEN', 'NOT_HIDDEN'],
                                     default: 'HIDDEN'
                                 },
-                                tagPrefix: { type: 'string', minLength: 1, description: i18next.t('autoselect.prefix-help') },
+                                tagPrefix: {
+                                    type: 'string',
+                                    minLength: 1,
+                                    description: i18next.t('autoselect.prefix-help')
+                                },
                                 useHostRemarkAsTag: { type: 'boolean' },
                                 useHostTagAsTag: { type: 'boolean' },
                                 selector: {

@@ -5,12 +5,17 @@ const vm = require('node:vm')
 const { test } = require('node:test')
 const ts = require('typescript')
 
+const i18n = require('i18next').createInstance()
+i18n.init({ lng: 'en', initImmediate: false, resources: Object.fromEntries(
+    ['en', 'ru', 'fa', 'zh'].map(language => [language, { translation: require(`../public/locales/${language}/remnawave.json`) }])
+) })
 const providers = new Map()
 const api = {}
 vm.runInNewContext(ts.transpileModule(fs.readFileSync(path.join(__dirname,
     '../src/shared/utils/monaco/host-hover.ts'), 'utf8'), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 }
 }).outputText, { exports: api, require(name) {
+    if (name === 'i18next') return i18n
     if (name === 'monaco-editor/editor') return {
         languages: { registerHoverProvider(language, value) {
             assert(!providers.has(language))
@@ -24,7 +29,6 @@ const uuid = '6c08d928-abfd-465f-8dc5-673e8b57a032'
 const host = { uuid, remark: 'Test server', address: 'edge.example.test', port: 443,
     sni: 'edge.example.test', path: null, host: null, tags: ['EU'], isHidden: true,
     isDisabled: false, inbound: { configProfileUuid: null, configProfileInboundUuid: null } }
-const decode = (markdown) => JSON.parse(markdown.split('\n').slice(1, -1).join('\n'))
 const at = (text, value = uuid, language = 'json') => api.hostReferenceAt(text, text.indexOf(value) + 12, language)
 
 test('all assignment, selector, group and geofile references resolve on partial JSON drafts', () => {
@@ -66,24 +70,33 @@ test('YAML scalar references work in lists and flow collections without matching
     assert.equal(at('x: ['.repeat(1000) + uuid, uuid, 'yaml'), undefined)
 })
 
-test('previews include only bounded host configuration fields and cannot escape a fenced code block', () => {
+test('previews use readable localized labels and escape host-controlled Markdown and HTML', () => {
+    for (const language of ['en', 'ru', 'fa', 'zh']) {
+        i18n.changeLanguage(language)
+        const markdown = api.hostHoverMarkdown(host)
+        assert(markdown.includes(i18n.t('editor-host-preview.address')))
+        assert(markdown.includes(i18n.t('editor-host-preview.hidden')))
+        assert(markdown.includes('443'))
+        assert(!markdown.includes('configProfileUuid'))
+        assert(!markdown.includes(host.uuid))
+        assert(!markdown.includes('```json'))
+    }
+    i18n.changeLanguage('en')
     const markdown = api.hostHoverMarkdown({ ...host,
         remark: '```\n<img src=x onerror=alert(1)>\n[run](command:evil)',
         secretKey: 'never-display', password: 'never-display',
         inbound: { ...host.inbound, privateKey: 'never-display' } })
-    assert(markdown.startsWith('````json\n'))
-    assert(markdown.endsWith('\n````'))
-    const value = decode(markdown)
-    assert.equal(value.port, 443)
-    assert.equal(value.isHidden, true)
-    assert.equal(value.remark.includes('command:evil'), true)
-    assert.equal(value.secretKey, undefined)
+    assert(!markdown.includes('<img'))
+    assert(!markdown.includes('[run]('))
     assert(!markdown.includes('never-display'))
-    const bounded = decode(api.hostHoverMarkdown({ ...host, remark: 'x'.repeat(10000),
-        tags: Array(10000).fill('x'.repeat(10000)) }))
-    assert.equal(bounded.remark.length, 512)
-    assert.equal(bounded.tags.length, 32)
-    assert.equal(bounded.tags[0].length, 128)
+    assert(!markdown.includes('\n<img'))
+    const bounded = api.hostHoverMarkdown({ ...host, remark: 'x'.repeat(10000),
+        tags: Array(10000).fill('y'.repeat(10000)) })
+    assert(bounded.includes('x'.repeat(512)))
+    assert(!bounded.includes('x'.repeat(513)))
+    assert(!bounded.includes('y'.repeat(129)))
+    assert.equal((bounded.match(/y{128}/g) || []).length, 32)
+    assert(bounded.length < 6000)
 })
 
 function model(text, language = 'json') {
@@ -104,7 +117,7 @@ test('one provider per language works on ordinary and diff models and releases d
     try {
         for (const [language, text] of [['json', `{"hosts":["${uuid}"]}`], ['yaml', `hosts: [${uuid}]`]]) {
             const result = providers.get(language).provideHover(model(text, language), {}, {})
-            assert.equal(decode(result.contents[0].value).remark, 'Test server')
+            assert(result.contents[0].value.includes('Test server'))
             assert.equal(result.contents[0].isTrusted, false)
             assert.equal(result.contents[0].supportHtml, false)
             assert.equal(result.range.values[2], 1)
@@ -119,12 +132,12 @@ test('same-version hover reuses parsing but updates metadata and rejects stale e
     const value = model(`{"hosts":["${uuid}"]}`)
     let replacement
     try {
-        assert.equal(decode(provider.provideHover(value, {}, {}).contents[0].value).remark, host.remark)
+        assert(provider.provideHover(value, {}, {}).contents[0].value.includes(host.remark))
         provider.provideHover(value, {}, {})
         assert.equal(value.reads, 1)
         replacement = api.registerHostHoverData([{ ...host, remark: 'Updated server' }])
         original()
-        assert.equal(decode(provider.provideHover(value, {}, {}).contents[0].value).remark, 'Updated server')
+        assert(provider.provideHover(value, {}, {}).contents[0].value.includes('Updated server'))
         assert.equal(provider.provideHover(value, {}, { isCancellationRequested: true }), undefined)
         assert.equal(provider.provideHover({ ...value, isDisposed: () => true }, {}, {}), undefined)
         value.replace(`{"note":"not a host ${uuid}"}`)
@@ -148,7 +161,7 @@ test('changing the model language invalidates hover parsing even without a text 
     try {
         assert.equal(provider.provideHover(value, {}, {}), undefined)
         value.setLanguage('json')
-        assert.equal(decode(provider.provideHover(value, {}, {}).contents[0].value).uuid, uuid)
+        assert(provider.provideHover(value, {}, {}).contents[0].value.includes(host.remark))
         assert.equal(value.reads, 2)
     } finally { dispose() }
 })

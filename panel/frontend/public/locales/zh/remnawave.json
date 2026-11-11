@@ -4459,7 +4459,7 @@
         "saved-help": "文本已保存到历史记录，当前可用版本未改变。请修正指出的错误后再次保存模板。",
         "applied-warning-title": "已应用，存在警告",
         "applied-warning-help": "已保存并应用。原始数值 tolerance 保留在模板与订阅 JSON 中。Xray 读取配置时将小于 0 的值限制为 0、大于 1 的值限制为 1，不会改写 JSON。",
-        "tolerance-help": "tolerance 是探测失败比例：0.01 表示 1%，1 表示 100%；0 关闭此检查。0–1 之外的有限数值可带警告保存。JSON 保留原值，Xray 读取配置时在内核中限制该值。"
+        "tolerance-help": "请输入有限数值。字符串、null 和非有限数值无效。推荐范围为 0–1：0.01 表示 1% 的探测失败。Xray 会在读取配置时限制超出范围的数值。"
     },
     "host-actions": {
         "clone-progress": "正在克隆：{{done}} / {{total}}"
@@ -4782,5 +4782,18 @@
         "DEFAULT": "没有单独关联",
         "error": "无法检查关联，请重试。错误不表示未关联模板。",
         "help": "此处显示已保存的关联。主机上指定的模板优先。标签修改保存后才会显示；响应规则及组设置可能选择其他模板。"
+    },
+    "editor-host-preview": {
+        "address": "地址",
+        "port": "端口",
+        "path": "路径",
+        "tags": "标签",
+        "visibility": "可见性",
+        "hidden": "隐藏",
+        "visible": "可见",
+        "status": "状态",
+        "disabled": "已禁用",
+        "enabled": "已启用",
+        "not-set": "未设置"
     }
 }

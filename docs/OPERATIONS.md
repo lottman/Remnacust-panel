@@ -8,7 +8,7 @@ The Autoselect tab groups each selection with its source pools and strategy. **W
 
 Pool errors identify the pool and a zero-based JSON path; clicking the path reveals the field in the code editor. Distinct prefixes such as `g` and `g-ru` are allowed. Identical prefixes and collisions with generated tags such as `g-2` must be corrected. Invalid code remains saveable as a draft and does not replace the active subscription.
 
-Xray leastLoad `tolerance` is a failed-probe fraction: 0.01 means 1%, and 1 means 100%. It is not the number of servers. Finite values outside that range follow Xray's clamp behavior and are saved with a warning.
+Xray leastLoad `tolerance` is a failed-probe fraction: 0.01 means 1%, and 1 means 100%. It is not the number of servers. Finite values outside that range follow Xray's clamp behavior and are saved without a redundant warning.
 
 Source membership is refreshed with the subscription; the client chooses among delivered members for each new connection. The separate HAProxy stable-entry workflow and installer command have been removed. Existing user-managed infrastructure is not stopped by a source update.
 
@@ -53,7 +53,7 @@ pg_restore --list database.dump
 pg_restore --file=database.sql database.dump
 ```
 
-The template editor preserves a finite numeric `leastLoad` tolerance in the saved template and subscription JSON. Xray clamps it internally when building the router settings; it does not rewrite the JSON. `0.01` means a 1% failed-probe threshold, `1` means 100%, and `0` disables this check. A saved value of `2` therefore remains `2` in the JSON while the core uses `1`. The editor warning explains that distinction.
+The template editor preserves a finite numeric `leastLoad` tolerance in the saved template and subscription JSON. Xray clamps it internally when building the router settings; it does not rewrite the JSON. `0.01` means a 1% failed-probe threshold, `1` means 100%, and `0` disables this check. A saved value of `2` therefore remains `2` in the JSON while the core uses `1`. The editor preserves this native behavior without a redundant warning; invalid types and nonfinite values remain errors.
 
 Snippet hover previews show the complete snippet JSON, including its array boundaries. Monaco's hover copy action copies that JSON without the introductory documentation or reference name. Ordinary schema documentation continues through the JSON language worker.
 

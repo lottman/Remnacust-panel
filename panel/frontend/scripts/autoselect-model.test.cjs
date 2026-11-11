@@ -37,7 +37,7 @@ test('priority configures health checks, clears the generated same-pool fallback
     assert.equal(next.routing.balancers[0].fallbackTag,undefined);
     assert.ok(next.observatory.subjectSelector.includes('p'));
     assert.equal(m.validationPath(next),null);
-    assert.deepEqual(next.routing.balancers[0].strategy.settings,{expected:2});
+    assert.equal(next.routing.balancers[0].strategy.settings,undefined);
     config.routing.balancers[0].fallbackTag='custom';
     next=m.parseTemplate(m.setBalancerStrategy(JSON.stringify(config),0,'priority'));
     assert.equal(next.routing.balancers[0].fallbackTag,'custom');
@@ -113,7 +113,7 @@ test('random and roundRobin remove their own unused probes but keep manual field
  for(const type of ['random','roundRobin']){
   const next=m.parseTemplate(m.setBalancerStrategy(JSON.stringify(base),0,type));
   assert.equal(next.burstObservatory,undefined);assert.deepEqual(next.unknown,base.unknown);
-  assert.deepEqual(next.routing.balancers[0].strategy.settings,base.routing.balancers[0].strategy.settings);
+  assert.equal(next.routing.balancers[0].strategy.settings,undefined);
  }
  const shared=structuredClone(base);shared.routing.balancers.push({tag:'b',selector:['p'],strategy:{type:'leastPing'}});
  assert.deepEqual(m.parseTemplate(m.setBalancerStrategy(JSON.stringify(shared),0,'random')).burstObservatory,shared.burstObservatory);
@@ -135,7 +135,7 @@ test('leastLoad edits preserve manual settings and validate expected/tolerance/d
  assert.equal(m.validationPath(base),null);
  const next=m.parseTemplate(m.editTemplate(JSON.stringify(base),['routing','balancers',0,'strategy','settings','expected'],3));
  assert.equal(next.routing.balancers[0].strategy.settings.expected,3);assert.deepEqual(next.routing.balancers[0].strategy.settings.costs,base.routing.balancers[0].strategy.settings.costs);
- for(const [field,value] of [['expected',-1],['expected',1.5],['tolerance',2],['maxRTT','bad'],['baselines',['no']]]){
+ for(const [field,value] of [['expected',-1],['expected',1.5],['tolerance',Infinity],['maxRTT','bad'],['baselines',['no']]]){
   const changed=structuredClone(base);changed.routing.balancers[0].strategy.settings[field]=value;
   assert.equal(m.validationPath(changed),`routing.balancers.0.strategy.settings.${field}`);
  }
@@ -227,4 +227,36 @@ test('connection selection retains every candidate and removes generation-time s
         assert.equal(converted.mode,'all');
         assert.deepEqual(converted.selector,selector,'keep the predicate and UUID boundary');
     }
+});
+
+
+test('changing a balancer strategy removes incompatible settings but preserves selectors and other balancers', () => {
+ const original={routing:{balancers:[{tag:'a',selector:['p'],fallbackTag:'manual',strategy:{type:'leastLoad',settings:{expected:2,tolerance:2,maxRTT:'5s',baselines:['1s'],costs:[{match:'p',value:1}]}}},{tag:'b',selector:['other'],strategy:{type:'leastLoad',settings:{expected:3}}}]},outbounds:[{tag:'manual',protocol:'freedom'}]};
+ for(const strategy of ['leastPing','random','roundRobin','priority']) {
+  const result=m.parseTemplate(m.setBalancerStrategy(JSON.stringify(original),0,strategy));
+  assert.equal(result.routing.balancers[0].strategy.settings,undefined);
+  assert.equal(result.routing.balancers[0].strategy.type,strategy);
+  assert.deepEqual(result.routing.balancers[0].selector,['p']);
+  assert.deepEqual(result.routing.balancers[1],original.routing.balancers[1]);
+  assert.deepEqual(result.outbounds,original.outbounds);
+ }
+ const unchanged=m.parseTemplate(m.setBalancerStrategy(JSON.stringify(original),0,'leastLoad'));
+ assert.deepEqual(unchanged.routing.balancers[0].strategy.settings,original.routing.balancers[0].strategy.settings);
+});
+
+test('finite leastLoad tolerance follows native clamping without an editor warning', () => {
+ for(const tolerance of [-1,0,0.5,1,2,1e300]) {
+  const config={routing:{balancers:[{tag:'auto',selector:['p'],strategy:{type:'leastLoad',settings:{tolerance}}}]},remnawave:{injectHosts:[{tagPrefix:'p',selector:{type:'tags',values:['EU']}}]}};
+  assert.equal(m.validationPath(config),null);
+  assert.equal(m.parseTemplate(JSON.stringify(config)).routing.balancers[0].strategy.settings.tolerance,tolerance);
+ }
+});
+
+
+test('reselecting a strategy repairs old incompatible settings without dropping roundRobin order', () => {
+ for (const strategy of ['leastPing','random','priority','roundRobin']) {
+  const source={routing:{balancers:[{tag:'auto',selector:['p'],strategy:{type:strategy,settings:{tolerance:2,expected:3,...(strategy==='roundRobin'?{remnacustOrder:['p1','p2']}:{})}}}]}};
+  const result=m.parseTemplate(m.setBalancerStrategy(JSON.stringify(source),0,strategy));
+  assert.deepEqual(result.routing.balancers[0].strategy.settings,strategy==='roundRobin'?{remnacustOrder:['p1','p2']}:undefined);
+ }
 });

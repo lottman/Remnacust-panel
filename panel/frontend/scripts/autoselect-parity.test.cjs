@@ -43,7 +43,7 @@ test('unused prefix collisions do not become duplicate outbound tags in the real
             routing: { balancers: [{ tag: 'auto', selector: ['EU', 'direct-2'],
                 strategy: { type: 'leastLoad', settings: { tolerance: 2 } } }] },
         };
-        assert.equal(m.validationPath(config), 'routing.balancers.0.strategy.settings.tolerance');
+        assert.equal(m.validationPath(config), null);
         const generated = (await xray(config))[0];
         const tags = generated.outbounds.map(outbound => outbound.tag);
         assert.deepEqual(tags, [mode === 'useHostRemarkAsTag' ? 'EU-1' : 'EU', 'direct-2', 'direct']);

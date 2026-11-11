@@ -188,10 +188,36 @@ for (const language of ['en', 'zh']) {
         assert.ok(suggestion.filterText.includes(host.uuid))
         assert.equal(suggestion.insertText, JSON.stringify(host.uuid))
         const valid = editorDocument(
-            { ...fixtures.valid.find((fixture) => fixture.editorContract).config, remnawave: {} },
+            {
+                ...fixtures.valid.find((fixture) => fixture.editorContract).config,
+                remnawave: {},
+                remnacust: {}
+            },
             uri
         )
         assert.deepEqual(await service.doValidation(valid, service.parseJSONDocument(valid)), [])
+        for (const metadata of [
+            { geofiles: [{ id: '00' + 'a'.repeat(32), target: 'DIRECT', categories: ['ru'] }] },
+            { geofiles: [{ id: '00' + 'b'.repeat(32), downloadToClient: false }] }
+        ]) {
+            const doc = editorDocument(
+                { ...fixtures.valid.find((f) => f.editorContract).config, remnacust: metadata },
+                uri
+            )
+            assert.deepEqual(await service.doValidation(doc, service.parseJSONDocument(doc)), [])
+        }
+        const invalidMetadata = editorDocument(
+            { remnacust: { geofiles: [{ id: 'bad', target: 'DIRECT' }] } },
+            uri
+        )
+        assert.ok(
+            (
+                await service.doValidation(
+                    invalidMetadata,
+                    service.parseJSONDocument(invalidMetadata)
+                )
+            ).length
+        )
         const invalid = editorDocument(
             fixtures.invalid.find((fixture) => fixture.editorContract).config,
             uri

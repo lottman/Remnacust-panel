@@ -342,9 +342,7 @@ test('unused prefixes do not block saving when host remarks or tags supply outbo
             assert.equal(result.isOk, true);
             assert.equal(result.response.draftContent, null);
             assert.deepEqual(result.response.templateJson, config);
-            assert.deepEqual(result.response.validationWarnings, [
-                'routing.balancers.0.strategy.settings.tolerance',
-            ]);
+            assert.equal(result.response.validationWarnings, undefined);
             assert.deepEqual(
                 (await f.service.getRevisions(f.current().uuid)).response.at(-1).templateJson,
                 config,
@@ -376,7 +374,7 @@ test('active prefixes still block static and pool collisions even with a nonfata
     }
 });
 
-test('finite tolerance outside the range publishes with a warning because Xray clamps it', async () => {
+test('finite tolerance outside the range publishes without a warning and preserves native clamping', async () => {
     for (const value of [2, -1]) {
         const f = fixture(),
             config = leastLoad(value);
@@ -385,9 +383,7 @@ test('finite tolerance outside the range publishes with a warning because Xray c
         assert.equal(result.isOk, true);
         assert.equal(result.response.draftContent, null);
         assert.deepEqual(result.response.templateJson, config);
-        assert.deepEqual(result.response.validationWarnings, [
-            'routing.balancers.0.strategy.settings.tolerance',
-        ]);
+        assert.equal(result.response.validationWarnings, undefined);
         assert.equal(f.invalidated.length, 1);
     }
 });
@@ -407,11 +403,11 @@ test('wrong tolerance types and nonfinite numbers remain saved drafts', async ()
     }
 });
 
-test('warning display limit cannot hide a later blocking validation failure', async () => {
+test('warning display limit never publishes a template with blocking validation failures', async () => {
     const config = leastLoad(2),
         f = fixture();
     config.routing.balancers = Array.from({ length: 21 }, (_, index) => ({
-        ...leastLoad(2).routing.balancers[0],
+        ...leastLoad('bad').routing.balancers[0],
         tag: `auto-${index}`,
     }));
     config.routing.balancers.push({ ...leastLoad('bad').routing.balancers[0], tag: 'bad' });

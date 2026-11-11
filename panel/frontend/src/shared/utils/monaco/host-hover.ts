@@ -1,5 +1,6 @@
 import type { GetHostsCommand } from '@remnawave/backend-contract'
 
+import i18next from 'i18next'
 import { getLocation } from 'jsonc-parser'
 import * as monaco from 'monaco-editor/editor'
 import { parseDocument, visit } from 'yaml'
@@ -45,11 +46,36 @@ function preview(host: HostPreview): HostPreview {
 }
 
 export function hostHoverMarkdown(host: HostPreview): string {
-    const code = JSON.stringify(preview(host), null, 2)
-    let length = 3
-    for (const [run] of code.matchAll(/`+/g)) length = Math.max(length, run.length + 1)
-    const fence = '`'.repeat(length)
-    return `${fence}json\n${code}\n${fence}`
+    const value = preview(host)
+    const escape = (text: string) =>
+        text
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/[\\`*_{}[\]()#+.!|~-]/g, '\\$&')
+            .replace(/[\r\n\t]/g, ' ')
+    const row = (label: string, text: string | number | null) =>
+        `- **${escape(label)}:** ${escape(String(text || i18next.t('editor-host-preview.not-set')))}`
+    return [
+        `**${escape(value.remark)}**`,
+        '',
+        row(i18next.t('editor-host-preview.address'), value.address),
+        row(i18next.t('editor-host-preview.port'), value.port),
+        row('SNI', value.sni),
+        row('Host', value.host),
+        row(i18next.t('editor-host-preview.path'), value.path),
+        row(i18next.t('editor-host-preview.tags'), value.tags.join(', ')),
+        row(
+            i18next.t('editor-host-preview.visibility'),
+            i18next.t(value.isHidden ? 'editor-host-preview.hidden' : 'editor-host-preview.visible')
+        ),
+        row(
+            i18next.t('editor-host-preview.status'),
+            i18next.t(
+                value.isDisabled ? 'editor-host-preview.disabled' : 'editor-host-preview.enabled'
+            )
+        )
+    ].join('\n')
 }
 
 export function registerHostHoverData(hosts: readonly HostPreview[]): () => void {

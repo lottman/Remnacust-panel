@@ -370,14 +370,17 @@ export function setBalancerStrategy(text: string, index: number, strategy: strin
     const before = parseTemplate(text)
     const oldSelectors: string[] = before.routing.balancers[index].selector ?? []
     let next = editTemplate(text, ['routing', 'balancers', index, 'strategy', 'type'], strategy)
+    const previous = before.routing.balancers[index].strategy
     if (
-        strategy !== 'roundRobin' &&
-        before.routing.balancers[index].strategy?.settings?.remnacustOrder !== undefined
+        previous?.settings !== undefined &&
+        (strategy !== 'leastLoad' || previous.type !== strategy)
     )
         next = editTemplate(
             next,
-            ['routing', 'balancers', index, 'strategy', 'settings', 'remnacustOrder'],
-            undefined
+            ['routing', 'balancers', index, 'strategy', 'settings'],
+            strategy === 'roundRobin' && previous.settings?.remnacustOrder !== undefined
+                ? { remnacustOrder: previous.settings.remnacustOrder }
+                : undefined
         )
     if (
         strategy === 'priority' &&
@@ -796,9 +799,7 @@ export function validationPath(config: JsonObject): string | null {
                 return `${path}.expected`
             if (
                 settings.tolerance !== undefined &&
-                (typeof settings.tolerance !== 'number' ||
-                    settings.tolerance < 0 ||
-                    settings.tolerance > 1)
+                (typeof settings.tolerance !== 'number' || !Number.isFinite(settings.tolerance))
             )
                 return `${path}.tolerance`
             const duration = (value: unknown) =>

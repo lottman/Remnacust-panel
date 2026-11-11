@@ -118,10 +118,7 @@ export function xrayTemplateWarnings(config: Record<string, any>): string[] {
                     warnings.push(`${path}.strategy.settings.expected`);
                 if (
                     settings.tolerance !== undefined &&
-                    (typeof settings.tolerance !== 'number' ||
-                        !Number.isFinite(settings.tolerance) ||
-                        settings.tolerance < 0 ||
-                        settings.tolerance > 1)
+                    (typeof settings.tolerance !== 'number' || !Number.isFinite(settings.tolerance))
                 )
                     warnings.push(`${path}.strategy.settings.tolerance`);
                 const duration = (value: unknown) =>

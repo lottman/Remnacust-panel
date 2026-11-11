@@ -147,7 +147,7 @@ export const configureMonaco = async (
                         : xraySchema
 
                 if (!root) throw new Error('Xray schema root is unavailable')
-                root.properties = { ...root.properties, remnawave: true }
+                root.properties = { ...root.properties, ...schema.properties }
 
                 registerJsonSchema({
                     fileMatch: [
@@ -172,7 +172,7 @@ export const configureMonaco = async (
                     ],
                     schema: {
                         ...singboxSchema,
-                        properties: { ...singboxSchema.properties, remnawave: true }
+                        properties: { ...singboxSchema.properties, ...schema.properties }
                     },
                     uri: 'https://singbox-schema.json'
                 })

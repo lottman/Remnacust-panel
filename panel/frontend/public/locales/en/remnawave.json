@@ -4459,7 +4459,7 @@
         "saved-help": "The text is saved in history. The working version is unchanged. Fix the indicated error and save the template again.",
         "applied-warning-title": "Applied with a warning",
         "applied-warning-help": "Saved and applied. The original numeric tolerance is preserved in the template and subscription JSON. When reading the configuration, Xray clamps values below 0 to 0 and above 1 to 1; it does not rewrite the JSON.",
-        "tolerance-help": "tolerance is a failed-probe fraction: 0.01 = 1%, 1 = 100%; 0 disables this check. Finite values outside 0–1 can be saved with a warning. The JSON keeps your value; Xray clamps it internally when reading the configuration."
+        "tolerance-help": "Enter a finite number. Strings, null and nonfinite values are invalid. The recommended range is 0–1: 0.01 means 1% failed probes. Xray clamps numeric values outside this range when reading the configuration."
     },
     "host-actions": {
         "clone-progress": "Cloning: {{done}} / {{total}}"
@@ -4782,5 +4782,18 @@
         "DEFAULT": "No explicit assignment",
         "error": "Could not check the assignment. Retry; an error does not mean no template is assigned.",
         "help": "These are saved assignments. A template selected on the host takes priority. Tag edits appear after saving; response rules and squad settings may select another template."
+    },
+    "editor-host-preview": {
+        "address": "Address",
+        "port": "Port",
+        "path": "Path",
+        "tags": "Tags",
+        "visibility": "Visibility",
+        "hidden": "Hidden",
+        "visible": "Visible",
+        "status": "Status",
+        "disabled": "Disabled",
+        "enabled": "Enabled",
+        "not-set": "Not set"
     }
 }

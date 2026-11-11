@@ -177,7 +177,7 @@ module.exports = async ({
     assert.equal(await allowed(alias), false);
     assert.equal(await allowed(unlimited), true);
     await prisma.$executeRawUnsafe('UPDATE hosts SET is_disabled=false WHERE uuid=$1::uuid', owner);
-    await prisma.$executeRawUnsafe("UPDATE users SET status='FROZEN' WHERE id=901");
+    await prisma.$executeRawUnsafe("UPDATE users SET status='FROZEN',frozen_until=(statement_timestamp() AT TIME ZONE 'UTC')+interval '1 day' WHERE id=901");
     assert.equal(await allowed(alias), false);
     await prisma.$executeRawUnsafe("UPDATE users SET status='ACTIVE' WHERE id=901");
     await prisma.$executeRawUnsafe(

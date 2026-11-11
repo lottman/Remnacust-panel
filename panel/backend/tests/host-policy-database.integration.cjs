@@ -333,7 +333,7 @@ async function main() {
             await prisma.$transaction(async tx => {
                 for (const status of ['FROZEN', 'LIMITED', 'DISABLED', 'EXPIRED']) {
                     await tx.$executeRawUnsafe("UPDATE users SET status='ACTIVE',expire_at=now()+interval '2 days' WHERE id=901");
-                    await tx.$executeRawUnsafe('UPDATE users SET status=$1 WHERE id=901', status);
+                    await tx.$executeRawUnsafe("UPDATE users SET status=$1::text,frozen_until=CASE WHEN $1::text='FROZEN' THEN (statement_timestamp() AT TIME ZONE 'UTC')+interval '1 day' ELSE NULL END WHERE id=901", status);
                     await tx.$executeRawUnsafe("UPDATE hosts SET always_available=true,only_when_inactive=true WHERE uuid='11111111-1111-4111-8111-111111111111'");
                     assert.equal((await tx.$queryRawUnsafe("SELECT xera_host_user_allowed(901,'11111111-1111-4111-8111-111111111111') AS allowed"))[0].allowed, true, status);
                     await tx.$executeRawUnsafe("UPDATE hosts SET always_available=false,only_when_inactive=false WHERE uuid='11111111-1111-4111-8111-111111111111'");

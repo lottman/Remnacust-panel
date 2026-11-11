@@ -115,6 +115,7 @@ test(
                     shortUuid: 'retirement-fixture',
                     expireAt: new Date('2099-01-01'),
                     status: 'FROZEN',
+                    frozenUntil: new Date('2099-01-01'),
                     frozenAt: new Date('2026-01-01'),
                     trafficLimitBytes: 123n,
                     trojanPassword: 'retained-fixture-password',

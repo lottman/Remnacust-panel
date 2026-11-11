@@ -20,10 +20,10 @@ async function main() {
         await prisma.$transaction(async tx => {
             const seed = fs.readFileSync(path.join(__dirname, 'fixtures/host-policy-seed.sql'), 'utf8').split('DO $$ BEGIN')[0].replace('BEGIN;', '');
             for (const statement of seed.split(';').filter(s => s.trim())) await tx.$executeRawUnsafe(statement);
-            await tx.$executeRawUnsafe(`INSERT INTO users(id,username,short_uuid,expire_at,trojan_password,vless_uuid,ss_password,status)
+            await tx.$executeRawUnsafe(`INSERT INTO users(id,username,short_uuid,expire_at,trojan_password,vless_uuid,ss_password,status,frozen_until)
                 SELECT 100000+n,'inbound-'||n,'inbound-'||n,now()+CASE WHEN n%7=0 THEN interval '-1 day' ELSE interval '1 day' END,
                     'test',md5(n::text)::uuid,'test',CASE n%6 WHEN 0 THEN 'ACTIVE' WHEN 1 THEN 'EXPIRED' WHEN 2 THEN 'FROZEN'
-                    WHEN 3 THEN 'DISABLED' WHEN 4 THEN 'LIMITED' ELSE 'ACTIVE' END FROM generate_series(1,5000) n`);
+                    WHEN 3 THEN 'DISABLED' WHEN 4 THEN 'LIMITED' ELSE 'ACTIVE' END, CASE WHEN n%6=2 THEN (statement_timestamp() AT TIME ZONE 'UTC')+interval '1 day' ELSE NULL END FROM generate_series(1,5000) n`);
             await tx.$executeRawUnsafe(`INSERT INTO internal_squad_members(internal_squad_uuid,user_id)
                 SELECT CASE WHEN id%9=0 THEN '22222222-aaaa-4aaa-8aaa-aaaaaaaaaaaa' ELSE '11111111-aaaa-4aaa-8aaa-aaaaaaaaaaaa' END::uuid,id
                 FROM users WHERE id>100000`);

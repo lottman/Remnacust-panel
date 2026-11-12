@@ -59,6 +59,8 @@ export function FreezeScheduleField({
             value={deadline ? dayjs(deadline).format('YYYY-MM-DD HH:mm:ss') : null}
             onChange={(next) => onChange(freezeDeadlineDate(next))}
             minDate={minimumDate}
+            defaultTimeValue={deadline ? undefined : dayjs(minimumDate).format('HH:mm:ss')}
+            timePickerProps={{ format: '24h', withDropdown: true }}
             locale={i18n.language}
             valueFormat="D MMM YYYY, HH:mm"
             dropdownType="modal"

@@ -1,4 +1,3 @@
-import { translateMutationMessage } from '@shared/utils/translate-mutation-message'
 import { notifications } from '@mantine/notifications'
 import {
     BulkAllExtendExpirationDateCommand,
@@ -23,11 +22,14 @@ import {
 } from '@remnawave/backend-contract'
 import i18next from 'i18next'
 
+import { translateMutationMessage } from '@shared/utils/translate-mutation-message'
+
 import { createMutationHook } from '../../tsq-helpers'
+import { userFreezeRequestSchema } from './user-freeze-request'
 
 export const useCreateUser = createMutationHook({
     endpoint: CreateUserCommand.TSQ_url,
-    bodySchema: CreateUserCommand.RequestBodySchema,
+    bodySchema: userFreezeRequestSchema(CreateUserCommand.RequestBodySchema),
     responseSchema: CreateUserCommand.ResponseSchema,
     requestMethod: CreateUserCommand.endpointDetails.REQUEST_METHOD,
 
@@ -54,7 +56,7 @@ export const useCreateUser = createMutationHook({
 
 export const useUpdateUser = createMutationHook({
     endpoint: UpdateUserCommand.TSQ_url,
-    bodySchema: UpdateUserCommand.RequestBodySchema,
+    bodySchema: userFreezeRequestSchema(UpdateUserCommand.RequestBodySchema),
     responseSchema: UpdateUserCommand.ResponseSchema,
     requestMethod: UpdateUserCommand.endpointDetails.REQUEST_METHOD,
     rMutationParams: {
@@ -138,10 +140,13 @@ export const useEnableUser = createMutationHook({
     rMutationParams: {
         onSuccess: (data) => {
             notifications.show({
-                title: i18next.t(data.status === 'ACTIVE' ? 'common.message.success' : 'common.message.error'),
-                message: data.status === 'ACTIVE'
-                    ? translateMutationMessage('User enabled successfully')
-                    : i18next.t('frozen-user.resumeBlocked'),
+                title: i18next.t(
+                    data.status === 'ACTIVE' ? 'common.message.success' : 'common.message.error'
+                ),
+                message:
+                    data.status === 'ACTIVE'
+                        ? translateMutationMessage('User enabled successfully')
+                        : i18next.t('frozen-user.resumeBlocked'),
                 color: data.status === 'ACTIVE' ? 'teal' : 'orange'
             })
         },
@@ -218,7 +223,7 @@ export const useBulkDeleteUsersByStatus = createMutationHook({
 
 export const useBulkUpdateUsers = createMutationHook({
     endpoint: BulkUpdateUsersCommand.TSQ_url,
-    bodySchema: BulkUpdateUsersCommand.RequestBodySchema,
+    bodySchema: userFreezeRequestSchema(BulkUpdateUsersCommand.RequestBodySchema),
     requestMethod: BulkUpdateUsersCommand.endpointDetails.REQUEST_METHOD,
     rMutationParams: {
         onSuccess: () => {
@@ -343,7 +348,7 @@ export const useBulkSetActiveInternalSquads = createMutationHook({
 
 export const useBulkAllUpdateUsers = createMutationHook({
     endpoint: BulkAllUpdateUsersCommand.TSQ_url,
-    bodySchema: BulkAllUpdateUsersCommand.RequestBodySchema,
+    bodySchema: userFreezeRequestSchema(BulkAllUpdateUsersCommand.RequestBodySchema),
     requestMethod: BulkAllUpdateUsersCommand.endpointDetails.REQUEST_METHOD,
     rMutationParams: {
         onSuccess: () => {
@@ -423,7 +428,9 @@ export const useBulkAllExtendUsersExpirationDate = createMutationHook({
         onSuccess: () => {
             notifications.show({
                 title: i18next.t('common.message.success'),
-                message: translateMutationMessage('All users expiration date extended successfully'),
+                message: translateMutationMessage(
+                    'All users expiration date extended successfully'
+                ),
                 color: 'teal'
             })
         },

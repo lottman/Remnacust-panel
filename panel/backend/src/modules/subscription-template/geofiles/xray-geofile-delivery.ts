@@ -262,14 +262,21 @@ export class XrayGeofileDelivery {
         return this.retirementHeader(profileKey, now);
     }
 
-    public retirementHeader(profileKey: string, now = Date.now()): string {
+    public retirementHeader(profileKey: string, now = Date.now(), restoreDefaults = false): string {
         this.inlineOnly = true;
         this.intervalHours = 0;
         const profile = {
             Name: this.profileName(profileKey),
             GlobalProxy: 'true',
-            Geoipurl: '',
-            Geositeurl: '',
+            Geoipurl: restoreDefaults
+                ? 'https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat'
+                : '',
+            Geositeurl: restoreDefaults
+                ? 'https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat'
+                : '',
+            ...(restoreDefaults
+                ? { [this.client === 'incy' ? 'useChunkFiles' : 'UseChunkFiles']: false }
+                : {}),
             DirectIp: [],
             DirectSites: [],
             BlockIp: [],

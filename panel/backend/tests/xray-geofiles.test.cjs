@@ -348,17 +348,10 @@ test('request-local renderer delivers Happ and INCY profiles, preserves manual h
         renderer.generateSubscription({ srrContext: ctx, user: { id: 42 }, hosts: [] });
     const happ = context('Happ/4.0.0');
     await run(happ);
-    assert.match(happ.headersToApply.routing, /^happ:\/\/routing\/onadd\//);
-    assert.equal(happ.headersToApply['routing-geo-update-interval'], undefined);
+    assert.equal(happ.headersToApply, undefined);
     const incy = context('INCY/2.4.0 (Android)');
     await run(incy);
-    assert.match(incy.headersToApply.routing, /^incy:\/\/routing\/onadd\//);
-    assert.equal(incy.headersToApply['routing-geo-update-interval'], '0');
-    const incyProfile = JSON.parse(
-        Buffer.from(incy.headersToApply.routing.slice('incy://routing/onadd/'.length), 'base64'),
-    );
-    assert.equal(incyProfile.Geositeurl, '');
-    assert.equal(incyProfile.useChunkFiles, undefined, 'Full JSON uses original geofiles');
+    assert.equal(incy.headersToApply, undefined);
     for (const where of ['customResponseHeaders', 'headersToApply']) {
         const manualInterval = context('INCY/2.4.0');
         if (where === 'customResponseHeaders')
@@ -367,8 +360,10 @@ test('request-local renderer delivers Happ and INCY profiles, preserves manual h
             };
         else manualInterval.headersToApply = { 'Routing-Geo-Update-Interval': '12' };
         await run(manualInterval);
-        assert.equal(manualInterval.headersToApply['routing-geo-update-interval'], undefined);
-        assert.match(manualInterval.headersToApply.routing, /^incy:/);
+        assert.deepEqual(
+            manualInterval.headersToApply,
+            where === 'customResponseHeaders' ? undefined : { 'Routing-Geo-Update-Interval': '12' },
+        );
     }
     for (const ua of [
         'v2rayNG/1.10.0',
@@ -401,15 +396,11 @@ test('request-local renderer delivers Happ and INCY profiles, preserves manual h
     const fallback = context('Happ/4.0.0');
     const result = await run(fallback);
     assert.match(result.subscription, /domain:example.com/);
-    assert.equal(
-        decode(fallback.headersToApply.routing).Geositeurl,
-        '',
-        'Small inline rules never request a bundle',
-    );
+    assert.equal(fallback.headersToApply, undefined, 'Fresh inline rules never request a bundle');
     failure = false;
     const later = context('Happ/4.0.0');
     await run(later);
-    assert.match(later.headersToApply.routing, /^happ:/);
+    assert.equal(later.headersToApply, undefined);
 });
 
 test('INCY compaction runs after geofile collection, including manual routing and bundle fallback', async () => {
@@ -475,17 +466,10 @@ test('INCY compaction runs after geofile collection, including manual routing an
         }
         assert.deepEqual(config.routing.rules[0].ip.split(','), networks, mode);
         assert.ok(Buffer.byteLength(JSON.stringify(config, null, 4)) < 500_000, mode);
-        if (mode === 'download')
-            assert.match(context.headersToApply.routing, /^incy:\/\/routing\/onadd\//);
+        if (mode === 'download') assert.equal(context.headersToApply, undefined);
         if (mode === 'manual') assert.deepEqual(context.headersToApply, { Routing: 'off' });
         if (mode === 'fallback') {
-            assert.equal(
-                JSON.parse(
-                    Buffer.from(context.headersToApply.routing.split('/onadd/')[1], 'base64'),
-                ).Geositeurl,
-                '',
-            );
-            assert.equal(context.headersToApply['x-remnacust-geofiles-delivery'], 'inline');
+            assert.equal(context.headersToApply, undefined);
         }
     }
 });
@@ -705,8 +689,14 @@ test('removing the last custom geofile clears only a previously issued provider 
         const cleared = decode(ctx.headersToApply.routing);
         assert.equal(cleared.Name, decode(original).Name);
         assert(Number(cleared.LastUpdated) > Number(decode(original).LastUpdated));
-        assert.equal(cleared.Geositeurl, '');
-        assert.equal(cleared.Geoipurl, '');
+        assert.equal(
+            cleared.Geositeurl,
+            'https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat',
+        );
+        assert.equal(
+            cleared.Geoipurl,
+            'https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat',
+        );
         for (const key of [
             'DirectSites',
             'DirectIp',

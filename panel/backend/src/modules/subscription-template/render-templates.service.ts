@@ -233,7 +233,7 @@ export class RenderTemplatesService {
                     generate,
                 });
                 const retiring =
-                    !output.header &&
+                    output.inline &&
                     client &&
                     !hasRouting &&
                     output.subscription &&
@@ -245,7 +245,7 @@ export class RenderTemplatesService {
                         client,
                         'inline',
                         params.profileTitle ?? 'Subscription',
-                    ).retirementHeader(params.profileKey ?? String(user.id));
+                    ).retirementHeader(params.profileKey ?? String(user.id), Date.now(), true);
                     output.intervalHours = 0;
                 }
                 const routing = output.header

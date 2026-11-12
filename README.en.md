@@ -2,7 +2,7 @@
 
 Configure the inline threshold under Geofiles: 1–250,000 addresses/conditions, default 20,000. Size and complexity safeguards remain and may switch delivery to DAT before the configured threshold. Manual Xray settings remain intact when automatic geofile delivery is disabled.
 
-Release **Panel/Page 1.1.7.118** belongs to Installer bundle **1.2.166**, with Node **1.1.31** and Core/WASM **1.1.19**. [Changes in this release](docs/releases/1.1.7.118.md). Installed servers require a separate update.
+Release **Panel/Page 1.1.7.119** belongs to Installer bundle **1.2.167**, with Node **1.1.31** and Core/WASM **1.1.19**. [Changes in this release](docs/releases/1.1.7.119.md). Installed servers require a separate update.
 
 
 [Русский](README.md) · [English](README.en.md)
@@ -39,8 +39,8 @@ Matching bundle as of **November 11, 2026**. Components use separate version num
 
 | Component | Current stable release |
 | --- | --- |
-| Panel and subscription website | [1.1.7.118](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.118) |
-| Installer / Docker bundle | [1.2.166](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.166) |
+| Panel and subscription website | [1.1.7.119](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.119) |
+| Installer / Docker bundle | [1.2.167](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.167) |
 | Node agent | [1.1.31](https://github.com/lottman/Remnacust-node/releases/tag/v1.1.31) |
 | Core / editor validator | [1.1.19](https://github.com/lottman/Remnacust-core/releases/tag/v1.1.19), Xray v26.11.9 |
 
@@ -60,9 +60,9 @@ When sharing a server, leave headroom for all components. Panel/node requirement
 
 | Software | Requirement |
 | --- | --- |
-| Installer 1.2.161 OS | Ubuntu 22.04 / 24.04 / 26.04 LTS and Debian 12 / 13; Linux amd64 or arm64 |
+| Installer 1.2.167 OS | Ubuntu 22.04 / 24.04 / 26.04 LTS and Debian 12 / 13; Linux amd64 or arm64 |
 | Containers | Docker Engine with a current Docker Compose v2 plugin; legacy `docker-compose` v1 is unsupported |
-| PostgreSQL | 14.24 / 15.19 / 16.15 / 17.11 / 18.6; 202 migrations; validation scope is listed in Compatibility |
+| PostgreSQL | 14.24 / 15.19 / 16.15 / 17.11 / 18.6; 204 migrations; validation scope is listed in Compatibility |
 | Prebuilt-image installation | Root, APT and GitHub/GHCR access, working DNS; no host Node.js or Go needed |
 | Building from source | Node.js 26.13 LTS; Go 1.27.4 separately for Core/editor |
 

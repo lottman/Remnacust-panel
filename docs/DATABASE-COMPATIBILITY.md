@@ -2,6 +2,10 @@
 
 ## Версии PostgreSQL и обновление
 
+Новые установки через Installer **1.2.166** используют PostgreSQL **18.6** с [исправлениями безопасности](https://www.postgresql.org/support/security/). Обновление панели сохраняет существующий образ БД и её том. Обновляйте БД отдельно после резервного копирования, в пределах текущей основной версии; смена основной версии требует переноса данных.
+
+Fresh installations with Installer **1.2.166** use PostgreSQL **18.6** with security fixes. Panel upgrades preserve the existing database image and volume. Back up and update the database separately within its current major version; changing major versions requires a data migration.
+
 Panel **1.1.7.112**: все **202 миграции** проверены на PostgreSQL **14.24 / 15.19 / 16.15 / 17.11 / 18.6** под ролью без superuser. На каждой версии проверены перенос GEO на отдельные шаблоны, сохранение старого состояния, новые шаблоны с выключенными GEO, блокировка глобальных изменений и конкурирующего отключения JSON, commit/rollback и поколение кэша. [Матрица CI](https://github.com/lottman/Remnacust-panel/actions/runs/42832489208). Это проверка тестовых баз, а не базы установленного сервера.
 
 Panel **1.1.7.100** проверена на PostgreSQL **14.24, 15.19, 16.15, 17.11 и 18.6**: все 196 миграций применены под владельцем базы без superuser. Для текущего драйвера проверено преобразование дат и часовых поясов; обновление панели не меняет major-версию PostgreSQL автоматически.

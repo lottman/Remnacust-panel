@@ -17,7 +17,7 @@ import { useTranslation } from 'react-i18next'
 import { PiCalendarDuotone } from 'react-icons/pi'
 import { TbShield, TbWebhook } from 'react-icons/tb'
 
-import { instance } from '@shared/api/axios'
+import { subscriptionDomainItemsQuery } from '@shared/api/hooks/subscription-domains'
 import { useUiText } from '@shared/i18n/interface-text'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SectionCard } from '@shared/ui/section-card'
@@ -36,15 +36,6 @@ interface IProps<T extends CreateUserCommand.RequestBody | UpdateUserCommand.Req
     motionWrapper: ForwardRefComponent<HTMLDivElement, HTMLMotionProps<'div'>>
 }
 
-type SubscriptionDomain = {
-    uuid: string
-    name: string
-    domain: string
-    path: string
-    kind: 'PRIMARY' | 'CDN'
-    isDefault: boolean
-}
-
 export const AccessSettingsCard = <
     T extends CreateUserCommand.RequestBody | UpdateUserCommand.RequestBody
 >(
@@ -59,13 +50,7 @@ export const AccessSettingsCard = <
 
     const [searchQuery, setSearchQuery] = useState('')
     const [localExpireAt, setLocalExpireAt] = useState<Date | undefined>(undefined)
-    const subscriptionDomains = useQuery({
-        queryKey: ['subscription-domains'],
-        queryFn: async () =>
-            (await instance.get<{ response: SubscriptionDomain[] }>('/api/subscription-domains'))
-                .data.response,
-        staleTime: 30_000
-    })
+    const subscriptionDomains = useQuery(subscriptionDomainItemsQuery())
 
     const MotionWrapper = motionWrapper
     const [selectedStatus, setSelectedStatus] = useState(form.getValues().status)

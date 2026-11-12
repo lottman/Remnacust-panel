@@ -41,6 +41,11 @@ test('all configured editor URLs use their asset content version', () => {
     })) {
         assert.equal(app.configEditor[key], `/assets/${name}?v=${versions[name]}`)
     }
+    for (const [key, name] of Object.entries({
+        singboxJsonSchemaUrl: 'singbox.schema.json',
+        mihomoYamlSchemaUrl: 'mihomo.schema.json'
+    }))
+        assert.equal(app.templateEditor[key], `/assets/${name}?v=${versions[name]}`)
     mode = 'default'
     for (const [key, name] of Object.entries({
         wasmUrl: 'default.wasm',

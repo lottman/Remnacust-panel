@@ -10,6 +10,12 @@ const { CanceledError } = require('axios')
 const directory = path.join(__dirname, '../src/widgets/dashboard/subscription-settings/settings')
 const tick = () => new Promise(resolve => setImmediate(resolve))
 function load(file, mocks) {
+    if (file === 'subscription-domains.widget.tsx') {
+        mocks = { ...mocks, '@shared/api/hooks/subscription-domains': load(
+            '../../../../shared/api/hooks/subscription-domains.ts',
+            { '@shared/api/axios': mocks['@shared/api/axios'] }
+        ) }
+    }
     const ref = { exports: {} }
     const code = ts.transpileModule(fs.readFileSync(path.join(directory, file), 'utf8'), {
         compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX }

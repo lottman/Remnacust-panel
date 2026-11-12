@@ -6,7 +6,6 @@ import {
     SUBSCRIPTION_TEMPLATE_TYPE,
     TSubscriptionTemplateType
 } from '@remnawave/backend-contract'
-import axios from 'axios'
 import consola from 'consola'
 import i18next from 'i18next'
 import { getLocation } from 'jsonc-parser'
@@ -160,10 +159,9 @@ export const configureMonaco = async (
             }
 
             if (templateType === SUBSCRIPTION_TEMPLATE_TYPE.SINGBOX) {
-                const response = await axios.get<IJsonSchemaDocument>(
+                const singboxSchema = await loadEditorSchema<IJsonSchemaDocument>(
                     app.templateEditor.singboxJsonSchemaUrl
                 )
-                const singboxSchema = response.data
 
                 registerJsonSchema({
                     fileMatch: [

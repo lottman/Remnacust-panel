@@ -25,29 +25,18 @@ import { useTranslation } from 'react-i18next'
 import { TbCheck, TbCopy, TbEdit, TbPlus, TbTrash, TbWorld, TbLink } from 'react-icons/tb'
 
 import { instance } from '@shared/api/axios'
+import {
+    type SubscriptionDomain,
+    subscriptionDomainsKey,
+    subscriptionDomainsQuery
+} from '@shared/api/hooks/subscription-domains'
 import { SectionCard } from '@shared/ui/section-card'
 import { SettingsCardShared } from '@shared/ui/settings-card'
 
 import { cdnCredentialsQuery, type CdnCredentialsSession } from './subscription-domain-credentials'
 import { cdnSubscriptionLink } from './subscription-domain-link'
 
-type DomainKind = 'PRIMARY' | 'CDN'
-type DomainEnvironmentStatus = 'synced' | 'unavailable' | 'invalid' | 'conflict'
-type SubscriptionDomain = {
-    uuid: string
-    name: string
-    domain: string
-    path: string
-    kind: DomainKind
-    parentUuid: string | null
-    isDefault: boolean
-    accessMode: 'OPEN' | 'CDN_ONLY' | 'REDIRECT' | 'BLOCKED'
-    redirectDomainUuid: string | null
-    usersCount: number
-    aliasesCount: number
-    publicBaseUrl: string
-    requestHeaderName: string | null
-}
+type DomainKind = SubscriptionDomain['kind']
 
 type DomainForm = {
     name: string
@@ -60,7 +49,7 @@ type DomainForm = {
     redirectDomainUuid: string | null
 }
 
-const queryKey = ['subscription-domains'] as const
+const queryKey = subscriptionDomainsKey
 
 const emptyForm: DomainForm = {
     name: '',
@@ -84,18 +73,7 @@ export function SubscriptionDomainsWidget() {
     const [existingLink, setExistingLink] = useState('')
     const [removeTarget, setRemoveTarget] = useState<SubscriptionDomain | null>(null)
     const form = useForm<DomainForm>({ initialValues: emptyForm })
-    const domains = useQuery({
-        queryKey,
-        queryFn: async () =>
-            (
-                await instance.get<{
-                    response: SubscriptionDomain[]
-                    environment?: DomainEnvironmentStatus
-                }>('/api/subscription-domains')
-            ).data,
-        staleTime: 15_000,
-        refetchOnWindowFocus: 'always'
-    })
+    const domains = useQuery(subscriptionDomainsQuery())
     const credentialsOptions = cdnCredentialsQuery(setupDomain)
     const credentials = useQuery(credentialsOptions)
     const save = useMutation({

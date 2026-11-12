@@ -54,7 +54,9 @@ function harness(language = 'en') {
                 return JSON.parse(
                     readFileSync(
                         new URL(
-                            `../public/assets/xray.schema${url === '/zh.json' ? '.cn' : ''}.json`,
+                            url === '/singbox.json'
+                                ? '../public/assets/singbox.schema.json'
+                                : `../public/assets/xray.schema${url === '/zh.json' ? '.cn' : ''}.json`,
                             import.meta.url
                         ),
                         'utf8'
@@ -64,8 +66,7 @@ function harness(language = 'en') {
         },
         i18next: { language, t: (value) => value },
         consola: { error: (...args) => errors.push(args) },
-        'monaco-yaml': {},
-        axios: { get: async () => ({ data: { type: 'object' } }) }
+        'monaco-yaml': {}
     })
     const monaco = {
         languages: {
@@ -230,7 +231,7 @@ test('non-Xray JSON editors do not load or register the Xray transport schema', 
     const h = harness()
     await h.setup.configureMonaco(h.monaco, 'json', [], 'SINGBOX')
     assert.deepEqual(h.errors, [])
-    assert.deepEqual(h.requests, [])
+    assert.deepEqual(h.requests, ['/singbox.json'])
     assert.ok(h.registrations.some((item) => item.uri === 'https://singbox-schema.json'))
     assert.ok(!h.registrations.some((item) => item.uri.includes('xray-schema')))
 })

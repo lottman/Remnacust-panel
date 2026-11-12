@@ -1,12 +1,15 @@
 import { selectedXrayMode } from './shared/api/hooks/xray-mode'
 
+const editorAsset = (name: string) => `/assets/${name}?v=${__EDITOR_ASSET_VERSIONS__[name]}`
+
 export function configEditorAssetUrls(mode: 'custom' | 'default') {
-    const asset = (name: string) => `/assets/${name}?v=${__EDITOR_ASSET_VERSIONS__[name]}`
     return {
-        wasmUrl: asset(mode === 'default' ? 'default.wasm' : 'main.wasm'),
-        wasmJsUrl: asset('wasm_exec.js'),
-        jsonSchemaUrl: asset(mode === 'default' ? 'xray.default.schema.json' : 'xray.schema.json'),
-        jsonSchemaCnUrl: asset(
+        wasmUrl: editorAsset(mode === 'default' ? 'default.wasm' : 'main.wasm'),
+        wasmJsUrl: editorAsset('wasm_exec.js'),
+        jsonSchemaUrl: editorAsset(
+            mode === 'default' ? 'xray.default.schema.json' : 'xray.schema.json'
+        ),
+        jsonSchemaCnUrl: editorAsset(
             mode === 'default' ? 'xray.default.schema.cn.json' : 'xray.schema.cn.json'
         )
     }
@@ -32,7 +35,7 @@ export const app = {
         }
     },
     templateEditor: {
-        singboxJsonSchemaUrl: '/assets/singbox.schema.json',
-        mihomoYamlSchemaUrl: '/assets/mihomo.schema.json'
+        singboxJsonSchemaUrl: editorAsset('singbox.schema.json'),
+        mihomoYamlSchemaUrl: editorAsset('mihomo.schema.json')
     }
 }

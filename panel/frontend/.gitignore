@@ -155,6 +155,12 @@ public/assets/**
 !public/assets/xray.default.schema.json
 !public/assets/xray.default.schema.cn.json
 !public/assets/xray.default.provenance.json
+!public/assets/mihomo.schema.json
+!public/assets/singbox.schema.json
+!public/assets/template-schemas.provenance.json
+!public/assets/schema-licenses/
+!public/assets/schema-licenses/meta-json-schema.MIT.txt
+!public/assets/schema-licenses/sing-box.GPL-3.0.txt
 
 # Temporary design exports
 .superdesign/tmp/

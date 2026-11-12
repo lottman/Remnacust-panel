@@ -36,6 +36,7 @@ export const ConfigProfilesHeaderActionButtonsFeature = (props: IProps) => {
             <ActionIconGroup>
                 <Tooltip label={t('snippets.drawer.widget.snippets')} withArrow>
                     <ActionIcon
+                        aria-label={t('snippets.drawer.widget.snippets')}
                         color="teal"
                         onClick={() => showModal('snippets_snippetsModal')}
                         size="input-md"
@@ -62,6 +63,7 @@ export const ConfigProfilesHeaderActionButtonsFeature = (props: IProps) => {
             <ActionIconGroup>
                 <Tooltip label={t('common.action.create')} withArrow>
                     <ActionIcon
+                        aria-label={t('common.action.create')}
                         color="teal"
                         onClick={() =>
                             showModal('createModal', {

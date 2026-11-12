@@ -9,7 +9,10 @@ export const EDITOR_ASSETS = [
     'default.wasm',
     'xray.default.schema.json',
     'xray.default.schema.cn.json',
-    'xray.default.provenance.json'
+    'xray.default.provenance.json',
+    'mihomo.schema.json',
+    'singbox.schema.json',
+    'template-schemas.provenance.json'
 ]
 
 export function editorAssetVersions(

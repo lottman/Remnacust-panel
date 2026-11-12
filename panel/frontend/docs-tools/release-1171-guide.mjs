@@ -12,20 +12,67 @@ const apply = [
     '数据库保存与节点应用是两个步骤。进入队列的提示只表示任务已提交，请在节点状态和日志中检查结果。入队失败时配置仍已保存，面板会显示警告。保存期间的新修改保留在编辑器中。制作独立版本前先克隆配置。'
 ]
 const postStart = [
-    ['После запуска ядра', 'В JSON плагина раздел postStart запускает включённые действия после старта или перезапуска Xray. Чтобы отправлять уведомление, включите postStart.enabled и postStart.webhook.enabled и укажите webhook.url. Нода отправит POST с событием service.core_started, временем и своими метаданными. Запрос выполняется в фоне с таймаутом 5 секунд; ошибка доставки записывается в журнал и не останавливает работающий Xray. Проверяйте адрес получателя перед включением.'],
-    ['After core startup', 'The postStart section in plugin JSON runs enabled actions after Xray starts or restarts. To send a notification, enable postStart.enabled and postStart.webhook.enabled and set webhook.url. The node sends a POST containing service.core_started, a timestamp and its metadata. Delivery runs in the background with a five-second timeout; failures are logged without stopping Xray. Verify the destination before enabling it.'],
-    ['پس از شروع هسته', 'بخش postStart در JSON افزونه، کارهای فعال را پس از شروع یا راه‌اندازی دوباره Xray اجرا می‌کند. برای اعلان، postStart.enabled و postStart.webhook.enabled را روشن و webhook.url را تنظیم کنید. نود درخواست POST با رویداد service.core_started، زمان و اطلاعات خود می‌فرستد. ارسال در پس‌زمینه با مهلت ۵ ثانیه است؛ خطای تحویل ثبت می‌شود و Xray را متوقف نمی‌کند. پیش از فعال‌سازی، آدرس مقصد را بررسی کنید.'],
-    ['内核启动后', '插件 JSON 的 postStart 在 Xray 启动或重启后执行已启用操作。要发送通知，启用 postStart.enabled 和 postStart.webhook.enabled，并填写 webhook.url。节点发送包含 service.core_started、时间和节点元数据的 POST。请求在后台执行，超时为 5 秒；发送失败只记录日志，不停止 Xray。启用前核对接收地址。']
+    [
+        'После запуска ядра',
+        'В JSON плагина раздел postStart запускает включённые действия после старта или перезапуска Xray. Чтобы отправлять уведомление, включите postStart.enabled и postStart.webhook.enabled и укажите webhook.url. Нода отправит POST с событием service.core_started, временем и своими метаданными. Запрос выполняется в фоне с таймаутом 5 секунд; ошибка доставки записывается в журнал и не останавливает работающий Xray. Проверяйте адрес получателя перед включением.'
+    ],
+    [
+        'After core startup',
+        'The postStart section in plugin JSON runs enabled actions after Xray starts or restarts. To send a notification, enable postStart.enabled and postStart.webhook.enabled and set webhook.url. The node sends a POST containing service.core_started, a timestamp and its metadata. Delivery runs in the background with a five-second timeout; failures are logged without stopping Xray. Verify the destination before enabling it.'
+    ],
+    [
+        'پس از شروع هسته',
+        'بخش postStart در JSON افزونه، کارهای فعال را پس از شروع یا راه‌اندازی دوباره Xray اجرا می‌کند. برای اعلان، postStart.enabled و postStart.webhook.enabled را روشن و webhook.url را تنظیم کنید. نود درخواست POST با رویداد service.core_started، زمان و اطلاعات خود می‌فرستد. ارسال در پس‌زمینه با مهلت ۵ ثانیه است؛ خطای تحویل ثبت می‌شود و Xray را متوقف نمی‌کند. پیش از فعال‌سازی، آدرس مقصد را بررسی کنید.'
+    ],
+    [
+        '内核启动后',
+        '插件 JSON 的 postStart 在 Xray 启动或重启后执行已启用操作。要发送通知，启用 postStart.enabled 和 postStart.webhook.enabled，并填写 webhook.url。节点发送包含 service.core_started、时间和节点元数据的 POST。请求在后台执行，超时为 5 秒；发送失败只记录日志，不停止 Xray。启用前核对接收地址。'
+    ]
 ]
+const templateEditors = [
+    [
+        'Редакторы шаблонов',
+        'В шаблонах Mihomo и sing-box работают подсказки полей и проверка структуры. Для подсказок не требуется доступ браузера к сторонним сайтам. Поддержка отдельных настроек зависит от версии ядра клиентского приложения: проверяйте итоговый профиль в приложении. Подсказки редактора не подтверждают доступность сервера или успешный запуск VPN.'
+    ],
+    [
+        'Template editors',
+        'Mihomo and sing-box templates provide field completion and structural validation without requiring the browser to reach third-party websites. Individual settings depend on the client application’s core version; check the rendered profile in that application. Editor assistance does not confirm server availability or a successful VPN connection.'
+    ],
+    [
+        'ویرایشگرهای قالب',
+        'قالب‌های Mihomo و sing-box پیشنهاد فیلد و بررسی ساختار دارند و مرورگر برای این راهنما به سایت‌های دیگر نیاز ندارد. پشتیبانی هر تنظیم به نسخه هسته برنامه کاربر بستگی دارد؛ پروفایل نهایی را در همان برنامه بررسی کنید. راهنمای ویرایشگر تأیید دسترسی سرور یا اتصال موفق VPN نیست.'
+    ],
+    [
+        '模板编辑器',
+        'Mihomo 和 sing-box 模板提供字段补全与结构检查，浏览器无需访问第三方网站。具体设置是否受支持取决于客户端应用的内核版本，请在该应用中检查最终配置。编辑器提示不代表服务器可用或 VPN 已成功连接。'
+    ]
+]
+
 export function explainRelease1171(articles) {
-    const editor = articles.find(article => article.id === 'xray-editor')
+    const editor = articles.find((article) => article.id === 'xray-editor')
     for (const [index, language] of languages.entries()) {
-        editor.sections.find(section => section.id === 'xray-editor-3')[language].body = saved[index]
-        editor.sections.find(section => section.id === 'xray-editor-4')[language].body = apply[index]
+        editor.sections.find((section) => section.id === 'xray-editor-3')[language].body =
+            saved[index]
+        editor.sections.find((section) => section.id === 'xray-editor-4')[language].body =
+            apply[index]
     }
-    const plugins = articles.find(article => article.id === 'node-plugins')
+    const plugins = articles.find((article) => article.id === 'node-plugins')
+    editor.sections.push({
+        id: 'template-editors-assistance',
+        ...Object.fromEntries(
+            languages.map((language, index) => [
+                language,
+                { title: templateEditors[index][0], body: templateEditors[index][1] }
+            ])
+        )
+    })
     plugins.sections.push({
         id: 'node-plugins-post-start',
-        ...Object.fromEntries(languages.map((language, index) => [language, { title: postStart[index][0], body: postStart[index][1] }]))
+        ...Object.fromEntries(
+            languages.map((language, index) => [
+                language,
+                { title: postStart[index][0], body: postStart[index][1] }
+            ])
+        )
     })
 }

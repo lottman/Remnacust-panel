@@ -47,6 +47,7 @@ export const InternalSquadsHeaderActionButtonsFeature = (props: IProps) => {
             <ActionIconGroup>
                 <Tooltip label={t('common.action.create')} withArrow>
                     <ActionIcon
+                        aria-label={t('common.action.create')}
                         color="teal"
                         onClick={() =>
                             showModal('createModal', {

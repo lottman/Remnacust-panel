@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { TbWorld } from 'react-icons/tb'
 
 import { instance } from '@shared/api/axios'
+import { subscriptionDomainsKey } from '@shared/api/hooks/subscription-domains'
 import { MaintenanceLogDownload } from '@shared/ui/panel-update-gate/maintenance-log-download'
 import { SectionCard } from '@shared/ui/section-card'
 import { SettingsCardShared } from '@shared/ui/settings-card'
@@ -83,7 +84,7 @@ function ManagedSubscriptionPagesWidget() {
                         loading={query.isFetching}
                         onClick={() => {
                             void query.refetch()
-                            void cache.invalidateQueries({ queryKey: ['subscription-domains'] })
+                            void cache.invalidateQueries({ queryKey: subscriptionDomainsKey })
                         }}
                     >
                         {t('subscription-pages.refresh')}

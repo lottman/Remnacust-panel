@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "files": {
+    "mihomo.schema.json": {
+      "package": "meta-json-schema@1.19.33",
+      "url": "https://registry.npmjs.org/meta-json-schema/-/meta-json-schema-1.19.33.tgz",
+      "integrity": "sha512-xNjwPSo4MB8LRh0nraZ3bcbuXdzaGk4ME8piYPBW/JuwBWAd2vLF4puiaIadr2KgSYtwlHmog/en4RtGqzE+hQ==",
+      "sha256": "6bd95d7aca338ce80f6b4adf931190b970d1acba35bb0f68d34a528aef28da66",
+      "license": "schema-licenses/meta-json-schema.MIT.txt"
+    },
+    "singbox.schema.json": {
+      "package": "SagerNet/sing-box@v1.14.4",
+      "commit": "c005f35300ce76427dc285481ec5695f5b179cd2",
+      "url": "https://raw.githubusercontent.com/SagerNet/sing-box/c005f35300ce76427dc285481ec5695f5b179cd2/docs/schema.json",
+      "sha256": "32f7598b8428276c5d358fd385942fa54dbe099055974120912b93626accbfd9",
+      "license": "schema-licenses/sing-box.GPL-3.0.txt"
+    }
+  }
+}

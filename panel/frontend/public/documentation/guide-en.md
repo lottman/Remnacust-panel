@@ -496,6 +496,10 @@ Database persistence and node application are separate steps. A queued message m
 
 The X25519 tab in Tools shows password, publicKey and privateKey with separate copy buttons. password and publicKey contain the same public key; the names are used by different versions and clients. Set the private key on the REALITY server and the public key in the field supported by the client. All values copies the three fields. Generating updates them together without changing the saved profile.
 
+### Template editors
+
+Mihomo and sing-box templates provide field completion and structural validation without requiring the browser to reach third-party websites. Individual settings depend on the client application’s core version; check the rendered profile in that application. Editor assistance does not confirm server availability or a successful VPN connection.
+
 ## Xera HTTP transport
 
 ### Origin and place in a connection

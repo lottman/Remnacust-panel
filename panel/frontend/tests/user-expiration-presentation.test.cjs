@@ -51,6 +51,9 @@ for (const language of ['ru', 'en', 'fa', 'zh']) {
             './freeze-schedule-field': freezeSchedule,
             '@widgets/dashboard/users/internal-squads-list': { InternalSquadsListWidget: () => null },
             '@shared/api/axios': { instance: { get() { throw Error('render must not request domains'); } } },
+            '@shared/api/hooks/subscription-domains': load(path.join(__dirname, '../src/shared/api/hooks/subscription-domains.ts'), {
+                '@shared/api/axios': { instance: { get() { throw Error('render must not request domains'); } } }
+            }),
             '@shared/i18n/interface-text': { useUiText: () => key => key },
             '@shared/ui/overlays/base-overlay-header': { BaseOverlayHeader: () => null },
             '@shared/ui/section-card': { SectionCard: { Root: Container, Section: Container } },

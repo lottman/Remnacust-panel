@@ -191,8 +191,7 @@ export const NodesConfigProfilesDrawer = NiceModal.create((props: IProps) => {
                                     <Text fw={700} size="sm">
                                         {filteredProfiles.find(
                                             (p) => p.uuid === selectedProfileUuid
-                                        )?.name ||
-                                            t('common.message.no-profile-selected')}
+                                        )?.name || t('common.message.no-profile-selected')}
                                     </Text>
                                     <Text c="dimmed" size="xs">
                                         {t('internal-squads.drawer.widget.selected-inbounds', {
@@ -214,6 +213,7 @@ export const NodesConfigProfilesDrawer = NiceModal.create((props: IProps) => {
 
                         <Group gap="xs" wrap="nowrap">
                             <ActionIcon
+                                aria-label={t('common.action.clear')}
                                 color="red"
                                 disabled={selectedInbounds.size === 0}
                                 onClick={clearSelection}
@@ -225,6 +225,7 @@ export const NodesConfigProfilesDrawer = NiceModal.create((props: IProps) => {
 
                             <Tooltip label={t('common.action.save')}>
                                 <ActionIcon
+                                    aria-label={t('common.action.save')}
                                     color="teal"
                                     disabled={selectedInbounds.size === 0}
                                     onClick={handleSaveInbounds}

@@ -6,3 +6,5 @@ Upstream source: https://github.com/remnawave/backend, https://github.com/remnaw
 
 The subscription page derives from https://github.com/remnawave/subscription-page (8.0.0), under AGPL-3.0. Its original LICENCE and author notices are retained.
 
+The template editor bundles meta-json-schema 1.19.33 (MIT) and the JSON schema from SagerNet/sing-box v1.14.4 (GPL-3.0). Immutable sources, content hashes and the original licenses are included in `panel/frontend/public/assets/template-schemas.provenance.json` and `panel/frontend/public/assets/schema-licenses/`. These schemas provide editor assistance; client applications may use different core versions.
+

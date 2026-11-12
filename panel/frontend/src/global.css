@@ -439,15 +439,7 @@ body {
 .monaco-editor {
     border-radius: var(--mantine-radius-default);
 }
-.monaco-editor .suggest-widget .monaco-list-row.focused {
-    background: color-mix(
-        in srgb,
-        var(--panel-accent, #54aeff) 30%,
-        var(--panel-elevated, #1c2128)
-    ) !important;
-    color: var(--panel-text, #ffffff) !important;
-    box-shadow: inset 3px 0 0 var(--panel-accent, #54aeff);
-}
+
 .overflow-guard {
     border-radius: var(--mantine-radius-default);
 }

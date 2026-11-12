@@ -2,7 +2,7 @@ import { TCustomRemarks } from '@libs/contracts/models/subscription-settings/cus
 
 export type TCombinedRemarkStatus = 'EXPIRED' | 'DISABLED' | 'FROZEN' | 'HWID_BLOCKED';
 
-const DEFAULT_ORDER: TCombinedRemarkStatus[] = ['EXPIRED', 'DISABLED', 'FROZEN', 'HWID_BLOCKED'];
+const DEFAULT_ORDER: TCombinedRemarkStatus[] = ['EXPIRED', 'HWID_BLOCKED', 'DISABLED', 'FROZEN'];
 
 export function composeStatusAndHwidRemarks(
     status: 'EXPIRED' | 'DISABLED' | 'FROZEN' | null,

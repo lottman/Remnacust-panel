@@ -84,3 +84,15 @@ test('inactive status never disguises a device limit or unsupported HWID as an e
         }
     }
 });
+
+
+test('default priority matches UI and preserves explicit saved orders', () => {
+    const remarks = schema.CustomRemarksSchema.parse(schema.DEFAULT_SUBSCRIPTION_REMARKS);
+    assert.deepEqual(remarks.subscriptionAndHwidRemarkOrder, ['EXPIRED', 'HWID_REGISTRATION_BLOCKED', 'HWID_BLOCKED', 'DISABLED', 'FROZEN']);
+    for (const settings of [schema.DEFAULT_SUBSCRIPTION_REMARKS, remarks]) {
+        assert.deepEqual(compose.composeStatusAndHwidRemarks('DISABLED', ['Disabled'], ['Blocked'], settings), ['Blocked', 'Disabled']);
+        assert.deepEqual(compose.composeStatusAndHwidRemarks('EXPIRED', ['Expired'], ['Blocked'], settings), ['Expired', 'Blocked']);
+        assert.deepEqual(registration.registrationBlockedRemarks({ status: 'DISABLED', expireAt: new Date('2099-01-01') }, { customRemarks: settings }), schema.DEFAULT_SUBSCRIPTION_REMARKS.HWIDRegistrationBlocked);
+        assert.deepEqual(registration.registrationBlockedRemarks({ status: 'EXPIRED', expireAt: new Date(0) }, { customRemarks: settings }), schema.DEFAULT_SUBSCRIPTION_REMARKS.expiredUsers);
+    }
+});

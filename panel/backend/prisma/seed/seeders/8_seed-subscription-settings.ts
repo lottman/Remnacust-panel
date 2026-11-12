@@ -11,7 +11,7 @@ export async function seedSubscriptionSettings(prisma: PrismaClient) {
     const customRemarks = {
         ...DEFAULT_SUBSCRIPTION_REMARKS,
         combineSubscriptionAndHwidRemarks: true,
-        subscriptionAndHwidRemarkOrder: ['EXPIRED', 'DISABLED', 'FROZEN', 'HWID_REGISTRATION_BLOCKED', 'HWID_BLOCKED'],
+        subscriptionAndHwidRemarkOrder: ['EXPIRED', 'HWID_REGISTRATION_BLOCKED', 'HWID_BLOCKED', 'DISABLED', 'FROZEN'],
     } satisfies TCustomRemarks;
 
     const existingConfig = await prisma.subscriptionSettings.findFirst();

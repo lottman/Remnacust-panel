@@ -6,7 +6,6 @@ import {
     Button,
     CopyButton,
     Group,
-    Modal,
     Select,
     Stack,
     Switch,
@@ -30,6 +29,7 @@ import {
     subscriptionDomainsKey,
     subscriptionDomainsQuery
 } from '@shared/api/hooks/subscription-domains'
+import { RetainedModal as Modal } from '@shared/ui/overlays/retained-overlays'
 import { SectionCard } from '@shared/ui/section-card'
 import { SettingsCardShared } from '@shared/ui/settings-card'
 

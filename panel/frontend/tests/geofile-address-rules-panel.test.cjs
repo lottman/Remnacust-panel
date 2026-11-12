@@ -30,6 +30,7 @@ function harness(config, format, language = 'en', mobile = false) {
             useMemo: callback => callback(),
         },
         '@mantine/core': Object.fromEntries(componentNames.map(name => [name, name])),
+        '@shared/ui/overlays/retained-overlays': { RetainedModal: 'Modal' },
         '@mantine/hooks': { useMediaQuery: () => mobile },
         '@mantine/modals': { modals: { openConfirmModal: options => confirmations.push(options) } },
         'react-i18next': { useTranslation: () => ({ t }) },

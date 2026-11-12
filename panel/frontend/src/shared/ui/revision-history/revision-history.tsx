@@ -1,21 +1,14 @@
 import type { editor } from 'monaco-editor'
 
-import {
-    Alert,
-    Badge,
-    Button,
-    Group,
-    Card,
-    Select,
-    Stack,
-    Text,
-    useMantineColorScheme
-} from '@mantine/core'
+import '@shared/utils/setup-monaco/setup-monaco'
+import { Alert, Badge, Button, Group, Card, Select, Stack, Text } from '@mantine/core'
 import { useMediaQuery } from '@mantine/hooks'
 import { DiffEditor } from '@monaco-editor/react'
 import { useLayoutEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbArrowBackUp, TbRefresh } from 'react-icons/tb'
+
+import { MONACO_THEME_NAME } from '@shared/constants/monaco-theme'
 
 import classes from './revision-history.module.css'
 
@@ -61,7 +54,6 @@ export function RevisionHistory(props: Props) {
         onRestore
     } = props
     const { t, i18n } = useTranslation()
-    const { colorScheme } = useMantineColorScheme()
     const narrowEditor = useMediaQuery('(max-width: 48em)')
     const [selected, setSelected] = useState<string | null>(null)
     const [confirmation, setConfirmation] = useState<{
@@ -156,7 +148,7 @@ export function RevisionHistory(props: Props) {
                             language={language}
                             original={revision.code}
                             modified={draft}
-                            theme={colorScheme === 'light' ? 'vs' : 'vs-dark'}
+                            theme={MONACO_THEME_NAME}
                             keepCurrentOriginalModel
                             keepCurrentModifiedModel
                             onMount={(instance) => {

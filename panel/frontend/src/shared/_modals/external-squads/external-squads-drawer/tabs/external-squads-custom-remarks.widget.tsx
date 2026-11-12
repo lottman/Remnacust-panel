@@ -9,7 +9,13 @@ import {
 import { RemarksManager } from '@widgets/dashboard/subscription-settings/settings/cards/managers/remarks-manager.widget'
 import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { PiClockCountdown, PiClockUser, PiListChecks, PiProhibit, PiSnowflake } from 'react-icons/pi'
+import {
+    PiClockCountdown,
+    PiClockUser,
+    PiListChecks,
+    PiProhibit,
+    PiSnowflake
+} from 'react-icons/pi'
 import { TbDeviceFloppy, TbDevices2, TbListLetters, TbX } from 'react-icons/tb'
 
 import { queryClient } from '@shared/api'
@@ -75,7 +81,9 @@ export const ExternalSquadsCustomRemarksTabWidget = (props: IProps) => {
                 expired: processRemarks(currentRemarks.expiredUsers),
                 limited: processRemarks(currentRemarks.limitedUsers),
                 disabled: processRemarks(currentRemarks.disabledUsers),
-                frozen: processRemarks(currentRemarks.frozenUsers ?? DEFAULT_SUBSCRIPTION_REMARKS.frozenUsers),
+                frozen: processRemarks(
+                    currentRemarks.frozenUsers ?? DEFAULT_SUBSCRIPTION_REMARKS.frozenUsers
+                ),
                 emptyHosts: processRemarks(currentRemarks.emptyHosts),
                 HWIDMaxDevicesExceeded: processRemarks(currentRemarks.HWIDMaxDevicesExceeded),
                 HWIDNotSupported: processRemarks(currentRemarks.HWIDNotSupported)
@@ -210,8 +218,10 @@ export const ExternalSquadsCustomRemarksTabWidget = (props: IProps) => {
                         extras.combineSubscriptionAndHwidRemarks ?? true,
                     subscriptionAndHwidRemarkOrder: extras.subscriptionAndHwidRemarkOrder ?? [
                         'EXPIRED',
+                        'HWID_REGISTRATION_BLOCKED',
+                        'HWID_BLOCKED',
                         'DISABLED',
-                        'HWID_BLOCKED'
+                        'FROZEN'
                     ],
                     expiredUsers: expiredFiltered,
                     limitedUsers: limitedFiltered,
@@ -357,7 +367,9 @@ export const ExternalSquadsCustomRemarksTabWidget = (props: IProps) => {
                                 icon={<PiSnowflake size="24px" />}
                                 iconColor="blue"
                                 initialRemarks={remarks.frozen}
-                                onChange={(value) => setRemarks((prev) => ({ ...prev, frozen: value }))}
+                                onChange={(value) =>
+                                    setRemarks((prev) => ({ ...prev, frozen: value }))
+                                }
                                 title={`${t('common.field.user-status')}: FROZEN`}
                             />
 

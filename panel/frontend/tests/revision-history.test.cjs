@@ -23,6 +23,8 @@ function harness(overrides = {}) {
         if (name === '@mantine/core') return { ...Object.fromEntries(['Alert', 'Badge', 'Button', 'Group', 'Card', 'Select', 'Stack', 'Text'].map(key => [key, key])), useMantineColorScheme: () => ({ colorScheme: 'dark' }) }
         if (name === '@mantine/hooks') return { useMediaQuery: () => false }
         if (name === 'react-i18next') return { useTranslation: () => ({ t: key => key, i18n: { language: 'en' } }) }
+        if (name === '@shared/constants/monaco-theme') return { MONACO_THEME_NAME: 'GithubDark' }
+        if (name === '@shared/utils/setup-monaco/setup-monaco') return {}
         if (name === '@monaco-editor/react') return { DiffEditor: 'diff' }
         if (name.endsWith('.css')) return { default: {} }
         if (name.includes('diffEditor/register')) return {}
@@ -73,6 +75,7 @@ test('clean draft restores selected version directly and diff compares saved cod
     const h = harness({ draft: 'baseline' })
     h.find('Select').props.onChange('two')
     assert.equal(h.find('diff').props.original, 'older')
+    assert.equal(h.find('diff').props.theme, 'GithubDark')
     assert.equal(h.find('diff').props.modified, 'baseline')
     h.click('restore')
     assert.equal(h.restored[0].uuid, 'two')

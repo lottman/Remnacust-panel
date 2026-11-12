@@ -1,6 +1,6 @@
 import type { editor } from 'monaco-editor'
 
-import { Box, Text, useMantineColorScheme } from '@mantine/core'
+import { Box, Text } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
 import Editor, { EditorProps, OnMount } from '@monaco-editor/react'
 import clsx from 'clsx'
@@ -50,7 +50,6 @@ interface Props extends Omit<EditorProps, 'wrapperProps'> {
 export function CodeEditor(props: Props) {
     const { t } = useTranslation()
     const repairLabel = t('common.action.repair-json')
-    const { colorScheme } = useMantineColorScheme()
     const reducedMotion = usePanelReducedMotion()
     const {
         defaultLanguage,
@@ -193,8 +192,8 @@ export function CodeEditor(props: Props) {
                 path={modelPath}
                 loading={<LoaderModalShared mih="100%" />}
                 onMount={handleMount}
-                theme={colorScheme === 'light' ? 'vs' : MONACO_THEME_NAME}
                 {...rest}
+                theme={MONACO_THEME_NAME}
                 options={{
                     ...BASE_MONACO_OPTIONS,
                     ...options,

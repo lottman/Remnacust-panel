@@ -31,7 +31,7 @@ export const CustomRemarksSchema = z.object({
         .array(z.enum(['EXPIRED', 'DISABLED', 'FROZEN', 'HWID_BLOCKED', 'HWID_REGISTRATION_BLOCKED']))
         .min(3).max(5)
         .refine((order) => new Set(order).size === order.length && ['EXPIRED','DISABLED','HWID_BLOCKED'].every(x=>order.includes(x as typeof order[number])), 'Remark order values must be unique and complete')
-        .default(['EXPIRED', 'DISABLED', 'FROZEN', 'HWID_REGISTRATION_BLOCKED', 'HWID_BLOCKED']),
+        .default(['EXPIRED', 'HWID_REGISTRATION_BLOCKED', 'HWID_BLOCKED', 'DISABLED', 'FROZEN']),
     action: SubscriptionActionSchema.nullable().optional(),
     expiredUsers: z.array(z.string()).min(1),
     limitedUsers: z.array(z.string()).min(1),

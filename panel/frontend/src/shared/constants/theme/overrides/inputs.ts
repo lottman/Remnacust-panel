@@ -7,12 +7,13 @@ export default {
             fieldsRoot: { overflow: 'visible' },
             fieldsGroup: { height: 'auto' },
             field: {
-                height: '1.8em',
-                minHeight: '1.8em',
-                width: 'calc(2ch + 0.75em)',
-                paddingInline: '0.3em',
-                lineHeight: 1.5,
-                flexShrink: 0
+                height: '1.65em',
+                minHeight: '1.65em',
+                width: '1.65em',
+                paddingInline: 0,
+                lineHeight: 1,
+                flexShrink: 0,
+                outline: 'none'
             }
         }
     }),

@@ -9,7 +9,6 @@ import {
     Button,
     Card,
     Group,
-    Modal,
     NumberInput,
     SegmentedControl,
     Select,
@@ -46,6 +45,7 @@ import { useXrayMode } from '@shared/api/hooks/xray-mode'
 import { useUiText } from '@shared/i18n/interface-text'
 import { Page, PageHeaderShared, LoadingScreen } from '@shared/ui'
 import { getUserExpirationState } from '@shared/ui/forms/users/forms-components/user-expiration'
+import { RetainedModal as Modal } from '@shared/ui/overlays/retained-overlays'
 import { RefreshButton } from '@shared/ui/refresh-control'
 import { XrayModeNotice } from '@shared/ui/xray-mode-notice'
 import { formatRemainingDurationUtil, getExpirationTextUtil } from '@shared/utils/time-utils'

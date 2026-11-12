@@ -343,7 +343,7 @@ export function PanelAppearanceProvider({ children }: { children: React.ReactNod
                         transitionProps: {
                             transition: 'pop',
                             duration: reducedMotion ? 0 : 220,
-                            exitDuration: reducedMotion ? 0 : 140,
+                            exitDuration: reducedMotion ? 0 : 220,
                             timingFunction: 'cubic-bezier(0.22, 0.8, 0.24, 1)'
                         }
                     }
@@ -359,7 +359,7 @@ export function PanelAppearanceProvider({ children }: { children: React.ReactNod
                         closeButtonProps: { 'aria-label': t('common.action.close') },
                         transitionProps: {
                             duration: reducedMotion ? 0 : 180,
-                            exitDuration: reducedMotion ? 0 : 120,
+                            exitDuration: reducedMotion ? 0 : 180,
                             timingFunction: 'cubic-bezier(0.2, 0.8, 0.2, 1)'
                         }
                     }

@@ -20136,9 +20136,9 @@
     }
   },
   "info": {
-    "title": "Remnacust API v1.1.7.119",
+    "title": "Remnacust API v1.1.7.120",
     "description": "\nRemnacust manages Xray users, nodes, configuration profiles and subscriptions.\n\n## Resources\n* https://t.me/lottman\n* https://github.com/lottman/Remnacust-panel\n",
-    "version": "1.1.7.119",
+    "version": "1.1.7.120",
     "contact": {},
     "license": {
       "name": "AGPL-3.0",
@@ -32574,10 +32574,10 @@
                         "subscriptionAndHwidRemarkOrder": {
                           "default": [
                             "EXPIRED",
-                            "DISABLED",
-                            "FROZEN",
                             "HWID_REGISTRATION_BLOCKED",
-                            "HWID_BLOCKED"
+                            "HWID_BLOCKED",
+                            "DISABLED",
+                            "FROZEN"
                           ],
                           "minItems": 3,
                           "maxItems": 5,
@@ -32916,10 +32916,10 @@
                   "subscriptionAndHwidRemarkOrder": {
                     "default": [
                       "EXPIRED",
-                      "DISABLED",
-                      "FROZEN",
                       "HWID_REGISTRATION_BLOCKED",
-                      "HWID_BLOCKED"
+                      "HWID_BLOCKED",
+                      "DISABLED",
+                      "FROZEN"
                     ],
                     "minItems": 3,
                     "maxItems": 5,
@@ -33265,10 +33265,10 @@
                   "subscriptionAndHwidRemarkOrder": {
                     "default": [
                       "EXPIRED",
-                      "DISABLED",
-                      "FROZEN",
                       "HWID_REGISTRATION_BLOCKED",
-                      "HWID_BLOCKED"
+                      "HWID_BLOCKED",
+                      "DISABLED",
+                      "FROZEN"
                     ],
                     "minItems": 3,
                     "maxItems": 5,
@@ -33572,10 +33572,10 @@
               "subscriptionAndHwidRemarkOrder": {
                 "default": [
                   "EXPIRED",
-                  "DISABLED",
-                  "FROZEN",
                   "HWID_REGISTRATION_BLOCKED",
-                  "HWID_BLOCKED"
+                  "HWID_BLOCKED",
+                  "DISABLED",
+                  "FROZEN"
                 ],
                 "minItems": 3,
                 "maxItems": 5,
@@ -33880,10 +33880,10 @@
                   "subscriptionAndHwidRemarkOrder": {
                     "default": [
                       "EXPIRED",
-                      "DISABLED",
-                      "FROZEN",
                       "HWID_REGISTRATION_BLOCKED",
-                      "HWID_BLOCKED"
+                      "HWID_BLOCKED",
+                      "DISABLED",
+                      "FROZEN"
                     ],
                     "minItems": 3,
                     "maxItems": 5,
@@ -34253,10 +34253,10 @@
                         "subscriptionAndHwidRemarkOrder": {
                           "default": [
                             "EXPIRED",
-                            "DISABLED",
-                            "FROZEN",
                             "HWID_REGISTRATION_BLOCKED",
-                            "HWID_BLOCKED"
+                            "HWID_BLOCKED",
+                            "DISABLED",
+                            "FROZEN"
                           ],
                           "minItems": 3,
                           "maxItems": 5,
@@ -46230,10 +46230,10 @@
                   "subscriptionAndHwidRemarkOrder": {
                     "default": [
                       "EXPIRED",
-                      "DISABLED",
-                      "FROZEN",
                       "HWID_REGISTRATION_BLOCKED",
-                      "HWID_BLOCKED"
+                      "HWID_BLOCKED",
+                      "DISABLED",
+                      "FROZEN"
                     ],
                     "minItems": 3,
                     "maxItems": 5,
@@ -46830,10 +46830,10 @@
               "subscriptionAndHwidRemarkOrder": {
                 "default": [
                   "EXPIRED",
-                  "DISABLED",
-                  "FROZEN",
                   "HWID_REGISTRATION_BLOCKED",
-                  "HWID_BLOCKED"
+                  "HWID_BLOCKED",
+                  "DISABLED",
+                  "FROZEN"
                 ],
                 "minItems": 3,
                 "maxItems": 5,
@@ -47403,10 +47403,10 @@
                   "subscriptionAndHwidRemarkOrder": {
                     "default": [
                       "EXPIRED",
-                      "DISABLED",
-                      "FROZEN",
                       "HWID_REGISTRATION_BLOCKED",
-                      "HWID_BLOCKED"
+                      "HWID_BLOCKED",
+                      "DISABLED",
+                      "FROZEN"
                     ],
                     "minItems": 3,
                     "maxItems": 5,

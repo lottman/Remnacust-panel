@@ -111,7 +111,7 @@ const errorHelp = [
     'خطاهای API به زبان رابط نمایش داده می‌شوند؛ کد داخل براکت برای عیب‌یابی است. در A113 برچسب تکراری ورودی را تغییر دهید؛ tag باید در همه پروفایل‌ها یکتا باشد. در A114 نام پروفایل را تغییر دهید. برچسب تکراری داخل JSON در پیام ویرایشگر مشخص می‌شود. خطای عمومی ذخیره، تکراری بودن نام را ثابت نمی‌کند؛ گزارش پنل را بررسی کنید. پس از خطای ایجاد، پیش از ایجاد دوباره فهرست را تازه‌سازی کنید. برای خطای نود «جزئیات فنی» را باز کنید تا گزارش اصلی را ببینید یا کپی کنید؛ پیش از انتشار عمومی، اسرار را حذف کنید.',
     'API 错误使用界面语言显示；方括号内的代码用于诊断。遇到 A113 时请修改重复的入站 tag：所有配置文件中的 tag 必须唯一。遇到 A114 时请修改配置文件名称。JSON 内部重复的标签会在编辑器消息中指出。一般保存失败并不代表名称冲突，请检查面板日志。创建失败后，请先刷新列表再尝试创建，以免重复创建。节点错误可通过“技术详情”查看或复制原始诊断；公开发送前请移除敏感信息。'
 ]
-languages.forEach((language, index) => {
+languages.forEach((_language, index) => {
     help['xray-editor-1'][index] += '\n\n' + errorHelp[index]
 })
 
@@ -304,3 +304,13 @@ const nodeControlRouteHelp = {
 for (const [lang, text] of Object.entries(nodeControlRouteHelp)) {
     help['node-health-1'][languages.indexOf(lang)] += '\n\n' + text
 }
+
+const billingClockHelp = [
+    'У работающей подключённой ноды за три календарных дня до следующей оплаты вместо значка пульса появляются жёлтые часы. За один день, в день оплаты и при просрочке часы красные. Дата берётся из связанной записи инфра-биллинга и считается по UTC. После продления даты предупреждение исчезает. Часы не заменяют состояния отключения, подключения, ошибки или необходимости обновления. Без даты оплаты индикатор не меняется.',
+    'For a running, connected node, yellow clock replaces the pulse icon three calendar days before the next payment. One day before, on the due date and when overdue, the clock is red. The date comes from the linked infrastructure billing record and uses UTC calendar days. Extending the billing date clears the warning. The clock never replaces disabled, connecting, disconnected, error or upgrade-required indicators. Without a billing date, the indicator stays unchanged.',
+    'برای نود روشن و متصل، سه روز تقویمی پیش از پرداخت بعدی، ساعت زرد جای نماد نبض را می‌گیرد. از یک روز پیش از موعد، در روز پرداخت و پس از سررسید، ساعت قرمز است. تاریخ از رکورد مرتبط صورت‌حساب زیرساخت خوانده می‌شود و روزها بر اساس UTC محاسبه می‌شوند. با تمدید تاریخ پرداخت، هشدار حذف می‌شود. ساعت جای وضعیت غیرفعال، در حال اتصال، قطع اتصال، خطا یا نیاز به به‌روزرسانی را نمی‌گیرد. بدون تاریخ پرداخت، نشانگر تغییر نمی‌کند.',
+    '对于运行中且已连接的节点，在下次付款日前三个自然日，脉搏图标会变为黄色时钟。提前一天、到期当天及逾期时显示红色时钟。日期来自关联的基础设施账单记录，并按 UTC 自然日计算。延长付款日期后，警告会消失。时钟不会覆盖已禁用、连接中、断开连接、错误或需要升级的状态。没有付款日期时，图标保持不变。'
+]
+languages.forEach((_language, index) => {
+    help['node-health-1'][index] += '\n\n' + billingClockHelp[index]
+})

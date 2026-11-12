@@ -15,7 +15,7 @@ export function registrationBlockedRemarks(
               ? 'EXPIRED'
               : null;
     const order = [
-        ...(remarks.subscriptionAndHwidRemarkOrder ?? ['EXPIRED', 'DISABLED', 'HWID_BLOCKED']),
+        ...(remarks.subscriptionAndHwidRemarkOrder ?? ['EXPIRED', 'HWID_REGISTRATION_BLOCKED', 'HWID_BLOCKED', 'DISABLED', 'FROZEN']),
     ];
     if (!order.includes('HWID_REGISTRATION_BLOCKED'))
         order.splice(2, 0, 'HWID_REGISTRATION_BLOCKED');

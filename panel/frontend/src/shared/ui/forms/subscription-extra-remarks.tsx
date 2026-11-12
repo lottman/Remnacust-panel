@@ -27,10 +27,10 @@ export function SubscriptionExtraRemarks({
     const { t } = useTranslation()
     const defaultOrder: NonNullable<ExtraRemarks['subscriptionAndHwidRemarkOrder']> = [
         'EXPIRED',
-        'DISABLED',
-        'FROZEN',
         'HWID_REGISTRATION_BLOCKED',
-        'HWID_BLOCKED'
+        'HWID_BLOCKED',
+        'DISABLED',
+        'FROZEN'
     ]
     const order = value.subscriptionAndHwidRemarkOrder?.length
         ? [...value.subscriptionAndHwidRemarkOrder]

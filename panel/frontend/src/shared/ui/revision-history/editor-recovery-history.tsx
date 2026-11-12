@@ -1,22 +1,14 @@
 import type { editor } from 'monaco-editor'
 
-import {
-    Alert,
-    Badge,
-    Button,
-    Card,
-    Group,
-    Stack,
-    Tabs,
-    Text,
-    useMantineColorScheme
-} from '@mantine/core'
+import '@shared/utils/setup-monaco/setup-monaco'
+import { Alert, Badge, Button, Card, Group, Stack, Tabs, Text } from '@mantine/core'
 import { modals } from '@mantine/modals'
 import { DiffEditor, type DiffEditorProps } from '@monaco-editor/react'
 import { ReactNode, useLayoutEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbArrowBackUp, TbTrash } from 'react-icons/tb'
 
+import { MONACO_THEME_NAME } from '@shared/constants/monaco-theme'
 import type { useEditorRecovery } from '@shared/hooks/use-editor-recovery'
 
 import classes from './revision-history.module.css'
@@ -62,7 +54,6 @@ export function EditorRecoveryHistory({
     onRestore
 }: Props) {
     const { t, i18n } = useTranslation()
-    const { colorScheme } = useMantineColorScheme()
     const [confirmation, setConfirmation] = useState<{ code: string; current: string } | null>(null)
     const [discarding, setDiscarding] = useState(false)
     const entry = recovery.entry
@@ -159,7 +150,7 @@ export function EditorRecoveryHistory({
                                     language={language}
                                     original={baseline}
                                     modified={entry.code}
-                                    theme={colorScheme === 'light' ? 'vs' : 'vs-dark'}
+                                    theme={MONACO_THEME_NAME}
                                     options={{
                                         readOnly: true,
                                         originalEditable: false,

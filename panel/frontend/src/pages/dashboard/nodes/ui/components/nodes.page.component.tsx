@@ -3,6 +3,7 @@ import { NodesHeaderActionButtonsFeature } from '@features/ui/dashboard/nodes/no
 import { Grid, Stack } from '@mantine/core'
 /* eslint-disable no-nested-ternary */
 import { GetNodesCommand } from '@remnawave/backend-contract'
+import { NodeBillingStatusProvider } from '@widgets/dashboard/nodes/node-billing-status'
 import { NodesDataTableWidget } from '@widgets/dashboard/nodes/nodes-datatable/nodes-datatable.widget'
 import { NodesRealtimeUsageMetrics } from '@widgets/dashboard/nodes/nodes-realtime-metrics'
 import { NodesSpotlightSearchWidget } from '@widgets/dashboard/nodes/nodes-spotlight-search'
@@ -88,52 +89,54 @@ export default function NodesPageComponent(props: IProps) {
     )
 
     return (
-        <Page title={t('constants.nodes')}>
-            <Grid>
-                <Grid.Col span={12}>
-                    <Stack>
-                        <PageHeaderShared
-                            actions={
-                                <NodesHeaderActionButtonsFeature
-                                    setViewMode={setNodesViewMode}
-                                    viewMode={viewMode}
-                                />
-                            }
-                            icon={<HiServer size={24} />}
-                            title={t('constants.nodes')}
-                        />
-                        <NodesRealtimeUsageMetrics isLoading={isLoading} nodes={nodes} />
-                        <NodeHealthOverview nodes={nodes} />
-
-                        {isLoading ? (
-                            <LoadingScreen height="60vh" />
-                        ) : (
-                            <ViewModeTransition mode={viewMode}>
-                                {viewMode === NODES_VIEW_MODE.TABLE ? (
-                                    <NodesDataTableWidget
-                                        nodes={nodes}
-                                        selectedRecords={selectedRecords}
-                                        setSelectedRecords={setSelectedRecords}
+        <NodeBillingStatusProvider enabled={!!nodes?.length}>
+            <Page title={t('constants.nodes')}>
+                <Grid>
+                    <Grid.Col span={12}>
+                        <Stack>
+                            <PageHeaderShared
+                                actions={
+                                    <NodesHeaderActionButtonsFeature
+                                        setViewMode={setNodesViewMode}
+                                        viewMode={viewMode}
                                     />
-                                ) : (
-                                    <NodesTableWidget
-                                        nodes={nodes}
-                                        nodePlugins={nodePlugins}
-                                        nodeIntegrations={nodeIntegrations}
-                                    />
-                                )}
-                            </ViewModeTransition>
-                        )}
-                    </Stack>
-                </Grid.Col>
-            </Grid>
+                                }
+                                icon={<HiServer size={24} />}
+                                title={t('constants.nodes')}
+                            />
+                            <NodesRealtimeUsageMetrics isLoading={isLoading} nodes={nodes} />
+                            <NodeHealthOverview nodes={nodes} />
 
-            <NodesSpotlightSearchWidget nodes={nodes ?? []} />
-            <MultiSelectNodesFeature
-                moveSelected={moveSelected}
-                selectedRecords={selectedRecords}
-                setSelectedRecords={setSelectedRecords}
-            />
-        </Page>
+                            {isLoading ? (
+                                <LoadingScreen height="60vh" />
+                            ) : (
+                                <ViewModeTransition mode={viewMode}>
+                                    {viewMode === NODES_VIEW_MODE.TABLE ? (
+                                        <NodesDataTableWidget
+                                            nodes={nodes}
+                                            selectedRecords={selectedRecords}
+                                            setSelectedRecords={setSelectedRecords}
+                                        />
+                                    ) : (
+                                        <NodesTableWidget
+                                            nodes={nodes}
+                                            nodePlugins={nodePlugins}
+                                            nodeIntegrations={nodeIntegrations}
+                                        />
+                                    )}
+                                </ViewModeTransition>
+                            )}
+                        </Stack>
+                    </Grid.Col>
+                </Grid>
+
+                <NodesSpotlightSearchWidget nodes={nodes ?? []} />
+                <MultiSelectNodesFeature
+                    moveSelected={moveSelected}
+                    selectedRecords={selectedRecords}
+                    setSelectedRecords={setSelectedRecords}
+                />
+            </Page>
+        </NodeBillingStatusProvider>
     )
 }

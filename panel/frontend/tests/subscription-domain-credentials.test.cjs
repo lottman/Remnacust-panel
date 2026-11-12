@@ -11,7 +11,7 @@ const directory = path.join(__dirname, '../src/widgets/dashboard/subscription-se
 const tick = () => new Promise(resolve => setImmediate(resolve))
 function load(file, mocks) {
     if (file === 'subscription-domains.widget.tsx') {
-        mocks = { ...mocks, '@shared/api/hooks/subscription-domains': load(
+        mocks = { ...mocks, '@shared/ui/overlays/retained-overlays': { RetainedModal: 'Modal' }, '@shared/api/hooks/subscription-domains': load(
             '../../../../shared/api/hooks/subscription-domains.ts',
             { '@shared/api/axios': mocks['@shared/api/axios'] }
         ) }

@@ -1,8 +1,5 @@
-import { useXrayMode } from '@shared/api/hooks/xray-mode'
-import { XrayModeNotice } from '@shared/ui/xray-mode-notice'
 import {
     Alert,
-    Drawer,
     TextInput,
     Button,
     Group,
@@ -36,9 +33,12 @@ import {
     useHostTagLimits
 } from '@shared/api/hooks/hosts/host-tag-limits.query'
 import { hostsQueryKeys } from '@shared/api/hooks/hosts/hosts.query.hooks'
+import { useXrayMode } from '@shared/api/hooks/xray-mode'
 import { invalidateLimits } from '@shared/api/limit-invalidation'
 import { useUiText } from '@shared/i18n/interface-text'
 import { DisclosureCard } from '@shared/ui/disclosure-card/disclosure-card'
+import { RetainedDrawer as Drawer } from '@shared/ui/overlays/retained-overlays'
+import { XrayModeNotice } from '@shared/ui/xray-mode-notice'
 
 const GIB = 1024 ** 3
 

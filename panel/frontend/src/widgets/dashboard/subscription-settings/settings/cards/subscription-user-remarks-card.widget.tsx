@@ -9,7 +9,13 @@ import {
 } from '@remnawave/backend-contract'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { PiClockCountdown, PiClockUser, PiListChecks, PiProhibit, PiSnowflake } from 'react-icons/pi'
+import {
+    PiClockCountdown,
+    PiClockUser,
+    PiListChecks,
+    PiProhibit,
+    PiSnowflake
+} from 'react-icons/pi'
 import { TbDevices2, TbListLetters, TbX } from 'react-icons/tb'
 import Masonry from 'react-layout-masonry'
 
@@ -169,8 +175,10 @@ export const SubscriptionUserRemarksCardWidget = (props: IProps) => {
                         extras.combineSubscriptionAndHwidRemarks ?? true,
                     subscriptionAndHwidRemarkOrder: extras.subscriptionAndHwidRemarkOrder ?? [
                         'EXPIRED',
+                        'HWID_REGISTRATION_BLOCKED',
+                        'HWID_BLOCKED',
                         'DISABLED',
-                        'HWID_BLOCKED'
+                        'FROZEN'
                     ],
                     expiredUsers: expiredFiltered,
                     limitedUsers: limitedFiltered,
@@ -305,7 +313,9 @@ export const SubscriptionUserRemarksCardWidget = (props: IProps) => {
                                     icon={<PiSnowflake size="24px" />}
                                     iconColor="blue"
                                     initialRemarks={remarks.frozen}
-                                    onChange={(value) => setRemarks((prev) => ({ ...prev, frozen: value }))}
+                                    onChange={(value) =>
+                                        setRemarks((prev) => ({ ...prev, frozen: value }))
+                                    }
                                     title={`${t('common.field.user-status')}: FROZEN`}
                                 />
 

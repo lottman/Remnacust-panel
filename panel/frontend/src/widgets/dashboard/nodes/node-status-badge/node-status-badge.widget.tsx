@@ -3,6 +3,7 @@ import { memo } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
     PiCloudArrowUpDuotone,
+    PiClockDuotone,
     PiProhibitDuotone,
     PiPulseDuotone,
     PiWarningCircle
@@ -11,6 +12,7 @@ import {
 import { getNodeHealth } from '@shared/utils/node-health'
 import { nodeNeedsCustomUpgrade } from '@shared/utils/node-policy-status'
 
+import { nodeBillingWarning, useNodeBillingDays } from '../node-billing-status'
 import { IProps } from './interface'
 
 export const NodeStatusBadgeWidget = memo(
@@ -23,6 +25,8 @@ export const NodeStatusBadgeWidget = memo(
             nodeData.isConnected &&
             nodeNeedsCustomUpgrade(nodeData.lastStatusMessage)
 
+        const billingDays = useNodeBillingDays(nodeData.uuid)
+        const billingColor = nodeBillingWarning(billingDays)
         const health = getNodeHealth(nodeData)
         const needsAttention =
             nodeData.isConnected && (health.level === 'attention' || health.level === 'critical')
@@ -53,6 +57,25 @@ export const NodeStatusBadgeWidget = memo(
                 )
                 color = 'yellow'
                 status = t(`xera-node-health.${health.level}`)
+            } else if (
+                nodeData.isConnected &&
+                !nodeData.isConnecting &&
+                nodeData.xrayUptime > 0 &&
+                billingColor
+            ) {
+                icon = (
+                    <PiClockDuotone
+                        size={18}
+                        style={{ color: `var(--mantine-color-${billingColor}-6)` }}
+                    />
+                )
+                color = billingColor
+                status =
+                    billingDays! < 0
+                        ? t('billing-date-status.overdue', { count: -billingDays! })
+                        : billingDays === 0
+                          ? t('billing-date-status.due-today')
+                          : t('billing-date-status.remaining', { count: billingDays! })
             } else if (nodeData.isConnected) {
                 icon = <PiPulseDuotone size={18} style={{ color: 'var(--mantine-color-teal-6)' }} />
                 color = 'teal'

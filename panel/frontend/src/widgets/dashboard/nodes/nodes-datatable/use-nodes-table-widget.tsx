@@ -30,7 +30,7 @@ import { faviconResolver } from '@shared/utils/misc'
 import { NodeHealthLevel } from '@shared/utils/node-health'
 import { formatDurationUtil } from '@shared/utils/time-utils'
 
-import { NodeStatusSimplfiedBadgeWidget } from '../node-status-simplfied-badge'
+import { NodeStatusBadgeWidget } from '../node-status-badge'
 
 export type NodeStatusFilter = 'connected' | 'connecting' | 'disabled' | 'disconnected'
 
@@ -184,15 +184,7 @@ export function getNodesTableColumns(
                 />
             ),
             filtering: filters.selectedStatuses.length > 0,
-            render: ({ isConnected, isConnecting, isDisabled, uuid, lastStatusMessage }) => (
-                <NodeStatusSimplfiedBadgeWidget
-                    isConnected={isConnected}
-                    isConnecting={isConnecting}
-                    isDisabled={isDisabled}
-                    nodeUuid={uuid}
-                    lastStatusMessage={lastStatusMessage}
-                />
-            )
+            render: (node) => <NodeStatusBadgeWidget node={node} withText={false} />
         },
 
         {

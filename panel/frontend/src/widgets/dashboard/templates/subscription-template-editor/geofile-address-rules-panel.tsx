@@ -8,7 +8,6 @@ import {
     Button,
     Card,
     Group,
-    Modal,
     Pagination,
     Select,
     Stack,
@@ -21,6 +20,8 @@ import { modals } from '@mantine/modals'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbFileImport, TbPencil, TbPlus, TbTrash } from 'react-icons/tb'
+
+import { RetainedModal as Modal } from '@shared/ui/overlays/retained-overlays'
 
 import styles from './autoselect-panel.module.css'
 import {

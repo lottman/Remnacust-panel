@@ -43,6 +43,7 @@ export function GeofileEditorModal({
     getCopySelections: () => GeofileSelection[]
 }) {
     const { t } = useTranslation()
+    const [opened, setOpened] = useState(true)
     const mobile = useMediaQuery('(max-width: 48em)')
     const copy =
         file.editPolicy === 'copy' ||
@@ -167,20 +168,20 @@ export function GeofileEditorModal({
         },
         onSuccess: async (result) => {
             await onSaved(result.file, file.id, result.selections)
-            onClose()
+            setOpened(false)
         }
     })
     const close = () => {
         if (save.isPending) return
         if (!dirty) {
-            onClose()
+            setOpened(false)
             return
         }
         modals.openConfirmModal({
             title: t('geofiles.editor-discard-title'),
             children: <Text size="sm">{t('geofiles.editor-discard-help')}</Text>,
             labels: { confirm: t('geofiles.discard-changes'), cancel: t('common.action.cancel') },
-            onConfirm: onClose
+            onConfirm: () => setOpened(false)
         })
     }
     const errorCode = isAxiosError(save.error) ? save.error.response?.data?.message : null
@@ -196,7 +197,8 @@ export function GeofileEditorModal({
                 : 'geofiles.editor-save-failed'
     return (
         <Modal
-            opened
+            opened={opened}
+            onExitTransitionEnd={onClose}
             onClose={close}
             title={t('geofiles.editor-title', { name: file.name })}
             size="xl"

@@ -135,7 +135,16 @@ const HysteriaProtocolSchema = z.object({
 
 export const ProtocolVariantSchema = z.discriminatedUnion('protocol', [
     VlessProtocolSchema.meta({ title: 'vless' }),
-    z.object({ protocol: z.literal('masque'), protocolOptions: z.object({ username: z.string(), password: z.string(), remoteDNS: z.array(z.string()) }) }).meta({ title: 'masque' }),
+    z
+        .object({
+            protocol: z.literal('masque'),
+            protocolOptions: z.object({
+                username: z.string(),
+                password: z.string(),
+                remoteDNS: z.array(z.string()),
+            }),
+        })
+        .meta({ title: 'masque' }),
     TrojanProtocolSchema.meta({ title: 'trojan' }),
     ShadowsocksProtocolSchema.meta({ title: 'shadowsocks' }),
     HysteriaProtocolSchema.meta({ title: 'hysteria' }),
@@ -178,9 +187,21 @@ const HysteriaTransportSchema = z.object({
 
 export const TransportVariantSchema = z.discriminatedUnion('transport', [
     TcpTransportSchema.meta({ title: 'tcp' }),
-    ...(['masque', 'xdrive'] as const).map((transport) => z.object({ transport: z.literal(transport), transportOptions: z.object({ settings: z.record(z.string(), z.unknown()) }) }).meta({ title: transport })),
+    ...(['masque', 'xdrive'] as const).map((transport) =>
+        z
+            .object({
+                transport: z.literal(transport),
+                transportOptions: z.object({ settings: z.record(z.string(), z.unknown()) }),
+            })
+            .meta({ title: transport }),
+    ),
     XHttpTransportSchema.meta({ title: 'xhttp' }),
-    z.object({ transport: z.literal('xera-http'), transportOptions: z.object({ settings: z.record(z.string(), z.unknown()) }) }).meta({ title: 'xera-http' }),
+    z
+        .object({
+            transport: z.literal('xera-http'),
+            transportOptions: z.object({ settings: z.record(z.string(), z.unknown()) }),
+        })
+        .meta({ title: 'xera-http' }),
     WsTransportSchema.meta({ title: 'ws' }),
     HttpUpgradeTransportSchema.meta({ title: 'httpupgrade' }),
     GrpcTransportSchema.meta({ title: 'grpc' }),
@@ -209,6 +230,7 @@ export const SecurityVariantSchema = z.discriminatedUnion('security', [
 ]);
 
 export const ProxyEntryMetadataSchema = z.object({
+    sourceAddressFamily: z.enum(['ipv4', 'ipv6', 'dynamic']).optional(),
     uuid: z.uuid(),
     tags: z.array(z.string()),
     excludeFromSubscriptionTypes: z.array(z.enum(SUBSCRIPTION_TEMPLATE_TYPE)),

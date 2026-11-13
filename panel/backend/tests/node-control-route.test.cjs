@@ -58,7 +58,7 @@ test('private Docker aliases remain valid while URL and credential injection are
     const { normalizeNodeAddress } = load(path.join(__dirname, '../src/common/axios/node-control-route.ts'));
     assert.equal(normalizeNodeAddress('node_service'), 'node_service');
     assert.equal(SocksProxyUrlSchema.safeParse('socks5://u:p@socks_proxy:1080').success, true);
-    for (const value of ['https://node_service', 'u:p@node_service', 'node_service/path', 'node_service\n'])
+    for (const value of ['https://node_service', 'u:p@node_service', 'node_service/path', 'node_service\n', 'fe80::1%eth0', '[fe80::1%eth0]'])
         assert.equal(normalizeNodeAddress(value), null);
     assert.equal(SocksProxyUrlSchema.safeParse('socks5://socks_proxy:1080/path').success, false);
 });

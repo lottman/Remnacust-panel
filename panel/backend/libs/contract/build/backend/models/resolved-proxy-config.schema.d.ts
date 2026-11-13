@@ -42,8 +42,8 @@ export declare const XhttpTransportOptionsSchema: z.ZodObject<{
     mode: z.ZodEnum<{
         auto: "auto";
         "packet-up": "packet-up";
-        "stream-one": "stream-one";
         "stream-up": "stream-up";
+        "stream-one": "stream-one";
     }>;
     extra: z.ZodNullable<z.ZodRecord<z.ZodString, z.ZodUnknown>>;
 }, z.core.$strip>;
@@ -166,8 +166,8 @@ export declare const TransportVariantSchema: z.ZodDiscriminatedUnion<[z.ZodObjec
         mode: z.ZodEnum<{
             auto: "auto";
             "packet-up": "packet-up";
-            "stream-one": "stream-one";
             "stream-up": "stream-up";
+            "stream-one": "stream-one";
         }>;
         extra: z.ZodNullable<z.ZodRecord<z.ZodString, z.ZodUnknown>>;
     }, z.core.$strip>;
@@ -240,15 +240,20 @@ export declare const SecurityVariantSchema: z.ZodDiscriminatedUnion<[z.ZodObject
     security: z.ZodLiteral<"none">;
 }, z.core.$strip>], "security">;
 export declare const ProxyEntryMetadataSchema: z.ZodObject<{
+    sourceAddressFamily: z.ZodOptional<z.ZodEnum<{
+        ipv4: "ipv4";
+        ipv6: "ipv6";
+        dynamic: "dynamic";
+    }>>;
     uuid: z.ZodUUID;
     tags: z.ZodArray<z.ZodString>;
     excludeFromSubscriptionTypes: z.ZodArray<z.ZodEnum<{
-        readonly XRAY_JSON: 'XRAY_JSON';
-        readonly XRAY_BASE64: 'XRAY_BASE64';
-        readonly MIHOMO: 'MIHOMO';
-        readonly STASH: 'STASH';
-        readonly CLASH: 'CLASH';
-        readonly SINGBOX: 'SINGBOX';
+        readonly XRAY_JSON: "XRAY_JSON";
+        readonly XRAY_BASE64: "XRAY_BASE64";
+        readonly MIHOMO: "MIHOMO";
+        readonly STASH: "STASH";
+        readonly CLASH: "CLASH";
+        readonly SINGBOX: "SINGBOX";
     }>>;
     inboundTag: z.ZodString;
     configProfileUuid: z.ZodNullable<z.ZodUUID>;
@@ -273,11 +278,11 @@ export declare const ResolvedProxyConfigBaseSchema: z.ZodObject<{
         shuffleHost: z.ZodBoolean;
         mihomoX25519: z.ZodBoolean;
         mihomoIpVersion: z.ZodNullable<z.ZodEnum<{
-            readonly DUAL: 'dual';
-            readonly IPV4: 'ipv4';
-            readonly IPV6: 'ipv6';
-            readonly IPV4_PREFER: 'ipv4-prefer';
-            readonly IPV6_PREFER: 'ipv6-prefer';
+            readonly DUAL: "dual";
+            readonly IPV4: "ipv4";
+            readonly IPV6: "ipv6";
+            readonly IPV4_PREFER: "ipv4-prefer";
+            readonly IPV6_PREFER: "ipv6-prefer";
         }>>;
         serverDescription: z.ZodNullable<z.ZodString>;
         xrayJsonTemplate: z.ZodNullable<z.ZodUnknown>;
@@ -333,15 +338,20 @@ export declare const ResolvedProxyConfigBaseSchema: z.ZodObject<{
         }, z.core.$strip>;
     }, z.core.$strip>;
     metadata: z.ZodObject<{
+        sourceAddressFamily: z.ZodOptional<z.ZodEnum<{
+            ipv4: "ipv4";
+            ipv6: "ipv6";
+            dynamic: "dynamic";
+        }>>;
         uuid: z.ZodUUID;
         tags: z.ZodArray<z.ZodString>;
         excludeFromSubscriptionTypes: z.ZodArray<z.ZodEnum<{
-            readonly XRAY_JSON: 'XRAY_JSON';
-            readonly XRAY_BASE64: 'XRAY_BASE64';
-            readonly MIHOMO: 'MIHOMO';
-            readonly STASH: 'STASH';
-            readonly CLASH: 'CLASH';
-            readonly SINGBOX: 'SINGBOX';
+            readonly XRAY_JSON: "XRAY_JSON";
+            readonly XRAY_BASE64: "XRAY_BASE64";
+            readonly MIHOMO: "MIHOMO";
+            readonly STASH: "STASH";
+            readonly CLASH: "CLASH";
+            readonly SINGBOX: "SINGBOX";
         }>>;
         inboundTag: z.ZodString;
         configProfileUuid: z.ZodNullable<z.ZodUUID>;
@@ -367,11 +377,11 @@ export declare const ResolvedProxyConfigSchema: z.ZodIntersection<z.ZodIntersect
         shuffleHost: z.ZodBoolean;
         mihomoX25519: z.ZodBoolean;
         mihomoIpVersion: z.ZodNullable<z.ZodEnum<{
-            readonly DUAL: 'dual';
-            readonly IPV4: 'ipv4';
-            readonly IPV6: 'ipv6';
-            readonly IPV4_PREFER: 'ipv4-prefer';
-            readonly IPV6_PREFER: 'ipv6-prefer';
+            readonly DUAL: "dual";
+            readonly IPV4: "ipv4";
+            readonly IPV6: "ipv6";
+            readonly IPV4_PREFER: "ipv4-prefer";
+            readonly IPV6_PREFER: "ipv6-prefer";
         }>>;
         serverDescription: z.ZodNullable<z.ZodString>;
         xrayJsonTemplate: z.ZodNullable<z.ZodUnknown>;
@@ -427,15 +437,20 @@ export declare const ResolvedProxyConfigSchema: z.ZodIntersection<z.ZodIntersect
         }, z.core.$strip>;
     }, z.core.$strip>;
     metadata: z.ZodObject<{
+        sourceAddressFamily: z.ZodOptional<z.ZodEnum<{
+            ipv4: "ipv4";
+            ipv6: "ipv6";
+            dynamic: "dynamic";
+        }>>;
         uuid: z.ZodUUID;
         tags: z.ZodArray<z.ZodString>;
         excludeFromSubscriptionTypes: z.ZodArray<z.ZodEnum<{
-            readonly XRAY_JSON: 'XRAY_JSON';
-            readonly XRAY_BASE64: 'XRAY_BASE64';
-            readonly MIHOMO: 'MIHOMO';
-            readonly STASH: 'STASH';
-            readonly CLASH: 'CLASH';
-            readonly SINGBOX: 'SINGBOX';
+            readonly XRAY_JSON: "XRAY_JSON";
+            readonly XRAY_BASE64: "XRAY_BASE64";
+            readonly MIHOMO: "MIHOMO";
+            readonly STASH: "STASH";
+            readonly CLASH: "CLASH";
+            readonly SINGBOX: "SINGBOX";
         }>>;
         inboundTag: z.ZodString;
         configProfileUuid: z.ZodNullable<z.ZodUUID>;
@@ -517,8 +532,8 @@ export declare const ResolvedProxyConfigSchema: z.ZodIntersection<z.ZodIntersect
         mode: z.ZodEnum<{
             auto: "auto";
             "packet-up": "packet-up";
-            "stream-one": "stream-one";
             "stream-up": "stream-up";
+            "stream-one": "stream-one";
         }>;
         extra: z.ZodNullable<z.ZodRecord<z.ZodString, z.ZodUnknown>>;
     }, z.core.$strip>;

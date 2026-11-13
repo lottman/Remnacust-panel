@@ -1,7 +1,7 @@
 import { SocksProxyAgent } from 'socks-proxy-agent';
 
-import { IMtlsOptions } from './axios.interfaces';
 import { parseSocksProxyUrl } from '../../../libs/contract/models/socks-proxy.schema';
+import { IMtlsOptions } from './axios.interfaces';
 
 type SocksConnectOpts = Parameters<SocksProxyAgent['connect']>[1];
 
@@ -13,6 +13,8 @@ export class MtlsSocksProxyAgent extends SocksProxyAgent {
     ) {
         if (!parseSocksProxyUrl(uri)) throw new Error('Invalid node SOCKS5 proxy configuration');
         super(uri, { keepAlive: true });
+        const host = this.proxy.host;
+        if (host?.startsWith('[') && host.endsWith(']')) this.proxy.host = host.slice(1, -1);
     }
 
     async connect(

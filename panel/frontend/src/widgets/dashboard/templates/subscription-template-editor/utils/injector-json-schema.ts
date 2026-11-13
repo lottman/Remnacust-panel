@@ -134,6 +134,12 @@ export function injectorJsonSchema(hostUuids: string[], descriptions: string[], 
                                     enum: ['ALL', 'HIDDEN', 'NOT_HIDDEN'],
                                     default: 'HIDDEN'
                                 },
+                                addressFamily: {
+                                    type: 'string',
+                                    enum: ['any', 'ipv4', 'ipv6'],
+                                    default: 'any',
+                                    description: i18next.t('autoselect.address-family-help')
+                                },
                                 tagPrefix: {
                                     type: 'string',
                                     minLength: 1,

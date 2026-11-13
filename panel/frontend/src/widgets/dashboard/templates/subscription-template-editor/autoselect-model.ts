@@ -1,7 +1,8 @@
 import {
     injectedPrefixesCollide,
     injectedTagMatches,
-    RemnawaveInjectorSchema
+    RemnawaveInjectorSchema,
+    type TPoolAddressFamily
 } from '@remnawave/backend-contract'
 import { applyEdits, modify } from 'jsonc-parser'
 
@@ -9,6 +10,7 @@ import { applyEdits, modify } from 'jsonc-parser'
 // oxlint-disable-next-line typescript/no-explicit-any
 export type JsonObject = Record<string, any>
 export type Pool = JsonObject & {
+    addressFamily?: TPoolAddressFamily
     selector: JsonObject
     mode?: 'all' | 'random' | 'group'
     tagPrefix?: string

@@ -3758,7 +3758,12 @@
         "assignment-mixed": "此旧分配同时包含主机和标签。请选择一种方式，保留其列表并移除另一列表。",
         "recipient-limits": "流量与速度限制在接收主机上设置。通过自动选择使用池成员时，不扣除成员主机配额，也不继承其速度限制。同一接收主机的多个自动选择共享额度。未设置接收主机限制且未启用其标签限制时，不设主机级上限。账户总配额仍然生效。",
         "response-time-help": "应用通过每台服务器检查 HTTP 响应，包括建立连接、HTTPS 的 TLS 和等待网站响应。选择可用且总响应时间最低的路径，不使用 ICMP ping 或面板测得的延迟。",
-        "probe-url-help": "使用所有池内服务器都能访问的同一个小型 HTTPS 响应，最好返回 204。测试网站不可用或响应缓慢会影响选择。"
+        "probe-url-help": "使用所有池内服务器都能访问的同一个小型 HTTPS 响应，最好返回 204。测试网站不可用或响应缓慢会影响选择。",
+        "address-family": "主机地址族",
+        "address-family-any": "任意地址",
+        "address-family-ipv4": "仅 IPv4 字面量",
+        "address-family-ipv6": "仅 IPv6 字面量",
+        "address-family-help": "IPv4/IPv6 仅保留主机地址字段中的明确 IP。域名需选择“任意地址”；不查询 DNS，也不使用节点的备用 API IP。此过滤与负载均衡策略独立。"
     },
     "template-history": {
         "title": "历史",

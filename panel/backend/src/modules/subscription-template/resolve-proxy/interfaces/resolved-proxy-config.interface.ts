@@ -212,6 +212,7 @@ export type SecurityVariant = TlsSecurity | RealitySecurity | NoneSecurity;
 // ─── Metadata ────────────────────────────────────────────
 
 export interface IProxyEntryMetadata {
+    sourceAddressFamily?: 'ipv4' | 'ipv6' | 'dynamic';
     alwaysAvailable?: boolean;
     uuid: string;
     tags: string[];

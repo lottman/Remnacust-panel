@@ -44,7 +44,11 @@ import {
     type Pool
 } from './autoselect-model'
 import styles from './autoselect-panel.module.css'
-import { defaultAutoselectSources, xrayPoolPreview } from './autoselect-sources'
+import {
+    autoselectHostOption,
+    defaultAutoselectSources,
+    xrayPoolPreview
+} from './autoselect-sources'
 import { PriorityOrder } from './priority-order'
 import { LegacyAssignments, TemplateAssignmentPanel } from './template-assignment-panel'
 import { TemplateChanges } from './template-changes'
@@ -185,6 +189,17 @@ function PoolCard({
                     }
                 />
             </div>
+            <Select
+                label={t('autoselect.address-family')}
+                description={t('autoselect.address-family-help')}
+                value={pool.addressFamily ?? 'any'}
+                allowDeselect={false}
+                data={(['any', 'ipv4', 'ipv6'] as const).map((value) => ({
+                    value,
+                    label: t(`autoselect.address-family-${value}`)
+                }))}
+                onChange={(value) => value && patch(['addressFamily'], value)}
+            />
             {(pool.useHostRemarkAsTag || pool.useHostTagAsTag) && (
                 <Alert color="blue">{t('autoselect.host-naming-help')}</Alert>
             )}
@@ -724,14 +739,7 @@ export function AutoselectPanel({
 }) {
     const { t } = useTranslation()
     const [error, setError] = useState<string | null>(null)
-    const options = useMemo(
-        () =>
-            hosts.map((host) => ({
-                value: host.uuid,
-                label: `${host.remark} \u00b7 ${host.address}:${host.port}`
-            })),
-        [hosts]
-    )
+    const options = useMemo(() => hosts.map(autoselectHostOption), [hosts])
     const tags = useMemo(
         () =>
             [...new Set(hosts.flatMap((host) => host.tags))]

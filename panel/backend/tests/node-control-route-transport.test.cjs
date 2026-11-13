@@ -80,6 +80,35 @@ test('registered management routes retain real mTLS, JWT, SOCKS isolation and at
         return { config, service };
     };
     try {
+        await t.test('IPv6 literal routes retain certificate validation, derived SNI and JWT authentication', async subtest => {
+            const ipv6 = https.createServer({ key: cert.nodeKeyPem, cert: cert.nodeCertPem, ca: master.caCertPem,
+                requestCert: true, rejectUnauthorized: true, minVersion: 'TLSv1.3' }, server.listeners('request')[0]);
+            ipv6.on('tlsClientError', () => {});
+            const ipv6Port = await listen(ipv6, '::1');
+            try {
+                try {
+                    await new Promise((resolve, reject) => {
+                        const socket = net.connect({ host: '::1', port: ipv6Port });
+                        socket.once('connect', () => { socket.destroy(); resolve(); });
+                        socket.once('error', error => { socket.destroy(); reject(error); });
+                    });
+                } catch (error) {
+                    if (process.platform === 'win32' && error.code === 'EACCES') {
+                        subtest.skip('Windows denies even a raw TCP connection to IPv6 loopback');
+                        return;
+                    }
+                    throw error;
+                }
+                for (const address of ['::1', '[::1]']) {
+                    const { service, config } = make({ address, port: ipv6Port, ips: [] });
+                    const result = await service.managedCore(config);
+                    assert.equal(result.isOk, true, `${address}: ${JSON.stringify(result)}`);
+                    const route = await service.connectionRoute(config);
+                    assert.equal(route.status, 'authenticated');
+                    assert.equal(route.activeAddress, '::1');
+                }
+            } finally { await close(ipv6); }
+        });
         await t.test('refused primary selects authenticated reserve and concurrent commands share discovery', async () => {
             const { service, config } = make();
             const before = requests.length;

@@ -3,13 +3,32 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.RemnawaveInjectorSchema = exports.InjectHostsEntrySchema = void 0;
+exports.RemnawaveInjectorSchema = exports.InjectHostsEntrySchema = exports.PoolAddressFamilySchema = void 0;
+exports.poolAddressMatches = poolAddressMatches;
 exports.injectedTagMatches = injectedTagMatches;
 exports.injectedPrefixesCollide = injectedPrefixesCollide;
 const zod_1 = __importDefault(require("zod"));
+exports.PoolAddressFamilySchema = zod_1.default.enum(['any', 'ipv4', 'ipv6']);
+const poolIpv4Address = zod_1.default.ipv4();
+const poolIpv6Address = zod_1.default.ipv6();
+function poolAddressMatches(address, family = 'any') {
+    if (family === 'any')
+        return true;
+    if (typeof address !== 'string')
+        return false;
+    if (family === 'ipv4' && address.startsWith('['))
+        return false;
+    const value = address.startsWith('[') && address.endsWith(']') ? address.slice(1, -1) : address;
+    if (value.includes('%'))
+        return false;
+    return family === 'ipv4'
+        ? poolIpv4Address.safeParse(value).success
+        : poolIpv6Address.safeParse(value).success;
+}
 // The first outbound uses the prefix itself; later ones use prefix-2, prefix-3, ….
 function injectedTagMatches(prefix, tag) {
-    return tag === prefix || (tag.startsWith(prefix + '-') && /^(?:[2-9]|[1-9]\d+)$/.test(tag.slice(prefix.length + 1)));
+    return (tag === prefix ||
+        (tag.startsWith(prefix + '-') && /^(?:[2-9]|[1-9]\d+)$/.test(tag.slice(prefix.length + 1))));
 }
 function injectedPrefixesCollide(left, right) {
     return injectedTagMatches(left, right) || injectedTagMatches(right, left);
@@ -60,6 +79,7 @@ exports.InjectHostsEntrySchema = zod_1.default
     selector: HostSelectorSchema,
     mode: zod_1.default.enum(['all', 'random', 'group']).optional(),
     selectFrom: zod_1.default.enum(['ALL', 'HIDDEN', 'NOT_HIDDEN']).optional(),
+    addressFamily: exports.PoolAddressFamilySchema.optional(),
     tagPrefix: zod_1.default.string().min(1).optional(),
     useHostRemarkAsTag: zod_1.default.boolean().optional(),
     useHostTagAsTag: zod_1.default.boolean().optional(),
@@ -98,5 +118,8 @@ exports.RemnawaveInjectorSchema = zod_1.default.object({
     injectHosts: zod_1.default.array(exports.InjectHostsEntrySchema).optional(),
     addVirtualHostAsOutbound: zod_1.default.boolean().optional(),
     assignTo: AssignmentSchema.optional(),
-    assignments: zod_1.default.array(AssignmentSchema.extend({ balancerTag: zod_1.default.string().min(1).max(255) })).max(1000).optional(),
+    assignments: zod_1.default
+        .array(AssignmentSchema.extend({ balancerTag: zod_1.default.string().min(1).max(255) }))
+        .max(1000)
+        .optional(),
 });

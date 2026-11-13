@@ -1,8 +1,30 @@
 import z from 'zod';
 
+export const PoolAddressFamilySchema = z.enum(['any', 'ipv4', 'ipv6']);
+export type TPoolAddressFamily = z.infer<typeof PoolAddressFamilySchema>;
+const poolIpv4Address = z.ipv4();
+const poolIpv6Address = z.ipv6();
+
+export function poolAddressMatches(
+    address: string | undefined,
+    family: TPoolAddressFamily = 'any',
+): boolean {
+    if (family === 'any') return true;
+    if (typeof address !== 'string') return false;
+    if (family === 'ipv4' && address.startsWith('[')) return false;
+    const value = address.startsWith('[') && address.endsWith(']') ? address.slice(1, -1) : address;
+    if (value.includes('%')) return false;
+    return family === 'ipv4'
+        ? poolIpv4Address.safeParse(value).success
+        : poolIpv6Address.safeParse(value).success;
+}
+
 // The first outbound uses the prefix itself; later ones use prefix-2, prefix-3, ….
 export function injectedTagMatches(prefix: string, tag: string): boolean {
-    return tag === prefix || (tag.startsWith(prefix + '-') && /^(?:[2-9]|[1-9]\d+)$/.test(tag.slice(prefix.length + 1)));
+    return (
+        tag === prefix ||
+        (tag.startsWith(prefix + '-') && /^(?:[2-9]|[1-9]\d+)$/.test(tag.slice(prefix.length + 1)))
+    );
 }
 
 export function injectedPrefixesCollide(left: string, right: string): boolean {
@@ -60,6 +82,7 @@ export const InjectHostsEntrySchema = z
         selector: HostSelectorSchema,
         mode: z.enum(['all', 'random', 'group']).optional(),
         selectFrom: z.enum(['ALL', 'HIDDEN', 'NOT_HIDDEN']).optional(),
+        addressFamily: PoolAddressFamilySchema.optional(),
         tagPrefix: z.string().min(1).optional(),
         useHostRemarkAsTag: z.boolean().optional(),
         useHostTagAsTag: z.boolean().optional(),
@@ -99,7 +122,10 @@ export const RemnawaveInjectorSchema = z.object({
     injectHosts: z.array(InjectHostsEntrySchema).optional(),
     addVirtualHostAsOutbound: z.boolean().optional(),
     assignTo: AssignmentSchema.optional(),
-    assignments: z.array(AssignmentSchema.extend({ balancerTag: z.string().min(1).max(255) })).max(1000).optional(),
+    assignments: z
+        .array(AssignmentSchema.extend({ balancerTag: z.string().min(1).max(255) }))
+        .max(1000)
+        .optional(),
 });
 
 export type TRemnawaveInjector = z.infer<typeof RemnawaveInjectorSchema>;

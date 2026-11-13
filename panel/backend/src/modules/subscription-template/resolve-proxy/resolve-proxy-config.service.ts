@@ -1,5 +1,6 @@
 import { filter, shuffle } from 'lodash';
 import { customAlphabet } from 'nanoid';
+import { isIP } from 'node:net';
 import {
     GRPCConfig,
     HTTPUpgradeConfig,
@@ -15,8 +16,6 @@ import {
 import { Injectable } from '@nestjs/common';
 
 import { TypedConfigService } from '@common/config/app-config';
-import { XrayModeService } from '@common/xray-mode/xray-mode.service';
-import { stockHostPolicy } from '@common/xray-mode/stock-host-policy';
 import {
     resolveEncryptionFromDecryption,
     resolveInboundAndMlDsa65PublicKey,
@@ -28,6 +27,8 @@ import { getVlessFlow } from '@common/utils/flow';
 import { isTextRemark } from '@common/utils/templates/is-text-remark';
 import { TemplateEngine } from '@common/utils/templates/replace-templates-values';
 import { setVlessRouteForUuid } from '@common/utils/vless-route';
+import { stockHostPolicy } from '@common/xray-mode/stock-host-policy';
+import { XrayModeService } from '@common/xray-mode/xray-mode.service';
 import { SECURITY_LAYERS, USERS_STATUS } from '@libs/contracts/constants';
 
 import { ExternalSquadEntity } from '@modules/external-squads/entities';
@@ -98,9 +99,15 @@ export class ResolveProxyConfigService {
             return [];
         }
 
-        const custom = !this.xrayModes || await this.xrayModes.isCustom();
+        const custom = !this.xrayModes || (await this.xrayModes.isCustom());
         if (!custom) {
-            options = { ...options, hosts: options.hosts.map(stockHostPolicy), ...(options.quotaOwnerHost ? { quotaOwnerHost: stockHostPolicy(options.quotaOwnerHost) } : {}) };
+            options = {
+                ...options,
+                hosts: options.hosts.map(stockHostPolicy),
+                ...(options.quotaOwnerHost
+                    ? { quotaOwnerHost: stockHostPolicy(options.quotaOwnerHost) }
+                    : {}),
+            };
         }
 
         if (!options.selectionOnly && !options.quotaOwnerHost)
@@ -773,7 +780,13 @@ export class ResolveProxyConfigService {
     }): ResolvedProxyConfig | null {
         const { inputHost, inbound, finalRemark, user } = ctx;
 
-        const address = this.resolveRandomizedValue(inputHost.address);
+        const rawAddress = this.resolveRandomizedValue(inputHost.address);
+        const address =
+            rawAddress.startsWith('[') &&
+            rawAddress.endsWith(']') &&
+            isIP(rawAddress.slice(1, -1)) === 6
+                ? rawAddress.slice(1, -1)
+                : rawAddress;
 
         const protocol = this.resolveProtocolOptions(
             inputHost,
@@ -826,6 +839,7 @@ export class ResolveProxyConfigService {
                 mapper: inputHost.mapper,
             },
             metadata: {
+                sourceAddressFamily: this.sourceAddressFamily(inputHost.address),
                 uuid: inputHost.uuid,
                 tags: inputHost.tags,
                 excludeFromSubscriptionTypes: inputHost.excludeFromSubscriptionTypes,
@@ -868,6 +882,13 @@ export class ResolveProxyConfigService {
 
     private isDomain(str: string): boolean {
         return this.domainRegex.test(str);
+    }
+
+    private sourceAddressFamily(value: string): 'ipv4' | 'ipv6' | 'dynamic' {
+        const address = value.startsWith('[') && value.endsWith(']') ? value.slice(1, -1) : value;
+        if (address.includes('%') || (value.startsWith('[') && isIP(address) !== 6))
+            return 'dynamic';
+        return isIP(address) === 4 ? 'ipv4' : isIP(address) === 6 ? 'ipv6' : 'dynamic';
     }
 
     private deduplicateRemark(remark: string, knownRemarks: Map<string, number>): string {

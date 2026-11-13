@@ -114,7 +114,16 @@ const HysteriaProtocolSchema = zod_1.z.object({
 });
 exports.ProtocolVariantSchema = zod_1.z.discriminatedUnion('protocol', [
     VlessProtocolSchema.meta({ title: 'vless' }),
-    zod_1.z.object({ protocol: zod_1.z.literal('masque'), protocolOptions: zod_1.z.object({ username: zod_1.z.string(), password: zod_1.z.string(), remoteDNS: zod_1.z.array(zod_1.z.string()) }) }).meta({ title: 'masque' }),
+    zod_1.z
+        .object({
+        protocol: zod_1.z.literal('masque'),
+        protocolOptions: zod_1.z.object({
+            username: zod_1.z.string(),
+            password: zod_1.z.string(),
+            remoteDNS: zod_1.z.array(zod_1.z.string()),
+        }),
+    })
+        .meta({ title: 'masque' }),
     TrojanProtocolSchema.meta({ title: 'trojan' }),
     ShadowsocksProtocolSchema.meta({ title: 'shadowsocks' }),
     HysteriaProtocolSchema.meta({ title: 'hysteria' }),
@@ -149,9 +158,19 @@ const HysteriaTransportSchema = zod_1.z.object({
 });
 exports.TransportVariantSchema = zod_1.z.discriminatedUnion('transport', [
     TcpTransportSchema.meta({ title: 'tcp' }),
-    ...['masque', 'xdrive'].map((transport) => zod_1.z.object({ transport: zod_1.z.literal(transport), transportOptions: zod_1.z.object({ settings: zod_1.z.record(zod_1.z.string(), zod_1.z.unknown()) }) }).meta({ title: transport })),
+    ...['masque', 'xdrive'].map((transport) => zod_1.z
+        .object({
+        transport: zod_1.z.literal(transport),
+        transportOptions: zod_1.z.object({ settings: zod_1.z.record(zod_1.z.string(), zod_1.z.unknown()) }),
+    })
+        .meta({ title: transport })),
     XHttpTransportSchema.meta({ title: 'xhttp' }),
-    zod_1.z.object({ transport: zod_1.z.literal('xera-http'), transportOptions: zod_1.z.object({ settings: zod_1.z.record(zod_1.z.string(), zod_1.z.unknown()) }) }).meta({ title: 'xera-http' }),
+    zod_1.z
+        .object({
+        transport: zod_1.z.literal('xera-http'),
+        transportOptions: zod_1.z.object({ settings: zod_1.z.record(zod_1.z.string(), zod_1.z.unknown()) }),
+    })
+        .meta({ title: 'xera-http' }),
     WsTransportSchema.meta({ title: 'ws' }),
     HttpUpgradeTransportSchema.meta({ title: 'httpupgrade' }),
     GrpcTransportSchema.meta({ title: 'grpc' }),
@@ -175,6 +194,7 @@ exports.SecurityVariantSchema = zod_1.z.discriminatedUnion('security', [
     NoneSecuritySchema.meta({ title: 'none' }),
 ]);
 exports.ProxyEntryMetadataSchema = zod_1.z.object({
+    sourceAddressFamily: zod_1.z.enum(['ipv4', 'ipv6', 'dynamic']).optional(),
     uuid: zod_1.z.uuid(),
     tags: zod_1.z.array(zod_1.z.string()),
     excludeFromSubscriptionTypes: zod_1.z.array(zod_1.z.enum(constants_1.SUBSCRIPTION_TEMPLATE_TYPE)),

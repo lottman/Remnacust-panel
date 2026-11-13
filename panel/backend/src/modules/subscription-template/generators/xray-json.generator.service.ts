@@ -11,7 +11,7 @@ import { applyHostMapper } from '../host-mapper';
 import { ResolvedProxyConfig } from '../resolve-proxy/interfaces';
 import { SubscriptionTemplateService } from '../subscription-template.service';
 import { ClientPoolError } from './client-pool';
-import { selectInjectHosts } from './inject-host-selection';
+import { filterPoolAddresses, selectInjectHosts } from './inject-host-selection';
 import {
     IGenerateConfigParams,
     Outbound,
@@ -745,9 +745,15 @@ export class XrayJsonGeneratorService {
                     byId.has(source.metadata.uuid) ? [byId.get(source.metadata.uuid)!] : [],
                 );
             }
+            if (entry.addressFamily && entry.addressFamily !== 'any')
+                selected = filterPoolAddresses(entry, selected);
             // A new bounded pool with no eligible member must not emit an invalid balancer
             // or silently fall back to the recipient's placeholder address.
-            if (entry.mode && selected.length === 0) return null;
+            if (
+                (entry.mode || (entry.addressFamily && entry.addressFamily !== 'any')) &&
+                selected.length === 0
+            )
+                return null;
             injectedOutbounds.push(
                 ...this.buildTaggedOutbounds(selected, {
                     tagPrefix: entry.tagPrefix,

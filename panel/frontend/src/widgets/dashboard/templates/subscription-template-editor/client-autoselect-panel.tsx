@@ -21,7 +21,11 @@ import { TbPlus, TbTrash } from 'react-icons/tb'
 
 import { connectionPool, type JsonObject } from './autoselect-model'
 import styles from './autoselect-panel.module.css'
-import { defaultAutoselectSources } from './autoselect-sources'
+import {
+    autoselectHostOption,
+    clientPoolPreview,
+    defaultAutoselectSources
+} from './autoselect-sources'
 import {
     addClientGroup,
     editClientTemplate,
@@ -71,10 +75,7 @@ export function ClientAutoselectPanel({
     }
     const patch = (index: number, path: (string | number)[], value: unknown) =>
         edit(() => editClientTemplate(text, format, [key, index, ...path], value))
-    const hostOptions = hosts.map((host) => ({
-        value: host.uuid,
-        label: `${host.remark} · ${host.address}:${host.port}`
-    }))
+    const hostOptions = hosts.map(autoselectHostOption)
     const tags = [...new Set(hosts.flatMap((host) => host.tags))]
         .sort()
         .map((value) => ({ value, label: value }))
@@ -143,6 +144,7 @@ export function ClientAutoselectPanel({
                     const selector = pool?.selector ?? { type: 'remarkRegex', pattern: '.*' }
                     const mode = pool?.mode ?? 'all'
                     const values: string[] = selector.values ?? []
+                    const possibleHosts = pool ? clientPoolPreview(pool, hosts, format) : null
                     const memberOptions = selector.type === 'tags' ? tags : hostOptions
                     const name: string = sing ? group.tag : group.name
                     const field = sing ? 'outbounds' : 'proxies'
@@ -479,7 +481,33 @@ export function ClientAutoselectPanel({
                                                         value && poolPatch(['selectFrom'], value)
                                                     }
                                                 />
+                                                <Select
+                                                    label={t('autoselect.address-family')}
+                                                    description={t(
+                                                        'autoselect.address-family-help'
+                                                    )}
+                                                    value={pool.addressFamily ?? 'any'}
+                                                    allowDeselect={false}
+                                                    data={(['any', 'ipv4', 'ipv6'] as const).map(
+                                                        (value) => ({
+                                                            value,
+                                                            label: t(
+                                                                `autoselect.address-family-${value}`
+                                                            )
+                                                        })
+                                                    )}
+                                                    onChange={(value) =>
+                                                        value && poolPatch(['addressFamily'], value)
+                                                    }
+                                                />
                                             </div>
+                                            {possibleHosts !== null && (
+                                                <Text size="xs" c="dimmed">
+                                                    {t('autoselect.pool-count', {
+                                                        count: possibleHosts
+                                                    })}
+                                                </Text>
+                                            )}
                                             {mode === 'random' && (
                                                 <NumberInput
                                                     label={t('autoselect.expected')}

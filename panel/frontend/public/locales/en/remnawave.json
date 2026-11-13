@@ -3758,7 +3758,12 @@
     "assignment-mixed": "This existing assignment contains both hosts and tags. Choose one mode to keep its list and remove the other.",
     "recipient-limits": "Quota and speed are configured on the recipient host. Autoselect does not debit pool members or inherit their speed limits. Multiple autoselects for one recipient share its allowance. Without recipient limits or enabled recipient tag limits, autoselect has no host-level ceiling. The account quota still applies.",
     "response-time-help": "The app checks the HTTP response through each server: connection setup, TLS for HTTPS, and waiting for the site response. It chooses an available route with the lowest total response time, not ICMP ping or latency measured by the panel.",
-    "probe-url-help": "Use the same small HTTPS response, preferably 204, reachable through every pool server. An unavailable or slow test site affects the selection."
+    "probe-url-help": "Use the same small HTTPS response, preferably 204, reachable through every pool server. An unavailable or slow test site affects the selection.",
+    "address-family": "Host address family",
+    "address-family-any": "Any address",
+    "address-family-ipv4": "IPv4 literals only",
+    "address-family-ipv6": "IPv6 literals only",
+    "address-family-help": "IPv4/IPv6 keeps only explicit IP addresses in the host address field. Domains require Any address; DNS and secondary node API IPs are not used. This filter is independent of the balancing strategy."
   },
   "template-history": {
     "title": "History",

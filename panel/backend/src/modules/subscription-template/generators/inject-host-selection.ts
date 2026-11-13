@@ -1,9 +1,11 @@
 import { randomInt } from 'node:crypto';
+import { isIP } from 'node:net';
 
 import type { TInjectHostsEntry } from '@libs/contracts/models';
 
 interface Candidate {
-    metadata: { uuid: string; tags: string[] };
+    metadata: { uuid: string; tags: string[]; sourceAddressFamily?: 'ipv4' | 'ipv6' | 'dynamic' };
+    address?: string;
 }
 
 export function uniqueHosts<T extends Candidate>(hosts: T[]): T[] {
@@ -31,12 +33,35 @@ export function selectPool<T extends Candidate>(
     );
 }
 
+export function filterPoolAddresses<T extends Candidate>(
+    entry: TInjectHostsEntry,
+    candidates: T[],
+): T[] {
+    if (entry.addressFamily && entry.addressFamily !== 'any') {
+        const family = entry.addressFamily === 'ipv4' ? 4 : 6;
+        candidates = candidates.filter(({ address, metadata }) => {
+            if (
+                metadata.sourceAddressFamily &&
+                metadata.sourceAddressFamily !== entry.addressFamily
+            )
+                return false;
+            if (typeof address !== 'string') return false;
+            if (family === 4 && address.startsWith('[')) return false;
+            const value =
+                address.startsWith('[') && address.endsWith(']') ? address.slice(1, -1) : address;
+            return !value.includes('%') && isIP(value) === family;
+        });
+    }
+    return candidates;
+}
+
 // Randomness is request-local. Selection happens only after user access and visibility filtering.
 export function selectInjectHosts<T extends Candidate>(
     entry: TInjectHostsEntry,
     candidates: T[],
     pick = randomInt,
 ): T[] {
+    candidates = filterPoolAddresses(entry, candidates);
     const selector = entry.selector;
     const type = selector.type === 'tags' ? 'tags' : 'uuids';
     if (entry.mode === 'group') {

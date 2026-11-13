@@ -47,6 +47,7 @@ export function normalizeNodeAddress(value: string): string | null {
         if (code < 32 || code === 127) return null;
     }
     const host = value.trim().replace(/^\[([^\]]+)\]$/, '$1');
+    if (host.includes('%')) return null;
     if (isIP(host) === 6) return new URL(`https://[${host}]`).hostname.slice(1, -1).toLowerCase();
     if (isIP(host) === 4) return host;
     if (host.length > 253 || !host || !host.replace(/\.$/, '').split('.').every((label) =>

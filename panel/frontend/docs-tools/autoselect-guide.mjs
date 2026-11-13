@@ -12,6 +12,13 @@ const assignmentMeaning = {
     zh: '\n\n关联示例：`remnawave.assignments = [{hosts: ["RECIPIENT_HOST_UUID"], balancerTag: "auto-eu"}]`。此处 hosts 表示接收自动选择配置的主机，并非池成员。池服务器另由 remnawave.injectHosts 选择；auto-eu 必须与 routing.balancers[].tag 一致。界面对应“在哪里使用自动选择”，无需手动编写 JSON。'
 }
 
+const addressFamilyNotes = {
+    ru: '\n\nСемейство адресов задаётся отдельно для каждого пула: «Любые адреса» (any, по умолчанию), IPv4 или IPv6. Строгие IPv4/IPv6 оставляют только хосты с явно указанным IP в поле адреса хоста; IPv6 допускается со скобками или без них. Домены остаются только в any: панель не выполняет DNS-поиск и не берёт дополнительные API-адреса ноды. Адреса с zone ID не входят в строгие пулы. Фильтр состава не меняет стратегию балансировки: сначала отбираются подходящие адреса, затем применяются режим выбора и стратегия клиента. Если нужен один сервер в обоих семействах, создайте отдельные хосты с IPv4 и IPv6 и назначьте их соответствующим пулам. Само разделение хостов не создаёт общей квоты: общие лимиты задаются существующими настройками пользователя, получателя автовыбора или тегов в поддерживаемой политике хостов.',
+    en: '\n\nEach pool has an independent host address family: Any address (any, the default), IPv4 or IPv6. Strict IPv4/IPv6 retains only hosts whose address field is an explicit IP literal; IPv6 may be bare or bracketed. Domains remain only in any: the panel does not resolve DNS or infer addresses from secondary node API IPs. Zone IDs are excluded from strict pools. This membership filter does not change the balancing strategy: address filtering precedes selection mode and the client strategy. To expose one server over both families, create separate hosts with IPv4 and IPv6 addresses and assign them to the corresponding pools. Separate hosts do not create a shared quota: shared limits use the existing user, autoselect recipient or tag settings within the supported host policy.',
+    fa: '\n\nهر مجموعه خانواده آدرس مستقل دارد: هر آدرس (any، پیش‌فرض)، IPv4 یا IPv6. حالت سخت‌گیرانه IPv4/IPv6 فقط میزبان‌هایی را نگه می‌دارد که فیلد آدرس آن‌ها یک IP صریح است؛ IPv6 با کروشه یا بدون آن پذیرفته می‌شود. دامنه فقط در any می‌ماند: پنل DNS را جست‌وجو نمی‌کند و از IPهای اضافی API نود آدرس استنتاج نمی‌کند. آدرس دارای zone ID وارد مجموعه سخت‌گیرانه نمی‌شود. این فیلتر اعضا راهبرد توزیع بار را تغییر نمی‌دهد؛ ابتدا آدرس فیلتر می‌شود، سپس حالت انتخاب و راهبرد برنامه اعمال می‌شوند. برای یک سرور با هر دو خانواده، دو میزبان مجزا با آدرس IPv4 و IPv6 بسازید و در مجموعه‌های مربوط قرار دهید. جدا کردن میزبان‌ها سهمیه مشترک جدید ایجاد نمی‌کند؛ محدودیت مشترک از تنظیمات موجود کاربر، گیرنده انتخاب خودکار یا برچسب‌ها در سیاست پشتیبانی‌شده میزبان استفاده می‌کند.',
+    zh: '\n\n每个池可独立选择主机地址族：任意地址（any，默认）、IPv4 或 IPv6。严格 IPv4/IPv6 仅保留地址字段为明确 IP 字面量的主机；IPv6 可带方括号或不带。域名仅保留在 any 中：面板不查询 DNS，也不根据节点的备用 API IP 推断主机地址。严格池不接受 zone ID。此成员过滤不改变负载均衡策略：先过滤地址，再应用选择模式和客户端策略。如需通过两种地址族使用同一服务器，请分别创建 IPv4 和 IPv6 主机并加入对应池。拆分主机不会自动创建共享配额；共享限制继续使用受支持主机策略中现有的用户、自动选择接收主机或标签设置。'
+}
+
 const sections = [
     [
         'templates-http-response-time',
@@ -269,6 +276,7 @@ export function explainAutoselect(articles) {
                         title: translations[index][0],
                         body:
                             translations[index][1] +
+                            (id === 'templates-autoselect' ? addressFamilyNotes[language] : '') +
                             (id === 'templates-assignments'
                                 ? routeReferenceNotes[language] +
                                   assignmentMeaning[language] +

@@ -165,6 +165,77 @@ test('missing core status does not authorize an automatic start', async () => {
     assert.deepEqual(f.starts, []);
 });
 
+test('a successful telemetry response without core information still schedules configuration with policy backoff', async () => {
+    for (const connected of [true, false])
+        for (const retry of [null, Date.now() + 60000, Date.now() - 60000]) {
+            const f = fixture(async () => ({
+                isOk: true,
+                response: { xrayInfo: null, system: null, userStateSynchronized: false },
+            }));
+            const current = job();
+            current.data.isConnected = connected;
+            if (retry !== null) f.cache.set(`retry:${current.data.nodeUuid}`, retry);
+            await f.worker.process(current);
+            assert.deepEqual(
+                f.starts,
+                retry !== null && retry > Date.now() ? [] : [{ nodeUuid: current.data.nodeUuid }],
+            );
+            assert.equal(f.writes.at(-1).isConnected, false);
+            assert.equal(f.records[0].status, 'xray_missing');
+            assert.equal(
+                f.records.some((record) => record.status === 'ok'),
+                false,
+            );
+        }
+});
+
+test('Stats 503 checks authenticated API health without a false disconnect or telemetry acknowledgement', async () => {
+    for (const running of [true, false]) {
+        const f = fixture(
+            async () => ({ isOk: false, code: 'NODE_HTTP_503', message: 'Core is not ready' }),
+            async () => ({
+                isOk: true,
+                response: { isAlive: true, xrayInternalStatusCached: running },
+            }),
+        );
+        await f.worker.process(job());
+        assert.deepEqual(f.writes, []);
+        assert.deepEqual(f.deleted, []);
+        assert.deepEqual(f.incidents, []);
+        assert.equal(f.starts.length, running ? 0 : 1);
+        assert.deepEqual(
+            f.records.map((record) => record.status),
+            ['retry'],
+        );
+    }
+});
+
+test('Stats 503 preserves policy backoff and cannot bypass unknown readiness or local route admission', async () => {
+    for (const readiness of [undefined, false]) {
+        const f = fixture(
+            async () => ({ isOk: false, code: 'NODE_HTTP_503' }),
+            async () => ({
+                isOk: true,
+                response: { isAlive: true, xrayInternalStatusCached: readiness },
+            }),
+        );
+        const current = job();
+        f.cache.set(`retry:${current.data.nodeUuid}`, Date.now() + 60000);
+        await f.worker.process(current);
+        assert.deepEqual(f.starts, []);
+        assert.deepEqual(f.writes, []);
+    }
+    const f = fixture(
+        async () => ({ isOk: false, code: 'NODE_HTTP_503' }),
+        async () => busy,
+    );
+    await f.worker.process(job());
+    assert.deepEqual(f.starts, []);
+    assert.deepEqual(f.writes, []);
+    assert.deepEqual(f.records, []);
+    assert.deepEqual(f.observations, []);
+});
+
 test('telemetry failure cannot claim connection recovery without authenticated API evidence', async () => {
     for (const health of [
         { isOk: false, code: 'NODE_HTTP_401' },

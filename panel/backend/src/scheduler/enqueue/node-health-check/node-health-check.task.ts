@@ -30,14 +30,13 @@ export class NodeHealthCheckTask {
     async handleCron() {
         try {
             if (!this.isNodesRestarted) {
-                this.isNodesRestarted = true;
                 this.logger.log('Restarting all nodes on application start.');
 
                 await this.nodesQueuesService.startAllNodes({
                     emitter: this.cronName,
                 });
 
-                return;
+                this.isNodesRestarted = true;
             }
 
             const nodesResponse = await this.queryBus.execute(new GetEnabledNodesPartialQuery());

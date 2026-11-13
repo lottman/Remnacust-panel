@@ -56,7 +56,11 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
             while (attempts < attemptsLimit) {
                 const statResult = await this.axios.getSystemStats(connectionOpts);
                 if (!statResult.isOk && statResult.code === 'NODE_ROUTE_BUSY') return;
-                if (!statResult.isOk && statResult.code === ERRORS.NODE_ERROR_500_WITH_MSG.code) {
+                if (
+                    !statResult.isOk &&
+                    (statResult.code === ERRORS.NODE_ERROR_500_WITH_MSG.code ||
+                        statResult.code === 'NODE_HTTP_503')
+                ) {
                     const health = await this.axios.getNodeHealth(connectionOpts);
                     if (!health.isOk && health.code === 'NODE_ROUTE_BUSY') return;
                     if (health.isOk && health.response.isAlive === true) {
@@ -75,15 +79,7 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
                                 }),
                             );
                         if (health.response.xrayInternalStatusCached === false) {
-                            const retryAt = await this.rawCacheService.get<number>(
-                                hostPolicyRetryKey(nodeUuid),
-                            );
-                            if (
-                                typeof retryAt !== 'number' ||
-                                !Number.isFinite(retryAt) ||
-                                retryAt <= Date.now()
-                            )
-                                await this.nodesQueuesService.startNode({ nodeUuid });
+                            await this.startNodeIfRetryDue(nodeUuid);
                         }
                         await this.reportIncident(nodeUuid, true, isConnected, observedAt);
                         return;
@@ -169,6 +165,8 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
                 }),
             );
 
+            await this.startNodeIfRetryDue(nodeUuid);
+
             return;
         }
 
@@ -248,6 +246,12 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
 
         await this.reportIncident(nodeUuid, true, isConnected, observedAt);
         return;
+    }
+
+    private async startNodeIfRetryDue(nodeUuid: string): Promise<void> {
+        const retryAt = await this.rawCacheService.get<number>(hostPolicyRetryKey(nodeUuid));
+        if (typeof retryAt !== 'number' || !Number.isFinite(retryAt) || retryAt <= Date.now())
+            await this.nodesQueuesService.startNode({ nodeUuid });
     }
 
     private async reportIncident(

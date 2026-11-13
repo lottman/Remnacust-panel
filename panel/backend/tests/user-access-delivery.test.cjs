@@ -218,6 +218,49 @@ test('intermediate Bull retries do not create a parallel outbox retry storm', as
     );
     assert.equal(f.pending.length, 0);
 });
+
+test('unconfigured Node 503 remains retryable and a retried grant rechecks current permissions', async () => {
+    const f = fixture();
+    let sends = 0;
+    await assert.rejects(
+        f.service.deliver(
+            node,
+            [entry],
+            true,
+            async () => {
+                sends++;
+                return {
+                    isOk: false,
+                    code: 'NODE_HTTP_503',
+                    message: 'Node user state is not synchronized',
+                };
+            },
+            false,
+        ),
+        /User access delivery is pending/,
+    );
+    assert.equal(sends, 1);
+    assert.deepEqual(f.pending, []);
+    f.rows[0].status = 'FROZEN';
+    await f.service.deliver(node, [entry], true, f.send, false);
+    assert.deepEqual(f.sent, []);
+    assert.deepEqual(f.pending, [[1n]]);
+});
+
+test('unconfigured Node on the last grant or revoke attempt persists access reconciliation', async () => {
+    for (const adding of [true, false]) {
+        const f = fixture();
+        if (!adding) f.rows[0].status = 'FROZEN';
+        await assert.rejects(
+            f.service.deliver(node, [entry], adding, async () => ({
+                isOk: false,
+                code: 'NODE_HTTP_503',
+            })),
+            /User access delivery is pending/,
+        );
+        assert.deepEqual(f.pending, [[1n]]);
+    }
+});
 test('deletion during an acknowledged grant revokes only the exact sent credentials', async () => {
     const f = fixture();
     await f.service.deliver(node, [entry], true, async () => {
@@ -295,40 +338,53 @@ for (const bulk of [false, true]) {
         '../user-access-delivery.service': {},
     })[name];
     for (const adding of [false, true])
-        test(`${bulk ? 'bulk' : 'single'} actual worker rejects negative node acknowledgements and preserves retries`, async () => {
-            const f = fixture();
-            if (!adding) f.rows[0].status = 'FROZEN';
-            const wire = bulk
-                ? adding
-                    ? {
-                          affectedInboundTags: ['main'],
-                          users: [
-                              {
-                                  userData: { userId: '1', hashUuid: 'key' },
-                                  inboundData: [{ tag: 'main' }],
-                              },
-                          ],
-                      }
-                    : { users: [{ userId: '1', hashUuid: 'key' }] }
-                : adding
-                  ? { hashData: { vlessUuid: 'key' }, data: [{ username: '1', tag: 'main' }] }
-                  : { username: '1', hashData: { vlessUuid: 'key' } };
-            const axios = {
-                addUser: async () => ({ isOk: false }),
-                deleteUser: async () => ({ isOk: false }),
-                addUsers: async () => ({ isOk: false }),
-                deleteUsers: async () => ({ isOk: false }),
-            };
-            const worker = new Worker(axios, f.service);
-            await assert.rejects(
-                worker.process({
-                    name: adding ? (bulk ? 'addBulk' : 'add') : bulk ? 'removeBulk' : 'remove',
-                    data: { node, data: wire },
-                    opts: { attempts: 5 },
-                    attemptsMade: 4,
-                }),
-                /delivery is pending/,
-            );
-            assert.deepEqual(f.pending, [[1n]]);
-        });
+        for (const unavailable of [false, true])
+            test(`${bulk ? 'bulk' : 'single'} ${adding ? 'grant' : 'revoke'} worker rejects ${unavailable ? '503' : 'negative acknowledgement'} and preserves retries`, async () => {
+                const f = fixture();
+                if (!adding) f.rows[0].status = 'FROZEN';
+                const wire = bulk
+                    ? adding
+                        ? {
+                              affectedInboundTags: ['main'],
+                              users: [
+                                  {
+                                      userData: { userId: '1', hashUuid: 'key' },
+                                      inboundData: [{ tag: 'main' }],
+                                  },
+                              ],
+                          }
+                        : { users: [{ userId: '1', hashUuid: 'key' }] }
+                    : adding
+                      ? { hashData: { vlessUuid: 'key' }, data: [{ username: '1', tag: 'main' }] }
+                      : { username: '1', hashData: { vlessUuid: 'key' } };
+                const axios = {
+                    addUser: async () => ({
+                        isOk: false,
+                        code: unavailable ? 'NODE_HTTP_503' : undefined,
+                    }),
+                    deleteUser: async () => ({
+                        isOk: false,
+                        code: unavailable ? 'NODE_HTTP_503' : undefined,
+                    }),
+                    addUsers: async () => ({
+                        isOk: false,
+                        code: unavailable ? 'NODE_HTTP_503' : undefined,
+                    }),
+                    deleteUsers: async () => ({
+                        isOk: false,
+                        code: unavailable ? 'NODE_HTTP_503' : undefined,
+                    }),
+                };
+                const worker = new Worker(axios, f.service);
+                await assert.rejects(
+                    worker.process({
+                        name: adding ? (bulk ? 'addBulk' : 'add') : bulk ? 'removeBulk' : 'remove',
+                        data: { node, data: wire },
+                        opts: { attempts: 5 },
+                        attemptsMade: 4,
+                    }),
+                    /delivery is pending/,
+                );
+                assert.deepEqual(f.pending, [[1n]]);
+            });
 }

@@ -153,7 +153,7 @@ test('health false/malformed are rejected; same-candidate legacy 404/405 status 
     }
 });
 test('POST and destructive GET dispatch once after ambiguous timeout; valid app errors keep route healthy', async () => {
-    for (const method of ['post', 'get']) for (const status of [undefined, 500, 404, 401]) {
+    for (const method of ['post', 'get']) for (const status of [undefined, 500, 503, 404, 401]) {
         const { client } = service(); let calls = 0;
         const dispatch = async (url, _body, config) => {
             if (!url.endsWith('/destructive')) return { data: { response: { isAlive: true } } };
@@ -164,7 +164,8 @@ test('POST and destructive GET dispatch once after ambiguous timeout; valid app 
         client.axiosInstance.get = dispatch; client.axiosInstance.post = dispatch;
         const result = await client.request({ label: 'CONTROL', opts: base, path: '/destructive', method });
         assert.equal(result.isOk, false); assert.equal(calls, 1);
-        assert.equal((await client.connectionRoute(base)).status, status === 500 || status === 404 ? 'authenticated' : 'unavailable');
+        if (status === 503) assert.equal(result.code, 'NODE_HTTP_503');
+        assert.equal((await client.connectionRoute(base)).status, status === 500 || status === 503 || status === 404 ? 'authenticated' : 'unavailable');
     }
 });
 test('a deadline cancellation is a timeout rather than an unexplained serialized canceled error', async () => {

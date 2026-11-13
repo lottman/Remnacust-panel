@@ -189,7 +189,7 @@ for (const format of ['XRAY_JSON', 'SINGBOX', 'MIHOMO', 'CLASH', 'STASH']) test(
         './autoselect-model': { poolsOf: () => [], autoselectGroups: () => [], parseTemplate: JSON.parse, templateChanges: () => [], needsProbes: () => false },
         './client-template-model': load(path.join(root, 'client-template-model.ts')),
         './autoselect-panel.module.css': {},
-        './autoselect-sources': {},
+        './autoselect-sources': load(path.join(root, 'autoselect-sources.ts')),
         './geofile-address-rules-panel': { GeofileAddressRules: 'ManualRules' },
         './priority-order': {}, './template-assignment-panel': {}, './template-changes': { TemplateChanges: 'TemplateChanges' }
     };

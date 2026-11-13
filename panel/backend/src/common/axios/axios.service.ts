@@ -628,8 +628,9 @@ export class AxiosService {
                 this.nodeRoutes ??= new NodeControlRouteResolver(this.rawCacheService);
                 const shutdown = label === 'STOP XRAY' && path === StopXrayCommand.url;
                 if (registered.isDisabled && !shutdown) throw new Error('Node is disabled');
-                selected = routeCandidates(registered).length === 1
-                    ? registered
+                const candidates = routeCandidates(registered);
+                selected = candidates.length === 1
+                    ? { ...registered, address: candidates[0] }
                     : await this.nodeRoutes.select(registered, (candidate, budget) => this.probeRoute(candidate, budget), Math.max(1, deadline - Date.now()), shutdown);
                 if (!(await this.routeRegistry.isCurrent(registered, shutdown)))
                     throw new NodeRouteBusyError('Node connection configuration changed before dispatch');

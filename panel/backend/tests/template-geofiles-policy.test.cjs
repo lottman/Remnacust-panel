@@ -177,17 +177,17 @@ test('template enable validates locked JSON settings before writing revisions an
         {},
     );
     repo.saveRevision = async () => calls.push('history');
-    for (const rows of [[], [{ enabled: false }]]) {
+    for (const rows of [[], [{ enabled: true, systemEnabled: false }]]) {
         settings = rows;
         calls.length = 0;
         await assert.rejects(
             repo.update({ uuid: 'test', geofilesEnabled: true }),
-            /GEOFILES_REQUIRE_BASE_JSON/,
+            /GEOFILES_SYSTEM_DISABLED/,
         );
         assert.equal(calls.length, 2);
         assert(calls.every((value) => value.includes('FOR UPDATE')));
     }
-    settings = [{ enabled: true }];
+    settings = [{ enabled: true, systemEnabled: true }];
     calls.length = 0;
     await repo.update({ uuid: 'test', geofilesEnabled: true });
     assert.deepEqual(calls.slice(-3), ['history', 'write', 'history']);

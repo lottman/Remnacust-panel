@@ -97,12 +97,10 @@ export const SubscriptionUserRemarksCardWidget = (props: IProps) => {
     const { mutate, isPending } = useUpdateSubscriptionSettings({
         mutationFns: {
             onSuccess(data) {
-                queryClient.setQueryData(
-                    QueryKeys.subscriptionSettings.getSubscriptionSettings.queryKey,
-                    data
-                )
-
                 setRemarks(computeRemarks(data))
+                return queryClient.invalidateQueries({
+                    queryKey: QueryKeys.subscriptionSettings.getSubscriptionSettings.queryKey
+                })
             },
 
             onError(error) {

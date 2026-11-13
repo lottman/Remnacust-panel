@@ -39,7 +39,7 @@ export function SubscriptionJsonDelivery() {
                         disabled={
                             !settings.isSuccess ||
                             update.isPending ||
-                            settings.data.geofilesEnabled === true
+                            settings.data.geofilesSystemEnabled === true
                         }
                         label={t('subscription-settings.widget.serve-json-at-base-subscription')}
                         description={t('geofiles.json-setting-help')}
@@ -48,7 +48,7 @@ export function SubscriptionJsonDelivery() {
                                 !settings.isSuccess ||
                                 update.isPending ||
                                 !settings.data ||
-                                settings.data.geofilesEnabled
+                                settings.data.geofilesSystemEnabled
                             )
                                 return
                             update.mutate({
@@ -59,7 +59,34 @@ export function SubscriptionJsonDelivery() {
                             })
                         }}
                     />
-                    {settings.data.geofilesEnabled && (
+                    <Switch
+                        checked={settings.data.geofilesSystemEnabled === true}
+                        disabled={
+                            !settings.isSuccess ||
+                            update.isPending ||
+                            (!settings.data.geofilesSystemEnabled &&
+                                !settings.data.serveJsonAtBaseSubscription)
+                        }
+                        label={t('geofiles.system-enabled')}
+                        description={t('geofiles.system-help')}
+                        onChange={(event) => {
+                            if (
+                                !settings.isSuccess ||
+                                update.isPending ||
+                                !settings.data ||
+                                (event.currentTarget.checked &&
+                                    !settings.data.serveJsonAtBaseSubscription)
+                            )
+                                return
+                            update.mutate({
+                                variables: {
+                                    uuid: settings.data.uuid,
+                                    geofilesSystemEnabled: event.currentTarget.checked
+                                }
+                            })
+                        }}
+                    />
+                    {settings.data.geofilesSystemEnabled && (
                         <Text size="sm" c="dimmed">
                             {t('geofiles.disable-before-json')}
                         </Text>

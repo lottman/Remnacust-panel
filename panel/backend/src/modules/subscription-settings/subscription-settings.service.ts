@@ -100,7 +100,11 @@ export class SubscriptionSettingsService {
         } catch (error) {
             if (
                 error instanceof Error &&
-                ['GEOFILES_REQUIRE_BASE_JSON', 'GEOFILES_PER_TEMPLATE'].includes(error.message)
+                [
+                    'GEOFILES_REQUIRE_BASE_JSON',
+                    'GEOFILES_PER_TEMPLATE',
+                    'GEOFILES_SYSTEM_DISABLED',
+                ].includes(error.message)
             )
                 return fail(ERRORS.CONFIG_VALIDATION_ERROR.withMessage(error.message));
             this.logger.error(error);

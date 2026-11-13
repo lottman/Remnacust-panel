@@ -28,7 +28,7 @@ import {
     storeBundleSelection,
     validateBundleSelection,
 } from './bundle-selection';
-import { compileDat, datCategories, DatRules } from './compile-dat';
+import { compileDat, DatRules } from './compile-dat';
 import { downloadGeofile, MAX_GEOFILE_BYTES } from './download-geofile';
 import { datClientFile } from './geofile-delivery';
 import {
@@ -50,12 +50,7 @@ import {
     readGeofileRefresh,
     publishGeofileCurrent,
 } from './refresh-geofile';
-import {
-    GEOFILE_EXTENSIONS,
-    GEOFILE_KINDS,
-    GeofileKind,
-    validateGeofile,
-} from './validate-geofile';
+import { GEOFILE_EXTENSIONS, GEOFILE_KINDS, GeofileKind } from './validate-geofile';
 import { DatKind, XrayGeofileDelivery, XrayGeofileFallback } from './xray-geofile-delivery';
 
 const MAX_FILES = 32;
@@ -552,7 +547,7 @@ export class GeofilesService {
                 payload = candidate;
         }
         if (!payload) {
-            await this.bundleContent(kind, ordered);
+            if (categories) throw new Error('geofile-bundle-size');
             payload = Buffer.from(
                 JSON.stringify({ kind, ids: ordered, namespace: 2, revision }),
             ).toString('base64url');
@@ -747,11 +742,10 @@ export class GeofilesService {
         return this.refreshStore.refresh(id, true);
     }
     public async refreshDue() {
-        const template = await this.prisma.subscriptionTemplate.findFirst({
-            where: { geofilesEnabled: true },
-            select: { uuid: true },
+        const settings = await this.prisma.subscriptionSettings.findFirst({
+            select: { geofilesSystemEnabled: true },
         });
-        if (!template) return [];
+        if (settings?.geofilesSystemEnabled !== true) return [];
         return this.refreshStore.refreshDue();
     }
 
@@ -1117,11 +1111,14 @@ export class GeofilesService {
             const kind = kindValue as GeofileKind;
             try {
                 data = await read();
-                validateGeofile(data, kind);
+                await validateGeofileAsync(data, kind);
             } catch {
                 throw new BadRequestException('geofile-invalid-or-unreachable');
             }
             const sha256 = createHash('sha256').update(data).digest('hex');
+            const categories = ['geoip', 'geosite'].includes(kind)
+                ? (await datCategoriesAsync(data)).slice(0, 1000)
+                : undefined;
             // Share the existing cross-worker reference lock with deletion and template saves.
             return await this.withReferenceLock(async () => {
                 await mkdir(this.root, { recursive: true, mode: 0o700 });
@@ -1151,9 +1148,7 @@ export class GeofilesService {
                         createdAt: new Date().toISOString(),
                         ...geofileProvenance(origin),
                         url: this.base + id + '/' + filename,
-                        ...(['geoip', 'geosite'].includes(kind)
-                            ? { categories: datCategories(data).slice(0, 1000) }
-                            : {}),
+                        ...(categories ? { categories } : {}),
                     };
                     try {
                         await writeFile(join(directory, 'data'), data, { flag: 'wx', mode: 0o600 });
@@ -1196,14 +1191,24 @@ export class GeofilesService {
             });
             if (item.id !== id) throw new NotFoundException('Geofile not found');
             const templates = await this.repository.getAllTemplates(true);
-            if (
-                templates.some(
-                    (template) =>
-                        (JSON.stringify(template.templateJson) ?? '').includes(id) ||
-                        template.templateYaml?.includes(id),
+            for (const template of templates) {
+                if (
+                    (JSON.stringify(template.templateJson) ?? '').includes(id) ||
+                    template.templateYaml?.includes(id)
                 )
-            )
-                throw new ConflictException('geofile-in-use');
+                    throw new ConflictException('geofile-in-use');
+                const config =
+                    template.templateJson ??
+                    (template.templateYaml
+                        ? load(template.templateYaml, {
+                              maxAliases: 100,
+                              maxTotalMergeKeys: 10000,
+                          })
+                        : undefined);
+                const native = await this.nativeReferences(config, item);
+                if (native.native || native.selections.length)
+                    throw new ConflictException('geofile-in-use');
+            }
             // The directory is derived exclusively from a validated, bounded slot ID.
             await rm(directory, { recursive: true });
             this.compiled.clear();

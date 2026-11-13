@@ -7,6 +7,7 @@ import { SubscriptionSettingsEntity } from '../entities';
 export class SubscriptionSettingsResponseModel {
     public uuid: string;
     public serveJsonAtBaseSubscription: boolean;
+    public geofilesSystemEnabled: boolean;
     public geofilesEnabled: boolean;
     public geofilesInlineRuleLimit: number;
     public isShowCustomRemarks: boolean;
@@ -25,6 +26,7 @@ export class SubscriptionSettingsResponseModel {
     constructor(entity: SubscriptionSettingsEntity) {
         this.uuid = entity.uuid;
         this.serveJsonAtBaseSubscription = entity.serveJsonAtBaseSubscription;
+        this.geofilesSystemEnabled = entity.geofilesSystemEnabled === true;
         this.geofilesEnabled = entity.geofilesEnabled;
         this.geofilesInlineRuleLimit = entity.geofilesInlineRuleLimit;
         this.isShowCustomRemarks = entity.isShowCustomRemarks;

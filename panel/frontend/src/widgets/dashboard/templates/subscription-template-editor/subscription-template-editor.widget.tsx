@@ -12,6 +12,7 @@ import { useDeferredValue, useLayoutEffect, useMemo, useRef, useState } from 're
 import { useTranslation } from 'react-i18next'
 import { TbArrowsShuffle, TbCode, TbDatabaseImport, TbHistory } from 'react-icons/tb'
 
+import { useGetSubscriptionSettings } from '@shared/api/hooks/subscription-settings/subscription-settings.query.hooks'
 import { usePseudoFullscreen, useViewportFillHeight } from '@shared/hooks'
 import { useEditorRecovery } from '@shared/hooks/use-editor-recovery'
 import { fullscreenClasses, FullscreenToggleButton } from '@shared/ui'
@@ -57,7 +58,12 @@ export function SubscriptionTemplateEditorWidget(props: Props) {
     useLayoutEffect(() => registerHostHoverData(hosts), [hosts])
     const { t } = useTranslation()
     const isXray = template.templateType === 'XRAY_JSON'
-    const geofilesEnabled = template.geofilesEnabled === true
+    const settings = useGetSubscriptionSettings()
+    const geofilesEnabled =
+        settings.isSuccess &&
+        settings.data?.geofilesSystemEnabled === true &&
+        settings.data.serveJsonAtBaseSubscription === true &&
+        template.geofilesEnabled === true
     const format = template.templateType as ClientFormat
     const [selectedTab, setActiveTab] = useState<string | null>('code')
     const activeTab = !geofilesEnabled && selectedTab === 'geofiles' ? 'code' : selectedTab

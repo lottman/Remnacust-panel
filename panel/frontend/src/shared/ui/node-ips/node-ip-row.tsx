@@ -25,6 +25,7 @@ import { isValidNodeIp } from './validate-node-ips'
 
 interface IProps {
     autoFocus?: boolean
+    description?: ReactNode
     error?: ReactNode
     id: string
     index: number
@@ -37,8 +38,19 @@ interface IProps {
 }
 
 export const NodeIpRow = (props: IProps) => {
-    const { autoFocus, id, index, ip, status, error, size, onChangeIp, onChangeStatus, onRemove } =
-        props
+    const {
+        autoFocus,
+        description,
+        id,
+        index,
+        ip,
+        status,
+        error,
+        size,
+        onChangeIp,
+        onChangeStatus,
+        onRemove
+    } = props
 
     const { t } = useTranslation()
 
@@ -103,6 +115,8 @@ export const NodeIpRow = (props: IProps) => {
 
             <TextInput
                 autoFocus={autoFocus}
+                description={description}
+                inputWrapperOrder={['label', 'input', 'description', 'error']}
                 error={error}
                 leftSection={
                     <CopyButton timeout={2000} value={ip.trim()}>

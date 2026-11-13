@@ -109,10 +109,11 @@ test('pending mutation cannot submit another change; rejection retains confirmed
 
 test('additional settings owns the shared controls and saving other options cannot overwrite its confirmed value', () => {
     const requests = [];
-    let initialValues;
+    let initialValues, additionalCallbacks;
+    const invalidations = [];
     const sharedSwitch = () => null;
     const apiHooks = { QueryKeys: { subscriptionSettings: { getSubscriptionSettings: { queryKey: [] } } },
-        useUpdateSubscriptionSettings: () => ({ mutate: value => requests.push(value), isPending: false }) };
+        useUpdateSubscriptionSettings: options => { additionalCallbacks = options.mutationFns; return { mutate: value => requests.push(value), isPending: false }; } };
     const mocks = {
         '@mantine/core': Object.fromEntries(['Button', 'Card', 'Group', 'Stack', 'Switch'].map(name => [name, name])),
         '@mantine/form': { schemaResolver: () => () => ({}), useForm: options => {
@@ -123,10 +124,11 @@ test('additional settings owns the shared controls and saving other options cann
         '@remnawave/backend-contract': { UpdateSubscriptionSettingsCommand: { RequestBodySchema: {} } },
         'react-i18next': { useTranslation: () => ({ t: value => value }) },
         'react-icons/pi': { PiGear: 'PiGear' },
-        '@shared/api': { queryClient: { setQueryData() {} } },
+        '@shared/api': { queryClient: { setQueryData() { assert.fail('late full snapshots must not overwrite the master cache'); }, invalidateQueries: options => { invalidations.push(options); } } },
         '@shared/api/hooks': apiHooks,
         '@shared/ui/settings-card': { SettingsCardShared: Object.fromEntries(['Container', 'Header', 'Content', 'Bottom'].map(name => [name, name])) },
         '@shared/ui/subscription-json-delivery': { SubscriptionJsonDelivery: sharedSwitch },
+        './default-geofiles-panel.widget': { DefaultGeofilesPanel: () => null },
         '@shared/utils/misc': { handleFormErrors() {} }
     };
     function load(file) {
@@ -149,17 +151,30 @@ test('additional settings owns the shared controls and saving other options cann
     assert.equal(geoSource.includes('GeofileJsonDelivery'), false);
     view.props.onSubmit();
     assert.deepEqual(requests, [{ variables: { uuid: 'settings-id', randomizeHosts: true, isShowCustomRemarks: false } }]);
+    additionalCallbacks.onSuccess({ uuid: 'settings-id', geofilesSystemEnabled: false });
+    assert.deepEqual(invalidations, [{ queryKey: [] }]);
 });
 
-for (const language of ['ru', 'en', 'fa', 'zh']) test(`${language}: settings expose only JSON and enabled templates prevent disabling it`, async () => {
+for (const language of ['ru', 'en', 'fa', 'zh']) test(`${language}: the independent master switch is off by default and requires JSON`, async () => {
     const panel = harness(language);
-    assert.equal(panel.render().filter(element => element.type === 'Switch').length, 1);
-    await panel.confirm({ ...panel.settings.data, serveJsonAtBaseSubscription: true, geofilesEnabled: true });
+    let controls = panel.render().filter(element => element.type === 'Switch');
+    assert.equal(controls.length, 2);
+    assert.equal(controls[1].props.checked, false);
+    assert.equal(controls[1].props.disabled, true);
+    controls[1].props.onChange({ currentTarget: { checked: true } });
+    assert.equal(panel.requests.length, 0);
+    await panel.confirm({ ...panel.settings.data, serveJsonAtBaseSubscription: true, geofilesEnabled: true, geofilesSystemEnabled: false });
+    controls = panel.render().filter(element => element.type === 'Switch');
+    assert.equal(controls[0].props.disabled, false, 'saved template flags do not lock JSON with the system off');
+    assert.equal(controls[1].props.disabled, false);
+    controls[1].props.onChange({ currentTarget: { checked: true } });
+    assert.deepEqual(panel.requests, [{ variables: { uuid: 'settings-id', geofilesSystemEnabled: true } }]);
+    await panel.confirm({ ...panel.settings.data, geofilesSystemEnabled: true });
     const control = panel.render().find(element => element.type === 'Switch');
     assert.equal(control.props.disabled, true);
     control.props.onChange({ currentTarget: { checked: false } });
-    assert.equal(panel.requests.length, 0);
-    await panel.confirm({ ...panel.settings.data, geofilesEnabled: false });
+    assert.equal(panel.requests.length, 1);
+    await panel.confirm({ ...panel.settings.data, geofilesSystemEnabled: false });
     assert.equal(panel.render().find(element => element.type === 'Switch').props.disabled, false);
 });
 
@@ -170,5 +185,5 @@ test('failed or conflicting writes refresh authoritative settings without silent
     assert.deepEqual(panel.events, ['invalidate']);
     const controls = panel.render().filter(element => element.type === 'Switch');
     assert.equal(controls[0].props.checked, true);
-    assert.equal(controls.length, 1);
+    assert.equal(controls.length, 2);
 });

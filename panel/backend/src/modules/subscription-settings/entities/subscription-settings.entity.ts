@@ -7,6 +7,7 @@ import { TResponseRulesConfig } from '@modules/subscription-response-rules/types
 export class SubscriptionSettingsEntity implements SubscriptionSettings {
     uuid: string;
     serveJsonAtBaseSubscription: boolean;
+    geofilesSystemEnabled = false;
     geofilesEnabled: boolean;
     geofilesInlineRuleLimit: number;
     isShowCustomRemarks: boolean;

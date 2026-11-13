@@ -1,4 +1,13 @@
-import { Alert, Button, Group, NumberInput, Stack, Switch, Text, TextInput } from '@mantine/core'
+import {
+    Alert,
+    Button,
+    NumberInput,
+    SimpleGrid,
+    Stack,
+    Switch,
+    Text,
+    TextInput
+} from '@mantine/core'
 import { useMutation } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -101,7 +110,7 @@ export function GeofileRefreshSettings({
                 <Alert color="red">{t('geofiles.refresh-failed')}</Alert>
             )}
             {deferred && <Alert color="yellow">{t('geofiles.refresh-deferred')}</Alert>}
-            <Group grow>
+            <SimpleGrid cols={{ base: 1, sm: 2 }}>
                 <Button
                     loading={configure.isPending}
                     disabled={!source.trim() || (busy && !configure.isPending)}
@@ -120,7 +129,7 @@ export function GeofileRefreshSettings({
                 >
                     {t('common.action.refresh')}
                 </Button>
-            </Group>
+            </SimpleGrid>
         </Stack>
     )
 }

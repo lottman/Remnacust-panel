@@ -6,7 +6,7 @@ const ts = require('typescript');
 
 function harness(template, editorType = 'json') {
     const states = [], refs = [];
-    const settings = { isSuccess: true, data: { geofilesEnabled: false } };
+    const settings = { isSuccess: true, data: { geofilesSystemEnabled: true, serveJsonAtBaseSubscription: true } };
     let stateIndex, refIndex;
     const recoveries = [];
     const components = new Proxy({}, { get: (_, name) => name });
@@ -140,6 +140,13 @@ test('geofiles tab follows its confirmed template flag and preserves the unsaved
     assert(!tabs().includes('geofiles'));
     assert.equal(h.render().find(element => element.type === 'CodeEditor').props.value, '{"unsaved":"kept"}');
     saved.geofilesEnabled = true;
+    h.settings.data.geofilesSystemEnabled = false;
+    assert(!tabs().includes('geofiles'));
+    h.settings.data.geofilesSystemEnabled = true;
+    h.settings.data.serveJsonAtBaseSubscription = false;
+    assert(!tabs().includes('geofiles'));
+    h.settings.data.serveJsonAtBaseSubscription = true;
     h.settings.isSuccess = false;
-    assert(tabs().includes('geofiles'));
+    assert(!tabs().includes('geofiles'));
+    assert.equal(h.render().find(element => element.type === 'CodeEditor').props.value, '{"unsaved":"kept"}');
 });

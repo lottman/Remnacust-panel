@@ -63,14 +63,18 @@ export function TemplatesCardWidget(props: IProps) {
                 </EntityCardShared.Header>
 
                 <EntityCardShared.Actions>
-                    <TemplateGeofilesStatus enabled={template.geofilesEnabled === true} />
+                    {allowGeofiles && (
+                        <TemplateGeofilesStatus enabled={template.geofilesEnabled === true} />
+                    )}
                     <EntityCardShared.Menu>
-                        <TemplateGeofilesMenuItem
-                            template={template}
-                            allowEnable={allowGeofiles}
-                            inactive={isDragOverlay}
-                        />
-                        <Menu.Divider />
+                        {allowGeofiles && (
+                            <TemplateGeofilesMenuItem
+                                template={template}
+                                allowEnable={allowGeofiles}
+                                inactive={isDragOverlay}
+                            />
+                        )}
+                        {allowGeofiles && <Menu.Divider />}
                         <Menu.Item
                             leftSection={<PiCopy size={18} />}
                             onClick={(event) => {

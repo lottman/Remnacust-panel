@@ -1937,6 +1937,8 @@
         }
     },
     "node-ips": {
+        "primary-ip-description": "这是主地址，不会显示在附加 IP 列表中；其状态会保留。",
+        "duplicate-ip-description": "此 IP 已在列表中。请检查其状态或删除重复项。",
         "add-ip": "添加 IP",
         "remove-ip": "移除 IP",
         "invalid-ip": "不是有效的 IPv4 或 IPv6 地址",
@@ -4281,6 +4283,14 @@
         "use-pool-help": "关闭后仍按原有方式添加符合条件的主机。手动配置的组成员将保留。"
     },
     "geofiles": {
+        "defaults-update": "从 GitHub 更新标准文件",
+        "default-not-downloaded": "尚未下载",
+        "default-ready": "已在文件库中",
+        "defaults-help": "默认列出 Loyalsoldier 来源。点击更新可从 GitHub 下载到文件库，随后像其他文件一样分配给模板。每个文件可单独设置自动更新和时间间隔。定时更新仅在系统启用时运行，关闭时仍可手动更新。已保存的模板分配会保留。",
+        "defaults-title": "标准 GeoIP 和 GeoSite",
+        "system-help": "默认关闭。允许在选定模板中分配文件并使用附加规则。手动填写的 geosite:、geoip:、ext:、geodata 和 routing 不受影响。需要在订阅基础地址提供 JSON。",
+        "system-disabled": "地理文件系统已关闭。请在订阅附加设置中启用后重试。",
+    "system-enabled": "启用 Remnacust 地理文件系统",
         "template-on": "此模板已启用地理文件",
         "template-off": "此模板已禁用地理文件",
         "template-enable": "启用地理文件",
@@ -4381,7 +4391,7 @@
         "enabled-label": "Remnacust 地理文件",
         "enabled-help": "单独启用：模板 → ⋯ → 启用地理文件。需要在基础链接启用 JSON。",
         "requires-json": "请先启用订阅基础地址的 JSON。",
-        "disable-before-json": "请先在各模板中禁用地理文件。",
+        "disable-before-json": "请先关闭 Remnacust 地理文件系统。模板分配将保留。",
         "json-setting-help": "这是订阅的全局设置，修改后立即保存；请在应用内刷新订阅。",
         "json-setting-load-failed": "无法加载订阅设置。",
         "json-setting-save-failed": "无法保存订阅设置，请重试。",

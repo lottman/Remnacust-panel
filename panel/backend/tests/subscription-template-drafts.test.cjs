@@ -47,6 +47,7 @@ function fixture(type = 'XRAY_JSON') {
         prepare: async (config) => config,
     };
     const repository = {
+        isGeofilesSystemEnabled: async () => true,
         findByUUID: async () => structuredClone(row),
         update: async (patch) => {
             row = {

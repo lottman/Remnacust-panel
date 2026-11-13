@@ -116,7 +116,7 @@ export function geofileCatalog(files: LibraryGeofile[]) {
                   }
               ]
             : []),
-        ...['V2Fly', 'MetaCubeX']
+        ...[...new Set(geofilePresets.map((preset) => preset.provider))]
             .map((provider) => ({
                 group: provider,
                 items: geofilePresets

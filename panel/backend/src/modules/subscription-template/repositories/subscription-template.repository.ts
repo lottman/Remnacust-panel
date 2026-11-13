@@ -64,11 +64,16 @@ export class SubscriptionTemplateRepository implements ICrud<SubscriptionTemplat
         const before = await this.prisma.tx.subscriptionTemplate.findUniqueOrThrow({
             where: { uuid },
         });
-        if (data.geofilesEnabled === true) {
-            const settings = await this.prisma.tx.$queryRaw<Array<{ enabled: boolean }>>`
-                SELECT serve_json_at_base_subscription AS enabled
+        if (data.geofilesEnabled === true && before.geofilesEnabled !== true) {
+            const settings = await this.prisma.tx.$queryRaw<
+                Array<{ enabled: boolean; systemEnabled: boolean }>
+            >`
+                SELECT serve_json_at_base_subscription AS enabled,
+                       geofiles_system_enabled AS "systemEnabled"
                 FROM subscription_settings ORDER BY uuid FOR UPDATE`;
-            if (!settings.some((item) => item.enabled === true))
+            if (!settings.some((item) => item.systemEnabled === true))
+                throw new Error('GEOFILES_SYSTEM_DISABLED');
+            if (!settings.some((item) => item.systemEnabled === true && item.enabled === true))
                 throw new Error('GEOFILES_REQUIRE_BASE_JSON');
         }
         await this.saveRevision(before);
@@ -86,6 +91,16 @@ export class SubscriptionTemplateRepository implements ICrud<SubscriptionTemplat
 
         await this.saveRevision(result);
         return this.converter.fromPrismaModelToEntity(result);
+    }
+
+    public async isGeofilesSystemEnabled(): Promise<boolean> {
+        const settings = await this.prisma.tx.subscriptionSettings.findFirst({
+            select: { geofilesSystemEnabled: true, serveJsonAtBaseSubscription: true },
+        });
+        return (
+            settings?.geofilesSystemEnabled === true &&
+            settings.serveJsonAtBaseSubscription === true
+        );
     }
 
     public async getRevisions(templateUuid: string) {

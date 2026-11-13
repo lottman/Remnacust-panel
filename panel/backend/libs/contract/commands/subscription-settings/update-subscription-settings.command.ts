@@ -23,6 +23,7 @@ export namespace UpdateSubscriptionSettingsCommand {
     export const RequestBodySchema = z.object({
         uuid: z.uuid(),
         serveJsonAtBaseSubscription: z.optional(z.boolean()),
+        geofilesSystemEnabled: z.optional(z.boolean()),
         geofilesEnabled: z.optional(z.boolean()),
         geofilesInlineRuleLimit: SubscriptionSettingsSchema.shape.geofilesInlineRuleLimit
             .removeDefault()

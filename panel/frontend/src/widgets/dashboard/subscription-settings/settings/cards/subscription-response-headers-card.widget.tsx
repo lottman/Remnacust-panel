@@ -51,11 +51,10 @@ export const SubscriptionResponseHeadersCardWidget = (props: IProps) => {
 
     const { mutate, isPending } = useUpdateSubscriptionSettings({
         mutationFns: {
-            onSuccess(data) {
-                queryClient.setQueryData(
-                    QueryKeys.subscriptionSettings.getSubscriptionSettings.queryKey,
-                    data
-                )
+            onSuccess() {
+                return queryClient.invalidateQueries({
+                    queryKey: QueryKeys.subscriptionSettings.getSubscriptionSettings.queryKey
+                })
             },
 
             onError(error) {

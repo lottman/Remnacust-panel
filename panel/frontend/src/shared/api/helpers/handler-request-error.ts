@@ -38,6 +38,7 @@ function configValidationMessage(message: unknown): string {
     if (typeof message !== 'string' || message.length > 2000)
         return i18n.t('requestErrors.codes.A061')
     if (message === 'GEOFILES_REQUIRE_BASE_JSON') return i18n.t('geofiles.requires-json')
+    if (message === 'GEOFILES_SYSTEM_DISABLED') return i18n.t('geofiles.system-disabled')
     if (message === 'GEOFILES_PER_TEMPLATE')
         return i18n.t('requestErrors.features.geofilesPerTemplate')
     const exact = {

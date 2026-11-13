@@ -12,7 +12,10 @@ const { RenderTemplatesService } = load(path.join(root, 'render-templates.servic
     '@libs/contracts/constants': require('../libs/contract/build/backend/constants'),
     '@common/raw-cache': {},
     './constants/config-types': {
-        SUBSCRIPTION_CONFIG_TYPES: { XRAY_JSON: { CONTENT_TYPE: 'application/json' } },
+        SUBSCRIPTION_CONFIG_TYPES: {
+            XRAY_JSON: { CONTENT_TYPE: 'application/json' },
+            XRAY_BASE64: { CONTENT_TYPE: 'text/plain', isBase64: true },
+        },
     },
     './generators/clash.generator.service': {},
     './generators/mihomo.generator.service': {},
@@ -79,7 +82,7 @@ async function fixture(client, prior = true, inline = false) {
         { resolveProxyConfig: async () => [] },
         null,
         null,
-        null,
+        { generateConfig: async () => 'dmxlc3M6Ly9maXh0dXJl' },
         null,
         {
             generateConfig: async ({ geofileDelivery }) => {
@@ -89,11 +92,16 @@ async function fixture(client, prior = true, inline = false) {
         },
         cache,
     );
-    const run = async (serveJsonAtBaseSubscription, credential = 'device-key', headers) => {
+    const run = async (
+        serveJsonAtBaseSubscription,
+        credential = 'device-key',
+        headers,
+        matchedResponseType = 'XRAY_JSON',
+    ) => {
         const context = {
             userAgent: `${client}/6.3.0`,
-            matchedResponseType: 'XRAY_JSON',
-            subscriptionSettings: { serveJsonAtBaseSubscription },
+            matchedResponseType,
+            subscriptionSettings: { serveJsonAtBaseSubscription, geofilesSystemEnabled: true },
             ...(headers ? { headersToApply: headers } : {}),
         };
         const result = await renderer.generateSubscription({
@@ -103,13 +111,37 @@ async function fixture(client, prior = true, inline = false) {
             profileTitle: 'Provider',
             profileKey: 'user-key',
         });
-        assert.equal(result.subscription, manual);
+        assert.equal(
+            result.subscription,
+            matchedResponseType === 'XRAY_JSON' ? manual : 'dmxlc3M6Ly9maXh0dXJl',
+        );
         return context.headersToApply;
     };
     return { original, run, states };
 }
 
 for (const client of ['happ', 'incy']) {
+    test(`${client}: switching to actual Base64 delivery restores defaults without changing the subscription body`, async () => {
+        const f = await fixture(client);
+        const headers = await f.run(false, 'device-key', undefined, 'XRAY_BASE64');
+        assert(headers?.routing, 'Base64 must retire the previously managed routing profile');
+        const profile = decode(headers.routing);
+        assert.equal(profile.Name, decode(f.original).Name);
+        assert.equal(profile.Geositeurl, defaultUrl('geosite'));
+        assert.equal(profile.Geoipurl, defaultUrl('geoip'));
+        assert(Number(profile.LastUpdated) > Number(decode(f.original).LastUpdated));
+        assert.deepEqual(await f.run(false, 'device-key', undefined, 'XRAY_BASE64'), headers);
+        assert.equal(await f.run(false, 'other-device', undefined, 'XRAY_BASE64'), undefined);
+        const manualHeaders = { Routing: `${client}://routing/off` };
+        assert.deepEqual(
+            await f.run(false, 'device-key', manualHeaders, 'XRAY_BASE64'),
+            manualHeaders,
+        );
+        const fresh = await fixture(client, false);
+        assert.equal(await fresh.run(false, 'device-key', undefined, 'XRAY_BASE64'), undefined);
+        assert.equal(fresh.states.size, 0);
+    });
+
     for (const jsonEnabled of [false, true]) {
         test(`${client}: removing all managed files restores standard DAT sources with JSON prerequisite ${jsonEnabled}`, async () => {
             const f = await fixture(client);
@@ -178,7 +210,10 @@ for (const client of ['happ', 'incy']) {
         const context = {
             userAgent: `${client}/6.3.0`,
             matchedResponseType: 'XRAY_JSON',
-            subscriptionSettings: { serveJsonAtBaseSubscription: true },
+            subscriptionSettings: {
+                serveJsonAtBaseSubscription: true,
+                geofilesSystemEnabled: true,
+            },
         };
         const result = await renderer.generateSubscription({
             srrContext: context,

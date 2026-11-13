@@ -12,6 +12,7 @@ import { HwidSettingsSchema } from './subscription-settings/hwid-settings.schema
 export const SubscriptionSettingsSchema = z.object({
     uuid: z.uuid(),
     serveJsonAtBaseSubscription: z.boolean(),
+    geofilesSystemEnabled: z.boolean().default(false),
     geofilesEnabled: z.boolean(),
     geofilesInlineRuleLimit: z
         .int()

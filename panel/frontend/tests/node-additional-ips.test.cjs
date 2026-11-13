@@ -96,6 +96,105 @@ test('editing, removing and adding additional addresses preserves the hidden mai
     assert.deepEqual(state.values.ips, [primary, entry('198.51.100.30', 'AVAILABLE'), entry('')])
 })
 
+test('pasting the main address into a new row keeps its identity, value and edit controls', () => {
+    for (const ips of [[], [primary, a]]) {
+        const state = setup(ips)
+        state.render().find(el => el.props.children?.type?.name === 'TbPlus').props.onClick()
+        const draft = state.rows().at(-1)
+        draft.props.onChangeIp(` ${primary.ip} `)
+        let row = state.rows().find(item => item.props.id === draft.props.id)
+        assert(row, 'the pasted row must remain editable')
+        assert.equal(row.props.ip, ` ${primary.ip} `)
+        assert.equal(row.props.description, 'node-ips.primary-ip-description')
+        assert.equal(state.values.ips.at(-1).ip, primary.ip)
+        row.props.onChangeStatus('RESERVE')
+        row = state.rows().find(item => item.props.id === draft.props.id)
+        row.props.onChangeIp(b.ip)
+        assert.deepEqual(state.values.ips.at(-1), entry(b.ip, 'RESERVE'))
+        state.rows().find(item => item.props.id === draft.props.id).props.onRemove()
+        assert.deepEqual(state.values.ips, ips)
+    }
+})
+
+test('existing rows stay editable when changed to an equivalent primary IPv6 address', () => {
+    const main = entry('2001:0db8:0:0:0:0:0:1', 'MANAGEMENT')
+    const state = setup([a, main, b], '[2001:DB8::1]')
+    const original = state.rows()[0]
+    original.props.onChangeIp('2001:db8::1')
+    const row = state.rows().find(item => item.props.id === original.props.id)
+    assert(row, 'an edited existing row must not disappear')
+    assert.equal(row.props.description, 'node-ips.primary-ip-description')
+    assert.deepEqual(state.values.ips[1], main)
+    assert.deepEqual(addresses.getAdditionalNodeIps(state.values.ips, state.values.address), [b])
+    state.values.address = '2001:db8::2'
+    assert(state.rows().some(item => item.props.id === original.props.id))
+    row.props.onChangeIp('invalid')
+    state.form.errors['ips.0.ip'] = 'invalid'
+    assert.equal(state.rows()[0].props.error, 'node-ips.invalid-ip')
+})
+
+test('normalized duplicate drafts are explained without discarding their routing statuses', () => {
+    const ipv6 = entry('2001:0db8:0:0:0:0:0:2', 'MANAGEMENT')
+    const state = setup([primary, ipv6, b])
+    const row = state.rows()[1]
+    row.props.onChangeIp('2001:DB8::2')
+    assert.equal(state.rows()[1].props.description, 'node-ips.duplicate-ip-description')
+    assert.deepEqual(state.values.ips, [primary, ipv6, entry('2001:DB8::2', 'BLOCKED')])
+    state.rows()[1].props.onChangeIp('203.0.113.27')
+    assert.equal(state.rows()[1].props.description, undefined)
+})
+
+test('saved primary drafts are hidden after reopening without deleting their control roles', () => {
+    const state = setup([a])
+    state.render().find(el => el.props.children?.type?.name === 'TbPlus').props.onClick()
+    state.rows()[1].props.onChangeIp(primary.ip)
+    state.rows()[1].props.onChangeStatus('MANAGEMENT')
+    const saved = structuredClone(state.values.ips)
+    assert.deepEqual(saved, [a, entry(primary.ip, 'MANAGEMENT')])
+    const reopened = setup(saved)
+    assert.deepEqual(reopened.rows().map(row => row.props.ip), [a.ip])
+    assert.deepEqual(reopened.values.ips, saved)
+    assert.deepEqual(reopened.writes, [])
+    assert.deepEqual(addresses.getAdditionalNodeIps(saved, primary.ip), [a])
+})
+
+test('real IP validation still rejects empty and malformed drafts and allows explicit role duplicates', () => {
+    const { getNodeIpsErrors, withNodeIpsErrors } = load('shared/ui/node-ips/validate-node-ips.ts', {
+        i18next: { t: key => key }
+    })
+    assert.deepEqual(getNodeIpsErrors([entry(''), entry('invalid'), entry('2001:db8::2')]), {
+        'ips.0.ip': 'node-ips.ip-is-required', 'ips.1.ip': 'node-ips.invalid-ip'
+    })
+    assert.deepEqual(getNodeIpsErrors([entry(' 198.51.100.1 ', 'MANAGEMENT'), entry('198.51.100.1', 'RESERVE')]), {})
+    assert.equal(getNodeIpsErrors(Array.from({ length: 65 }, () => a)).ips, 'node-ips.max-ips-reached')
+    assert.deepEqual(withNodeIpsErrors(() => ({ address: 'invalid address' }))({ ips: [entry('')] }), {
+        address: 'invalid address', 'ips.0.ip': 'node-ips.ip-is-required'
+    })
+})
+
+test('sorting a draft matching the main address preserves hidden control metadata', () => {
+    const state = setup([primary, a, b])
+    const draft = state.rows()[0]
+    draft.props.onChangeIp(primary.ip)
+    const rows = state.rows()
+    assert.equal(rows.length, 2)
+    state.render().find(el => el.props.onDragEnd).props.onDragEnd({ canceled: false, operation: {
+        source: { id: rows[0].props.id, index: 1 }, target: { id: rows[1].props.id }
+    } })
+    assert.deepEqual(state.values.ips, [primary, b, entry(primary.ip)])
+    assert.equal(state.rows()[1].props.id, draft.props.id)
+})
+
+test('duplicate explanations are localized in every supported language', () => {
+    for (const language of ['en', 'ru', 'fa', 'zh']) {
+        const locale = require(`../public/locales/${language}/remnawave.json`)
+        for (const key of ['primary-ip-description', 'duplicate-ip-description']) {
+            assert.equal(typeof locale['node-ips'][key], 'string')
+            assert(locale['node-ips'][key].trim())
+        }
+    }
+})
+
 test('sorting visible addresses keeps hidden main addresses in their original slots', () => {
     for (const ips of [[primary, a, b], [a, primary, b], [a, b, primary]]) {
         const state = setup(ips)

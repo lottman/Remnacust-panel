@@ -20136,9 +20136,9 @@
     }
   },
   "info": {
-    "title": "Remnacust API v1.1.7.120",
+    "title": "Remnacust API v1.1.7.121",
     "description": "\nRemnacust manages Xray users, nodes, configuration profiles and subscriptions.\n\n## Resources\n* https://t.me/lottman\n* https://github.com/lottman/Remnacust-panel\n",
-    "version": "1.1.7.120",
+    "version": "1.1.7.121",
     "contact": {},
     "license": {
       "name": "AGPL-3.0",
@@ -46201,6 +46201,10 @@
               "serveJsonAtBaseSubscription": {
                 "type": "boolean"
               },
+              "geofilesSystemEnabled": {
+                "default": false,
+                "type": "boolean"
+              },
               "geofilesEnabled": {
                 "type": "boolean"
               },
@@ -46802,6 +46806,9 @@
           "serveJsonAtBaseSubscription": {
             "type": "boolean"
           },
+          "geofilesSystemEnabled": {
+            "type": "boolean"
+          },
           "geofilesEnabled": {
             "type": "boolean"
           },
@@ -47372,6 +47379,10 @@
                 "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
               },
               "serveJsonAtBaseSubscription": {
+                "type": "boolean"
+              },
+              "geofilesSystemEnabled": {
+                "default": false,
                 "type": "boolean"
               },
               "geofilesEnabled": {

@@ -1,7 +1,8 @@
-import type { ColumnType } from "kysely";
-export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
-  ? ColumnType<S, I | undefined, U>
-  : ColumnType<T, T | undefined, T>;
+import type { ColumnType } from 'kysely';
+export type Generated<T> =
+    T extends ColumnType<infer S, infer I, infer U>
+        ? ColumnType<S, I | undefined, U>
+        : ColumnType<T, T | undefined, T>;
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
 export type Admin = {
@@ -356,6 +357,7 @@ export type SubscriptionPageConfig = {
 export type SubscriptionSettings = {
     uuid: Generated<string>;
     serveJsonAtBaseSubscription: Generated<boolean>;
+    geofilesSystemEnabled: Generated<boolean>;
     geofilesEnabled: Generated<boolean>;
     geofilesInlineRuleLimit: Generated<number>;
     isShowCustomRemarks: Generated<boolean>;

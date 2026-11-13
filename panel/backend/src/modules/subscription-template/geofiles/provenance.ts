@@ -1,4 +1,6 @@
 export const PRESET_GEOFILE_URLS = new Set([
+    'https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat',
+    'https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat',
     'https://github.com/v2fly/geoip/releases/latest/download/geoip.dat',
     'https://github.com/v2fly/domain-list-community/releases/latest/download/dlc.dat',
     'https://github.com/v2fly/geoip/releases/latest/download/private.dat',

@@ -288,7 +288,8 @@ export class SubscriptionTemplateService {
                 (oldContent.includes('/geofiles/') ||
                     nextContent.includes('/geofiles/') ||
                     oldContent.includes('"geofiles"') ||
-                    nextContent.includes('"geofiles"'))
+                    nextContent.includes('"geofiles"')) &&
+                (await this.subscriptionTemplateRepository.isGeofilesSystemEnabled())
                     ? await this.geofiles.withReferenceLock(async () => {
                           try {
                               await this.geofiles.assertReferences(nextContent);
@@ -336,7 +337,10 @@ export class SubscriptionTemplateService {
             return ok(response);
         } catch (error) {
             rethrowXrayModeConflict(error);
-            if (error instanceof Error && error.message === 'GEOFILES_REQUIRE_BASE_JSON')
+            if (
+                error instanceof Error &&
+                ['GEOFILES_REQUIRE_BASE_JSON', 'GEOFILES_SYSTEM_DISABLED'].includes(error.message)
+            )
                 return fail(ERRORS.CONFIG_VALIDATION_ERROR.withMessage(error.message));
             this.logger.error(error);
 
@@ -527,7 +531,7 @@ export class SubscriptionTemplateService {
         type: TSubscriptionTemplateType,
         name: string = DEFAULT_TEMPLATE_NAME,
         happ?: XrayGeofileDelivery,
-        geofilesEnabled = false,
+        geofilesSystemEnabled = false,
         inlineRuleLimit?: number,
     ): Promise<object> {
         const cacheKey = CACHE_KEYS.SUBSCRIPTION_TEMPLATE(name, type);
@@ -546,7 +550,7 @@ export class SubscriptionTemplateService {
                 cached as Record<string, unknown>,
                 type,
                 happ,
-                geofilesEnabled,
+                geofilesSystemEnabled,
                 inlineRuleLimit,
             );
         }
@@ -570,7 +574,7 @@ export class SubscriptionTemplateService {
             await pending,
             type,
             happ,
-            geofilesEnabled,
+            geofilesSystemEnabled,
             inlineRuleLimit,
         );
     }
@@ -642,11 +646,11 @@ export class SubscriptionTemplateService {
         config: Record<string, unknown>,
         type: string,
         happ?: XrayGeofileDelivery,
-        geofilesEnabled = false,
+        geofilesSystemEnabled = false,
         inlineRuleLimit?: number,
     ): Promise<object> {
         if (!config?.remnacust) return config;
-        const enabled = geofilesEnabled && templateGeofilesEnabled(config);
+        const enabled = geofilesSystemEnabled && templateGeofilesEnabled(config);
         if (enabled && happ?.deferTemplates) return config;
         if (!enabled) {
             const clean = structuredClone(config);

@@ -26,7 +26,7 @@ import { TbNetwork, TbPlus } from 'react-icons/tb'
 
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SectionCard } from '@shared/ui/section-card'
-import { getAdditionalNodeIps } from '@shared/utils/node-addresses'
+import { normalizeNodeAddress } from '@shared/utils/node-addresses'
 
 import { NodeIpRow } from './node-ip-row'
 import { isValidNodeIp, MAX_NODE_IPS } from './validate-node-ips'
@@ -34,6 +34,7 @@ import { isValidNodeIp, MAX_NODE_IPS } from './validate-node-ips'
 interface IEditableNodeIp {
     id: string
     ip: string
+    isDraft?: boolean
     status: TNodeIpStatus
 }
 
@@ -68,7 +69,11 @@ export const NodeIpsEditor = <
     const [items, setItems] = useState<IEditableNodeIp[]>(() => toEditableIps(form.getValues().ips))
     const [addedRowId, setAddedRowId] = useState<null | string>(null)
     const address = form.useWatchValue('address')
-    const visibleItems = getAdditionalNodeIps(items, address)
+    const primaryAddress = normalizeNodeAddress(address ?? '')
+    const visibleItems = items.filter(
+        (item) =>
+            item.isDraft || !primaryAddress || normalizeNodeAddress(item.ip) !== primaryAddress
+    )
 
     const commit = useCallback(
         (nextItems: IEditableNodeIp[]) => {
@@ -89,7 +94,7 @@ export const NodeIpsEditor = <
 
         const id = nextRowId()
         setAddedRowId(id)
-        commit([...items, { id, ip: '', status: 'UNKNOWN' }])
+        commit([...items, { id, ip: '', isDraft: true, status: 'UNKNOWN' }])
     }
 
     const handleRemove = (id: string) => {
@@ -97,7 +102,7 @@ export const NodeIpsEditor = <
     }
 
     const handleChangeIp = (id: string, ip: string) => {
-        commit(items.map((item) => (item.id === id ? { ...item, ip } : item)))
+        commit(items.map((item) => (item.id === id ? { ...item, ip, isDraft: true } : item)))
     }
 
     const handleChangeStatus = (id: string, status: TNodeIpStatus) => {
@@ -126,6 +131,16 @@ export const NodeIpsEditor = <
         return undefined
     }
 
+    const resolveRowDescription = (item: IEditableNodeIp): ReactNode => {
+        const ip = normalizeNodeAddress(item.ip)
+        if (!ip || !isValidNodeIp(item.ip.trim())) return undefined
+        if (ip === primaryAddress) return t('node-ips.primary-ip-description')
+        if (items.some((other) => other.id !== item.id && normalizeNodeAddress(other.ip) === ip)) {
+            return t('node-ips.duplicate-ip-description')
+        }
+        return undefined
+    }
+
     const isFull = items.length >= MAX_NODE_IPS
 
     return (
@@ -148,6 +163,7 @@ export const NodeIpsEditor = <
                         }
                     >
                         <ActionIcon
+                            aria-label={t('node-ips.add-ip')}
                             color="cyan"
                             disabled={isFull}
                             onClick={handleAdd}
@@ -190,6 +206,7 @@ export const NodeIpsEditor = <
                                     {visibleItems.map((item, index) => (
                                         <NodeIpRow
                                             autoFocus={item.id === addedRowId}
+                                            description={resolveRowDescription(item)}
                                             error={resolveRowError(item, items.indexOf(item))}
                                             id={item.id}
                                             index={index}

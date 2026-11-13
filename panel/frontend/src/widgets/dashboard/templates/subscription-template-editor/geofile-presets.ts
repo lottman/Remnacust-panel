@@ -1,6 +1,22 @@
 // Published DAT assets; imports still pass through the server's URL and content validation.
 export const geofilePresets = [
     {
+        id: 'loyalsoldier-geoip',
+        name: 'Loyalsoldier GeoIP',
+        kind: 'geoip',
+        provider: 'Loyalsoldier',
+        description: 'countries',
+        url: 'https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat'
+    },
+    {
+        id: 'loyalsoldier-geosite',
+        name: 'Loyalsoldier GeoSite',
+        kind: 'geosite',
+        provider: 'Loyalsoldier',
+        description: 'domains',
+        url: 'https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat'
+    },
+    {
         id: 'v2fly-geoip',
         name: 'V2Fly GeoIP',
         kind: 'geoip',

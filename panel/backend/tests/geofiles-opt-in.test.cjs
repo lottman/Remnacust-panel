@@ -79,7 +79,7 @@ test('cached raw templates respect concurrent per-request opt-in and retain save
     assert.equal(raw.remnacust.geofiles.length, 1);
 });
 
-test('real format generators enforce the JSON prerequisite and per-template policy through the renderer', async () => {
+test('real format generators enforce the independent system switch, JSON prerequisite and per-template policy', async () => {
     const template = {
         remnacust: { geofilesEnabled: true, geofiles: [{ id: 'a'.repeat(34), target: 'DIRECT' }] },
         inbounds: [],
@@ -89,47 +89,59 @@ test('real format generators enforce the JSON prerequisite and per-template poli
     };
     for (const type of ['XRAY_JSON', 'SINGBOX', 'CLASH', 'MIHOMO', 'STASH']) {
         for (const enabled of [false, true]) {
-            const templates = templateService(
-                {},
-                { templateSnapshot: async () => ({ generation: 'a'.repeat(32), value: template }) },
-            );
-            let prepares = 0;
-            templates.geofiles = {
-                prepare: async (config, _type, _delivery, _mode, limit) => {
-                    assert.equal(limit, 347);
-                    prepares++;
-                    const result = structuredClone(config);
-                    delete result.remnacust;
-                    return result;
-                },
-            };
-            const [sing, mihomo, clash, xray] = generators(templates);
-            const renderer = new RenderTemplatesService(
-                { resolveProxyConfig: async () => [host()] },
-                mihomo,
-                clash,
-                {},
-                sing,
-                xray,
-                { retireRoutingProfileRevision: async () => null },
-            );
-            const context = {
-                matchedResponseType: type,
-                userAgent: 'ordinary-client',
-                subscriptionSettings: {
-                    geofilesEnabled: enabled,
-                    serveJsonAtBaseSubscription: enabled,
-                    geofilesInlineRuleLimit: 347,
-                },
-            };
-            const result = await renderer.generateSubscription({
-                srrContext: context,
-                user: { id: 1, status: 'ACTIVE', expireAt: new Date(Date.now() + 86400000) },
-                hosts: [],
-            });
-            assert(result.subscription.length > 0);
-            assert.equal(prepares, enabled ? 1 : 0, `${type}: opt-in reaches preparation`);
-            assert.equal(context.headersToApply, undefined);
+            for (const system of [undefined, false, true]) {
+                const templates = templateService(
+                    {},
+                    {
+                        templateSnapshot: async () => ({
+                            generation: 'a'.repeat(32),
+                            value: template,
+                        }),
+                    },
+                );
+                let prepares = 0;
+                templates.geofiles = {
+                    prepare: async (config, _type, _delivery, _mode, limit) => {
+                        assert.equal(limit, 347);
+                        prepares++;
+                        const result = structuredClone(config);
+                        delete result.remnacust;
+                        return result;
+                    },
+                };
+                const [sing, mihomo, clash, xray] = generators(templates);
+                const renderer = new RenderTemplatesService(
+                    { resolveProxyConfig: async () => [host()] },
+                    mihomo,
+                    clash,
+                    {},
+                    sing,
+                    xray,
+                    { retireRoutingProfileRevision: async () => null },
+                );
+                const context = {
+                    matchedResponseType: type,
+                    userAgent: 'ordinary-client',
+                    subscriptionSettings: {
+                        geofilesEnabled: enabled,
+                        geofilesSystemEnabled: system,
+                        serveJsonAtBaseSubscription: enabled,
+                        geofilesInlineRuleLimit: 347,
+                    },
+                };
+                const result = await renderer.generateSubscription({
+                    srrContext: context,
+                    user: { id: 1, status: 'ACTIVE', expireAt: new Date(Date.now() + 86400000) },
+                    hosts: [],
+                });
+                assert(result.subscription.length > 0);
+                assert.equal(
+                    prepares,
+                    enabled && system === true ? 1 : 0,
+                    `${type}: master and JSON prerequisite reach preparation`,
+                );
+                assert.equal(context.headersToApply, undefined);
+            }
         }
     }
 });
@@ -181,7 +193,7 @@ test('disabled system never creates Happ or INCY routing state for ordinary clie
     }
 });
 
-test('automatic refresh has no file or network operations when no template is enabled', async () => {
+test('automatic refresh has no file or network operations when the master is disabled', async () => {
     const { GeofilesService } = source(
         'modules/subscription-template/geofiles/geofiles.service.ts',
     );
@@ -189,8 +201,8 @@ test('automatic refresh has no file or network operations when no template is en
     let enabled = false,
         calls = 0;
     service.prisma = {
-        subscriptionTemplate: {
-            findFirst: async () => (enabled ? { uuid: 'enabled-template' } : null),
+        subscriptionSettings: {
+            findFirst: async () => ({ geofilesSystemEnabled: enabled }),
         },
     };
     service.refreshStore = {
@@ -343,7 +355,7 @@ test('explicit administrator refresh remains available while scheduled library r
     );
     const service = Object.create(GeofilesService.prototype);
     service.prisma = {
-        subscriptionTemplate: { findFirst: async () => null },
+        subscriptionSettings: { findFirst: async () => null },
     };
     const calls = [];
     service.refreshStore = {
@@ -359,7 +371,7 @@ test('explicit administrator refresh remains available while scheduled library r
     assert.deepEqual(await service.refreshDue(), []);
 });
 
-test('repository rejects global geofile changes and disabling JSON while any template is enabled', async () => {
+test('repository keeps the aggregate read-only and requires JSON for the independent master', async () => {
     const { SubscriptionSettingsRepository } = load(
         path.join(
             __dirname,
@@ -403,7 +415,7 @@ test('repository rejects global geofile changes and disabling JSON while any tem
         uuid: 'settings',
         serveJsonAtBaseSubscription: true,
     });
-    state = { ...state, geofilesEnabled: true };
+    state = { ...state, geofilesEnabled: true, geofilesSystemEnabled: true };
     await assert.rejects(
         repo.update({ uuid: 'settings', serveJsonAtBaseSubscription: false }),
         /GEOFILES_REQUIRE_BASE_JSON/,

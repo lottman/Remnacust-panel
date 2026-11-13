@@ -173,7 +173,7 @@ test(
 );
 
 test(
-    'per-template geofiles default off, preserve isolation and reject concurrent JSON conflicts',
+    'per-template geofiles default off, preserve isolation and serialize master and JSON conflicts',
     {
         skip: !process.env.GEOFILES_OPTIN_TEST_DATABASE_URL,
         timeout: 30000,
@@ -195,7 +195,7 @@ test(
         const state = async () =>
             (
                 await db.query(
-                    'SELECT geofiles_enabled,serve_json_at_base_subscription FROM subscription_settings WHERE uuid=$1',
+                    'SELECT geofiles_enabled,geofiles_system_enabled,serve_json_at_base_subscription FROM subscription_settings WHERE uuid=$1',
                     [id],
                 )
             ).rows[0];
@@ -213,6 +213,7 @@ test(
             );
             assert.deepEqual(await state(), {
                 geofiles_enabled: false,
+                geofiles_system_enabled: false,
                 serve_json_at_base_subscription: false,
             });
             const threshold = async () =>
@@ -297,12 +298,12 @@ test(
             const initial = await epoch();
             await assert.rejects(
                 change(db, templateIds[0], true),
-                (error) => error.code === '23514' && error.message === 'GEOFILES_REQUIRE_BASE_JSON',
+                (error) => error.code === '23514' && error.message === 'GEOFILES_SYSTEM_DISABLED',
             );
             assert.equal(await epoch(), initial);
             await writer.query('BEGIN');
             await writer.query(
-                'UPDATE subscription_settings SET serve_json_at_base_subscription=true WHERE uuid=$1',
+                'UPDATE subscription_settings SET serve_json_at_base_subscription=true,geofiles_system_enabled=true WHERE uuid=$1',
                 [id],
             );
             await change(writer, templateIds[0], true);
@@ -311,7 +312,7 @@ test(
             await writer.query('ROLLBACK');
             assert.equal(await epoch(), initial);
             await db.query(
-                'UPDATE subscription_settings SET serve_json_at_base_subscription=true WHERE uuid=$1',
+                'UPDATE subscription_settings SET serve_json_at_base_subscription=true,geofiles_system_enabled=true WHERE uuid=$1',
                 [id],
             );
             const wait = await barrier();
@@ -333,6 +334,7 @@ test(
             assert.equal(await flag(templateIds[1]), false);
             assert.deepEqual(await state(), {
                 geofiles_enabled: true,
+                geofiles_system_enabled: true,
                 serve_json_at_base_subscription: true,
             });
             await assert.rejects(
@@ -353,9 +355,10 @@ test(
             assert.equal(await flag(templateIds[1]), true);
             await change(db, templateIds[1], false);
             assert.equal((await state()).geofiles_enabled, false);
+            assert.equal((await state()).geofiles_system_enabled, true);
             await writer.query('BEGIN');
             await writer.query(
-                'UPDATE subscription_settings SET serve_json_at_base_subscription=false WHERE uuid=$1',
+                'UPDATE subscription_settings SET serve_json_at_base_subscription=false,geofiles_system_enabled=false WHERE uuid=$1',
                 [id],
             );
             const rejectedEnable = change(rival, templateIds[1], true).then(
@@ -364,10 +367,10 @@ test(
             );
             await wait();
             await writer.query('COMMIT');
-            assert.equal((await rejectedEnable)?.message, 'GEOFILES_REQUIRE_BASE_JSON');
+            assert.equal((await rejectedEnable)?.message, 'GEOFILES_SYSTEM_DISABLED');
             assert.equal(await flag(templateIds[1]), false);
             await db.query(
-                'UPDATE subscription_settings SET serve_json_at_base_subscription=true WHERE uuid=$1',
+                'UPDATE subscription_settings SET serve_json_at_base_subscription=true,geofiles_system_enabled=true WHERE uuid=$1',
                 [id],
             );
             await change(db, templateIds[0], true);
@@ -375,7 +378,7 @@ test(
             assert.equal((await state()).geofiles_enabled, false);
             await db.query('DELETE FROM subscription_templates WHERE uuid=$1', [templateIds[1]]);
             await db.query(
-                'UPDATE subscription_settings SET serve_json_at_base_subscription=false WHERE uuid=$1',
+                'UPDATE subscription_settings SET serve_json_at_base_subscription=false,geofiles_system_enabled=false WHERE uuid=$1',
                 [id],
             );
             const before = await epoch();

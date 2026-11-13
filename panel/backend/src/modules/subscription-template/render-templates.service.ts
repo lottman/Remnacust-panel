@@ -60,23 +60,55 @@ export class RenderTemplatesService {
             );
         }
 
+        const configuredHeaders = {
+            ...srrContext.subscriptionSettings?.customResponseHeaders,
+            ...srrContext.headersToApply,
+        };
+        const hasRouting = Object.keys(configuredHeaders).some(
+            (key) => key.toLowerCase() === 'routing',
+        );
+        const client = xrayGeofileClient(srrContext.userAgent ?? '');
+
         switch (srrContext.matchedResponseType) {
-            case 'XRAY_BASE64':
+            case 'XRAY_BASE64': {
+                const subscription = await this.xrayGeneratorService.generateConfig(
+                    formattedHosts,
+                    SUBSCRIPTION_CONFIG_TYPES['XRAY_BASE64'].isBase64,
+                    srrContext.isExtendedClient,
+                );
+                if (client && !hasRouting && subscription)
+                    await this.applyGeofileRouting(
+                        params,
+                        client,
+                        configuredHeaders,
+                        {
+                            header: new XrayGeofileDelivery(
+                                client,
+                                'inline',
+                                params.profileTitle ?? 'Subscription',
+                            ).retirementHeader(
+                                params.profileKey ?? String(user.id),
+                                Date.now(),
+                                true,
+                            ),
+                            intervalHours: 0,
+                            inline: true,
+                        },
+                        true,
+                    );
                 return {
-                    subscription: await this.xrayGeneratorService.generateConfig(
-                        formattedHosts,
-                        SUBSCRIPTION_CONFIG_TYPES['XRAY_BASE64'].isBase64,
-                        srrContext.isExtendedClient,
-                    ),
+                    subscription,
                     contentType: SUBSCRIPTION_CONFIG_TYPES['XRAY_BASE64'].CONTENT_TYPE,
                 };
+            }
 
             case 'CLASH':
                 return {
                     subscription: await this.clashGeneratorService.generateConfig(
                         formattedHosts,
                         srrContext.overrideTemplateName,
-                        srrContext.subscriptionSettings.serveJsonAtBaseSubscription === true,
+                        srrContext.subscriptionSettings.serveJsonAtBaseSubscription === true &&
+                            srrContext.subscriptionSettings.geofilesSystemEnabled === true,
                         srrContext.subscriptionSettings.geofilesInlineRuleLimit,
                     ),
                     contentType: SUBSCRIPTION_CONFIG_TYPES['CLASH'].CONTENT_TYPE,
@@ -89,7 +121,8 @@ export class RenderTemplatesService {
                         false,
                         srrContext.isExtendedClient,
                         srrContext.overrideTemplateName,
-                        srrContext.subscriptionSettings.serveJsonAtBaseSubscription === true,
+                        srrContext.subscriptionSettings.serveJsonAtBaseSubscription === true &&
+                            srrContext.subscriptionSettings.geofilesSystemEnabled === true,
                         srrContext.subscriptionSettings.geofilesInlineRuleLimit,
                     ),
                     contentType: SUBSCRIPTION_CONFIG_TYPES['MIHOMO'].CONTENT_TYPE,
@@ -100,7 +133,8 @@ export class RenderTemplatesService {
                     subscription: await this.singBoxGeneratorService.generateConfig(
                         formattedHosts,
                         srrContext.overrideTemplateName,
-                        srrContext.subscriptionSettings.serveJsonAtBaseSubscription === true,
+                        srrContext.subscriptionSettings.serveJsonAtBaseSubscription === true &&
+                            srrContext.subscriptionSettings.geofilesSystemEnabled === true,
                         srrContext.subscriptionSettings.geofilesInlineRuleLimit,
                     ),
                     contentType: SUBSCRIPTION_CONFIG_TYPES['SINGBOX'].CONTENT_TYPE,
@@ -113,21 +147,14 @@ export class RenderTemplatesService {
                         true,
                         false,
                         srrContext.overrideTemplateName,
-                        srrContext.subscriptionSettings.serveJsonAtBaseSubscription === true,
+                        srrContext.subscriptionSettings.serveJsonAtBaseSubscription === true &&
+                            srrContext.subscriptionSettings.geofilesSystemEnabled === true,
                         srrContext.subscriptionSettings.geofilesInlineRuleLimit,
                     ),
                     contentType: SUBSCRIPTION_CONFIG_TYPES['STASH'].CONTENT_TYPE,
                 };
 
             case 'XRAY_JSON': {
-                const configuredHeaders = {
-                    ...srrContext.subscriptionSettings.customResponseHeaders,
-                    ...srrContext.headersToApply,
-                };
-                const hasRouting = Object.keys(configuredHeaders).some(
-                    (key) => key.toLowerCase() === 'routing',
-                );
-                const client = xrayGeofileClient(srrContext.userAgent);
                 const candidateOptions = {
                     subscriptionSettings: srrContext.subscriptionSettings,
                     hosts: params.autoselectHosts ?? hosts,
@@ -192,7 +219,8 @@ export class RenderTemplatesService {
                             user.status !== USERS_STATUS.ACTIVE || user.expireAt <= new Date(),
                         geofileDelivery,
                         geofilesEnabled:
-                            srrContext.subscriptionSettings.serveJsonAtBaseSubscription === true,
+                            srrContext.subscriptionSettings.serveJsonAtBaseSubscription === true &&
+                            srrContext.subscriptionSettings.geofilesSystemEnabled === true,
                         geofilesInlineRuleLimit:
                             srrContext.subscriptionSettings.geofilesInlineRuleLimit,
                     });
@@ -223,7 +251,8 @@ export class RenderTemplatesService {
                 };
                 const output = await automaticXrayDelivery({
                     client:
-                        srrContext.subscriptionSettings.serveJsonAtBaseSubscription === true
+                        srrContext.subscriptionSettings.serveJsonAtBaseSubscription === true &&
+                        srrContext.subscriptionSettings.geofilesSystemEnabled === true
                             ? client
                             : undefined,
                     inlineRuleLimit: srrContext.subscriptionSettings.geofilesInlineRuleLimit,
@@ -248,35 +277,13 @@ export class RenderTemplatesService {
                     ).retirementHeader(params.profileKey ?? String(user.id), Date.now(), true);
                     output.intervalHours = 0;
                 }
-                const routing = output.header
-                    ? await stabilizeRoutingProfile(
-                          output.header,
-                          output.intervalHours,
-                          (key, fingerprint, minimum) =>
-                              retiring
-                                  ? this.rawCache.retireRoutingProfileRevision(
-                                        key,
-                                        fingerprint,
-                                        minimum,
-                                    )
-                                  : this.rawCache.routingProfileRevision(key, fingerprint, minimum),
-                          // Use the resolved credential identity, never an unregistered request HWID.
-                          user.vlessUuid ?? '',
-                          output.sourceRevision,
-                      )
-                    : undefined;
-                if (routing)
-                    srrContext.headersToApply = {
-                        ...srrContext.headersToApply,
-                        routing,
-                        ...(output.inline ? { 'x-remnacust-geofiles-delivery': 'inline' } : {}),
-                        ...(client === 'incy' &&
-                        !Object.keys(configuredHeaders).some(
-                            (key) => key.toLowerCase() === 'routing-geo-update-interval',
-                        )
-                            ? { 'routing-geo-update-interval': String(output.intervalHours) }
-                            : {}),
-                    };
+                await this.applyGeofileRouting(
+                    params,
+                    client,
+                    configuredHeaders,
+                    output,
+                    !!retiring,
+                );
                 return {
                     subscription: output.subscription,
                     contentType: SUBSCRIPTION_CONFIG_TYPES['XRAY_JSON'].CONTENT_TYPE,
@@ -286,6 +293,44 @@ export class RenderTemplatesService {
             default:
                 return { subscription: '', contentType: '' };
         }
+    }
+
+    private async applyGeofileRouting(
+        params: IGenerateSubscription,
+        client: 'happ' | 'incy' | undefined,
+        configuredHeaders: Record<string, string>,
+        output: {
+            header?: string;
+            intervalHours?: number;
+            inline: boolean;
+            sourceRevision?: string;
+        },
+        retiring: boolean,
+    ): Promise<void> {
+        if (!output.header) return;
+        const routing = await stabilizeRoutingProfile(
+            output.header,
+            output.intervalHours,
+            (key, fingerprint, minimum) =>
+                retiring
+                    ? this.rawCache.retireRoutingProfileRevision(key, fingerprint, minimum)
+                    : this.rawCache.routingProfileRevision(key, fingerprint, minimum),
+            // Use the resolved credential identity, never an unregistered request HWID.
+            params.user.vlessUuid ?? '',
+            output.sourceRevision,
+        );
+        if (routing)
+            params.srrContext.headersToApply = {
+                ...params.srrContext.headersToApply,
+                routing,
+                ...(output.inline ? { 'x-remnacust-geofiles-delivery': 'inline' } : {}),
+                ...(client === 'incy' &&
+                !Object.keys(configuredHeaders).some(
+                    (key) => key.toLowerCase() === 'routing-geo-update-interval',
+                )
+                    ? { 'routing-geo-update-interval': String(output.intervalHours) }
+                    : {}),
+            };
     }
 
     public async generateRawSubscription(

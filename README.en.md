@@ -2,7 +2,7 @@
 
 Configure the inline threshold under Geofiles: 1–250,000 addresses/conditions, default 20,000. Size and complexity safeguards remain and may switch delivery to DAT before the configured threshold. Manual Xray settings remain intact when automatic geofile delivery is disabled.
 
-Release **Panel/Page 1.1.7.120** belongs to Installer bundle **1.2.168**, with Node **1.1.32** and Core/WASM **1.1.19**. [Changes in this release](docs/releases/1.1.7.120.md). Installed servers require a separate update.
+Release **Panel/Page 1.1.7.121** belongs to Installer bundle **1.2.169**, with Node **1.1.32** and Core/WASM **1.1.19**. [Changes in this release](docs/releases/1.1.7.121.md). Installed servers require a separate update.
 
 
 [Русский](README.md) · [English](README.en.md)
@@ -39,8 +39,8 @@ Matching bundle as of **November 11, 2026**. Components use separate version num
 
 | Component | Current stable release |
 | --- | --- |
-| Panel and subscription website | [1.1.7.120](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.120) |
-| Installer / Docker bundle | [1.2.168](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.168) |
+| Panel and subscription website | [1.1.7.121](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.121) |
+| Installer / Docker bundle | [1.2.169](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.169) |
 | Node agent | [1.1.32](https://github.com/lottman/Remnacust-node/releases/tag/v1.1.32) |
 | Core / editor validator | [1.1.19](https://github.com/lottman/Remnacust-core/releases/tag/v1.1.19), Xray v26.11.9 |
 
@@ -60,7 +60,7 @@ When sharing a server, leave headroom for all components. Panel/node requirement
 
 | Software | Requirement |
 | --- | --- |
-| Installer 1.2.168 OS | Ubuntu 22.04 / 24.04 / 26.04 LTS and Debian 12 / 13; Linux amd64 or arm64 |
+| Installer 1.2.169 OS | Ubuntu 22.04 / 24.04 / 26.04 LTS and Debian 12 / 13; Linux amd64 or arm64 |
 | Containers | Docker Engine with a current Docker Compose v2 plugin; legacy `docker-compose` v1 is unsupported |
 | PostgreSQL | 14.24 / 15.19 / 16.15 / 17.11 / 18.6; 204 migrations; validation scope is listed in Compatibility |
 | Prebuilt-image installation | Root, APT and GitHub/GHCR access, working DNS; no host Node.js or Go needed |
@@ -99,11 +99,11 @@ Standard Remnawave nodes and pages retain basic operation within their protocols
 
 Pool members and the hosts displaying an autoselect are configured separately. Select pool members by hosts or tags. Membership refreshes with the subscription; the client strategy selects a server for a new connection. Strategies vary by application and format. [Autoselect](docs/XRAY-AUTOSELECT.md).
 
-Enable GEO separately from the template menu (⋯); the adjacent icon shows its state. New templates default to off. Upload a geofile from your computer or HTTPS into the shared library. Small sets are embedded into JSON; large sets can be delivered as combined DAT files to supported Happ/INCY clients. Full routing requires a JSON subscription: enable JSON on the base path or use `/json`. URI/Base64 cannot carry the complete ruleset. Save the template, then refresh the subscription in the application. [Geofiles](docs/GEOFILES.md).
+In additional subscription settings, enable base-path JSON and the geofile master switch (off by default). Then enable GEO separately from the template menu (⋯); the adjacent icon shows its state. New templates default to off. Upload a geofile from your computer or HTTPS into the shared library. Small sets are embedded into JSON; large sets can be delivered as combined DAT files to supported Happ/INCY clients. Full routing requires a JSON subscription: enable JSON on the base path or use `/json`. URI/Base64 cannot carry the complete ruleset. Save the template, then refresh the subscription in the application. [Geofiles](docs/GEOFILES.md).
 
 Edit library files directly; presets are saved as copies with a new name. Add individual addresses below them and choose DIRECT, blocking or an existing VPN route.
 
-Domains are under **Subscription → Settings → Subscription pages**. The installer service synchronizes the primary domain with `SUB_PUBLIC_DOMAIN`. Each primary supports up to three CDN domains. User cards provide primary/CDN links and QR codes.
+Domains are under **Subscription → Settings → Subscription pages**. The installer service synchronizes the primary domain with `SUB_PUBLIC_DOMAIN`. Each primary supports one CDN domain. User cards provide primary/CDN links and QR codes.
 
 For VK/Yandex, copy the origin, Host/SNI and generated request-header pair from the CDN card. Disable shared subscription-response caching. Backend addresses and API tokens are server-side settings; do not put them into public links. [Domains and CDN](docs/SUBSCRIPTION-DOMAINS.md) · [API permissions](docs/API.md).
 

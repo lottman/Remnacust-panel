@@ -274,9 +274,7 @@ export class XrayGeofileDelivery {
             Geositeurl: restoreDefaults
                 ? 'https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat'
                 : '',
-            ...(restoreDefaults
-                ? { [this.client === 'incy' ? 'useChunkFiles' : 'UseChunkFiles']: false }
-                : {}),
+            [this.client === 'incy' ? 'useChunkFiles' : 'UseChunkFiles']: false,
             DirectIp: [],
             DirectSites: [],
             BlockIp: [],
@@ -333,6 +331,7 @@ export class XrayGeofileDelivery {
         const profile: Record<string, unknown> = {
             Name: this.profileName(profileKey),
             GlobalProxy: 'true',
+            [this.client === 'incy' ? 'useChunkFiles' : 'UseChunkFiles']: false,
             Geoipurl: '',
             Geositeurl: '',
             DirectIp: [],

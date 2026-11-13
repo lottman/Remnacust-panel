@@ -110,6 +110,7 @@ for (const language of ['en', 'ru', 'fa', 'zh']) {
         assert.equal(getMessage({ code: 'ECONNABORTED' }), locale.requestErrors.timeout)
         assert.equal(getMessage({ code: 'ERR_CANCELED' }), locale.requestErrors.canceled)
         assert.equal(message('GEOFILES_REQUIRE_BASE_JSON'), locale.geofiles['requires-json'] + ' [A061]')
+        assert.equal(message('GEOFILES_SYSTEM_DISABLED'), locale.geofiles['system-disabled'] + ' [A061]')
         assert.equal(message('GEOFILES_PER_TEMPLATE'), locale.requestErrors.features.geofilesPerTemplate + ' [A061]')
         for (const field of ['code', 'message', 'errorCode']) {
             assert.equal(getMessage({ response: { status: 409, data: { [field]: 'CUSTOM_XRAY_REQUIRED' } } }), locale.requestErrors.features.customCore + ' [CUSTOM_XRAY_REQUIRED]')

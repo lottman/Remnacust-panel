@@ -30,7 +30,10 @@ export function TemplatesGridWidget(props: IProps) {
 
     const { templates, type } = props
     const settings = useGetSubscriptionSettings()
-    const allowGeofiles = settings.isSuccess && settings.data?.serveJsonAtBaseSubscription === true
+    const allowGeofiles =
+        settings.isSuccess &&
+        settings.data?.geofilesSystemEnabled === true &&
+        settings.data.serveJsonAtBaseSubscription === true
 
     const sectionKey = `templates:${type}`
 

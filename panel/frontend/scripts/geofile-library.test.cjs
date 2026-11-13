@@ -30,7 +30,8 @@ test('one catalog exposes every uploaded file alongside built-in datasets', () =
     ]
     const catalog = geofileCatalog(files)
     assert.deepEqual(catalog[0].items.map((item) => item.value), ['file:dat', 'file:srs', 'file:yaml'])
-    assert.equal(catalog.flatMap((group) => group.items).filter((item) => item.value.startsWith('preset:')).length, 6)
+    assert.deepEqual(catalog.flatMap((group) => group.items).filter((item) => item.value.startsWith('preset:')).map(item => item.value).sort(), geofilePresets.map(item => 'preset:' + item.id).sort())
+    assert.deepEqual(geofilePresets.filter(item => item.provider === 'Loyalsoldier').map(item => item.kind).sort(), ['geoip', 'geosite'])
     assert.equal(compatibleGeofile('singbox-srs', 'XRAY_JSON'), false)
     assert.equal(compatibleGeofile('singbox-srs', 'SINGBOX'), true)
     for (const format of ['XRAY_JSON', 'SINGBOX', 'MIHOMO', 'CLASH', 'STASH'])

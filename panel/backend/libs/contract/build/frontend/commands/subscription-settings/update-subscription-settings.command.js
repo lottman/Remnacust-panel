@@ -13,6 +13,7 @@ var UpdateSubscriptionSettingsCommand;
     UpdateSubscriptionSettingsCommand.RequestBodySchema = zod_1.z.object({
         uuid: zod_1.z.uuid(),
         serveJsonAtBaseSubscription: zod_1.z.optional(zod_1.z.boolean()),
+        geofilesSystemEnabled: zod_1.z.optional(zod_1.z.boolean()),
         geofilesEnabled: zod_1.z.optional(zod_1.z.boolean()),
         geofilesInlineRuleLimit: models_1.SubscriptionSettingsSchema.shape.geofilesInlineRuleLimit
             .removeDefault()

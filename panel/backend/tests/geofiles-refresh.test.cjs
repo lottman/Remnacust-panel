@@ -267,7 +267,7 @@ test('refresh survives restart, keeps immutable bytes, honors cooldown and retai
     const withSettings = (instance) => {
         instance.prisma = {
             ...instance.prisma,
-            subscriptionTemplate: { findFirst: async () => ({ uuid: 'enabled-template' }) },
+            subscriptionSettings: { findFirst: async () => ({ geofilesSystemEnabled: true }) },
         };
         return instance;
     };

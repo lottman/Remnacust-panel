@@ -443,6 +443,7 @@ model SubscriptionTemplateRevisions {
 model SubscriptionSettings {
   uuid                        String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   serveJsonAtBaseSubscription Boolean @default(false) @map("serve_json_at_base_subscription")
+  geofilesSystemEnabled       Boolean @default(false) @map("geofiles_system_enabled")
   geofilesEnabled             Boolean @default(false) @map("geofiles_enabled")
   geofilesInlineRuleLimit Int @default(20000) @map("geofiles_inline_rule_limit")
   isShowCustomRemarks         Boolean @default(true) @map("is_show_custom_remarks")

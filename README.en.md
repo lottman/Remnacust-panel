@@ -62,7 +62,7 @@ When sharing a server, leave headroom for all components. Panel/node requirement
 | --- | --- |
 | Installer 1.2.169 OS | Ubuntu 22.04 / 24.04 / 26.04 LTS and Debian 12 / 13; Linux amd64 or arm64 |
 | Containers | Docker Engine with a current Docker Compose v2 plugin; legacy `docker-compose` v1 is unsupported |
-| PostgreSQL | 14.24 / 15.19 / 16.15 / 17.11 / 18.6; 204 migrations; validation scope is listed in Compatibility |
+| PostgreSQL | 14.24 / 15.19 / 16.15 / 17.11 / 18.6; 205 migrations; validation scope is listed in Compatibility |
 | Prebuilt-image installation | Root, APT and GitHub/GHCR access, working DNS; no host Node.js or Go needed |
 | Building from source | Node.js 26.13 LTS; Go 1.27.4 separately for Core/editor |
 

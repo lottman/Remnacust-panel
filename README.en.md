@@ -35,7 +35,7 @@ docker compose up -d --no-build --pull never
 
 ## Stable versions
 
-Matching bundle as of **November 11, 2026**. Components use separate version numbers.
+Matching bundle as of **November 13, 2026**. Components use separate version numbers.
 
 | Component | Current stable release |
 | --- | --- |

@@ -2,20 +2,20 @@
 
 # Remnacust Panel
 
-Выпуск **Panel/Page 1.1.7.113** входит в комплект Installer **1.2.160** с Node **1.1.30** и Core/WASM **1.1.18**. [Изменения выпуска](../docs/releases/1.1.7.113.md). Обновление установленного сервера выполняется отдельно.
+Выпуск **Panel/Page 1.1.7.124** входит в комплект Installer **1.2.172** с Node **1.1.35** и Core/WASM **1.1.21**. [Изменения выпуска](../docs/releases/1.1.7.124.md). Обновление установленного сервера выполняется отдельно.
 
 Панель управления пользователями, нодами и подписками. Для установки на VPS используйте готовые образы через установщик; Node.js и Go на сервере не нужны.
 
 | Стабильный компонент | Версия |
 | --- | --- |
-| [Panel и страница подписки](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.113) | 1.1.7.113 |
-| [Installer / комплект](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.160) | 1.2.160 |
-| [Node](https://github.com/lottman/Remnacust-node/releases/tag/v1.1.30) | 1.1.30 |
-| [Core / WASM](https://github.com/lottman/Remnacust-core/releases/tag/v1.1.18) | 1.1.18 |
+| [Panel и страница подписки](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.124) | 1.1.7.124 |
+| [Installer / комплект](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.172) | 1.2.172 |
+| [Node](https://github.com/lottman/Remnacust-node/releases/tag/v1.1.35) | 1.1.35 |
+| [Core / WASM](https://github.com/lottman/Remnacust-core/releases/tag/v1.1.21) | 1.1.21 |
 
 ## Сервер и порты
 
-Установщик 1.2.160 поддерживает **Ubuntu 22.04/24.04/26.04 LTS и Debian 12/13**, Linux amd64/arm64.
+Установщик 1.2.172 поддерживает **Ubuntu 22.04/24.04/26.04 LTS и Debian 12/13**, Linux amd64/arm64.
 
 Для небольшой панели ориентируйтесь на 2 CPU, 2 GiB RAM и 20 GiB диска; рекомендуются 4 CPU и 4 GiB RAM. Под базу, журналы и копии нужен дополнительный запас по мере роста нагрузки. Нужны root, домен, доступ к пакетным репозиториям и скачиванию образов.
 
@@ -94,7 +94,7 @@ sudo less /opt/remnacust/logs/installer-panel.log
 
 ## Разработка
 
-Для source-сборки нужны Node.js 26.13 LTS, Docker Engine/Compose v2 и отдельная тестовая БД. Это другой режим, не обновление установленной панели из checkout.
+Для source-сборки нужны Node.js 26.13.1 LTS, Docker Engine/Compose v2 и отдельная тестовая БД. Это другой режим, не обновление установленной панели из checkout.
 
 [Backend](backend/README.md) · [Frontend](frontend/README.md) · [Сборка и проверки](../docs/BUILDING.md) · [API](../docs/API.md) · [Руководство](frontend/public/documentation/guide-ru.md).
 

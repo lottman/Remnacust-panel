@@ -2,20 +2,20 @@
 
 # Remnacust Panel
 
-Release **Panel/Page 1.1.7.113** belongs to Installer bundle **1.2.160**, with Node **1.1.30** and Core/WASM **1.1.18**. [Release changes](../docs/releases/1.1.7.113.md). Installed servers require a separate update.
+Release **Panel/Page 1.1.7.124** belongs to Installer bundle **1.2.172**, with Node **1.1.35** and Core/WASM **1.1.21**. [Release changes](../docs/releases/1.1.7.124.md). Installed servers require a separate update.
 
 Manage users, nodes and subscriptions. Use the installer and prebuilt images on a VPS; the server does not need Node.js or Go build tools.
 
 | Stable component | Version |
 | --- | --- |
-| [Panel and subscription page](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.113) | 1.1.7.113 |
-| [Installer / bundle](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.160) | 1.2.160 |
-| [Node](https://github.com/lottman/Remnacust-node/releases/tag/v1.1.30) | 1.1.30 |
-| [Core / WASM](https://github.com/lottman/Remnacust-core/releases/tag/v1.1.18) | 1.1.18 |
+| [Panel and subscription page](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.124) | 1.1.7.124 |
+| [Installer / bundle](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.172) | 1.2.172 |
+| [Node](https://github.com/lottman/Remnacust-node/releases/tag/v1.1.35) | 1.1.35 |
+| [Core / WASM](https://github.com/lottman/Remnacust-core/releases/tag/v1.1.21) | 1.1.21 |
 
 ## Server and ports
 
-Installer 1.2.160 supports **Ubuntu 22.04/24.04/26.04 LTS and Debian 12/13**, Linux amd64/arm64.
+Installer 1.2.172 supports **Ubuntu 22.04/24.04/26.04 LTS and Debian 12/13**, Linux amd64/arm64.
 
 For a small panel, plan for 2 CPU cores, 2 GiB RAM and 20 GiB disk; 4 cores and 4 GiB RAM are recommended. Allow more space for database growth, logs and backups as load increases. Root access, a domain and access to package repositories and image downloads are required.
 
@@ -94,7 +94,7 @@ For an unavailable UI, check containers, proxy, DNS and certificates. For subscr
 
 ## Development
 
-Source builds need Node.js 26.13 LTS, Docker Engine/Compose v2 and an isolated test database. This is separate from maintaining an installer-managed deployment.
+Source builds need Node.js 26.13.1 LTS, Docker Engine/Compose v2 and an isolated test database. This is separate from maintaining an installer-managed deployment.
 
 [Backend](backend/README.en.md) · [Frontend](frontend/README.en.md) · [Build and checks](../docs/BUILDING.md) · [API](../docs/API.md) · [User guide](frontend/public/documentation/guide-en.md).
 

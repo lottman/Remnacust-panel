@@ -41,7 +41,27 @@ export const SubscriptionSettingsTabsWidget = ({ subscriptionSettings }: Subscri
             }}
             value={activeTab}
         >
-            <Tabs.List>
+            <Tabs.List
+                onFocus={(event) => {
+                    const tab = event.target
+                    const list = event.currentTarget
+                    if (
+                        tab.getAttribute('role') !== 'tab' ||
+                        tab.closest('[role="tablist"]') !== list
+                    )
+                        return
+
+                    const tabBounds = tab.getBoundingClientRect()
+                    const left = list.getBoundingClientRect().left + list.clientLeft
+                    const right = left + list.clientWidth
+                    const delta =
+                        tabBounds.left < left
+                            ? tabBounds.left - left
+                            : Math.max(0, tabBounds.right - right)
+
+                    if (delta) list.scrollBy({ left: delta, behavior: 'instant' })
+                }}
+            >
                 <Tabs.Tab leftSection={<PiInfo size={px('1.2rem')} />} value={TABS.general}>
                     {t('subscription-settings.widget.main-settings')}
                 </Tabs.Tab>

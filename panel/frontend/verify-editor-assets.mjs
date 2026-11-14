@@ -1,11 +1,12 @@
 import { execFile } from 'node:child_process'
-import { createHash, webcrypto } from 'node:crypto'
+import { webcrypto } from 'node:crypto'
 import { readFileSync, statSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { promisify } from 'node:util'
 import { runInThisContext } from 'node:vm'
 
 import { EDITOR_ASSETS } from './editor-assets.mjs'
+import { verifyDefaultEditorProvenance } from './verify-default-editor-assets.mjs'
 import {
     editorDocument,
     editorService,
@@ -18,22 +19,7 @@ const stock = process.argv.includes('--default')
 for (const name of EDITOR_ASSETS) {
     if (statSync(asset(name)).size === 0) throw new Error(`Empty editor asset: ${name}`)
 }
-const provenance = JSON.parse(readFileSync(asset('xray.default.provenance.json'), 'utf8'))
-if (
-    provenance.flavor !== 'default' ||
-    provenance.upstreamVersion !== 'v26.11.9' ||
-    provenance.upstreamCommit !== '676eaf66f8f05d4d558ee7a74b4736623d3feeb9' ||
-    provenance.sourceArchiveSha256 !==
-        'eab6fad20dfabc862c2537552e136e195de93d166c9a0bab72e408b4295eb7dc'
-)
-    throw new Error('Stale default editor provenance')
-for (const name of ['default.wasm', 'xray.default.schema.json', 'xray.default.schema.cn.json']) {
-    const sha = createHash('sha256')
-        .update(readFileSync(asset(name)))
-        .digest('hex')
-    if (provenance.files?.[name] !== sha)
-        throw new Error(`Default editor asset integrity mismatch: ${name}`)
-}
+verifyDefaultEditorProvenance()
 if (!stock) {
     const result = await promisify(execFile)(
         process.execPath,
@@ -49,7 +35,7 @@ for (const name of ['xray.schema.json', 'xray.schema.cn.json']) {
         schema['x-remnacust-upstream']?.version !== 'v26.11.9' ||
         schema['x-remnacust-upstream']?.commit !== '676eaf66f8f05d4d558ee7a74b4736623d3feeb9' ||
         schema['x-remnacust-upstream']?.patchCommit !== null ||
-        schema['x-remnacust-upstream']?.coreVersion !== '1.1.20'
+        schema['x-remnacust-upstream']?.coreVersion !== '1.1.21'
     )
         throw new Error('Stale config schema')
 }
@@ -86,7 +72,7 @@ if (!globalThis.XrayParseConfig('{invalid json')) {
     throw new Error('Xray WASM accepted invalid JSON')
 }
 
-if (globalThis.XrayGetVersion() !== (stock ? '26.11.9' : '1.1.20')) {
+if (globalThis.XrayGetVersion() !== (stock ? '26.11.9' : '1.1.21')) {
     throw new Error(`Stale editor core: ${globalThis.XrayGetVersion()}`)
 }
 if (stock) {
@@ -178,6 +164,6 @@ for (const fixture of fixtures.invalid) {
 const schemaCases = await verifyXeraEditorSchemas(fixtures)
 
 console.log(
-    `Editor core 1.1.20 (upstream 26.11.9), ${fixtures.valid.length + fixtures.invalid.length} configuration fixtures and ${schemaCases} Monaco schema cases verified`
+    `Editor core 1.1.21 (upstream 26.11.9), ${fixtures.valid.length + fixtures.invalid.length} configuration fixtures and ${schemaCases} Monaco schema cases verified`
 )
 process.exit(0)

@@ -14,7 +14,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/lottman/Remnacust-installer/
 
 ## Локальная разработка
 
-Нужны Node.js 26.13 LTS и отдельный тестовый backend. Из этого каталога:
+Нужны Node.js 26.13.1 LTS и отдельный тестовый backend. Из этого каталога:
 
 ```bash
 cp .env.sample .env
@@ -46,7 +46,7 @@ npm run cb
 
 ## Редактор и документация
 
-Текущие исходники включают Core/WASM **1.1.18**, Xray v26.10.31. Проверка ресурсов редактора:
+Текущие исходники включают Core/WASM **1.1.21**, Xray v26.11.9. Проверка ресурсов редактора:
 
 ```bash
 node verify-editor-assets.mjs

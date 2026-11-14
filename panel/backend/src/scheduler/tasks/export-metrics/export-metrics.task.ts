@@ -1,5 +1,6 @@
+import type { Gauge } from '@prometheus-io/client';
+
 import { InjectMetric } from '@willsoto/nestjs-prometheus';
-import { Gauge } from 'prom-client';
 
 import { Injectable, Logger } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';

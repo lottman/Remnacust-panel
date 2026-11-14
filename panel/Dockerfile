@@ -1,5 +1,6 @@
 # Build from the public project root: docker build -f panel/Dockerfile .
-FROM node:26.13.0-trixie-slim AS backend-build
+FROM node:26.13.1-trixie-slim@sha256:e6bedef217677b276c591795e169840edd9096dbf13f29df8ef8d1856b8820bc AS backend-build
+RUN npm install --global --ignore-scripts --no-audit --no-fund --registry=https://registry.npmjs.org npm@12.2.2 && test "$(npm --version)" = "12.2.2"
 WORKDIR /opt/app
 
 COPY panel/backend/package*.json ./
@@ -31,7 +32,8 @@ RUN rm -rf node_modules/effect/dist/esm \
     find node_modules \( -name '*.js.map' -o -name '*.mjs.map' \) -delete && \
     find node_modules \( -name '*.d.ts' -o -name '*.d.cts' -o -name '*.d.mts' \) -delete
 
-FROM node:26.13.0-trixie-slim AS frontend
+FROM node:26.13.1-trixie-slim@sha256:e6bedef217677b276c591795e169840edd9096dbf13f29df8ef8d1856b8820bc AS frontend
+RUN npm install --global --ignore-scripts --no-audit --no-fund --registry=https://registry.npmjs.org npm@12.2.2 && test "$(npm --version)" = "12.2.2"
 WORKDIR /opt/frontend
 COPY panel/frontend/package*.json ./
 COPY panel/frontend/vendor ./vendor
@@ -46,25 +48,26 @@ RUN --mount=type=cache,id=remnacust-webfonts,target=/opt/frontend/node_modules/.
     npm run typecheck \
     && npm run cb
 
-FROM alpine:3.21 AS certificates
+FROM alpine:3.24.4@sha256:f59abe656b692d901e184be3445e084786602108599d2a51d229c0f5a48c71bf AS certificates
 RUN apk add --no-cache ca-certificates
 
-FROM node:26.13.0-trixie-slim AS runtime-manager
+FROM node:26.13.1-trixie-slim@sha256:e6bedef217677b276c591795e169840edd9096dbf13f29df8ef8d1856b8820bc AS runtime-manager
+RUN npm install --global --ignore-scripts --no-audit --no-fund --registry=https://registry.npmjs.org npm@12.2.2 && test "$(npm --version)" = "12.2.2"
 WORKDIR /opt/pm2
 COPY panel/runtime-manager/package*.json ./
 RUN npm ci --omit=dev --ignore-scripts --no-audit --no-fund
 
-FROM node:26.13.0-trixie-slim
+FROM node:26.13.1-trixie-slim@sha256:e6bedef217677b276c591795e169840edd9096dbf13f29df8ef8d1856b8820bc
 COPY --from=certificates /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 
 LABEL org.opencontainers.image.title="Remnacust"
-LABEL org.opencontainers.image.version="1.1.7.119"
+LABEL org.opencontainers.image.version="1.1.7.124"
 LABEL org.opencontainers.image.description="Powerful proxy management tool"
 LABEL org.opencontainers.image.url="https://github.com/lottman/Remnacust-panel"
 LABEL org.opencontainers.image.source="https://github.com/lottman/Remnacust-panel"
 LABEL org.opencontainers.image.vendor="Remnacust"
 LABEL org.opencontainers.image.licenses="AGPL-3.0"
-LABEL org.opencontainers.image.documentation="https://docs.rw"
+LABEL org.opencontainers.image.documentation="https://github.com/lottman/Remnacust-panel#readme"
 
 WORKDIR /opt/app
 

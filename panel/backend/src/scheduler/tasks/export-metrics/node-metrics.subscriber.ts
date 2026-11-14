@@ -1,8 +1,9 @@
-import { Inject } from '@nestjs/common';
+import type { Counter } from '@prometheus-io/client';
+
 import { InjectMetric } from '@willsoto/nestjs-prometheus';
 import Redis from 'ioredis';
-import { Counter } from 'prom-client';
 
+import { Inject } from '@nestjs/common';
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 
 import { METRIC_NAMES } from '@libs/contracts/constants';

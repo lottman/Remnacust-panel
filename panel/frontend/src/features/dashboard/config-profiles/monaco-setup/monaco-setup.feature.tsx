@@ -15,10 +15,13 @@ import { loadEditorSchema } from '@shared/utils/monaco/schema-cache'
 import { setSnippetHoverData } from '@shared/utils/monaco/snippet-hover'
 
 interface ISchemaNode {
+    $ref?: unknown
     allOf?: ISchemaNode[]
     anyOf?: ISchemaNode[]
+    items?: ISchemaNode
     oneOf?: ISchemaNode[]
     properties?: Record<string, unknown>
+    type?: string
 }
 
 interface IXraySchema {
@@ -189,6 +192,47 @@ const resolveRootNode = (schema: IXraySchema | undefined): ISchemaNode | undefin
     return schema?.definitions?.[ref.slice(DEFINITIONS_REF_PREFIX.length)]
 }
 
+const resolveXrayDefinitions = (schema: IXraySchema) => {
+    const definitions = schema.definitions ?? {}
+    const isDefault = schema.$ref === `${DEFINITIONS_REF_PREFIX}XrayDefaultConfig`
+
+    if (!isDefault) {
+        return {
+            isDefault,
+            outbound: definitions.OutboundObject,
+            rule: definitions.RuleObject,
+            balancer: definitions.BalancerObject,
+            geodata: definitions.GeodataObject,
+            mux: definitions.MuxObject,
+            sockopt: definitions.SockoptObject,
+            finalMask: definitions.FinalMaskObject
+        }
+    }
+
+    const rule: ISchemaNode = {
+        type: 'object',
+        properties: {},
+        allOf: [
+            { $ref: `${DEFINITIONS_REF_PREFIX}XrayDefaultRawFieldRule` },
+            { $ref: `${DEFINITIONS_REF_PREFIX}XrayDefaultRouterRule` }
+        ]
+    }
+    const rules = definitions.XrayDefaultRouterConfig?.properties?.rules as ISchemaNode | undefined
+
+    if (rules) rules.items = rule
+
+    return {
+        isDefault,
+        outbound: definitions.XrayDefaultOutboundDetourConfig,
+        rule,
+        balancer: definitions.XrayDefaultBalancingRule,
+        geodata: definitions.XrayDefaultGeodataConfig,
+        mux: definitions.XrayDefaultMuxConfig,
+        sockopt: definitions.XrayDefaultSocketConfig,
+        finalMask: definitions.XrayDefaultFinalMask
+    }
+}
+
 export const MonacoSetupFeature = {
     setup: async (
         currentLanguage: string,
@@ -208,6 +252,7 @@ export const MonacoSetupFeature = {
             }
 
             const schema = await loadEditorSchema<IXraySchema>(jsonSchemaUrl)
+            const xray = resolveXrayDefinitions(schema)
 
             const snippetDescriptions = snippets.map((snippet) => {
                 const snippetJson = JSON.stringify(snippet.snippet, null, 1)
@@ -258,11 +303,12 @@ export const MonacoSetupFeature = {
                 minItems: 1
             }
 
-            const notInjected: string[] = (
-                ['OutboundObject', 'RuleObject', 'BalancerObject'] as const
-            ).filter(
-                (definition) =>
-                    injectProperty(schema.definitions?.[definition], 'snippet', snippetSchema) === 0
+            const notInjected = Object.entries({
+                outbound: xray.outbound,
+                rule: xray.rule,
+                balancer: xray.balancer
+            }).flatMap(([name, node]) =>
+                injectProperty(node, 'snippet', snippetSchema) === 0 ? [name] : []
             )
 
             const rootNode = resolveRootNode(schema)
@@ -278,8 +324,8 @@ export const MonacoSetupFeature = {
             }
 
             if (
-                injectProperty(schema.definitions?.GeodataObject, 'core', CUSTOM_CORE_SCHEMA) ===
-                    0 &&
+                !xray.isDefault &&
+                injectProperty(xray.geodata, 'core', CUSTOM_CORE_SCHEMA) === 0 &&
                 rootNode?.properties?.geodata
             ) {
                 consola.error('Failed to inject the custom core property into GeodataObject.')
@@ -311,8 +357,9 @@ export const MonacoSetupSnippetsFeature = {
             const schema = await loadEditorSchema<IXraySchema>(jsonSchemaUrl)
 
             const rootNode = resolveRootNode(schema)
+            const xray = resolveXrayDefinitions(schema)
 
-            injectProperty(schema.definitions?.GeodataObject, 'core', CUSTOM_CORE_SCHEMA)
+            if (!xray.isDefault) injectProperty(xray.geodata, 'core', CUSTOM_CORE_SCHEMA)
 
             const snippetArraySchema = {
                 $schema: 'http://json-schema.org/draft-07/schema#',
@@ -326,9 +373,9 @@ export const MonacoSetupSnippetsFeature = {
                 },
                 type: 'array',
                 items: {
-                    oneOf: [
+                    [xray.isDefault ? 'anyOf' : 'oneOf']: [
                         {
-                            ...schema.definitions?.OutboundObject,
+                            ...xray.outbound,
                             get title() {
                                 return uiText('outbound-object-9c0af1d')
                             },
@@ -337,7 +384,7 @@ export const MonacoSetupSnippetsFeature = {
                             }
                         },
                         {
-                            ...schema.definitions?.RuleObject,
+                            ...xray.rule,
                             get title() {
                                 return uiText('rule-object-35c596a')
                             },
@@ -346,7 +393,7 @@ export const MonacoSetupSnippetsFeature = {
                             }
                         },
                         {
-                            ...schema.definitions?.BalancerObject,
+                            ...xray.balancer,
                             get title() {
                                 return uiText('balancer-object-c0dcb8b')
                             },
@@ -603,18 +650,18 @@ export const MonacoSetupSharedListEditorFeature = {
 }
 
 const HOST_JSON_FIELD_SCHEMAS = [
-    { definition: 'MuxObject', fileMatch: 'host-mux://*', uri: 'https://host-mux-schema.json' },
+    { definition: 'mux', fileMatch: 'host-mux://*', uri: 'https://host-mux-schema.json' },
     {
-        definition: 'SockoptObject',
+        definition: 'sockopt',
         fileMatch: 'host-sockopt://*',
         uri: 'https://host-sockopt-schema.json'
     },
     {
-        definition: 'FinalMaskObject',
+        definition: 'finalMask',
         fileMatch: 'host-final-mask://*',
         uri: 'https://host-final-mask-schema.json'
     }
-]
+] as const
 
 const buildFinalMaskProperties = (definitions: Record<string, ISchemaNode | undefined>) => {
     if (!definitions.TCPMask || !definitions.UDPMask) {
@@ -644,16 +691,17 @@ export const MonacoSetupHostJsonFieldsFeature = {
 
             const response = { data: await loadEditorSchema<IXraySchema>(jsonSchemaUrl) }
             const { definitions = {} } = response.data
+            const xray = resolveXrayDefinitions(response.data)
 
             HOST_JSON_FIELD_SCHEMAS.forEach(({ definition, fileMatch, uri }) => {
-                const node = definitions[definition]
+                const node = xray[definition]
 
                 if (!node) {
                     return
                 }
 
                 const properties =
-                    definition === 'FinalMaskObject'
+                    definition === 'finalMask' && !xray.isDefault
                         ? buildFinalMaskProperties(definitions)
                         : undefined
 

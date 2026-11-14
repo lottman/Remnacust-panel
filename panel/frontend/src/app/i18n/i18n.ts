@@ -20,6 +20,7 @@ i18n.use(initReactI18next)
     .init({
         fallbackLng: 'en',
         supportedLngs: ['en', 'ru', 'fa', 'zh'],
+        returnEmptyString: false,
         debug: process.env.NODE_ENV === 'development',
         defaultNS: 'remnawave',
         ns: ['remnawave'],

@@ -2,7 +2,7 @@
 
 Порог обычных правил настраивается в разделе «Геофайлы»: 1–250 000 адресов/условий, по умолчанию 20 000. Ограничения размера и сложности сохраняются и могут переключить доставку на DAT раньше выбранного порога. При выключенной автоматизации ручные настройки Xray сохраняются.
 
-Выпуск **Panel/Page 1.1.7.123** входит в комплект Installer **1.2.171** с Node **1.1.34** и Core/WASM **1.1.20**. [Изменения выпуска](docs/releases/1.1.7.123.md). Обновление установленного сервера выполняется отдельно.
+Выпуск **Panel/Page 1.1.7.124** входит в комплект Installer **1.2.172** с Node **1.1.35** и Core/WASM **1.1.21**. [Изменения выпуска](docs/releases/1.1.7.124.md). Обновление установленного сервера выполняется отдельно.
 
 
 [Русский](README.md) · [English](README.en.md)
@@ -39,10 +39,10 @@ docker compose up -d --no-build --pull never
 
 | Компонент | Текущий стабильный выпуск |
 | --- | --- |
-| Панель и сайт подписки | [1.1.7.123](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.123) |
-| Установщик / Docker-комплект | [1.2.171](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.171) |
-| Агент ноды | [1.1.34](https://github.com/lottman/Remnacust-node/releases/tag/v1.1.34) |
-| Core / валидатор редактора | [1.1.20](https://github.com/lottman/Remnacust-core/releases/tag/v1.1.20), Xray v26.11.9 |
+| Панель и сайт подписки | [1.1.7.124](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.124) |
+| Установщик / Docker-комплект | [1.2.172](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.172) |
+| Агент ноды | [1.1.35](https://github.com/lottman/Remnacust-node/releases/tag/v1.1.35) |
+| Core / валидатор редактора | [1.1.21](https://github.com/lottman/Remnacust-core/releases/tag/v1.1.21), Xray v26.11.9 |
 
 Используйте согласованный комплект. Обновление панели не обновляет автоматически удалённые Node, управляемое Core или ядро Linux. Для расширенных лимитов нужна подтверждённая поддержка Node/Core, а не только номер версии в интерфейсе. [Совместимость](docs/COMPATIBILITY.md).
 
@@ -60,7 +60,7 @@ docker compose up -d --no-build --pull never
 
 | ПО | Требование |
 | --- | --- |
-| ОС установщика 1.2.171 | Ubuntu 22.04 / 24.04 / 26.04 LTS и Debian 12 / 13, Linux amd64 или arm64 |
+| ОС установщика 1.2.172 | Ubuntu 22.04 / 24.04 / 26.04 LTS и Debian 12 / 13, Linux amd64 или arm64 |
 | Контейнеры | Docker Engine и актуальный плагин Docker Compose v2; `docker-compose` v1 не поддерживается |
 | PostgreSQL | 14.24 / 15.19 / 16.15 / 17.11 / 18.6; 205 миграций; границы проверки — в таблице совместимости |
 | Установка готовых образов | Root, доступ к APT, GitHub/GHCR и рабочий DNS; Node.js и Go на VPS не нужны |

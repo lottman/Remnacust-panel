@@ -1,6 +1,6 @@
 {
   "name": "@remnacust/subscription-page-backend",
-  "version": "1.1.7.123",
+  "version": "1.1.7.124",
   "private": false,
   "description": "Remnawave Subscription Page",
   "homepage": "https://github.com/lottman/Remnacust-panel",
@@ -27,15 +27,15 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@nestjs/axios": "12.0.1",
-    "@nestjs/common": "12.4.0",
+    "@nestjs/axios": "12.0.2",
+    "@nestjs/common": "12.5.0",
     "@nestjs/config": "12.1.1",
-    "@nestjs/core": "12.4.0",
-    "@nestjs/jwt": "12.0.4",
-    "@nestjs/platform-express": "12.4.0",
-    "@remnawave/backend-contract": "3.4.15",
-    "@remnawave/subscription-page-types": "0.6.2",
-    "axios": "1.21.0",
+    "@nestjs/core": "12.5.0",
+    "@nestjs/jwt": "12.0.5",
+    "@nestjs/platform-express": "12.5.0",
+    "@remnawave/backend-contract": "3.4.17",
+    "@remnawave/subscription-page-types": "0.7.0",
+    "axios": "1.21.1",
     "consola": "^3.4.2",
     "cookie-parser": "^1.4.7",
     "ejs": "7.0.2",
@@ -55,10 +55,10 @@
     "compression": "^1.8.2"
   },
   "devDependencies": {
-    "@nestjs/cli": "12.0.12",
+    "@nestjs/cli": "12.0.13",
     "@nestjs/schematics": "12.0.13",
-    "@rspack/cli": "2.3.1",
-    "@rspack/core": "2.3.1",
+    "@rspack/cli": "2.3.2",
+    "@rspack/core": "2.3.2",
     "@rspack/dev-server": "2.2.2",
     "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
@@ -75,20 +75,20 @@
     "cross-env": "^10.1.0",
     "globals": "17.14.0",
     "lefthook": "2.2.2",
-    "nf3": "0.4.2",
-    "oxfmt": "0.77.0",
-    "oxlint": "1.92.0",
+    "nf3": "0.4.3",
+    "oxfmt": "0.78.0",
+    "oxlint": "1.93.0",
     "run-script-webpack-plugin": "^0.2.3",
-    "ts-checker-rspack-plugin": "1.7.2",
+    "ts-checker-rspack-plugin": "1.8.0",
     "typescript": "npm:@typescript/typescript6@6.0.2",
     "webpack-node-externals": "^3.0.0",
     "@types/compression": "^1.8.1",
     "@typescript/native": "npm:typescript@7.0.2"
   },
   "overrides": {
-    "tinypool": "2.1.2",
+    "tinypool": "2.2.0",
     "source-map-js": "1.2.2",
-    "postcss-selector-parser": "7.1.6",
+    "postcss-selector-parser": "7.2.1",
     "proxy-addr": "$proxy-addr",
     "fast-uri": "3.1.9",
     "js-yaml": "5.5.0",
@@ -97,9 +97,16 @@
     },
     "zod": "$zod",
     "body-parser": "2.4.0",
-    "multer": "2.5.0"
+    "multer": "2.5.0",
+    "follow-redirects": "1.16.3",
+    "@nestjs/cli": {
+      "minimatch": "11.0.8"
+    }
   },
   "engines": {
-    "node": ">=26.13.0 <27"
+    "node": ">=26.13.1 <27"
+  },
+  "allowScripts": {
+    "lefthook@2.2.2": true
   }
 }

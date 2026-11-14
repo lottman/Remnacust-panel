@@ -5,6 +5,72 @@
   "goVersion": "go version go1.27.4 windows/amd64",
   "sourceArchiveSha256": "eab6fad20dfabc862c2537552e136e195de93d166c9a0bab72e408b4295eb7dc",
   "configurationSourceSha256": "01666deb53beae1df9df9fccbca8e807dc7405996cc8a368c1be6713c26e7cba",
+  "dependencySecurityUpdates": {
+    "manifestSha256": "ed60b350e8422f97530acedf0b3ac8778ffac1c9249fc57df2110690eafb5c89",
+    "schemaVersion": 1,
+    "policy": "official-baseline-with-security-dependency-updates",
+    "upstreamVersion": "v26.11.9",
+    "upstreamCommit": "676eaf66f8f05d4d558ee7a74b4736623d3feeb9",
+    "sourceArchiveUrl": "https://codeload.github.com/XTLS/Xray-core/zip/676eaf66f8f05d4d558ee7a74b4736623d3feeb9",
+    "sourceArchiveSha256": "05623c5394d82870edcfdd9355169b05453da133544355012b2cd1874e67f100",
+    "tagSourceArchiveUrl": "https://codeload.github.com/XTLS/Xray-core/zip/refs/tags/v26.11.9",
+    "tagSourceArchiveSha256": "eab6fad20dfabc862c2537552e136e195de93d166c9a0bab72e408b4295eb7dc",
+    "configurationSourceSha256": "01666deb53beae1df9df9fccbca8e807dc7405996cc8a368c1be6713c26e7cba",
+    "originalGoModSha256": "05b5ec4430acb5898c9c95e3886a41b4399a4e05d605165833498432baa4ade9",
+    "originalGoSumSha256": "d36f2d9ff1786fd06aa382b718375a4d50336d4d50ebcb4573110a4c1eae25fc",
+    "goModSha256": "e13b98fb2a7c05cc9e2126451353d4ac5b1ca734174dbd2b416fef6d8ab7ef40",
+    "goSumSha256": "d53d7e8f770513935d5ab87c9e6692eb565f996cdaff5500f2c14ddd2dea05f4",
+    "reviewedAt": "2026-11-14",
+    "goVersion": "go1.27.4",
+    "govulncheckVersion": "v1.9.0",
+    "dependencyOverrides": [
+      {
+        "module": "github.com/klauspost/compress",
+        "previousVersion": "v1.20.1",
+        "version": "v1.20.4",
+        "source": "https://github.com/klauspost/compress/releases/tag/v1.20.4",
+        "reports": [
+          "https://pkg.go.dev/vuln/GO-2026-6865",
+          "https://github.com/klauspost/compress/security/advisories/GHSA-fpmh-frq8-7rj8"
+        ]
+      },
+      {
+        "module": "golang.org/x/crypto",
+        "previousVersion": "v0.58.0",
+        "version": "v0.59.0",
+        "source": "https://go.googlesource.com/crypto/+/refs/tags/v0.59.0",
+        "reports": [
+          "https://pkg.go.dev/vuln/GO-2026-5932"
+        ]
+      }
+    ],
+    "mvsUpdates": [
+      {
+        "module": "golang.org/x/sync",
+        "previousVersion": "v0.24.0",
+        "version": "v0.25.0",
+        "source": "https://go.googlesource.com/sync/+/refs/tags/v0.25.0"
+      },
+      {
+        "module": "golang.org/x/sys",
+        "previousVersion": "v0.49.0",
+        "version": "v0.50.0",
+        "source": "https://go.googlesource.com/sys/+/refs/tags/v0.50.0"
+      },
+      {
+        "module": "golang.org/x/text",
+        "previousVersion": "v0.43.0",
+        "version": "v0.44.0",
+        "source": "https://go.googlesource.com/text/+/refs/tags/v0.44.0"
+      },
+      {
+        "module": "golang.org/x/tools",
+        "previousVersion": "v0.51.0",
+        "version": "v0.52.0",
+        "source": "https://go.googlesource.com/tools/+/refs/tags/v0.52.0"
+      }
+    ]
+  },
   "validatorWrapperSha256": "9e62ce85cc2313499697aa1cbc4f74f30c46339574d6373df1e6ee6a59252ee9",
   "browserPlatformAdapters": [
     "common/platform/filesystem/file.go",
@@ -17,8 +83,8 @@
     "transport/internet/system_listener.go"
   ],
   "files": {
-    "default.wasm": "08304733228e91d5591888a85e4723ea22626973be03cc71294e0d29bf278cc8",
-    "xray.default.schema.json": "db4afe648217156e8530da0bcf5820f88d877bc842411d41b53d62b0b06d9070",
-    "xray.default.schema.cn.json": "db4afe648217156e8530da0bcf5820f88d877bc842411d41b53d62b0b06d9070"
+    "default.wasm": "6ed09d11a1274d3aea22f0eea47c53005bb88d6e5cb44af7e38913e31ab83f76",
+    "xray.default.schema.json": "a8ece617e6af9fdf4a46adfabad8c299c4b3b40eb5b5e9c504cf668db1d105f9",
+    "xray.default.schema.cn.json": "a8ece617e6af9fdf4a46adfabad8c299c4b3b40eb5b5e9c504cf668db1d105f9"
   }
 }

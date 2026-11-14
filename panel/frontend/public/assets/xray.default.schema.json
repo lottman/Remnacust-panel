@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Xray v26.11.9 (official upstream)",
+  "title": "Xray v26.11.9 (official baseline with security dependency updates)",
   "$ref": "#/definitions/XrayDefaultConfig",
   "definitions": {
     "XrayDefaultAPIConfig": {

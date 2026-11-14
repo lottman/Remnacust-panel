@@ -554,7 +554,7 @@ Behind an HTTP proxy, check the route, headers, request-body limits and timeouts
 
 stream-auto remains available: it selects a mode from HTTP/REALITY and downloadSettings; it does not measure DPI, latency or buffering, and does not change an open stream after a network error.
 
-Core 1.1.20 defaults packet-up pacing to a sampled 20–40 ms interval with a 30 ms midpoint instead of a constant 30 ms. Explicit scMinPostsIntervalMs is preserved, including fixed intervals and disabled pacing. Streaming modes are not delayed by this setting. The range removes one fixed cadence; it does not hide connection volume, duration or workload.
+Core 1.1.21 defaults packet-up pacing to a sampled 20–40 ms interval with a 30 ms midpoint instead of a constant 30 ms. Explicit scMinPostsIntervalMs is preserved, including fixed intervals and disabled pacing. Streaming modes are not delayed by this setting. The range removes one fixed cadence; it does not hide connection volume, duration or workload.
 
 ### Additional traffic padding
 
@@ -578,6 +578,10 @@ Update the client and server cores together. Remove xPaddingObfsMode, noGRPCHead
 
 h2Params configures the HTTP/2 server, for example {"MaxConcurrentStreams":128,"MaxReadFrameSize":65536}. Unknown fields, prohibited ciphers and invalid sizes are rejected; timeouts are numeric nanoseconds. This does not configure a browser fingerprint for the HTTP/2 client.
 
+If h2Params.MaxReadFrameSize is unset or 0, our Xera and XHTTP HTTP/2 servers advertise a frame size of 16384 bytes (16 KiB). An explicit value, such as 65536, is preserved. This helps reduce the client-selected long-upload buffer when connecting directly to our server, but does not set a total memory limit. An external CDN advertises its own frame size; this default does not change it.
+
+For Xera HTTP/3, if streamSettings.finalmask.quicParams.maxIncomingStreams is unset or 0, the bidirectional QUIC stream limit per connection is 2 × effective serverMaxSessions + 256. serverMaxSessions belongs in xeraHttpSettings; when unset or 0, the session limit is 4096 and the stream limit is 8448. stream-up holds two long-running requests per session, stream-one uses one, and packet-up uses a downlink plus finite upload requests. Explicit maxIncomingStreams values, including 3 and -1, are preserved: -1 disables incoming bidirectional streams. When setting a manual limit, allow room for requests used by the selected mode; QUIC streams and sessions are counted separately.
+
 Headers follow the TLS ClientHello family; explicit values take priority. Unrecognized requests receive the same ordinary 404 response before session allocation or body reads. Padding and these responses do not replace TLS/REALITY or VLESS. uTLS does not mimic the entire browser HTTP/2/QUIC stack. An ISP cannot read HTTP inside HTTPS, but a CDN terminating TLS can. DPI indistinguishability is not guaranteed: comparative measurements on the target network are required.
 
 Service metadata HTTP header names must start with X-, contain 3–64 characters and avoid proxy headers. Session, sequence and padding keys sharing a placement must be distinct. Invalid or conflicting settings are rejected before starting the listener.
@@ -600,7 +604,7 @@ Xera does not introduce background browsing. REALITY retains its existing fallba
 
 ### Client HTTP/2 wire profile
 
-Core 1.1.20 selects the partial HTTP/2 profile only for matching Chrome 133 and 155 TLS profiles. Chrome 155 SETTINGS and their order, connection window and pseudoheader order were compared with official Chrome for Testing 155.0.8059.84 (revision 1697595). chrome and an empty fingerprint use this path while the pinned uTLS selects a supported version. Firefox, Safari and unverified Chrome versions retain standard H2. Full browser equivalence is not claimed. Generated User-Agent and Sec-CH-UA follow the ClientHello version, including GREASE and brand order; explicit headers are preserved.
+Core 1.1.21 selects the partial HTTP/2 profile only for matching Chrome 133 and 155 TLS profiles. Chrome 155 SETTINGS and their order, connection window and pseudoheader order were compared with official Chrome for Testing 155.0.8059.84 (revision 1697595). chrome and an empty fingerprint use this path while the pinned uTLS selects a supported version. Firefox, Safari and unverified Chrome versions retain standard H2. Full browser equivalence is not claimed. Generated User-Agent and Sec-CH-UA follow the ClientHello version, including GREASE and brand order; explicit headers are preserved.
 
 This is HTTP/2 behavior inside the protected connection, not new encryption. An ISP cannot read SETTINGS inside TLS; a TLS-terminating CDN can. Alignment removes one specific cross-layer mismatch, but does not hide the server address, session duration or application traffic patterns. Full DPI indistinguishability has not been established.
 
@@ -621,6 +625,28 @@ Use a matching panel, node and core release. Updating the panel does not update 
 h2Params and server resource limits stay on the node and are omitted from client subscriptions, including inside extra. Shared transport options and downloadSettings are preserved. xmux.hKeepAlivePeriod is in seconds: 0 selects the default, -1 disables idle probes, and positive values cannot exceed 604800. HTTP header names and values are checked before startup. Set Host through the separate host field.
 
 Explicit TLS minVersion and maxVersion must be empty or 1.0, 1.1, 1.2 or 1.3; the minimum cannot exceed the maximum. A uTLS client also enforces these bounds. If the fingerprint or server cannot support the allowed range, the connection is rejected. ECH and HTTP/3 require TLS 1.3. Custom version bounds can change ClientHello, so standard browser-profile comparisons do not cover arbitrary modified settings.
+
+### Selecting a mode for the network
+
+For direct TCP, use correctly configured REALITY and stream-auto. For a CDN terminating TLS, use TLS with packet-up or stream-auto: finite POSTs also work when uploads are buffered. Verify data delivery, not just successful establishment. REALITY cannot pass unchanged through ordinary CDN TLS termination.
+
+HTTP/3 needs a separate TLS profile with alpn: ["h3"] and reachable UDP. If UDP is blocked, use a separately reachable TCP HTTP/2 profile; an open stream is not migrated automatically. QUIC Initial does not hide SNI without actual ECH negotiation. Measurements in [China](https://gfw.report/publications/usenixsecurity25/en/) and [Russia in March–April 2026](https://www.petsymposium.org/foci/2026/foci-2026-0010.pdf) establish that HTTP/3 alone does not prevent name-based filtering.
+
+Test sustained upload and download, HTTPS inside the tunnel, idle recovery and reconnection. Padding cannot create a reachable route when an IP is blocked or a strict destination allowlist applies. Splitting HTTP requests also does not guarantee evasion of a whole-connection limit. Success on one network does not establish availability across providers. Sources were checked as of 14 November 2026; protection against an unknown AI classifier has not been demonstrated.
+
+### Browser Dialer and ECH acquisition
+
+Browser Dialer uses a real browser with an open helper page. Keep the helper on loopback and open its configured address directly; reload the page after updating Core. Foreign websites cannot read its token or join its WebSocket. The page is not cached or allowed in frames. These controls do not protect against a process that already has local access.
+
+Browser Dialer does not follow HTTP redirects, use cached tunnel responses or forward HTTP error pages as connection data. The helper cannot set another origin’s cookies: cookie placements and explicit Cookie headers fail early. Put session, sequence and padding metadata in paths, queries or headers, and data in bodies or headers. GET/HEAD bodies and Fetch-forbidden methods are rejected. Native clients retain cookie support; customDownlinkPadding is incompatible with Browser Dialer.
+
+ECH hides the inner ClientHello only when negotiation succeeds; the IP, outer SNI and traffic characteristics remain observable. Verify ECH configuration acquisition separately: udp:// exposes the DNS query, while the chosen DoH must be reachable from the user’s network. Large HTTPS/ECH records are supported; truncated UDP answers retry over TCP at the same resolver. DoH replies are limited to 65535 bytes and checked before caching. DoH failure does not trigger plaintext DNS fallback; ECH failure does not authorize removing ECH or certificate verification.
+
+### IPv6 and mixed networks
+
+Verify IPv4 and IPv6 separately. The address field accepts an IPv6 literal such as 2001:db8::1; URLs and address:port pairs need brackets: [2001:db8::1]:443. This is a reserved documentation address. SNI must match the TLS/REALITY configuration. A separate downloadSettings endpoint can also use IPv6.
+
+Core IPv6 support does not provision a host or Docker route or override operating-system restrictions. A reachable IPv6 address, route, listener and port are required. An AAAA record alone does not prove reachability. Select the appropriate IPv4/IPv6/all-addresses mode in autoselect and test the pool from the client network; a panel-side check does not replace a device check. IP family and exit country are different parameters: IPv6 neither establishes another country nor implies an absence of filtering.
 
 ## Visual profile canvas
 

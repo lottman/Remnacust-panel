@@ -1,6 +1,7 @@
 import { Button, Group, NumberInput, px, Stack, Switch, Text } from '@mantine/core'
 import { useForm, schemaResolver } from '@mantine/form'
 import { UpdateSubscriptionSettingsCommand } from '@remnawave/backend-contract'
+import { useId } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiGear, PiIdentificationBadge } from 'react-icons/pi'
 import { TbDevices2 } from 'react-icons/tb'
@@ -20,6 +21,7 @@ interface IProps {
 export const SubscriptionHwidSettingsWidget = (props: IProps) => {
     const { subscriptionSettings } = props
     const { t } = useTranslation()
+    const hwidLimitLabelId = useId()
 
     const form = useForm<UpdateSubscriptionSettingsCommand.RequestBody>({
         name: 'subscription-hwid-settings-form',
@@ -67,11 +69,12 @@ export const SubscriptionHwidSettingsWidget = (props: IProps) => {
                     <Stack gap="md">
                         <Group justify="space-between" wrap="nowrap">
                             <Group gap="xs" justify="start" wrap="nowrap">
-                                <Text fw={600} size="md">
+                                <Text fw={600} id={hwidLimitLabelId} size="md">
                                     {t('subscription-hwid-settings.widget.hwid-limit')}
                                 </Text>
                             </Group>
                             <Switch
+                                aria-labelledby={hwidLimitLabelId}
                                 key={form.key('hwidSettings.enabled')}
                                 size="md"
                                 {...form.getInputProps('hwidSettings.enabled', {

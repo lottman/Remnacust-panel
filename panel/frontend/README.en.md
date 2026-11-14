@@ -14,7 +14,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/lottman/Remnacust-installer/
 
 ## Local development
 
-Use Node.js 26.13 LTS and an isolated test backend. From this directory:
+Use Node.js 26.13.1 LTS and an isolated test backend. From this directory:
 
 ```bash
 cp .env.sample .env
@@ -46,7 +46,7 @@ The test command targets Linux. Use the [Docker build from the repository root](
 
 ## Editor and documentation
 
-The current source includes Core/WASM **1.1.18**, Xray v26.10.31. Check editor assets with:
+The current source includes Core/WASM **1.1.21**, Xray v26.11.9. Check editor assets with:
 
 ```bash
 node verify-editor-assets.mjs

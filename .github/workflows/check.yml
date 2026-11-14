@@ -11,12 +11,14 @@ jobs:
       run:
         working-directory: panel/frontend
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
-          node-version: 26.13.0
+          node-version: 26.13.1
           cache: npm
           cache-dependency-path: panel/frontend/package-lock.json
+      - name: Use npm 12.2.2
+        run: npm install --global --ignore-scripts --no-audit --no-fund --registry=https://registry.npmjs.org npm@12.2.2 && test "$(npm --version)" = "12.2.2"
       - run: npm ci
       - run: npm ci --prefix ../backend
       - run: npm run migrate:generate --prefix ../backend
@@ -33,7 +35,7 @@ jobs:
       TEMPLATE_CACHE_TEST_REDIS_URL: redis://127.0.0.1:56382/15
     services:
       valkey:
-        image: valkey/valkey:9-alpine
+        image: valkey/valkey:9.1.3-alpine@sha256:bf09d58e96d6b4524a15396b65b242bbe18beebbcc15a04d8ee75ddac62fae0b
         ports:
           - 56381:6379
           - 56382:6379
@@ -43,7 +45,7 @@ jobs:
           --health-timeout 5s
           --health-retries 10
       postgres:
-        image: mirror.gcr.io/library/postgres:17.6
+        image: mirror.gcr.io/library/postgres:17.12@sha256:dbb9623d5121b5d2c2c9e2fba56e40193cbb3510d4af7f035b1ab1823aff3205
         env:
           POSTGRES_HOST_AUTH_METHOD: trust
         ports:
@@ -57,19 +59,28 @@ jobs:
       run:
         working-directory: panel/backend
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           repository: lottman/Remnacust-node
-          ref: f564ab67b4f2688f7ab6f0e5cccb9dd53795b9c8
+          ref: 14c534d17f1c45dbb9405c72f879e0f6eb88d232
           path: node-repository
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
-          node-version: 26.13.0
+          node-version: 26.13.1
+          package-manager-cache: false
+      - name: Use npm 12.2.2
+        run: npm install --global --ignore-scripts --no-audit --no-fund --registry=https://registry.npmjs.org npm@12.2.2 && test "$(npm --version)" = "12.2.2"
       - run: npm ci
       - run: npm ci --prefix ../frontend
       - run: npm ci --prefix ../../node-repository/node
       - run: npm ci --prefix ../../subscription-page/backend
+      - name: Audit locked application dependencies
+        run: |
+          set -euo pipefail
+          for source in . ../frontend ../runtime-manager ../../subscription-page/frontend ../../subscription-page/backend ../../subscription-page/runtime-manager; do
+            npm audit --package-lock-only --audit-level=low --prefix "$source"
+          done
       - run: npm run migrate:generate
       - run: npm run typecheck
       - run: node --test tests/*.test.cjs
@@ -118,13 +129,22 @@ jobs:
           npm run generate:openapi
           node ../frontend/docs-tools/check-documentation.mjs
       - run: npm run build
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: lottman/Remnacust-core
+          ref: 1248215d28de7e08a8992d405c25d3b657a28e5a
+          path: core-repository
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
+        with:
+          go-version: '1.27.4'
+          cache-dependency-path: core-repository/xray/go.sum
       - name: Verify response-time autoselect with the native Xray core
         env:
           REMNACUST_AUTOPROBE_CORE: ${{ runner.temp }}/remnacust-response-time-core
         run: |
-          curl --fail --location --proto '=https' --proto-redir '=https' --max-filesize 201326592 https://github.com/lottman/Remnacust-core/releases/download/v1.1.16/remnacust-core-1.1.16-linux-amd64 -o "$REMNACUST_AUTOPROBE_CORE"
-          printf 'f8ca5d7da286caf83c90d195c018ed2a3d3c97da3d405f05ebf031f1d60bf2c9  %s\n' "$REMNACUST_AUTOPROBE_CORE" | sha256sum -c
-          chmod 755 "$REMNACUST_AUTOPROBE_CORE"
+          set -euo pipefail
+          (cd "$GITHUB_WORKSPACE/core-repository/xray" && CGO_ENABLED=0 go build -buildvcs=false -trimpath -o "$REMNACUST_AUTOPROBE_CORE" ./main)
+          python3 "$GITHUB_WORKSPACE/core-repository/tests/version.test.py" "$REMNACUST_AUTOPROBE_CORE"
           node tests/autoselect-http-probe.integration.cjs
           node tests/autoselect-http-probe.integration.cjs --burst
       - name: Apply migrations to the disposable test database
@@ -382,10 +402,13 @@ jobs:
   subscription-page:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
-          node-version: 26.13.0
+          node-version: 26.13.1
+          package-manager-cache: false
+      - name: Use npm 12.2.2
+        run: npm install --global --ignore-scripts --no-audit --no-fund --registry=https://registry.npmjs.org npm@12.2.2 && test "$(npm --version)" = "12.2.2"
       - run: npm ci && npm run typecheck
         working-directory: subscription-page/backend
       - run: npm ci --include=dev && npm run typecheck && npm run cb
@@ -404,7 +427,7 @@ jobs:
       fail-fast: false
       max-parallel: 2
       matrix:
-        postgres: ['14.24', '15.19', '16.15', '17.11', '18.6']
+        postgres: ['14.25', '15.20', '16.16', '17.12', '18.7']
     services:
       postgres:
         image: postgres:${{ matrix.postgres }}-alpine
@@ -426,12 +449,14 @@ jobs:
       run:
         working-directory: panel/backend
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
-          node-version: 26.13.0
+          node-version: 26.13.1
           cache: npm
           cache-dependency-path: panel/backend/package-lock.json
+      - name: Use npm 12.2.2
+        run: npm install --global --ignore-scripts --no-audit --no-fund --registry=https://registry.npmjs.org npm@12.2.2 && test "$(npm --version)" = "12.2.2"
       - run: npm ci
       - run: npm run migrate:generate
       - name: Create a non-superuser database owner

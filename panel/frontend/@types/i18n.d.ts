@@ -12,6 +12,8 @@ import resources from './resources.ts'
 declare module 'i18next' {
     interface CustomTypeOptions {
         defaultNS: 'remnawave'
+        returnEmptyString: false
+        strictInterpolationChecks: true
         resources: typeof resources
     }
 }

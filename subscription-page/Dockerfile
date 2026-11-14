@@ -1,4 +1,5 @@
-FROM node:26.13.0-trixie-slim AS backend-build
+FROM node:26.13.1-trixie-slim@sha256:e6bedef217677b276c591795e169840edd9096dbf13f29df8ef8d1856b8820bc AS backend-build
+RUN npm install --global --ignore-scripts --no-audit --no-fund --registry=https://registry.npmjs.org npm@12.2.2 && test "$(npm --version)" = "12.2.2"
 WORKDIR /opt/app
 
 COPY backend/package*.json ./
@@ -12,7 +13,8 @@ COPY backend/ .
 RUN npm run build \
     && npm run trace
 
-FROM node:26.13.0-trixie-slim AS frontend-build
+FROM node:26.13.1-trixie-slim@sha256:e6bedef217677b276c591795e169840edd9096dbf13f29df8ef8d1856b8820bc AS frontend-build
+RUN npm install --global --ignore-scripts --no-audit --no-fund --registry=https://registry.npmjs.org npm@12.2.2 && test "$(npm --version)" = "12.2.2"
 WORKDIR /opt/frontend
 COPY frontend/package*.json ./
 COPY frontend/.npmrc ./
@@ -21,21 +23,23 @@ COPY frontend/ ./
 RUN npm run typecheck \
     && NODE_ENV=production npm run cb
 
-FROM node:26.13.0-trixie-slim AS runtime-manager
+FROM node:26.13.1-trixie-slim@sha256:e6bedef217677b276c591795e169840edd9096dbf13f29df8ef8d1856b8820bc AS runtime-manager
+RUN npm install --global --ignore-scripts --no-audit --no-fund --registry=https://registry.npmjs.org npm@12.2.2 && test "$(npm --version)" = "12.2.2"
 WORKDIR /opt/pm2
 COPY runtime-manager/package*.json ./
 RUN npm ci --omit=dev --ignore-scripts --no-audit --no-fund
 
-FROM node:26.13.0-trixie-slim
+FROM node:26.13.1-trixie-slim@sha256:e6bedef217677b276c591795e169840edd9096dbf13f29df8ef8d1856b8820bc
 WORKDIR /opt/app
 
 LABEL org.opencontainers.image.title="Remnacust Subscription Page"
+LABEL org.opencontainers.image.version="1.1.7.124"
 LABEL org.opencontainers.image.description="Remnacust Subscription Page"
 LABEL org.opencontainers.image.url="https://github.com/lottman/Remnacust-panel"
 LABEL org.opencontainers.image.source="https://github.com/lottman/Remnacust-panel"
 LABEL org.opencontainers.image.vendor="Remnacust"
 LABEL org.opencontainers.image.licenses="AGPL-3.0"
-LABEL org.opencontainers.image.documentation="https://docs.rw"
+LABEL org.opencontainers.image.documentation="https://github.com/lottman/Remnacust-panel#readme"
 
 
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*

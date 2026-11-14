@@ -554,7 +554,7 @@ Xera HTTP 是我们 Xray 内核中的 XHTTP 分支。节点内核和客户端内
 
 stream-auto 仍然可用：它根据 HTTP/REALITY 和 downloadSettings 选择模式，不检测 DPI、延迟或缓冲，也不会在网络错误后更改已建立流的模式。
 
-Core 1.1.20 的 packet-up 默认发送间隔从固定 30 毫秒改为在 20–40 毫秒内取样，中点仍为 30 毫秒。保留明确配置的 scMinPostsIntervalMs，包括固定间隔和关闭节流。流式模式不受此设置延迟。该范围消除一种固定节奏，但不会隐藏连接的数据量、时长或负载。
+Core 1.1.21 的 packet-up 默认发送间隔从固定 30 毫秒改为在 20–40 毫秒内取样，中点仍为 30 毫秒。保留明确配置的 scMinPostsIntervalMs，包括固定间隔和关闭节流。流式模式不受此设置延迟。该范围消除一种固定节奏，但不会隐藏连接的数据量、时长或负载。
 
 ### 额外流量填充
 
@@ -578,6 +578,10 @@ budgetPercent 非零而 burstBytes 为零或省略时，内核使用 4096 字节
 
 h2Params 配置 HTTP/2 服务器，例如 {"MaxConcurrentStreams":128,"MaxReadFrameSize":65536}。未知字段、禁止的密码套件和无效大小会被拒绝；超时为以纳秒计的数字。这不会将 HTTP/2 客户端变成浏览器指纹。
 
+当 h2Params.MaxReadFrameSize 未设置或为 0 时，我们的 Xera 和 XHTTP HTTP/2 服务器会通告 16384 字节（16 KiB）的帧大小。显式值（如 65536）会保留。直连我们的服务器时，这有助于减小客户端为长时间上传选择的缓冲区，但不构成总内存上限。外部 CDN 会通告自己的帧大小，此默认值不会改变 CDN 的设置。
+
+对于 Xera HTTP/3，streamSettings.finalmask.quicParams.maxIncomingStreams 未设置或为 0 时，每个连接的双向 QUIC 流上限为 2 × 有效 serverMaxSessions + 256。serverMaxSessions 位于 xeraHttpSettings 中；未设置或为 0 时，会话上限为 4096，流上限为 8448。stream-up 每个会话保持两个长时间请求，stream-one 使用一个请求，packet-up 使用下载流和有限长度的上传请求。显式 maxIncomingStreams 值（包括 3 和 -1）会保留；-1 禁止接收入站双向流。手动设置上限时，应为所选模式的请求预留容量；QUIC 流与会话分别计数。
+
 默认请求头跟随 TLS ClientHello 家族，明确设置的值优先。无法识别的请求在创建会话和读取请求体之前得到相同的普通 404 响应。填充和这些响应不能替代 TLS/REALITY 或 VLESS。uTLS 不会模拟浏览器的整个 HTTP/2/QUIC 协议栈。运营商无法读取 HTTPS 内的 HTTP，但终止 TLS 的 CDN 可以读取。不能保证 DPI 无法区分，仍需在目标网络中进行对比测量。
 
 传输服务元数据的 HTTP 请求头名称必须以 X- 开头、长度为 3–64 个字符，且不能使用代理请求头。同一位置的会话、序号和填充键必须不同。无效或冲突配置会在监听器启动前被拒绝。
@@ -600,7 +604,7 @@ Xera 不会主动生成后台浏览流量。REALITY 保留原有的 fallback/spi
 
 ### 客户端 HTTP/2 线缆特征
 
-Core 1.1.20 仅为匹配的 Chrome 133 和 155 TLS 配置选择部分 HTTP/2 特征。Chrome 155 的 SETTINGS 及其顺序、连接窗口和伪请求头顺序已与官方 Chrome for Testing 155.0.8059.84（revision 1697595）进行比较。固定版本的 uTLS 选择受支持版本时，chrome 和空 fingerprint 使用此路径。Firefox、Safari 及未经验证的 Chrome 版本保留标准 H2。不声称完全等同于浏览器。自动生成的 User-Agent 和 Sec-CH-UA 与 ClientHello 版本保持一致，包括 GREASE 和品牌顺序；保留用户明确指定的请求头。
+Core 1.1.21 仅为匹配的 Chrome 133 和 155 TLS 配置选择部分 HTTP/2 特征。Chrome 155 的 SETTINGS 及其顺序、连接窗口和伪请求头顺序已与官方 Chrome for Testing 155.0.8059.84（revision 1697595）进行比较。固定版本的 uTLS 选择受支持版本时，chrome 和空 fingerprint 使用此路径。Firefox、Safari 及未经验证的 Chrome 版本保留标准 H2。不声称完全等同于浏览器。自动生成的 User-Agent 和 Sec-CH-UA 与 ClientHello 版本保持一致，包括 GREASE 和品牌顺序；保留用户明确指定的请求头。
 
 这是受保护连接内部的 HTTP/2 行为，不是新增加密。运营商无法读取 TLS 内的 SETTINGS，但终止 TLS 的 CDN 可以。它消除一个具体的跨层不一致，却不隐藏服务器地址、会话时长或应用流量模式。尚未证明对 DPI 完全不可区分。
 
@@ -621,6 +625,28 @@ TLS/REALITY、证书校验、证书固定及 ALPN 检查继续由现有 Xray 路
 h2Params 与服务端资源限制保留在节点上，不写入客户端订阅，包括 extra 内的设置。共享传输设置与 downloadSettings 保留。xmux.hKeepAlivePeriod 单位为秒：0 使用默认值，-1 关闭空闲探测，正值不超过 604800。启动前验证 HTTP 标头名称和值。Host 请通过单独的 host 字段设置。
 
 明确设置的 TLS minVersion 和 maxVersion 必须为空，或为 1.0、1.1、1.2、1.3；最小值不得大于最大值。uTLS 客户端也会执行这些限制。指纹或服务器不支持允许的范围时拒绝连接。ECH 和 HTTP/3 要求 TLS 1.3。自定义版本限制可能改变 ClientHello，因此标准浏览器配置的比较不适用于任意修改后的设置。
+
+### 根据网络选择模式
+
+直连 TCP 时，使用正确配置的 REALITY 和 stream-auto。使用终止 TLS 的 CDN 时，选择 TLS 配合 packet-up 或 stream-auto；有限长度的 POST 也适用于上传被缓冲的情况。应验证实际数据传输，而不只是连接建立成功。普通 CDN 的 TLS 终止无法原样传递 REALITY。
+
+HTTP/3 需要单独的 TLS 配置、alpn: ["h3"] 和可达的 UDP。UDP 被封锁时，需要另一个可达的 TCP HTTP/2 配置；已打开的流不会自动在二者之间迁移。未实际协商 ECH 时，QUIC Initial 不会隐藏 SNI。[中国的测量](https://gfw.report/publications/usenixsecurity25/en/)与[俄罗斯 2026 年 3—4 月的测量](https://www.petsymposium.org/foci/2026/foci-2026-0010.pdf)说明，仅使用 HTTP/3 无法防止基于名称的过滤。
+
+请测试持续上传和下载、隧道内的 HTTPS、空闲恢复及重新连接。IP 被封锁或只允许指定目标时，padding 无法创建可达路径。拆分 HTTP 请求也不能保证绕过整个连接的流量限制。某一网络测试成功不代表所有运营商均可用。资料核查截至 2026 年 11 月 14 日；尚未证明能够抵御未知的 AI 分类器。
+
+### Browser Dialer 与 ECH 配置获取
+
+Browser Dialer 使用真实浏览器，并要求助手页面保持打开。请将助手绑定到 loopback，直接访问配置的地址；更新 Core 后重新加载页面。其他网站不能读取其令牌或加入其 WebSocket。页面禁止缓存及 iframe 嵌入。这些措施不能防御已经拥有本地访问权限的进程。
+
+Browser Dialer 不跟随 HTTP 重定向、不使用缓存的隧道响应，也不将 HTTP 错误页面作为连接数据传递。助手无法设置其他 origin 的 cookie，因此会提前拒绝 cookie 放置方式和显式 Cookie 请求头。session、sequence、padding 元数据请放在路径、query 或请求头中，数据放在 body 或请求头中。拒绝带 body 的 GET/HEAD 及 Fetch 禁止的方法。native 客户端保留 cookie 支持；customDownlinkPadding 与 Browser Dialer 不兼容。
+
+只有协商成功时 ECH 才会隐藏内部 ClientHello；IP、外部 SNI 及流量特征仍可观察。请单独验证 ECH 配置获取：udp:// 会暴露 DNS 查询，所选 DoH 必须能从用户网络访问。支持大型 HTTPS/ECH 记录；截断的 UDP 响应会向同一解析器通过 TCP 重试。DoH 响应最多 65535 字节，并在缓存前验证。DoH 失败不会回退到明文 DNS；ECH 错误不允许关闭 ECH 或证书验证。
+
+### IPv6 与混合网络
+
+请分别验证 IPv4 和 IPv6。address 字段接受 IPv6 字面量，例如 2001:db8::1；URL 和地址:端口组合需要方括号：[2001:db8::1]:443。这是文档专用保留地址。SNI 必须匹配 TLS/REALITY 配置。单独的 downloadSettings 目标也可以使用 IPv6。
+
+Core 支持 IPv6 并不代表主机或 Docker 已配置路由，也不会解除操作系统限制。必须具备可达的 IPv6 地址、路由、监听器及端口。仅有 AAAA 记录不能证明可达性。自动选择中应选用合适的 IPv4/IPv6/全部地址模式，并从客户端网络测试地址池；面板端检查不能替代设备端检查。IP 地址族与出口国家是不同参数：IPv6 不代表出口国家改变，也不代表没有过滤。
 
 ## 配置可视化画布
 

@@ -21,6 +21,7 @@ function setup(asset, prepare = () => {}) {
     const urls = []
     vm.runInNewContext(compiled, { exports, require(name) {
         if (name === 'src/config') return { app: { configEditor: { jsonSchemaUrl: 'fixture-json', jsonSchemaCnUrl: 'fixture-cn' } } }
+        if (name === '@shared/api/hooks/xray-mode') return { loadXrayMode: async () => ({ mode: 'custom', revision: 0 }) }
         if (name === 'consola') return { error: (...args) => errors.push(args.join(' ')) }
         if (name === '@shared/i18n/interface-text') return { translateUiText: key => key }
         if (name === '@shared/utils/monaco/json-schema-registry') return { registerJsonSchema: schema => registered.push(schema) }

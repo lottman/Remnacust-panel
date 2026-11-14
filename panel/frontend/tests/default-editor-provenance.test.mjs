@@ -66,3 +66,30 @@ test('default asset tampering still fails independently of source and dependency
         /asset integrity mismatch/)
     }
 })
+
+test('recomputed file hashes cannot authorize replacement assets with the unchanged trusted security manifest', () => {
+    for (const name of ['default.wasm', 'xray.default.schema.json', 'xray.default.schema.cn.json']) {
+        const provenance = JSON.parse(asset('xray.default.provenance.json'))
+        const trustedManifest = structuredClone(provenance.dependencySecurityUpdates)
+        const replacement = Buffer.concat([
+            asset(name),
+            name === 'default.wasm' ? Buffer.from([0, 1, 0]) : Buffer.from('\n')
+        ])
+        if (name === 'default.wasm') assert(WebAssembly.validate(replacement))
+        provenance.files[name] = createHash('sha256').update(replacement).digest('hex')
+        assert.deepEqual(provenance.dependencySecurityUpdates, trustedManifest)
+        assert.throws(() => verifyDefaultEditorProvenance((requested) => {
+            if (requested === 'xray.default.provenance.json') return JSON.stringify(provenance)
+            return requested === name ? replacement : asset(requested)
+        }), /asset integrity mismatch/)
+    }
+})
+
+test('the reviewed default artifact set cannot be extended or truncated through provenance', () => {
+    for (const change of [
+        (value) => { value.files['unreviewed.wasm'] = 'a'.repeat(64) },
+        (value) => { delete value.files['xray.default.schema.cn.json'] }
+    ]) {
+        assert.throws(() => verifyDefaultEditorProvenance(altered(change)), /asset integrity mismatch/)
+    }
+})

@@ -9,6 +9,7 @@ import { NodePluginEditorSchema, SharedListConfigSchema } from '@remnawave/node-
 import consola from 'consola'
 import { app } from 'src/config'
 
+import { loadXrayMode } from '@shared/api/hooks/xray-mode'
 import { translateUiText as uiText } from '@shared/i18n/interface-text'
 import { registerJsonSchema } from '@shared/utils/monaco/json-schema-registry'
 import { loadEditorSchema } from '@shared/utils/monaco/schema-cache'
@@ -239,6 +240,7 @@ export const MonacoSetupFeature = {
         snippets: GetSnippetsCommand.Response['response']['snippets']
     ) => {
         try {
+            await loadXrayMode()
             setSnippetHoverData(snippets)
             const snippetNames = snippets.map((s) => s.name)
 
@@ -345,6 +347,7 @@ export const MonacoSetupFeature = {
 export const MonacoSetupSnippetsFeature = {
     setup: async (currentLanguage: string) => {
         try {
+            await loadXrayMode()
             let { jsonSchemaUrl } = app.configEditor
             switch (currentLanguage) {
                 case 'zh':
@@ -680,6 +683,7 @@ const buildFinalMaskProperties = (definitions: Record<string, ISchemaNode | unde
 export const MonacoSetupHostJsonFieldsFeature = {
     setup: async (currentLanguage: string) => {
         try {
+            await loadXrayMode()
             let { jsonSchemaUrl } = app.configEditor
             switch (currentLanguage) {
                 case 'zh':

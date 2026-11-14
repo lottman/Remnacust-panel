@@ -554,6 +554,8 @@ Behind an HTTP proxy, check the route, headers, request-body limits and timeouts
 
 stream-auto remains available: it selects a mode from HTTP/REALITY and downloadSettings; it does not measure DPI, latency or buffering, and does not change an open stream after a network error.
 
+Core 1.1.20 defaults packet-up pacing to a sampled 20–40 ms interval with a 30 ms midpoint instead of a constant 30 ms. Explicit scMinPostsIntervalMs is preserved, including fixed intervals and disabled pacing. Streaming modes are not delayed by this setting. The range removes one fixed cadence; it does not hide connection volume, duration or workload.
+
 ### Additional traffic padding
 
 customDownlinkPadding adds random bytes to transmitted blocks and increases traffic usage. Start without it. When enabled, set matching header and token values on both sides: header must start with X- and contain 3–64 characters; token must contain 16–128 base64url characters. Avoid reserved proxy headers. bytes accepts 0–1024 and blockBytes 1024–16384; budgetPercent caps overhead (up to 100%), burstBytes is the initial allowance (up to 1 MiB), and uplink enables upload padding. These settings do not replace TLS/REALITY or guarantee that a connection bypasses blocking.
@@ -578,39 +580,47 @@ h2Params configures the HTTP/2 server, for example {"MaxConcurrentStreams":128,"
 
 Headers follow the TLS ClientHello family; explicit values take priority. Unrecognized requests receive the same ordinary 404 response before session allocation or body reads. Padding and these responses do not replace TLS/REALITY or VLESS. uTLS does not mimic the entire browser HTTP/2/QUIC stack. An ISP cannot read HTTP inside HTTPS, but a CDN terminating TLS can. DPI indistinguishability is not guaranteed: comparative measurements on the target network are required.
 
-Transport HTTP header names must start with X-, contain 3–64 characters and avoid proxy headers. Session, sequence and padding keys sharing a placement must be distinct. Invalid or conflicting settings are rejected before starting the listener.
+Service metadata HTTP header names must start with X-, contain 3–64 characters and avoid proxy headers. Session, sequence and padding keys sharing a placement must be distinct. Invalid or conflicting settings are rejected before starting the listener.
 
 Tokenish padding is now generated in one pass from random Base62 symbols with an exact HPACK Huffman-encoded size, without a deterministic repair suffix. This is the size of the padding value, not the complete HTTP request or TLS packet.
 
 When the server enables customDownlinkPadding, every request requires exactly one matching header/token marker and the client verifies the response acknowledgement. Missing, incorrect or repeated markers receive an ordinary 404 before body reads or session allocation; there is no unpadded fallback. Update both ends together. Browser Dialer does not support this extension, so CORS preflights are also rejected for it. Generate token from 32 random bytes encoded as base64url. The marker is shared by the profile and visible to a TLS-terminating CDN and profile users: it does not replace VLESS authorization or stop a participant who already knows it.
 
+The marker is static: disclosure permits request replay. A valid path, session ID and ordinary padding do not authenticate a user.
+
 ### Camouflage limits and measurement
 
 Encryption hides content, but not the server address, packet sizes, directions or timing. Matching HTTP headers alone does not reproduce browser behavior. TLS-in-TLS and The Parrot Is Dead describe limitations; results for other tunnels do not measure our Xera. FRONT studies cover traffic in a Tor model, so its settings cannot be transferred without measurements.
 
-Evaluate passive classification and active requests separately. Compare ordinary HTTPS and Xera captures on the same network across workloads and session lengths; measure false positives, latency, traffic overhead, CPU and memory. H1/H2/H3 functional and race tests establish correctness, not DPI indistinguishability. This local change adds no background requests, artificial delays or live protocol switching.
+Evaluate passive classification and active requests separately. Compare ordinary HTTPS and Xera captures on the same network across workloads and session lengths; measure false positives, latency, traffic overhead, CPU and memory. H1/H2/H3 functional and race tests establish correctness, not DPI indistinguishability.
 
 [TLS-in-TLS, USENIX 2024](https://www.usenix.org/conference/usenixsecurity24/presentation/xue-fingerprinting) · [The Parrot Is Dead](https://dedis.cs.yale.edu/dissent/papers/parrot-abs/) · [FRONT](https://www.usenix.org/conference/usenixsecurity20/presentation/gong) · [Security Engineering, 20.4](https://www.cl.cam.ac.uk/archive/rja14/Papers/SEv3-ch20.pdf)
 
+Xera does not introduce background browsing. REALITY retains its existing fallback/spider: receiving an ordinary trusted certificate instead of REALITY authentication can trigger HTTPS requests to the configured server. This does not grant VPN access.
+
 ### Client HTTP/2 wire profile
 
-The new local client path aligns the HTTP/2 opening with the supported Chrome 133 TLS profile: SETTINGS and their order, pseudo-header order, connection window and header compression. It is selected automatically for chrome, hellochrome_133 and an empty fingerprint while the pinned uTLS maps them to Chrome 133. Other versions and families retain the standard H2 path, with no browser-equivalence claim. This change does not alter HTTP/1.1 or HTTP/3.
+Core 1.1.20 selects the partial HTTP/2 profile only for matching Chrome 133 and 155 TLS profiles. Chrome 155 SETTINGS and their order, connection window and pseudoheader order were compared with official Chrome for Testing 155.0.8059.84 (revision 1697595). chrome and an empty fingerprint use this path while the pinned uTLS selects a supported version. Firefox, Safari and unverified Chrome versions retain standard H2. Full browser equivalence is not claimed. Generated User-Agent and Sec-CH-UA follow the ClientHello version, including GREASE and brand order; explicit headers are preserved.
 
 This is HTTP/2 behavior inside the protected connection, not new encryption. An ISP cannot read SETTINGS inside TLS; a TLS-terminating CDN can. Alignment removes one specific cross-layer mismatch, but does not hide the server address, session duration or application traffic patterns. Full DPI indistinguishability has not been established.
 
-TLS/REALITY, certificate verification, certificate pinning and ALPN checks remain in the existing Xray path. Redirects are not followed, changing HTTP authority in one transport is rejected, and POST requests are not automatically replayed after an error. Request cancellation, closure and connection reuse are supported. Each client transport permits at most four connections and 32 active HTTP requests per direction; waiting requests honor their own cancellation context. No background requests or artificial delays are added.
+TLS/REALITY, certificate verification, certificate pinning and ALPN checks remain in the existing Xray path. Redirects are not followed, changing HTTP authority in one transport is rejected, and POST requests are not automatically replayed after an error. Request cancellation, closure and connection reuse are supported. Each client transport permits at most four connections and 32 active HTTP requests per direction; waiting requests honor their own cancellation context.
 
-The path uses pinned fhttp v0.7.3. A loopback test checks the actual transmitted frames, not just configuration values. This is a local change and does not establish that a release has been published.
+The path uses pinned fhttp v0.7.3. Tests compare actual transmitted frames with the stored capture fixture; they do not test an unknown classifier.
 
 Before HTTP/2 decoding, response boundaries are checked: frames cannot exceed the advertised 16 KiB; a header block is limited to 512 KiB and 32 frames and must complete within 10 seconds. An invalid CONTINUATION sequence closes the connection. The deadline is cleared after headers complete and does not limit data-transfer duration. This bounds excessive header processing without changing payloads or encryption.
+
+For verified Chrome 133/155 H2 profiles, the initial arithmetic TLS record-size ramp is disabled. Ready outbound bytes are combined in a bounded queue: up to 64 KiB pending and up to 64 KiB in the active write. It does not wait to fill a batch or add a collection delay; backpressure, errors, deadlines and graceful TLS closure are preserved. This concerns TLS records, not TCP segment boundaries.
 
 ### Checking options in the editor
 
 Node profiles and Xray subscription templates use the same transport schema. Completions also cover extra, customDownlinkPadding, xmux and downloadSettings. The editor checks supported values and bounds; WASM additionally runs the configuration builder. Valid JSON alone does not establish application support.
 
-After changing the core, rebuild the editor and frontend. Schemas, WASM and its JavaScript each receive a content-based URL version, so updated completions do not redownload unchanged WASM.
+Use a matching panel, node and core release. Updating the panel does not update the client application core. Schemas, WASM and its JavaScript have separate content-based URL versions, so unchanged assets do not require another download.
 
 h2Params and server resource limits stay on the node and are omitted from client subscriptions, including inside extra. Shared transport options and downloadSettings are preserved. xmux.hKeepAlivePeriod is in seconds: 0 selects the default, -1 disables idle probes, and positive values cannot exceed 604800. HTTP header names and values are checked before startup. Set Host through the separate host field.
+
+Explicit TLS minVersion and maxVersion must be empty or 1.0, 1.1, 1.2 or 1.3; the minimum cannot exceed the maximum. A uTLS client also enforces these bounds. If the fingerprint or server cannot support the allowed range, the connection is rejected. ECH and HTTP/3 require TLS 1.3. Custom version bounds can change ClientHello, so standard browser-profile comparisons do not cover arbitrary modified settings.
 
 ## Visual profile canvas
 

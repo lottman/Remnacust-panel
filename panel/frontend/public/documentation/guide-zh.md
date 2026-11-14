@@ -554,6 +554,8 @@ Xera HTTP 是我们 Xray 内核中的 XHTTP 分支。节点内核和客户端内
 
 stream-auto 仍然可用：它根据 HTTP/REALITY 和 downloadSettings 选择模式，不检测 DPI、延迟或缓冲，也不会在网络错误后更改已建立流的模式。
 
+Core 1.1.20 的 packet-up 默认发送间隔从固定 30 毫秒改为在 20–40 毫秒内取样，中点仍为 30 毫秒。保留明确配置的 scMinPostsIntervalMs，包括固定间隔和关闭节流。流式模式不受此设置延迟。该范围消除一种固定节奏，但不会隐藏连接的数据量、时长或负载。
+
 ### 额外流量填充
 
 customDownlinkPadding 在传输块中添加随机字节，会增加流量消耗。先不启用它。启用时两端设置相同的 header 和 token：header 必须以 X- 开头，长度 3–64 字符；token 为 16–128 个 base64url 字符。不要使用代理保留请求头。bytes 范围为 0–1024，blockBytes 为 1024–16384；budgetPercent 限制额外开销，最大 100%；burstBytes 为初始额度，最大 1 MiB；uplink 启用上传填充。这些参数不能代替 TLS/REALITY，也不保证绕过封锁。
@@ -578,39 +580,47 @@ h2Params 配置 HTTP/2 服务器，例如 {"MaxConcurrentStreams":128,"MaxReadFr
 
 默认请求头跟随 TLS ClientHello 家族，明确设置的值优先。无法识别的请求在创建会话和读取请求体之前得到相同的普通 404 响应。填充和这些响应不能替代 TLS/REALITY 或 VLESS。uTLS 不会模拟浏览器的整个 HTTP/2/QUIC 协议栈。运营商无法读取 HTTPS 内的 HTTP，但终止 TLS 的 CDN 可以读取。不能保证 DPI 无法区分，仍需在目标网络中进行对比测量。
 
-传输 HTTP 请求头名称必须以 X- 开头、长度为 3–64 个字符，且不能使用代理请求头。同一位置的会话、序号和填充键必须不同。无效或冲突配置会在监听器启动前被拒绝。
+传输服务元数据的 HTTP 请求头名称必须以 X- 开头、长度为 3–64 个字符，且不能使用代理请求头。同一位置的会话、序号和填充键必须不同。无效或冲突配置会在监听器启动前被拒绝。
 
 tokenish 填充现在通过单次遍历生成随机 Base62 字符，使 HPACK Huffman 编码后的长度精确匹配目标，不再追加可预测的修正后缀。这是填充值的编码长度，不是整个 HTTP 请求或 TLS 数据包的大小。
 
 服务器启用 customDownlinkPadding 时，每个请求都必须包含且仅包含一个匹配的 header/token 标记，客户端也会检查响应确认。缺失、错误或重复的标记在读取请求体和分配会话前得到普通 404，不再回退到无填充流。请同时更新两端。Browser Dialer 不支持该扩展，因此此时也拒绝 CORS 预检。建议使用 32 个随机字节经 base64url 编码生成 token。标记由整个配置共享，终止 TLS 的 CDN 和该配置的用户都能看到；它不能代替 VLESS 授权，也不能阻止已经知道标记的参与者。
 
+该标记是静态的，泄露后请求可以被重放。正确的路径、会话 ID 和普通填充不能认证用户身份。
+
 ### 伪装边界与测量
 
 加密隐藏内容，但不隐藏服务器地址、数据包大小、方向和时间。仅匹配 HTTP 请求头不能复现浏览器行为。TLS-in-TLS 和 The Parrot Is Dead 研究了这些限制；其他隧道的研究结果不代表对我们 Xera 的评估。FRONT 在 Tor 模型中研究掩护流量，其参数不能未经测量直接使用。
 
-分别评估被动分类和主动请求。在同一网络上，针对不同负载及会话长度比较普通 HTTPS 与 Xera 的流量捕获；测量误报、延迟、流量开销、CPU 和内存。H1/H2/H3 功能测试与竞态测试验证正确性，不能证明 DPI 无法区分。本地修改没有增加后台请求、人工延迟或运行中切换协议。
+分别评估被动分类和主动请求。在同一网络上，针对不同负载及会话长度比较普通 HTTPS 与 Xera 的流量捕获；测量误报、延迟、流量开销、CPU 和内存。H1/H2/H3 功能测试与竞态测试验证正确性，不能证明 DPI 无法区分。Xera 本身不会增加后台请求或运行中切换协议；发送间隔另行配置。
 
 [TLS-in-TLS, USENIX 2024](https://www.usenix.org/conference/usenixsecurity24/presentation/xue-fingerprinting) · [The Parrot Is Dead](https://dedis.cs.yale.edu/dissent/papers/parrot-abs/) · [FRONT](https://www.usenix.org/conference/usenixsecurity20/presentation/gong) · [Security Engineering, 20.4](https://www.cl.cam.ac.uk/archive/rja14/Papers/SEv3-ch20.pdf)
 
+Xera 不会主动生成后台浏览流量。REALITY 保留原有的 fallback/spider：收到普通受信任证书而非 REALITY 身份验证结果时，可能向配置的服务器发出 HTTPS 请求。这不代表获得了 VPN 访问权限。
+
 ### 客户端 HTTP/2 线缆特征
 
-新的本地客户端路径将 HTTP/2 开始阶段与支持的 Chrome 133 TLS 配置保持一致：SETTINGS 及其顺序、伪请求头顺序、连接窗口和请求头压缩。当固定版本的 uTLS 将 chrome、hellochrome_133 及空 fingerprint 映射到 Chrome 133 时自动启用。其他版本和家族保留标准 H2 路径，不声称具有浏览器等效特征。本次修改不改变 HTTP/1.1 或 HTTP/3。
+Core 1.1.20 仅为匹配的 Chrome 133 和 155 TLS 配置选择部分 HTTP/2 特征。Chrome 155 的 SETTINGS 及其顺序、连接窗口和伪请求头顺序已与官方 Chrome for Testing 155.0.8059.84（revision 1697595）进行比较。固定版本的 uTLS 选择受支持版本时，chrome 和空 fingerprint 使用此路径。Firefox、Safari 及未经验证的 Chrome 版本保留标准 H2。不声称完全等同于浏览器。自动生成的 User-Agent 和 Sec-CH-UA 与 ClientHello 版本保持一致，包括 GREASE 和品牌顺序；保留用户明确指定的请求头。
 
 这是受保护连接内部的 HTTP/2 行为，不是新增加密。运营商无法读取 TLS 内的 SETTINGS，但终止 TLS 的 CDN 可以。它消除一个具体的跨层不一致，却不隐藏服务器地址、会话时长或应用流量模式。尚未证明对 DPI 完全不可区分。
 
-TLS/REALITY、证书校验、证书固定及 ALPN 检查继续由现有 Xray 路径执行。不跟随重定向，拒绝在一个传输中更改 HTTP authority，错误后不自动重放 POST。支持取消请求、关闭及连接复用。每个客户端传输最多四个连接和 每个方向 32 个活动 HTTP 请求；等待中的请求也遵循自身 context 的取消。不会增加后台请求或人工延迟。
+TLS/REALITY、证书校验、证书固定及 ALPN 检查继续由现有 Xray 路径执行。不跟随重定向，拒绝在一个传输中更改 HTTP authority，错误后不自动重放 POST。支持取消请求、关闭及连接复用。每个客户端传输最多四个连接和 每个方向 32 个活动 HTTP 请求；等待中的请求也遵循自身 context 的取消。
 
-该路径固定使用 fhttp v0.7.3。loopback 测试检查实际发送的帧，而不仅是配置值。这是本地修改，不能视为已发布版本。
+该路径固定使用 fhttp v0.7.3。测试将实际发送的帧与保存的捕获样本进行比较，并非对未知分类器的测试。
 
 解码 HTTP/2 前检查响应边界：帧不能超过声明的 16 KiB；一个请求头块最多 512 KiB、32 帧，且必须在 10 秒内完成。无效的 CONTINUATION 顺序会关闭连接。请求头完成后清除截止时间，不限制数据传输时长。这限制过量请求头处理，不改变数据或加密。
+
+对于已验证的 Chrome 133/155 H2 配置，禁用 TLS 记录大小在连接初期的等差增长。已就绪的发送数据在有界队列中合并：最多 64 KiB 等待写入，另有最多 64 KiB 正在写入。队列不会等待凑满一批，也不增加收集延迟；保留背压、错误、截止时间和正常 TLS 关闭。这针对 TLS 记录，而非 TCP 分段边界。
 
 ### 在编辑器中检查设置
 
 节点配置与 Xray 订阅模板使用同一传输模式。extra、customDownlinkPadding、xmux 和 downloadSettings 内也提供补全。编辑器检查取值与边界，WASM 还会运行配置构建器。JSON 有效并不代表应用支持该传输。
 
-更改内核后，请重新构建编辑器和前端。模式、WASM 及其 JavaScript 分别使用内容版本 URL；补全变化不会重新下载未变化的 WASM。
+请使用匹配版本的面板、节点和内核。更新面板不会更新客户端应用内核。模式、WASM 及其 JavaScript 分别使用基于内容的 URL 版本，因此无需重新下载未变化的资源。
 
 h2Params 与服务端资源限制保留在节点上，不写入客户端订阅，包括 extra 内的设置。共享传输设置与 downloadSettings 保留。xmux.hKeepAlivePeriod 单位为秒：0 使用默认值，-1 关闭空闲探测，正值不超过 604800。启动前验证 HTTP 标头名称和值。Host 请通过单独的 host 字段设置。
+
+明确设置的 TLS minVersion 和 maxVersion 必须为空，或为 1.0、1.1、1.2、1.3；最小值不得大于最大值。uTLS 客户端也会执行这些限制。指纹或服务器不支持允许的范围时拒绝连接。ECH 和 HTTP/3 要求 TLS 1.3。自定义版本限制可能改变 ClientHello，因此标准浏览器配置的比较不适用于任意修改后的设置。
 
 ## 配置可视化画布
 

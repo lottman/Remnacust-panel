@@ -1,31 +1,16 @@
 [
   {
-    "id": "remnacust-core-1.1.19",
-    "build": "1.1.19",
-    "sourceCommit": "76a16bedcfaa53ccb1dbc9cddbbb2b175349a4ac",
+    "id": "remnacust-core-1.1.20",
+    "build": "1.1.20",
+    "sourceCommit": "0f32082405fdd64ca45b08cc15f7daa2f671d592",
     "artifacts": {
       "amd64": {
-        "url": "https://github.com/lottman/Remnacust-core/releases/download/v1.1.19/remnacust-core-1.1.19-linux-amd64",
-        "sha256": "048996c6364cdcc6bf256854fc5b72a426397f52e2c13414f7dcfdf3032879cc"
+        "url": "https://github.com/lottman/Remnacust-core/releases/download/v1.1.20/remnacust-core-1.1.20-linux-amd64",
+        "sha256": "974e2e5a75341b5dd42ed69c643e02176b31d2171ef75c4139ab31b3ddb1acbd"
       },
       "arm64": {
-        "url": "https://github.com/lottman/Remnacust-core/releases/download/v1.1.19/remnacust-core-1.1.19-linux-arm64",
-        "sha256": "df51f0edfc4320c61edf9b560679972c5b6fb165afd6763a5cd4917940e0a02f"
-      }
-    }
-  },
-  {
-    "id": "remnacust-core-1.1.18",
-    "build": "1.1.18",
-    "sourceCommit": "e6c902ba975e3e21e3949658ba963bb3d6985342",
-    "artifacts": {
-      "amd64": {
-        "url": "https://github.com/lottman/Remnacust-core/releases/download/v1.1.18/remnacust-core-1.1.18-linux-amd64",
-        "sha256": "1d14f8a6419c3a705f45310620c2eacd2f649f50051a1e362d5a2019c44f86b9"
-      },
-      "arm64": {
-        "url": "https://github.com/lottman/Remnacust-core/releases/download/v1.1.18/remnacust-core-1.1.18-linux-arm64",
-        "sha256": "1bfe708b724ac6dd71307ebc9503f8d861875d5641e4dc60142a1d068cf39e60"
+        "url": "https://github.com/lottman/Remnacust-core/releases/download/v1.1.20/remnacust-core-1.1.20-linux-arm64",
+        "sha256": "1c2a7cbc42c04ddf695f129a2d101d2597e6237f0e403fd7031f45c73de70ab4"
       }
     }
   }

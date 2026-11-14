@@ -1161,6 +1161,72 @@
           }
         ]
       }
+    },
+    {
+      "name": "TLS explicit 1.3 policy",
+      "editorContract": true,
+      "config": {
+        "inbounds": [
+          {
+            "port": 1080,
+            "protocol": "vless",
+            "settings": {
+              "clients": [],
+              "decryption": "none"
+            },
+            "streamSettings": {
+              "network": "xera-http",
+              "security": "tls",
+              "tlsSettings": {
+                "minVersion": "1.3",
+                "maxVersion": "1.3"
+              },
+              "xeraHttpSettings": {
+                "path": "/policy/"
+              }
+            }
+          }
+        ],
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "tag": "direct"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TLS 1.2 to 1.3 policy",
+      "editorContract": true,
+      "config": {
+        "inbounds": [
+          {
+            "port": 1080,
+            "protocol": "vless",
+            "settings": {
+              "clients": [],
+              "decryption": "none"
+            },
+            "streamSettings": {
+              "network": "xera-http",
+              "security": "tls",
+              "tlsSettings": {
+                "minVersion": "1.2",
+                "maxVersion": "1.3"
+              },
+              "xeraHttpSettings": {
+                "path": "/policy/"
+              }
+            }
+          }
+        ],
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "tag": "direct"
+          }
+        ]
+      }
     }
   ],
   "invalid": [
@@ -3604,6 +3670,135 @@
                 }
               }
             }
+          }
+        ]
+      }
+    },
+    {
+      "name": "TLS inverted version policy",
+      "editorContract": true,
+      "config": {
+        "inbounds": [
+          {
+            "port": 1080,
+            "protocol": "vless",
+            "settings": {
+              "clients": [],
+              "decryption": "none"
+            },
+            "streamSettings": {
+              "network": "xera-http",
+              "security": "tls",
+              "tlsSettings": {
+                "minVersion": "1.3",
+                "maxVersion": "1.2"
+              },
+              "xeraHttpSettings": {
+                "path": "/policy/"
+              }
+            }
+          }
+        ],
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "tag": "direct"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TLS unknown minimum version",
+      "editorContract": true,
+      "config": {
+        "inbounds": [
+          {
+            "port": 1080,
+            "protocol": "vless",
+            "settings": {
+              "clients": [],
+              "decryption": "none"
+            },
+            "streamSettings": {
+              "network": "xera-http",
+              "security": "tls",
+              "tlsSettings": {
+                "minVersion": "1.4"
+              },
+              "xeraHttpSettings": {
+                "path": "/policy/"
+              }
+            }
+          }
+        ],
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "tag": "direct"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TLS unknown maximum version",
+      "editorContract": true,
+      "config": {
+        "inbounds": [
+          {
+            "port": 1080,
+            "protocol": "vless",
+            "settings": {
+              "clients": [],
+              "decryption": "none"
+            },
+            "streamSettings": {
+              "network": "xera-http",
+              "security": "tls",
+              "tlsSettings": {
+                "maxVersion": "TLS1.3"
+              },
+              "xeraHttpSettings": {
+                "path": "/policy/"
+              }
+            }
+          }
+        ],
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "tag": "direct"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TLS malformed minimum version",
+      "editorContract": true,
+      "config": {
+        "inbounds": [
+          {
+            "port": 1080,
+            "protocol": "vless",
+            "settings": {
+              "clients": [],
+              "decryption": "none"
+            },
+            "streamSettings": {
+              "network": "xera-http",
+              "security": "tls",
+              "tlsSettings": {
+                "minVersion": "1.00"
+              },
+              "xeraHttpSettings": {
+                "path": "/policy/"
+              }
+            }
+          }
+        ],
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "tag": "direct"
           }
         ]
       }

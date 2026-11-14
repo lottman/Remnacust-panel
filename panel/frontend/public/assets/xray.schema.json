@@ -5342,16 +5342,28 @@
           }
         },
         "minVersion": {
-          "name": "minVersion",
+          "type": "string",
+          "enum": [
+            "",
+            "1.0",
+            "1.1",
+            "1.2",
+            "1.3"
+          ],
           "description": "\n`minVersion` — минимально допустимая версия TLS.\n\n",
-          "markdownDescription": "\n`minVersion` — минимально допустимая версия TLS.\n\n",
-          "type": "string"
+          "markdownDescription": "\n`minVersion` — минимально допустимая версия TLS.\n\n"
         },
         "maxVersion": {
-          "name": "maxVersion",
+          "type": "string",
+          "enum": [
+            "",
+            "1.0",
+            "1.1",
+            "1.2",
+            "1.3"
+          ],
           "description": "\n`maxVersion` — максимально допустимая версия TLS.\n\n",
-          "markdownDescription": "\n`maxVersion` — максимально допустимая версия TLS.\n\n",
-          "type": "string"
+          "markdownDescription": "\n`maxVersion` — максимально допустимая версия TLS.\n\n"
         },
         "cipherSuites": {
           "name": "cipherSuites",
@@ -5429,7 +5441,103 @@
           "type": "boolean"
         }
       },
-      "additionalProperties": false
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "minVersion"
+            ],
+            "properties": {
+              "minVersion": {
+                "const": "1.0"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "maxVersion": {
+                "enum": [
+                  "",
+                  "1.0",
+                  "1.1",
+                  "1.2",
+                  "1.3"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "minVersion"
+            ],
+            "properties": {
+              "minVersion": {
+                "const": "1.1"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "maxVersion": {
+                "enum": [
+                  "",
+                  "1.1",
+                  "1.2",
+                  "1.3"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "minVersion"
+            ],
+            "properties": {
+              "minVersion": {
+                "const": "1.2"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "maxVersion": {
+                "enum": [
+                  "",
+                  "1.2",
+                  "1.3"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "minVersion"
+            ],
+            "properties": {
+              "minVersion": {
+                "const": "1.3"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "maxVersion": {
+                "enum": [
+                  "",
+                  "1.3"
+                ]
+              }
+            }
+          }
+        }
+      ]
     },
     "CertificateObject": {
       "title": "CertificateObject",
@@ -8372,10 +8480,24 @@
           "type": "string"
         },
         "maxVersion": {
-          "type": "string"
+          "type": "string",
+          "enum": [
+            "",
+            "1.0",
+            "1.1",
+            "1.2",
+            "1.3"
+          ]
         },
         "minVersion": {
-          "type": "string"
+          "type": "string",
+          "enum": [
+            "",
+            "1.0",
+            "1.1",
+            "1.2",
+            "1.3"
+          ]
         },
         "pinnedPeerCertSha256": {
           "type": "string"
@@ -8393,7 +8515,103 @@
           "type": "string"
         }
       },
-      "type": "object"
+      "type": "object",
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "minVersion"
+            ],
+            "properties": {
+              "minVersion": {
+                "const": "1.0"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "maxVersion": {
+                "enum": [
+                  "",
+                  "1.0",
+                  "1.1",
+                  "1.2",
+                  "1.3"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "minVersion"
+            ],
+            "properties": {
+              "minVersion": {
+                "const": "1.1"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "maxVersion": {
+                "enum": [
+                  "",
+                  "1.1",
+                  "1.2",
+                  "1.3"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "minVersion"
+            ],
+            "properties": {
+              "minVersion": {
+                "const": "1.2"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "maxVersion": {
+                "enum": [
+                  "",
+                  "1.2",
+                  "1.3"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "minVersion"
+            ],
+            "properties": {
+              "minVersion": {
+                "const": "1.3"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "maxVersion": {
+                "enum": [
+                  "",
+                  "1.3"
+                ]
+              }
+            }
+          }
+        }
+      ]
     },
     "RemnacustCoreTransportProtocol": {
       "type": "string"
@@ -10649,6 +10867,6 @@
     "version": "v26.11.9",
     "commit": "676eaf66f8f05d4d558ee7a74b4736623d3feeb9",
     "patchCommit": null,
-    "coreVersion": "1.1.19"
+    "coreVersion": "1.1.20"
   }
 }

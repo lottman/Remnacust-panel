@@ -13,6 +13,7 @@ import { getNodeHealth } from '@shared/utils/node-health'
 import { nodeNeedsCustomUpgrade } from '@shared/utils/node-policy-status'
 
 import { nodeBillingWarning, useNodeBillingDays } from '../node-billing-status'
+import { getNodeStatus } from '../node-status'
 import { IProps } from './interface'
 
 export const NodeStatusBadgeWidget = memo(
@@ -20,16 +21,16 @@ export const NodeStatusBadgeWidget = memo(
         const { t } = useTranslation()
 
         const nodeData = fetchedNode || node
-        const upgradeRequired =
-            !nodeData.isDisabled &&
-            nodeData.isConnected &&
-            nodeNeedsCustomUpgrade(nodeData.lastStatusMessage)
+        const connectionStatus = getNodeStatus(nodeData)
+        const isActive = nodeData.isConnected && !nodeData.isDisabled && !nodeData.isConnecting
+        const isConfirmed = connectionStatus === 'connected'
+        const upgradeRequired = isActive && nodeNeedsCustomUpgrade(nodeData.lastStatusMessage)
 
         const billingDays = useNodeBillingDays(nodeData.uuid)
         const billingColor = nodeBillingWarning(billingDays)
         const health = getNodeHealth(nodeData)
         const needsAttention =
-            nodeData.isConnected && (health.level === 'attention' || health.level === 'critical')
+            isActive && (health.level === 'attention' || health.level === 'critical')
         const healthReason = health.issues
             .map((issue) => t(`xera-node-health.${issue}`))
             .join(' · ')
@@ -45,6 +46,15 @@ export const NodeStatusBadgeWidget = memo(
                 )
                 color = 'gray'
                 status = t('node-status-badge.widget.disabled')
+            } else if (nodeData.isConnecting) {
+                icon = (
+                    <PiCloudArrowUpDuotone
+                        size={18}
+                        style={{ color: 'var(--mantine-color-yellow-3)' }}
+                    />
+                )
+                color = 'var(--mantine-color-yellow-3)'
+                status = t('node-status-badge.widget.connecting')
             } else if (upgradeRequired) {
                 icon = (
                     <PiPulseDuotone size={18} style={{ color: 'var(--mantine-color-violet-6)' }} />
@@ -57,12 +67,11 @@ export const NodeStatusBadgeWidget = memo(
                 )
                 color = 'yellow'
                 status = t(`xera-node-health.${health.level}`)
-            } else if (
-                nodeData.isConnected &&
-                !nodeData.isConnecting &&
-                nodeData.xrayUptime > 0 &&
-                billingColor
-            ) {
+            } else if (connectionStatus === 'limited') {
+                icon = <PiPulseDuotone size={18} style={{ color: 'var(--mantine-color-blue-6)' }} />
+                color = 'blue'
+                status = t('xera-node-health.limited')
+            } else if (isConfirmed && billingColor) {
                 icon = (
                     <PiClockDuotone
                         size={18}
@@ -76,19 +85,10 @@ export const NodeStatusBadgeWidget = memo(
                         : billingDays === 0
                           ? t('billing-date-status.due-today')
                           : t('billing-date-status.remaining', { count: billingDays! })
-            } else if (nodeData.isConnected) {
+            } else if (isActive) {
                 icon = <PiPulseDuotone size={18} style={{ color: 'var(--mantine-color-teal-6)' }} />
                 color = 'teal'
                 status = t('node-status-badge.widget.connected')
-            } else if (nodeData.isConnecting) {
-                icon = (
-                    <PiCloudArrowUpDuotone
-                        size={18}
-                        style={{ color: 'var(--mantine-color-yellow-3)' }}
-                    />
-                )
-                color = 'var(--mantine-color-yellow-3)'
-                status = t('node-status-badge.widget.connecting')
             } else {
                 icon = <PiWarningCircle size={18} style={{ color: 'var(--mantine-color-red-3)' }} />
                 color = 'red'

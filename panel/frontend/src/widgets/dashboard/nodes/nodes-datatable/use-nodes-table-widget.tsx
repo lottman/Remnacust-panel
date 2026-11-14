@@ -1,3 +1,5 @@
+import type { NodeStatus } from '../node-status'
+
 import { DataTableColumn } from '@kastov/mantine-datatable'
 import { ActionIcon, Avatar, Badge, Group, MultiSelect, Text, TextInput } from '@mantine/core'
 import {
@@ -32,7 +34,7 @@ import { formatDurationUtil } from '@shared/utils/time-utils'
 
 import { NodeStatusBadgeWidget } from '../node-status-badge'
 
-export type NodeStatusFilter = 'connected' | 'connecting' | 'disabled' | 'disconnected'
+export type NodeStatusFilter = NodeStatus
 
 export interface NodesTableFilters {
     availableConfigProfiles: { label: string; value: string }[]
@@ -140,6 +142,10 @@ export function getNodesTableColumns(
                             value: 'connecting'
                         },
                         {
+                            label: t('xera-node-health.limited'),
+                            value: 'limited'
+                        },
+                        {
                             label: t('node-status-badge.widget.disabled'),
                             value: 'disabled'
                         },
@@ -162,6 +168,12 @@ export function getNodesTableColumns(
                                 <PiCloudArrowUpDuotone
                                     size={16}
                                     style={{ color: 'var(--mantine-color-yellow-3)' }}
+                                />
+                            )}
+                            {option.value === 'limited' && (
+                                <PiPulseDuotone
+                                    size={16}
+                                    style={{ color: 'var(--mantine-color-blue-6)' }}
                                 />
                             )}
                             {option.value === 'disabled' && (

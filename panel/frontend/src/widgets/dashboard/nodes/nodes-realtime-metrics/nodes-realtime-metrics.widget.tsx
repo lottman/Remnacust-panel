@@ -8,6 +8,8 @@ import { TbUsers } from 'react-icons/tb'
 import { IMetricCardProps, MetricCardShared } from '@shared/ui/metrics/metric-card'
 import { prettySiRealtimeBytesUtil } from '@shared/utils/bytes'
 
+import { getNodeStatus } from '../node-status'
+
 interface IProps {
     isLoading: boolean
     nodes: GetNodesCommand.Response['response'] | undefined
@@ -18,17 +20,24 @@ export function NodesRealtimeUsageMetrics(props: IProps) {
 
     const { t } = useTranslation()
 
-    const aggregated = useMemo(() => {
-        if (!nodes?.length) return null
+    const activeNodes = useMemo(
+        () =>
+            nodes?.filter((node) => node.isConnected && !node.isDisabled && !node.isConnecting) ??
+            [],
+        [nodes]
+    )
 
-        return nodes.reduce(
+    const aggregated = useMemo(() => {
+        if (!activeNodes.length) return null
+
+        return activeNodes.reduce(
             (acc, curr) => ({
                 rxSpeed: acc.rxSpeed + (curr.system?.stats.interface?.rxBytesPerSec ?? 0),
                 txSpeed: acc.txSpeed + (curr.system?.stats.interface?.txBytesPerSec ?? 0)
             }),
             { rxSpeed: 0, txSpeed: 0 }
         )
-    }, [nodes])
+    }, [activeNodes])
 
     const cards: IMetricCardProps[] = [
         {
@@ -49,14 +58,14 @@ export function NodesRealtimeUsageMetrics(props: IProps) {
         {
             IconComponent: TbUsers,
             title: t('nodes-quick-stats.widget.users-online'),
-            value: nodes?.reduce((acc, curr) => acc + (curr.usersOnline ?? 0), 0) ?? 0,
+            value: activeNodes.reduce((acc, curr) => acc + (curr.usersOnline ?? 0), 0),
             iconVariant: 'soft',
             iconColor: 'cyan'
         },
         {
             IconComponent: PiPulse,
             title: t('nodes-quick-stats.widget.online-nodes'),
-            value: nodes?.filter((node) => node.isConnected).length ?? 0,
+            value: activeNodes.filter((node) => getNodeStatus(node) === 'connected').length,
             iconVariant: 'soft',
             iconColor: 'teal'
         }

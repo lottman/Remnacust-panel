@@ -1,0 +1,23 @@
+globalThis.checkRemarksNarrowScope = async (page) => {
+    await page.getByRole('combobox', { name: 'Who receives this message', exact: true }).click()
+    await page.getByRole('option', { name: 'Selected squads', exact: true }).click()
+    await page.getByRole('combobox', { name: 'Internal Squads', exact: true }).click()
+    await page.getByRole('option', { name: 'Example internal squad', exact: true }).click()
+    await page.keyboard.press('Escape')
+    await page.getByRole('combobox', { name: 'External Squads', exact: true }).click()
+    await page.getByRole('option', { name: 'Example external squad', exact: true }).click()
+    await page.keyboard.press('Escape')
+    await page.getByRole('button', { name: 'Squad error', exact: true }).click()
+    await page.getByText('Could not load all squad names', { exact: true }).waitFor()
+    const english = await page.evaluate(() => document.documentElement.scrollWidth)
+    if (english > 412)
+        throw new Error('Unresolved squad pills overflow English viewport: ' + english)
+    await page.getByRole('button', { name: 'fa', exact: true }).click()
+    await page.waitForFunction(() => document.documentElement.dir === 'rtl')
+    const persian = await page.evaluate(() => document.documentElement.scrollWidth)
+    if (persian > 412)
+        throw new Error('Unresolved squad pills overflow Persian viewport: ' + persian)
+    await page.screenshot({ path: 'output/playwright/remarks-412-fa-scope.png', fullPage: true })
+    await page.getByRole('button', { name: 'en', exact: true }).click()
+    return { english, persian, result: 'PASS unresolved saved IDs at 412px EN and FA RTL' }
+}

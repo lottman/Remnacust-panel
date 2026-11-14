@@ -222,7 +222,8 @@ export class XrayJsonGeneratorService {
 
         try {
             const mode = this.xrayModes ? (await this.xrayModes.get()).mode : 'custom';
-            const templateContent = (params.subscriptionInactive
+            const templateContent = (params.subscriptionInactive ||
+            (hosts.length > 0 && hosts.every((host) => host.metadata.activeExpiryRemark))
                 ? { inbounds: [] }
                 : await this.subscriptionTemplateService.getCachedTemplateByType(
                       'XRAY_JSON',
@@ -253,6 +254,11 @@ export class XrayJsonGeneratorService {
             for (const source of hosts) {
                 if (source.metadata.isHidden) continue;
                 if (source.metadata.excludeFromSubscriptionTypes.includes('XRAY_JSON')) continue;
+                if (source.metadata.activeExpiryRemark) {
+                    const notice = this.buildOutboundConfig(source, isExtendedClient);
+                    if (notice) append(JSON.stringify({ ...notice, xray: mode }));
+                    continue;
+                }
                 const variants =
                     params.subscriptionInactive || ignoreHostXrayJsonTemplate
                         ? undefined
@@ -594,6 +600,7 @@ export class XrayJsonGeneratorService {
             const host = hosts.find((item) => item.metadata.uuid === tag.slice(5));
             if (
                 !host ||
+                host.metadata.activeExpiryRemark ||
                 host.metadata.isDisabled ||
                 host.metadata.excludeFromSubscriptionTypes.includes('XRAY_JSON') ||
                 host.clientOverrides.selectionOnly
@@ -642,6 +649,7 @@ export class XrayJsonGeneratorService {
         // A pool must obey the same host restrictions as standalone profiles.
         allHosts = allHosts.filter(
             (candidate) =>
+                !candidate.metadata.activeExpiryRemark &&
                 !candidate.metadata.isDisabled &&
                 !candidate.metadata.excludeFromSubscriptionTypes?.includes('XRAY_JSON'),
         );

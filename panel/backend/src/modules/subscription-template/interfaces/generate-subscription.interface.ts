@@ -1,3 +1,5 @@
+import type { ActiveExpiryPlan } from '../../subscription/utils/active-expiry-remarks';
+
 import { ExternalSquadEntity } from '@modules/external-squads/entities/external-squad.entity';
 import { HostWithRawInbound } from '@modules/hosts/entities/host-with-inbound-tag.entity';
 import { ISRRContext } from '@modules/subscription-response-rules/interfaces';
@@ -11,6 +13,7 @@ export interface IGenerateSubscription {
     user: UserEntity;
     hosts: HostWithRawInbound[];
     autoselectHosts?: HostWithRawInbound[];
+    activeExpiryPlan?: ActiveExpiryPlan | null;
     hostsOverrides?: ExternalSquadEntity['hostOverrides'];
     fallbackOptions?: {
         showHwidMaxDeviceRemarks?: boolean;

@@ -97,10 +97,25 @@ test('billing never replaces disabled, disconnected, connecting, unhealthy or up
         'react-icons/pi': { PiClockDuotone: 'clock', PiCloudArrowUpDuotone: 'cloud', PiProhibitDuotone: 'disabled', PiPulseDuotone: 'pulse', PiWarningCircle: 'warning' },
         '@shared/utils/node-health': { getNodeHealth: node => ({ level: node.level ?? 'healthy', issues: [] }) },
         '@shared/utils/node-policy-status': { nodeNeedsCustomUpgrade: status => status === 'upgrade' },
+        '../node-status': load('widgets/dashboard/nodes/node-status.ts', {}),
         '../node-billing-status': { nodeBillingWarning: nodeBilling.nodeBillingWarning, useNodeBillingDays: () => 1 }
     })
     const node = { uuid: 'node', isConnected: true, isDisabled: false, isConnecting: false, xrayUptime: 1 }
     const icon = changes => elements(NodeStatusBadgeWidget({ node: { ...node, ...changes }, withText: false })).find(el => ['clock', 'pulse', 'cloud', 'disabled', 'warning'].includes(el.type))?.type
     assert.equal(icon({}), 'clock')
-    for (const changes of [{ isDisabled: true }, { isConnected: false }, { isConnecting: true }, { xrayUptime: 0 }, { level: 'critical' }, { level: 'attention' }, { lastStatusMessage: 'upgrade' }]) assert.notEqual(icon(changes), 'clock')
+    for (const [changes, expected] of [
+        [{ isDisabled: true }, 'disabled'],
+        [{ isDisabled: true, isConnecting: true }, 'disabled'],
+        [{ isConnected: false }, 'warning'],
+        [{ isConnecting: true }, 'cloud'],
+        [{ isConnected: false, isConnecting: true }, 'cloud'],
+        [{ xrayUptime: 0 }, 'pulse'],
+        [{ xrayUptime: -1 }, 'pulse'],
+        [{ xrayUptime: NaN }, 'pulse'],
+        [{ xrayUptime: Infinity }, 'pulse'],
+        [{ xrayUptime: undefined }, 'pulse'],
+        [{ level: 'critical' }, 'warning'],
+        [{ level: 'attention' }, 'warning'],
+        [{ lastStatusMessage: 'upgrade' }, 'pulse']
+    ]) assert.equal(icon(changes), expected)
 })

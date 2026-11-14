@@ -300,6 +300,8 @@ export const ExternalSquadsDrawer = NiceModal.create((props: IProps) => {
 
                     <Tabs.Panel pt="xl" value={TAB_TYPE.customRemarks}>
                         <Transition
+                            keepMounted
+                            keepMountedMode="display-none"
                             duration={200}
                             mounted={activeTab === TAB_TYPE.customRemarks}
                             timingFunction="linear"

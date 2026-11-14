@@ -64,24 +64,29 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
                     const health = await this.axios.getNodeHealth(connectionOpts);
                     if (!health.isOk && health.code === 'NODE_ROUTE_BUSY') return;
                     if (health.isOk && health.response.isAlive === true) {
-                        await this.healthLog.record({
+                        const coreStopped = health.response.xrayInternalStatusCached === false;
+                        if (coreStopped) {
+                            const updated = await this.commandBus.execute(
+                                new UpdateNodeCommand({
+                                    uuid: nodeUuid,
+                                    isConnected: false,
+                                    lastStatusMessage: '[NODE_CORE_NOT_READY]',
+                                    ...(isConnected ? { lastStatusChange: new Date() } : {}),
+                                }),
+                            );
+                            await this.clearLiveTelemetry(nodeUuid);
+                            if (!updated.isOk) return;
+                        }
+                        await this.recordHealth({
                             nodeUuid,
                             status: 'retry',
                             message:
                                 statResult.message ?? 'Node telemetry is temporarily unavailable',
                         });
-                        if (!isConnected)
-                            await this.commandBus.execute(
-                                new UpdateNodeCommand({
-                                    uuid: nodeUuid,
-                                    isConnected: true,
-                                    lastStatusMessage: statResult.message,
-                                }),
-                            );
-                        if (health.response.xrayInternalStatusCached === false) {
+                        if (coreStopped) {
+                            await this.reportIncident(nodeUuid, false, isConnected, observedAt);
                             await this.startNodeIfRetryDue(nodeUuid);
                         }
-                        await this.reportIncident(nodeUuid, true, isConnected, observedAt);
                         return;
                     }
                 }
@@ -98,7 +103,7 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
                     case false:
                         message = statResult.message ?? 'Unknown error';
                         attempts++;
-                        await this.healthLog.record({
+                        await this.recordHealth({
                             nodeUuid,
                             status: 'retry',
                             attempt: attempts,
@@ -123,7 +128,7 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
 
             return await this.handleDisconnectedNode(nodeUuid, isConnected, message, observedAt);
         } catch (error) {
-            await this.healthLog.record({
+            await this.recordHealth({
                 nodeUuid: job.data.nodeUuid,
                 status: 'error',
                 message: error instanceof Error ? error.message : String(error),
@@ -143,28 +148,24 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
         observedAt: number,
     ) {
         if (stats.xrayInfo === null) {
-            await this.reportIncident(nodeUuid, false, isConnected, observedAt);
-            await this.rawCacheService.delMany([
-                CACHE_KEYS.NODE_SYSTEM_STATS(nodeUuid),
-                CACHE_KEYS.NODE_XRAY_UPTIME(nodeUuid),
-                CACHE_KEYS.NODE_USERS_ONLINE(nodeUuid),
-            ]);
-            await this.healthLog.record({
+            const updated = await this.commandBus.execute(
+                new UpdateNodeCommand({
+                    uuid: nodeUuid,
+                    isConnected: false,
+                    lastStatusChange: new Date(),
+                    lastStatusMessage: '[NODE_CORE_NOT_READY]',
+                }),
+            );
+            await this.clearLiveTelemetry(nodeUuid);
+            await this.recordHealth({
                 nodeUuid,
                 status: 'xray_missing',
                 message: 'Node answered without Xray information',
             });
             this.logger.error(`Node ${nodeUuid} – xrayInfo is null`);
 
-            await this.commandBus.execute(
-                new UpdateNodeCommand({
-                    uuid: nodeUuid,
-                    isConnected: false,
-                    lastStatusChange: new Date(),
-                    lastStatusMessage: 'Required info is missing. Outdated version?',
-                }),
-            );
-
+            if (!updated.isOk) return;
+            await this.reportIncident(nodeUuid, false, isConnected, observedAt);
             await this.startNodeIfRetryDue(nodeUuid);
 
             return;
@@ -254,6 +255,30 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
             await this.nodesQueuesService.startNode({ nodeUuid });
     }
 
+    private async clearLiveTelemetry(nodeUuid: string, includeSystemInfo = false): Promise<void> {
+        try {
+            await this.rawCacheService.delMany([
+                ...(includeSystemInfo ? [CACHE_KEYS.NODE_SYSTEM_INFO(nodeUuid)] : []),
+                CACHE_KEYS.NODE_SYSTEM_STATS(nodeUuid),
+                CACHE_KEYS.NODE_XRAY_UPTIME(nodeUuid),
+                CACHE_KEYS.NODE_USERS_ONLINE(nodeUuid),
+                nodeBindingTrafficKey(nodeUuid),
+            ]);
+        } catch {
+            this.logger.warn(`Could not clear stale telemetry for node ${nodeUuid}`);
+        }
+    }
+
+    private async recordHealth(
+        input: Parameters<NodeHealthLogService['record']>[0],
+    ): Promise<void> {
+        try {
+            await this.healthLog.record(input);
+        } catch {
+            this.logger.warn(`Could not record node health for node ${input.nodeUuid}`);
+        }
+    }
+
     private async reportIncident(
         uuid: string,
         healthy: boolean,
@@ -296,16 +321,6 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
         message: string | undefined,
         observedAt: number,
     ) {
-        await this.healthLog.record({ nodeUuid, status: 'unreachable', attempt: 2, message });
-        await this.rawCacheService.delMany([
-            CACHE_KEYS.NODE_SYSTEM_INFO(nodeUuid),
-            CACHE_KEYS.NODE_SYSTEM_STATS(nodeUuid),
-            CACHE_KEYS.NODE_USERS_ONLINE(nodeUuid),
-            CACHE_KEYS.NODE_XRAY_UPTIME(nodeUuid),
-        ]);
-
-        const retryAt = await this.rawCacheService.get<number>(hostPolicyRetryKey(nodeUuid));
-        const policyPending = typeof retryAt === 'number' && Number.isFinite(retryAt);
         const newNodeEntity = await this.commandBus.execute(
             new UpdateNodeCommand({
                 uuid: nodeUuid,
@@ -314,16 +329,15 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
                 lastStatusMessage: message,
             }),
         );
+        await this.clearLiveTelemetry(nodeUuid, true);
+        await this.recordHealth({ nodeUuid, status: 'unreachable', attempt: 2, message });
 
         if (!newNodeEntity.isOk) {
             return;
         }
 
-        if (!policyPending || retryAt <= Date.now()) {
-            await this.nodesQueuesService.startNode({ nodeUuid });
-        }
-
         await this.reportIncident(nodeUuid, false, isConnected, observedAt);
+        await this.startNodeIfRetryDue(nodeUuid);
 
         this.logger.warn(
             `Lost connection to Node ${nodeUuid}, ${newNodeEntity.response.address}:${newNodeEntity.response.port}, message: ${message}`,

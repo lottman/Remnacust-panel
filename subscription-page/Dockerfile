@@ -33,7 +33,7 @@ FROM node:26.13.1-trixie-slim@sha256:e6bedef217677b276c591795e169840edd9096dbf13
 WORKDIR /opt/app
 
 LABEL org.opencontainers.image.title="Remnacust Subscription Page"
-LABEL org.opencontainers.image.version="1.1.7.124"
+LABEL org.opencontainers.image.version="1.1.7.125"
 LABEL org.opencontainers.image.description="Remnacust Subscription Page"
 LABEL org.opencontainers.image.url="https://github.com/lottman/Remnacust-panel"
 LABEL org.opencontainers.image.source="https://github.com/lottman/Remnacust-panel"

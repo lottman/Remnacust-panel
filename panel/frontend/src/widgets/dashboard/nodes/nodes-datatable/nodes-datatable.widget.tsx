@@ -18,6 +18,7 @@ import { DataTableControls, LoadingScreen, sortRecords } from '@shared/ui'
 import { getNodeHealth, NodeHealthLevel } from '@shared/utils/node-health'
 import { sToMs } from '@shared/utils/time-utils'
 
+import { getNodeStatus } from '../node-status'
 import {
     getNodesTableColumns,
     type NodesTableFilters,
@@ -221,11 +222,7 @@ export const NodesDataTableWidget = memo((props: IProps) => {
             }
 
             if (selectedStatuses.length > 0) {
-                let nodeStatus: NodeStatusFilter
-                if (node.isConnected) nodeStatus = 'connected'
-                else if (node.isConnecting) nodeStatus = 'connecting'
-                else if (node.isDisabled) nodeStatus = 'disabled'
-                else nodeStatus = 'disconnected'
+                const nodeStatus = getNodeStatus(node)
 
                 if (!selectedStatuses.includes(nodeStatus)) return false
             }

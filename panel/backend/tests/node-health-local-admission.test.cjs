@@ -109,7 +109,7 @@ function fixture(
     return { worker, writes, records, deleted, incidents, starts, cache, observations };
 }
 
-test('an authenticated telemetry failure never disconnects or restarts an independently reachable legacy agent', async () => {
+test('legacy cached health preserves existing state without inventing connection recovery', async () => {
     for (const connected of [true, false]) {
         const f = fixture(
             async () => ({ isOk: false, code: 'N002', message: 'Failed to get system stats' }),
@@ -126,12 +126,12 @@ test('an authenticated telemetry failure never disconnects or restarts an indepe
         assert.deepEqual(f.incidents, []);
         assert.equal(f.records.length, 1);
         assert.equal(f.records[0].status, 'retry');
-        assert.equal(f.writes.length, connected ? 0 : 1);
-        if (!connected) assert.equal(f.writes[0].isConnected, true);
+        assert.deepEqual(f.writes, []);
+        assert.deepEqual(f.observations, []);
     }
 });
 
-test('an authenticated stopped core is scheduled for configuration without inventing telemetry', async () => {
+test('an authenticated stopped core loses live metrics and retains configuration backoff', async () => {
     for (const connected of [true, false])
         for (const retry of [null, Date.now() + 60000, Date.now() - 60000]) {
             const f = fixture(
@@ -150,9 +150,22 @@ test('an authenticated stopped core is scheduled for configuration without inven
                 f.records.every((record) => record.status !== 'ok' && !record.metrics),
                 true,
             );
-            assert.deepEqual(f.deleted, []);
-            assert.deepEqual(f.incidents, []);
-            if (!connected) assert.equal(f.writes[0].isConnected, true);
+            assert.deepEqual(f.deleted, [
+                [
+                    keys.NODE_SYSTEM_STATS(current.data.nodeUuid),
+                    keys.NODE_XRAY_UPTIME(current.data.nodeUuid),
+                    keys.NODE_USERS_ONLINE(current.data.nodeUuid),
+                    `binding:${current.data.nodeUuid}`,
+                ],
+            ]);
+            assert.equal(f.writes.length, 1);
+            assert.equal(f.writes[0].isConnected, false);
+            assert.equal(Object.hasOwn(f.writes[0], 'isConnecting'), false);
+            assert.equal(
+                f.observations.every((value) => !value.good),
+                true,
+            );
+            assert.equal(f.incidents.includes('restored'), false);
         }
 });
 
@@ -189,7 +202,7 @@ test('a successful telemetry response without core information still schedules c
         }
 });
 
-test('Stats 503 checks authenticated API health without a false disconnect or telemetry acknowledgement', async () => {
+test('Stats 503 distinguishes cached API health from a confirmed stopped Core', async () => {
     for (const running of [true, false]) {
         const f = fixture(
             async () => ({ isOk: false, code: 'NODE_HTTP_503', message: 'Core is not ready' }),
@@ -199,9 +212,17 @@ test('Stats 503 checks authenticated API health without a false disconnect or te
             }),
         );
         await f.worker.process(job());
-        assert.deepEqual(f.writes, []);
-        assert.deepEqual(f.deleted, []);
-        assert.deepEqual(f.incidents, []);
+        if (running) {
+            assert.deepEqual(f.writes, []);
+            assert.deepEqual(f.deleted, []);
+            assert.deepEqual(f.incidents, []);
+            assert.deepEqual(f.observations, []);
+        } else {
+            assert.equal(f.writes.length, 1);
+            assert.equal(f.writes[0].isConnected, false);
+            assert.equal(f.deleted[0].length, 4);
+            assert.deepEqual(f.incidents, ['lost']);
+        }
         assert.equal(f.starts.length, running ? 0 : 1);
         assert.deepEqual(
             f.records.map((record) => record.status),
@@ -223,7 +244,8 @@ test('Stats 503 preserves policy backoff and cannot bypass unknown readiness or 
         f.cache.set(`retry:${current.data.nodeUuid}`, Date.now() + 60000);
         await f.worker.process(current);
         assert.deepEqual(f.starts, []);
-        assert.deepEqual(f.writes, []);
+        assert.equal(f.writes.length, readiness === false ? 1 : 0);
+        if (readiness === false) assert.equal(f.writes[0].isConnected, false);
     }
     const f = fixture(
         async () => ({ isOk: false, code: 'NODE_HTTP_503' }),

@@ -45,6 +45,7 @@ export async function clientPoolMembers(
     if (!pool) return undefined;
     const eligible: (ResolvedProxyConfig & { clientName: string })[] = [];
     for (const { host, name } of candidates) {
+        if (host.metadata.activeExpiryRemark) continue;
         const visibility = pool.selectFrom ?? 'NOT_HIDDEN';
         if (visibility === 'HIDDEN' && !host.metadata.isHidden) continue;
         if (visibility === 'NOT_HIDDEN' && host.metadata.isHidden) continue;
@@ -83,7 +84,11 @@ export async function renderClientGroups(
         const { remnawave: _custom, ...clean } = group;
         let members: string[] | undefined;
         try {
-            members = await clientPoolMembers(custom?.pool, candidates, deadline);
+            members =
+                candidates.length &&
+                candidates.every((candidate) => candidate.host.metadata.activeExpiryRemark)
+                    ? candidates.map((candidate) => candidate.name)
+                    : await clientPoolMembers(custom?.pool, candidates, deadline);
         } catch (error) {
             throw new ClientPoolError(
                 error instanceof Error ? error.message : 'Client pool failed',

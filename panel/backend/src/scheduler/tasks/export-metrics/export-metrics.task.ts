@@ -160,6 +160,8 @@ export class ExportMetricsTask {
 
     private async reportNodesStats() {
         try {
+            this.nodeStatus.reset();
+            this.nodeOnlineUsers.reset();
             const nodesResponse = await this.getAllNodes();
             if (!nodesResponse.isOk) {
                 return;
@@ -189,12 +191,14 @@ export class ExportMetricsTask {
                     node_uuid: node.uuid,
                 } satisfies INodeMetricLabel;
 
-                this.nodeStatus.set(baseNodeLabels, node.isConnected ? 1 : 0);
+                const isActive = node.isConnected && !node.isDisabled && !node.isConnecting;
+                this.nodeStatus.set(baseNodeLabels, isActive ? 1 : 0);
+                this.nodeOnlineUsers.set(baseNodeLabels, 0);
 
                 if (nodesSystemStats.isOk && nodesSystemStats.response.get(node.uuid)) {
                     const nodeSystemStats = nodesSystemStats.response.get(node.uuid);
 
-                    if (nodeSystemStats) {
+                    if (nodeSystemStats && isActive) {
                         this.nodeOnlineUsers.set(baseNodeLabels, nodeSystemStats.onlineUsers);
                     }
 

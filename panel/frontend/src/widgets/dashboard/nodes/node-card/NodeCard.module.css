@@ -22,6 +22,10 @@
     --node-state: var(--mantine-color-cyan-5);
 }
 
+.nodeRow[data-node-status='limited'] {
+    --node-state: var(--mantine-color-blue-6);
+}
+
 .nodeRow[data-node-status='upgrade-required'] {
     --node-state: var(--mantine-color-violet-6);
 }

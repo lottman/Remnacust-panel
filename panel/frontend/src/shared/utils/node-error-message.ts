@@ -25,6 +25,7 @@ export function nodeConfigurationNeedsRestart(message: string): boolean {
 
 /** Translate known diagnostics; keep unknown messages available for investigation. */
 export function getNodeErrorMessage(message: string, t: TFunction): string {
+    if (message === '[NODE_CORE_NOT_READY]') return t('nodeErrors.coreNotReady')
     if (nodeConfigurationNeedsRestart(message)) return t('nodeErrors.maintenanceRestart' as never)
     if (
         message === 'canceled' ||

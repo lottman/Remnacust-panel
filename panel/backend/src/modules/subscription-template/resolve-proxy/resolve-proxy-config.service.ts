@@ -25,6 +25,7 @@ import { getSsPassword, isSS2022MethodFromMethod } from '@common/helpers/xray-co
 import { HostAccessService } from '@common/host-policy/host-access.service';
 import { getVlessFlow } from '@common/utils/flow';
 import { isTextRemark } from '@common/utils/templates/is-text-remark';
+import { renderSubscriptionAction } from '@common/utils/templates/render-subscription-action';
 import { TemplateEngine } from '@common/utils/templates/replace-templates-values';
 import { setVlessRouteForUuid } from '@common/utils/vless-route';
 import { stockHostPolicy } from '@common/xray-mode/stock-host-policy';
@@ -40,6 +41,11 @@ import { composeStatusAndHwidRemarks } from '@modules/subscription/utils/compose
 import { registrationBlockedRemarks } from '@modules/subscription/utils/registration-blocked-remarks';
 import { UserEntity } from '@modules/users/entities';
 
+import {
+    ActiveExpiryItem,
+    ActiveExpiryPlan,
+    boundActivePresentationItems,
+} from '../../subscription/utils/active-expiry-remarks';
 import {
     GrpcTransport,
     HttpUpgradeTransport,
@@ -61,6 +67,7 @@ export interface IResolveProxyConfigOptions {
     hosts: HostWithRawInbound[];
     selectionOnly?: boolean;
     quotaOwnerHost?: HostWithRawInbound;
+    activeExpiryPlan?: ActiveExpiryPlan | null;
     user: UserEntity;
     hostsOverrides?: ExternalSquadEntity['hostOverrides'];
     fallbackOptions?: {
@@ -119,7 +126,9 @@ export class ResolveProxyConfigService {
             );
         }
 
-        const inactive = user.status !== USERS_STATUS.ACTIVE || user.expireAt <= new Date();
+        const inactive =
+            user.status !== USERS_STATUS.ACTIVE ||
+            user.expireAt.getTime() <= (options.activeExpiryPlan?.selectedAt ?? Date.now());
         const blocked = !!(
             fallbackOptions?.showHwidMaxDeviceRemarks ||
             fallbackOptions?.showHwidNotSupportedRemarks ||
@@ -127,6 +136,10 @@ export class ResolveProxyConfigService {
             fallbackOptions?.showHwidRegistrationBlockedRemarks ||
             fallbackOptions?.respondWithRemarks?.length
         );
+        const activeExpiryPlan =
+            !inactive && !blocked && !options.selectionOnly && !options.quotaOwnerHost
+                ? options.activeExpiryPlan
+                : null;
         options.hosts = inactive
             ? options.hosts.filter((host) => host.alwaysAvailable)
             : options.hosts.filter((host) => !host.onlyWhenInactive);
@@ -137,19 +150,31 @@ export class ResolveProxyConfigService {
             fallbackOptions,
             options.hosts.length,
         );
-        if (earlyRemarks !== null && (blocked || !inactive || options.hosts.length === 0)) {
+        if (
+            !activeExpiryPlan &&
+            earlyRemarks !== null &&
+            (blocked || !inactive || options.hosts.length === 0)
+        ) {
             return this.createFallbackHosts(
                 this.templateRemarks(earlyRemarks, user, subscriptionSettings, options.hosts),
             );
         }
 
-        let hosts = this.applyShuffle(options.hosts);
+        let hosts =
+            activeExpiryPlan && !activeExpiryPlan.rows.some((item) => item.kind === 'hosts')
+                ? []
+                : this.applyShuffle(options.hosts);
 
-        const hostUsers = options.selectionOnly
-            ? new Map<string, UserEntity | null>()
-            : options.quotaOwnerHost
-              ? await this.hostAccess.prepareAutoselect(user, options.quotaOwnerHost.uuid, hosts)
-              : await this.hostAccess.prepare(user, hosts);
+        const hostUsers =
+            options.selectionOnly || hosts.length === 0
+                ? new Map<string, UserEntity | null>()
+                : options.quotaOwnerHost
+                  ? await this.hostAccess.prepareAutoselect(
+                        user,
+                        options.quotaOwnerHost.uuid,
+                        hosts,
+                    )
+                  : await this.hostAccess.prepare(user, hosts);
         hosts = hosts.filter((host) => hostUsers.get(host.uuid) !== null);
         const rawInbounds = hosts.map((h) => h.rawInbound);
         const [publicKeyMap, mldsa65PublicKeyMap, encryptionMap] = await Promise.all([
@@ -219,6 +244,61 @@ export class ResolveProxyConfigService {
             return subscriptionSettings.customRemarks.alwaysAvailableHostsPosition === 'before'
                 ? [...resolvedProxyConfigs, ...remarks]
                 : [...remarks, ...resolvedProxyConfigs];
+        }
+        if (activeExpiryPlan) {
+            const values = TemplateEngine.createUserValueMap(
+                user,
+                subscriptionSettings,
+                this.subPublicDomain,
+                hosts,
+            );
+            activeExpiryPlan.items = boundActivePresentationItems(
+                activeExpiryPlan.rows.flatMap<ActiveExpiryItem>((item) => {
+                    if (item.kind === 'hosts') return [item];
+                    if (item.kind === 'text')
+                        return [
+                            {
+                                kind: 'text' as const,
+                                text: TemplateEngine.replace(item.text, values).slice(0, 500),
+                            },
+                        ];
+                    const action = renderSubscriptionAction(item, values);
+                    return action
+                        ? [{ kind: 'action' as const, ...action }]
+                        : [
+                              {
+                                  kind: 'text' as const,
+                                  text: TemplateEngine.replace(
+                                      [item.text, item.buttonText].filter(Boolean).join(' · '),
+                                      values,
+                                  ).slice(0, 500),
+                              },
+                          ];
+                }),
+                activeExpiryPlan.presentationBytes,
+            );
+            return activeExpiryPlan.items.flatMap((item) => {
+                if (item.kind === 'hosts') return resolvedProxyConfigs;
+                const text =
+                    item.kind === 'text'
+                        ? item.text
+                        : [item.text, item.buttonText].filter(Boolean).join(' · ');
+                const empty = this.createFallbackHosts([''])[0];
+                return [
+                    {
+                        ...empty,
+                        finalRemark: text,
+                        protocol: 'shadowsocks' as const,
+                        protocolOptions: {
+                            method: 'aes-128-gcm',
+                            password: '00000000-0000-0000-0000-000000000000',
+                            uot: false,
+                            uotVersion: 1,
+                        },
+                        metadata: { ...empty.metadata, remark: text, activeExpiryRemark: true },
+                    },
+                ];
+            });
         }
         return resolvedProxyConfigs;
     }

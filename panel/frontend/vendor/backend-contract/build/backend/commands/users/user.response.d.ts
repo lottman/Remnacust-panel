@@ -45,8 +45,8 @@ export declare const UserResponseSchema: z.ZodObject<{
             domain: z.ZodString;
             path: z.ZodString;
             kind: z.ZodEnum<{
-                PRIMARY: 'PRIMARY';
-                CDN: 'CDN';
+                CDN: "CDN";
+                PRIMARY: "PRIMARY";
             }>;
             parentUuid: z.ZodNullable<z.ZodUUID>;
             isDefault: z.ZodBoolean;

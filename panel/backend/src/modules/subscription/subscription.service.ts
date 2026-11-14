@@ -70,6 +70,14 @@ import {
     SubscriptionWithConfigResponse,
 } from './models';
 import { GetSubpageConfigResponseModel } from './models/get-subpage-config.response.model';
+import {
+    ActiveExpiryPlan,
+    boundPresentationItems,
+    boundSubscriptionHeaders,
+    omitSubscriptionAction,
+    presentationBudget,
+    selectActiveExpiryPlan,
+} from './utils/active-expiry-remarks';
 import { composeStatusAndHwidRemarks } from './utils/compose-status-hwid-remarks';
 import { getSubscriptionRefillDate, getSubscriptionUserInfo } from './utils/get-user-info.headers';
 import { applyHostPolicyPing } from './utils/host-policy-ping';
@@ -503,6 +511,7 @@ export class SubscriptionService {
                     : undefined,
                 hostLimitRemarks,
                 presentationHosts,
+                subscription.activeExpiryPlan,
             );
             if (limitedHostUuids.size && subscriptionSettings.isShowCustomRemarks) {
                 const announcement = hostLimitRemarks
@@ -530,15 +539,17 @@ export class SubscriptionService {
                       shortUuid,
                       user.response.subscriptionUrlBase,
                   );
+            const responseHeaders = {
+                ...headers,
+                ...(personalCredentialsReady && hwidHeaders
+                    ? {
+                          'x-device-subscription-url': `${deviceSubscriptionUrl}/device/${this.deviceAccess.linkToken(user.response, hwidHeaders.hwid)}`,
+                      }
+                    : {}),
+            };
+            boundSubscriptionHeaders(responseHeaders, srrContext.headersToApply);
             return new SubscriptionWithConfigResponse({
-                headers: {
-                    ...headers,
-                    ...(personalCredentialsReady && hwidHeaders
-                        ? {
-                              'x-device-subscription-url': `${deviceSubscriptionUrl}/device/${this.deviceAccess.linkToken(user.response, hwidHeaders.hwid)}`,
-                          }
-                        : {}),
-                },
+                headers: responseHeaders,
                 body: subscription.subscription,
                 contentType: subscription.contentType,
             });
@@ -856,8 +867,20 @@ export class SubscriptionService {
             }
 
             let subscription: ResolvedProxyConfig[] | undefined;
+            let activeExpiryPlan: ActiveExpiryPlan | null = null;
 
             if (!hwidCheckup || hwidCheckup.subscriptionAllowed) {
+                activeExpiryPlan = await this.getActiveExpiryPlan(user, patchedSettingEntity);
+                if (activeExpiryPlan)
+                    Object.assign(
+                        activeExpiryPlan,
+                        presentationBudget(
+                            headers,
+                            activeExpiryPlan.rows.some((item) => item.kind === 'hosts'),
+                            0,
+                            activeExpiryPlan.rows.some((item) => item.kind !== 'hosts'),
+                        ),
+                    );
                 const hosts = await this.queryBus.execute(
                     new GetHostsForUserQuery(user.id, withDisabledHosts, true),
                 );
@@ -867,6 +890,7 @@ export class SubscriptionService {
                 }
 
                 subscription = await this.renderTemplatesService.generateRawSubscription({
+                    activeExpiryPlan,
                     subscriptionSettings: patchedSettingEntity,
                     user: renderUser,
                     hosts: patchedSettingEntity.randomizeHosts
@@ -891,6 +915,17 @@ export class SubscriptionService {
                     },
                 });
             }
+
+            if (activeExpiryPlan?.items) {
+                const items = activeExpiryPlan.items;
+                if (activeExpiryPlan.omitGlobalAction) omitSubscriptionAction(headers);
+                delete headers['x-era-subscription-presentation'];
+                if (items.length)
+                    headers['x-era-subscription-presentation'] = Buffer.from(
+                        JSON.stringify(items),
+                    ).toString('base64');
+            }
+            boundSubscriptionHeaders(headers);
 
             void this.updateAndReportSubscriptionRequest({
                 userId: user.id,
@@ -1010,6 +1045,7 @@ export class SubscriptionService {
                 if (!hostsResponse.isOk) return fail(ERRORS.INTERNAL_SERVER_ERROR);
 
                 formattedHosts = await this.resolveProxyConfigService.resolveProxyConfig({
+                    activeExpiryPlan: await this.getActiveExpiryPlan(userEntity, settings),
                     subscriptionSettings: settings,
                     hosts: hostsResponse.response,
                     user: userEntity,
@@ -1268,14 +1304,57 @@ export class SubscriptionService {
         );
     }
 
+    private async getActiveExpiryPlan(user: UserEntity, settings: SubscriptionSettingsEntity) {
+        if (!settings.customRemarks?.activeExpiry) return null;
+        return selectActiveExpiryPlan(user, settings, async () => {
+            const membership = await this.queryBus.execute(
+                new GetUserByUniqueFieldQuery({ id: user.id }, { activeInternalSquads: true }),
+            );
+            if (!membership.isOk) throw new Error('Could not load subscription squad membership');
+            return membership.response.activeInternalSquads.map((squad) => squad.uuid);
+        });
+    }
+
     private async renderSubscription(params: IGenerateSubscription) {
         const settings = params.srrContext.subscriptionSettings;
+        const denied = Object.values(params.fallbackOptions ?? {}).some((value) =>
+            Array.isArray(value) ? value.length > 0 : value === true,
+        );
+        const activeExpiryPlan = denied
+            ? null
+            : params.activeExpiryPlan !== undefined
+              ? params.activeExpiryPlan
+              : await this.getActiveExpiryPlan(params.user, settings);
+        if (activeExpiryPlan && activeExpiryPlan.presentationBytes === undefined) {
+            const baseHeaders = this.getUserProfileHeadersInfo(
+                params.user,
+                settings,
+                false,
+                undefined,
+                [],
+                params.hosts,
+            );
+            const combined = { ...baseHeaders, ...params.srrContext.headersToApply };
+            const pendingRouting =
+                settings.geofilesSystemEnabled === true &&
+                !Object.keys(combined).some((key) => key.toLowerCase() === 'routing');
+            Object.assign(
+                activeExpiryPlan,
+                presentationBudget(
+                    combined,
+                    activeExpiryPlan.rows.some((item) => item.kind === 'hosts'),
+                    pendingRouting ? 3500 : 0,
+                    activeExpiryPlan.rows.some((item) => item.kind !== 'hosts'),
+                ),
+            );
+        }
         const headers = { ...settings.customResponseHeaders, ...params.srrContext.headersToApply };
         const rawTitle = Object.entries(headers)
             .reverse()
             .find(([key]) => key.toLowerCase() === 'profile-title')?.[1];
-        return this.renderTemplatesService.generateSubscription({
+        const result = await this.renderTemplatesService.generateSubscription({
             ...params,
+            activeExpiryPlan,
             profileTitle: rawTitle
                 ? TemplateEngine.formatWithUser(
                       rawTitle,
@@ -1287,6 +1366,7 @@ export class SubscriptionService {
                 : this.subPublicDomain.split('/')[0],
             profileKey: `${this.subPublicDomain}:${params.user.id}`,
         });
+        return { ...result, activeExpiryPlan };
     }
 
     private getUserProfileHeadersInfo(
@@ -1296,6 +1376,7 @@ export class SubscriptionService {
         remarksOverride?: string[],
         extraRemarks: string[] = [],
         hosts: HostWithRawInbound[] = [],
+        activeExpiryPlan?: ActiveExpiryPlan | null,
     ): ISubscriptionHeaders {
         const headers: ISubscriptionHeaders = {
             'content-disposition': `attachment; filename=${user.username}`,
@@ -1343,7 +1424,7 @@ export class SubscriptionService {
                 'utf8',
             ).toString('base64');
         }
-        if (settings.isShowCustomRemarks) {
+        if (settings.isShowCustomRemarks && !activeExpiryPlan) {
             const source =
                 remarksOverride ??
                 (
@@ -1406,13 +1487,30 @@ export class SubscriptionService {
                     if (text.trim()) items.push({ kind: 'text', text });
                 }
                 // Bound the response header, including UTF-8/base64 expansion.
-                while (items.length && Buffer.byteLength(JSON.stringify(items)) > 4500) items.pop();
-                if (items.length)
+                const budget = presentationBudget(
+                    headers,
+                    items.some((item) => item.kind === 'hosts'),
+                    0,
+                    items.some((item) => item.kind !== 'hosts'),
+                );
+                if (budget.omitGlobalAction) omitSubscriptionAction(headers);
+                const bounded = boundPresentationItems(items, budget.presentationBytes);
+                if (bounded.length)
                     headers['x-era-subscription-presentation'] = Buffer.from(
-                        JSON.stringify(items),
+                        JSON.stringify(bounded),
                     ).toString('base64');
             }
         }
+        if (activeExpiryPlan?.items) {
+            const items = activeExpiryPlan.items;
+            if (activeExpiryPlan.omitGlobalAction) omitSubscriptionAction(headers);
+            delete headers['x-era-subscription-presentation'];
+            if (items.length)
+                headers['x-era-subscription-presentation'] = Buffer.from(
+                    JSON.stringify(items),
+                ).toString('base64');
+        }
+        boundSubscriptionHeaders(headers);
         return headers;
     }
 

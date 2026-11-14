@@ -2,7 +2,7 @@ import { z } from 'zod';
 export declare namespace GetUserByShortUuidCommand {
     const url: (shortUuid: string) => string;
     const TSQ_url: string;
-    const endpointDetails: import('../../../constants').EndpointDetails;
+    const endpointDetails: import("../../../constants").EndpointDetails;
     const RequestParamSchema: z.ZodObject<{
         shortUuid: z.ZodString;
     }, z.core.$strip>;
@@ -52,8 +52,8 @@ export declare namespace GetUserByShortUuidCommand {
                 domain: z.ZodString;
                 path: z.ZodString;
                 kind: z.ZodEnum<{
-                    PRIMARY: 'PRIMARY';
-                    CDN: 'CDN';
+                    CDN: "CDN";
+                    PRIMARY: "PRIMARY";
                 }>;
                 parentUuid: z.ZodNullable<z.ZodUUID>;
                 isDefault: z.ZodBoolean;

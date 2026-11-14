@@ -28,6 +28,7 @@ import { prettifyBytesUtil, prettySiRealtimeBytesUtil } from '@shared/utils/byte
 import { nodeNeedsCustomUpgrade } from '@shared/utils/node-policy-status'
 import { getNodeResetDaysUtil, getXrayUptimeUtil } from '@shared/utils/time-utils'
 
+import { getNodeStatus } from '../node-status'
 import { NodeStatusBadgeWidget } from '../node-status-badge'
 import { IProps } from './interfaces'
 import classes from './NodeCard.module.css'
@@ -89,20 +90,21 @@ export const NodeCardWidget = memo((props: IProps) => {
     const percentage = calcPercentage()
     const fallbackProgress = node.isTrafficTrackingActive && node.trafficLimitBytes === 0
 
-    const isOnline = node.isConnected && node.xrayUptime !== 0 && !node.isDisabled
+    const connectionStatus = getNodeStatus(node)
+    const isOnline = connectionStatus === 'connected'
     const isConfigMissing =
         node.configProfile.activeConfigProfileUuid === null ||
         node.configProfile.activeInbounds.length === 0
     const progressColor = getProgressColor(percentage, fallbackProgress)
-    const nodeStatus = node.isDisabled
-        ? 'disabled'
-        : node.isConnected
-          ? nodeNeedsCustomUpgrade(node.lastStatusMessage)
-              ? 'upgrade-required'
-              : 'connected'
-          : node.isConnecting
-            ? 'connecting'
-            : 'offline'
+    const nodeStatus =
+        node.isConnected &&
+        !node.isDisabled &&
+        !node.isConnecting &&
+        nodeNeedsCustomUpgrade(node.lastStatusMessage)
+            ? 'upgrade-required'
+            : connectionStatus === 'disconnected'
+              ? 'offline'
+              : connectionStatus
 
     const { ramPercentage, ramColor, rxSpeed, txSpeed, loadAvg, cpus } = useMemo(() => {
         if (!node.system)
@@ -329,16 +331,18 @@ export const NodeCardWidget = memo((props: IProps) => {
                                     <Box />
                                 )}
 
-                                {isOnline && (
+                                {(isOnline || connectionStatus === 'limited') && (
                                     <Flex align="center" gap={4}>
                                         <XrayLogo size={14} />
                                         <Text
-                                            c={isOnline ? 'teal' : 'red'}
+                                            c={isOnline ? 'teal' : 'blue'}
                                             fw={isOnline ? 600 : 500}
                                             size="sm"
                                             truncate
                                         >
-                                            {getXrayUptimeUtil(node.xrayUptime)}
+                                            {isOnline
+                                                ? getXrayUptimeUtil(node.xrayUptime)
+                                                : t('xera-node-health.limited')}
                                         </Text>
                                     </Flex>
                                 )}
@@ -650,7 +654,9 @@ export const NodeCardWidget = memo((props: IProps) => {
                             >
                                 {isOnline
                                     ? getXrayUptimeUtil(node.xrayUptime)
-                                    : t('design-ui.node-offline')}
+                                    : connectionStatus === 'limited'
+                                      ? t('xera-node-health.limited')
+                                      : t('design-ui.node-offline')}
                             </Text>
                         </Flex>
                     </Flex>

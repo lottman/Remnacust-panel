@@ -4,5 +4,6 @@ export interface IProps {
     isDisabled: boolean
     nodeUuid: string
     lastStatusMessage?: string | null
+    xrayUptime?: number
     style?: React.CSSProperties
 }

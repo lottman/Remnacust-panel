@@ -1,8 +1,8 @@
 import z from 'zod';
 export declare const PoolAddressFamilySchema: z.ZodEnum<{
+    any: "any";
     ipv4: "ipv4";
     ipv6: "ipv6";
-    any: "any";
 }>;
 export type TPoolAddressFamily = z.infer<typeof PoolAddressFamilySchema>;
 export declare function poolAddressMatches(address: string | undefined, family?: TPoolAddressFamily): boolean;
@@ -60,9 +60,9 @@ export declare const InjectHostsEntrySchema: z.ZodObject<{
         groups: z.ZodOptional<z.ZodUnion<readonly [z.ZodArray<z.ZodArray<z.ZodType<string, unknown, z.core.$ZodTypeInternals<string, unknown>>>>, z.ZodRecord<z.ZodString, z.ZodArray<z.ZodType<string, unknown, z.core.$ZodTypeInternals<string, unknown>>>>]>>;
     }, z.core.$strip>], "type">;
     mode: z.ZodOptional<z.ZodEnum<{
-        random: "random";
         all: "all";
         group: "group";
+        random: "random";
     }>>;
     selectFrom: z.ZodOptional<z.ZodEnum<{
         ALL: "ALL";
@@ -70,9 +70,9 @@ export declare const InjectHostsEntrySchema: z.ZodObject<{
         NOT_HIDDEN: "NOT_HIDDEN";
     }>>;
     addressFamily: z.ZodOptional<z.ZodEnum<{
+        any: "any";
         ipv4: "ipv4";
         ipv6: "ipv6";
-        any: "any";
     }>>;
     tagPrefix: z.ZodOptional<z.ZodString>;
     useHostRemarkAsTag: z.ZodOptional<z.ZodBoolean>;
@@ -106,9 +106,9 @@ export declare const RemnawaveInjectorSchema: z.ZodObject<{
             groups: z.ZodOptional<z.ZodUnion<readonly [z.ZodArray<z.ZodArray<z.ZodType<string, unknown, z.core.$ZodTypeInternals<string, unknown>>>>, z.ZodRecord<z.ZodString, z.ZodArray<z.ZodType<string, unknown, z.core.$ZodTypeInternals<string, unknown>>>>]>>;
         }, z.core.$strip>], "type">;
         mode: z.ZodOptional<z.ZodEnum<{
-            random: "random";
             all: "all";
             group: "group";
+            random: "random";
         }>>;
         selectFrom: z.ZodOptional<z.ZodEnum<{
             ALL: "ALL";
@@ -116,9 +116,9 @@ export declare const RemnawaveInjectorSchema: z.ZodObject<{
             NOT_HIDDEN: "NOT_HIDDEN";
         }>>;
         addressFamily: z.ZodOptional<z.ZodEnum<{
+            any: "any";
             ipv4: "ipv4";
             ipv6: "ipv6";
-            any: "any";
         }>>;
         tagPrefix: z.ZodOptional<z.ZodString>;
         useHostRemarkAsTag: z.ZodOptional<z.ZodBoolean>;

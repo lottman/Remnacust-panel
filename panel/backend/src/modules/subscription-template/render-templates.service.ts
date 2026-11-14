@@ -44,6 +44,7 @@ export class RenderTemplatesService {
             hostsOverrides,
             fallbackOptions,
             excludeHostsByTags: srrContext.excludeHostsByTags,
+            activeExpiryPlan: params.activeExpiryPlan,
         });
         if (params.onResolvedHosts) {
             params.onResolvedHosts(
@@ -157,7 +158,11 @@ export class RenderTemplatesService {
             case 'XRAY_JSON': {
                 const candidateOptions = {
                     subscriptionSettings: srrContext.subscriptionSettings,
-                    hosts: params.autoselectHosts ?? hosts,
+                    hosts:
+                        params.activeExpiryPlan &&
+                        !params.activeExpiryPlan.rows.some((item) => item.kind === 'hosts')
+                            ? []
+                            : (params.autoselectHosts ?? hosts),
                     user,
                     hostsOverrides,
                     fallbackOptions,
@@ -231,6 +236,7 @@ export class RenderTemplatesService {
                         formattedHosts = await this.resolveProxyConfigService.resolveProxyConfig({
                             ...candidateOptions,
                             hosts,
+                            activeExpiryPlan: params.activeExpiryPlan,
                         });
                         params.onResolvedHosts?.(
                             formattedHosts
@@ -344,6 +350,7 @@ export class RenderTemplatesService {
             user,
             hostsOverrides,
             fallbackOptions,
+            activeExpiryPlan: options.activeExpiryPlan,
         });
     }
 }

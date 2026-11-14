@@ -1,8 +1,8 @@
 import { z } from 'zod';
 export declare namespace ImportUsersCommand {
-    const url: '/api/users/import';
-    const TSQ_url: '/api/users/import';
-    const endpointDetails: import('../../constants').EndpointDetails;
+    const url: "/api/users/import";
+    const TSQ_url: "/api/users/import";
+    const endpointDetails: import("../../constants").EndpointDetails;
     const RequestBodySchema: z.ZodObject<{
         users: z.ZodArray<z.ZodObject<{
             username: z.ZodString;

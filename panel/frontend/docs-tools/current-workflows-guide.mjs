@@ -3,6 +3,50 @@ const languages = ['ru', 'en', 'fa', 'zh']
 // Keep scope and units identical in all four operator guides.
 const sections = [
     [
+        'subscription-settings',
+        'subscription-settings-active-expiry-remarks',
+        [
+            [
+                'Примечания до окончания активной подписки',
+                'В настройках подписки откройте примечания и добавьте правило до окончания. Задайте число дней, включите правило и выберите всех пользователей или конкретные внутренние и внешние сквады. Совпадения с любым выбранным сквадом достаточно. Правило действует только для ACTIVE, пока срок ещё не истёк и до него осталось не больше указанного числа суток. Если подходят несколько правил, применяется правило с меньшим числом дней; при одинаковом числе — первое в списке. После продления подписки окно пересчитывается при следующем запросе. Замороженная, отключённая, истёкшая или ограниченная подписка использует прежние сообщения своего состояния. Блокировка устройства и ограничения регистрации сохраняют приоритет.\n\nДобавьте текстовые строки или HTTPS-ссылки действий. Отдельная строка {HOSTS} вставляет доступные пользователю подключения в этой позиции. Она допустима один раз; переключатель хостов добавляет или удаляет её. Хосты проходят обычные проверки сквадов, квот, доступа и совместимости формата. Маркер не даёт новых прав. Без {HOSTS} клиент получит только примечания; используйте этот режим осознанно, поскольку обычные подключения не будут выданы. Произвольный JSON прокси в этих правилах не поддерживается. Предпросмотр показывает пример, а не реальные подключения пользователя. Сохраните изменения и обновите подписку в клиенте: вид текста и действий зависит от приложения.\n\nВнешний сквад может целиком переопределить глобальные примечания, включая эти правила. Включите наследование, чтобы использовать весь глобальный набор. Выбор внешнего сквада в глобальном правиле не отменяет его собственного переопределения. Сбой сохранения оставляет черновик доступным для повторной попытки; сброс восстанавливает сохранённые значения.'
+            ],
+            [
+                'Remarks before an active subscription expires',
+                'Open remarks in subscription settings and add a pre-expiry rule. Set the number of days, enable the rule, and choose all users or specific internal and external squads. Membership in any selected squad is sufficient. A rule applies only to ACTIVE subscriptions that have not expired and have no more than the configured number of days remaining. If several rules match, the smallest day threshold wins; equal thresholds use list order. Renewal recalculates eligibility on the next request. Frozen, disabled, expired and limited subscriptions keep their existing state messages. Device blocks and registration restrictions retain priority.\n\nAdd text rows or HTTPS link actions. A standalone {HOSTS} row inserts the connections available to this user at that position. It is allowed once; the hosts switch inserts or removes it. Hosts still pass normal squad, quota, access and output-format checks. The marker grants no additional permissions. Without {HOSTS}, the client receives remarks only; choose this deliberately because normal connections will not be delivered. Arbitrary proxy JSON is not supported in these rules. Preview shows sample content rather than real user connections. Save changes and refresh the subscription in the client; text and action presentation depends on the application.\n\nAn external squad can replace the entire global remarks configuration, including these rules. Enable inheritance to use the complete global configuration. Selecting that external squad in a global rule does not override its own replacement. Failed saves retain the draft for retry; reset restores saved values.'
+            ],
+            [
+                'یادداشت پیش از پایان اشتراک فعال',
+                'در تنظیمات اشتراک، یادداشت‌ها را باز و یک قانون پیش از انقضا اضافه کنید. تعداد روزها را تعیین و قانون را فعال کنید؛ همه کاربران یا اسکوادهای داخلی و خارجی مشخص را انتخاب کنید. عضویت در هرکدام از اسکوادهای انتخاب‌شده کافی است. قانون فقط برای اشتراک ACTIVE اعمال می‌شود که هنوز منقضی نشده و زمان باقی‌مانده آن از تعداد روزهای تعیین‌شده بیشتر نیست. اگر چند قانون منطبق باشند، قانون با آستانه روز کمتر انتخاب می‌شود؛ در تساوی، ترتیب فهرست تعیین‌کننده است. پس از تمدید، شرایط در درخواست بعدی دوباره محاسبه می‌شوند. اشتراک‌های منجمد، غیرفعال، منقضی و محدود همان پیام وضعیت قبلی را دارند. مسدودی دستگاه و محدودیت ثبت اولویت خود را حفظ می‌کنند.\n\nردیف‌های متن یا اقدام با پیوند HTTPS اضافه کنید. ردیف مستقل {HOSTS} اتصال‌های مجاز کاربر را در همان محل قرار می‌دهد. فقط یک بار مجاز است؛ کلید میزبان‌ها آن را اضافه یا حذف می‌کند. کنترل‌های معمول اسکواد، سهمیه، دسترسی و سازگاری قالب خروجی همچنان اعمال می‌شوند. این نشانگر مجوز تازه‌ای نمی‌دهد. بدون {HOSTS} فقط یادداشت‌ها به برنامه ارسال می‌شوند و اتصال‌های معمول حذف خواهند شد؛ این حالت را آگاهانه انتخاب کنید. JSON دلخواه پراکسی در این قوانین پشتیبانی نمی‌شود. پیش‌نمایش نمونه است و اتصال‌های واقعی کاربر را نشان نمی‌دهد. تغییرات را ذخیره و اشتراک را در برنامه تازه کنید؛ نمایش متن و اقدام به برنامه بستگی دارد.\n\nاسکواد خارجی می‌تواند کل تنظیمات یادداشت سراسری، از جمله این قوانین، را جایگزین کند. برای استفاده از کل تنظیمات سراسری، ارث‌بری را فعال کنید. انتخاب آن اسکواد در قانون سراسری، جایگزینی اختصاصی آن را لغو نمی‌کند. خطای ذخیره پیش‌نویس را برای تلاش مجدد نگه می‌دارد و بازنشانی مقادیر ذخیره‌شده را برمی‌گرداند.'
+            ],
+            [
+                '有效订阅到期前的备注',
+                '在订阅设置中打开备注并添加到期前规则。设置天数，启用规则，选择所有用户或指定的内部、外部分组。用户属于任一所选分组即可。规则仅适用于尚未到期、剩余时间不超过设定天数的 ACTIVE 订阅。多个规则匹配时，选择天数最少的规则；天数相同时按列表顺序选择。续费后，下次请求会重新计算。已冻结、禁用、到期或受限的订阅仍使用原有状态消息。设备封禁和注册限制保持更高优先级。\n\n添加文本行或 HTTPS 链接操作。单独一行 {HOSTS} 会在该位置插入此用户可用的连接，只允许出现一次；主机开关会添加或移除该行。主机仍需通过通常的分组、配额、访问权限及输出格式检查，此标记不会授予额外权限。没有 {HOSTS} 时，客户端只收到备注，不会收到正常连接，请谨慎选择。此类规则不支持任意代理 JSON。预览仅显示示例，不会显示用户真实连接。保存后请在客户端刷新订阅；文本与操作的显示方式取决于应用。\n\n外部分组可完整替换全局备注设置，包括这些规则。启用继承即可使用整套全局设置。在全局规则中选择该外部分组，并不会取消它自身的覆盖设置。保存失败时会保留草稿以便重试；重置则恢复已保存的值。'
+            ]
+        ]
+    ],
+    [
+        'subscription-settings',
+        'subscription-settings-remarks-size',
+        [
+            [
+                'Длина сообщений и совместимость клиентов',
+                'Используйте короткие примечания. После подстановки переменных длинные строки могут сокращаться, а часть дополнительных строк не попадёт в выдачу из-за ограничений клиента. Для правила до окончания сохраняются блок {HOSTS}, если он задан, и хотя бы одно предупреждение. Порядок сообщений и подключений одинаков в теле ответа и представлении подписки. Если общая кнопка действия не помещается вместе с сообщениями, она может быть опущена целиком; URL не обрезается. Проверьте итоговый ответ и отображение в нужном приложении.'
+            ],
+            [
+                'Message length and client compatibility',
+                'Keep remarks concise. After variable substitution, long text may be shortened and some additional rows omitted to fit client limits. Pre-expiry rules retain {HOSTS}, when configured, and at least one notice. Message and connection order matches between the response body and subscription presentation. A global action that cannot fit alongside the messages may be omitted entirely; its URL is never truncated. Check the resulting response and its display in the intended application.'
+            ],
+            [
+                'طول پیام و سازگاری برنامه',
+                'یادداشت‌ها را کوتاه نگه دارید. پس از جایگزینی متغیرها ممکن است متن طولانی کوتاه و برخی ردیف‌های اضافی برای رعایت محدودیت برنامه حذف شوند. قانون پیش از انقضا، در صورت تنظیم، {HOSTS} و حداقل یک اعلان را حفظ می‌کند. ترتیب پیام‌ها و اتصال‌ها در بدنه پاسخ و نمایش اشتراک یکسان است. اگر اقدام سراسری کنار پیام‌ها جا نشود، ممکن است کامل حذف شود؛ نشانی آن هرگز بریده نمی‌شود. پاسخ نهایی و نمایش آن را در برنامه موردنظر بررسی کنید.'
+            ],
+            [
+                '消息长度与客户端兼容性',
+                '请保持备注简短。替换变量后，为适应客户端限制，过长文本可能被缩短，部分附加行可能被省略。到期前规则会保留已配置的 {HOSTS} 和至少一条提示。响应正文与订阅展示中的消息及连接顺序一致。如果全局操作无法与消息同时容纳，可能会整体省略；不会截断其 URL。请在目标应用中检查最终响应和显示效果。'
+            ]
+        ]
+    ],
+    [
         'nodes',
         'nodes-start-queue-pause',
         [

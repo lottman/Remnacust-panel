@@ -2,20 +2,20 @@
 
 # Remnacust Panel
 
-Выпуск **Panel/Page 1.1.7.124** входит в комплект Installer **1.2.172** с Node **1.1.35** и Core/WASM **1.1.21**. [Изменения выпуска](../docs/releases/1.1.7.124.md). Обновление установленного сервера выполняется отдельно.
+Выпуск **Panel/Page 1.1.7.125** входит в комплект Installer **1.2.173** с Node **1.1.36** и Core/WASM **1.1.21**. [Изменения выпуска](../docs/releases/1.1.7.125.md). Обновление установленного сервера выполняется отдельно.
 
 Панель управления пользователями, нодами и подписками. Для установки на VPS используйте готовые образы через установщик; Node.js и Go на сервере не нужны.
 
 | Стабильный компонент | Версия |
 | --- | --- |
-| [Panel и страница подписки](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.124) | 1.1.7.124 |
-| [Installer / комплект](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.172) | 1.2.172 |
-| [Node](https://github.com/lottman/Remnacust-node/releases/tag/v1.1.35) | 1.1.35 |
+| [Panel и страница подписки](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.125) | 1.1.7.125 |
+| [Installer / комплект](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.173) | 1.2.173 |
+| [Node](https://github.com/lottman/Remnacust-node/releases/tag/v1.1.36) | 1.1.36 |
 | [Core / WASM](https://github.com/lottman/Remnacust-core/releases/tag/v1.1.21) | 1.1.21 |
 
 ## Сервер и порты
 
-Установщик 1.2.172 поддерживает **Ubuntu 22.04/24.04/26.04 LTS и Debian 12/13**, Linux amd64/arm64.
+Установщик 1.2.173 поддерживает **Ubuntu 22.04/24.04/26.04 LTS и Debian 12/13**, Linux amd64/arm64.
 
 Для небольшой панели ориентируйтесь на 2 CPU, 2 GiB RAM и 20 GiB диска; рекомендуются 4 CPU и 4 GiB RAM. Под базу, журналы и копии нужен дополнительный запас по мере роста нагрузки. Нужны root, домен, доступ к пакетным репозиториям и скачиванию образов.
 

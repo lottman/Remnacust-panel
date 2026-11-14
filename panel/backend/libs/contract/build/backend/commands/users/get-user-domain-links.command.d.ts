@@ -9,8 +9,8 @@ export declare namespace GetUserDomainLinksCommand {
     const RequestQuerySchema: z.ZodObject<{
         domainUuid: z.ZodOptional<z.ZodUUID>;
         kind: z.ZodOptional<z.ZodEnum<{
-            PRIMARY: "PRIMARY";
             CDN: "CDN";
+            PRIMARY: "PRIMARY";
         }>>;
     }, z.core.$strict>;
     const ResponseSchema: z.ZodObject<{
@@ -21,8 +21,8 @@ export declare namespace GetUserDomainLinksCommand {
                 name: z.ZodString;
                 domain: z.ZodString;
                 kind: z.ZodEnum<{
-                    PRIMARY: "PRIMARY";
                     CDN: "CDN";
+                    PRIMARY: "PRIMARY";
                 }>;
                 url: z.ZodURL;
                 isSelected: z.ZodBoolean;
@@ -51,8 +51,8 @@ export declare namespace GetUserPrimaryDomainLinkCommand {
                 name: z.ZodString;
                 domain: z.ZodString;
                 kind: z.ZodEnum<{
-                    PRIMARY: "PRIMARY";
                     CDN: "CDN";
+                    PRIMARY: "PRIMARY";
                 }>;
                 url: z.ZodURL;
                 isSelected: z.ZodBoolean;
@@ -81,8 +81,8 @@ export declare namespace GetUserCdnDomainLinksCommand {
                 name: z.ZodString;
                 domain: z.ZodString;
                 kind: z.ZodEnum<{
-                    PRIMARY: "PRIMARY";
                     CDN: "CDN";
+                    PRIMARY: "PRIMARY";
                 }>;
                 url: z.ZodURL;
                 isSelected: z.ZodBoolean;

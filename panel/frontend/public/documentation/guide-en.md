@@ -1041,6 +1041,18 @@ New devices denied is handled separately. If registration is denied for a new de
 
 Traffic quota exhaustion, the maximum device count and missing HWID support have separate messages outside this list. Reordering changes subscription messages; restrictions and access checks still apply. Presentation depends on the client.
 
+### Remarks before an active subscription expires
+
+Open remarks in subscription settings and add a pre-expiry rule. Set the number of days, enable the rule, and choose all users or specific internal and external squads. Membership in any selected squad is sufficient. A rule applies only to ACTIVE subscriptions that have not expired and have no more than the configured number of days remaining. If several rules match, the smallest day threshold wins; equal thresholds use list order. Renewal recalculates eligibility on the next request. Frozen, disabled, expired and limited subscriptions keep their existing state messages. Device blocks and registration restrictions retain priority.
+
+Add text rows or HTTPS link actions. A standalone {HOSTS} row inserts the connections available to this user at that position. It is allowed once; the hosts switch inserts or removes it. Hosts still pass normal squad, quota, access and output-format checks. The marker grants no additional permissions. Without {HOSTS}, the client receives remarks only; choose this deliberately because normal connections will not be delivered. Arbitrary proxy JSON is not supported in these rules. Preview shows sample content rather than real user connections. Save changes and refresh the subscription in the client; text and action presentation depends on the application.
+
+An external squad can replace the entire global remarks configuration, including these rules. Enable inheritance to use the complete global configuration. Selecting that external squad in a global rule does not override its own replacement. Failed saves retain the draft for retry; reset restores saved values.
+
+### Message length and client compatibility
+
+Keep remarks concise. After variable substitution, long text may be shortened and some additional rows omitted to fit client limits. Pre-expiry rules retain {HOSTS}, when configured, and at least one notice. Message and connection order matches between the response body and subscription presentation. A global action that cannot fit alongside the messages may be omitted entirely; its URL is never truncated. Check the resulting response and its display in the intended application.
+
 ### First start of a mixed node fleet
 
 On first connection, wait for capability checks and profile application. Native Remnawave and custom nodes can coexist, but extensions depend on the core actually running. Nodes sharing an inbound use a compatible mode; independent compatible inbounds retain extensions. Unknown capabilities keep the previous configuration and schedule another check. An unavailable node delays only related connections. Network errors do not remove configured restrictions.

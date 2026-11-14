@@ -1,0 +1,18 @@
+.activeRow {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+}
+
+@media (max-width: 48em) {
+    .activeRow {
+        grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .activeRow > :first-child {
+        grid-column: 1 / -1;
+    }
+
+    .activeRow > :nth-child(2) {
+        flex-direction: row;
+    }
+}

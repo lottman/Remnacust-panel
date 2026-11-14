@@ -1,8 +1,8 @@
 import { z } from 'zod';
 export declare namespace BulkUpdateUsersCommand {
-    const url: '/api/users/bulk/update';
-    const TSQ_url: '/api/users/bulk/update';
-    const endpointDetails: import('../../../constants').EndpointDetails;
+    const url: "/api/users/bulk/update";
+    const TSQ_url: "/api/users/bulk/update";
+    const endpointDetails: import("../../../constants").EndpointDetails;
     const RequestBodySchema: z.ZodObject<{
         userIds: z.ZodArray<z.ZodNumber>;
         fields: z.ZodObject<{

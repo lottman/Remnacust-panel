@@ -36,6 +36,7 @@ import { useUiText } from '@shared/i18n/interface-text'
 import { MetricCardShared } from '@shared/ui/metrics/metric-card'
 import { getNodeHealth } from '@shared/utils/node-health'
 
+import { getNodeStatus } from '../node-status'
 import { NodeDetailsCard } from './node-details-card'
 import styles from './NodeDetails.module.css'
 
@@ -43,7 +44,9 @@ export const NodeMetricsWidget = () => {
     const uiText = useUiText()
 
     const { data: nodeMetrics, isLoading, isError, refetch, dataUpdatedAt } = useGetNodesMetrics()
-    const { data: nodes } = useGetNodes()
+    const { data: nodes } = useGetNodes({
+        rQueryParams: { refetchOnMount: 'always', refetchInterval: 5_000 }
+    })
     const isMobile = useIsMobile()
     const { i18n } = useTranslation()
     const [query, setQuery] = useState('')
@@ -58,7 +61,7 @@ export const NodeMetricsWidget = () => {
 
         const totalNodes = nodeMetrics.nodes.length
         const totalUsersOnline = nodeMetrics.nodes.reduce((acc, node) => acc + node.usersOnline, 0)
-        const activeNodes = nodes?.filter((node) => node.isConnected && !node.isDisabled).length
+        const activeNodes = nodes?.filter((node) => getNodeStatus(node) === 'connected').length
         const totalInbounds = nodeMetrics.nodes.reduce(
             (acc, node) => acc + node.inboundsStats.length,
             0

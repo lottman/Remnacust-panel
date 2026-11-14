@@ -21,6 +21,7 @@ function load(file, mocks = {}) {
 const translation = { useTranslation: () => ({ t: key => key }) }
 const { NodeStatusBadgeWidget } = load('widgets/dashboard/nodes/node-status-badge/node-status-badge.widget.tsx', {
     '../node-billing-status': { useNodeBillingDays: () => undefined, nodeBillingWarning: () => null },
+    '../node-status': load('widgets/dashboard/nodes/node-status.ts'),
     'react-i18next': translation,
     '@shared/utils/node-health': load('shared/utils/node-health.ts'),
     '@shared/utils/node-policy-status': load('shared/utils/node-policy-status.ts')

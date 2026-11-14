@@ -6,6 +6,7 @@ import { GetNodeInboundsHostsFeature } from '@features/ui/dashboard/nodes/get-no
 import { GetNodeLinkedHostsFeature } from '@features/ui/dashboard/nodes/get-node-linked-hosts'
 import { GetNodeUsersUsageFeature } from '@features/ui/dashboard/nodes/get-node-users-usage'
 import { OpenNodeSshFeature } from '@features/ui/dashboard/nodes/open-node-ssh'
+import { githubDarkTheme } from '@json-edit-react/themes'
 import {
     ActionIcon,
     Badge,
@@ -23,12 +24,12 @@ import {
 import { modals } from '@mantine/modals'
 import { GetNodeCommand, UpdateNodeCommand } from '@remnawave/backend-contract'
 import { JsonViewer } from 'json-edit-react'
-import { githubDarkTheme } from '@json-edit-react/themes'
 import { memo, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
     PiArrowsCounterClockwise,
     PiCloudArrowUpDuotone,
+    PiPulseDuotone,
     PiUsersDuotone,
     PiWarningCircle
 } from 'react-icons/pi'
@@ -43,9 +44,11 @@ import { NodeHealthDetails } from '@shared/ui/node-health/node-health'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SectionCard } from '@shared/ui/section-card'
 import { prettifyBytesUtil } from '@shared/utils/bytes'
-import { getNodeResetDaysUtil, getXrayUptimeUtil } from '@shared/utils/time-utils'
+import { getNodeHealth } from '@shared/utils/node-health'
 import { nodeNeedsCustomUpgrade } from '@shared/utils/node-policy-status'
+import { getNodeResetDaysUtil, getXrayUptimeUtil } from '@shared/utils/time-utils'
 
+import { getNodeStatus } from '../node-status'
 import classes from './node-details-card.module.css'
 
 interface IProps {
@@ -56,6 +59,8 @@ export const NodeDetailsCardWidget = memo((props: IProps) => {
     const { node } = props
 
     const { t } = useTranslation()
+    const connectionStatus = getNodeStatus(node)
+    const healthLevel = getNodeHealth(node).level
 
     const mutationParams = {
         route: {
@@ -88,31 +93,48 @@ export const NodeDetailsCardWidget = memo((props: IProps) => {
         let IconComponent: React.ComponentType<{ size: number }>
         let themeIconColor: ThemeIconProps['color'] = 'red'
 
-        if (isConfigMissing) {
-            IconComponent = PiWarningCircle
-            themeIconColor = 'red'
-            return { IconComponent, themeIconColor }
-        }
-
         if (node.isDisabled) {
             IconComponent = TbWifiOff
             themeIconColor = 'gray'
             return { IconComponent, themeIconColor }
         }
 
-        if (node.isConnected) {
-            IconComponent = TbWifi
-            themeIconColor = nodeNeedsCustomUpgrade(node.lastStatusMessage) ? 'violet' : 'teal'
-        } else if (node.isConnecting) {
+        if (node.isConnecting) {
             IconComponent = PiCloudArrowUpDuotone
             themeIconColor = 'yellow'
+        } else if (isConfigMissing) {
+            IconComponent = PiWarningCircle
+            themeIconColor = 'red'
+        } else if (node.isConnected && nodeNeedsCustomUpgrade(node.lastStatusMessage)) {
+            IconComponent = TbWifi
+            themeIconColor = 'violet'
+        } else if (
+            node.isConnected &&
+            (healthLevel === 'attention' || healthLevel === 'critical')
+        ) {
+            IconComponent = PiWarningCircle
+            themeIconColor = 'yellow'
+        } else if (connectionStatus === 'limited') {
+            IconComponent = PiPulseDuotone
+            themeIconColor = 'blue'
+        } else if (connectionStatus === 'connected') {
+            IconComponent = TbWifi
+            themeIconColor = 'teal'
         } else {
             IconComponent = PiWarningCircle
             themeIconColor = 'red'
         }
 
         return { IconComponent, themeIconColor }
-    }, [node.isConnected, node.isConnecting, node.isDisabled, node.lastStatusMessage, isConfigMissing])
+    }, [
+        node.isConnected,
+        node.isConnecting,
+        node.isDisabled,
+        node.lastStatusMessage,
+        isConfigMissing,
+        connectionStatus,
+        healthLevel
+    ])
 
     const trafficData = useMemo(() => {
         let maxData = '∞'
@@ -174,19 +196,25 @@ export const NodeDetailsCardWidget = memo((props: IProps) => {
                     />
 
                     <Group gap="xs">
-                        {node.isConnected && (
+                        {(connectionStatus === 'connected' || connectionStatus === 'limited') && (
                             <Tooltip
-                                label={t('node-stats.card.represents-the-uptime-of-the-xray-core')}
+                                label={t(
+                                    connectionStatus === 'limited'
+                                        ? 'xera-node-health.limited'
+                                        : 'node-stats.card.represents-the-uptime-of-the-xray-core'
+                                )}
                             >
                                 <Badge
-                                    color="teal"
+                                    color={connectionStatus === 'limited' ? 'blue' : 'teal'}
                                     h={28}
                                     leftSection={<XrayLogo size={14} />}
                                     size="lg"
                                     variant="light"
                                     visibleFrom="sm"
                                 >
-                                    {getXrayUptimeUtil(node.xrayUptime)}
+                                    {connectionStatus === 'limited'
+                                        ? t('xera-node-health.limited')
+                                        : getXrayUptimeUtil(node.xrayUptime)}
                                 </Badge>
                             </Tooltip>
                         )}
@@ -395,7 +423,12 @@ export const NodeDetailsCardWidget = memo((props: IProps) => {
                                 }`
                             }}
                         >
-                            <Group className={classes.statRow} gap={6} justify="center" wrap="nowrap">
+                            <Group
+                                className={classes.statRow}
+                                gap={6}
+                                justify="center"
+                                wrap="nowrap"
+                            >
                                 <PiUsersDuotone
                                     color={
                                         node.usersOnline! > 0
@@ -424,8 +457,15 @@ export const NodeDetailsCardWidget = memo((props: IProps) => {
                                     border: '1px solid rgba(139, 92, 246, 0.2)'
                                 }}
                             >
-                                <Tooltip label={`${t('node-details-card.widget.xray-core-version')}: ${node.versions.xray}`}>
-                                    <Group className={classes.statRow} gap={6} justify="center" wrap="nowrap">
+                                <Tooltip
+                                    label={`${t('node-details-card.widget.xray-core-version')}: ${node.versions.xray}`}
+                                >
+                                    <Group
+                                        className={classes.statRow}
+                                        gap={6}
+                                        justify="center"
+                                        wrap="nowrap"
+                                    >
                                         <XrayLogo color="var(--mantine-color-violet-5)" size={16} />
                                         <Text c="violet.5" fw={600} size="xs" truncate>
                                             {node.versions.xray}
@@ -435,7 +475,7 @@ export const NodeDetailsCardWidget = memo((props: IProps) => {
                             </Paper>
                         )}
 
-                        {node.xrayUptime !== 0 && (
+                        {connectionStatus === 'connected' && (
                             <Paper
                                 className={classes.stat}
                                 hiddenFrom="sm"
@@ -451,7 +491,12 @@ export const NodeDetailsCardWidget = memo((props: IProps) => {
                                         'node-stats.card.represents-the-uptime-of-the-xray-core'
                                     )}
                                 >
-                                    <Group className={classes.statRow} gap={6} justify="center" wrap="nowrap">
+                                    <Group
+                                        className={classes.statRow}
+                                        gap={6}
+                                        justify="center"
+                                        wrap="nowrap"
+                                    >
                                         <XrayLogo color="var(--mantine-color-teal-5)" size={16} />
                                         <Text
                                             c="teal.5"
@@ -480,7 +525,12 @@ export const NodeDetailsCardWidget = memo((props: IProps) => {
                                 <Tooltip
                                     label={`${t('node-details-card.widget.remnawave-node-version')}: ${node.versions.node}`}
                                 >
-                                    <Group className={classes.statRow} gap={6} justify="center" wrap="nowrap">
+                                    <Group
+                                        className={classes.statRow}
+                                        gap={6}
+                                        justify="center"
+                                        wrap="nowrap"
+                                    >
                                         <Logo color="var(--mantine-color-indigo-5)" size={16} />
                                         <Text c="indigo.5" fw={600} size="xs" truncate>
                                             {node.versions.node}

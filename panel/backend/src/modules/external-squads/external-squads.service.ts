@@ -1,4 +1,3 @@
-import { SubscriptionActionSchema } from '@libs/contracts/models/subscription-settings/custom-remarks.schema';
 import { Transactional } from '@nestjs-cls/transactional';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
 
@@ -8,10 +7,10 @@ import { RawCacheService } from '@common/raw-cache';
 import { fail, ok, TResult } from '@common/types';
 import { CACHE_KEYS, TSubscriptionTemplateType } from '@libs/contracts/constants';
 import { ERRORS } from '@libs/contracts/constants/errors';
-import { ResolvedProxyConfigSchema } from '@libs/contracts/models';
 
 import { SquadsQueueService } from '@queue/_squads';
 
+import { validateCustomRemarks } from '../../common/utils/templates/validate-custom-remarks';
 import { ReorderExternalSquadsBodyDto, UpdateExternalSquadBodyDto } from './dtos';
 import { ExternalSquadEntity } from './entities';
 import { GetExternalSquadByUuidResponseModel } from './models/get-external-squad-by-uuid.response.model';
@@ -66,6 +65,7 @@ export class ExternalSquadService {
                 }),
             );
 
+            await this.rawCacheService.invalidateTemplateSnapshots();
             return await this.getExternalSquadByUuid(externalSquad.uuid);
         } catch (error) {
             if (
@@ -109,25 +109,9 @@ export class ExternalSquadService {
             }
 
             if (dto.customRemarks) {
-                for (const [status, remarks] of Object.entries(dto.customRemarks)) {
-                    if (!Array.isArray(remarks)) continue;
-                    for (const remark of remarks) {
-                        if (remark.trim() === '{{FREE_HOST}}') continue;
-                        if (remark.trim().startsWith('{')) {
-                            try {
-                                const parsed = JSON.parse(remark);
-                                if (parsed.type === 'link') SubscriptionActionSchema.parse(parsed);
-                                else ResolvedProxyConfigSchema.parse(parsed);
-                            } catch (error) {
-                                return fail(
-                                    ERRORS.CUSTOM_RAW_REMARK_VALIDATION_ERROR.withMessage(
-                                        `${status}: ${error instanceof Error ? error.message : 'Unknown error'}`,
-                                    ),
-                                );
-                            }
-                        }
-                    }
-                }
+                const error = validateCustomRemarks(dto.customRemarks);
+                if (error)
+                    return fail(ERRORS.CUSTOM_RAW_REMARK_VALIDATION_ERROR.withMessage(error));
             }
 
             await this.externalSquadRepository.update({
@@ -166,6 +150,7 @@ export class ExternalSquadService {
             }
 
             await this.rawCacheService.del(CACHE_KEYS.EXTERNAL_SQUAD_SETTINGS(externalSquad.uuid));
+            await this.rawCacheService.invalidateTemplateSnapshots();
 
             return await this.getExternalSquadByUuid(externalSquad.uuid);
         } catch (error) {
@@ -220,6 +205,7 @@ export class ExternalSquadService {
             await this.rawCacheService.del(CACHE_KEYS.EXTERNAL_SQUAD_SETTINGS(externalSquad.uuid));
 
             await this.externalSquadRepository.deleteByUUID(uuid);
+            await this.rawCacheService.invalidateTemplateSnapshots();
 
             return ok(true);
         } catch (error) {

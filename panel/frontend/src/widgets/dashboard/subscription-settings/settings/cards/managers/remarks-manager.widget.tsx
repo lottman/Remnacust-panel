@@ -7,6 +7,7 @@ import {
     Divider,
     Group,
     Menu,
+    Paper,
     Stack,
     Text,
     TextInput,
@@ -18,8 +19,10 @@ import { PiPlus, PiTrash, PiArrowUp, PiArrowDown, PiLink, PiGlobe } from 'react-
 
 import { useUiText } from '@shared/i18n/interface-text'
 import { usePanelReducedMotion } from '@shared/ui/appearance/appearance'
-import { FlagTextInput } from '@shared/ui/flag-picker/flag-picker'
+import { FlagTextarea, FlagTextInput } from '@shared/ui/flag-picker/flag-picker'
 import { TemplateInfoPopoverShared } from '@shared/ui/popovers/template-info-popover/template-info-popover.shared'
+
+import classes from './remarks-manager.module.css'
 
 const EMPTY_REMARKS = ['']
 
@@ -28,13 +31,15 @@ export const RemarksManager = ({
     title,
     onChange,
     icon,
-    iconColor
+    iconColor,
+    mode = 'legacy'
 }: {
     icon: React.ReactNode
     iconColor: DefaultMantineColor
     initialRemarks?: string[]
     onChange: (remarks: string[]) => void
     title: string
+    mode?: 'legacy' | 'activeExpiry'
 }) => {
     const uiText = useUiText()
 
@@ -116,7 +121,12 @@ export const RemarksManager = ({
 
                     <Menu position="bottom-end" withinPortal>
                         <Menu.Target>
-                            <Button leftSection={<PiPlus size="16px" />} size="sm" variant="light">
+                            <Button
+                                disabled={mode === 'activeExpiry' && localRemarks.length >= 24}
+                                leftSection={<PiPlus size="16px" />}
+                                size="sm"
+                                variant="light"
+                            >
                                 {t('common.action.add')}
                             </Button>
                         </Menu.Target>
@@ -141,7 +151,15 @@ export const RemarksManager = ({
                             </Menu.Item>
                             <Menu.Item
                                 leftSection={<PiGlobe />}
-                                onClick={() => addLocalRemark('{{FREE_HOST}}')}
+                                disabled={
+                                    mode === 'activeExpiry' &&
+                                    localRemarks.some((line) => line.trim() === '{HOSTS}')
+                                }
+                                onClick={() =>
+                                    addLocalRemark(
+                                        mode === 'activeExpiry' ? '{HOSTS}' : '{{FREE_HOST}}'
+                                    )
+                                }
                             >
                                 {uiText('available-hosts-66c64ba')}
                             </Menu.Item>
@@ -155,8 +173,25 @@ export const RemarksManager = ({
                     {localRemarks.map((remark, index) => {
                         const link = linkValue(remark)
                         return (
-                            <Group align="flex-start" gap="sm" key={index}>
-                                {link ? (
+                            <Group
+                                align="flex-start"
+                                gap="sm"
+                                key={index}
+                                className={mode === 'activeExpiry' ? classes.activeRow : undefined}
+                            >
+                                {mode === 'activeExpiry' && remark.trim() === '{HOSTS}' ? (
+                                    <Paper p="sm" withBorder style={{ flex: 1, minWidth: 0 }}>
+                                        <Group gap="xs">
+                                            <PiGlobe />
+                                            <Text fw={600} size="sm">
+                                                {uiText('remarks-host-block')}
+                                            </Text>
+                                        </Group>
+                                        <Text c="dimmed" size="xs">
+                                            {uiText('remarks-host-block-help')}
+                                        </Text>
+                                    </Paper>
+                                ) : link ? (
                                     <Stack gap="xs" style={{ flex: 1 }}>
                                         <TextInput
                                             label={uiText('text-71988c4')}
@@ -205,8 +240,28 @@ export const RemarksManager = ({
                                             }
                                         />
                                     </Stack>
+                                ) : mode === 'activeExpiry' ? (
+                                    <FlagTextarea
+                                        autosize
+                                        minRows={2}
+                                        maxRows={8}
+                                        maxLength={500}
+                                        aria-label={uiText('remarks-line-number', {
+                                            number: index + 1
+                                        })}
+                                        rightSection={<TemplateInfoPopoverShared compact />}
+                                        onChange={(event) =>
+                                            updateLocalRemark(index, event.currentTarget.value)
+                                        }
+                                        placeholder={t('remarks-manager.widget.enter-remark')}
+                                        style={{ minWidth: 0 }}
+                                        value={remark}
+                                    />
                                 ) : (
                                     <FlagTextInput
+                                        aria-label={uiText('remarks-line-number', {
+                                            number: index + 1
+                                        })}
                                         rightSection={<TemplateInfoPopoverShared compact />}
                                         onChange={(e) => updateLocalRemark(index, e.target.value)}
                                         placeholder={t('remarks-manager.widget.enter-remark')}
@@ -240,6 +295,9 @@ export const RemarksManager = ({
                                     </ActionIcon>
                                 </Stack>
                                 <ActionIcon
+                                    aria-label={uiText('remarks-remove-line', {
+                                        number: index + 1
+                                    })}
                                     color="red"
                                     disabled={localRemarks.length === 1}
                                     onClick={() => removeLocalRemark(index)}

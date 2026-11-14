@@ -63,7 +63,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           repository: lottman/Remnacust-node
-          ref: 14c534d17f1c45dbb9405c72f879e0f6eb88d232
+          ref: 13e0bd44380c79ad7563f438d7ff9362ba167b1d
           path: node-repository
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
@@ -500,6 +500,13 @@ jobs:
         env:
           GEOFILES_OPTIN_TEST_DATABASE_URL: ${{ env.DATABASE_URL }}
           GEOFILES_OPTIN_TEST_DISPOSABLE: '1'
+      - name: Verify active expiry omission and repository row locks
+        run: node --test tests/active-expiry-persistence.database.integration.cjs
+        env:
+          ACTIVE_EXPIRY_TEST_DATABASE_URL: ${{ env.DATABASE_URL }}
+          ACTIVE_EXPIRY_TEST_DISPOSABLE: '1'
+          ACTIVE_EXPIRY_TEST_REQUIRED: '1'
+          ACTIVE_EXPIRY_TEST_PG_VERSION: ${{ matrix.postgres }}
       - name: Verify geofile master migration and concurrent toggles
         run: node --test tests/geofiles-system-master.database.integration.cjs
         env:
@@ -514,6 +521,14 @@ jobs:
         env:
           TEMPLATE_CACHE_TEST_DATABASE_URL: ${{ env.DATABASE_URL }}
           TEMPLATE_CACHE_TEST_DISPOSABLE: '1'
+          TEMPLATE_CACHE_TEST_REQUIRED: '1'
+          TEMPLATE_CACHE_TEST_PG_VERSION: ${{ matrix.postgres }}
+      - name: Verify external squad assignment cache revisions and cascades
+        run: node --test tests/external-squad-template-revision.database.integration.cjs
+        env:
+          TEMPLATE_CACHE_TEST_DATABASE_URL: ${{ env.DATABASE_URL }}
+          TEMPLATE_CACHE_TEST_DISPOSABLE: '1'
+          TEMPLATE_CACHE_TEST_REQUIRED: '1'
           TEMPLATE_CACHE_TEST_PG_VERSION: ${{ matrix.postgres }}
       - name: Verify host metadata freshness and bounded identity scans
         run: node --test tests/host-policy-metadata.database.integration.cjs

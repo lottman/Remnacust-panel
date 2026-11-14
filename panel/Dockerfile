@@ -61,7 +61,7 @@ FROM node:26.13.1-trixie-slim@sha256:e6bedef217677b276c591795e169840edd9096dbf13
 COPY --from=certificates /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 
 LABEL org.opencontainers.image.title="Remnacust"
-LABEL org.opencontainers.image.version="1.1.7.124"
+LABEL org.opencontainers.image.version="1.1.7.125"
 LABEL org.opencontainers.image.description="Powerful proxy management tool"
 LABEL org.opencontainers.image.url="https://github.com/lottman/Remnacust-panel"
 LABEL org.opencontainers.image.source="https://github.com/lottman/Remnacust-panel"
@@ -72,7 +72,7 @@ LABEL org.opencontainers.image.documentation="https://github.com/lottman/Remnacu
 WORKDIR /opt/app
 
 ARG BRANCH=main
-ARG __RW_METADATA_VERSION=1.1.7.119
+ARG __RW_METADATA_VERSION=1.1.7.125
 ARG __RW_METADATA_GIT_BACKEND_COMMIT=unknown
 ARG __RW_METADATA_GIT_FRONTEND_COMMIT=unknown
 ARG __RW_METADATA_GIT_BRANCH=local

@@ -20,6 +20,17 @@ function source(relative, overrides = {}) {
         }
     }
     for (const name of Object.keys(mocks)) {
+        if (
+            name.endsWith('/active-expiry-remarks') ||
+            name.endsWith('/validate-custom-remarks') ||
+            name.endsWith('/preserve-active-expiry-remarks')
+        )
+            mocks[name] = load(path.resolve(path.dirname(filename), name + '.ts'), {
+                ...mocks,
+                ...overrides,
+                '@libs/contracts/models': require('../libs/contract/build/backend/models'),
+                '@libs/contracts/models/subscription-settings/custom-remarks.schema': require('../libs/contract/build/backend/models/subscription-settings/custom-remarks.schema'),
+            });
         if (name.endsWith('/template-geofile-policy'))
             mocks[name] = load(path.resolve(path.dirname(filename), name + '.ts'));
     }

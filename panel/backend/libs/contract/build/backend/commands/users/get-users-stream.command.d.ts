@@ -1,8 +1,8 @@
 import { z } from 'zod';
 export declare namespace GetUsersStreamCommand {
-    const url: '/api/users/stream';
-    const TSQ_url: '/api/users/stream';
-    const endpointDetails: import('../../constants').EndpointDetails;
+    const url: "/api/users/stream";
+    const TSQ_url: "/api/users/stream";
+    const endpointDetails: import("../../constants").EndpointDetails;
     const RequestQuerySchema: z.ZodObject<{
         cursor: z.ZodOptional<z.ZodCoercedNumber<unknown>>;
         size: z.ZodDefault<z.ZodOptional<z.ZodCoercedNumber<unknown>>>;
@@ -72,8 +72,8 @@ export declare namespace GetUsersStreamCommand {
                     domain: z.ZodString;
                     path: z.ZodString;
                     kind: z.ZodEnum<{
-                        PRIMARY: 'PRIMARY';
-                        CDN: 'CDN';
+                        CDN: "CDN";
+                        PRIMARY: "PRIMARY";
                     }>;
                     parentUuid: z.ZodNullable<z.ZodUUID>;
                     isDefault: z.ZodBoolean;

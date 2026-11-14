@@ -3,7 +3,7 @@ import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 
 import { RawCacheService } from '@common/raw-cache';
 import { fail, ok } from '@common/types';
-import { CACHE_KEYS, CACHE_KEYS_TTL, ERRORS } from '@libs/contracts/constants';
+import { CACHE_KEYS, ERRORS } from '@libs/contracts/constants';
 
 import { ExternalSquadRepository } from '@modules/external-squads/repositories/external-squad.repository';
 
@@ -28,7 +28,8 @@ export class GetCachedTemplateNameHandler implements IQueryHandler<GetCachedTemp
                 query.templateType,
             );
 
-            const cached = await this.rawCacheService.getString(cacheKey, true);
+            const snapshot = await this.rawCacheService.templateSnapshot<string>(cacheKey);
+            const cached = snapshot.value;
 
             if (cached !== null) {
                 return cached === '' ? fail(ERRORS.SUBSCRIPTION_TEMPLATE_NOT_FOUND) : ok(cached);
@@ -39,10 +40,10 @@ export class GetCachedTemplateNameHandler implements IQueryHandler<GetCachedTemp
                 query.templateType,
             );
 
-            await this.rawCacheService.setString(
+            await this.rawCacheService.setTemplateSnapshot(
                 cacheKey,
+                snapshot.generation,
                 result ?? '',
-                CACHE_KEYS_TTL.EXTERNAL_SQUAD_TEMPLATE_NAME,
             );
 
             if (!result) {

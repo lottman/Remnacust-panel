@@ -33,17 +33,13 @@ const cases = [
 ];
 for (const [file, exported, method] of cases) {
     const Handler = source('modules/' + file, { '@libs/contracts/constants': constants })[exported];
-    const settingsCase = exported === 'GetCachedSubscriptionSettingsHandler';
-    const cache = (methods) =>
-        settingsCase
-            ? {
-                  templateSnapshot: async (key) => ({
-                      generation: 'a'.repeat(32),
-                      value: await methods.get(key),
-                  }),
-                  setTemplateSnapshot: async (key, _generation, value) => methods.set(key, value),
-              }
-            : methods;
+    const cache = (methods) => ({
+        templateSnapshot: async (key) => ({
+            generation: 'a'.repeat(32),
+            value: await methods.get(key),
+        }),
+        setTemplateSnapshot: async (key, _generation, value) => methods.set(key, value),
+    });
     test(exported + ' preserves database settings when cache read or write fails', async () => {
         for (const failure of ['get', 'set']) {
             let reads = 0;

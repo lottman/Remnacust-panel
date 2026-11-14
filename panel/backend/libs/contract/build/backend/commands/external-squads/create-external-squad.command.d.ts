@@ -44,6 +44,20 @@ export declare namespace CreateExternalSquadCommand {
                 maxDevicesAnnounce: z.ZodNullable<z.ZodString>;
             }, z.core.$strip>>;
             customRemarks: z.ZodNullable<z.ZodObject<{
+                activeExpiry: z.ZodOptional<z.ZodObject<{
+                    rules: z.ZodArray<z.ZodObject<{
+                        id: z.ZodPipe<z.ZodUUID, z.ZodTransform<string, string>>;
+                        enabled: z.ZodBoolean;
+                        daysBeforeExpiry: z.ZodNumber;
+                        scope: z.ZodEnum<{
+                            all: "all";
+                            selected: "selected";
+                        }>;
+                        internalSquadUuids: z.ZodArray<z.ZodPipe<z.ZodUUID, z.ZodTransform<string, string>>>;
+                        externalSquadUuids: z.ZodArray<z.ZodPipe<z.ZodUUID, z.ZodTransform<string, string>>>;
+                        remarks: z.ZodArray<z.ZodString>;
+                    }, z.core.$strip>>;
+                }, z.core.$strip>>;
                 alwaysAvailableHostsPosition: z.ZodOptional<z.ZodEnum<{
                     after: "after";
                     before: "before";
@@ -104,6 +118,17 @@ export declare namespace CreateExternalSquadCommand {
                 maxDevicesAnnounce: string | null;
             } | null;
             customRemarks: {
+                activeExpiry?: {
+                    rules: {
+                        id: string;
+                        enabled: boolean;
+                        daysBeforeExpiry: number;
+                        scope: "all" | "selected";
+                        internalSquadUuids: string[];
+                        externalSquadUuids: string[];
+                        remarks: string[];
+                    }[];
+                } | undefined;
                 alwaysAvailableHostsPosition?: "after" | "before" | undefined;
                 combineSubscriptionAndHwidRemarks: boolean;
                 subscriptionAndHwidRemarkOrder: ("DISABLED" | "EXPIRED" | "FROZEN" | "HWID_BLOCKED" | "HWID_REGISTRATION_BLOCKED")[];
@@ -158,6 +183,17 @@ export declare namespace CreateExternalSquadCommand {
                 maxDevicesAnnounce: string | null;
             } | null;
             customRemarks: {
+                activeExpiry?: {
+                    rules: {
+                        id: string;
+                        enabled: boolean;
+                        daysBeforeExpiry: number;
+                        scope: "all" | "selected";
+                        internalSquadUuids: string[];
+                        externalSquadUuids: string[];
+                        remarks: string[];
+                    }[];
+                } | undefined;
                 alwaysAvailableHostsPosition?: "after" | "before" | undefined;
                 combineSubscriptionAndHwidRemarks: boolean;
                 subscriptionAndHwidRemarkOrder: ("DISABLED" | "EXPIRED" | "FROZEN" | "HWID_BLOCKED" | "HWID_REGISTRATION_BLOCKED")[];

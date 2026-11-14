@@ -1,4 +1,4 @@
-import { TransactionHost } from '@nestjs-cls/transactional';
+import { Transactional, TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { sql } from 'kysely';
 import { jsonArrayFrom } from 'kysely/helpers/postgres';
@@ -12,6 +12,7 @@ import { ICrud } from '@common/types/crud-port';
 import { wrapDbNull } from '@common/utils';
 import { TSubscriptionTemplateType } from '@libs/contracts/constants';
 
+import { preserveActiveExpiryRemarks } from '../../../common/utils/templates/preserve-active-expiry-remarks';
 import { ExternalSquadEntity, ExternalSquadWithInfoEntity } from '../entities';
 import { ExternalSquadConverter } from '../external-squads.converter';
 
@@ -50,10 +51,20 @@ export class ExternalSquadRepository implements ICrud<ExternalSquadEntity> {
         return this.externalSquadConverter.fromPrismaModelToEntity(result);
     }
 
+    @Transactional()
     public async update({
         uuid,
         ...data
     }: Partial<ExternalSquadEntity>): Promise<ExternalSquadEntity> {
+        if (data.customRemarks && !Object.hasOwn(data.customRemarks, 'activeExpiry')) {
+            const [before] = await this.prisma.tx.$queryRaw<{ customRemarks: unknown }[]>`
+                SELECT custom_remarks AS "customRemarks" FROM external_squads
+                WHERE uuid = ${uuid}::uuid FOR UPDATE`;
+            data.customRemarks = preserveActiveExpiryRemarks(
+                data.customRemarks,
+                before?.customRemarks,
+            );
+        }
         const result = await this.prisma.tx.externalSquads.update({
             where: {
                 uuid,

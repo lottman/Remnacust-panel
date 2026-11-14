@@ -2,7 +2,7 @@ import { z } from 'zod';
 export declare namespace RevokeUserSubscriptionCommand {
     const url: (userId: string) => string;
     const TSQ_url: string;
-    const endpointDetails: import('../../../constants').EndpointDetails;
+    const endpointDetails: import("../../../constants").EndpointDetails;
     const RequestParamSchema: z.ZodObject<{
         userId: z.ZodCoercedNumber<unknown>;
     }, z.core.$strip>;
@@ -56,8 +56,8 @@ export declare namespace RevokeUserSubscriptionCommand {
                 domain: z.ZodString;
                 path: z.ZodString;
                 kind: z.ZodEnum<{
-                    PRIMARY: 'PRIMARY';
-                    CDN: 'CDN';
+                    CDN: "CDN";
+                    PRIMARY: "PRIMARY";
                 }>;
                 parentUuid: z.ZodNullable<z.ZodUUID>;
                 isDefault: z.ZodBoolean;

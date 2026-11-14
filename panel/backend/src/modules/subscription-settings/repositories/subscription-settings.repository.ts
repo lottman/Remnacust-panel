@@ -6,6 +6,7 @@ import { Injectable } from '@nestjs/common';
 
 import { ICrud } from '@common/types/crud-port';
 
+import { preserveActiveExpiryRemarks } from '../../../common/utils/templates/preserve-active-expiry-remarks';
 import { SubscriptionSettingsEntity } from '../entities/subscription-settings.entity';
 import { SubscriptionSettingsConverter } from '../subscription-settings.converter';
 
@@ -50,6 +51,7 @@ export class SubscriptionSettingsRepository implements ICrud<SubscriptionSetting
         const before = await this.prisma.tx.subscriptionSettings.findUniqueOrThrow({
             where: { uuid },
         });
+        data.customRemarks = preserveActiveExpiryRemarks(data.customRemarks, before.customRemarks);
         if (data.geofilesEnabled !== undefined && data.geofilesEnabled !== before.geofilesEnabled)
             throw new Error('GEOFILES_PER_TEMPLATE');
         if (

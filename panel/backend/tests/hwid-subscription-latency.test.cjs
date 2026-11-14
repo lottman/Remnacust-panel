@@ -63,6 +63,12 @@ const { SubscriptionService } = source('modules/subscription/subscription.servic
     '../../common/utils/geofile-request-context': {
         currentGeofileOrigin: () => 'https://cdn.example.test',
     },
+    './utils/active-expiry-remarks': load(
+        path.join(__dirname, '../src/modules/subscription/utils/active-expiry-remarks.ts'),
+        {
+            '@libs/contracts/models/subscription-settings/custom-remarks.schema': require('../libs/contract/build/backend/models/subscription-settings/custom-remarks.schema'),
+        },
+    ),
     './models': { SubscriptionWithConfigResponse: Response },
 });
 
@@ -100,7 +106,9 @@ test('Happ and INCY HWID subscription requests respond without node I/O, includi
         {},
     );
     Object.defineProperty(access, 'enabled', { get: () => true });
-    access.kickReconciliation = () => { kicks++; };
+    access.kickReconciliation = () => {
+        kicks++;
+    };
     const service = Object.create(SubscriptionService.prototype);
     Object.assign(service, {
         deviceAccess: access,

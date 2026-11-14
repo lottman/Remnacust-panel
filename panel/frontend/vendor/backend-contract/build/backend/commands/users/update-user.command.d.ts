@@ -1,15 +1,15 @@
 import { z } from 'zod';
 export declare namespace UpdateUserCommand {
-    const url: '/api/users/';
-    const TSQ_url: '/api/users/';
-    const endpointDetails: import('../../constants').EndpointDetails;
+    const url: "/api/users/";
+    const TSQ_url: "/api/users/";
+    const endpointDetails: import("../../constants").EndpointDetails;
     const RequestBodySchema: z.ZodObject<{
         username: z.ZodOptional<z.ZodString>;
         id: z.ZodOptional<z.ZodNumber>;
         status: z.ZodOptional<z.ZodEnum<{
-            DISABLED: 'DISABLED';
-            ACTIVE: 'ACTIVE';
-            FROZEN: 'FROZEN';
+            ACTIVE: "ACTIVE";
+            DISABLED: "DISABLED";
+            FROZEN: "FROZEN";
         }>>;
         frozenUntil: z.ZodOptional<z.ZodNullable<z.ZodPipe<z.ZodISODateTime, z.ZodTransform<Date, string>>>>;
         trafficLimitBytes: z.ZodOptional<z.ZodNumber>;
@@ -76,8 +76,8 @@ export declare namespace UpdateUserCommand {
                 domain: z.ZodString;
                 path: z.ZodString;
                 kind: z.ZodEnum<{
-                    PRIMARY: 'PRIMARY';
-                    CDN: 'CDN';
+                    CDN: "CDN";
+                    PRIMARY: "PRIMARY";
                 }>;
                 parentUuid: z.ZodNullable<z.ZodUUID>;
                 isDefault: z.ZodBoolean;

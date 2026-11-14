@@ -10,25 +10,34 @@ import {
 
 import { nodeNeedsCustomUpgrade } from '@shared/utils/node-policy-status'
 
+import { getNodeStatus } from '../node-status'
 import { IProps } from './interface'
 
 export const NodeStatusSimplfiedBadgeWidget = memo(
-    ({ isConnected, isConnecting, isDisabled, nodeUuid, lastStatusMessage, ...rest }: IProps) => {
+    ({
+        isConnected,
+        isConnecting,
+        isDisabled,
+        nodeUuid,
+        lastStatusMessage,
+        xrayUptime,
+        ...rest
+    }: IProps) => {
         const { t } = useTranslation()
+        const connectionStatus = getNodeStatus({
+            isConnected,
+            isConnecting,
+            isDisabled,
+            xrayUptime
+        })
         const upgradeRequired =
-            !isDisabled && isConnected && nodeNeedsCustomUpgrade(lastStatusMessage)
+            isConnected && !isDisabled && !isConnecting && nodeNeedsCustomUpgrade(lastStatusMessage)
         let icon: React.ReactNode
         let color = 'red'
 
         if (isDisabled) {
             icon = <PiProhibitDuotone size={18} style={{ color: 'var(--mantine-color-gray-6)' }} />
             color = 'gray'
-        } else if (upgradeRequired) {
-            icon = <PiPulseDuotone size={18} style={{ color: 'var(--mantine-color-violet-6)' }} />
-            color = 'violet'
-        } else if (isConnected) {
-            icon = <PiPulseDuotone size={18} style={{ color: 'var(--mantine-color-teal-6)' }} />
-            color = 'teal'
         } else if (isConnecting) {
             icon = (
                 <PiCloudArrowUpDuotone
@@ -37,6 +46,15 @@ export const NodeStatusSimplfiedBadgeWidget = memo(
                 />
             )
             color = 'var(--mantine-color-yellow-3)'
+        } else if (upgradeRequired) {
+            icon = <PiPulseDuotone size={18} style={{ color: 'var(--mantine-color-violet-6)' }} />
+            color = 'violet'
+        } else if (connectionStatus === 'limited') {
+            icon = <PiPulseDuotone size={18} style={{ color: 'var(--mantine-color-blue-6)' }} />
+            color = 'blue'
+        } else if (isConnected) {
+            icon = <PiPulseDuotone size={18} style={{ color: 'var(--mantine-color-teal-6)' }} />
+            color = 'teal'
         } else {
             icon = <PiWarningCircle size={18} style={{ color: 'var(--mantine-color-red-3)' }} />
             color = 'red'
@@ -44,8 +62,12 @@ export const NodeStatusSimplfiedBadgeWidget = memo(
 
         return (
             <Tooltip
-                disabled={!upgradeRequired}
-                label={t('xera-node-health.upgrade-required-message')}
+                disabled={!upgradeRequired && connectionStatus !== 'limited'}
+                label={t(
+                    upgradeRequired
+                        ? 'xera-node-health.upgrade-required-message'
+                        : 'xera-node-health.limited'
+                )}
                 multiline
                 w="max-content"
                 maw="min(300px, calc(100vw - 24px))"
@@ -53,7 +75,11 @@ export const NodeStatusSimplfiedBadgeWidget = memo(
             >
                 <ThemeIcon
                     aria-label={
-                        upgradeRequired ? t('xera-node-health.upgrade-required-title') : undefined
+                        upgradeRequired
+                            ? t('xera-node-health.upgrade-required-title')
+                            : connectionStatus === 'limited'
+                              ? t('xera-node-health.limited')
+                              : undefined
                     }
                     color={color}
                     size="md"

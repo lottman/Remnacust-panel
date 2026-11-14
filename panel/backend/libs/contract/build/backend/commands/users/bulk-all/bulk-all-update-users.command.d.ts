@@ -1,8 +1,8 @@
 import { z } from 'zod';
 export declare namespace BulkAllUpdateUsersCommand {
-    const url: '/api/users/bulk/all/update';
-    const TSQ_url: '/api/users/bulk/all/update';
-    const endpointDetails: import('../../../constants').EndpointDetails;
+    const url: "/api/users/bulk/all/update";
+    const TSQ_url: "/api/users/bulk/all/update";
+    const endpointDetails: import("../../../constants").EndpointDetails;
     const RequestBodySchema: z.ZodObject<{
         status: z.ZodOptional<z.ZodEnum<{
             readonly ACTIVE: 'ACTIVE';

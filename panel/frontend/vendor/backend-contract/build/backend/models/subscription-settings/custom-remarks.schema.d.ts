@@ -17,7 +17,60 @@ export declare const SubscriptionActionSchema: z.ZodObject<{
     buttonText: z.ZodString;
     url: z.ZodString;
 }, z.core.$strip>;
+export type ActiveExpiryItem = {
+    kind: 'hosts';
+} | {
+    kind: 'text';
+    text: string;
+} | {
+    kind: 'action';
+    text: string;
+    buttonText: string;
+    url: string;
+};
+export declare function parseActiveExpiryRemark(remark: string): ActiveExpiryItem | null;
+export declare const ActiveExpiryRuleSchema: z.ZodObject<{
+    id: z.ZodPipe<z.ZodUUID, z.ZodTransform<string, string>>;
+    enabled: z.ZodBoolean;
+    daysBeforeExpiry: z.ZodNumber;
+    scope: z.ZodEnum<{
+        all: "all";
+        selected: "selected";
+    }>;
+    internalSquadUuids: z.ZodArray<z.ZodPipe<z.ZodUUID, z.ZodTransform<string, string>>>;
+    externalSquadUuids: z.ZodArray<z.ZodPipe<z.ZodUUID, z.ZodTransform<string, string>>>;
+    remarks: z.ZodArray<z.ZodString>;
+}, z.core.$strip>;
+export declare const ActiveExpirySchema: z.ZodObject<{
+    rules: z.ZodArray<z.ZodObject<{
+        id: z.ZodPipe<z.ZodUUID, z.ZodTransform<string, string>>;
+        enabled: z.ZodBoolean;
+        daysBeforeExpiry: z.ZodNumber;
+        scope: z.ZodEnum<{
+            all: "all";
+            selected: "selected";
+        }>;
+        internalSquadUuids: z.ZodArray<z.ZodPipe<z.ZodUUID, z.ZodTransform<string, string>>>;
+        externalSquadUuids: z.ZodArray<z.ZodPipe<z.ZodUUID, z.ZodTransform<string, string>>>;
+        remarks: z.ZodArray<z.ZodString>;
+    }, z.core.$strip>>;
+}, z.core.$strip>;
+export type TActiveExpiryRule = z.infer<typeof ActiveExpiryRuleSchema>;
 export declare const CustomRemarksSchema: z.ZodObject<{
+    activeExpiry: z.ZodOptional<z.ZodObject<{
+        rules: z.ZodArray<z.ZodObject<{
+            id: z.ZodPipe<z.ZodUUID, z.ZodTransform<string, string>>;
+            enabled: z.ZodBoolean;
+            daysBeforeExpiry: z.ZodNumber;
+            scope: z.ZodEnum<{
+                all: "all";
+                selected: "selected";
+            }>;
+            internalSquadUuids: z.ZodArray<z.ZodPipe<z.ZodUUID, z.ZodTransform<string, string>>>;
+            externalSquadUuids: z.ZodArray<z.ZodPipe<z.ZodUUID, z.ZodTransform<string, string>>>;
+            remarks: z.ZodArray<z.ZodString>;
+        }, z.core.$strip>>;
+    }, z.core.$strip>>;
     alwaysAvailableHostsPosition: z.ZodOptional<z.ZodEnum<{
         after: "after";
         before: "before";

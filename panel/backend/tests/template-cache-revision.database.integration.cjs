@@ -126,6 +126,28 @@ for (const table of ['subscription_templates', 'external_squads']) {
                         if (operation === 'TRUNCATE')
                             await writer.query(`TRUNCATE ${table} CASCADE`);
                     };
+                    if (operation === 'TRUNCATE' && table === 'external_squads') {
+                        await transaction(async () => {
+                            await assert.rejects(
+                                mutate,
+                                (error) =>
+                                    error.code === 'P0001' &&
+                                    error.message === 'quota recovery evidence is immutable',
+                            );
+                            assert.equal(await epoch(), before);
+                        });
+                        assert.equal(await epoch(), before);
+                        assert.equal(
+                            (
+                                await observer.query(
+                                    `SELECT count(*)::int AS n FROM ${table} WHERE uuid=$1`,
+                                    [target],
+                                )
+                            ).rows[0].n,
+                            1,
+                        );
+                        continue;
+                    }
                     await transaction(async () => {
                         await mutate();
                         assert.notEqual(
@@ -214,7 +236,11 @@ for (const table of ['subscription_templates', 'external_squads']) {
                         table,
                         restrictedOwner: true,
                         migrations: applied.length,
-                        committedOperations: ['INSERT', 'UPDATE', 'DELETE', 'TRUNCATE'],
+                        committedOperations:
+                            table === 'external_squads'
+                                ? ['INSERT', 'UPDATE', 'DELETE']
+                                : ['INSERT', 'UPDATE', 'DELETE', 'TRUNCATE'],
+                        protectedCascadeRejected: table === 'external_squads',
                         rollback: true,
                         concurrentCommitAndRollback: true,
                     }) + '\n',

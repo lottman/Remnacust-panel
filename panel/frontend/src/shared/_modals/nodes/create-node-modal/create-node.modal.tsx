@@ -1,8 +1,8 @@
 import NiceModal, { useModal } from '@ebay/nice-modal-react'
 import { Modal, Stepper, Stack, Transition } from '@mantine/core'
-import { useForm, schemaResolver } from '@mantine/form'
+import { FormErrors, useForm } from '@mantine/form'
 import { CreateNodeCommand } from '@remnawave/backend-contract'
-import { useEffect, useState } from 'react'
+import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbCpu } from 'react-icons/tb'
 
@@ -15,12 +15,17 @@ import {
     useCreateNode,
     useGetNodeSecretKey
 } from '@shared/api/hooks'
-import { withNodeControlAddressesErrors } from '@shared/ui/node-ips/validate-node-control-addresses'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 
 import { CreateNodeStep1Connection } from './create-node-steps/create-node-step-1-connection'
 import { CreateNodeStep2ConfigProfiles } from './create-node-steps/create-node-step-2-config-profiles'
 import { CreateNodeStep3Status } from './create-node-steps/create-node-step-3-status'
+import {
+    CreateNodeFocusRequest,
+    focusCreateNodeError,
+    getCreateNodeErrors,
+    getCreateNodeStepErrors
+} from './create-node-validation'
 
 export const CreateNodeModal = NiceModal.create(() => {
     const { t } = useTranslation()
@@ -39,6 +44,8 @@ export const CreateNodeModal = NiceModal.create(() => {
     const [installMode, setInstallMode] = useState<'ssh' | 'manual'>('ssh')
     const [createdNodeUuid, setCreatedNodeUuid] = useState<string>()
     const [selectedPort, setSelectedPort] = useState<number>(2222)
+    const [focusRequest, setFocusRequest] = useState<CreateNodeFocusRequest>()
+    const createPending = useRef(false)
 
     const form = useForm<CreateNodeCommand.RequestBody>({
         name: 'create-node-form',
@@ -54,15 +61,27 @@ export const CreateNodeModal = NiceModal.create(() => {
         onValuesChange: (values) => {
             if (values.proxyUrl === '') form.setFieldValue('proxyUrl', null)
         },
-        validate: withNodeControlAddressesErrors(
-            schemaResolver(CreateNodeCommand.RequestBodySchema),
-            { required: true }
-        )
+        validate: getCreateNodeErrors,
+        validateInputOnBlur: ['proxyUrl']
     })
+
+    const showValidationErrors = (errors: FormErrors) => {
+        const connectionErrors = getCreateNodeStepErrors(errors, 0)
+        const step = Object.keys(connectionErrors).length ? 0 : 1
+        const field = Object.keys(
+            step === 0 ? connectionErrors : getCreateNodeStepErrors(errors, 1)
+        )[0]
+        form.setErrors(errors)
+        setActiveStep(step)
+        if (field) {
+            setFocusRequest((current) => ({ field, requestId: (current?.requestId ?? 0) + 1 }))
+        }
+    }
 
     const { mutate: createNode, isPending: isCreateNodePending } = useCreateNode({
         mutationFns: {
             onError: (error) => {
+                createPending.current = false
                 if (!(error instanceof RequestError)) return
                 const field =
                     error.errorCode === 'A033'
@@ -73,8 +92,7 @@ export const CreateNodeModal = NiceModal.create(() => {
                             ? 'controlAddresses'
                             : undefined
                 if (!field) return
-                form.setFieldError(field, error.message)
-                setActiveStep(0)
+                showValidationErrors({ [field]: error.message })
             },
             onSuccess: (data) => {
                 queryClient.refetchQueries({
@@ -87,9 +105,16 @@ export const CreateNodeModal = NiceModal.create(() => {
         }
     })
 
-    const handleCreateNode = () => {
-        if (isCreateNodePending || form.validate().hasErrors) return
-        const values = form.getValues()
+    const handleCreateNode = async () => {
+        if (createPending.current || isCreateNodePending || createdNodeUuid) return
+        createPending.current = true
+        const values = structuredClone(form.getValues())
+        const validation = await form.validate()
+        if (validation.hasErrors) {
+            createPending.current = false
+            showValidationErrors(validation.errors)
+            return
+        }
         createNode({
             variables: {
                 ...values,
@@ -98,18 +123,21 @@ export const CreateNodeModal = NiceModal.create(() => {
         })
     }
 
-    const nextStep = () => setActiveStep((current) => (current < 2 ? current + 1 : current))
-    const prevStep = () => setActiveStep((current) => (current > 0 ? current - 1 : current))
-
-    useEffect(() => {
-        if (form.getValues().port) {
+    const nextStep = async () => {
+        const validation = await form.validate()
+        const errors = getCreateNodeStepErrors(validation.errors, 0)
+        form.setErrors(errors)
+        if (Object.keys(errors).length) {
+            showValidationErrors(errors)
             return
         }
-
-        form.setValues({
-            port: 2222
-        })
-    }, [form])
+        setFocusRequest(undefined)
+        setActiveStep(1)
+    }
+    const prevStep = () => {
+        setFocusRequest(undefined)
+        setActiveStep((current) => (current > 0 ? current - 1 : current))
+    }
 
     form.watch('port', ({ value }) => {
         if (value) {
@@ -141,12 +169,18 @@ export const CreateNodeModal = NiceModal.create(() => {
                     duration={300}
                     exitDuration={0}
                     mounted={activeStep === 0}
+                    onEntered={() => {
+                        if (!focusRequest) return
+                        focusCreateNodeError(form, focusRequest.field)
+                        requestAnimationFrame(() => focusCreateNodeError(form, focusRequest.field))
+                    }}
                     timingFunction="ease"
                     transition="fade"
                 >
                     {(styles) => (
                         <div style={styles}>
                             <CreateNodeStep1Connection
+                                focusRequest={focusRequest}
                                 form={form}
                                 installMode={installMode}
                                 onInstallModeChange={setInstallMode}
@@ -168,6 +202,7 @@ export const CreateNodeModal = NiceModal.create(() => {
                     {(styles) => (
                         <div style={styles}>
                             <CreateNodeStep2ConfigProfiles
+                                focusRequest={focusRequest}
                                 form={form}
                                 isCreating={isCreateNodePending}
                                 onCreateNode={handleCreateNode}

@@ -5,6 +5,7 @@ import i18next from 'i18next'
 import { translateMutationMessage } from '@shared/utils/translate-mutation-message'
 
 import { createMutationHook } from '../../tsq-helpers'
+import { SUBSCRIPTION_SETTINGS_MUTATION_KEY } from './subscription-settings-state'
 
 export const useUpdateSubscriptionSettings = createMutationHook({
     endpoint: UpdateSubscriptionSettingsCommand.TSQ_url,
@@ -12,6 +13,8 @@ export const useUpdateSubscriptionSettings = createMutationHook({
     responseSchema: UpdateSubscriptionSettingsCommand.ResponseSchema,
     requestMethod: UpdateSubscriptionSettingsCommand.endpointDetails.REQUEST_METHOD,
     rMutationParams: {
+        mutationKey: SUBSCRIPTION_SETTINGS_MUTATION_KEY,
+        scope: { id: 'subscriptionSettings' },
         onSuccess: () => {
             notifications.show({
                 title: i18next.t('common.message.success'),

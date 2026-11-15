@@ -116,7 +116,14 @@ export class NodeConfigurationService {
                     !node.controlAddresses.some((row) => row.enabled))
             )
                 return;
-            return await this.hostPolicies.withCompatibilitySnapshot([node.uuid], async () => {
+            const withSnapshot = (work: () => Promise<void>) =>
+                this.hostPolicies.withCompatibilitySnapshot(
+                    [node.uuid],
+                    work,
+                    false,
+                    'configuration',
+                );
+            return await withSnapshot(async () => {
                 const claimed = await this.leases.acquire(node.uuid);
                 if (claimed === 'busy') return;
                 lease = claimed;
@@ -479,7 +486,9 @@ export class NodeConfigurationService {
                             nodeResponse.isStarted && !nodeResponse.error,
                         ),
                     );
-                if (nodeResponse.isStarted && !nodeResponse.error) {
+                if (nodeResponse.isStarted && !nodeResponse.error && !policy.verificationPending) {
+                    await assertOwnership();
+                    await lease?.assert();
                     await this.rawCacheService.delMany([hostPolicyRetryKey(node.uuid)]);
                 }
 
@@ -518,6 +527,7 @@ export class NodeConfigurationService {
                         isConnected: nodeResponse.isStarted,
                         lastStatusMessage:
                             nodeResponse.error ??
+                            (nodeResponse.isStarted ? policy.message : undefined) ??
                             (await this.rawCacheService.get<string>(
                                 `remnacust:node-compatibility:${node.uuid}`,
                             )) ??

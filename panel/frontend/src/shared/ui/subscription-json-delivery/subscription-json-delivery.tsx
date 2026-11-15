@@ -1,7 +1,11 @@
 import { Alert, Button, Loader, Stack, Switch, Text } from '@mantine/core'
-import { useQueryClient } from '@tanstack/react-query'
+import { useIsMutating, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 
+import {
+    getGeofilesSettingsState,
+    SUBSCRIPTION_SETTINGS_MUTATION_KEY
+} from '@shared/api/hooks/subscription-settings/subscription-settings-state'
 import { useUpdateSubscriptionSettings } from '@shared/api/hooks/subscription-settings/subscription-settings.mutation.hooks'
 import {
     subscriptionSettingsQueryKeys,
@@ -12,6 +16,7 @@ export function SubscriptionJsonDelivery() {
     const { t } = useTranslation()
     const client = useQueryClient()
     const queryKey = subscriptionSettingsQueryKeys.getSubscriptionSettings.queryKey
+    const settingsPending = useIsMutating({ mutationKey: SUBSCRIPTION_SETTINGS_MUTATION_KEY }) > 0
     const settings = useGetSubscriptionSettings({
         rQueryParams: {
             refetchOnMount: 'always',
@@ -30,6 +35,8 @@ export function SubscriptionJsonDelivery() {
             }
         }
     })
+    const state = getGeofilesSettingsState(settings.data, settings.isSuccess)
+    const busy = update.isPending || settingsPending
     return (
         <Stack gap="xs">
             {settings.data ? (
@@ -38,17 +45,27 @@ export function SubscriptionJsonDelivery() {
                         checked={settings.data.serveJsonAtBaseSubscription}
                         disabled={
                             !settings.isSuccess ||
-                            update.isPending ||
-                            settings.data.geofilesSystemEnabled === true
+                            busy ||
+                            (state.systemEnabled && state.jsonEnabled)
                         }
                         label={t('subscription-settings.widget.serve-json-at-base-subscription')}
-                        description={t('geofiles.json-setting-help')}
+                        description={[
+                            t('geofiles.json-setting-help'),
+                            state.systemEnabled && state.jsonEnabled
+                                ? t('geofiles.disable-before-json')
+                                : ''
+                        ]
+                            .filter(Boolean)
+                            .join(' ')}
                         onChange={(event) => {
                             if (
                                 !settings.isSuccess ||
-                                update.isPending ||
+                                busy ||
+                                client.isMutating({
+                                    mutationKey: SUBSCRIPTION_SETTINGS_MUTATION_KEY
+                                }) > 0 ||
                                 !settings.data ||
-                                settings.data.geofilesSystemEnabled
+                                (state.systemEnabled && !event.currentTarget.checked)
                             )
                                 return
                             update.mutate({
@@ -63,16 +80,18 @@ export function SubscriptionJsonDelivery() {
                         checked={settings.data.geofilesSystemEnabled === true}
                         disabled={
                             !settings.isSuccess ||
-                            update.isPending ||
-                            (!settings.data.geofilesSystemEnabled &&
-                                !settings.data.serveJsonAtBaseSubscription)
+                            busy ||
+                            (!state.systemEnabled && !state.canEnableSystem)
                         }
                         label={t('geofiles.system-enabled')}
                         description={t('geofiles.system-help')}
                         onChange={(event) => {
                             if (
                                 !settings.isSuccess ||
-                                update.isPending ||
+                                busy ||
+                                client.isMutating({
+                                    mutationKey: SUBSCRIPTION_SETTINGS_MUTATION_KEY
+                                }) > 0 ||
                                 !settings.data ||
                                 (event.currentTarget.checked &&
                                     !settings.data.serveJsonAtBaseSubscription)
@@ -86,14 +105,9 @@ export function SubscriptionJsonDelivery() {
                             })
                         }}
                     />
-                    {settings.data.geofilesSystemEnabled && (
-                        <Text size="sm" c="dimmed">
-                            {t('geofiles.disable-before-json')}
-                        </Text>
-                    )}
                     {!settings.data.serveJsonAtBaseSubscription && (
                         <Text size="sm" c="dimmed">
-                            {t('geofiles.requires-json')}
+                            {t('geofiles.generated-requires-json')}
                         </Text>
                     )}
                 </Stack>

@@ -45,7 +45,7 @@ test('repeated create errors reuse one notification instead of stacking identica
     const contract = Object.fromEntries([
         'BulkNodesActionsCommand', 'BulkNodesProfileModificationCommand', 'BulkNodesUpdateCommand',
         'CreateNodeCommand', 'DeleteNodeCommand', 'DisableNodeCommand', 'EnableNodeCommand',
-        'ReorderNodesCommand', 'ResetNodeTrafficCommand', 'RestartAllNodesCommand', 'RestartNodeCommand', 'UpdateNodeCommand',
+        'ReorderNodesCommand', 'RescanNodeIpsCommand', 'ResetNodeTrafficCommand', 'RestartAllNodesCommand', 'RestartNodeCommand', 'UpdateNodeCommand',
     ].map(key => [key, command]));
     const hooks = load(path.join(__dirname, '../src/shared/api/hooks/nodes/nodes.mutation.hooks.ts'), {
         '@shared/utils/translate-mutation-message': { translateMutationMessage: value => value },

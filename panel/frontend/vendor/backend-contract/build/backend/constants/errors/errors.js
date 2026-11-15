@@ -1337,12 +1337,37 @@ exports.ERRORS = {
     },
     NODE_CONTROL_ADDRESS_LIMIT: {
         code: 'A265',
-        message: 'A node can retain at most 65 control addresses; disable existing addresses instead of replacing the list',
+        message: 'Node address list exceeds the supported limit; saved addresses were retained',
         httpCode: 400,
     },
     NODE_CONTROL_REVISION_CONFLICT: {
         code: 'A266',
         message: 'Node connection settings changed; reload the node before saving',
         httpCode: 409,
+    },
+    NODE_IP_SCAN_UNAVAILABLE: {
+        code: 'A267',
+        message: 'Could not read node addresses; saved addresses were retained',
+        httpCode: 503,
+    },
+    NODE_IP_SCAN_UNSUPPORTED: {
+        code: 'A268',
+        message: 'Address discovery requires Remnacust Node 1.1.38 or later',
+        httpCode: 409,
+    },
+    NODE_IP_SCAN_INVALID: {
+        code: 'A269',
+        message: 'The node did not return a complete valid address inventory',
+        httpCode: 502,
+    },
+    NODE_IP_SCAN_DISABLED: {
+        code: 'A270',
+        message: 'Enable the node and a management address before rescanning',
+        httpCode: 409,
+    },
+    NODE_IP_SCAN_BUSY: {
+        code: 'A271',
+        message: 'Address discovery is temporarily busy; try again',
+        httpCode: 429,
     },
 };

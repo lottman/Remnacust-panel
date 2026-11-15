@@ -19,10 +19,13 @@ export class UpdateNodeHandler implements ICommandHandler<UpdateNodeCommand, TRe
 
     async execute(command: UpdateNodeCommand): Promise<TResult<NodesEntity>> {
         try {
-            const node = await this.nodesRepository.update(
-                command.node,
-                command.expectedControlRevision,
-            );
+            const node = command.healthObservation
+                ? await this.nodesRepository.updateHealth(
+                      command.node,
+                      command.expectedControlRevision,
+                      command.healthObservation,
+                  )
+                : await this.nodesRepository.update(command.node, command.expectedControlRevision);
             return ok(node);
         } catch (error: unknown) {
             if (error instanceof NodeControlRevisionConflictError)

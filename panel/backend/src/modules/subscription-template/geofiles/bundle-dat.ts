@@ -20,11 +20,27 @@ export function bundleDat(
     files: Array<{ id: string; data: Buffer }>,
     namespace: 1 | 2 = 2,
     categories?: Record<string, string[]>,
+    standard?: Buffer,
 ): Buffer {
     const chunks: Buffer[] = [];
     const seen = new Set<string>();
     let bytes = 0,
         count = 0;
+    if (standard) {
+        for (const entry of geofileFields(standard)) {
+            if (entry.field !== 1 || !Buffer.isBuffer(entry.value)) throw Error('geofile-dat');
+            const names = [...geofileFields(entry.value)].filter((field) => field.field === 1);
+            if (names.length !== 1 || !Buffer.isBuffer(names[0].value) || ++count > 50_000)
+                throw Error('geofile-complexity');
+            const name = names[0].value.toString('utf8').toUpperCase();
+            if (seen.has(name)) throw Error('geofile-duplicate-category');
+            seen.add(name);
+            const data = message(entry.value);
+            bytes += data.length;
+            if (bytes > MAX_GEOFILE_BYTES) throw Error('geofile-size');
+            chunks.push(data);
+        }
+    }
     for (const file of files) {
         const found = new Set<string>();
         const wanted = categories ? new Set(categories[file.id]) : undefined;

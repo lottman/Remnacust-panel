@@ -61,6 +61,8 @@ export const REST_API = {
         },
 
         ACTIONS: {
+            RESCAN_IPS: (uuid: string) =>
+                `${ROOT}/${CONTROLLERS.NODES_CONTROLLER}/${CONTROLLERS.NODES_ROUTES.ACTIONS.RESCAN_IPS(uuid)}`,
             ENABLE: (uuid: string) =>
                 `${ROOT}/${CONTROLLERS.NODES_CONTROLLER}/${CONTROLLERS.NODES_ROUTES.ACTIONS.ENABLE(
                     uuid,

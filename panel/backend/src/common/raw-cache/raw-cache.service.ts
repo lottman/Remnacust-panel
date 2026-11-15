@@ -24,13 +24,16 @@ export class RawCacheService {
         return `remnacust:template-cache:v1:${createHash('sha256').update(key).digest('hex')}`;
     }
 
-    private async templateCacheOperation<T>(operation: Promise<T>): Promise<T> {
+    private async templateCacheOperation<T>(
+        operation: Promise<T>,
+        timeoutMessage = 'Template cache timeout',
+    ): Promise<T> {
         let timer: ReturnType<typeof setTimeout> | undefined;
         try {
             return await Promise.race([
                 operation,
                 new Promise<never>((_resolve, reject) => {
-                    timer = setTimeout(() => reject(Error('Template cache timeout')), 250);
+                    timer = setTimeout(() => reject(Error(timeoutMessage)), 250);
                 }),
             ]);
         } finally {
@@ -172,6 +175,55 @@ export class RawCacheService {
         );
         if (![0, 1, 2].includes(Number(result))) throw new Error('Invalid incident transition');
         return Number(result);
+    }
+
+    async observeNodeHealth(
+        uuid: string,
+        controlRevision: string,
+        observedAt: number,
+        attempt: number,
+        healthy: boolean,
+    ): Promise<number | null> {
+        if (
+            !/^[a-f0-9-]{36}$/i.test(uuid) ||
+            !/^[a-f0-9-]{36}$/i.test(controlRevision) ||
+            !Number.isSafeInteger(observedAt) ||
+            observedAt < 0 ||
+            ![1, 2].includes(attempt)
+        )
+            throw new Error('Invalid node health observation');
+        const result = await this.templateCacheOperation(
+            this.redis.eval(
+                `
+            local at=tonumber(ARGV[2])
+            local attempt=tonumber(ARGV[3])
+            local healthy=ARGV[4]=='1'
+            local raw=redis.call('GET',KEYS[1])
+            local s=raw and cjson.decode(raw) or nil
+            if s and (at<s.at or (at==s.at and
+                (attempt<s.attempt or (attempt==s.attempt and (not healthy or s.healthy))))) then
+                return -1
+            end
+            local failures=0
+            if not healthy then
+                failures=math.min(2,((s and s.revision==ARGV[1]) and s.failures or 0)+1)
+            end
+            redis.call('SET',KEYS[1],cjson.encode({revision=ARGV[1],at=at,attempt=attempt,
+                healthy=healthy,failures=failures}),'EX',604800)
+            return failures`,
+                1,
+                `remnacust:node-health:v1:${uuid}`,
+                controlRevision,
+                observedAt,
+                attempt,
+                healthy ? 1 : 0,
+            ),
+            'Node health observation cache timed out',
+        );
+        if (result === -1) return null;
+        if (typeof result !== 'number' || ![0, 1, 2].includes(result))
+            throw new Error('Invalid node health observation response');
+        return result;
     }
 
     async acknowledgeNodeIncident(uuid: string, observedAt: number, event: number): Promise<void> {

@@ -13,6 +13,10 @@ export declare const NodeResponseSchema: z.ZodObject<{
             enabled: z.ZodBoolean;
         }, z.core.$strip>>>;
         controlRevision: z.ZodOptional<z.ZodUUID>;
+        ipScan: z.ZodOptional<z.ZodNullable<z.ZodObject<{
+            addresses: z.ZodArray<z.ZodUnion<readonly [z.ZodIPv4, z.ZodIPv6]>>;
+            scannedAt: z.ZodISODateTime;
+        }, z.core.$strip>>>;
         isConnected: z.ZodBoolean;
         isDisabled: z.ZodBoolean;
         isConnecting: z.ZodBoolean;

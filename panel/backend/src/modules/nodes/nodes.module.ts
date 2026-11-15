@@ -10,6 +10,8 @@ import { RemoveUserFromNodeHandler } from './events/remove-user-from-node/remove
 import { NodeDiagnosticsController } from './node-diagnostics.controller';
 import { NodeDiagnosticsService } from './node-diagnostics.service';
 import { NodeHealthLogService } from './node-health-log.service';
+import { NodeIpInventoryController } from './node-ip-inventory.controller';
+import { NodeIpInventoryService } from './node-ip-inventory.service';
 import { NodePortPlansController } from './node-port-plans.controller';
 import { NodePortPlansService } from './node-port-plans.service';
 import {
@@ -32,6 +34,7 @@ import { NodesRepository } from './repositories/nodes.repository';
         NodeReconciliationController,
         NodePortPlansController,
         NodeDiagnosticsController,
+        NodeIpInventoryController,
     ],
     providers: [
         NodesRepository,
@@ -43,6 +46,7 @@ import { NodesRepository } from './repositories/nodes.repository';
         NodeRuntimeService,
         NodesSystemCacheService,
         NodeHealthLogService,
+        NodeIpInventoryService,
         NodeReconciliationGuard,
         ...EVENTS,
         ...QUERIES,

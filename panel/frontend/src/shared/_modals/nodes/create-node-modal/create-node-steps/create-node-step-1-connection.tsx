@@ -14,7 +14,7 @@ import {
 } from '@mantine/core'
 import { UseFormReturnType } from '@mantine/form'
 import { CreateNodeCommand } from '@remnawave/backend-contract'
-import { useMemo, useState } from 'react'
+import { useEffect, useEffectEvent, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiArrowRight, PiTagDuotone } from 'react-icons/pi'
 import {
@@ -36,11 +36,17 @@ import { SelectInfraProviderShared } from '@shared/ui/infra-billing/select-infra
 import { NodeControlAddressesEditor } from '@shared/ui/node-ips/node-control-addresses-editor'
 import { TagInputPill } from '@shared/ui/tag-input-pill'
 
+import {
+    CREATE_NODE_ADDITIONAL_FIELDS,
+    CreateNodeFocusRequest,
+    focusCreateNodeError
+} from '../create-node-validation'
 import { CopyDockerComposeWidget } from './copy-docker-compose.widget'
 
 interface IProps {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     form: UseFormReturnType<CreateNodeCommand.RequestBody, any>
+    focusRequest?: CreateNodeFocusRequest
     onNext: () => void
     port: number
     secretKey: string | undefined
@@ -50,6 +56,7 @@ interface IProps {
 
 export const CreateNodeStep1Connection = ({
     form,
+    focusRequest,
     onNext,
     secretKey,
     port,
@@ -68,30 +75,35 @@ export const CreateNodeStep1Connection = ({
     const { data: nodesTags } = useGetNodesTags()
 
     const [additionalOpened, setAdditionalOpened] = useState(false)
+    const [dismissedRequestId, setDismissedRequestId] = useState<number>()
 
-    const handleNext = async () => {
-        const nameErrors = form.validateField('name')
-        const countryCodeErrors = form.validateField('countryCode')
-        const addressErrors = form.validateField('controlAddresses')
-        const portErrors = form.validateField('port')
-
-        if (
-            nameErrors.hasError ||
-            countryCodeErrors.hasError ||
-            addressErrors.hasError ||
-            portErrors.hasError
-        ) {
-            return
-        }
-
-        onNext()
+    const additionalFocusRequested =
+        focusRequest && CREATE_NODE_ADDITIONAL_FIELDS.includes(focusRequest.field.split('.')[0])
+    const additionalVisible = Boolean(
+        additionalOpened ||
+        (additionalFocusRequested && focusRequest.requestId !== dismissedRequestId)
+    )
+    const changeAdditionalOpened = (opened: boolean) => {
+        setAdditionalOpened(opened)
+        if (!opened) setDismissedRequestId(focusRequest?.requestId)
     }
+    const focusError = () => {
+        if (focusRequest) focusCreateNodeError(form, focusRequest.field)
+    }
+    const focusLatestError = useEffectEvent(focusError)
+
+    useEffect(() => {
+        if (!focusRequest) return
+        const frame = requestAnimationFrame(() => focusLatestError())
+        return () => cancelAnimationFrame(frame)
+    }, [focusRequest])
 
     return (
         <form
+            id="create-node-connection-form"
             onSubmit={(e) => {
                 e.preventDefault()
-                handleNext()
+                onNext()
             }}
         >
             <Stack gap="xs" mih={400}>
@@ -173,19 +185,28 @@ export const CreateNodeStep1Connection = ({
 
                     <Popover
                         closeOnClickOutside={false}
-                        onChange={setAdditionalOpened}
-                        opened={additionalOpened}
+                        onChange={changeAdditionalOpened}
+                        opened={additionalVisible}
                         position="bottom"
                         shadow="md"
-                        width={340}
+                        width="min(340px, calc(100vw - 32px))"
+                        transitionProps={{
+                            onEntered: () => {
+                                if (additionalFocusRequested) focusError()
+                            }
+                        }}
                         withArrow
                     >
                         <Divider
                             label={
                                 <Popover.Target>
                                     <UnstyledButton
+                                        data-create-node-additional-options
                                         c="dimmed"
-                                        onClick={() => setAdditionalOpened((opened) => !opened)}
+                                        aria-label={t(
+                                            'create-node-step-1-connection.additional-options'
+                                        )}
+                                        onClick={() => changeAdditionalOpened(!additionalVisible)}
                                         px={4}
                                         type="button"
                                     >
@@ -199,7 +220,7 @@ export const CreateNodeStep1Connection = ({
                                             <TbChevronDown
                                                 size={14}
                                                 style={{
-                                                    transform: additionalOpened
+                                                    transform: additionalVisible
                                                         ? 'rotate(180deg)'
                                                         : undefined,
                                                     transition: 'transform 200ms ease'
@@ -215,6 +236,7 @@ export const CreateNodeStep1Connection = ({
                         <Popover.Dropdown>
                             <Stack gap="sm">
                                 <PasswordInput
+                                    form="create-node-connection-form"
                                     key={form.key('proxyUrl')}
                                     label={t('node-vitals.card.proxy-url')}
                                     {...form.getInputProps('proxyUrl')}

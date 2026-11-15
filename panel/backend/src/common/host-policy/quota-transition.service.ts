@@ -282,6 +282,7 @@ export class QuotaTransitionService {
     private async participants(t: Transition) {
         return (
             await sql<Participant>`SELECT p.node_uuid AS uuid,n.id::text AS id,n.address,n.port,n.proxy_url AS "proxyUrl",
+            n.control_revision::text AS "controlRevision",n.control_addresses AS "controlAddresses",n.ips,
             n.consumption_multiplier::text AS multiplier,p.required,p.initial_core AS "initialCore",p.instance_uuid AS instance,
             p.preflight_at AS "preflightAt",p.fenced_core AS "fencedCore",p.fenced_at AS "fencedAt",p.drained_at AS "drainedAt",p.release_ready AS "releaseReady",p.released_at AS "releasedAt"
             FROM xera_quota_transition_nodes p LEFT JOIN nodes n ON n.uuid=p.node_uuid
@@ -569,22 +570,26 @@ export class QuotaTransitionService {
         return (
             !!phase ||
             JSON.stringify(
-                [...after].sort((a, b) => a.uuid.localeCompare(b.uuid)).map((p) => [
-                    p.preflightAt,
-                    p.fencedAt,
-                    p.drainedAt,
-                    p.releaseReady,
-                    p.releasedAt,
-                ]),
-            ) !==
-                JSON.stringify(
-                [...participants].sort((a, b) => a.uuid.localeCompare(b.uuid)).map((p) => [
+                [...after]
+                    .sort((a, b) => a.uuid.localeCompare(b.uuid))
+                    .map((p) => [
                         p.preflightAt,
                         p.fencedAt,
                         p.drainedAt,
                         p.releaseReady,
                         p.releasedAt,
                     ]),
+            ) !==
+                JSON.stringify(
+                    [...participants]
+                        .sort((a, b) => a.uuid.localeCompare(b.uuid))
+                        .map((p) => [
+                            p.preflightAt,
+                            p.fencedAt,
+                            p.drainedAt,
+                            p.releaseReady,
+                            p.releasedAt,
+                        ]),
                 )
         );
     }

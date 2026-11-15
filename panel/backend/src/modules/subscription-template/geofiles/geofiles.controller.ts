@@ -215,9 +215,10 @@ export class PublicGeofilesController {
         @Param('filename') filename: string,
         @Param('selection') selection: string,
         @Res({ passthrough: true }) response: Response,
+        @Query('revision') revision?: string,
     ) {
         if (!filename.startsWith('bundle-')) throw new NotFoundException('Geofile not found');
-        return this.download(id, filename, selection, response);
+        return this.download(id, filename, selection, response, revision);
     }
 
     @Get(':id/:filename')
@@ -226,7 +227,14 @@ export class PublicGeofilesController {
         @Param('filename') filename: string,
         @Query('selection') selection: unknown,
         @Res({ passthrough: true }) response: Response,
+        @Query('revision') revision?: string,
     ) {
+        if (
+            typeof revision === 'string' &&
+            revision.endsWith('.sha256') &&
+            !filename.endsWith('.sha256')
+        )
+            filename += '.sha256';
         const mutable =
             filename.startsWith('latest.') ||
             filename.startsWith('rules-') ||
@@ -259,7 +267,13 @@ export class PublicGeofilesController {
                     '"',
             });
         }
-        const { item, stream } = await this.files.download(id, filename);
+        const checksum =
+            filename.endsWith('.sha256') ||
+            (typeof revision === 'string' && revision.endsWith('.sha256'));
+        const { item, stream } = await this.files.download(
+            id,
+            filename.endsWith('.sha256') ? filename.slice(0, -7) : filename,
+        );
         response.set({
             'Cache-Control': mutable
                 ? 'public, max-age=0, must-revalidate'
@@ -269,6 +283,14 @@ export class PublicGeofilesController {
             'Cross-Origin-Resource-Policy': 'cross-origin',
             ETag: `"${item.sha256}"`,
         });
+        if (checksum) {
+            stream.destroy();
+            return new StreamableFile(Buffer.from(item.sha256), {
+                type: 'text/plain',
+                length: 64,
+                disposition: 'attachment; filename="geofile.dat.sha256"',
+            });
+        }
         return new StreamableFile(stream, {
             type: 'application/octet-stream',
             length: item.size,

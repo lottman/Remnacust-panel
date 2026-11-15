@@ -47,6 +47,9 @@ export declare namespace GetSystemStatsCommand {
                         txTotal: z.ZodNumber;
                     }, z.core.$strip>>;
                 }, z.core.$strip>;
+                info: z.ZodOptional<z.ZodObject<{
+                    ipAddresses: z.ZodPipe<z.ZodArray<z.ZodPipe<z.ZodString, z.ZodTransform<string, string>>>, z.ZodTransform<string[], string[]>>;
+                }, z.core.$strip>>;
             }, z.core.$strip>;
         }, z.core.$strip>;
     }, z.core.$strip>;

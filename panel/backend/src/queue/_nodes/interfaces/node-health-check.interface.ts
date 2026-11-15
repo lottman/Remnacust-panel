@@ -5,5 +5,6 @@ export interface INodeHealthCheckPayload {
     isConnected: boolean;
     lastStatusMessage?: string | null;
     controlRevision?: string;
+    ipScanAt?: number | null;
     connectionOpts: INodeConnectionOpts;
 }

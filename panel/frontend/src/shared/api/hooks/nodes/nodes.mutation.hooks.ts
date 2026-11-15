@@ -1,4 +1,3 @@
-import { translateMutationMessage } from '@shared/utils/translate-mutation-message'
 import { notifications } from '@mantine/notifications'
 import {
     BulkNodesActionsCommand,
@@ -9,12 +8,15 @@ import {
     DisableNodeCommand,
     EnableNodeCommand,
     ReorderNodesCommand,
+    RescanNodeIpsCommand,
     ResetNodeTrafficCommand,
     RestartAllNodesCommand,
     RestartNodeCommand,
     UpdateNodeCommand
 } from '@remnawave/backend-contract'
 import i18next from 'i18next'
+
+import { translateMutationMessage } from '@shared/utils/translate-mutation-message'
 
 import { createMutationHook } from '../../tsq-helpers'
 
@@ -60,6 +62,35 @@ export const useUpdateNode = createMutationHook({
         },
         onError: (error) => {
             notifications.show({
+                title: i18next.t('common.message.error'),
+                message:
+                    error instanceof Error
+                        ? error.message
+                        : i18next.t('common.message.unknown-error'),
+                color: 'red'
+            })
+        }
+    }
+})
+
+export const useRescanNodeIps = createMutationHook({
+    endpoint: RescanNodeIpsCommand.TSQ_url,
+    bodySchema: RescanNodeIpsCommand.RequestBodySchema,
+    responseSchema: RescanNodeIpsCommand.ResponseSchema,
+    routeParamsSchema: RescanNodeIpsCommand.RequestParamSchema,
+    requestMethod: RescanNodeIpsCommand.endpointDetails.REQUEST_METHOD,
+    rMutationParams: {
+        onSuccess: () => {
+            notifications.show({
+                id: 'node-ip-scan-result',
+                title: i18next.t('common.message.success'),
+                message: i18next.t('node-control-addresses.rescan-success'),
+                color: 'teal'
+            })
+        },
+        onError: (error) => {
+            notifications.show({
+                id: 'node-ip-scan-result',
                 title: i18next.t('common.message.error'),
                 message:
                     error instanceof Error

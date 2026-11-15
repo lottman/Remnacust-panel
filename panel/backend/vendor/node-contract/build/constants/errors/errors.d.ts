@@ -79,5 +79,10 @@ export declare const ERRORS: {
         readonly message: "Failed to get geocheck report";
         readonly httpCode: 500;
     };
+    readonly FAILED_TO_GET_NETWORK_ADDRESSES: {
+        readonly code: "A019";
+        readonly message: "Unable to enumerate node network addresses completely";
+        readonly httpCode: 503;
+    };
 };
 //# sourceMappingURL=errors.d.ts.map

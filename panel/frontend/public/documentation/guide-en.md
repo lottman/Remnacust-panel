@@ -254,6 +254,20 @@ In card view, nodes can be dragged with a tag selected. Only visible nodes are r
 
 On Hosts and Nodes, Ctrl+F, Cmd+F on macOS and F3 open panel search instead of browser find. Search works in card and table views and from ordinary form fields. Monaco keeps its own editor search. The override is removed when leaving these pages.
 
+### IP addresses and rescanning
+
+The compact IP list accepts IPv4, IPv6 and hostnames. The purple Panel badge marks the first enabled address, preferred for node management in list order. Each toggle permits the panel to use that address; arrows change priority. Saved manual addresses can be disabled or reordered. To correct one, add a new address and disable the old one: ordinary editing keeps saved rows.
+
+With Node 1.1.38, assigned IPv4 and IPv6 addresses are discovered when the panel first receives successful node information. While the node is available, new IPs are then appended no more often than once every 30 minutes after the last successful scan. Existing addresses remain. The interval survives a panel restart.
+
+Rescan IPs requests a fresh list immediately. It removes only disappeared IPs previously added by discovery. Manual IPs and hostnames, the order of surviving rows and their disabled state are preserved. Save address, port or proxy changes first. A failed scan keeps the existing list; update an older Node agent or continue adding addresses manually.
+
+### The node is running but some hosts are blocked
+
+When Xray is running but a complete shared policy cannot be confirmed because another node is unavailable, independent hosts can keep working. Dependent hosts remain closed: startup does not disable quotas or restrictions. The panel shows a distinct warning and does not rate the node as fully healthy.
+
+Check dependent nodes and the warning details. The panel retries automatically and removes the block only after the complete policy is confirmed. Reloading the page or starting the node again does not cancel restrictions.
+
 ### Fields and accounting
 
 Name, country, tags and provider describe infrastructure. The profile and inbound list determine active services. A node consumption multiplier changes user traffic accounting and is not a bandwidth cap. Traffic tracking, monthly threshold, reset day and node notifications concern server usage rather than an individual user quota.
@@ -905,6 +919,14 @@ Save remains available for invalid JSON/YAML, empty host selections and incomple
 
 Host sources and their strategy share one block. Pools using a shared balancer are grouped together; manual balancers remain visible. Deleting the block removes its sources, balancers and linked rules while retaining independent groups and manual outbounds. leastLoad.expected is the selected node count; tolerance is the allowed failed probe fraction from 0 to 1: 0.01 means 1%, and 2 does not mean two nodes. Xray clamps finite numeric values outside the range to 0–1; such templates apply without a redundant warning while retaining the original number. Changing the strategy in the GUI removes the previous algorithm settings; reselecting leastLoad preserves its parameters. Host UUID hover shows localized parameters instead of technical JSON. New pools start with enabled hosts supported by the format, selected by UUID. With no eligible hosts, the setup remains a draft until sources are selected.
 
+### Standard geofiles and Happ recovery
+
+For automatic delivery, enable the geofile master switch and JSON at the base subscription URL, then enable geofiles for the required template. Full standard GeoSite and GeoIP datasets remain available alongside custom categories: ordinary names, including CATEGORY-RU, are retained, and custom categories receive separate names.
+
+Set a 48-hour refresh interval and enable automatic updates for standard datasets. The interval can be changed per file. Update now checks the source immediately. If SHA-256 is unchanged, the active file is not replaced. After content changes, save the template if needed and refresh the subscription in the app.
+
+If Happ cannot find a standard category after using custom files, refresh its subscription. With the geofile master switch enabled and full standard datasets available, the panel can restore the standard files, including after a panel restart. Explicit Routing settings and custom geodata retain priority. Manual geosite:, geoip: and ext: rules are preserved; restoring standard datasets does not require rewriting them.
+
 ### When the app downloads geofiles
 
 The panel measures each profile including list expansion and client formatting. Small datasets are inline rules; Happ/INCY download large datasets as DAT. A JSON subscription is required: enable “Serve JSON at the base subscription path” or use /json. Save the template and refresh the subscription.
@@ -1109,8 +1131,7 @@ During page installation or migration, choose the local panel or another panel�
 
 ### Fields and controls
 
-- **Serve JSON at base subscription**: Shared subscription setting. Saved immediately; refresh the subscription in the app after changing it.
-- **Enable the Remnacust geofile system**: Off by default. Allows file assignments and additional rules in selected templates. Explicit geosite:, geoip:, ext:, geodata and routing remain independent. Requires JSON at the base subscription URL.
+- **Enable the Remnacust geofile system**: Off by default. Enables full GeoIP/GeoSite updates and geofiles in selected templates. Generated client settings require JSON at the base subscription URL. Manual geosite:, geoip:, ext:, geodata and routing remain independent.
 - **Additional options**: Configure additional subscription options
 - **Randomize hosts**: Enables random host ordering in subscription output. The order can change on the next refresh.
 - **Show custom remarks**: Shows configured subscription status messages, such as expiry or exhausted quota notices.

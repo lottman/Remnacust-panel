@@ -8,6 +8,7 @@ export interface IGetEnabledNodesPartialResponse {
     isConnected: boolean;
     lastStatusMessage: string | null;
     controlRevision: string;
+    ipScanAt?: number | null;
     connectionOpts: INodeConnectionOpts;
 }
 

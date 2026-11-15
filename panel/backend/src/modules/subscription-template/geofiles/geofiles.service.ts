@@ -41,6 +41,7 @@ import {
     validateNativeDatAsync,
     parseGeofileSelections,
     validateGeofileSelections,
+    validateDatReferencesAsync,
 } from './geofile-editor';
 import { materializeGeofiles } from './materialize-geofiles';
 import { GeofileOrigin, geofileProvenance } from './provenance';
@@ -50,8 +51,14 @@ import {
     readGeofileRefresh,
     publishGeofileCurrent,
 } from './refresh-geofile';
+import { standardDat } from './standard-dat';
 import { GEOFILE_EXTENSIONS, GEOFILE_KINDS, GeofileKind } from './validate-geofile';
-import { DatKind, XrayGeofileDelivery, XrayGeofileFallback } from './xray-geofile-delivery';
+import {
+    DatKind,
+    XrayGeofileDelivery,
+    XrayGeofileFallback,
+    XrayStandardSources,
+} from './xray-geofile-delivery';
 
 const MAX_FILES = 32;
 const MAX_BUNDLED_CACHE_BYTES = 32 * 1024 * 1024;
@@ -476,12 +483,17 @@ export class GeofilesService {
                 throw new Error('geofile-bundle');
             files.push(file);
         }
+        const standard = standardDat(await this.list(), kind);
+        if (standard && !ids.includes(standard.id) && bytes + standard.size > MAX_GEOFILE_BYTES)
+            throw Error('geofile-bundle');
         const key =
             namespace +
             ':' +
             files.map((file) => `${file.id}:${file.sha256}`).join(',') +
             ':' +
-            JSON.stringify(categories ?? null);
+            JSON.stringify(categories ?? null) +
+            ':' +
+            (standard ? `${standard.id}:${standard.sha256}` : '');
         const cached = this.bundled.get(key);
         if (cached) {
             this.bundled.delete(key);
@@ -496,7 +508,12 @@ export class GeofilesService {
                 const sources = [];
                 for (const file of files)
                     sources.push({ id: file.id, data: await this.readActive(file) });
-                const data = bundleDat(sources, namespace, categories);
+                const data = bundleDat(
+                    sources,
+                    namespace,
+                    categories,
+                    standard ? await this.readActive(standard) : undefined,
+                );
                 if (data.length <= MAX_BUNDLED_CACHE_BYTES) {
                     while (
                         this.bundled.size &&
@@ -1033,6 +1050,61 @@ export class GeofilesService {
         return result.sort((left, right) => right.createdAt.localeCompare(left.createdAt));
     }
 
+    public async standardSources(): Promise<XrayStandardSources | undefined> {
+        const files = await this.list();
+        const geoip = standardDat(files, 'geoip');
+        const geosite = standardDat(files, 'geosite');
+        if (!geoip || !geosite) return;
+        return {
+            geoip: { url: `${geoip.url}?revision=${geoip.sha256}`, sha256: geoip.sha256 },
+            geosite: { url: `${geosite.url}?revision=${geosite.sha256}`, sha256: geosite.sha256 },
+            intervalSeconds: Math.min(
+                geoip.refresh?.intervalSeconds ?? 172800,
+                geosite.refresh?.intervalSeconds ?? 172800,
+            ),
+            validate: async (kind, categories) => {
+                await this.validateStandardReferences(
+                    kind === 'geoip' ? geoip : geosite,
+                    categories,
+                );
+            },
+        };
+    }
+
+    private async validateStandardReferences(
+        file: StoredGeofile,
+        categories: string[],
+    ): Promise<void> {
+        const selected = [...new Set(categories)].sort();
+        const key = `${file.id}:${file.sha256}:standard:${JSON.stringify(selected)}`;
+        if (this.validated.has(key)) return;
+        const pending = this.compilingByKey.get(key);
+        if (pending) {
+            await pending;
+            return;
+        }
+        const submitted = this.compileQueue.submit(async () => {
+            this.compiling++;
+            try {
+                const result = await validateDatReferencesAsync(
+                    await this.readActive(file),
+                    file.kind as DatKind,
+                    selected,
+                );
+                if (this.validated.size >= 32)
+                    this.validated.delete(this.validated.keys().next().value!);
+                this.validated.set(key, result);
+                return result;
+            } finally {
+                this.compiling--;
+            }
+        });
+        if (!submitted) throw new ServiceUnavailableException('geofile-busy');
+        const operation = submitted.finally(() => this.compilingByKey.delete(key));
+        this.compilingByKey.set(key, operation);
+        await operation;
+    }
+
     public async withReferenceLock<T>(operation: () => Promise<T>): Promise<T> {
         return this.prisma.$transaction(
             async (tx) => {
@@ -1179,7 +1251,15 @@ export class GeofilesService {
             () => downloadGeofile(url),
             geofileProvenance(undefined, url).origin,
         );
-        await this.refreshStore.configure(file.id, { sourceUrl: url, enabled: false }, true);
+        await this.refreshStore.configure(
+            file.id,
+            {
+                sourceUrl: url,
+                enabled: false,
+                ...(file.origin === 'preset' ? { intervalSeconds: 172800 } : {}),
+            },
+            true,
+        );
         return this.activeFile(await this.fileById(file.id));
     }
 

@@ -12,6 +12,7 @@ export declare const NODES_ROUTES: {
         readonly DISABLE: (uuid: string) => string;
         readonly RESTART: (uuid: string) => string;
         readonly RESET_TRAFFIC: (uuid: string) => string;
+        readonly RESCAN_IPS: (uuid: string) => string;
         readonly RESTART_ALL: "actions/restart-all";
         readonly REORDER: "actions/reorder";
     };

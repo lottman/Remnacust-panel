@@ -63,7 +63,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           repository: lottman/Remnacust-node
-          ref: 4165675bfb6ce5ec576903b632b1206432242d5c
+          ref: 2de09aadf78d775b7cdd7e9f3e189b72601eb028
           path: node-repository
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
@@ -152,6 +152,7 @@ jobs:
           node tests/autoselect-http-probe.integration.cjs
           node tests/autoselect-http-probe.integration.cjs --burst
           node tests/autoselect-load-balance.integration.cjs
+          node --test tests/geofile-standard-delivery.integration.cjs
       - name: Apply migrations to the disposable test database
         run: npm run migrate:deploy
         env:
@@ -501,7 +502,7 @@ jobs:
           })().catch(error => { console.error(error); process.exitCode = 1; });
           NODE
       - name: Verify canonical node addresses and committed control revisions
-        run: node --test tests/node-control-addresses.database.integration.cjs
+        run: node --test tests/node-control-addresses.database.integration.cjs tests/node-ip-inventory.database.integration.cjs tests/node-health-persistence.database.integration.cjs
         env:
           NODE_CONTROL_TEST_DATABASE_URL: ${{ env.DATABASE_URL }}
           NODE_CONTROL_TEST_DISPOSABLE: '1'

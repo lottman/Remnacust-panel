@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.NodeSystemSchema = exports.NodeSystemStatsSchema = exports.NodeSystemInfoSchema = exports.NetworkInterfaceSchema = void 0;
 const zod_1 = require("zod");
+const network_addresses_schema_1 = require("./network-addresses.schema");
 exports.NetworkInterfaceSchema = zod_1.z.object({
     interface: zod_1.z.string(),
     rxBytesPerSec: zod_1.z.number(),
@@ -20,6 +21,7 @@ exports.NodeSystemInfoSchema = zod_1.z.object({
     type: zod_1.z.string(),
     version: zod_1.z.string(),
     networkInterfaces: zod_1.z.array(zod_1.z.string()),
+    ipAddresses: network_addresses_schema_1.NetworkAddressesSchema.optional(),
 });
 exports.NodeSystemStatsSchema = zod_1.z.object({
     memoryFree: zod_1.z.number(),

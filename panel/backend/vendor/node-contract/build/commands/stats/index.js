@@ -18,6 +18,7 @@ __exportStar(require("./get-all-inbounds-stats.command"), exports);
 __exportStar(require("./get-all-outbounds-stats.command"), exports);
 __exportStar(require("./get-combined-stats.command"), exports);
 __exportStar(require("./get-inbound-stats.command"), exports);
+__exportStar(require("./get-network-addresses.command"), exports);
 __exportStar(require("./get-outbound-stats.command"), exports);
 __exportStar(require("./get-system-stats.command"), exports);
 __exportStar(require("./get-user-ip-list.command"), exports);

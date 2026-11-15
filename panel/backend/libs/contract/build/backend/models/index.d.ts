@@ -44,4 +44,5 @@ export * from './path-params.schema';
 export * from './host-mapper';
 export * from './ssh-terminal.schema';
 export * from './subscription-domain.schema';
+export * from './node-ip-scan.schema';
 //# sourceMappingURL=index.d.ts.map

@@ -22,6 +22,8 @@ import { GetNodeByUuidQuery } from '@modules/nodes/queries/get-node-by-uuid';
 import { NodesQueuesService } from '@queue/_nodes';
 import { QUEUES_NAMES } from '@queue/queue.enum';
 
+import { ObserveNodeIpInventoryCommand } from '../../../modules/nodes/commands/observe-node-ip-inventory/observe-node-ip-inventory.command';
+import { NODE_IP_SCAN_INTERVAL_MS } from '../../../modules/nodes/node-ip-inventory.constants';
 import { NODES_JOB_NAMES } from '../constants/nodes-job-name.constant';
 import { INodeHealthCheckPayload } from '../interfaces';
 
@@ -44,18 +46,21 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
     }
     async process(job: Job<INodeHealthCheckPayload>) {
         try {
-            const { nodeUuid, isConnected, connectionOpts: queuedConnectionOpts } = job.data;
+            const { nodeUuid, connectionOpts: queuedConnectionOpts } = job.data;
             const connectionOpts = { ...queuedConnectionOpts, uuid: nodeUuid };
             const observedAt = job.timestamp ?? Date.now();
-            let controlRevision = job.data.controlRevision;
-            let configurationPending = job.data.lastStatusMessage === '[NODE_UPDATE_PENDING]';
-            if (!controlRevision) {
-                const current = await this.queryBus.execute(new GetNodeByUuidQuery(nodeUuid));
-                if (!current.isOk) return;
-                controlRevision = current.response.controlRevision;
-                configurationPending ||=
-                    current.response.lastStatusMessage === '[NODE_UPDATE_PENDING]';
-            }
+            const current = await this.queryBus.execute(new GetNodeByUuidQuery(nodeUuid));
+            if (!current.isOk) return;
+            if (
+                job.data.controlRevision &&
+                job.data.controlRevision !== current.response.controlRevision
+            )
+                return;
+            const controlRevision = current.response.controlRevision;
+            const isConnected = current.response.isConnected ?? job.data.isConnected;
+            const configurationPending =
+                job.data.lastStatusMessage === '[NODE_UPDATE_PENDING]' ||
+                current.response.lastStatusMessage === '[NODE_UPDATE_PENDING]';
 
             const attemptsLimit = 2;
             let attempts = 0;
@@ -67,7 +72,7 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
                 if (!statResult.isOk && statResult.code === 'NODE_ROUTE_BUSY') return;
                 if (!statResult.isOk && statResult.code === 'NODE_ROUTE_DISABLED') {
                     const updated = await this.commandBus.execute(
-                        new UpdateNodeCommand(
+                        this.healthUpdate(
                             {
                                 uuid: nodeUuid,
                                 isConnected: false,
@@ -76,10 +81,18 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
                                 ...(isConnected ? { lastStatusChange: new Date() } : {}),
                             },
                             controlRevision,
+                            observedAt,
+                            attempts + 1,
                         ),
                     );
                     if (!updated.isOk && updated.code === 'A266') return;
-                    await this.clearLiveTelemetry(nodeUuid);
+                    await this.clearLiveTelemetry(
+                        nodeUuid,
+                        false,
+                        controlRevision,
+                        observedAt,
+                        attempts + 1,
+                    );
                     return;
                 }
                 if (
@@ -90,21 +103,47 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
                     const health = await this.axios.getNodeHealth(connectionOpts);
                     if (!health.isOk && health.code === 'NODE_ROUTE_BUSY') return;
                     if (health.isOk && health.response.isAlive === true) {
+                        if (
+                            (await this.observeHealth(
+                                nodeUuid,
+                                controlRevision,
+                                observedAt,
+                                attempts + 1,
+                                true,
+                            )) === null
+                        )
+                            return;
                         const coreStopped = health.response.xrayInternalStatusCached === false;
-                        if (coreStopped) {
+                        if (coreStopped || controlRevision !== undefined) {
                             const updated = await this.commandBus.execute(
-                                new UpdateNodeCommand(
+                                this.healthUpdate(
                                     {
                                         uuid: nodeUuid,
-                                        isConnected: false,
-                                        lastStatusMessage: '[NODE_CORE_NOT_READY]',
-                                        ...(isConnected ? { lastStatusChange: new Date() } : {}),
+                                        ...(coreStopped && {
+                                            isConnected: false,
+                                            lastStatusMessage: '[NODE_CORE_NOT_READY]',
+                                            ...(isConnected
+                                                ? { lastStatusChange: new Date() }
+                                                : {}),
+                                        }),
                                     },
                                     controlRevision,
+                                    observedAt,
+                                    attempts + 1,
                                 ),
                             );
                             if (!updated.isOk && updated.code === 'A266') return;
-                            await this.clearLiveTelemetry(nodeUuid);
+                            if (
+                                coreStopped &&
+                                !(await this.clearLiveTelemetry(
+                                    nodeUuid,
+                                    false,
+                                    controlRevision,
+                                    observedAt,
+                                    attempts + 1,
+                                ))
+                            )
+                                return;
                             if (!updated.isOk) return;
                         }
                         await this.recordHealth({
@@ -129,6 +168,32 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
 
                 switch (statResult.isOk) {
                     case true:
+                        if (
+                            controlRevision &&
+                            Array.isArray(statResult.response.system?.info?.ipAddresses) &&
+                            (job.data.ipScanAt == null ||
+                                Date.now() - job.data.ipScanAt >= NODE_IP_SCAN_INTERVAL_MS)
+                        ) {
+                            try {
+                                const scan = await this.commandBus.execute(
+                                    new ObserveNodeIpInventoryCommand(
+                                        nodeUuid,
+                                        controlRevision,
+                                        statResult.response.system.info.ipAddresses,
+                                    ),
+                                );
+                                if (
+                                    scan.isOk &&
+                                    scan.response &&
+                                    scan.response.controlRevision !== controlRevision
+                                )
+                                    return;
+                            } catch {
+                                this.logger.warn(
+                                    `Could not save IP inventory for node ${nodeUuid}`,
+                                );
+                            }
+                        }
                         return await this.handleConnectedNode(
                             connectionOpts,
                             nodeUuid,
@@ -137,20 +202,39 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
                             observedAt,
                             configurationPending,
                             controlRevision,
+                            attempts + 1,
                         );
                     case false:
                         message = statResult.message ?? 'Unknown error';
                         attempts++;
+                        const failures = await this.observeHealth(
+                            nodeUuid,
+                            controlRevision,
+                            observedAt,
+                            attempts,
+                            false,
+                        );
+                        if (failures === null) return;
                         await this.recordHealth({
                             nodeUuid,
                             status: 'retry',
-                            attempt: attempts,
+                            attempt: failures,
                             message,
                         });
 
                         this.logger.warn(
-                            `Node ${nodeUuid}, ${connectionOpts.address}:${connectionOpts.port} – health check attempt ${attempts} of ${attemptsLimit}, message: ${message}`,
+                            `Node ${nodeUuid}, ${connectionOpts.address}:${connectionOpts.port} – health check attempt ${failures} of ${attemptsLimit}, message: ${message}`,
                         );
+
+                        if (failures >= attemptsLimit)
+                            return await this.handleDisconnectedNode(
+                                nodeUuid,
+                                isConnected,
+                                message,
+                                observedAt,
+                                controlRevision,
+                                attempts,
+                            );
 
                         continue;
                     default:
@@ -159,18 +243,9 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
                             `Node ${nodeUuid}, ${connectionOpts.address}:${connectionOpts.port} – health check attempt ${attempts} of ${attemptsLimit}, message: ${message}`,
                         );
 
-                        attempts++;
-                        continue;
+                        return;
                 }
             }
-
-            return await this.handleDisconnectedNode(
-                nodeUuid,
-                isConnected,
-                message,
-                observedAt,
-                controlRevision,
-            );
         } catch (error) {
             await this.recordHealth({
                 nodeUuid: job.data.nodeUuid,
@@ -184,6 +259,51 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
         }
     }
 
+    private healthUpdate(
+        node: ConstructorParameters<typeof UpdateNodeCommand>[0],
+        controlRevision: string | undefined,
+        observedAt: number,
+        attempt: number,
+    ): UpdateNodeCommand {
+        return new UpdateNodeCommand(node, controlRevision, { observedAt, attempt });
+    }
+
+    private observeHealth(
+        uuid: string,
+        controlRevision: string | undefined,
+        observedAt: number,
+        attempt: number,
+        healthy: boolean,
+    ): Promise<number | null> {
+        return controlRevision === undefined
+            ? Promise.resolve(healthy ? 0 : attempt)
+            : this.rawCacheService.observeNodeHealth(
+                  uuid,
+                  controlRevision,
+                  observedAt,
+                  attempt,
+                  healthy,
+              );
+    }
+
+    private async writeTelemetry(
+        uuid: string,
+        controlRevision: string | undefined,
+        observedAt: number,
+        attempt: number,
+        entries: { key: string; value: unknown; ttlSeconds?: number }[],
+    ): Promise<boolean> {
+        if (controlRevision === undefined) {
+            await this.rawCacheService.setMany(entries);
+            return true;
+        }
+        return this.rawCacheService.setManyFenced(
+            `remnacust:node-health:telemetry:v1:${uuid}`,
+            (BigInt(observedAt) * 3n + BigInt(attempt)).toString(),
+            entries,
+        );
+    }
+
     private async handleConnectedNode(
         connectionOpts: INodeConnectionOpts,
         nodeUuid: string,
@@ -192,10 +312,16 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
         observedAt: number,
         configurationPending = false,
         controlRevision?: string,
+        attempt = 1,
     ) {
+        if (
+            (await this.observeHealth(nodeUuid, controlRevision, observedAt, attempt, true)) ===
+            null
+        )
+            return;
         if (stats.xrayInfo === null) {
             const updated = await this.commandBus.execute(
-                new UpdateNodeCommand(
+                this.healthUpdate(
                     {
                         uuid: nodeUuid,
                         isConnected: false,
@@ -203,10 +329,21 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
                         lastStatusMessage: '[NODE_CORE_NOT_READY]',
                     },
                     controlRevision,
+                    observedAt,
+                    attempt,
                 ),
             );
             if (!updated.isOk && updated.code === 'A266') return;
-            await this.clearLiveTelemetry(nodeUuid);
+            if (
+                !(await this.clearLiveTelemetry(
+                    nodeUuid,
+                    false,
+                    controlRevision,
+                    observedAt,
+                    attempt,
+                ))
+            )
+                return;
             await this.recordHealth({
                 nodeUuid,
                 status: 'xray_missing',
@@ -221,32 +358,47 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
             return;
         }
 
-        await this.rawCacheService.setMany([
-            {
-                key: CACHE_KEYS.NODE_TELEMETRY_SNAPSHOT(nodeUuid),
-                value: {
-                    controlRevision: controlRevision ?? null,
-                    stats: stats.system?.stats ?? null,
-                    xrayUptime: stats.xrayInfo.uptime,
+        if (!isConnected || controlRevision !== undefined) {
+            const updated = await this.commandBus.execute(
+                this.healthUpdate(
+                    { uuid: nodeUuid, isConnected: true },
+                    controlRevision,
+                    observedAt,
+                    attempt,
+                ),
+            );
+            if (!updated.isOk) return;
+        }
+
+        if (
+            !(await this.writeTelemetry(nodeUuid, controlRevision, observedAt, attempt, [
+                {
+                    key: CACHE_KEYS.NODE_TELEMETRY_SNAPSHOT(nodeUuid),
+                    value: {
+                        controlRevision: controlRevision ?? null,
+                        stats: stats.system?.stats ?? null,
+                        xrayUptime: stats.xrayInfo.uptime,
+                    },
+                    ttlSeconds: CACHE_KEYS_TTL.NODE_XRAY_UPTIME,
                 },
-                ttlSeconds: CACHE_KEYS_TTL.NODE_XRAY_UPTIME,
-            },
-            {
-                key: nodeBindingTrafficKey(nodeUuid),
-                value: parseProfileTraffic(stats.bindingTraffic),
-                ttlSeconds: Math.min(CACHE_KEYS_TTL.NODE_SYSTEM_STATS, 120),
-            },
-            {
-                key: CACHE_KEYS.NODE_SYSTEM_STATS(nodeUuid),
-                value: stats.system?.stats ?? null,
-                ttlSeconds: CACHE_KEYS_TTL.NODE_SYSTEM_STATS,
-            },
-            {
-                key: CACHE_KEYS.NODE_XRAY_UPTIME(nodeUuid),
-                value: stats.xrayInfo.uptime,
-                ttlSeconds: CACHE_KEYS_TTL.NODE_XRAY_UPTIME,
-            },
-        ]);
+                {
+                    key: nodeBindingTrafficKey(nodeUuid),
+                    value: parseProfileTraffic(stats.bindingTraffic),
+                    ttlSeconds: Math.min(CACHE_KEYS_TTL.NODE_SYSTEM_STATS, 120),
+                },
+                {
+                    key: CACHE_KEYS.NODE_SYSTEM_STATS(nodeUuid),
+                    value: stats.system?.stats ?? null,
+                    ttlSeconds: CACHE_KEYS_TTL.NODE_SYSTEM_STATS,
+                },
+                {
+                    key: CACHE_KEYS.NODE_XRAY_UPTIME(nodeUuid),
+                    value: stats.xrayInfo.uptime,
+                    ttlSeconds: CACHE_KEYS_TTL.NODE_XRAY_UPTIME,
+                },
+            ]))
+        )
+            return;
 
         await this.healthLog.record({
             nodeUuid,
@@ -279,20 +431,6 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
             typeof retryAt !== 'number' || !Number.isFinite(retryAt) || retryAt <= Date.now();
 
         if (!isConnected) {
-            const nodeUpdatedResponse = await this.commandBus.execute(
-                new UpdateNodeCommand(
-                    {
-                        uuid: nodeUuid,
-                        isConnected: true,
-                    },
-                    controlRevision,
-                ),
-            );
-
-            if (!nodeUpdatedResponse.isOk) {
-                return;
-            }
-
             if (retryDue) {
                 await this.nodesQueuesService.startNode({ nodeUuid });
             }
@@ -317,18 +455,36 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
             await this.nodesQueuesService.startNode({ nodeUuid });
     }
 
-    private async clearLiveTelemetry(nodeUuid: string, includeSystemInfo = false): Promise<void> {
+    private async clearLiveTelemetry(
+        nodeUuid: string,
+        includeSystemInfo = false,
+        controlRevision?: string,
+        observedAt = 0,
+        attempt = 1,
+    ): Promise<boolean> {
         try {
-            await this.rawCacheService.delMany([
+            const keys = [
                 ...(includeSystemInfo ? [CACHE_KEYS.NODE_SYSTEM_INFO(nodeUuid)] : []),
                 CACHE_KEYS.NODE_SYSTEM_STATS(nodeUuid),
                 CACHE_KEYS.NODE_XRAY_UPTIME(nodeUuid),
                 CACHE_KEYS.NODE_USERS_ONLINE(nodeUuid),
                 CACHE_KEYS.NODE_TELEMETRY_SNAPSHOT(nodeUuid),
                 nodeBindingTrafficKey(nodeUuid),
-            ]);
+            ];
+            if (controlRevision === undefined) {
+                await this.rawCacheService.delMany(keys);
+                return true;
+            }
+            return await this.writeTelemetry(
+                nodeUuid,
+                controlRevision,
+                observedAt,
+                attempt,
+                keys.map((key) => ({ key, value: null, ttlSeconds: 60 })),
+            );
         } catch {
             this.logger.warn(`Could not clear stale telemetry for node ${nodeUuid}`);
+            return true;
         }
     }
 
@@ -387,9 +543,10 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
         message: string | undefined,
         observedAt: number,
         controlRevision?: string,
+        attempt = 2,
     ) {
         const newNodeEntity = await this.commandBus.execute(
-            new UpdateNodeCommand(
+            this.healthUpdate(
                 {
                     uuid: nodeUuid,
                     isConnected: false,
@@ -397,10 +554,13 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
                     lastStatusMessage: message,
                 },
                 controlRevision,
+                observedAt,
+                attempt,
             ),
         );
         if (!newNodeEntity.isOk && newNodeEntity.code === 'A266') return;
-        await this.clearLiveTelemetry(nodeUuid, true);
+        if (!(await this.clearLiveTelemetry(nodeUuid, true, controlRevision, observedAt, attempt)))
+            return;
         await this.recordHealth({ nodeUuid, status: 'unreachable', attempt: 2, message });
 
         if (!newNodeEntity.isOk) {

@@ -1,3 +1,5 @@
+import type { NodeHealthObservation } from '../../node-health-observation';
+
 import { Command } from '@nestjs/cqrs';
 
 import { TResult } from '@common/types';
@@ -8,6 +10,7 @@ export class UpdateNodeCommand extends Command<TResult<NodesEntity>> {
     constructor(
         public readonly node: Partial<NodesEntity>,
         public readonly expectedControlRevision?: string,
+        public readonly healthObservation?: NodeHealthObservation,
     ) {
         super();
     }

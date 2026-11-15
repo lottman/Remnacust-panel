@@ -17,6 +17,7 @@ export declare const NodeSystemInfoSchema: z.ZodObject<{
     type: z.ZodString;
     version: z.ZodString;
     networkInterfaces: z.ZodArray<z.ZodString>;
+    ipAddresses: z.ZodOptional<z.ZodPipe<z.ZodArray<z.ZodPipe<z.ZodString, z.ZodTransform<string, string>>>, z.ZodTransform<string[], string[]>>>;
 }, z.core.$strip>;
 export declare const NodeSystemStatsSchema: z.ZodObject<{
     memoryFree: z.ZodNumber;
@@ -44,6 +45,7 @@ export declare const NodeSystemSchema: z.ZodObject<{
         type: z.ZodString;
         version: z.ZodString;
         networkInterfaces: z.ZodArray<z.ZodString>;
+        ipAddresses: z.ZodOptional<z.ZodPipe<z.ZodArray<z.ZodPipe<z.ZodString, z.ZodTransform<string, string>>>, z.ZodTransform<string[], string[]>>>;
     }, z.core.$strip>;
     stats: z.ZodObject<{
         memoryFree: z.ZodNumber;

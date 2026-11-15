@@ -22,9 +22,10 @@ export class GeofilesController {
         @Param('selection') selection: string,
         @Req() request: Request,
         @Res() response: Response,
+        @Query('revision') revision?: string,
     ) {
         if (!filename.startsWith('bundle-')) throw new NotFoundException();
-        return this.download(id, filename, selection, request, response);
+        return this.download(id, filename, selection, request, response, revision);
     }
 
     @Get(':id/:filename')
@@ -34,10 +35,17 @@ export class GeofilesController {
         @Query('selection') selection: unknown,
         @Req() request: Request,
         @Res() response: Response,
+        @Query('revision') revision?: string,
     ) {
         if (
+            typeof revision === 'string' &&
+            revision.endsWith('.sha256') &&
+            !filename.endsWith('.sha256')
+        )
+            filename += '.sha256';
+        if (
             !/^[0-9a-f]{34}$/.test(id) ||
-            !/^(?:[0-9a-f]{64}\.(?:dat|srs|json|yaml|txt)|latest\.(?:dat|srs|json|yaml|txt)|rules-[A-Za-z0-9_-]{1,2732}\.[a-f0-9]{64}\.(?:json|yaml)|bundle-[a-f0-9]{64}\.dat(?:\.sha256)?)$/.test(
+            !/^(?:[0-9a-f]{64}\.(?:dat|srs|json|yaml|txt)(?:\.sha256)?|latest\.(?:dat|srs|json|yaml|txt)(?:\.sha256)?|rules-[A-Za-z0-9_-]{1,2732}\.[a-f0-9]{64}\.(?:json|yaml)|bundle-[a-f0-9]{64}\.dat(?:\.sha256)?)$/.test(
                 filename,
             )
         )

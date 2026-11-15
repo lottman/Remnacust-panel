@@ -1,4 +1,4 @@
-import { Nodes } from '@prisma/client';
+import { NodeIpInventory, Nodes } from '@prisma/client';
 
 import { TNodeIps, TNodeControlAddresses } from '@libs/contracts/models';
 
@@ -37,6 +37,7 @@ export class NodesEntity implements Nodes {
     public ips: TNodeIps;
     public controlAddresses: TNodeControlAddresses;
     public controlRevision: string;
+    public ipInventory?: NodeIpInventory | null;
     public consumptionMultiplier: bigint;
     public nodeConsumptionMultiplier: bigint;
     public createdAt: Date;

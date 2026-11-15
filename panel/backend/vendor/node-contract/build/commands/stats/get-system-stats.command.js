@@ -32,6 +32,7 @@ var GetSystemStatsCommand;
             }),
             system: zod_1.z.object({
                 stats: models_1.NodeSystemStatsSchema,
+                info: zod_1.z.object({ ipAddresses: models_1.NetworkAddressesSchema }).optional(),
             }),
         }),
     });

@@ -16,6 +16,7 @@ exports.NODES_ROUTES = {
         DISABLE: (uuid) => `${uuid}/${exports.NODE_ACTIONS_ROUTE}/disable`,
         RESTART: (uuid) => `${uuid}/${exports.NODE_ACTIONS_ROUTE}/restart`,
         RESET_TRAFFIC: (uuid) => `${uuid}/${exports.NODE_ACTIONS_ROUTE}/reset-traffic`,
+        RESCAN_IPS: (uuid) => `${uuid}/${exports.NODE_ACTIONS_ROUTE}/rescan-ips`,
         RESTART_ALL: `${exports.NODE_ACTIONS_ROUTE}/restart-all`,
         REORDER: `${exports.NODE_ACTIONS_ROUTE}/reorder`,
     },

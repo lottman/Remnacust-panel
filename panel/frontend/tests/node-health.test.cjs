@@ -33,3 +33,13 @@ test('high resource pressure is attention; invalid resource samples are unavaila
         assert.ok(getNodeHealth(node).unavailableSignals.includes('resources'))
     }
 })
+
+test('running Core with quarantined or pending host policies remains attention rather than fully healthy', () => {
+    for (const lastStatusMessage of ['[HOST_POLICY_QUARANTINED] Restricted hosts await peer proof', '[HOST_POLICY_PENDING] Retry pending']) {
+        const result = getNodeHealth({ ...ready, lastStatusMessage })
+        assert.equal(result.level, 'attention')
+        assert.equal(result.score, 75)
+        assert.ok(result.issues.includes('policy'))
+    }
+    assert.equal(getNodeHealth({ ...ready, lastStatusMessage: null }).level, 'healthy')
+})

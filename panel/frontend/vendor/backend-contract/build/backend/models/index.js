@@ -60,3 +60,4 @@ __exportStar(require("./path-params.schema"), exports);
 __exportStar(require("./host-mapper"), exports);
 __exportStar(require("./ssh-terminal.schema"), exports);
 __exportStar(require("./subscription-domain.schema"), exports);
+__exportStar(require("./node-ip-scan.schema"), exports);

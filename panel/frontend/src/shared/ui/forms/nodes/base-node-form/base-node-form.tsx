@@ -54,6 +54,8 @@ interface IProps<T extends UpdateNodeCommand.RequestBody> {
     handleClose: () => void
     handleSubmit: () => void
     isDataSubmitting: boolean
+    isRescanningIps?: boolean
+    onRescanIps?: () => void
     saveDisabled?: boolean
     node: GetNodeCommand.Response['response']
     nodeDetailsCard?: ReactNode
@@ -116,6 +118,9 @@ export const BaseNodeForm = <T extends UpdateNodeCommand.RequestBody>(props: IPr
                     />
 
                     <NodeIpsCard
+                        isRescanningIps={props.isRescanningIps}
+                        onRescanIps={props.onRescanIps}
+                        rescanDisabled={props.saveDisabled}
                         cardVariants={cardVariants}
                         disabled={isDataSubmitting}
                         form={form}
@@ -202,6 +207,9 @@ export const BaseNodeForm = <T extends UpdateNodeCommand.RequestBody>(props: IPr
                         />
 
                         <NodeIpsCard
+                            isRescanningIps={props.isRescanningIps}
+                            onRescanIps={props.onRescanIps}
+                            rescanDisabled={props.saveDisabled}
                             cardVariants={cardVariants}
                             disabled={isDataSubmitting}
                             form={form}

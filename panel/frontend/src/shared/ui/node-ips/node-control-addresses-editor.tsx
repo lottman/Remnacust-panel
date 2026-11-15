@@ -1,10 +1,11 @@
 import {
     ActionIcon,
     Alert,
+    Badge,
     Button,
     CopyButton,
     Group,
-    Paper,
+    ScrollArea,
     Stack,
     Switch,
     Text,
@@ -13,9 +14,9 @@ import {
 } from '@mantine/core'
 import { UseFormReturnType } from '@mantine/form'
 import { CreateNodeCommand, UpdateNodeCommand } from '@remnawave/backend-contract'
-import { useState } from 'react'
+import { ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { TbArrowDown, TbArrowUp, TbCheck, TbCopy, TbNetwork, TbPlus, TbX } from 'react-icons/tb'
+import { TbArrowDown, TbArrowUp, TbCheck, TbCopy, TbNetwork, TbPlus } from 'react-icons/tb'
 
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SectionCard } from '@shared/ui/section-card'
@@ -24,6 +25,9 @@ import {
     MAX_NODE_CONTROL_ADDRESSES,
     NodeControlAddress
 } from '@shared/utils/node-control-addresses'
+
+import { NodeIpStatusIcon } from './node-ip-status-icon'
+import { resolveNodeIpStatusMeta } from './node-ip-status.constants'
 
 interface EditableAddress extends NodeControlAddress {
     id: string
@@ -34,6 +38,8 @@ interface IProps<T extends CreateNodeCommand.RequestBody | UpdateNodeCommand.Req
     disabled?: boolean
     form: UseFormReturnType<T>
     hasProxy?: boolean
+    ips?: readonly { ip: string; status: string }[]
+    rescanAction?: ReactNode
     savedAddresses?: readonly NodeControlAddress[]
 }
 
@@ -46,7 +52,7 @@ const withId = (entry: NodeControlAddress): EditableAddress => ({
 
 export function NodeControlAddressesEditor<
     T extends CreateNodeCommand.RequestBody | UpdateNodeCommand.RequestBody
->({ disabled = false, form, hasProxy, savedAddresses = [] }: IProps<T>) {
+>({ disabled = false, form, hasProxy, ips = [], rescanAction, savedAddresses = [] }: IProps<T>) {
     const { t } = useTranslation()
     const [items, setItems] = useState(() =>
         (form.getValues().controlAddresses ?? []).map((entry) => ({
@@ -63,6 +69,7 @@ export function NodeControlAddressesEditor<
     const proxyUrl = form.useWatchValue('proxyUrl')
     const viaProxy = form.isDirty('proxyUrl') ? Boolean(proxyUrl) : (hasProxy ?? Boolean(proxyUrl))
     const full = items.length >= MAX_NODE_CONTROL_ADDRESSES
+    const panelId = items.find((entry) => entry.enabled && entry.address.trim())?.id
     const commit = (next: EditableAddress[]) => {
         setItems(next)
         form.clearFieldError('controlAddresses')
@@ -89,25 +96,37 @@ export function NodeControlAddressesEditor<
                         title={t('common.field.ip-addresses')}
                         titleOrder={5}
                     />
-                    <Tooltip
-                        label={t('node-control-addresses.max', { max: MAX_NODE_CONTROL_ADDRESSES })}
-                        disabled={!full}
-                    >
-                        <Button
-                            disabled={disabled || full}
-                            leftSection={<TbPlus size={16} />}
-                            onClick={() => {
-                                if (full) return
-                                const item = withId({ address: '', enabled: true })
-                                setAddedId(item.id)
-                                commit([...items, item])
-                            }}
-                            size="compact-sm"
-                            variant="light"
+                    <Group gap="xs">
+                        {rescanAction}
+                        <Tooltip
+                            label={t('node-control-addresses.max', {
+                                max: MAX_NODE_CONTROL_ADDRESSES
+                            })}
+                            disabled={!full}
                         >
-                            {t('node-control-addresses.add')}
-                        </Button>
-                    </Tooltip>
+                            <Button
+                                data-path={
+                                    (
+                                        form.getInputProps('controlAddresses') as {
+                                            'data-path'?: string
+                                        }
+                                    )['data-path']
+                                }
+                                disabled={disabled || full}
+                                leftSection={<TbPlus size={16} />}
+                                onClick={() => {
+                                    if (full) return
+                                    const item = withId({ address: '', enabled: true })
+                                    setAddedId(item.id)
+                                    commit([...items, item])
+                                }}
+                                size="compact-sm"
+                                variant="light"
+                            >
+                                {t('node-control-addresses.add')}
+                            </Button>
+                        </Tooltip>
+                    </Group>
                 </Group>
             </SectionCard.Section>
             <SectionCard.Section>
@@ -125,50 +144,65 @@ export function NodeControlAddressesEditor<
                     {!items.some((entry) => entry.enabled) && (
                         <Alert color="yellow">{t('node-control-addresses.all-off')}</Alert>
                     )}
-                    <Stack component="ol" gap="sm" m={0} p={0} style={{ listStyle: 'none' }}>
-                        {items.map((item, index) => {
-                            const isSaved =
-                                item.saved ||
-                                (!addressesDirty && saved.has(normalizeNodeAddress(item.address)))
-                            const label = item.address || t('node-control-addresses.new')
-                            return (
-                                <Paper component="li" key={item.id} p="xs" withBorder>
-                                    <Stack gap="xs">
-                                        <Group justify="space-between" gap="xs">
-                                            <Text size="xs" fw={600}>
-                                                {t('node-control-addresses.priority', {
-                                                    index: index + 1
-                                                })}
-                                            </Text>
-                                            <Switch
-                                                aria-label={t('node-control-addresses.toggle', {
-                                                    address: label
-                                                })}
-                                                checked={item.enabled}
-                                                disabled={disabled}
-                                                label={t('node-control-addresses.for-panel')}
-                                                onChange={(event) =>
-                                                    commit(
-                                                        items.map((entry) =>
-                                                            entry.id === item.id
-                                                                ? {
-                                                                      ...entry,
-                                                                      enabled:
-                                                                          event.currentTarget
-                                                                              .checked
-                                                                  }
-                                                                : entry
-                                                        )
-                                                    )
-                                                }
-                                            />
-                                        </Group>
+                    <ScrollArea.Autosize mah={128} scrollbarSize={6} type="auto">
+                        <Stack
+                            component="ol"
+                            gap="xs"
+                            m={0}
+                            px={4}
+                            py={0}
+                            style={{ listStyle: 'none' }}
+                        >
+                            {items.map((item, index) => {
+                                const isSaved =
+                                    item.saved ||
+                                    (!addressesDirty &&
+                                        saved.has(normalizeNodeAddress(item.address)))
+                                const label = item.address || t('node-control-addresses.new')
+                                const normalized = normalizeNodeAddress(item.address)
+                                const isPanelAddress = item.id === panelId
+                                const status =
+                                    ips.find(
+                                        (entry) => normalizeNodeAddress(entry.ip) === normalized
+                                    )?.status ?? (isPanelAddress ? 'MANAGEMENT' : 'UNKNOWN')
+                                return (
+                                    <Group
+                                        component="li"
+                                        key={item.id}
+                                        align="flex-start"
+                                        gap={6}
+                                        wrap="nowrap"
+                                    >
+                                        <Tooltip
+                                            label={t(resolveNodeIpStatusMeta(status).labelKey)}
+                                        >
+                                            <span
+                                                aria-label={t(
+                                                    resolveNodeIpStatusMeta(status).labelKey
+                                                )}
+                                            >
+                                                <NodeIpStatusIcon
+                                                    status={status}
+                                                    size={36}
+                                                    iconSize={20}
+                                                />
+                                            </span>
+                                        </Tooltip>
                                         <TextInput
                                             aria-label={t('node-control-addresses.address', {
                                                 index: index + 1
                                             })}
                                             autoFocus={item.id === addedId}
                                             dir="ltr"
+                                            data-path={
+                                                (
+                                                    form.getInputProps(
+                                                        `controlAddresses.${index}.address`
+                                                    ) as {
+                                                        'data-path'?: string
+                                                    }
+                                                )['data-path']
+                                            }
                                             disabled={disabled}
                                             error={form.errors[`controlAddresses.${index}.address`]}
                                             onChange={(event) => {
@@ -183,7 +217,7 @@ export function NodeControlAddressesEditor<
                                             }}
                                             placeholder={t('node-control-addresses.placeholder')}
                                             readOnly={isSaved}
-                                            rightSection={
+                                            leftSection={
                                                 <CopyButton value={item.address.trim()}>
                                                     {({ copied, copy }) => (
                                                         <ActionIcon
@@ -202,7 +236,22 @@ export function NodeControlAddressesEditor<
                                                     )}
                                                 </CopyButton>
                                             }
-                                            rightSectionPointerEvents="all"
+                                            leftSectionPointerEvents="all"
+                                            rightSection={
+                                                isPanelAddress ? (
+                                                    <Badge
+                                                        color="violet"
+                                                        size="xs"
+                                                        variant="soft"
+                                                        radius="sm"
+                                                    >
+                                                        {t('node-control-addresses.panel')}
+                                                    </Badge>
+                                                ) : undefined
+                                            }
+                                            rightSectionWidth={isPanelAddress ? 82 : undefined}
+                                            size="sm"
+                                            style={{ flex: 1, minWidth: 0 }}
                                             styles={{
                                                 input: {
                                                     fontFamily:
@@ -211,28 +260,35 @@ export function NodeControlAddressesEditor<
                                             }}
                                             value={item.address}
                                         />
-                                        <Group gap="xs" justify="flex-end">
-                                            {!isSaved && (
-                                                <ActionIcon
-                                                    aria-label={t(
-                                                        'node-control-addresses.discard',
-                                                        { address: label }
-                                                    )}
-                                                    disabled={disabled}
-                                                    onClick={() =>
-                                                        commit(
-                                                            items.filter(
-                                                                (entry) => entry.id !== item.id
-                                                            )
-                                                        )
-                                                    }
-                                                    variant="subtle"
-                                                    size="lg"
-                                                    color="gray"
-                                                >
-                                                    <TbX size={18} />
-                                                </ActionIcon>
-                                            )}
+                                        <Tooltip
+                                            label={t('node-control-addresses.toggle', {
+                                                address: label
+                                            })}
+                                        >
+                                            <Switch
+                                                aria-label={t('node-control-addresses.toggle', {
+                                                    address: label
+                                                })}
+                                                checked={item.enabled}
+                                                disabled={disabled}
+                                                mt={8}
+                                                onChange={(event) => {
+                                                    const enabled = event.currentTarget.checked
+                                                    commit(
+                                                        !enabled && !isSaved && !item.address.trim()
+                                                            ? items.filter(
+                                                                  (entry) => entry.id !== item.id
+                                                              )
+                                                            : items.map((entry) =>
+                                                                  entry.id === item.id
+                                                                      ? { ...entry, enabled }
+                                                                      : entry
+                                                              )
+                                                    )
+                                                }}
+                                            />
+                                        </Tooltip>
+                                        <Stack gap={0}>
                                             <ActionIcon
                                                 aria-label={t('node-control-addresses.up', {
                                                     address: label
@@ -240,9 +296,9 @@ export function NodeControlAddressesEditor<
                                                 disabled={disabled || index === 0}
                                                 onClick={() => move(index, -1)}
                                                 variant="subtle"
-                                                size="lg"
+                                                size={18}
                                             >
-                                                <TbArrowUp size={18} />
+                                                <TbArrowUp size={14} />
                                             </ActionIcon>
                                             <ActionIcon
                                                 aria-label={t('node-control-addresses.down', {
@@ -251,16 +307,16 @@ export function NodeControlAddressesEditor<
                                                 disabled={disabled || index === items.length - 1}
                                                 onClick={() => move(index, 1)}
                                                 variant="subtle"
-                                                size="lg"
+                                                size={18}
                                             >
-                                                <TbArrowDown size={18} />
+                                                <TbArrowDown size={14} />
                                             </ActionIcon>
-                                        </Group>
-                                    </Stack>
-                                </Paper>
-                            )
-                        })}
-                    </Stack>
+                                        </Stack>
+                                    </Group>
+                                )
+                            })}
+                        </Stack>
+                    </ScrollArea.Autosize>
                     {typeof form.errors.controlAddresses === 'string' && (
                         <Alert color="red" role="alert">
                             {form.errors.controlAddresses}

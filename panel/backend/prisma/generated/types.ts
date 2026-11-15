@@ -218,6 +218,13 @@ export type NodeHealthLogSettings = {
     id: Generated<number>;
     retentionDays: Generated<number>;
 };
+export type NodeIpInventory = {
+    nodeUuid: string;
+    addresses: Generated<string[]>;
+    generatedAddresses: Generated<string[]>;
+    revision: Generated<string>;
+    scannedAt: Timestamp;
+};
 export type NodeMeta = {
     nodeId: bigint;
     metadata: object;
@@ -517,6 +524,7 @@ export type DB = {
     users: Users;
     xeraNodeHealthLogSettings: NodeHealthLogSettings;
     xeraNodeHealthLogs: NodeHealthLogs;
+    xeraNodeIpInventory: NodeIpInventory;
     xeraNodeOptimization: XeraNodeOptimization;
     xeraQuotaUsage: XeraQuotaUsage;
     xeraSessionRecordings: SessionRecording;

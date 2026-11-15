@@ -35,7 +35,7 @@ function editor(initial, saved = initial) {
     const before = structuredClone(values)
     let baseline = structuredClone(values)
     const form = {
-        errors: {}, getValues: () => values, isDirty: key => JSON.stringify(values[key]) !== JSON.stringify(baseline[key]),
+        errors: {}, getValues: () => values, getInputProps: key => ({ 'data-path': `fixture-${key}` }), isDirty: key => JSON.stringify(values[key]) !== JSON.stringify(baseline[key]),
         useWatchValue: key => values[key], clearFieldError: key => { delete form.errors[key] },
         setFieldValue: (key, value) => { values[key] = value }
     }
@@ -50,6 +50,8 @@ function editor(initial, saved = initial) {
         '@shared/ui/overlays/base-overlay-header': { BaseOverlayHeader: 'header' },
         '@shared/ui/section-card': { SectionCard: { Root: 'section', Section: 'section' } },
         '@shared/utils/node-control-addresses': helpers,
+        './node-ip-status-icon': { NodeIpStatusIcon: 'status-icon' },
+        './node-ip-status.constants': { resolveNodeIpStatusMeta: status => ({ labelKey: `node-ip-statuses.${status.toLowerCase()}` }) },
         '@shared/utils/node-addresses': load('shared/utils/node-addresses.ts')
     })
     const render = (extra = {}) => { cursor = 0; return elements(NodeControlAddressesEditor({ form, savedAddresses: saved, ...extra })) }
@@ -128,12 +130,22 @@ test('keyboard reorder preserves each toggle and payload order; a draft matching
     draft.props.onChange({ currentTarget: { value: '192.0.2.1' } })
     assert.equal(state.inputs().at(-1).props.readOnly, false)
     assert.equal(state.inputs().at(-1).props.autoFocus, true)
-    state.control('node-control-addresses.discard192.0.2.1').props.onClick()
-    assert.equal(state.values.controlAddresses.length, 2)
+    assert.ok(!state.control('node-control-addresses.discard'))
+    state.toggles().at(-1).props.onChange({ currentTarget: { checked: false } })
+    assert.equal(state.values.controlAddresses.length, 3)
+    assert.deepEqual(state.values.controlAddresses.at(-1), address('192.0.2.1', false))
     assert.ok(state.values.controlAddresses.every(item => Object.keys(item).sort().join(',') === 'address,enabled'))
     const reopened = editor(state.values.controlAddresses)
-    assert.deepEqual(reopened.inputs().map(item => item.props.value), ['node.example.test', '192.0.2.1'])
-    assert.deepEqual(reopened.toggles().map(item => item.props.checked), [true, false])
+    assert.deepEqual(reopened.inputs().map(item => item.props.value), ['node.example.test', '192.0.2.1', '192.0.2.1'])
+    assert.deepEqual(reopened.toggles().map(item => item.props.checked), [true, false, false])
+})
+
+test('switching off an empty unsaved row discards only the blank draft', () => {
+    const state = editor([address('node.example.test')])
+    state.add()
+    state.toggles().at(-1).props.onChange({ currentTarget: { checked: false } })
+    assert.deepEqual(state.values.controlAddresses, [address('node.example.test')])
+    assert.ok(!state.control('node-control-addresses.discard'))
 })
 
 test('all 65 legacy addresses fit and the editor bounds additions', () => {

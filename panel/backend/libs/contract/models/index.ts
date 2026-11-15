@@ -45,3 +45,4 @@ export * from './host-mapper';
 export * from './ssh-terminal.schema';
 
 export * from './subscription-domain.schema';
+export * from './node-ip-scan.schema';

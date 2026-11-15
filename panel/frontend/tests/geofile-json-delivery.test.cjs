@@ -3,6 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
 const ts = require('typescript');
+const settingsState = require('../../backend/tests/load-typescript.cjs')(path.join(__dirname, '../src/shared/api/hooks/subscription-settings/subscription-settings-state.ts'));
 
 function harness(language = 'en', initial = { uuid: 'settings-id', serveJsonAtBaseSubscription: false, other: 'preserved' }) {
     const strings = JSON.parse(fs.readFileSync(path.join(__dirname, `../public/locales/${language}/remnawave.json`), 'utf8'));
@@ -19,13 +20,15 @@ function harness(language = 'en', initial = { uuid: 'settings-id', serveJsonAtBa
     const settings = { data: initial, isSuccess: !!initial, isPending: !initial, isError: false, isFetching: false, refetch: () => events.push('refetch') };
     const update = { isPending: false, isError: false, mutate: request => requests.push(request) };
     const client = {
+        isMutating: () => 0,
         async cancelQueries(options) { assert.deepEqual(options.queryKey, key); events.push('cancel'); },
         setQueryData(queryKey, data) { assert.deepEqual(queryKey, key); events.push('confirmed'); settings.data = data; },
         async invalidateQueries(options) { assert.deepEqual(options.queryKey, key); events.push('invalidate'); },
     };
     const mocks = {
         '@mantine/core': Object.fromEntries(['Alert', 'Button', 'Card', 'Loader', 'Stack', 'Switch', 'Text'].map(name => [name, name])),
-        '@tanstack/react-query': { useQueryClient: () => client },
+        '@tanstack/react-query': { useQueryClient: () => client, useIsMutating: () => 0 },
+        '@shared/api/hooks/subscription-settings/subscription-settings-state': settingsState,
         'react-i18next': { useTranslation: () => ({ t }) },
         '@shared/api/hooks/subscription-settings/subscription-settings.query.hooks': {
             subscriptionSettingsQueryKeys: { getSubscriptionSettings: { queryKey: key } },

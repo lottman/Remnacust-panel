@@ -232,6 +232,12 @@ test('retained address limits reject replacement overflow without erasing old ro
 const { NodesRepository } = load(
     path.join(__dirname, '../src/modules/nodes/repositories/nodes.repository.ts'),
     {
+        '../constants/nodes/ip-statuses': load(
+            path.join(
+                __dirname,
+                '../libs/contract/constants/nodes/ip-statuses/node-ip-statuses.constant.ts',
+            ),
+        ),
         '@nestjs-cls/transactional': {
             Transactional: () => (_target, _property, descriptor) => descriptor,
         },

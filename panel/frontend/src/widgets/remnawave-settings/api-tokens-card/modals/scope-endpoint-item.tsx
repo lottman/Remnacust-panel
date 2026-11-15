@@ -18,7 +18,9 @@ export const ScopeEndpointItem = memo(({ checked, endpoint, onToggle, readOnly }
     const domainLabel = domainLinkScopeLabel(endpoint.key)
     const description = domainLabel
         ? t(domainLabel)
-        : endpoint.key === 'limits:unlimited'
+        : endpoint.key === 'nodes:rescan-ips'
+          ? t('node-control-addresses.rescan')
+          : endpoint.key === 'limits:unlimited'
           ? t('limitsUnlimited.permission')
           : endpoint.description
     const isWrite = endpoint.kind === 'write'

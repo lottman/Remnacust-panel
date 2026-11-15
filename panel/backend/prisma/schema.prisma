@@ -5,7 +5,7 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client-js"
+  provider   = "prisma-client-js"
   engineType = "client"
 }
 
@@ -24,7 +24,7 @@ generator json {
 }
 
 datasource db {
-  provider  = "postgresql"
+  provider = "postgresql"
 }
 
 model RemnawaveSettings {
@@ -39,7 +39,7 @@ model RemnawaveSettings {
   /// [BrandingSettings]
   brandingSettings Json? @map("branding_settings")
   /// [BackupSettings]
-  backupSettings  Json? @map("backup_settings")
+  backupSettings   Json? @map("backup_settings")
 
   @@map("remnawave_settings")
 }
@@ -52,9 +52,9 @@ model NodeHealthLogSettings {
 }
 
 model XraySettings {
-  id       Int    @id @default(1)
-  mode     String @default("custom")
-  revision Int    @default(0)
+  id           Int     @id @default(1)
+  mode         String  @default("custom")
+  revision     Int     @default(0)
   applyPending Boolean @default(false) @map("apply_pending")
 
   @@map("xera_xray_settings")
@@ -78,31 +78,31 @@ model NodeHealthLogs {
 }
 
 model Users {
-  id                     BigInt    @id @default(autoincrement()) @map("id")
-  shortUuid              String    @unique @map("short_uuid")
-  username               String    @unique @map("username")
+  id                     BigInt               @id @default(autoincrement()) @map("id")
+  shortUuid              String               @unique @map("short_uuid")
+  username               String               @unique @map("username")
   /// @kyselyType('ACTIVE' | 'DISABLED' | 'LIMITED' | 'EXPIRED' | 'FROZEN')
-  status                 String    @default("ACTIVE") @map("status") @db.VarChar(10)
-  trafficLimitBytes      BigInt    @default(0) @map("traffic_limit_bytes")
+  status                 String               @default("ACTIVE") @map("status") @db.VarChar(10)
+  trafficLimitBytes      BigInt               @default(0) @map("traffic_limit_bytes")
   /// @kyselyType('NO_RESET' | 'DAY' | 'WEEK' | 'MONTH' | 'MONTH_ROLLING')
-  trafficLimitStrategy   String    @default("NO_RESET") @map("traffic_limit_strategy")
-  expireAt               DateTime  @map("expire_at")
-  frozenAt               DateTime? @map("frozen_at")
-  frozenUntil            DateTime? @map("frozen_until")
-  lastTrafficResetAt     DateTime? @map("last_traffic_reset_at")
-  subRevokedAt           DateTime? @map("sub_revoked_at")
-  trojanPassword         String    @map("trojan_password")
-  vlessUuid              String    @map("vless_uuid") @db.Uuid
-  ssPassword             String    @map("ss_password")
-  description            String?   @map("description")
-  tag                    String?   @map("tag")
-  telegramId             BigInt?   @map("telegram_id")
-  email                  String?   @map("email")
-  hwidDeviceLimit        Int?      @map("hwid_device_limit")
-  externalSquadUuid      String?   @map("external_squad_uuid") @db.Uuid
-  subscriptionDomainUuid String? @map("subscription_domain_uuid") @db.Uuid
-  subscriptionDomain SubscriptionDomains? @relation(fields: [subscriptionDomainUuid], references: [uuid], onDelete: Restrict)
-  lastTriggeredThreshold Int       @default(0) @map("last_triggered_threshold")
+  trafficLimitStrategy   String               @default("NO_RESET") @map("traffic_limit_strategy")
+  expireAt               DateTime             @map("expire_at")
+  frozenAt               DateTime?            @map("frozen_at")
+  frozenUntil            DateTime?            @map("frozen_until")
+  lastTrafficResetAt     DateTime?            @map("last_traffic_reset_at")
+  subRevokedAt           DateTime?            @map("sub_revoked_at")
+  trojanPassword         String               @map("trojan_password")
+  vlessUuid              String               @map("vless_uuid") @db.Uuid
+  ssPassword             String               @map("ss_password")
+  description            String?              @map("description")
+  tag                    String?              @map("tag")
+  telegramId             BigInt?              @map("telegram_id")
+  email                  String?              @map("email")
+  hwidDeviceLimit        Int?                 @map("hwid_device_limit")
+  externalSquadUuid      String?              @map("external_squad_uuid") @db.Uuid
+  subscriptionDomainUuid String?              @map("subscription_domain_uuid") @db.Uuid
+  subscriptionDomain     SubscriptionDomains? @relation(fields: [subscriptionDomainUuid], references: [uuid], onDelete: Restrict)
+  lastTriggeredThreshold Int                  @default(0) @map("last_triggered_threshold")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
@@ -140,10 +140,10 @@ model UserTraffic {
 }
 
 model ApiTokens {
-  uuid     String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name     String   @map("name")
+  uuid     String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name     String    @map("name")
   expireAt DateTime? @map("expire_at")
-  scopes   String[] @default(["*"]) @map("scopes")
+  scopes   String[]  @default(["*"]) @map("scopes")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
@@ -254,6 +254,7 @@ model Nodes {
   torrentBlockerReports        TorrentBlockerReports[]
   healthLogs                   NodeHealthLogs[]
   optimization                 XeraNodeOptimization?
+  ipInventory                  NodeIpInventory?
 
   activeConfigProfile ConfigProfiles? @relation(fields: [activeConfigProfileUuid], references: [uuid], onDelete: SetNull)
   provider            InfraProviders? @relation(fields: [providerUuid], references: [uuid], onDelete: SetNull)
@@ -263,13 +264,24 @@ model Nodes {
   @@map("nodes")
 }
 
+model NodeIpInventory {
+  nodeUuid           String   @id @map("node_uuid") @db.Uuid
+  addresses          String[] @default([])
+  generatedAddresses String[] @default([]) @map("generated_addresses")
+  revision           String   @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  scannedAt          DateTime @map("scanned_at") @db.Timestamptz(6)
+  node               Nodes    @relation(fields: [nodeUuid], references: [uuid], onDelete: Cascade, onUpdate: Cascade)
+
+  @@map("xera_node_ip_inventory")
+}
+
 model XeraNodeOptimization {
-  nodeUuid String @id @map("node_uuid") @db.Uuid
-  level String?
+  nodeUuid   String    @id @map("node_uuid") @db.Uuid
+  level      String?
   verifiedAt DateTime? @map("verified_at") @db.Timestamptz(6)
-  checkedAt DateTime @default(now()) @map("checked_at") @db.Timestamptz(6)
-  verified Boolean @default(false)
-  node Nodes @relation(fields: [nodeUuid], references: [uuid], onDelete: Cascade)
+  checkedAt  DateTime  @default(now()) @map("checked_at") @db.Timestamptz(6)
+  verified   Boolean   @default(false)
+  node       Nodes     @relation(fields: [nodeUuid], references: [uuid], onDelete: Cascade)
 
   @@map("xera_node_optimization")
 }
@@ -287,10 +299,10 @@ model Integrations {
 }
 
 model XeraQuotaUsage {
-  nodeId BigInt @map("node_id")
-  userId BigInt @map("user_id")
-  createdAt DateTime @map("created_at") @db.Date
-  totalBytes BigInt @map("total_bytes")
+  nodeId     BigInt   @map("node_id")
+  userId     BigInt   @map("user_id")
+  createdAt  DateTime @map("created_at") @db.Date
+  totalBytes BigInt   @map("total_bytes")
 
   @@id([nodeId, userId, createdAt])
   @@index([userId, createdAt])
@@ -347,7 +359,7 @@ model Hosts {
   sockoptParams                Json?    @map("sockopt_params")
   finalMask                    Json?    @map("final_mask")
   alwaysAvailable              Boolean  @default(false) @map("always_available")
-  onlyWhenInactive Boolean @default(false) @map("only_when_inactive")
+  onlyWhenInactive             Boolean  @default(false) @map("only_when_inactive")
   isDisabled                   Boolean  @default(false) @map("is_disabled")
   serverDescription            String?  @map("server_description") @db.VarChar(30)
   vlessRouteId                 Int?     @map("vless_route_id")
@@ -365,14 +377,14 @@ model Hosts {
   trafficLimitResetUnit        String   @default("DAYS") @map("traffic_limit_reset_unit")
   trafficLimitResetAnchorAt    DateTime @default(dbgenerated("'1970-01-01 00:00:00+00'::timestamptz")) @map("traffic_limit_reset_anchor_at") @db.Timestamptz(6)
   speedLimitMbps               Int?     @map("speed_limit_mbps")
-  totalSpeedLimitMbps          Int? @map("total_speed_limit_mbps")
-  trafficMultiplier           Float? @map("traffic_multiplier")
-  serverSpeedLimitMbps Int? @map("server_speed_limit_mbps")
-  deviceSpeedLimitMbps Int? @map("device_speed_limit_mbps")
-  useTagTrafficLimit Boolean @default(true) @map("use_tag_traffic_limit")
-  useTagSpeedLimit Boolean @default(true) @map("use_tag_speed_limit")
-  useTagDeviceSpeedLimit Boolean @default(true) @map("use_tag_device_speed_limit")
-  useTagTotalSpeedLimit Boolean @default(true) @map("use_tag_total_speed_limit")
+  totalSpeedLimitMbps          Int?     @map("total_speed_limit_mbps")
+  trafficMultiplier            Float?   @map("traffic_multiplier")
+  serverSpeedLimitMbps         Int?     @map("server_speed_limit_mbps")
+  deviceSpeedLimitMbps         Int?     @map("device_speed_limit_mbps")
+  useTagTrafficLimit           Boolean  @default(true) @map("use_tag_traffic_limit")
+  useTagSpeedLimit             Boolean  @default(true) @map("use_tag_speed_limit")
+  useTagDeviceSpeedLimit       Boolean  @default(true) @map("use_tag_device_speed_limit")
+  useTagTotalSpeedLimit        Boolean  @default(true) @map("use_tag_total_speed_limit")
   domainRules                  Json?    @map("domain_rules")
   sniRegeneration              Json?    @map("sni_regeneration")
 
@@ -408,15 +420,15 @@ model InternalSquadHostLinks {
 }
 
 model SubscriptionTemplate {
-  uuid         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  viewPosition Int      @default(autoincrement()) @map("view_position")
-  name         String   @default("Default") @map("name") @db.VarChar(255)
-  tags         String[] @default([]) @map("tags")
-  templateType String   @map("template_type")
-  templateYaml String?  @map("template_yaml")
-  templateJson Json?    @map("template_json")
-  draftContent String?  @map("draft_content")
-  geofilesEnabled Boolean @default(false) @map("geofiles_enabled")
+  uuid            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  viewPosition    Int      @default(autoincrement()) @map("view_position")
+  name            String   @default("Default") @map("name") @db.VarChar(255)
+  tags            String[] @default([]) @map("tags")
+  templateType    String   @map("template_type")
+  templateYaml    String?  @map("template_yaml")
+  templateJson    Json?    @map("template_json")
+  draftContent    String?  @map("draft_content")
+  geofilesEnabled Boolean  @default(false) @map("geofiles_enabled")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
@@ -430,15 +442,16 @@ model SubscriptionTemplate {
 }
 
 model SubscriptionTemplateRevisions {
-  id           Int      @id @default(autoincrement())
-  uuid         String   @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  templateUuid String   @map("template_uuid") @db.Uuid
+  id           Int                  @id @default(autoincrement())
+  uuid         String               @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  templateUuid String               @map("template_uuid") @db.Uuid
   name         String
-  templateJson Json?    @map("template_json")
-  templateYaml String?  @map("template_yaml")
-  draftContent String?  @map("draft_content")
-  createdAt    DateTime @default(now()) @map("created_at")
-  template SubscriptionTemplate @relation(fields: [templateUuid], references: [uuid], onDelete: Cascade)
+  templateJson Json?                @map("template_json")
+  templateYaml String?              @map("template_yaml")
+  draftContent String?              @map("draft_content")
+  createdAt    DateTime             @default(now()) @map("created_at")
+  template     SubscriptionTemplate @relation(fields: [templateUuid], references: [uuid], onDelete: Cascade)
+
   @@index([templateUuid, id(sort: Desc)])
   @@map("subscription_template_revisions")
 }
@@ -448,7 +461,7 @@ model SubscriptionSettings {
   serveJsonAtBaseSubscription Boolean @default(false) @map("serve_json_at_base_subscription")
   geofilesSystemEnabled       Boolean @default(false) @map("geofiles_system_enabled")
   geofilesEnabled             Boolean @default(false) @map("geofiles_enabled")
-  geofilesInlineRuleLimit Int @default(20000) @map("geofiles_inline_rule_limit")
+  geofilesInlineRuleLimit     Int     @default(20000) @map("geofiles_inline_rule_limit")
   isShowCustomRemarks         Boolean @default(true) @map("is_show_custom_remarks")
   customRemarks               Json    @map("custom_remarks")
   customResponseHeaders       Json?   @map("custom_response_headers")
@@ -784,35 +797,37 @@ model TorrentBlockerReports {
 }
 
 model SessionRecording {
-  id String @id @db.Uuid
-  startedAt DateTime @default(now()) @map("started_at") @db.Timestamptz
-  endsAt DateTime @map("ends_at") @db.Timestamptz
-  intervalSeconds Int @map("interval_seconds")
-  status String @default("running")
-  snapshot Json
-  nextPollAt DateTime @default(now()) @map("next_poll_at") @db.Timestamptz
-  leaseUntil DateTime? @map("lease_until") @db.Timestamptz
-  token String?
-  expiresAt DateTime @map("expires_at") @db.Timestamptz
+  id              String    @id @db.Uuid
+  startedAt       DateTime  @default(now()) @map("started_at") @db.Timestamptz
+  endsAt          DateTime  @map("ends_at") @db.Timestamptz
+  intervalSeconds Int       @map("interval_seconds")
+  status          String    @default("running")
+  snapshot        Json
+  nextPollAt      DateTime  @default(now()) @map("next_poll_at") @db.Timestamptz
+  leaseUntil      DateTime? @map("lease_until") @db.Timestamptz
+  token           String?
+  expiresAt       DateTime  @map("expires_at") @db.Timestamptz
+
   @@index([expiresAt])
   @@map("xera_session_recordings")
 }
 
 model SubscriptionDomains {
-  uuid String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name String @db.VarChar(100)
-  domain String @unique @db.VarChar(253)
-  path String @default("") @db.VarChar(240)
-  kind String @db.VarChar(7)
-  parentUuid String? @map("parent_uuid") @db.Uuid
-  isDefault Boolean @default(false) @map("is_default")
-  accessMode String @default("OPEN") @map("access_mode") @db.VarChar(8)
-  redirectDomainUuid String? @map("redirect_domain_uuid") @db.Uuid
-  redirectDomain SubscriptionDomains? @relation("DomainRedirect", fields: [redirectDomainUuid], references: [uuid], onDelete: NoAction)
-  redirectedFrom SubscriptionDomains[] @relation("DomainRedirect")
-  parent SubscriptionDomains? @relation("DomainAliases", fields: [parentUuid], references: [uuid], onDelete: Restrict)
-  aliases SubscriptionDomains[] @relation("DomainAliases")
-  users Users[]
+  uuid               String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name               String                @db.VarChar(100)
+  domain             String                @unique @db.VarChar(253)
+  path               String                @default("") @db.VarChar(240)
+  kind               String                @db.VarChar(7)
+  parentUuid         String?               @map("parent_uuid") @db.Uuid
+  isDefault          Boolean               @default(false) @map("is_default")
+  accessMode         String                @default("OPEN") @map("access_mode") @db.VarChar(8)
+  redirectDomainUuid String?               @map("redirect_domain_uuid") @db.Uuid
+  redirectDomain     SubscriptionDomains?  @relation("DomainRedirect", fields: [redirectDomainUuid], references: [uuid], onDelete: NoAction)
+  redirectedFrom     SubscriptionDomains[] @relation("DomainRedirect")
+  parent             SubscriptionDomains?  @relation("DomainAliases", fields: [parentUuid], references: [uuid], onDelete: Restrict)
+  aliases            SubscriptionDomains[] @relation("DomainAliases")
+  users              Users[]
+
   @@index([parentUuid])
   @@index([redirectDomainUuid])
   @@map("subscription_domains")

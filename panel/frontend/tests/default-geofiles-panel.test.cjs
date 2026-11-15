@@ -3,12 +3,14 @@ const fs = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
 const ts = require('typescript');
+const settingsState = require('../../backend/tests/load-typescript.cjs')(path.join(__dirname, '../src/shared/api/hooks/subscription-settings/subscription-settings-state.ts'));
 
 function fixture(language = 'en') {
     const strings = JSON.parse(fs.readFileSync(path.join(__dirname, `../public/locales/${language}/remnawave.json`), 'utf8'));
     const calls = [], states = [];
     let cursor = 0, mutation;
     const query = { data: [], isPending: false, isSuccess: true, isError: false };
+    const settings = { data: { geofilesSystemEnabled: true, geofilesEnabled: false, serveJsonAtBaseSubscription: true }, isSuccess: true, isPending: false, isError: false };
     const updates = { isPending: false, isError: false, mutate() {} };
     const presets = [
         { id: 'geoip', provider: 'Loyalsoldier', kind: 'geoip', name: 'GeoIP', url: 'https://example.test/geoip.dat' },
@@ -23,13 +25,20 @@ function fixture(language = 'en') {
     const mocks = {
         '@mantine/core': { Accordion: accordion, ...Object.fromEntries(['Alert', 'Badge', 'Button', 'Group', 'Loader', 'Stack', 'Text'].map(name => [name, name])) },
         '@tanstack/react-query': {
+            useIsMutating: () => 0,
             useQuery: options => { calls.push(['QUERY', options]); return query; },
             useMutation: options => { mutation = options; return updates; },
-            useQueryClient: () => ({ invalidateQueries: async options => calls.push(['INVALIDATE', options]) }),
+            useQueryClient: () => ({ getQueryState: () => ({ status: settings.isSuccess ? 'success' : settings.isError ? 'error' : 'pending' }), getQueryData: () => settings.data, isMutating: () => 0, invalidateQueries: async options => calls.push(['INVALIDATE', options]) }),
         },
         react: { useState: initial => { const index = cursor++; if (!(index in states)) states[index] = initial; return [states[index], value => { states[index] = value; }]; } },
         'react-i18next': { useTranslation: () => ({ t: key => { const text = key.split('.').reduce((value, part) => value?.[part], strings); assert.equal(typeof text, 'string', `${language}: ${key}`); return text; } }) },
         '@shared/api': { instance: api },
+        '@shared/api/hooks/subscription-settings/subscription-settings-state': settingsState,
+        '@shared/api/hooks/subscription-settings/subscription-settings.query.hooks': {
+            useGetSubscriptionSettings: () => settings,
+            subscriptionSettingsQueryKeys: { getSubscriptionSettings: { queryKey: ['subscriptionSettings', 'getSubscriptionSettings'] } },
+        },
+        '@shared/ui/appearance/appearance': { usePanelReducedMotion: () => false },
         '../../../templates/subscription-template-editor/geofile-presets': { geofilePresets: presets },
         '../../../templates/subscription-template-editor/geofile-refresh-settings': { GeofileRefreshSettings: 'RefreshSettings' },
     };

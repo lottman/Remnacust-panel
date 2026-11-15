@@ -11,9 +11,13 @@ import { INodeConnectionOpts } from '@common/axios/axios.interfaces';
 import { TypedConfigService } from '@common/config/app-config/typed-config.service';
 import { TxKyselyService } from '@common/database';
 import { RawCacheService } from '@common/raw-cache';
-import { XrayModeService } from '@common/xray-mode/xray-mode.service';
 import { hostCredentials } from '@common/utils/host-identity';
+import { XrayModeService } from '@common/xray-mode/xray-mode.service';
 
+import {
+    canonicalNodeControlAddresses,
+    legacyNodeControlAddresses,
+} from '../../modules/nodes/node-control-addresses';
 import { BoundedWorkQueue } from '../utils/bounded-work-queue';
 import { attachAutoselectRoutes, type AutoselectRoute } from './autoselect-route-policy';
 import {
@@ -44,11 +48,18 @@ import {
     renderQuotaRegistrations,
     verifyQuotaRegistrations,
 } from './quota-registration';
+import {
+    HOST_POLICY_QUARANTINED,
+    hostPolicyRetryKey,
+    HOST_POLICY_RETRY_MS,
+} from './sync-host-policy-for-start';
 
 export const HOST_POLICY_VERSION = 'xera-host-policy-v2';
 const HOST_POLICY_DISCOVERY_BUDGET_MS = 30000;
 type HostPolicyCapabilities = {
     checkedAt?: number;
+    proofRevision?: string;
+    proofContext?: string;
     native?: boolean;
     version?: string;
     supported?: boolean;
@@ -74,6 +85,11 @@ type HostPolicyCapabilities = {
     quotaRecoveryPolicyBindingsRequired?: boolean;
     quotaRecoveryPolicyBindingsSupported?: boolean;
 };
+type PolicyConnection = INodeConnectionOpts & {
+    controlRevision?: string;
+    controlAddresses?: unknown;
+    ips?: unknown;
+};
 type CompatibilitySnapshot = {
     key: string;
     roots: Set<string>;
@@ -81,6 +97,19 @@ type CompatibilitySnapshot = {
     routed: Set<string>;
     capabilities: Map<string, { connection: string; value: HostPolicyCapabilities }>;
     unavailable: Map<string, Error>;
+    strictUnavailable?: Map<string, Error>;
+    configurationIsolated?: Set<string>;
+    strictClassification?: Pick<CompatibilitySnapshot, 'key' | 'inbounds' | 'routed'>;
+    configurationClassification?: Map<string, { inbounds: Set<string>; routed: Set<string> }>;
+    configurationPending?: Set<string>;
+    configurationQuarantine?: Set<string>;
+    proofUntil?: Map<string, number>;
+};
+type ConfigurationIsolation = {
+    inbounds: Set<string>;
+    groups: Set<string>;
+    hosts: Set<string>;
+    inboundTags: Map<string, string>;
 };
 export { normalizeDestinationRule as normalizePolicyDomain } from './destination-rule';
 @Injectable()
@@ -129,8 +158,10 @@ export class HostPolicyService {
     }
     async legacyInbounds(): Promise<Set<string>> {
         if (this.xrayModes && !(await this.xrayModes.isCustom())) {
-            const rows = await sql<{ uuid: string }>`SELECT uuid FROM config_profile_inbounds`.execute(this.db.kysely);
-            const inbounds = new Set(rows.rows.map(row => row.uuid));
+            const rows = await sql<{
+                uuid: string;
+            }>`SELECT uuid FROM config_profile_inbounds`.execute(this.db.kysely);
+            const inbounds = new Set(rows.rows.map((row) => row.uuid));
             this.legacyInventory = { until: Date.now() + 1000, inbounds, routed: inbounds };
             return inbounds;
         }
@@ -180,8 +211,10 @@ export class HostPolicyService {
         roots: readonly string[],
         work: () => Promise<T>,
         allowPartial = false,
+        purpose: 'strict' | 'configuration' = 'strict',
     ): Promise<T> {
-        if (this.xrayModes && !(await this.xrayModes.isCustom())) return this.compatibility.run(undefined, work);
+        if (this.xrayModes && !(await this.xrayModes.isCustom()))
+            return this.compatibility.run(undefined, work);
         if (this.transactions.isTransactionActive())
             throw new Error('Node capability discovery must run outside SQL transactions');
         const current = this.compatibility.getStore();
@@ -190,15 +223,81 @@ export class HostPolicyService {
                 throw this.discoveryFailure(
                     'Host policy compatibility snapshot does not cover this node',
                 );
-            for (const uuid of roots) {
-                const failure = current.unavailable.get(uuid);
-                if (failure && !allowPartial) throw failure;
-            }
-            return work();
         }
         let snapshot: CompatibilitySnapshot;
         try {
-            snapshot = await this.prepareCompatibilitySnapshot(roots);
+            snapshot = current ?? (await this.prepareCompatibilitySnapshot(roots));
+            const strictUnavailable = snapshot.strictUnavailable ?? snapshot.unavailable;
+            const strictClassification = snapshot.strictClassification ?? {
+                key: snapshot.key,
+                inbounds: snapshot.inbounds,
+                routed: snapshot.routed,
+            };
+            const inbounds = new Set(strictClassification.inbounds);
+            const routed = new Set(strictClassification.routed);
+            const unavailable = new Map(strictUnavailable);
+            const configurationIsolated = new Set<string>();
+            if (purpose === 'configuration') {
+                for (const uuid of roots) {
+                    const capability = snapshot.capabilities.get(uuid)?.value;
+                    if (
+                        unavailable.has(uuid) &&
+                        capability?.native !== true &&
+                        capability?.version === HOST_POLICY_VERSION &&
+                        capability.supported === true &&
+                        capability.routedDeviceSpeedLimitsSupported === true &&
+                        !capability.offlineReserves
+                    ) {
+                        const proof = this.nodeWork.submit(() => this.configurationIsolation(uuid));
+                        if (!proof) throw this.discoveryFailure('Host policy proof queue is full');
+                        const isolation = await proof;
+                        if (
+                            isolation &&
+                            ((!isolation.groups.size && !isolation.hosts.size) ||
+                                capability.policyRevisionsSupported === true)
+                        ) {
+                            unavailable.delete(uuid);
+                            configurationIsolated.add(uuid);
+                            for (const [
+                                root,
+                                classification,
+                            ] of snapshot.configurationClassification ?? []) {
+                                for (const inbound of classification.inbounds)
+                                    if (root === uuid || isolation.inbounds.has(inbound))
+                                        inbounds.add(inbound);
+                                for (const inbound of classification.routed)
+                                    if (root === uuid || isolation.inbounds.has(inbound))
+                                        routed.add(inbound);
+                            }
+                        }
+                    }
+                }
+            }
+            snapshot = {
+                ...snapshot,
+                key:
+                    purpose === 'configuration' && configurationIsolated.size
+                        ? createHash('sha256')
+                              .update(
+                                  JSON.stringify([
+                                      strictClassification.key,
+                                      'configuration',
+                                      [...configurationIsolated].sort(),
+                                      [...inbounds].sort(),
+                                      [...routed].sort(),
+                                  ]),
+                              )
+                              .digest('hex')
+                        : strictClassification.key,
+                inbounds,
+                routed,
+                unavailable,
+                strictUnavailable,
+                strictClassification,
+                configurationIsolated,
+                configurationPending: new Set<string>(),
+                configurationQuarantine: new Set<string>(),
+            };
         } catch (error) {
             throw this.discoveryFailure(
                 error instanceof Error ? error.message : 'Host policy node inventory unavailable',
@@ -210,14 +309,148 @@ export class HostPolicyService {
         }
         return this.compatibility.run(snapshot, work);
     }
+    isConfigurationQuarantined(nodeUuid: string): boolean {
+        return this.compatibility.getStore()?.configurationPending?.has(nodeUuid) === true;
+    }
+    isConfigurationIsolated(nodeUuid: string): boolean {
+        return this.compatibility.getStore()?.configurationIsolated?.has(nodeUuid) === true;
+    }
+    private async configurationIsolation(
+        nodeUuid: string,
+        quotaMode?: Awaited<ReturnType<typeof quotaNodeMode>>,
+    ): Promise<ConfigurationIsolation | null> {
+        if (quotaMode === undefined) quotaMode = await quotaNodeMode(this.db, nodeUuid);
+        if (quotaMode) return null;
+        const state = await this.scopes(undefined, nodeUuid, false, {
+            identities: false,
+            allModern: true,
+        });
+        const hosts = state.hosts.filter((host) => host.boundNodes.includes(nodeUuid));
+        const groups = state.groups.filter((group) => group.nodeUuids.includes(nodeUuid));
+        const restrictedHosts = new Set(
+            hosts
+                .filter(
+                    (host) =>
+                        host.managed ||
+                        host.alwaysAvailable ||
+                        host.onlyWhenInactive ||
+                        BigInt(host.userLimit ?? 0) !== 0n ||
+                        (host.userSpeed ?? 0) !== 0 ||
+                        (host.deviceSpeed ?? 0) !== 0 ||
+                        (host.totalSpeed ?? 0) !== 0 ||
+                        (host.trafficMultiplier ?? 1) !== 1 ||
+                        (host.domains && host.domains.mode !== 'OFF'),
+                )
+                .map((host) => host.uuid),
+        );
+        const restrictedGroups = new Set(
+            groups
+                .filter(
+                    (group) =>
+                        BigInt(group.userLimit ?? 0) !== 0n ||
+                        (group.userSpeed ?? 0) !== 0 ||
+                        (group.deviceSpeed ?? 0) !== 0 ||
+                        (group.totalSpeed ?? 0) !== 0 ||
+                        group.trafficMultiplier !== 1,
+                )
+                .map((group) => group.key),
+        );
+        const byId = new Map(state.hosts.map((host) => [host.uuid, host]));
+        const inbounds = new Set(
+            hosts.flatMap((host) =>
+                [
+                    host,
+                    byId.get(host.quotaHostUuid ?? ''),
+                    byId.get(host.sourceHostUuid ?? ''),
+                ].flatMap((endpoint) => (endpoint?.inboundUuid ? [endpoint.inboundUuid] : [])),
+            ),
+        );
+        const keys = groups
+            .map((group) => group.key)
+            .filter((key) => key.startsWith('host:') || key.startsWith('tag:'));
+        const controls = keys.length
+            ? await sql<{
+                  scope: string;
+              }>`SELECT lower(s.kind)||':'||s.key AS scope FROM xera_limit_scopes s
+            WHERE (lower(s.kind)||':'||s.key)=ANY(${keys}::text[])
+            UNION ALL SELECT lower(a.kind)||':'||a.key AS scope FROM xera_limit_user_adjustments a
+            WHERE (lower(a.kind)||':'||a.key)=ANY(${keys}::text[])`.execute(this.db.kysely)
+            : { rows: [] };
+        for (const row of controls.rows) restrictedGroups.add(row.scope);
+        for (const host of hosts)
+            if (
+                groups.some(
+                    (group) =>
+                        restrictedGroups.has(group.key) && group.hostUuids.includes(host.uuid),
+                )
+            )
+                restrictedHosts.add(host.uuid);
+        return {
+            inbounds,
+            groups: restrictedGroups,
+            hosts: restrictedHosts,
+            inboundTags: new Map(
+                hosts
+                    .filter(
+                        (host) =>
+                            restrictedHosts.has(host.uuid) && host.inboundUuid && host.inboundTag,
+                    )
+                    .map((host) => [host.inboundUuid!, host.inboundTag!]),
+            ),
+        };
+    }
+    private async assertCachedPeerCompatibility(
+        nodeUuid: string,
+        snapshot?: CompatibilitySnapshot,
+    ): Promise<void> {
+        const peers = await sql<PolicyConnection>`
+            SELECT DISTINCT n.uuid,n.address,n.port,n.proxy_url AS "proxyUrl",
+                n.control_revision::text AS "controlRevision",n.control_addresses AS "controlAddresses",n.ips
+            FROM nodes n JOIN config_profile_inbounds_to_nodes b ON b.node_uuid=n.uuid
+            WHERE NOT n.is_disabled AND n.uuid<>${nodeUuid}::uuid
+              AND EXISTS(SELECT 1 FROM config_profile_inbounds_to_nodes root
+                WHERE root.node_uuid=${nodeUuid}::uuid
+                  AND root.config_profile_inbound_uuid=b.config_profile_inbound_uuid)
+            ORDER BY n.uuid LIMIT 10001`.execute(this.db.kysely);
+        if (peers.rows.length > 10000)
+            throw this.discoveryFailure('Host policy peer inventory exceeds limit');
+        for (let offset = 0; offset < peers.rows.length; offset += 64)
+            await Promise.all(
+                peers.rows.slice(offset, offset + 64).map(async (peer) => {
+                    const value = snapshot
+                        ? snapshot.capabilities.get(peer.uuid)?.value
+                        : await this.cache.get<HostPolicyCapabilities>(this.capabilityKey(peer));
+                    if (
+                        !value ||
+                        typeof value.checkedAt !== 'number' ||
+                        Date.now() - value.checkedAt < 0 ||
+                        Date.now() - value.checkedAt >= 60000 ||
+                        value.proofRevision !== peer.controlRevision ||
+                        value.proofContext !== this.proofContext(peer) ||
+                        (value.native === true
+                            ? value.supported !== false
+                            : typeof value.version !== 'string' ||
+                              typeof value.supported !== 'boolean')
+                    )
+                        throw this.discoveryFailure(
+                            `Node ${peer.uuid}: host policy peer proof unavailable`,
+                        );
+                }),
+            );
+        if (!snapshot) {
+            await this.legacyInventoryPending;
+            this.legacyInventory = undefined;
+        }
+    }
     private discoveryFailure(message: string): Error {
         return Object.assign(new Error(message), { code: 'HOST_POLICY_DISCOVERY_FAILED' });
     }
     private async prepareCompatibilitySnapshot(
         roots: readonly string[],
     ): Promise<CompatibilitySnapshot> {
-        const nodes = await sql<INodeConnectionOpts & { uuid: string; inbounds: string[] }>`
+        const nodes = await sql<PolicyConnection & { inbounds: string[] }>`
             SELECT n.uuid,n.address,n.port,n.proxy_url AS "proxyUrl",
+                n.control_revision::text AS "controlRevision",n.control_addresses AS "controlAddresses",n.ips,
                 COALESCE(array_agg(b.config_profile_inbound_uuid) FILTER(WHERE b.config_profile_inbound_uuid IS NOT NULL),'{}'::uuid[]) AS inbounds
             FROM nodes n LEFT JOIN config_profile_inbounds_to_nodes b ON b.node_uuid=n.uuid
             WHERE NOT n.is_disabled GROUP BY n.uuid ORDER BY n.uuid LIMIT 10001`.execute(
@@ -258,7 +491,7 @@ export class HostPolicyService {
                             }),
                         ]);
                         capabilities.set(node.uuid, {
-                            connection: this.connectionKey(node),
+                            connection: this.proofContext(node),
                             value,
                         });
                     } catch (error) {
@@ -289,35 +522,68 @@ export class HostPolicyService {
             const nativeRoot = capabilities.get(uuid)?.value.native === true;
             const failure =
                 failures.get(uuid) ??
-                (nativeRoot ? undefined : nodesById
-                    .get(uuid)
-                    ?.inbounds.map((inbound) => failedInbounds.get(inbound))
-                    .find((value) => value !== undefined));
+                (nativeRoot
+                    ? undefined
+                    : nodesById
+                          .get(uuid)
+                          ?.inbounds.map((inbound) => failedInbounds.get(inbound))
+                          .find((value) => value !== undefined));
             if (failure) unavailable.set(uuid, failure);
         }
         const legacy = new Set<string>();
         const routed = new Set<string>();
+        const lastKnownLegacy = new Set<string>();
+        const lastKnownRouted = new Set<string>();
         for (let offset = 0; offset < nodes.rows.length; offset += 64)
             await Promise.all(
                 nodes.rows.slice(offset, offset + 64).map(async (node) => {
                     const value =
                         capabilities.get(node.uuid)?.value ??
-                        (failures.has(node.uuid)
-                            ? undefined
-                            : await this.cache.get<HostPolicyCapabilities>(
-                                  this.capabilityKey(node),
-                              ));
+                        (await this.cache.get<HostPolicyCapabilities>(this.capabilityKey(node)));
+                    const nodeLegacy = failures.has(node.uuid) ? lastKnownLegacy : legacy;
+                    const nodeRouted = failures.has(node.uuid) ? lastKnownRouted : routed;
                     if (value?.native === true)
-                        for (const inbound of node.inbounds) legacy.add(inbound);
+                        for (const inbound of node.inbounds) nodeLegacy.add(inbound);
                     if (
                         value?.native === true ||
                         (value?.version === HOST_POLICY_VERSION &&
                             value.supported === true &&
                             value.routedDeviceSpeedLimitsSupported !== true)
                     )
-                        for (const inbound of node.inbounds) routed.add(inbound);
+                        for (const inbound of node.inbounds) nodeRouted.add(inbound);
                 }),
             );
+        await this.legacyInventoryPending;
+        this.legacyInventory = {
+            until: Date.now() + 1000,
+            inbounds: new Set([...legacy, ...lastKnownLegacy]),
+            routed: new Set([...routed, ...lastKnownRouted]),
+        };
+        const inboundProofUntil = new Map<string, number>();
+        for (const node of dependencies) {
+            const until = (capabilities.get(node.uuid)?.value.checkedAt ?? 0) + 60000;
+            for (const inbound of node.inbounds)
+                inboundProofUntil.set(
+                    inbound,
+                    Math.min(inboundProofUntil.get(inbound) ?? Infinity, until),
+                );
+        }
+        const proofUntil = new Map(
+            roots.map((uuid) => {
+                const capability = capabilities.get(uuid)?.value;
+                return [
+                    uuid,
+                    Math.min(
+                        (capability?.checkedAt ?? 0) + 60000,
+                        ...(capability?.native === true
+                            ? []
+                            : (nodesById.get(uuid)?.inbounds ?? []).map(
+                                  (inbound) => inboundProofUntil.get(inbound) ?? 0,
+                              )),
+                    ),
+                ];
+            }),
+        );
         const snapshot: CompatibilitySnapshot = {
             key: createHash('sha256')
                 .update(
@@ -342,6 +608,24 @@ export class HostPolicyService {
             routed,
             capabilities,
             unavailable,
+            proofUntil,
+            configurationClassification: new Map(
+                roots.map((uuid) => [
+                    uuid,
+                    {
+                        inbounds: new Set(
+                            (nodesById.get(uuid)?.inbounds ?? []).filter((inbound) =>
+                                lastKnownLegacy.has(inbound),
+                            ),
+                        ),
+                        routed: new Set(
+                            (nodesById.get(uuid)?.inbounds ?? []).filter((inbound) =>
+                                lastKnownRouted.has(inbound),
+                            ),
+                        ),
+                    },
+                ]),
+            ),
         };
         return snapshot;
     }
@@ -353,18 +637,40 @@ export class HostPolicyService {
     private capabilityKey(node: INodeConnectionOpts & { uuid: string }): string {
         return `xera:host-policy:capabilities:v2:${node.uuid}:${this.connectionKey(node)}`;
     }
+    private proofContext(node: PolicyConnection): string {
+        const ips = Array.isArray(node.ips) ? node.ips : [];
+        const addresses =
+            node.controlAddresses === undefined
+                ? legacyNodeControlAddresses({ address: node.address, ips })
+                : canonicalNodeControlAddresses(node.controlAddresses);
+        return createHash('sha256')
+            .update(
+                JSON.stringify([
+                    this.connectionKey(node),
+                    node.controlRevision ?? null,
+                    addresses,
+                    ips.map((row) => [row.ip, row.status]),
+                ]),
+            )
+            .digest('hex');
+    }
     private async discoverCapabilities(
-        node: INodeConnectionOpts & { uuid: string },
+        node: PolicyConnection,
         force = false,
         network?: (duration: number) => void,
     ): Promise<HostPolicyCapabilities> {
         if (this.transactions.isTransactionActive())
             throw new Error('Node capability discovery must run outside SQL transactions');
         const key = this.capabilityKey(node);
+        const context = this.proofContext(node);
+        const revision = node.controlRevision;
+        const discoveryKey = key + ':' + context;
         const cached = await this.cache.get<HostPolicyCapabilities>(key);
         if (
             !force &&
             cached &&
+            cached.proofContext === context &&
+            cached.proofRevision === revision &&
             (cached.native === true
                 ? cached.supported === false
                 : typeof cached.version === 'string' && typeof cached.supported === 'boolean') &&
@@ -373,14 +679,17 @@ export class HostPolicyService {
             Date.now() - cached.checkedAt < 60000
         )
             return cached;
-        const pending = this.discoveries.get(key);
+        const pending = this.discoveries.get(discoveryKey);
         if (pending) return pending;
         const discovery = this.discoveryWork.submit(async () => {
             const healthStarted = performance.now();
             let native = false;
+            let healthRevision: string | undefined;
             try {
-                const health = await this.axios.getNodeHealth(node);
-                native = health.isOk &&
+                const health = await this.axios.getNodeHealth(node, revision);
+                healthRevision = health.nodeControlRevision;
+                native =
+                    health.isOk &&
                     typeof health.response?.isAlive === 'boolean' &&
                     typeof health.response.nodeVersion === 'string' &&
                     /^v?[23]\.\d+\.\d+$/.test(health.response.nodeVersion);
@@ -390,9 +699,14 @@ export class HostPolicyService {
                 network?.(performance.now() - healthStarted);
             }
             const started = performance.now();
-            const status = native ? null : await this.axios
-                .hostPolicy<HostPolicyCapabilities>(node)
-                .finally(() => network?.(performance.now() - started));
+            const status = native
+                ? null
+                : await this.axios
+                      .hostPolicy<HostPolicyCapabilities>(node)
+                      .finally(() => network?.(performance.now() - started));
+            const proofRevision = native
+                ? healthRevision
+                : (status as { nodeControlRevision?: string } | null)?.nodeControlRevision;
             let value: HostPolicyCapabilities;
             if (native) {
                 value = { native: true, supported: false, checkedAt: Date.now() };
@@ -435,6 +749,15 @@ export class HostPolicyService {
                         response.quotaRecoveryPolicyBindingsSupported,
                 };
             } else throw new Error(`Node ${node.uuid}: host policy capabilities unavailable`);
+            if (
+                (revision !== undefined && proofRevision !== revision) ||
+                (healthRevision !== undefined && proofRevision !== healthRevision)
+            )
+                throw this.discoveryFailure(
+                    'Node control context changed during capability discovery',
+                );
+            value.proofRevision = proofRevision;
+            value.proofContext = context;
             await this.cache.set(key, value, 86400);
             await this.legacyInventoryPending;
             this.legacyInventory = undefined;
@@ -444,20 +767,21 @@ export class HostPolicyService {
             throw Object.assign(new Error('Node capability discovery queue is full'), {
                 code: 'HOST_POLICY_BUSY',
             });
-        this.discoveries.set(key, discovery);
+        this.discoveries.set(discoveryKey, discovery);
         try {
             return await discovery;
         } finally {
-            if (this.discoveries.get(key) === discovery) this.discoveries.delete(key);
+            if (this.discoveries.get(discoveryKey) === discovery)
+                this.discoveries.delete(discoveryKey);
         }
     }
     async scopes(
         userId?: bigint,
         nodeUuid?: string,
         userQuota = false,
-        options: { identities?: boolean; profileUuid?: string } = {},
+        options: { identities?: boolean; profileUuid?: string; allModern?: boolean } = {},
     ): Promise<PolicySnapshot> {
-        const custom = !this.xrayModes || await this.xrayModes.isCustom();
+        const custom = !this.xrayModes || (await this.xrayModes.isCustom());
         if (!custom) userQuota = false;
         const [hosts, tags, identities, routes] = await Promise.all([
             sql<PolicyHost>`SELECT h.uuid,h.tags,h.config_profile_inbound_uuid AS "inboundUuid",i.tag AS "inboundTag",i.profile_uuid AS "profileUuid",
@@ -474,9 +798,7 @@ export class HostPolicyService {
     LEFT JOIN LATERAL (
         SELECT k.host_uuid FROM xera_host_identities k
         WHERE k.host_uuid >= h.uuid ORDER BY k.host_uuid LIMIT 1
-    ) issued ON issued.host_uuid=h.uuid`.execute(
-                this.db.kysely,
-            ),
+    ) issued ON issued.host_uuid=h.uuid`.execute(this.db.kysely),
             sql<PolicyTag>`
     SELECT tag,total_speed_limit_mbps AS "totalSpeed",traffic_multiplier AS "trafficMultiplier",user_traffic_limit_bytes::text AS "userLimit",speed_limit_mbps AS "userSpeed",device_speed_limit_mbps AS "deviceSpeed",reset_anchor_at AS anchor,
     reset_value AS "resetValue",reset_unit AS "resetUnit" FROM xera_host_tag_limits`.execute(
@@ -507,9 +829,11 @@ export class HostPolicyService {
                 this.db.kysely,
             ),
         ]);
-        const legacyInboundIds = await this.legacyInbounds();
+        const legacyInboundIds = options.allModern
+            ? new Set<string>()
+            : await this.legacyInbounds();
         const legacyRouteInbounds =
-            this.compatibility.getStore()?.routed ??
+            (options.allModern ? legacyInboundIds : this.compatibility.getStore()?.routed) ??
             this.legacyInventory?.routed ??
             legacyInboundIds;
         const hostById = new Map(hosts.rows.map((host) => [host.uuid, host]));
@@ -625,7 +949,7 @@ export class HostPolicyService {
             ? true
             : undefined;
     }
-    async syncNode(node: INodeConnectionOpts & { uuid: string }): Promise<void> {
+    async syncNode(node: PolicyConnection): Promise<void> {
         if (this.xrayModes && !(await this.xrayModes.isCustom())) return;
         if (this.transactions.isTransactionActive())
             return Promise.reject(
@@ -639,6 +963,7 @@ export class HostPolicyService {
             node.address,
             node.port,
             node.proxyUrl,
+            this.proofContext(node),
             snapshot?.key,
         ]);
         let entry = this.nodeSynchronizations.get(key);
@@ -713,10 +1038,7 @@ export class HostPolicyService {
         schedule();
         return promise;
     }
-    private async applyNodePolicy(
-        node: INodeConnectionOpts & { uuid: string },
-        registrationPass = 0,
-    ): Promise<void> {
+    private async applyNodePolicy(node: PolicyConnection, registrationPass = 0): Promise<void> {
         if (this.xrayModes && !(await this.xrayModes.isCustom())) return;
         if (this.transactions.isTransactionActive())
             throw new Error('Host policy synchronization must run after SQL commit');
@@ -737,10 +1059,8 @@ export class HostPolicyService {
                 networkMs += performance.now() - sentAt;
             }
         };
-        const connection = createHash('sha256')
-            .update(JSON.stringify([node.address, node.port, node.proxyUrl]))
-            .digest('hex');
-        const capabilityKey = `xera:host-policy:capabilities:v2:${node.uuid}:${connection}`;
+        const connection = this.proofContext(node);
+        const capabilityKey = this.capabilityKey(node);
         try {
             let quotaMode = await quotaNodeMode(this.db, node.uuid);
             let quotaSource = '';
@@ -808,6 +1128,9 @@ export class HostPolicyService {
                             { code: 'HOST_POLICY_NOT_APPLIED' },
                         );
                     }
+                    const context = this.compatibility.getStore();
+                    if (context?.configurationQuarantine?.has(node.uuid))
+                        context.configurationPending?.add(node.uuid);
                     return result.response;
                 } catch (error) {
                     await (
@@ -848,6 +1171,29 @@ export class HostPolicyService {
                     // Recheck under the node lock: a coordinator may have begun
                     // fencing while the capability request was in flight.
                     quotaMode = await quotaNodeMode(this.db, node.uuid);
+                    const snapshot = this.compatibility.getStore();
+                    const isolation = snapshot?.configurationIsolated?.has(node.uuid)
+                        ? await this.configurationIsolation(node.uuid, quotaMode)
+                        : undefined;
+                    if (
+                        isolation === null ||
+                        (isolation &&
+                            (isolation.groups.size || isolation.hosts.size) &&
+                            !revisionAware)
+                    )
+                        throw snapshot!.strictUnavailable!.get(node.uuid)!;
+                    if (!isolation && !nativeNode) {
+                        if (snapshot?.roots.has(node.uuid)) {
+                            if (
+                                snapshot.strictUnavailable?.has(node.uuid) ||
+                                (snapshot.proofUntil?.get(node.uuid) ?? 0) <= Date.now()
+                            )
+                                throw this.discoveryFailure(
+                                    'Host policy compatibility snapshot expired',
+                                );
+                            await this.assertCachedPeerCompatibility(node.uuid, snapshot);
+                        } else await this.assertCachedPeerCompatibility(node.uuid);
+                    }
                     if (
                         quotaMode &&
                         (!capabilities?.quotaReservesSupported ||
@@ -883,6 +1229,24 @@ export class HostPolicyService {
                     let state = await this.scopes(undefined, node.uuid, quotaMode?.userQuota, {
                         identities: !deferredIdentities,
                     });
+                    if (
+                        !isolation &&
+                        !nativeNode &&
+                        state.hosts.some(
+                            (host) =>
+                                host.boundNodes.includes(node.uuid) &&
+                                state.legacyInboundIds?.has(host.inboundUuid ?? ''),
+                        )
+                    ) {
+                        const required = await this.configurationIsolation(node.uuid, quotaMode);
+                        if (required && (required.groups.size || required.hosts.size))
+                            throw Object.assign(
+                                new Error(
+                                    'Legacy credentials cannot safely enforce the required host policy',
+                                ),
+                                { code: 'HOST_POLICY_NOT_APPLIED' },
+                            );
+                    }
                     if (!capabilities?.routedDeviceSpeedLimitsSupported)
                         state = legacyAutoselectPolicy(state);
                     const protectedHosts = state.hosts.filter(
@@ -986,6 +1350,18 @@ export class HostPolicyService {
                               : null;
                         const key = kind === 'HOST' ? group.key.slice(5) : group.key.slice(4);
                         let blockAll = pausedScopes.has(group.key);
+                        if (
+                            isolation &&
+                            (isolation.groups.has(group.key) ||
+                                BigInt(group.userLimit ?? 0) !== 0n ||
+                                (group.userSpeed ?? 0) !== 0 ||
+                                (group.deviceSpeed ?? 0) !== 0 ||
+                                (group.totalSpeed ?? 0) !== 0 ||
+                                group.trafficMultiplier !== 1)
+                        ) {
+                            isolation.groups.add(group.key);
+                            blockAll = true;
+                        }
                         let blockedOwners: Record<string, boolean> = {};
                         if (!quotaMode && BigInt(group.userLimit ?? 0) > 0n) {
                             const usage = await sql<{
@@ -1036,11 +1412,31 @@ export class HostPolicyService {
                     const hosts: Record<string, unknown> = {};
                     for (const h of protectedHosts) {
                         const selected = !h.nodes.length || h.nodes.includes(node.uuid);
+                        const quarantined =
+                            isolation &&
+                            (isolation.hosts.has(h.uuid) ||
+                                h.managed ||
+                                h.alwaysAvailable ||
+                                h.onlyWhenInactive ||
+                                (h.domains && h.domains.mode !== 'OFF') ||
+                                nodeGroups.some(
+                                    (group) =>
+                                        isolation.groups.has(group.key) &&
+                                        group.hostUuids.includes(h.uuid),
+                                ));
+                        if (quarantined && h.inboundUuid && h.inboundTag)
+                            isolation.inboundTags.set(h.inboundUuid, h.inboundTag);
                         hosts[h.uuid.replaceAll('-', '')] = {
                             inboundTag: h.inboundTag,
                             allowedIdentities: Object.fromEntries(
                                 state.identities
-                                    .filter((k) => selected && k.hostUuid === h.uuid && k.allowed)
+                                    .filter(
+                                        (k) =>
+                                            selected &&
+                                            !quarantined &&
+                                            k.hostUuid === h.uuid &&
+                                            k.allowed,
+                                    )
                                     .map((k) => [this.keys(k).username, true]),
                             ),
                             groups: state.groups
@@ -1083,17 +1479,25 @@ export class HostPolicyService {
                             );
                         }
                     }
+                    if (
+                        isolation &&
+                        (isolation.groups.size ||
+                            isolation.hosts.size ||
+                            isolation.inboundTags.size)
+                    )
+                        snapshot?.configurationQuarantine?.add(node.uuid);
                     const body = {
                         version: HOST_POLICY_VERSION,
                         ...(protectedHosts.some((host) => host.quotaHostUuid)
                             ? { routedIdentities: true }
                             : {}),
                         protectedInbounds: [
-                            ...new Set(
-                                protectedHosts
+                            ...new Set([
+                                ...protectedHosts
                                     .filter((h) => state.protectedInboundIds.has(h.inboundUuid!))
                                     .map((h) => h.inboundTag),
-                            ),
+                                ...(isolation?.inboundTags.values() ?? []),
+                            ]),
                         ],
                         hosts,
                         groups,
@@ -1338,7 +1742,16 @@ export class HostPolicyService {
     private async synchronizeConnectedNodes(): Promise<void> {
         const nodes = await this.db.kysely
             .selectFrom('nodes')
-            .select(['uuid', 'address', 'port', 'proxyUrl'])
+            .select([
+                'uuid',
+                'address',
+                'port',
+                'proxyUrl',
+                'lastStatusMessage',
+                'controlRevision',
+                'controlAddresses',
+                'ips',
+            ])
             .where('isDisabled', '=', false)
             .where('isConnected', '=', true)
             .execute();
@@ -1346,6 +1759,15 @@ export class HostPolicyService {
             await Promise.all(
                 nodes.slice(i, i + 8).map(async (n) => {
                     try {
+                        if (n.lastStatusMessage?.startsWith(HOST_POLICY_QUARANTINED)) {
+                            const retry = await this.cache.get<number>(hostPolicyRetryKey(n.uuid));
+                            if (typeof retry !== 'number' || !Number.isFinite(retry))
+                                await this.cache.set(
+                                    hostPolicyRetryKey(n.uuid),
+                                    Date.now() + HOST_POLICY_RETRY_MS,
+                                    86400,
+                                );
+                        }
                         await this.syncNode(n);
                     } catch (e) {
                         this.logger.error(String(e));

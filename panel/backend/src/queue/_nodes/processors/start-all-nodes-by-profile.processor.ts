@@ -142,6 +142,8 @@ export class StartAllNodesByProfileQueueProcessor extends WorkerHost {
                     );
 
                     const eligibleNodes = new Set<string>();
+                    const policyWarnings = new Map<string, string>();
+                    const policyVerificationPending = new Set<string>();
                     await pMap(
                         legacyNodes,
                         async (node) => {
@@ -189,6 +191,10 @@ export class StartAllNodesByProfileQueueProcessor extends WorkerHost {
                             }
 
                             eligibleNodes.add(node.uuid);
+                            if (policy.quarantined && policy.message)
+                                policyWarnings.set(node.uuid, policy.message);
+                            if (policy.verificationPending)
+                                policyVerificationPending.add(node.uuid);
                         },
                         { concurrency: 3 },
                     );
@@ -478,7 +484,12 @@ export class StartAllNodesByProfileQueueProcessor extends WorkerHost {
                                 return;
                             case true:
                                 const nodeResponse = startXrayResponse.response;
-                                if (nodeResponse.isStarted && !nodeResponse.error) {
+                                await assertOwnership();
+                                if (
+                                    nodeResponse.isStarted &&
+                                    !nodeResponse.error &&
+                                    !policyVerificationPending.has(node.uuid)
+                                ) {
                                     await this.rawCacheService.delMany([
                                         hostPolicyRetryKey(node.uuid),
                                     ]);
@@ -513,6 +524,9 @@ export class StartAllNodesByProfileQueueProcessor extends WorkerHost {
                                         isConnected: nodeResponse.isStarted,
                                         lastStatusMessage:
                                             nodeResponse.error ??
+                                            (nodeResponse.isStarted
+                                                ? policyWarnings.get(node.uuid)
+                                                : undefined) ??
                                             (await this.rawCacheService.get<string>(
                                                 `remnacust:node-compatibility:${node.uuid}`,
                                             )) ??
@@ -598,6 +612,7 @@ export class StartAllNodesByProfileQueueProcessor extends WorkerHost {
                     );
                 },
                 true,
+                'configuration',
             );
         } catch (error) {
             this.logger.error(

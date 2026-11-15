@@ -357,7 +357,17 @@ export class HostAccessService {
         if (!identities.length) return { allSynchronized: true, readyHosts: new Set() };
         const nodes = await this.db.kysely
             .selectFrom('nodes')
-            .select(['uuid', 'address', 'port', 'proxyUrl', 'isConnected', 'isDisabled'])
+            .select([
+                'uuid',
+                'address',
+                'port',
+                'proxyUrl',
+                'isConnected',
+                'isDisabled',
+                'controlRevision',
+                'controlAddresses',
+                'ips',
+            ])
             .execute();
         const results = await settleConcurrent(nodes, 8, async (node) => {
             let success = true;

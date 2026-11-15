@@ -137,9 +137,19 @@ function fixture({
             },
         },
         {
+            observeNodeHealth: async (_uuid, _revision, _at, attempt, healthy) =>
+                healthy ? 0 : attempt,
             setMany: async (entries) => {
                 cacheWrites.push(...entries);
                 for (const entry of entries) cache.set(entry.key, entry.value);
+            },
+            setManyFenced: async (key, epoch, entries) => {
+                const previous = cache.get(key);
+                if (previous != null && BigInt(previous) > BigInt(epoch)) return false;
+                cache.set(key, epoch);
+                cacheWrites.push(...entries);
+                for (const entry of entries) cache.set(entry.key, entry.value);
+                return true;
             },
             delMany: async (entries) => {
                 trace.push('delMany');
@@ -341,6 +351,12 @@ test('actual inventory and bulk producer retain pending configuration after a fa
     const { NodesRepository } = load(
         path.join(__dirname, '../src/modules/nodes/repositories/nodes.repository.ts'),
         {
+            '../constants/nodes/ip-statuses': load(
+                path.join(
+                    __dirname,
+                    '../libs/contract/constants/nodes/ip-statuses/node-ip-statuses.constant.ts',
+                ),
+            ),
             '@nestjs-cls/transactional': {
                 Transactional: () => (_target, _property, descriptor) => descriptor,
             },

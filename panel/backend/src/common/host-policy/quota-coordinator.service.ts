@@ -94,6 +94,7 @@ export class QuotaCoordinatorService {
     private async nodes(): Promise<Node[]> {
         const result =
             await sql<Node>`SELECT n.uuid,n.id::text AS id,n.address,n.port,n.proxy_url AS "proxyUrl",
+            n.control_revision::text AS "controlRevision",n.control_addresses AS "controlAddresses",n.ips,
             n.consumption_multiplier::text AS multiplier,m.phase,m.instance_uuid AS instance,m.initial_core AS "initialCore",
             m.fenced_core AS "fencedCore",m.fenced_source AS "fencedSource",m.fenced_at AS "fencedAt",
             m.initial_drained_at AS drained,m.legacy_usage_drained_at AS "legacyDrained",

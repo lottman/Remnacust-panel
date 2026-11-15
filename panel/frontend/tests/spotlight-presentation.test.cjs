@@ -14,7 +14,7 @@ function load(file, mocks = {}) {
         compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true }
     }).outputText
     const ref = { exports: {} }
-    new Function('require', 'module', 'exports', compiled)(name => Object.hasOwn(mocks, name) ? mocks[name] : require(name), ref, ref.exports)
+    new Function('require', 'module', 'exports', compiled)(name => Object.hasOwn(mocks, name) ? mocks[name] : name === './node-policy-status' ? load('shared/utils/node-policy-status.ts') : require(name), ref, ref.exports)
     return ref.exports
 }
 

@@ -16,6 +16,7 @@ import {
     useGetNodeIntegrations,
     useGetNodePlugins,
     useGetNodeSecretKey,
+    useRescanNodeIps,
     useUpdateNode
 } from '@shared/api/hooks'
 import { useUiText } from '@shared/i18n/interface-text'
@@ -24,10 +25,17 @@ import { LoaderModalShared } from '@shared/ui/loader-modal'
 import { withNodeIpsErrors } from '@shared/ui/node-ips'
 import { withNodeControlAddressesErrors } from '@shared/ui/node-ips/validate-node-control-addresses'
 
-import { getNodeConnectionValues, getNodeUpdateValues } from './node-form-state'
+import {
+    applyNodeIpScanResult,
+    getNodeConnectionValues,
+    getNodeUpdateValues,
+    hasNodeConnectionChanges,
+    resetNodeFormDirty
+} from './node-form-state'
 import { NodeHealthHistory } from './node-health-history'
 import { NodePortPlans } from './node-port-plans'
 import { useNodePortPlan } from './node-port-plans.api'
+import { cacheNodeAfterWrite } from './node-query-state'
 
 interface IProps {
     nodeUuid: string
@@ -44,6 +52,8 @@ export const EditNodeByUuidModalContent = (props: IProps) => {
     const [connectionConflict, setConnectionConflict] = useState(false)
     const [reloadingConnection, setReloadingConnection] = useState(false)
     const [reloadError, setReloadError] = useState(false)
+    const [ipScanError, setIpScanError] = useState<string>()
+    const connectionOperation = useRef<'save' | 'scan' | null>(null)
     const portPlan = useNodePortPlan(nodeUuid)
 
     const isFormInitialized = useRef(false)
@@ -65,18 +75,10 @@ export const EditNodeByUuidModalContent = (props: IProps) => {
     const { data: nodePlugins } = useGetNodePlugins()
     const { data: nodeIntegrations } = useGetNodeIntegrations()
 
-    const { data: fetchedNode, refetch: refetchNode } = useGetNode({
-        route: {
-            uuid: nodeUuid
-        },
-        rQueryParams: {
-            enabled: !form.isTouched()
-        }
-    })
-
     const { mutate: updateNode, isPending: isUpdateNodePending } = useUpdateNode({
         mutationFns: {
             onError: (error) => {
+                connectionOperation.current = null
                 if (error instanceof RequestError && error.errorCode === 'A266') {
                     setConnectionConflict(true)
                 }
@@ -85,12 +87,8 @@ export const EditNodeByUuidModalContent = (props: IProps) => {
                 }
             },
             onSuccess: async (data, variables) => {
-                queryClient.setQueryData(
-                    nodesQueryKeys.getNode({
-                        uuid: nodeUuid
-                    }).queryKey,
-                    data
-                )
+                await cacheNodeAfterWrite(queryClient, nodeUuid, data)
+                connectionOperation.current = null
 
                 queryClient.refetchQueries({
                     queryKey: nodesQueryKeys.getAllNodes.queryKey
@@ -109,14 +107,63 @@ export const EditNodeByUuidModalContent = (props: IProps) => {
                 for (const [field, value] of Object.entries(connection)) {
                     form.setFieldValue(field, value as never)
                 }
-                form.resetDirty(initial)
+                resetNodeFormDirty(form, initial, [
+                    ...Object.keys(connection),
+                    ...Object.keys(variables.variables ?? {})
+                ])
                 setConnectionConflict(false)
             }
         }
     })
 
+    const { mutate: rescanNodeIps, isPending: isRescanningIps } = useRescanNodeIps({
+        route: { uuid: nodeUuid },
+        mutationFns: {
+            onError: (error) => {
+                connectionOperation.current = null
+                setIpScanError(error.message)
+                if (error instanceof RequestError && error.errorCode === 'A266') {
+                    setConnectionConflict(true)
+                }
+            },
+            onSuccess: async (data) => {
+                await cacheNodeAfterWrite(queryClient, nodeUuid, data)
+                connectionOperation.current = null
+                queryClient.refetchQueries({ queryKey: nodesQueryKeys.getAllNodes.queryKey })
+                setConnectionConflict(!applyNodeIpScanResult(form, data))
+                setIpScanError(undefined)
+            }
+        }
+    })
+
+    const { data: fetchedNode, refetch: refetchNode } = useGetNode({
+        route: { uuid: nodeUuid },
+        rQueryParams: { enabled: !form.isTouched() && !isRescanningIps && !isUpdateNodePending }
+    })
+
+    const handleRescanIps = () => {
+        if (
+            connectionOperation.current ||
+            isUpdateNodePending ||
+            isRescanningIps ||
+            reloadingConnection ||
+            portBusy ||
+            connectionConflict
+        )
+            return
+        if (hasNodeConnectionChanges(form)) {
+            setIpScanError(t('node-control-addresses.rescan-save-first'))
+            return
+        }
+        const controlRevision = form.getValues().controlRevision
+        if (!controlRevision) return
+        connectionOperation.current = 'scan'
+        setIpScanError(undefined)
+        rescanNodeIps({ variables: { controlRevision } })
+    }
+
     useEffect(() => {
-        if (fetchedNode && !isFormInitialized.current) {
+        if (fetchedNode && fetchedNode.uuid === nodeUuid && !isFormInitialized.current) {
             isFormInitialized.current = true
             form.initialize({
                 uuid: fetchedNode.uuid,
@@ -145,18 +192,32 @@ export const EditNodeByUuidModalContent = (props: IProps) => {
                 activePluginUuid: fetchedNode.activePluginUuid ?? undefined,
                 note: fetchedNode.note ?? undefined
             })
+        } else if (
+            fetchedNode &&
+            fetchedNode.uuid === nodeUuid &&
+            !isRescanningIps &&
+            !isUpdateNodePending &&
+            !connectionConflict &&
+            fetchedNode.controlRevision !== form.getValues().controlRevision &&
+            !hasNodeConnectionChanges(form)
+        ) {
+            applyNodeIpScanResult(form, fetchedNode)
         }
     }, [fetchedNode])
 
-    const handleSubmit = form.onSubmit(async (values) => {
-        if (!fetchedNode) {
-            return
-        }
+    const handleSubmit = () =>
+        form.onSubmit(async (values) => {
+            if (!fetchedNode || connectionOperation.current || reloadingConnection) {
+                return
+            }
 
-        updateNode({
-            variables: structuredClone(getNodeUpdateValues(values, (field) => form.isDirty(field)))
-        })
-    })
+            connectionOperation.current = 'save'
+            updateNode({
+                variables: structuredClone(
+                    getNodeUpdateValues(values, (field) => form.isDirty(field))
+                )
+            })
+        })()
 
     const reloadConnection = async () => {
         setReloadingConnection(true)
@@ -173,8 +234,9 @@ export const EditNodeByUuidModalContent = (props: IProps) => {
             for (const [field, value] of Object.entries(connection)) {
                 form.setFieldValue(field, value as never)
             }
-            form.resetDirty(initial)
+            resetNodeFormDirty(form, initial, Object.keys(connection))
             setConnectionConflict(false)
+            setIpScanError(undefined)
         } catch {
             setReloadError(true)
         } finally {
@@ -231,12 +293,21 @@ export const EditNodeByUuidModalContent = (props: IProps) => {
                         {t('operations.requestError')}
                     </Alert>
                 )}
+                {ipScanError && (
+                    <Alert color="red" role="alert" mb="md">
+                        {ipScanError}
+                    </Alert>
+                )}
                 {secretKey && nodePlugins && nodeIntegrations ? (
                     <BaseNodeForm
                         form={form}
                         handleClose={onClose}
                         handleSubmit={handleSubmit}
-                        isDataSubmitting={isUpdateNodePending || reloadingConnection}
+                        isDataSubmitting={
+                            isUpdateNodePending || reloadingConnection || isRescanningIps
+                        }
+                        isRescanningIps={isRescanningIps}
+                        onRescanIps={handleRescanIps}
                         saveDisabled={connectionConflict}
                         node={fetchedNode}
                         portPlansEnabled={portPlan.data?.enabled ?? false}

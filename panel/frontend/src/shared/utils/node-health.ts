@@ -1,9 +1,12 @@
 import { GetNodesCommand } from '@remnawave/backend-contract'
 
+import { nodePolicyIsPending } from './node-policy-status'
+
 type Node = Pick<
     GetNodesCommand.Response['response'][number],
     'configProfile' | 'isConnected' | 'isConnecting' | 'isDisabled' | 'system' | 'xrayUptime'
->
+> &
+    Partial<Pick<GetNodesCommand.Response['response'][number], 'lastStatusMessage'>>
 
 export type NodeHealthLevel = 'attention' | 'critical' | 'disabled' | 'healthy' | 'limited'
 export type NodeHealthSignal =
@@ -12,6 +15,7 @@ export type NodeHealthSignal =
     | 'connecting'
     | 'high-load'
     | 'high-memory'
+    | 'policy'
     | 'resources'
     | 'xray'
 
@@ -44,11 +48,13 @@ export function getNodeHealth(node: Node): NodeHealth {
         node.configProfile.activeConfigProfileUuid && node.configProfile.activeInbounds.length
     )
     if (!configured) issues.push('configuration')
+    const policyPending = nodePolicyIsPending(node.lastStatusMessage)
+    if (policyPending) issues.push('policy')
     if (node.isConnecting) issues.push('connecting')
     else if (!node.isConnected) issues.push('connection')
 
     let checkedSignals = 2
-    let passingSignals = Number(configured) + Number(node.isConnected)
+    let passingSignals = Number(configured && !policyPending) + Number(node.isConnected)
 
     const coreReady =
         node.isConnected &&

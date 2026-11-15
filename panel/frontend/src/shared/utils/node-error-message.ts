@@ -28,6 +28,8 @@ export function getNodeErrorMessage(message: string, t: TFunction): string {
     if (message === '[NODE_CORE_NOT_READY]') return t('nodeErrors.coreNotReady')
     if (message === '[NODE_CONTROL_DISABLED]') return t('nodeErrors.controlDisabled')
     if (message === '[NODE_UPDATE_PENDING]') return t('nodeErrors.updatePending')
+    if (message.startsWith('[HOST_POLICY_QUARANTINED]'))
+        return t('xera-node-health.policy-quarantined-message')
     if (nodeConfigurationNeedsRestart(message)) return t('nodeErrors.maintenanceRestart' as never)
     if (
         message === 'canceled' ||
@@ -53,8 +55,7 @@ export function getNodeErrorMessage(message: string, t: TFunction): string {
     if (/certificate|CERT_|TLS handshake/i.test(message)) return t('nodeErrors.tls')
     if (/Node route selection is cooling down|Node route selection cooling down/i.test(message))
         return t('nodeErrors.routeCooldown')
-    if (/No authenticated node API route available/i.test(message))
-        return t('nodeErrors.authentication')
+    if (/No authenticated node API route available/i.test(message)) return t('nodeErrors.noRoute')
     if (/host policy capabilities unavailable|\[HOST_POLICY_PENDING\]/i.test(message))
         return t('xera-node-health.policy-pending-message')
     if (/changes its port or transport/i.test(message)) return t('nodeErrors.listenerChanged')

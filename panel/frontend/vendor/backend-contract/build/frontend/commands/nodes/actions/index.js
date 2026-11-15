@@ -20,3 +20,4 @@ __exportStar(require("./reorder.command"), exports);
 __exportStar(require("./reset-traffic.command"), exports);
 __exportStar(require("./restart-all.command"), exports);
 __exportStar(require("./restart.command"), exports);
+__exportStar(require("./rescan-ips.command"), exports);

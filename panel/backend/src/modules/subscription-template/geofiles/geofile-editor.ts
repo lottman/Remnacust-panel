@@ -424,11 +424,12 @@ function* compileSteps(
     kind: 'geoip' | 'geosite',
     categories: string[],
     validateOnly = false,
+    maximumCategories = 32,
 ): Generator<void, DatRules> {
     if (
         !Array.isArray(categories) ||
         !categories.length ||
-        categories.length > 32 ||
+        categories.length > maximumCategories ||
         categories.some(
             (code) =>
                 typeof code !== 'string' ||
@@ -596,6 +597,13 @@ export function datCategoriesAsync(data: Buffer) {
 }
 export function compileDatAsync(...args: Parameters<typeof compileSteps>) {
     return runCooperative(compileSteps(...args));
+}
+export function validateDatReferencesAsync(
+    data: Buffer,
+    kind: 'geoip' | 'geosite',
+    categories: string[],
+) {
+    return runCooperative(compileSteps(data, kind, categories, true, 1024));
 }
 export function validateNativeDatAsync(data: Buffer, id: string) {
     return runCooperative(nativeValidationSteps(data, id));

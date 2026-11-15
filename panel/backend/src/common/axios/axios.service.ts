@@ -27,6 +27,7 @@ import {
     GetAllOutboundsStatsCommand,
     GetCombinedStatsCommand,
     GetGeocheckCommand,
+    GetNetworkAddressesCommand,
     GetNodeHealthCheckCommand,
     GetSystemStatsCommand,
     GetUserIpListCommand,
@@ -852,6 +853,7 @@ export class AxiosService {
                     '/node/stats/runtime',
                     '/node/xray/managed-core',
                     '/node/xray/logs',
+                    '/node/stats/network-addresses',
                 ].includes(path) &&
                 error instanceof AxiosError &&
                 !error.response &&
@@ -1192,6 +1194,20 @@ export class AxiosService {
             opts,
             data,
             timeout: 15_000,
+        });
+    }
+
+    public async getNodeNetworkAddresses(
+        opts: INodeConnectionOpts,
+    ): Promise<TResult<GetNetworkAddressesCommand.Response['response']>> {
+        return this.request<GetNetworkAddressesCommand.Response>({
+            label: 'GET NODE NETWORK ADDRESSES',
+            path: GetNetworkAddressesCommand.url,
+            opts,
+            method: 'get',
+            timeout: 5_000,
+            maxResponseBytes: 65_536,
+            logAxiosError: false,
         });
     }
 

@@ -10,6 +10,7 @@ import { SingBoxGeneratorService } from './generators/singbox.generator.service'
 import { XrayJsonGeneratorService } from './generators/xray-json.generator.service';
 import { XrayGeneratorService } from './generators/xray.generator.service';
 import { automaticXrayDelivery } from './geofiles/automatic-xray-delivery';
+import { GeofilesService } from './geofiles/geofiles.service';
 import { stabilizeRoutingProfile } from './geofiles/stabilize-routing-profile';
 import { xrayGeofileClient, XrayGeofileDelivery } from './geofiles/xray-geofile-delivery';
 import { IGenerateSubscription } from './interfaces';
@@ -29,6 +30,7 @@ export class RenderTemplatesService {
         private readonly singBoxGeneratorService: SingBoxGeneratorService,
         private readonly xrayJsonGeneratorService: XrayJsonGeneratorService,
         private readonly rawCache: RawCacheService,
+        private readonly geofiles?: GeofilesService,
     ) {}
 
     public async generateSubscription(params: IGenerateSubscription): Promise<{
@@ -69,6 +71,13 @@ export class RenderTemplatesService {
             (key) => key.toLowerCase() === 'routing',
         );
         const client = xrayGeofileClient(srrContext.userAgent ?? '');
+        const standards =
+            client &&
+            !hasRouting &&
+            srrContext.subscriptionSettings.serveJsonAtBaseSubscription === true &&
+            srrContext.subscriptionSettings.geofilesSystemEnabled === true
+                ? await this.geofiles?.standardSources()
+                : undefined;
 
         switch (srrContext.matchedResponseType) {
             case 'XRAY_BASE64': {
@@ -87,15 +96,20 @@ export class RenderTemplatesService {
                                 client,
                                 'inline',
                                 params.profileTitle ?? 'Subscription',
+                                undefined,
+                                false,
+                                standards,
                             ).retirementHeader(
                                 params.profileKey ?? String(user.id),
                                 Date.now(),
                                 true,
                             ),
-                            intervalHours: 0,
+                            intervalHours: standards
+                                ? Math.ceil(standards.intervalSeconds / 3600)
+                                : 0,
                             inline: true,
                         },
-                        true,
+                        !standards,
                     );
                 return {
                     subscription,
@@ -265,6 +279,7 @@ export class RenderTemplatesService {
                     manualRouting: hasRouting,
                     title: params.profileTitle ?? 'Subscription',
                     profileKey: params.profileKey ?? String(user.id),
+                    standards,
                     generate,
                 });
                 const retiring =
@@ -280,15 +295,20 @@ export class RenderTemplatesService {
                         client,
                         'inline',
                         params.profileTitle ?? 'Subscription',
+                        undefined,
+                        false,
+                        standards,
                     ).retirementHeader(params.profileKey ?? String(user.id), Date.now(), true);
-                    output.intervalHours = 0;
+                    output.intervalHours = standards
+                        ? Math.ceil(standards.intervalSeconds / 3600)
+                        : 0;
                 }
                 await this.applyGeofileRouting(
                     params,
                     client,
                     configuredHeaders,
                     output,
-                    !!retiring,
+                    !!retiring && !standards,
                 );
                 return {
                     subscription: output.subscription,

@@ -1366,13 +1366,38 @@ export declare const ERRORS: {
     };
     readonly NODE_CONTROL_ADDRESS_LIMIT: {
         readonly code: 'A265';
-        readonly message: 'A node can retain at most 65 control addresses; disable existing addresses instead of replacing the list';
+        readonly message: 'Node address list exceeds the supported limit; saved addresses were retained';
         readonly httpCode: 400;
     };
     readonly NODE_CONTROL_REVISION_CONFLICT: {
         readonly code: 'A266';
         readonly message: 'Node connection settings changed; reload the node before saving';
         readonly httpCode: 409;
+    };
+    readonly NODE_IP_SCAN_UNAVAILABLE: {
+        readonly code: 'A267';
+        readonly message: 'Could not read node addresses; saved addresses were retained';
+        readonly httpCode: 503;
+    };
+    readonly NODE_IP_SCAN_UNSUPPORTED: {
+        readonly code: 'A268';
+        readonly message: 'Address discovery requires Remnacust Node 1.1.38 or later';
+        readonly httpCode: 409;
+    };
+    readonly NODE_IP_SCAN_INVALID: {
+        readonly code: 'A269';
+        readonly message: 'The node did not return a complete valid address inventory';
+        readonly httpCode: 502;
+    };
+    readonly NODE_IP_SCAN_DISABLED: {
+        readonly code: 'A270';
+        readonly message: 'Enable the node and a management address before rescanning';
+        readonly httpCode: 409;
+    };
+    readonly NODE_IP_SCAN_BUSY: {
+        readonly code: 'A271';
+        readonly message: 'Address discovery is temporarily busy; try again';
+        readonly httpCode: 429;
     };
 };
 //# sourceMappingURL=errors.d.ts.map

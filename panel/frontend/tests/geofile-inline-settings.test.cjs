@@ -3,6 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
 const ts = require('typescript');
+const settingsState = require('../../backend/tests/load-typescript.cjs')(path.join(__dirname,'../src/shared/api/hooks/subscription-settings/subscription-settings-state.ts'));
 function harness(language='en') {
  const strings=JSON.parse(fs.readFileSync(path.join(__dirname,`../public/locales/${language}/remnawave.json`),'utf8'));
  const t=k=>{const s=k.split('.').reduce((v,k)=>v?.[k],strings);assert.equal(typeof s,'string',k);return s;};
@@ -13,7 +14,8 @@ function harness(language='en') {
  '@mantine/core':Object.fromEntries(['Alert','Button','Group','Loader','NumberInput','Stack','Text'].map(k=>[k,k])),
  '@remnawave/backend-contract':{GEOFILE_INLINE_RULE_LIMIT:20000,GEOFILE_INLINE_RULE_LIMIT_MIN:1,GEOFILE_INLINE_RULE_LIMIT_MAX:250000},
  react:{useState:()=>[draft,v=>{draft=v;}]},'react-i18next':{useTranslation:()=>({t})},
- '@tanstack/react-query':{useQueryClient:()=>({cancelQueries:async()=>events.push('cancel'),setQueryData:(k,v)=>{assert.deepEqual(k,key);settings.data=v;events.push('confirmed');},invalidateQueries:async()=>events.push('invalidate')})},
+ '@tanstack/react-query':{useIsMutating:()=>0,useQueryClient:()=>({isMutating:()=>0,cancelQueries:async()=>events.push('cancel'),setQueryData:(k,v)=>{assert.deepEqual(k,key);settings.data=v;events.push('confirmed');},invalidateQueries:async()=>events.push('invalidate')})},
+ '@shared/api/hooks/subscription-settings/subscription-settings-state':settingsState,
  '@shared/api/hooks/subscription-settings/subscription-settings.query.hooks':{subscriptionSettingsQueryKeys:{getSubscriptionSettings:{queryKey:key}},useGetSubscriptionSettings:()=>settings},
  '@shared/api/hooks/subscription-settings/subscription-settings.mutation.hooks':{useUpdateSubscriptionSettings:o=>{callbacks=o.mutationFns;return update;}}
  };

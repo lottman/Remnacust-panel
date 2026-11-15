@@ -12,6 +12,7 @@ import {
 import {
     nodeNeedsCustomUpgrade,
     nodePolicyIsPending,
+    nodePolicyIsQuarantined,
     nodeUsesCompatibility
 } from '@shared/utils/node-policy-status'
 
@@ -26,6 +27,7 @@ export const NodeErrorMessageWidget = (props: IProps) => {
         return null
     }
     const policyPending = nodePolicyIsPending(node.lastStatusMessage)
+    const policyQuarantined = nodePolicyIsQuarantined(node.lastStatusMessage)
     const maintenancePending = nodeConfigurationNeedsRestart(node.lastStatusMessage)
     const telemetryUnavailable = node.lastStatusMessage === 'Failed to get system stats'
     const warning = policyPending || maintenancePending || telemetryUnavailable
@@ -53,9 +55,11 @@ export const NodeErrorMessageWidget = (props: IProps) => {
                             ? 'nodeErrors.compatibilityTitle'
                             : upgradeRequired
                               ? 'xera-node-health.upgrade-required-title'
-                              : policyPending || maintenancePending
-                                ? 'xera-node-health.policy-pending-title'
-                                : 'common.message.last-error-message'
+                              : policyQuarantined
+                                ? 'xera-node-health.policy-quarantined-title'
+                                : policyPending || maintenancePending
+                                  ? 'xera-node-health.policy-pending-title'
+                                  : 'common.message.last-error-message'
                     )}
                     titleOrder={5}
                 />
@@ -70,9 +74,11 @@ export const NodeErrorMessageWidget = (props: IProps) => {
                             ? explanation
                             : upgradeRequired
                               ? t('xera-node-health.upgrade-required-message')
-                              : policyPending
-                                ? t('xera-node-health.policy-pending-message')
-                                : explanation
+                              : policyQuarantined
+                                ? t('xera-node-health.policy-quarantined-message')
+                                : policyPending
+                                  ? t('xera-node-health.policy-pending-message')
+                                  : explanation
                     }
                     tone={
                         upgradeRequired ? 'upgrade' : compatibility || warning ? 'warning' : 'error'

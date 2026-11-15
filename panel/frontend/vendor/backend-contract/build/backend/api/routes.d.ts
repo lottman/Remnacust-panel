@@ -49,6 +49,7 @@ export declare const REST_API: {
             readonly GET: "/api/nodes/tags";
         };
         readonly ACTIONS: {
+            readonly RESCAN_IPS: (uuid: string) => string;
             readonly ENABLE: (uuid: string) => string;
             readonly DISABLE: (uuid: string) => string;
             readonly RESTART: (uuid: string) => string;

@@ -3,6 +3,7 @@ export declare const STATS_ROUTES: {
     readonly GET_USER_ONLINE_STATUS: "get-user-online-status";
     readonly GET_USERS_STATS: "get-users-stats";
     readonly GET_SYSTEM_STATS: "get-system-stats";
+    readonly GET_NETWORK_ADDRESSES: "network-addresses";
     readonly GET_INBOUND_STATS: "get-inbound-stats";
     readonly GET_OUTBOUND_STATS: "get-outbound-stats";
     readonly GET_ALL_OUTBOUNDS_STATS: "get-all-outbounds-stats";

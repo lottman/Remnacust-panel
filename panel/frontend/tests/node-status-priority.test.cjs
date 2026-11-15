@@ -20,6 +20,7 @@ function load(file, mocks = {}) {
         if (Object.hasOwn(mocks, name)) return mocks[name]
         if (name === 'react') return pureReact
         if (name === '../node-status') return load('widgets/dashboard/nodes/node-status.ts')
+        if (name === './node-policy-status') return load('shared/utils/node-policy-status.ts')
         if (name === '@shared/utils/node-metric') return load('shared/utils/node-metric.ts')
         if (name === '@shared/utils/node-control-addresses') return load('shared/utils/node-control-addresses.ts')
         if (name.startsWith('@features/') && mocks.features) return mocks.features

@@ -27,11 +27,15 @@ export interface GeofileRefresh {
 export function GeofileRefreshSettings({
     id,
     refresh,
-    onUpdated
+    onUpdated,
+    disabled = false,
+    canUpdate
 }: {
     id: string
     refresh?: GeofileRefresh
     onUpdated: () => void | Promise<void>
+    disabled?: boolean
+    canUpdate?: () => boolean
 }) {
     const { t, i18n } = useTranslation()
     const [source, setSource] = useState(refresh?.sourceUrl ?? '')
@@ -41,29 +45,33 @@ export function GeofileRefreshSettings({
     )
     const [deferred, setDeferred] = useState(false)
     const configure = useMutation({
-        mutationFn: () =>
-            instance.patch(`/api/geofiles/${id}/refresh`, {
+        mutationFn: () => {
+            if (disabled || canUpdate?.() === false) throw new Error(t('geofiles.system-disabled'))
+            return instance.patch(`/api/geofiles/${id}/refresh`, {
                 sourceUrl: source.trim(),
                 enabled,
                 intervalSeconds: Number(minutes) * 60
-            }),
+            })
+        },
         onSuccess: onUpdated
     })
     const update = useMutation({
-        mutationFn: async () =>
-            (
+        mutationFn: async () => {
+            if (disabled || canUpdate?.() === false) throw new Error(t('geofiles.system-disabled'))
+            return (
                 await instance.post<{ response: { updated: boolean } }>(
                     `/api/geofiles/${id}/refresh`,
                     undefined,
                     { timeout: 45000 }
                 )
-            ).data.response,
+            ).data.response
+        },
         onSuccess: async (result) => {
             setDeferred(!result.updated)
             await onUpdated()
         }
     })
-    const busy = configure.isPending || update.isPending
+    const busy = disabled || configure.isPending || update.isPending
     return (
         <Stack gap="sm">
             <Text fw={600}>{t('geofiles.server-refresh')}</Text>
@@ -112,9 +120,11 @@ export function GeofileRefreshSettings({
             {deferred && <Alert color="yellow">{t('geofiles.refresh-deferred')}</Alert>}
             <SimpleGrid cols={{ base: 1, sm: 2 }}>
                 <Button
+                    type="button"
                     loading={configure.isPending}
                     disabled={!source.trim() || (busy && !configure.isPending)}
                     onClick={() => {
+                        if (busy || !source.trim() || canUpdate?.() === false) return
                         setDeferred(false)
                         configure.mutate()
                     }}
@@ -122,10 +132,14 @@ export function GeofileRefreshSettings({
                     {t('geofiles.save-refresh')}
                 </Button>
                 <Button
+                    type="button"
                     variant="soft"
                     loading={update.isPending}
                     disabled={!refresh?.sourceUrl || (busy && !update.isPending)}
-                    onClick={() => update.mutate()}
+                    onClick={() => {
+                        if (busy || !refresh?.sourceUrl || canUpdate?.() === false) return
+                        update.mutate()
+                    }}
                 >
                     {t('common.action.refresh')}
                 </Button>

@@ -162,6 +162,7 @@ export class GeofileRefreshStore {
             );
             const state: GeofileRefreshState = { ...old, sourceUrl, enabled, intervalSeconds };
             if (old?.sourceUrl !== sourceUrl || !enabled) delete state.lease;
+            if (old?.sourceUrl !== sourceUrl) delete state.lastSuccessAt;
             if (onlyIfMissing) {
                 state.lastAttemptAt = new Date().toISOString();
                 state.lastSuccessAt = state.lastAttemptAt;
@@ -194,7 +195,7 @@ export class GeofileRefreshStore {
             if (!state || !state.sourceUrl || (!manual && !state.enabled)) return;
             if (
                 (state.lease && Date.parse(state.lease.until) > now) ||
-                (state.nextRefreshAt && Date.parse(state.nextRefreshAt) > now)
+                (!manual && state.nextRefreshAt && Date.parse(state.nextRefreshAt) > now)
             )
                 return;
             await cleanupStaging(directory, state);

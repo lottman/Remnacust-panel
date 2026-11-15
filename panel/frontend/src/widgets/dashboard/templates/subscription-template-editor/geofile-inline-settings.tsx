@@ -4,10 +4,11 @@ import {
     GEOFILE_INLINE_RULE_LIMIT_MIN,
     GEOFILE_INLINE_RULE_LIMIT_MAX
 } from '@remnawave/backend-contract'
-import { useQueryClient } from '@tanstack/react-query'
+import { useIsMutating, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { SUBSCRIPTION_SETTINGS_MUTATION_KEY } from '@shared/api/hooks/subscription-settings/subscription-settings-state'
 import { useUpdateSubscriptionSettings } from '@shared/api/hooks/subscription-settings/subscription-settings.mutation.hooks'
 import {
     subscriptionSettingsQueryKeys,
@@ -18,6 +19,7 @@ export function GeofileInlineSettings() {
     const { t } = useTranslation()
     const client = useQueryClient()
     const queryKey = subscriptionSettingsQueryKeys.getSubscriptionSettings.queryKey
+    const settingsPending = useIsMutating({ mutationKey: SUBSCRIPTION_SETTINGS_MUTATION_KEY }) > 0
     const settings = useGetSubscriptionSettings({
         rQueryParams: { refetchOnMount: 'always', refetchOnWindowFocus: 'always' }
     })
@@ -55,7 +57,7 @@ export function GeofileInlineSettings() {
                 hideControls
                 value={value}
                 onChange={setDraft}
-                disabled={!settings.isSuccess || update.isPending}
+                disabled={!settings.isSuccess || update.isPending || settingsPending}
                 error={
                     draft !== null && !valid
                         ? t('geofiles.inline-limit-invalid', {
@@ -71,9 +73,25 @@ export function GeofileInlineSettings() {
             <Group>
                 <Button
                     loading={update.isPending}
-                    disabled={!settings.isSuccess || update.isPending || !valid || value === saved}
+                    type="button"
+                    disabled={
+                        !settings.isSuccess ||
+                        update.isPending ||
+                        settingsPending ||
+                        !valid ||
+                        value === saved
+                    }
                     onClick={() => {
-                        if (!valid || !settings.data || update.isPending) return
+                        if (
+                            !valid ||
+                            !settings.isSuccess ||
+                            !settings.data ||
+                            update.isPending ||
+                            settingsPending ||
+                            client.isMutating({ mutationKey: SUBSCRIPTION_SETTINGS_MUTATION_KEY }) >
+                                0
+                        )
+                            return
                         update.mutate({
                             variables: { uuid: settings.data.uuid, geofilesInlineRuleLimit: value }
                         })

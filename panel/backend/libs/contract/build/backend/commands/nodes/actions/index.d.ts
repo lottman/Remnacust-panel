@@ -4,4 +4,5 @@ export * from './reorder.command';
 export * from './reset-traffic.command';
 export * from './restart-all.command';
 export * from './restart.command';
+export * from './rescan-ips.command';
 //# sourceMappingURL=index.d.ts.map

@@ -1,10 +1,12 @@
 import type { TNodeControlAddresses, TNodeIps } from '../../../../libs/contract/models';
+import type { NodeHealthObservation } from '../node-health-observation';
 
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { Transactional } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { Prisma } from '@prisma/client';
 import { sql } from 'kysely';
+import { randomUUID } from 'node:crypto';
 
 import { Injectable } from '@nestjs/common';
 
@@ -20,6 +22,8 @@ import {
     reconcileNodeControlAddresses,
     NodeControlRevisionConflictError,
 } from '../node-control-addresses';
+import { planNodeIpInventory } from '../node-ip-inventory';
+import { NODE_IP_SCAN_INTERVAL_MS } from '../node-ip-inventory.constants';
 import { NodesConverter } from '../nodes.converter';
 import { IGetEnabledNodesPartialResponse } from '../queries/get-enabled-nodes-partial/get-enabled-nodes-partial.query';
 import { IGetOnlineNodesPartialResponse } from '../queries/get-online-nodes';
@@ -32,6 +36,7 @@ export type INodesWithResolvedInbounds = Prisma.NodesGetPayload<{
             };
         };
         provider: true;
+        ipInventory: true;
     };
 }>;
 
@@ -42,6 +47,7 @@ const INCLUDE_RESOLVED_INBOUNDS = {
         },
     },
     provider: true,
+    ipInventory: true,
 } as const;
 
 @Injectable()
@@ -150,6 +156,9 @@ export class NodesRepository implements ICrud<NodesEntity> {
                 'address',
                 'port',
                 'proxyUrl',
+                sql<Date | null>`(SELECT scanned_at FROM xera_node_ip_inventory WHERE node_uuid = nodes.uuid)`.as(
+                    'ipScanAt',
+                ),
             ])
             .where('isDisabled', '=', false)
             .where('isConnecting', '=', false)
@@ -160,6 +169,7 @@ export class NodesRepository implements ICrud<NodesEntity> {
             isConnected: value.isConnected,
             lastStatusMessage: value.lastStatusMessage,
             controlRevision: value.controlRevision,
+            ipScanAt: value.ipScanAt == null ? null : new Date(value.ipScanAt).getTime(),
             connectionOpts: {
                 uuid: value.uuid,
                 address: value.address,
@@ -246,6 +256,46 @@ export class NodesRepository implements ICrud<NodesEntity> {
     }
 
     @Transactional()
+    public async updateHealth(
+        node: Partial<NodesEntity>,
+        expectedRevision: string | undefined,
+        observation: NodeHealthObservation,
+    ): Promise<NodesEntity> {
+        if (
+            !node.uuid ||
+            !expectedRevision ||
+            !Number.isSafeInteger(observation.observedAt) ||
+            observation.observedAt < 0 ||
+            ![1, 2].includes(observation.attempt)
+        )
+            throw new NodeControlRevisionConflictError();
+        const [before] = await this.prisma.tx.$queryRaw<{ controlRevision: string }[]>`
+            SELECT control_revision::text AS "controlRevision" FROM nodes
+            WHERE uuid = ${node.uuid}::uuid FOR UPDATE`;
+        if (!before || before.controlRevision !== expectedRevision)
+            throw new NodeControlRevisionConflictError();
+        const accepted = await this.prisma.tx.$queryRaw<{ nodeUuid: string }[]>`
+            INSERT INTO xera_node_health_observations
+                (node_uuid, control_revision, observed_at, attempt, healthy)
+            VALUES (${node.uuid}::uuid, ${expectedRevision}::uuid,
+                ${BigInt(observation.observedAt)}, ${observation.attempt}, ${node.isConnected === true})
+            ON CONFLICT (node_uuid) DO UPDATE SET
+                control_revision = EXCLUDED.control_revision,
+                observed_at = EXCLUDED.observed_at,
+                attempt = EXCLUDED.attempt,
+                healthy = EXCLUDED.healthy
+            WHERE xera_node_health_observations.control_revision <> EXCLUDED.control_revision
+                OR (xera_node_health_observations.observed_at, xera_node_health_observations.attempt)
+                    < (EXCLUDED.observed_at, EXCLUDED.attempt)
+                OR (xera_node_health_observations.observed_at = EXCLUDED.observed_at
+                    AND xera_node_health_observations.attempt = EXCLUDED.attempt
+                    AND NOT xera_node_health_observations.healthy AND EXCLUDED.healthy)
+            RETURNING node_uuid::text AS "nodeUuid"`;
+        if (!accepted.length) throw new NodeControlRevisionConflictError();
+        return this.updateControlAddresses(node, expectedRevision);
+    }
+
+    @Transactional()
     private async updateControlAddresses(
         { uuid, ...data }: Partial<NodesEntity>,
         expectedRevision?: string,
@@ -275,12 +325,86 @@ export class NodesRepository implements ICrud<NodesEntity> {
         return this.persistUpdate({ uuid, ...data }, inboundUuids);
     }
 
+    @Transactional()
+    public async applyIpScan(input: {
+        uuid: string;
+        addresses: string[];
+        expectedControlRevision: string;
+        expectedScanRevision: string | null;
+        mode: 'initial' | 'append' | 'refresh';
+        now?: Date;
+    }): Promise<NodesEntity> {
+        const [before] = await this.prisma.tx.$queryRaw<
+            {
+                address: string;
+                ips: TNodeIps;
+                controlAddresses: TNodeControlAddresses;
+                controlRevision: string;
+            }[]
+        >`SELECT address, ips, control_addresses AS "controlAddresses", control_revision::text AS "controlRevision" FROM nodes
+            WHERE uuid = ${input.uuid}::uuid FOR UPDATE`;
+        if (!before || before.controlRevision !== input.expectedControlRevision)
+            throw new NodeControlRevisionConflictError();
+        const ipInventory = await this.prisma.tx.nodeIpInventory.findUnique({
+            where: { nodeUuid: input.uuid },
+        });
+        const now = input.now ?? new Date();
+        const freshAutomatic =
+            input.mode === 'append' &&
+            ipInventory &&
+            now.getTime() - ipInventory.scannedAt.getTime() < NODE_IP_SCAN_INTERVAL_MS;
+        if (!(input.mode === 'initial' && ipInventory) && !freshAutomatic) {
+            if ((ipInventory?.revision ?? null) !== input.expectedScanRevision)
+                throw new NodeControlRevisionConflictError();
+            const planned = planNodeIpInventory(
+                { ...before, ipInventory },
+                input.addresses,
+                input.mode,
+            );
+            if (
+                JSON.stringify(before.ips) !== JSON.stringify(planned.ips) ||
+                JSON.stringify(before.controlAddresses) !== JSON.stringify(planned.controlAddresses)
+            ) {
+                await this.prisma.tx.nodes.update({
+                    where: { uuid: input.uuid },
+                    data: {
+                        ips: planned.ips,
+                        controlAddresses: planned.controlAddresses,
+                        ...(!planned.controlAddresses.some((row) => row.enabled) && {
+                            isConnected: false,
+                            isConnecting: false,
+                            lastStatusMessage: '[NODE_CONTROL_DISABLED]',
+                            lastStatusChange: new Date(),
+                        }),
+                    },
+                });
+            }
+            const inventory = {
+                addresses: planned.addresses,
+                generatedAddresses: planned.generatedAddresses,
+                revision: randomUUID(),
+                scannedAt: now,
+            };
+            await this.prisma.tx.nodeIpInventory.upsert({
+                where: { nodeUuid: input.uuid },
+                create: { nodeUuid: input.uuid, ...inventory },
+                update: inventory,
+            });
+        }
+        return new NodesEntity(
+            await this.prisma.tx.nodes.findUniqueOrThrow({
+                where: { uuid: input.uuid },
+                include: INCLUDE_RESOLVED_INBOUNDS,
+            }),
+        );
+    }
+
     private async persistUpdate(
         { uuid, ...data }: Partial<NodesEntity>,
         inboundUuids?: string[],
     ): Promise<NodesEntity> {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { provider, activeInbounds, ...prismaData } = data;
+        const { provider, activeInbounds, ipInventory, ...prismaData } = data;
 
         const result = await this.prisma.tx.nodes.update({
             where: { uuid },
@@ -320,7 +444,7 @@ export class NodesRepository implements ICrud<NodesEntity> {
 
     public async findByCriteria(dto: Partial<NodesEntity>): Promise<NodesEntity[]> {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { tags, ips, controlAddresses, integrationUuids, ...rest } = dto;
+        const { tags, ips, controlAddresses, ipInventory, integrationUuids, ...rest } = dto;
         const nodesList = await this.prisma.tx.nodes.findMany({
             where: rest,
             orderBy: {
@@ -344,7 +468,7 @@ export class NodesRepository implements ICrud<NodesEntity> {
 
     public async findFirstByCriteria(dto: Partial<NodesEntity>): Promise<NodesEntity | null> {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { tags, ips, controlAddresses, integrationUuids, ...rest } = dto;
+        const { tags, ips, controlAddresses, ipInventory, integrationUuids, ...rest } = dto;
         const result = await this.prisma.tx.nodes.findFirst({
             where: rest,
             include: INCLUDE_RESOLVED_INBOUNDS,

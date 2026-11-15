@@ -11,6 +11,12 @@ import {
 } from './incy-config';
 
 export type DatKind = 'geoip' | 'geosite';
+export interface XrayStandardSources {
+    geoip: { url: string; sha256: string };
+    geosite: { url: string; sha256: string };
+    intervalSeconds: number;
+    validate: (kind: DatKind, categories: string[]) => Promise<void>;
+}
 export type DatBundleUrl = (
     kind: DatKind,
     ids: string[],
@@ -103,6 +109,7 @@ export class XrayGeofileDelivery {
         private readonly title = 'Subscription',
         inlineRuleLimit?: number,
         public readonly deferTemplates = false,
+        public readonly standards?: XrayStandardSources,
     ) {
         this.inlineRuleLimit = geofileInlineRuleLimit(inlineRuleLimit);
     }
@@ -122,6 +129,8 @@ export class XrayGeofileDelivery {
                 mode,
                 this.title,
                 this.inlineRuleLimit,
+                false,
+                this.standards,
             );
             const generated = await generate(delivery);
             if (generated === undefined) return;
@@ -245,7 +254,10 @@ export class XrayGeofileDelivery {
             const mapped = mapGeofileReferences(config, (item) => {
                 if (this.references.has(item.toLowerCase())) return item;
                 const key = aliases.get(item.toLowerCase());
-                if (!key) throw new XrayGeofileFallback('existing-geodata');
+                if (!key) {
+                    if (this.standards && !aliases.has(item.toLowerCase())) return item;
+                    throw new XrayGeofileFallback('existing-geodata');
+                }
                 this.references.get(key)!.ambiguous = true;
                 return key;
             });
@@ -264,15 +276,20 @@ export class XrayGeofileDelivery {
 
     public retirementHeader(profileKey: string, now = Date.now(), restoreDefaults = false): string {
         this.inlineOnly = true;
-        this.intervalHours = 0;
+        this.intervalHours =
+            restoreDefaults && this.standards
+                ? Math.ceil(this.standards.intervalSeconds / 3600)
+                : 0;
         const profile = {
             Name: this.profileName(profileKey),
             GlobalProxy: 'true',
             Geoipurl: restoreDefaults
-                ? 'https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat'
+                ? (this.standards?.geoip.url ??
+                  'https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat')
                 : '',
             Geositeurl: restoreDefaults
-                ? 'https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat'
+                ? (this.standards?.geosite.url ??
+                  'https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat')
                 : '',
             [this.client === 'incy' ? 'useChunkFiles' : 'UseChunkFiles']: false,
             DirectIp: [],
@@ -302,15 +319,32 @@ export class XrayGeofileDelivery {
         const configs = JSON.parse(subscription);
         if (!Array.isArray(configs)) throw new XrayGeofileFallback('configuration');
         let existingGeodata = configs.some((config) => config?.geodata);
+        const native = new Set<string>();
         // Like the size budget, complexity belongs to one client profile.
         // A valid subscription may repeat the same rules on many hosts.
         for (const config of configs) {
             mapGeofileReferences(config, (item) => {
                 const key = item.toLowerCase();
                 if (this.references.has(key)) used.add(key);
+                else if (this.standards) native.add(key);
                 else existingGeodata = true;
                 return item;
             });
+        }
+        if (used.size && !existingGeodata && this.standards) {
+            if (native.size > 1024) throw new XrayGeofileFallback('size');
+            for (const kind of ['geoip', 'geosite'] as const) {
+                const categories = [...native]
+                    .filter((reference) => reference.startsWith(`${kind}:`))
+                    .map((reference) => reference.slice(kind.length + 1))
+                    .sort();
+                if (!categories.length) continue;
+                try {
+                    await this.standards.validate(kind, categories);
+                } catch {
+                    throw new XrayGeofileFallback('existing-geodata');
+                }
+            }
         }
         if (!used.size) return existingGeodata ? undefined : this.inlineHeader(profileKey, now);
         if (existingGeodata) throw new XrayGeofileFallback('existing-geodata');
@@ -325,15 +359,20 @@ export class XrayGeofileDelivery {
                   .update(JSON.stringify([...new Set(sources)].sort()))
                   .digest('hex')
             : undefined;
-        const interval = Math.max(...selected.map((key) => this.references.get(key)!.interval));
+        const interval = this.standards
+            ? Math.min(
+                  this.standards.intervalSeconds,
+                  ...selected.map((key) => this.references.get(key)!.interval),
+              )
+            : Math.max(...selected.map((key) => this.references.get(key)!.interval));
         // Force one refresh when migrating from the longer v1 names in the same interval.
         const revision = Math.floor(now / 1000 / interval) * interval + DAT_NAMESPACE_VERSION - 1;
         const profile: Record<string, unknown> = {
             Name: this.profileName(profileKey),
             GlobalProxy: 'true',
             [this.client === 'incy' ? 'useChunkFiles' : 'UseChunkFiles']: false,
-            Geoipurl: '',
-            Geositeurl: '',
+            Geoipurl: this.standards?.geoip.url ?? '',
+            Geositeurl: this.standards?.geosite.url ?? '',
             DirectIp: [],
             DirectSites: [],
             BlockIp: [],

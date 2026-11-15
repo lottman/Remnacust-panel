@@ -357,7 +357,8 @@ test('refresh survives restart, keeps immutable bytes, honors cooldown and retai
             fixtures.geosite,
         );
         assert.deepEqual(await read((await service.download(file.id, 'latest.dat')).stream), body);
-        assert.equal(await service.refreshNow(file.id), false);
+        await service.refreshDue();
+        assert.equal(reads, 1);
         service = withSettings(create());
         await service.refreshDue();
         assert.equal(reads, 1, 'Restart does not reset persisted cooldown');
@@ -378,7 +379,7 @@ test('refresh survives restart, keeps immutable bytes, honors cooldown and retai
             'Failed refresh keeps the last usable bundle',
         );
         assert.equal(reads, 2);
-        assert.equal(await service.refreshNow(file.id), false);
+        await service.refreshDue();
         assert.equal(reads, 2);
         await due();
         body = fixtures.bytes(

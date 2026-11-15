@@ -10,6 +10,7 @@ export declare const REST_API: {
         readonly GET_USER_ONLINE_STATUS: "/node/stats/get-user-online-status";
         readonly GET_USERS_STATS: "/node/stats/get-users-stats";
         readonly GET_SYSTEM_STATS: "/node/stats/get-system-stats";
+        readonly GET_NETWORK_ADDRESSES: "/node/stats/network-addresses";
         readonly GET_INBOUND_STATS: "/node/stats/get-inbound-stats";
         readonly GET_OUTBOUND_STATS: "/node/stats/get-outbound-stats";
         readonly GET_ALL_OUTBOUNDS_STATS: "/node/stats/get-all-outbounds-stats";

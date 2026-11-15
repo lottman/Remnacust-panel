@@ -182,6 +182,12 @@ test('repository sends one atomic nested write; it does not create inbound links
     const file = path.join(base, 'repositories/nodes.repository.ts');
     const { NodesRepository } = load(file, {
         ...aliases(file),
+        '../constants/nodes/ip-statuses': load(
+            path.join(
+                __dirname,
+                '../libs/contract/constants/nodes/ip-statuses/node-ip-statuses.constant.ts',
+            ),
+        ),
         '../entities/nodes.entity': { NodesEntity: Entity },
         '@nestjs-cls/transactional': {
             Transactional: () => (_target, _property, descriptor) => descriptor,

@@ -58,4 +58,9 @@ exports.ERRORS = {
         message: 'Failed to get geocheck report',
         httpCode: 500,
     },
+    FAILED_TO_GET_NETWORK_ADDRESSES: {
+        code: 'A019',
+        message: 'Unable to enumerate node network addresses completely',
+        httpCode: 503,
+    },
 };

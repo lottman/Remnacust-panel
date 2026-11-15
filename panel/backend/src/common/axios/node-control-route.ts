@@ -54,6 +54,11 @@ export class NodeRouteBusyError extends Error {
         super(message);
     }
 }
+export class NodeRouteCooldownError extends NodeRouteBusyError {
+    constructor() {
+        super('Node route selection is cooling down');
+    }
+}
 export class NodeRouteDisabledError extends Error {
     readonly code = 'NODE_ROUTE_DISABLED';
     constructor() {
@@ -339,12 +344,7 @@ export class NodeControlRouteResolver {
             return { ...config, address: cached.address };
         }
         if (await cache.get<boolean>(`node-route:round-failure:${revision}`)) {
-            this.remember(revision, {
-                ...report,
-                status: 'unavailable',
-                attempts: [{ address: candidates[0] ?? '', status: 'skipped', code: 'cooldown' }],
-            });
-            throw new Error('Node route selection is cooling down');
+            throw new NodeRouteCooldownError();
         }
         await this.admit(deadline);
         try {
@@ -379,12 +379,12 @@ export class NodeControlRouteResolver {
                     20,
                 );
                 if (node > 3) throw new NodeRouteBusyError();
-                probes++;
                 const timeout = Math.min(
                     Math.floor(budgetMs / Math.min(3, candidates.length)),
                     deadline - Date.now(),
                 );
                 if (timeout <= 0) break;
+                probes++;
                 let result: Awaited<ReturnType<RouteProbe>>;
                 try {
                     result = await probe({ ...config, address }, timeout);
@@ -416,8 +416,11 @@ export class NodeControlRouteResolver {
                 );
                 if (result.code === 'proxy') break;
             }
+            if (probes === 0) {
+                if (Date.now() >= deadline) throw new NodeRouteBusyError();
+                throw new NodeRouteCooldownError();
+            }
             this.remember(revision, { ...report, status: 'unavailable' });
-            if (probes === 0 && Date.now() >= deadline) throw new NodeRouteBusyError();
             await cache.set(`node-route:round-failure:${revision}`, true, 5);
             throw new Error('No authenticated node API route available');
         } finally {

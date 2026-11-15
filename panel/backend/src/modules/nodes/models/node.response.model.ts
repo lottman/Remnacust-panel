@@ -1,5 +1,5 @@
 import { fromNanoToNumber } from '@common/utils/nano';
-import { TNodeIps, TNodeControlAddresses } from '@libs/contracts/models';
+import { TNodeIps, TNodeControlAddresses, TNodeIpScanInfo } from '@libs/contracts/models';
 
 import { ConfigProfileInboundEntity } from '@modules/config-profiles/entities';
 import { InfraProviderEntity } from '@modules/infra-billing/entities';
@@ -17,6 +17,7 @@ export class NodeResponseModel {
     public hasProxy: boolean;
     public controlAddresses: TNodeControlAddresses;
     public controlRevision: string;
+    public ipScan: TNodeIpScanInfo | null;
     public isConnected: boolean;
     public isConnecting: boolean;
     public isDisabled: boolean;
@@ -61,6 +62,12 @@ export class NodeResponseModel {
         this.hasProxy = !!data.proxyUrl;
         this.controlAddresses = data.controlAddresses;
         this.controlRevision = data.controlRevision;
+        this.ipScan = data.ipInventory
+            ? {
+                  addresses: [...data.ipInventory.addresses],
+                  scannedAt: data.ipInventory.scannedAt.toISOString(),
+              }
+            : null;
         this.isConnected = data.isConnected;
         this.isConnecting = data.isConnecting;
         this.isDisabled = data.isDisabled;

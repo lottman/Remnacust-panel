@@ -1,3 +1,4 @@
+import { explainIpDiscoveryAndStandardGeofiles } from './ip-discovery-and-standard-geofiles-guide.mjs'
 import fs from 'node:fs'
 import path from 'node:path'
 
@@ -47,6 +48,7 @@ explainCurrentWorkflows(articles)
 explainEditorWorkflows(articles)
 explainGeofileRefresh(articles)
 explainOperations(articles)
+explainIpDiscoveryAndStandardGeofiles(articles)
 
 const target = path.resolve(import.meta.dirname, '../public/documentation')
 fs.mkdirSync(target, { recursive: true })

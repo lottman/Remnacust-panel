@@ -67,6 +67,29 @@ const sections = [
                 body: '自动交付需要启用地理文件总开关和订阅基础地址的 JSON，再为所需模板启用地理文件。完整的标准 GeoSite 和 GeoIP 与自定义分类一同保留。CATEGORY-RU 等普通分类名仍然可用，自定义分类使用独立名称。\n\n可为标准数据集设置 48 小时的间隔并启用自动更新，也可以逐文件修改间隔。“立即更新”会马上检查来源；SHA-256 未变化时不会替换当前文件。内容变化后，如有需要请保存模板，再在应用中更新订阅。\n\n如果 Happ 使用自定义文件后找不到标准分类，请更新订阅。地理文件总开关已启用且完整标准数据集可用时，面板能够恢复标准文件，面板重启后也可恢复。显式 Routing 设置和自有 geodata 保持优先。手动 geosite:、geoip: 和 ext: 规则保持不变，恢复标准数据集无需改写这些规则。'
             }
         }
+    },
+    {
+        article: 'templates',
+        id: 'geofile-public-paths',
+        before: 'templates-client-downloads',
+        translations: {
+            ru: {
+                title: 'Публичный путь геофайлов',
+                body: 'Клиент загружает геофайлы по HTTPS с домена подписки через /geofiles/. Если сайт использует отдельный CUSTOM_SUB_PREFIX, ссылки от корня сайта и ранее сохранённые ссылки с префиксом поддерживаются вместе. Правила доступа к домену применяются к обоим адресам.\n\nВ reverse proxy передавайте GET и HEAD для /geofiles/* на сайт подписки, даже если остальные страницы доступны только под отдельным префиксом. При ошибке 404 проверьте этот маршрут. Для проверки доставки загрузите DAT и его .sha256: контрольная сумма должна соответствовать файлу. После исправления обновите подписку в приложении.'
+            },
+            en: {
+                title: 'Public geofile path',
+                body: 'Clients download geofiles over HTTPS from the subscription domain through /geofiles/. If the website uses a separate CUSTOM_SUB_PREFIX, root links and previously saved prefixed links remain supported together. Domain access rules apply to both addresses.\n\nForward GET and HEAD requests for /geofiles/* to the subscription website in your reverse proxy, even when other pages use a separate prefix. Check this route if downloads return 404. To verify delivery, download the DAT and its .sha256: the checksum must match the file. Refresh the subscription in the app after correcting the route.'
+            },
+            fa: {
+                title: 'مسیر عمومی فایل‌های جغرافیایی',
+                body: 'کلاینت فایل‌های جغرافیایی را با HTTPS از دامنهٔ اشتراک و مسیر /geofiles/ دریافت می‌کند. اگر سایت CUSTOM_SUB_PREFIX جداگانه دارد، پیوندهای ریشهٔ سایت و پیوندهای ذخیره‌شده با پیشوند هر دو پشتیبانی می‌شوند. قواعد دسترسی دامنه برای هر دو نشانی اعمال می‌شود.\n\nدر پراکسی معکوس، درخواست‌های GET و HEAD مسیر /geofiles/* را به سایت اشتراک هدایت کنید، حتی اگر صفحه‌های دیگر فقط با پیشوند جداگانه در دسترس‌اند. هنگام خطای 404 این مسیر را بررسی کنید. برای بررسی دریافت، DAT و .sha256 آن را بارگیری کنید؛ مجموع بررسی باید با فایل مطابقت داشته باشد. پس از اصلاح مسیر، اشتراک را در برنامه تازه کنید.'
+            },
+            zh: {
+                title: '地理文件的公共路径',
+                body: '客户端通过 HTTPS 从订阅域名的 /geofiles/ 路径下载地理文件。网站配置了单独的 CUSTOM_SUB_PREFIX 时，根路径链接和以前保存的带前缀链接均可使用。域名访问规则对这两种地址都生效。\n\n在反向代理中，将 /geofiles/* 的 GET 和 HEAD 请求转发到订阅网站，即使其他页面只在单独的前缀下开放。下载返回 404 时，请检查此路由。验证交付时，下载 DAT 及其 .sha256，校验和应与文件相符。修正路由后，请在应用中更新订阅。'
+            }
+        }
     }
 ]
 

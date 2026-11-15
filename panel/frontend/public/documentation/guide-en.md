@@ -927,6 +927,12 @@ Set a 48-hour refresh interval and enable automatic updates for standard dataset
 
 If Happ cannot find a standard category after using custom files, refresh its subscription. With the geofile master switch enabled and full standard datasets available, the panel can restore the standard files, including after a panel restart. Explicit Routing settings and custom geodata retain priority. Manual geosite:, geoip: and ext: rules are preserved; restoring standard datasets does not require rewriting them.
 
+### Public geofile path
+
+Clients download geofiles over HTTPS from the subscription domain through /geofiles/. If the website uses a separate CUSTOM_SUB_PREFIX, root links and previously saved prefixed links remain supported together. Domain access rules apply to both addresses.
+
+Forward GET and HEAD requests for /geofiles/* to the subscription website in your reverse proxy, even when other pages use a separate prefix. Check this route if downloads return 404. To verify delivery, download the DAT and its .sha256: the checksum must match the file. Refresh the subscription in the app after correcting the route.
+
 ### When the app downloads geofiles
 
 The panel measures each profile including list expansion and client formatting. Small datasets are inline rules; Happ/INCY download large datasets as DAT. A JSON subscription is required: enable “Serve JSON at the base subscription path” or use /json. Save the template and refresh the subscription.

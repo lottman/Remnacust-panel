@@ -26,6 +26,7 @@ import {
     checkAssetsCookieMiddleware,
     getRealIp,
 } from '@common/middlewares';
+import { geofileRootAlias } from '@common/middlewares/geofile-root-alias.middleware';
 import {
     dynamicRequestBudget,
     DynamicRequestBudgetInterceptor,
@@ -128,6 +129,8 @@ async function bootstrap(): Promise<void> {
             customSubPrefix ?? '',
         ),
     );
+
+    app.use(geofileRootAlias(customSubPrefix ?? ''));
 
     app.use(
         '/assets',

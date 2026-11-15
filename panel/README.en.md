@@ -2,14 +2,14 @@
 
 # Remnacust Panel
 
-Release **Panel/Page 1.1.7.127** belongs to Installer bundle **1.2.175**, with Node **1.1.38** and Core/WASM **1.1.22**. [Release changes](../docs/releases/1.1.7.127.md). Installed servers require a separate update.
+Release **Panel/Page 1.1.7.128** belongs to Installer bundle **1.2.176**, with Node **1.1.38** and Core/WASM **1.1.22**. [Release changes](../docs/releases/1.1.7.128.md). Installed servers require a separate update.
 
 Manage users, nodes and subscriptions. Use the installer and prebuilt images on a VPS; the server does not need Node.js or Go build tools.
 
 | Stable component | Version |
 | --- | --- |
-| [Panel and subscription page](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.127) | 1.1.7.127 |
-| [Installer / bundle](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.175) | 1.2.175 |
+| [Panel and subscription page](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.128) | 1.1.7.128 |
+| [Installer / bundle](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.176) | 1.2.176 |
 | [Node](https://github.com/lottman/Remnacust-node/releases/tag/v1.1.38) | 1.1.38 |
 | [Core / WASM](https://github.com/lottman/Remnacust-core/releases/tag/v1.1.22) | 1.1.22 |
 

@@ -34,8 +34,8 @@ The bundle for this panel version. Components use separate version numbers; publ
 
 | Component | Bundle version |
 | --- | --- |
-| Panel and subscription website | [1.1.7.127](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.127) |
-| Installer / Docker bundle | [1.2.175](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.175) |
+| Panel and subscription website | [1.1.7.128](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.128) |
+| Installer / Docker bundle | [1.2.176](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.176) |
 | Node agent | [1.1.38](https://github.com/lottman/Remnacust-node/releases/tag/v1.1.38) |
 | Core / editor validator | [1.1.22](https://github.com/lottman/Remnacust-core/releases/tag/v1.1.22), Xray v26.11.9 |
 
@@ -104,7 +104,7 @@ Apply to JSON updates the draft; save the profile separately. For inbound client
 
 Manual JSON and extra, existing auto/stream-auto transfer modes, ALPN, padding and quotas are preserved.
 
-API management retains permission checks and administrator-only operation restrictions. Updates to the RU/EN/FA/ZH guide and security dependencies are prepared. [Panel/Page 1.1.7.127 changes](docs/releases/1.1.7.127.md).
+API management retains permission checks and administrator-only operation restrictions. Updates to the RU/EN/FA/ZH guide and security dependencies are prepared. [Panel/Page 1.1.7.128 changes](docs/releases/1.1.7.128.md).
 
 Standard Remnawave nodes and pages retain basic operation within their protocols and APIs. Advanced host/device restrictions and autoselect accounting require compatible custom Node/Core. Network failures or unknown compatibility do not authorize dropping configured restrictions. [Node compatibility](docs/NODE-COMPATIBILITY.md).
 

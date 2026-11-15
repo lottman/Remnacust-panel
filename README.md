@@ -34,8 +34,8 @@ docker compose up -d --no-build --pull never
 
 | Компонент | Версия комплекта |
 | --- | --- |
-| Панель и сайт подписки | [1.1.7.127](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.127) |
-| Установщик / Docker-комплект | [1.2.175](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.175) |
+| Панель и сайт подписки | [1.1.7.128](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.128) |
+| Установщик / Docker-комплект | [1.2.176](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.176) |
 | Агент ноды | [1.1.38](https://github.com/lottman/Remnacust-node/releases/tag/v1.1.38) |
 | Core / валидатор редактора | [1.1.22](https://github.com/lottman/Remnacust-core/releases/tag/v1.1.22), Xray v26.11.9 |
 
@@ -104,7 +104,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/lottman/Remnacust-installer/
 
 Ручной JSON и extra, прежние режимы передачи auto/stream-auto, ALPN, padding и квоты сохраняются.
 
-Управление через API сохраняет проверки прав и ограничения административных операций. Подготовлены обновления руководства на RU/EN/FA/ZH и исправления зависимостей безопасности. [Изменения Panel/Page 1.1.7.127](docs/releases/1.1.7.127.md).
+Управление через API сохраняет проверки прав и ограничения административных операций. Подготовлены обновления руководства на RU/EN/FA/ZH и исправления зависимостей безопасности. [Изменения Panel/Page 1.1.7.128](docs/releases/1.1.7.128.md).
 
 Обычные ноды и страницы Remnawave сохраняют базовую работу в пределах их протоколов и API. Расширенные ограничения хостов, устройств и учёт автовыбора требуют совместимых наших Node/Core. Сетевой сбой или неизвестная совместимость не разрешают снимать установленные ограничения. [Совместимость нод](docs/NODE-COMPATIBILITY.md).
 

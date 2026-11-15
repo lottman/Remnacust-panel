@@ -55,6 +55,12 @@ const { NodesConverter } = load(path.join(sourceRoot, 'modules/nodes/nodes.conve
 const { NodesRepository } = load(
     path.join(sourceRoot, 'modules/nodes/repositories/nodes.repository.ts'),
     {
+        '../constants/nodes/ip-statuses': load(
+            path.join(
+                __dirname,
+                '../libs/contract/constants/nodes/ip-statuses/node-ip-statuses.constant.ts',
+            ),
+        ),
         '../entities/nodes.entity': entities,
         '../node-control-addresses': controls,
         '@common/database': {},

@@ -502,7 +502,7 @@ jobs:
           })().catch(error => { console.error(error); process.exitCode = 1; });
           NODE
       - name: Verify canonical node addresses and committed control revisions
-        run: node --test tests/node-control-addresses.database.integration.cjs tests/node-ip-inventory.database.integration.cjs tests/node-health-persistence.database.integration.cjs
+        run: node --test --test-concurrency=1 tests/node-control-addresses.database.integration.cjs tests/node-ip-inventory.database.integration.cjs tests/node-health-persistence.database.integration.cjs
         env:
           NODE_CONTROL_TEST_DATABASE_URL: ${{ env.DATABASE_URL }}
           NODE_CONTROL_TEST_DISPOSABLE: '1'

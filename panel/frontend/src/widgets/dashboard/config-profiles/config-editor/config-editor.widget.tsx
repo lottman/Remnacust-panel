@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next'
 import { TbAlertTriangle } from 'react-icons/tb'
 import { useBlocker } from 'react-router'
 
+import { useXrayMode } from '@shared/api/hooks/xray-mode'
 import { usePseudoFullscreen, useViewportFillHeight } from '@shared/hooks'
 import { useUiText } from '@shared/i18n/interface-text'
 import { CodeEditor, editorClasses, EditorFooter, EditorStatusBar } from '@shared/ui/code-editor'
@@ -22,6 +23,8 @@ import { preventBackScroll } from '@shared/utils/misc'
 
 import styles from './ConfigEditor.module.css'
 import { IProps } from './interfaces'
+import { applyXeraSettingsToEditor } from './xera-settings'
+import { XeraSettingsControl } from './xera-settings-control'
 
 export function ConfigEditorWidget(props: IProps) {
     const uiText = useUiText()
@@ -42,6 +45,8 @@ export function ConfigEditorWidget(props: IProps) {
     const [result, setResult] = useState('')
     const [isConfigValid, setIsConfigValid] = useState(true)
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+    const [isEditorReady, setIsEditorReady] = useState(false)
+    const coreMode = useXrayMode()
     const configText = useMemo(
         () => JSON.stringify(configProfile.config, null, 2) || '',
         [configProfile.config]
@@ -102,6 +107,14 @@ export function ConfigEditorWidget(props: IProps) {
         const currentValue = editorRef.current.getValue()
         const hasChanges = currentValue !== originalValue
         setHasUnsavedChanges(hasChanges)
+    }
+
+    const applyXeraSettings = (source: string, next: string): boolean => {
+        if (!applyXeraSettingsToEditor(editorRef.current, source, next)) return false
+        setEditorValue(next)
+        setHasUnsavedChanges(next !== originalValue)
+        ConfigValidationFeature.validate(editorRef, setResult, setIsConfigValid, snippetMap)
+        return true
     }
 
     const applyRestoreDraft = () => {
@@ -228,6 +241,18 @@ export function ConfigEditorWidget(props: IProps) {
                 }}
                 withBorder
             >
+                <XeraSettingsControl
+                    coreMode={
+                        coreMode.isPending
+                            ? 'loading'
+                            : coreMode.isError
+                              ? 'error'
+                              : (coreMode.data?.mode ?? 'loading')
+                    }
+                    editorReady={isEditorReady}
+                    onApply={applyXeraSettings}
+                    value={editorValue}
+                />
                 {isFullscreen && (
                     <FullscreenToggleButton
                         isFullscreen={isFullscreen}
@@ -256,8 +281,12 @@ export function ConfigEditorWidget(props: IProps) {
                     }}
                     onMount={(editor) => {
                         editorRef.current = editor
+                        setIsEditorReady(true)
                         editor.onDidDispose(() => {
-                            if (editorRef.current === editor) editorRef.current = null
+                            if (editorRef.current === editor) {
+                                editorRef.current = null
+                                setIsEditorReady(false)
+                            }
                             if (validationTimer.current) clearTimeout(validationTimer.current)
                         })
                         applyRestoreDraft()

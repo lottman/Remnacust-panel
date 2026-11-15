@@ -14,6 +14,13 @@ export function validateClientTemplate(config: unknown, type: string): void {
             throw new Error('group-object');
         const group = item as Record<string, unknown>;
         const custom = group.remnawave as Record<string, unknown> | undefined;
+        if (
+            custom?.loadBalance !== undefined &&
+            (typeof custom.loadBalance !== 'boolean' ||
+                (custom.loadBalance &&
+                    group.type !== (type === 'SINGBOX' ? 'urltest' : 'load-balance')))
+        )
+            throw new Error('load-balance-strategy');
         if (custom?.pool === undefined) continue;
         const name = group[type === 'SINGBOX' ? 'tag' : 'name'];
         if (

@@ -24,6 +24,7 @@ type Report = {
         code:
             | 'authenticated'
             | 'disabled'
+            | 'managementDisabled'
             | 'dns'
             | 'certificate'
             | 'refused'
@@ -143,7 +144,13 @@ export function NodeConnectionRoute({ route, now }: { route: ConnectionRoute; no
     )
 }
 
-export function NodeDiagnostics({ nodeUuid }: { nodeUuid: string }) {
+export function NodeDiagnostics({
+    nodeUuid,
+    disabled = false
+}: {
+    nodeUuid: string
+    disabled?: boolean
+}) {
     const { t } = useTranslation()
     const [now, setNow] = useState(() => Date.now())
     const checkRequest = useRef<AbortController | null>(null)
@@ -186,9 +193,11 @@ export function NodeDiagnostics({ nodeUuid }: { nodeUuid: string }) {
         resetCheck()
         resetMute()
         return () => checkRequest.current?.abort()
-    }, [nodeUuid, resetCheck, resetMute])
+    }, [nodeUuid, disabled, resetCheck, resetMute])
     const report =
-        check.variables === nodeUuid && !check.isPending && !check.isError ? check.data : undefined
+        !disabled && check.variables === nodeUuid && !check.isPending && !check.isError
+            ? check.data
+            : undefined
     const muteResult = mute.variables?.requestedUuid === nodeUuid ? mute.data : undefined
     const until = muteResult ? muteResult.alertMutedUntil : report?.alertMutedUntil
     const route = parseConnectionRoute(report?.connectionRoute)
@@ -212,9 +221,12 @@ export function NodeDiagnostics({ nodeUuid }: { nodeUuid: string }) {
                 <Group justify="space-between" wrap="wrap">
                     <Text fw={600}>{t('operations.diagnostics')}</Text>
                     <Button
+                        disabled={disabled}
                         variant="light"
                         loading={check.isPending && check.variables === nodeUuid}
-                        onClick={() => check.mutate(nodeUuid)}
+                        onClick={() => {
+                            if (!disabled) check.mutate(nodeUuid)
+                        }}
                     >
                         {t('operations.checkConnection')}
                     </Button>
@@ -222,6 +234,11 @@ export function NodeDiagnostics({ nodeUuid }: { nodeUuid: string }) {
                 <Text size="sm" c="dimmed">
                     {t('operations.diagnosticsScope')}
                 </Text>
+                {disabled && (
+                    <Text size="sm" c="dimmed">
+                        {t('node-control-addresses.save-before-check')}
+                    </Text>
+                )}
                 {((check.isError && check.variables === nodeUuid) ||
                     (mute.isError && mute.variables?.requestedUuid === nodeUuid)) && (
                     <Alert color="red" role="alert">

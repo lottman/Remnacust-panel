@@ -3,8 +3,12 @@ import { z } from 'zod';
 import { NODES_ROUTES, REST_API } from '../../api';
 import { getEndpointDetails } from '../../constants';
 import { NodeIpsSchema, NodesSchema } from '../../models';
-import { NodeResponseSchema } from './node.response';
+import {
+    NodeControlAddressesSchema,
+    NodeControlAddressValueSchema,
+} from '../../models/node-control-addresses.schema';
 import { SocksProxyUrlSchema } from '../../models/socks-proxy.schema';
+import { NodeResponseSchema } from './node.response';
 
 export namespace UpdateNodeCommand {
     export const url = REST_API.NODES.UPDATE;
@@ -17,56 +21,66 @@ export namespace UpdateNodeCommand {
 
     export const RequestBodySchema = NodesSchema.pick({
         uuid: true,
-    }).extend({
-        name: z.optional(z.string().min(3).max(30)),
-        address: z.optional(z.string().min(2)),
-        port: z.optional(z.number().min(1).max(65535)),
-        proxyUrl: SocksProxyUrlSchema.nullish(),
-        isTrafficTrackingActive: z.optional(z.boolean()),
-        trafficLimitBytes: z.optional(z.number().min(0)),
-        notifyPercent: z.optional(z.number().min(0).max(100)),
-        trafficResetDay: z.optional(z.int().min(0).max(31)),
-        countryCode: z.optional(z.string().max(2).toUpperCase()),
-        consumptionMultiplier: z.optional(
-            z
-                .number()
-                .min(0.0)
-                .max(100.0)
-                .transform((n) => Number(n.toFixed(1))),
-        ),
-        nodeConsumptionMultiplier: z.optional(
-            z
-                .number()
-                .min(0.0)
-                .max(100.0)
-                .transform((n) => Number(n.toFixed(1))),
-        ),
-        configProfile: z
-            .object({
-                activeConfigProfileUuid: z.uuid(),
-                activeInbounds: z.array(z.uuid()),
-            })
-            .optional(),
+    })
+        .extend({
+            name: z.optional(z.string().min(3).max(30)),
+            address: NodeControlAddressValueSchema.optional(),
+            controlAddresses: NodeControlAddressesSchema.optional(),
+            controlRevision: z.uuid().optional(),
+            port: z.optional(z.number().min(1).max(65535)),
+            proxyUrl: SocksProxyUrlSchema.nullish(),
+            isTrafficTrackingActive: z.optional(z.boolean()),
+            trafficLimitBytes: z.optional(z.number().min(0)),
+            notifyPercent: z.optional(z.number().min(0).max(100)),
+            trafficResetDay: z.optional(z.int().min(0).max(31)),
+            countryCode: z.optional(z.string().max(2).toUpperCase()),
+            consumptionMultiplier: z.optional(
+                z
+                    .number()
+                    .min(0.0)
+                    .max(100.0)
+                    .transform((n) => Number(n.toFixed(1))),
+            ),
+            nodeConsumptionMultiplier: z.optional(
+                z
+                    .number()
+                    .min(0.0)
+                    .max(100.0)
+                    .transform((n) => Number(n.toFixed(1))),
+            ),
+            configProfile: z
+                .object({
+                    activeConfigProfileUuid: z.uuid(),
+                    activeInbounds: z.array(z.uuid()),
+                })
+                .optional(),
 
-        providerUuid: z.uuid().nullish(),
-        tags: z.optional(
-            z
-                .array(
-                    z
-                        .string()
-                        .regex(
-                            /^[A-Za-z0-9_:]+$/,
-                            'Tag can only contain letters, numbers, underscores and colons',
-                        )
-                        .max(36, 'Each tag must be less than 36 characters'),
-                )
-                .max(10, 'Maximum 10 tags'),
-        ),
-        activePluginUuid: z.uuid().nullish(),
-        integrationUuids: z.optional(z.array(z.uuid()).max(20, 'Maximum 20 integrations')),
-        note: z.optional(z.string().max(255).nullable()),
-        ips: z.optional(NodeIpsSchema),
-    });
+            providerUuid: z.uuid().nullish(),
+            tags: z.optional(
+                z
+                    .array(
+                        z
+                            .string()
+                            .regex(
+                                /^[A-Za-z0-9_:]+$/,
+                                'Tag can only contain letters, numbers, underscores and colons',
+                            )
+                            .max(36, 'Each tag must be less than 36 characters'),
+                    )
+                    .max(10, 'Maximum 10 tags'),
+            ),
+            activePluginUuid: z.uuid().nullish(),
+            integrationUuids: z.optional(z.array(z.uuid()).max(20, 'Maximum 20 integrations')),
+            note: z.optional(z.string().max(255).nullable()),
+            ips: z.optional(NodeIpsSchema),
+        })
+        .refine(
+            (value) => value.controlAddresses === undefined || value.controlRevision !== undefined,
+            {
+                message: 'Reload the node connection settings before saving control addresses',
+                path: ['controlRevision'],
+            },
+        );
 
     export const ResponseSchema = NodeResponseSchema;
 

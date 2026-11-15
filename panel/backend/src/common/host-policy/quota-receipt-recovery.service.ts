@@ -49,7 +49,7 @@ export class QuotaReceiptRecoveryService {
             if (!pending.rows.length) throw new QuotaReceiptRecoveryError('NOT_PENDING');
             const nodes = await sql<
                 INodeConnectionOpts & { id: string }
-            >`SELECT id::text,address,port,proxy_url AS "proxyUrl" FROM nodes WHERE uuid=${node}::uuid`.execute(
+            >`SELECT uuid,id::text,address,port,proxy_url AS "proxyUrl" FROM nodes WHERE uuid=${node}::uuid`.execute(
                 this.db.kysely,
             );
             const opts = nodes.rows[0];

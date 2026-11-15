@@ -6,6 +6,7 @@ export interface INodeVersions {
 }
 
 export interface INodeHotCache {
+    controlRevision?: string | null;
     system: INodeSystem | null;
     versions: INodeVersions | null;
     xrayUptime: number;

@@ -12,6 +12,7 @@ export declare const CACHE_KEYS: {
     readonly NODE_USERS_ONLINE: (uuid: string) => string;
     readonly NODE_VERSIONS: (uuid: string) => string;
     readonly NODE_XRAY_UPTIME: (uuid: string) => string;
+    readonly NODE_TELEMETRY_SNAPSHOT: (uuid: string) => string;
     readonly RAW_INBOUND: (uuid: string) => string;
     readonly XRAY_JSON_TEMPLATE: (uuid: string) => string;
     readonly EXTERNAL_SQUAD_TEMPLATE_NAME: (uuid: string, type: TSubscriptionTemplateType) => string;

@@ -1,6 +1,6 @@
 {
   "name": "@remnacust/backend",
-  "version": "1.1.7.125",
+  "version": "1.1.7.126",
   "private": false,
   "description": "Remnacust Panel Backend",
   "homepage": "https://github.com/lottman/Remnacust-panel",
@@ -65,12 +65,13 @@
     "@peculiar/x509": "3.1.0",
     "@prisma/adapter-pg": "7.10.1",
     "@prisma/client": "7.10.1",
+    "@prometheus-io/client": "0.16.1",
     "@remnawave/hashed-set": "^0.0.4",
     "@remnawave/node-contract": "file:vendor/node-contract",
     "@scalar/nestjs-api-reference": "1.2.37",
     "@simplewebauthn/server": "14.1.0",
     "@songkeys/nestjs-redis": "12.0.0",
-    "@stablelib/base64": "^2.0.1",
+    "@stablelib/base64": "2.0.2",
     "@stablelib/x25519": "^2.0.1",
     "@willsoto/nestjs-prometheus": "7.0.0",
     "@zip.js/zip.js": "2.25.0",
@@ -112,6 +113,7 @@
     "re2js": "2.10.0",
     "semver": "7.8.6",
     "sirv": "3.0.2",
+    "socks": "2.8.10",
     "socks-proxy-agent": "10.1.0",
     "ssh2": "^1.17.0",
     "superjson": "2.2.6",
@@ -122,8 +124,7 @@
     "ws": "8.23.0",
     "xbytes": "^1.9.1",
     "xray-typed": "^1.2.3",
-    "zod": "4.6.7",
-    "@prometheus-io/client": "0.16.1"
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "@rspack/cli": "2.3.2",

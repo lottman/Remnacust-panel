@@ -106,7 +106,9 @@ export const NodeStatusBadgeWidget = memo(
                             ? t('xera-node-health.upgrade-required-message')
                             : needsAttention && healthReason
                               ? healthReason
-                              : status
+                              : connectionStatus === 'limited'
+                                ? t('xera-node-health.limited-help')
+                                : status
                     }
                     multiline
                     w="max-content"
@@ -130,8 +132,12 @@ export const NodeStatusBadgeWidget = memo(
 
         return (
             <Tooltip
-                disabled={!upgradeRequired}
-                label={t('xera-node-health.upgrade-required-message')}
+                disabled={!upgradeRequired && connectionStatus !== 'limited'}
+                label={t(
+                    upgradeRequired
+                        ? 'xera-node-health.upgrade-required-message'
+                        : 'xera-node-health.limited-help'
+                )}
                 multiline
                 w="max-content"
                 maw="min(300px, calc(100vw - 24px))"

@@ -84,6 +84,7 @@
         "unknown-error": "请求失败，发生未知错误。"
     },
     "xera-node-health": {
+        "limited-help": "面板没有最新的 Xray 运行时间，或部分节点测量数据不可用。这并不能证明 VPN 已停止。破折号表示没有测量值；测得的零仍显示为零。",
         "title": "节点健康状态",
         "healthy": "正常",
         "limited": "数据有限",
@@ -1523,7 +1524,10 @@
         "node-v": "节点 V.",
         "provider": "服务商",
         "total-ram": "内存总数",
-        "cpu-model": "CPU 型号"
+        "cpu-model": "CPU 型号",
+        "proxy": "代理",
+        "proxy-enabled": "是",
+        "proxy-disabled": "否"
     },
     "subpage-config-visual-editor": {
         "widget": {
@@ -1936,6 +1940,64 @@
             "note": "备注"
         }
     },
+    "xera-settings": {
+        "title": "自适应 Xera HTTP",
+        "target": "现有 Xera HTTP 传输",
+        "inbounds": "入站客户端偏好",
+        "outbounds": "出站客户端传输",
+        "inbound-help": "这些客户端偏好会传入由此入站生成的主机订阅。服务器请求限制需单独配置。",
+        "outbound-help": "此出站传输的客户端偏好。",
+        "manual": "点击应用前，手动传输设置保持不变。",
+        "enable": "启用自适应",
+        "mode": "自适应配置",
+        "mode-balanced": "均衡",
+        "mode-low-latency": "低延迟",
+        "mode-unstable-network": "不稳定网络",
+        "minimum": "最少活动 HTTP 请求数",
+        "maximum": "最多活动 HTTP 请求数",
+        "requests-help": "按此传输配置中的每个方向和目标分别计算活动 HTTP 请求数。TCP 连接数可能不同。",
+        "apply-help": "应用会将自适应设置写入 JSON 草稿。配置文件需单独保存。",
+        "apply": "应用到 JSON",
+        "applied": "JSON 草稿已更新。请保存配置文件以应用。",
+        "requires-core": "客户端自适应功能需要 Remnacust Core 1.1.22 或更新版本。所选 Core 模式无法确认客户端版本。",
+        "requires-custom": "自适应 Xera HTTP 需要自定义 Core 模式，且客户端需使用 Remnacust Core 1.1.22 或更新版本。",
+        "mode-loading": "正在读取所选 Core 模式…",
+        "mode-error": "Core 模式不可用。确认模式后才能通过此表单应用设置。",
+        "empty": "JSON 中尚无 Xera HTTP 传输。请先在 JSON 中配置，再使用此区域。",
+        "invalid-json": "使用这些控件前，请修复 JSON 草稿中的解析错误。",
+        "invalid-shape": "配置和传输设置必须是 JSON 对象。请在 JSON 中修正此部分。",
+        "duplicate-keys": "使用这些控件前，请解决 JSON 对象中的重复键。",
+        "invalid-adaptive": "自适应设置不完整或无效。请先在 JSON 中修正，再使用可视控件编辑。",
+        "invalid-bounds": "请输入 1 到 32 的整数，且最小值不能大于最大值。",
+        "target-changed": "所选传输已更改。请重新选择后重试。",
+        "document-changed": "JSON 草稿已更改。请检查当前传输后再应用。",
+        "apply-failed": "无法更新 JSON 草稿。请检查编辑器后重试。"
+    },
+    "node-control-addresses": {
+        "save-before-check": "检查已保存的管理路由前，请先保存连接更改。",
+        "conflict": "连接设置已在其他位置更改。您的编辑仍保留在表单中。重新加载连接设置将以已保存的设置替换您的地址、端口和代理编辑。",
+        "reload": "用已保存的设置替换我的连接编辑",
+        "preferred": "首个启用地址",
+        "add": "添加地址",
+        "help": "面板从上到下尝试已启用的地址。已保存的地址会保留在列表中；如需更改，请停用旧地址并添加新地址。",
+        "proxy": "配置的 SOCKS5 适用于所有地址。代理失败时不会回退到直连。",
+        "direct": "面板使用直接连接进行管理。",
+        "all-off": "面板管理已关闭。这不会停止 VPN 或节点内核。",
+        "new": "新地址",
+        "priority": "优先级 {{index}}",
+        "toggle": "使用 {{address}} 进行面板管理",
+        "for-panel": "用于面板",
+        "address": "地址 {{index}}",
+        "placeholder": "IPv4、IPv6 或主机名",
+        "discard": "丢弃新地址 {{address}}",
+        "up": "上移 {{address}}",
+        "down": "下移 {{address}}",
+        "max": "最多保留 {{max}} 个地址",
+        "required": "请输入 IP 地址或主机名。",
+        "invalid": "请输入有效的 IPv4、IPv6 或主机名，不含协议、端口或路径。",
+        "duplicate": "该地址已在列表中。IPv6 写法和主机名大小写会统一处理。",
+        "invalid-list": "最多可使用 {{max}} 个唯一地址，每个地址都有面板管理开关。"
+    },
     "node-ips": {
         "primary-ip-description": "这是主地址，不会显示在附加 IP 列表中；其状态会保留。",
         "duplicate-ip-description": "此 IP 已在列表中。请检查其状态或删除重复项。",
@@ -2048,7 +2110,7 @@
         "source-default": "默认",
         "default-placeholder": "自动",
         "default-description": "节点将使用默认出站路由。",
-        "ip-description": "选择节点 IP 或输入任意地址",
+        "ip-description": "请选择已配置的节点 IP，或输入 IPv4 或 IPv6 字面地址。不支持主机名。",
         "interface-description": "选择节点接口或输入任意名称",
         "run": "运行检查",
         "running": "正在运行 GeoCheck",
@@ -2064,6 +2126,8 @@
         }
     },
     "node-ssh": {
+        "host-not-configured": "请选择为此节点配置的 IP 地址或主机名。",
+        "management-off-hint": "所有地址的面板管理均已关闭。此手动 SSH 会话仍可选择任何已配置的地址。",
         "title": "SSH 终端",
         "key-imported": "您的密钥",
         "key-description-imported": "使用您导入的密钥签名，密钥不会离开浏览器。请确保公钥已加入服务器的 authorized_keys。",
@@ -2091,7 +2155,7 @@
         "key-description": "已为此节点生成专用密钥，密钥不会离开浏览器。请将下方内容添加至服务器的 authorized_keys，然后连接。",
         "authorized-keys": "authorized_keys 条目",
         "host": "主机",
-        "host-hint": "留空以使用节点地址",
+        "host-hint": "请选择已配置的地址。留空时使用首个启用的管理地址；全部关闭时使用首个已配置地址。",
         "connect": "连接",
         "hostkey-new-title": "未知主机密钥",
         "hostkey-new-description": "这是此浏览器首次连接该主机。信任前请通过独立渠道验证指纹。",
@@ -2447,7 +2511,9 @@
             "A068": "您没有执行此操作的权限。",
             "A176": "此类型中已存在同名模板，请选择其他名称。",
             "A263": "冻结此用户时，必须指定未来的自动解冻日期和时间。",
-            "A264": "此次冻结截止时间已保存，不能修改。激活后可重新安排冻结。"
+            "A264": "此次冻结截止时间已保存，不能修改。激活后可重新安排冻结。",
+            "A265": "每个节点最多保留 65 个管理地址。请停用已保存的地址，不要替换整个列表。",
+            "A266": "连接设置已更改。保存前请重新加载节点。"
         },
         "statusCodes": {
             "A089_400": "LIMITED 和 EXPIRED 状态由系统自动计算。请选择其他状态。",
@@ -3671,6 +3737,9 @@
         "sark": "萨克岛"
     },
     "autoselect": {
+        "strategy-loadBalance": "分散连接",
+        "load-balance-help": "新连接依次分配给池中可用的成员。客户端跳过未通过 HTTP 检测的服务器。此模式不测量 CPU、内存或带宽；已有连接继续使用原服务器。",
+        "load-balance-singbox-help": "sing-box 使用 urltest 兼容模式：根据 HTTP 响应时间选择可用服务器。此格式不支持轮询分配连接。",
         "server-order": "服务器顺序",
         "round-robin-summary": "新连接按顺序轮流分配。若只想在前一个服务器不可用时切换，请选择“优先级：首个可用”。",
         "editing": "编辑",
@@ -4291,6 +4360,8 @@
         "remaining_many": "{{count}} 天后付款"
     },
     "nodeErrors": {
+    "updatePending": "设置已保存，等待应用到节点；面板将重试连接。",
+    "controlDisabled": "节点管理已关闭：所有地址均已停用。正在运行的 VPN 不会停止。",
     "coreNotReady": "节点 API 可以访问，但 Core 尚未就绪。请等待同步；如果此状态持续，请检查节点日志。",
         "requestTimeout": "节点未在请求期限内响应。请检查面板服务器能否访问其 API。",
         "telemetryUnavailable": "节点 API 可访问，但无法获取 Xray 统计信息。这并不表示 VPN 已停止。",
@@ -4540,6 +4611,7 @@
         "clone-progress": "正在克隆：{{done}} / {{total}}"
     },
     "operations": {
+        "result_managementDisabled": "节点管理已关闭，因为所有管理地址均已停用。正在运行的 VPN 不会停止。",
         "routeAttempts": "本次检查的尝试",
         "routeTitle": "管理 API 路由",
         "routeStatus_authenticated": "API 已响应",

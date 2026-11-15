@@ -9485,6 +9485,12 @@
     "RemnacustCoreXeraHTTPConfig": {
       "additionalProperties": true,
       "properties": {
+        "adaptive": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
         "customDownlinkPadding": {
           "type": [
             "object",
@@ -9726,6 +9732,16 @@
           },
           "else": {
             "properties": {
+              "adaptive": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/definitions/RemnacustCoreXeraAdaptiveConfig"
+                  }
+                ]
+              },
               "customDownlinkPadding": {
                 "anyOf": [
                   {
@@ -10515,6 +10531,16 @@
     "RemnacustCoreXeraExtra": {
       "additionalProperties": true,
       "properties": {
+        "adaptive": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/definitions/RemnacustCoreXeraAdaptiveConfig"
+            }
+          ]
+        },
         "customDownlinkPadding": {
           "anyOf": [
             {
@@ -10861,12 +10887,637 @@
           }
         }
       ]
+    },
+    "RemnacustCoreXeraAdaptiveConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "maxStreams": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 32,
+          "default": 32,
+          "description": "Upper bound of active HTTP requests per direction across the destination/configuration pool, not a TCP connection limit."
+        },
+        "minStreams": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 32,
+          "default": 4,
+          "description": "Lower bound of request admission capacity per direction; does not open idle requests."
+        },
+        "mode": {
+          "enum": [
+            "balanced",
+            "low-latency",
+            "unstable-network"
+          ],
+          "description": "Selects measured feedback thresholds without changing the HTTP transport mode."
+        }
+      },
+      "type": "object",
+      "required": [
+        "mode",
+        "minStreams",
+        "maxStreams"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "minStreams": {
+                "const": 2
+              }
+            },
+            "required": [
+              "minStreams"
+            ]
+          },
+          "then": {
+            "properties": {
+              "maxStreams": {
+                "minimum": 2
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "minStreams": {
+                "const": 3
+              }
+            },
+            "required": [
+              "minStreams"
+            ]
+          },
+          "then": {
+            "properties": {
+              "maxStreams": {
+                "minimum": 3
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "minStreams": {
+                "const": 4
+              }
+            },
+            "required": [
+              "minStreams"
+            ]
+          },
+          "then": {
+            "properties": {
+              "maxStreams": {
+                "minimum": 4
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "minStreams": {
+                "const": 5
+              }
+            },
+            "required": [
+              "minStreams"
+            ]
+          },
+          "then": {
+            "properties": {
+              "maxStreams": {
+                "minimum": 5
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "minStreams": {
+                "const": 6
+              }
+            },
+            "required": [
+              "minStreams"
+            ]
+          },
+          "then": {
+            "properties": {
+              "maxStreams": {
+                "minimum": 6
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "minStreams": {
+                "const": 7
+              }
+            },
+            "required": [
+              "minStreams"
+            ]
+          },
+          "then": {
+            "properties": {
+              "maxStreams": {
+                "minimum": 7
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "minStreams": {
+                "const": 8
+              }
+            },
+            "required": [
+              "minStreams"
+            ]
+          },
+          "then": {
+            "properties": {
+              "maxStreams": {
+                "minimum": 8
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "minStreams": {
+                "const": 9
+              }
+            },
+            "required": [
+              "minStreams"
+            ]
+          },
+          "then": {
+            "properties": {
+              "maxStreams": {
+                "minimum": 9
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "minStreams": {
+                "const": 10
+              }
+            },
+            "required": [
+              "minStreams"
+            ]
+          },
+          "then": {
+            "properties": {
+              "maxStreams": {
+                "minimum": 10
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "minStreams": {
+                "const": 11
+              }
+            },
+            "required": [
+              "minStreams"
+            ]
+          },
+          "then": {
+            "properties": {
+              "maxStreams": {
+                "minimum": 11
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "minStreams": {
+                "const": 12
+              }
+            },
+            "required": [
+              "minStreams"
+            ]
+          },
+          "then": {
+            "properties": {
+              "maxStreams": {
+                "minimum": 12
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "minStreams": {
+                "const": 13
+              }
+            },
+            "required": [
+              "minStreams"
+            ]
+          },
+          "then": {
+            "properties": {
+              "maxStreams": {
+                "minimum": 13
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "minStreams": {
+                "const": 14
+              }
+            },
+            "required": [
+              "minStreams"
+            ]
+          },
+          "then": {
+            "properties": {
+              "maxStreams": {
+                "minimum": 14
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "minStreams": {
+                "const": 15
+              }
+            },
+            "required": [
+              "minStreams"
+            ]
+          },
+          "then": {
+            "properties": {
+              "maxStreams": {
+                "minimum": 15
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "minStreams": {
+                "const": 16
+              }
+            },
+            "required": [
+              "minStreams"
+            ]
+          },
+          "then": {
+            "properties": {
+              "maxStreams": {
+                "minimum": 16
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "minStreams": {
+                "const": 17
+              }
+            },
+            "required": [
+              "minStreams"
+            ]
+          },
+          "then": {
+            "properties": {
+              "maxStreams": {
+                "minimum": 17
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "minStreams": {
+                "const": 18
+              }
+            },
+            "required": [
+              "minStreams"
+            ]
+          },
+          "then": {
+            "properties": {
+              "maxStreams": {
+                "minimum": 18
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "minStreams": {
+                "const": 19
+              }
+            },
+            "required": [
+              "minStreams"
+            ]
+          },
+          "then": {
+            "properties": {
+              "maxStreams": {
+                "minimum": 19
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "minStreams": {
+                "const": 20
+              }
+            },
+            "required": [
+              "minStreams"
+            ]
+          },
+          "then": {
+            "properties": {
+              "maxStreams": {
+                "minimum": 20
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "minStreams": {
+                "const": 21
+              }
+            },
+            "required": [
+              "minStreams"
+            ]
+          },
+          "then": {
+            "properties": {
+              "maxStreams": {
+                "minimum": 21
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "minStreams": {
+                "const": 22
+              }
+            },
+            "required": [
+              "minStreams"
+            ]
+          },
+          "then": {
+            "properties": {
+              "maxStreams": {
+                "minimum": 22
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "minStreams": {
+                "const": 23
+              }
+            },
+            "required": [
+              "minStreams"
+            ]
+          },
+          "then": {
+            "properties": {
+              "maxStreams": {
+                "minimum": 23
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "minStreams": {
+                "const": 24
+              }
+            },
+            "required": [
+              "minStreams"
+            ]
+          },
+          "then": {
+            "properties": {
+              "maxStreams": {
+                "minimum": 24
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "minStreams": {
+                "const": 25
+              }
+            },
+            "required": [
+              "minStreams"
+            ]
+          },
+          "then": {
+            "properties": {
+              "maxStreams": {
+                "minimum": 25
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "minStreams": {
+                "const": 26
+              }
+            },
+            "required": [
+              "minStreams"
+            ]
+          },
+          "then": {
+            "properties": {
+              "maxStreams": {
+                "minimum": 26
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "minStreams": {
+                "const": 27
+              }
+            },
+            "required": [
+              "minStreams"
+            ]
+          },
+          "then": {
+            "properties": {
+              "maxStreams": {
+                "minimum": 27
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "minStreams": {
+                "const": 28
+              }
+            },
+            "required": [
+              "minStreams"
+            ]
+          },
+          "then": {
+            "properties": {
+              "maxStreams": {
+                "minimum": 28
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "minStreams": {
+                "const": 29
+              }
+            },
+            "required": [
+              "minStreams"
+            ]
+          },
+          "then": {
+            "properties": {
+              "maxStreams": {
+                "minimum": 29
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "minStreams": {
+                "const": 30
+              }
+            },
+            "required": [
+              "minStreams"
+            ]
+          },
+          "then": {
+            "properties": {
+              "maxStreams": {
+                "minimum": 30
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "minStreams": {
+                "const": 31
+              }
+            },
+            "required": [
+              "minStreams"
+            ]
+          },
+          "then": {
+            "properties": {
+              "maxStreams": {
+                "minimum": 31
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "minStreams": {
+                "const": 32
+              }
+            },
+            "required": [
+              "minStreams"
+            ]
+          },
+          "then": {
+            "properties": {
+              "maxStreams": {
+                "minimum": 32
+              }
+            }
+          }
+        }
+      ],
+      "description": "Client admission budget for active HTTP requests per direction, destination and configuration generation. A stream-one request reserves both directions. Server session, memory and HTTP limits remain independent."
     }
   },
   "x-remnacust-upstream": {
     "version": "v26.11.9",
     "commit": "676eaf66f8f05d4d558ee7a74b4736623d3feeb9",
     "patchCommit": null,
-    "coreVersion": "1.1.21"
+    "coreVersion": "1.1.22"
   }
 }

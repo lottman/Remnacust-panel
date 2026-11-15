@@ -20,6 +20,7 @@ export * from './last-connected-node.schema';
 export * from './node-integration.schema';
 export * from './node-plugin.schema';
 export * from './node-ips.schema';
+export * from './node-control-addresses.schema';
 export * from './node-system.schema';
 export * from './nodes.schema';
 export * from './remnawave-settings';

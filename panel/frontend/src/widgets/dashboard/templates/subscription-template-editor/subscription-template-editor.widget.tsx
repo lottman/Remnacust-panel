@@ -3,43 +3,58 @@ import type { editor } from 'monaco-editor'
 import { TemplateEditorActionsFeature } from '@features/dashboard/subscription-templates/template-editor-actions'
 import { Alert, Box, Button, Paper, Tabs } from '@mantine/core'
 import { Monaco } from '@monaco-editor/react'
-import 'monaco-yaml/yaml.worker.js'
 import { GetHostsCommand, GetSubscriptionTemplateCommand } from '@remnawave/backend-contract'
 import { decode } from '@stablelib/base64'
 import clsx from 'clsx'
 import { findNodeAtLocation, parseTree } from 'jsonc-parser'
-import { useDeferredValue, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, useDeferredValue, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbArrowsShuffle, TbCode, TbDatabaseImport, TbHistory } from 'react-icons/tb'
 
+import type { useGetHosts } from '@shared/api/hooks'
 import { useGetSubscriptionSettings } from '@shared/api/hooks/subscription-settings/subscription-settings.query.hooks'
 import { usePseudoFullscreen, useViewportFillHeight } from '@shared/hooks'
 import { useEditorRecovery } from '@shared/hooks/use-editor-recovery'
 import { fullscreenClasses, FullscreenToggleButton } from '@shared/ui'
 import { CodeEditor, editorClasses, EditorFooter } from '@shared/ui/code-editor'
+import { LoaderModalShared } from '@shared/ui/loader-modal/loader-model.shared'
+import { hasPageQueryError, PageQueryError } from '@shared/ui/page-query-error'
+import { lazyWithRecovery as lazy } from '@shared/utils/lazy-with-recovery'
 import { preventBackScroll } from '@shared/utils/misc'
 import { registerHostHoverData } from '@shared/utils/monaco/host-hover'
 import { setupSuggestWidget } from '@shared/utils/setup-monaco/setup-suggest-monaco'
 
 import { parseTemplate, poolsOf, templateChanges, validationPath } from './autoselect-model'
-import { AutoselectPanel } from './autoselect-panel'
 import panelStyles from './autoselect-panel.module.css'
-import { ClientAutoselectPanel } from './client-autoselect-panel'
 import {
     clientValidationPath,
     geofileEditorShapeError,
     readClientTemplate,
     type ClientFormat
 } from './client-template-model'
-import { GeofilesPanel } from './geofiles-panel'
 import styles from './SubscriptionTemplateEditor.module.css'
 import { TemplateChanges } from './template-changes'
-import { TemplateHistory } from './template-history'
 import { configureMonaco, getTemplateModelPath } from './utils/setup-template-monaco'
+
+const AutoselectPanel = lazy(() =>
+    import('./autoselect-panel').then((module) => ({ default: module.AutoselectPanel }))
+)
+const ClientAutoselectPanel = lazy(() =>
+    import('./client-autoselect-panel').then((module) => ({
+        default: module.ClientAutoselectPanel
+    }))
+)
+const GeofilesPanel = lazy(() =>
+    import('./geofiles-panel').then((module) => ({ default: module.GeofilesPanel }))
+)
+const TemplateHistory = lazy(() =>
+    import('./template-history').then((module) => ({ default: module.TemplateHistory }))
+)
+const EMPTY_HOSTS: GetHostsCommand.Response['response'] = []
 
 interface Props {
     editorType: 'json' | 'yaml'
-    hosts: GetHostsCommand.Response['response']
+    hostsQuery: ReturnType<typeof useGetHosts>
     template: GetSubscriptionTemplateCommand.Response['response']
 }
 
@@ -54,7 +69,10 @@ function templateSource(template: Props['template'], editorType: Props['editorTy
 }
 
 export function SubscriptionTemplateEditorWidget(props: Props) {
-    const { editorType, hosts, template } = props
+    const { editorType, hostsQuery, template } = props
+    const hosts = hostsQuery.data ?? EMPTY_HOSTS
+    const hostsReady = hostsQuery.data !== undefined
+    const hostsFailed = hasPageQueryError([hostsQuery])
     useLayoutEffect(() => registerHostHoverData(hosts), [hosts])
     const { t } = useTranslation()
     const isXray = template.templateType === 'XRAY_JSON'
@@ -66,6 +84,7 @@ export function SubscriptionTemplateEditorWidget(props: Props) {
         template.geofilesEnabled === true
     const format = template.templateType as ClientFormat
     const [selectedTab, setActiveTab] = useState<string | null>('code')
+    const [autoselectOpened, setAutoselectOpened] = useState(false)
     const activeTab = !geofilesEnabled && selectedTab === 'geofiles' ? 'code' : selectedTab
 
     const { isFullscreen, toggle: toggleFullscreen } = usePseudoFullscreen()
@@ -75,6 +94,18 @@ export function SubscriptionTemplateEditorWidget(props: Props) {
 
     const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null)
     const monacoRef = useRef<Monaco | null>(null)
+    const hostsRef = useRef(hosts)
+    const monacoSetupRef = useRef<ReturnType<typeof configureMonaco> | null>(null)
+    useLayoutEffect(() => {
+        hostsRef.current = hosts
+        let cancelled = false
+        void monacoSetupRef.current?.then((updateHosts) => {
+            if (!cancelled) updateHosts?.(hosts)
+        })
+        return () => {
+            cancelled = true
+        }
+    }, [hosts])
 
     const baseline = useMemo(
         () => templateSource(template, editorType),
@@ -105,6 +136,8 @@ export function SubscriptionTemplateEditorWidget(props: Props) {
     }, [value, format, isXray, editorType])
     const deferredValue = useDeferredValue(value)
     const changes = useMemo(() => {
+        if ((activeTab !== 'autoselect' && activeTab !== 'geofiles') || baseline === deferredValue)
+            return []
         try {
             return templateChanges(
                 readClientTemplate(baseline, format),
@@ -113,10 +146,15 @@ export function SubscriptionTemplateEditorWidget(props: Props) {
         } catch {
             return []
         }
-    }, [baseline, deferredValue, format])
+    }, [baseline, deferredValue, format, activeTab])
 
     const handleEditorWillMount = (monaco: Monaco) => {
-        configureMonaco(monaco, editorType, hosts, template.templateType)
+        monacoSetupRef.current = configureMonaco(
+            monaco,
+            editorType,
+            hostsRef.current,
+            template.templateType
+        )
     }
 
     const handleEditorDidMount = (editor: editor.IStandaloneCodeEditor, monaco: Monaco) => {
@@ -167,13 +205,16 @@ export function SubscriptionTemplateEditorWidget(props: Props) {
 
     return (
         <Box className={clsx(styles.container, isFullscreen && fullscreenClasses.overlay)}>
+            {hostsFailed && <PageQueryError queries={[hostsQuery]} />}
             <Tabs
                 value={activeTab}
                 onChange={(next) => {
                     if (next !== 'code' && isFullscreen) toggleFullscreen()
+                    if (next === 'autoselect') setAutoselectOpened(true)
                     setActiveTab(next)
                 }}
                 keepMounted
+                keepMountedMode="display-none"
             >
                 <Tabs.List mb="md" className={styles.tabsList}>
                     <Tabs.Tab value="code" leftSection={<TbCode size={17} />}>
@@ -233,69 +274,84 @@ export function SubscriptionTemplateEditorWidget(props: Props) {
                     </Paper>
                 </Tabs.Panel>
                 <Tabs.Panel value="autoselect">
-                    {draft.config ? (
-                        isXray ? (
-                            <AutoselectPanel
-                                text={value}
-                                baseline={baseline}
-                                config={draft.config}
-                                hosts={hosts}
-                                onChange={setDraft}
-                            />
-                        ) : (
-                            <div className={panelStyles.layout}>
-                                <div className={panelStyles.main}>
-                                    <ClientAutoselectPanel
-                                        text={value}
-                                        config={draft.config}
-                                        format={format}
-                                        hosts={hosts}
-                                        onChange={setDraft}
-                                    />
-                                </div>
-                                <TemplateChanges changes={changes} />
-                            </div>
-                        )
-                    ) : (
-                        <Alert color="red" title={t('autoselect.validation')}>
-                            {t('client-template.invalid-help')}
-                        </Alert>
-                    )}
+                    {autoselectOpened &&
+                        (hostsReady ? (
+                            <Suspense fallback={<LoaderModalShared />}>
+                                {draft.config ? (
+                                    isXray ? (
+                                        <AutoselectPanel
+                                            text={value}
+                                            baseline={baseline}
+                                            config={draft.config}
+                                            hosts={hosts}
+                                            onChange={setDraft}
+                                        />
+                                    ) : (
+                                        <div className={panelStyles.layout}>
+                                            <div className={panelStyles.main}>
+                                                <ClientAutoselectPanel
+                                                    text={value}
+                                                    config={draft.config}
+                                                    format={format}
+                                                    hosts={hosts}
+                                                    onChange={setDraft}
+                                                />
+                                            </div>
+                                            <TemplateChanges changes={changes} />
+                                        </div>
+                                    )
+                                ) : (
+                                    <Alert color="red" title={t('autoselect.validation')}>
+                                        {t('client-template.invalid-help')}
+                                    </Alert>
+                                )}
+                            </Suspense>
+                        ) : !hostsFailed ? (
+                            <LoaderModalShared />
+                        ) : null)}
                 </Tabs.Panel>
                 <Tabs.Panel value="geofiles">
                     {geofilesEnabled &&
                         activeTab === 'geofiles' &&
-                        (draft.config ? (
-                            <div className={panelStyles.layout}>
-                                <div className={panelStyles.main}>
-                                    <GeofilesPanel
-                                        hosts={hosts}
-                                        text={value}
-                                        config={draft.config}
-                                        format={format}
-                                        onChange={setDraft}
-                                        getValue={() => valueRef.current}
-                                    />
-                                </div>
-                                <TemplateChanges changes={changes} />
-                            </div>
-                        ) : (
-                            <Alert color="red">{t('client-template.invalid-help')}</Alert>
-                        ))}
+                        (hostsReady ? (
+                            <Suspense fallback={<LoaderModalShared />}>
+                                {draft.config ? (
+                                    <div className={panelStyles.layout}>
+                                        <div className={panelStyles.main}>
+                                            <GeofilesPanel
+                                                hosts={hosts}
+                                                text={value}
+                                                config={draft.config}
+                                                format={format}
+                                                onChange={setDraft}
+                                                getValue={() => valueRef.current}
+                                            />
+                                        </div>
+                                        <TemplateChanges changes={changes} />
+                                    </div>
+                                ) : (
+                                    <Alert color="red">{t('client-template.invalid-help')}</Alert>
+                                )}
+                            </Suspense>
+                        ) : !hostsFailed ? (
+                            <LoaderModalShared />
+                        ) : null)}
                 </Tabs.Panel>
                 <Tabs.Panel value="history">
                     {activeTab === 'history' && (
-                        <TemplateHistory
-                            uuid={template.uuid}
-                            language={editorType}
-                            draft={value}
-                            baseline={baseline}
-                            recovery={recovery}
-                            onRestore={(code) => {
-                                setDraft(code)
-                                setActiveTab('code')
-                            }}
-                        />
+                        <Suspense fallback={<LoaderModalShared />}>
+                            <TemplateHistory
+                                uuid={template.uuid}
+                                language={editorType}
+                                draft={value}
+                                baseline={baseline}
+                                recovery={recovery}
+                                onRestore={(code) => {
+                                    setDraft(code)
+                                    setActiveTab('code')
+                                }}
+                            />
+                        </Suspense>
                     )}
                 </Tabs.Panel>
             </Tabs>

@@ -47,6 +47,15 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
             const { nodeUuid, isConnected, connectionOpts: queuedConnectionOpts } = job.data;
             const connectionOpts = { ...queuedConnectionOpts, uuid: nodeUuid };
             const observedAt = job.timestamp ?? Date.now();
+            let controlRevision = job.data.controlRevision;
+            let configurationPending = job.data.lastStatusMessage === '[NODE_UPDATE_PENDING]';
+            if (!controlRevision) {
+                const current = await this.queryBus.execute(new GetNodeByUuidQuery(nodeUuid));
+                if (!current.isOk) return;
+                controlRevision = current.response.controlRevision;
+                configurationPending ||=
+                    current.response.lastStatusMessage === '[NODE_UPDATE_PENDING]';
+            }
 
             const attemptsLimit = 2;
             let attempts = 0;
@@ -56,6 +65,23 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
             while (attempts < attemptsLimit) {
                 const statResult = await this.axios.getSystemStats(connectionOpts);
                 if (!statResult.isOk && statResult.code === 'NODE_ROUTE_BUSY') return;
+                if (!statResult.isOk && statResult.code === 'NODE_ROUTE_DISABLED') {
+                    const updated = await this.commandBus.execute(
+                        new UpdateNodeCommand(
+                            {
+                                uuid: nodeUuid,
+                                isConnected: false,
+                                isConnecting: false,
+                                lastStatusMessage: '[NODE_CONTROL_DISABLED]',
+                                ...(isConnected ? { lastStatusChange: new Date() } : {}),
+                            },
+                            controlRevision,
+                        ),
+                    );
+                    if (!updated.isOk && updated.code === 'A266') return;
+                    await this.clearLiveTelemetry(nodeUuid);
+                    return;
+                }
                 if (
                     !statResult.isOk &&
                     (statResult.code === ERRORS.NODE_ERROR_500_WITH_MSG.code ||
@@ -67,13 +93,17 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
                         const coreStopped = health.response.xrayInternalStatusCached === false;
                         if (coreStopped) {
                             const updated = await this.commandBus.execute(
-                                new UpdateNodeCommand({
-                                    uuid: nodeUuid,
-                                    isConnected: false,
-                                    lastStatusMessage: '[NODE_CORE_NOT_READY]',
-                                    ...(isConnected ? { lastStatusChange: new Date() } : {}),
-                                }),
+                                new UpdateNodeCommand(
+                                    {
+                                        uuid: nodeUuid,
+                                        isConnected: false,
+                                        lastStatusMessage: '[NODE_CORE_NOT_READY]',
+                                        ...(isConnected ? { lastStatusChange: new Date() } : {}),
+                                    },
+                                    controlRevision,
+                                ),
                             );
+                            if (!updated.isOk && updated.code === 'A266') return;
                             await this.clearLiveTelemetry(nodeUuid);
                             if (!updated.isOk) return;
                         }
@@ -84,7 +114,13 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
                                 statResult.message ?? 'Node telemetry is temporarily unavailable',
                         });
                         if (coreStopped) {
-                            await this.reportIncident(nodeUuid, false, isConnected, observedAt);
+                            await this.reportIncident(
+                                nodeUuid,
+                                false,
+                                isConnected,
+                                observedAt,
+                                controlRevision,
+                            );
                             await this.startNodeIfRetryDue(nodeUuid);
                         }
                         return;
@@ -99,6 +135,8 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
                             isConnected,
                             statResult.response,
                             observedAt,
+                            configurationPending,
+                            controlRevision,
                         );
                     case false:
                         message = statResult.message ?? 'Unknown error';
@@ -126,7 +164,13 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
                 }
             }
 
-            return await this.handleDisconnectedNode(nodeUuid, isConnected, message, observedAt);
+            return await this.handleDisconnectedNode(
+                nodeUuid,
+                isConnected,
+                message,
+                observedAt,
+                controlRevision,
+            );
         } catch (error) {
             await this.recordHealth({
                 nodeUuid: job.data.nodeUuid,
@@ -146,16 +190,22 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
         isConnected: boolean,
         stats: INodeSystemStatsResponse,
         observedAt: number,
+        configurationPending = false,
+        controlRevision?: string,
     ) {
         if (stats.xrayInfo === null) {
             const updated = await this.commandBus.execute(
-                new UpdateNodeCommand({
-                    uuid: nodeUuid,
-                    isConnected: false,
-                    lastStatusChange: new Date(),
-                    lastStatusMessage: '[NODE_CORE_NOT_READY]',
-                }),
+                new UpdateNodeCommand(
+                    {
+                        uuid: nodeUuid,
+                        isConnected: false,
+                        lastStatusChange: new Date(),
+                        lastStatusMessage: '[NODE_CORE_NOT_READY]',
+                    },
+                    controlRevision,
+                ),
             );
+            if (!updated.isOk && updated.code === 'A266') return;
             await this.clearLiveTelemetry(nodeUuid);
             await this.recordHealth({
                 nodeUuid,
@@ -165,13 +215,22 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
             this.logger.error(`Node ${nodeUuid} – xrayInfo is null`);
 
             if (!updated.isOk) return;
-            await this.reportIncident(nodeUuid, false, isConnected, observedAt);
+            await this.reportIncident(nodeUuid, false, isConnected, observedAt, controlRevision);
             await this.startNodeIfRetryDue(nodeUuid);
 
             return;
         }
 
         await this.rawCacheService.setMany([
+            {
+                key: CACHE_KEYS.NODE_TELEMETRY_SNAPSHOT(nodeUuid),
+                value: {
+                    controlRevision: controlRevision ?? null,
+                    stats: stats.system?.stats ?? null,
+                    xrayUptime: stats.xrayInfo.uptime,
+                },
+                ttlSeconds: CACHE_KEYS_TTL.NODE_XRAY_UPTIME,
+            },
             {
                 key: nodeBindingTrafficKey(nodeUuid),
                 value: parseProfileTraffic(stats.bindingTraffic),
@@ -221,10 +280,13 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
 
         if (!isConnected) {
             const nodeUpdatedResponse = await this.commandBus.execute(
-                new UpdateNodeCommand({
-                    uuid: nodeUuid,
-                    isConnected: true,
-                }),
+                new UpdateNodeCommand(
+                    {
+                        uuid: nodeUuid,
+                        isConnected: true,
+                    },
+                    controlRevision,
+                ),
             );
 
             if (!nodeUpdatedResponse.isOk) {
@@ -239,13 +301,13 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
                 (typeof retryAt === 'number' &&
                     Number.isFinite(retryAt) &&
                     retryAt <= Date.now()) ||
-                (stats.userStateSynchronized === false && retryDue)
+                ((stats.userStateSynchronized === false || configurationPending) && retryDue)
             ) {
                 await this.nodesQueuesService.startNode({ nodeUuid });
             }
         }
 
-        await this.reportIncident(nodeUuid, true, isConnected, observedAt);
+        await this.reportIncident(nodeUuid, true, isConnected, observedAt, controlRevision);
         return;
     }
 
@@ -262,6 +324,7 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
                 CACHE_KEYS.NODE_SYSTEM_STATS(nodeUuid),
                 CACHE_KEYS.NODE_XRAY_UPTIME(nodeUuid),
                 CACHE_KEYS.NODE_USERS_ONLINE(nodeUuid),
+                CACHE_KEYS.NODE_TELEMETRY_SNAPSHOT(nodeUuid),
                 nodeBindingTrafficKey(nodeUuid),
             ]);
         } catch {
@@ -284,10 +347,13 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
         healthy: boolean,
         previouslyConnected: boolean,
         observedAt: number,
+        controlRevision?: string,
     ) {
         try {
             const node = await this.queryBus.execute(new GetNodeByUuidQuery(uuid));
             if (!node.isOk || node.response.isDisabled) return;
+            if (controlRevision !== undefined && node.response.controlRevision !== controlRevision)
+                return;
             const [retryAt, maintenance, operation] = await Promise.all([
                 this.rawCacheService.get<number>(hostPolicyRetryKey(uuid)),
                 this.rawCacheService.get<number>(`remnacust:node-alert-mute:${uuid}`),
@@ -320,15 +386,20 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
         isConnected: boolean,
         message: string | undefined,
         observedAt: number,
+        controlRevision?: string,
     ) {
         const newNodeEntity = await this.commandBus.execute(
-            new UpdateNodeCommand({
-                uuid: nodeUuid,
-                isConnected: false,
-                lastStatusChange: new Date(),
-                lastStatusMessage: message,
-            }),
+            new UpdateNodeCommand(
+                {
+                    uuid: nodeUuid,
+                    isConnected: false,
+                    lastStatusChange: new Date(),
+                    lastStatusMessage: message,
+                },
+                controlRevision,
+            ),
         );
+        if (!newNodeEntity.isOk && newNodeEntity.code === 'A266') return;
         await this.clearLiveTelemetry(nodeUuid, true);
         await this.recordHealth({ nodeUuid, status: 'unreachable', attempt: 2, message });
 
@@ -336,7 +407,7 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
             return;
         }
 
-        await this.reportIncident(nodeUuid, false, isConnected, observedAt);
+        await this.reportIncident(nodeUuid, false, isConnected, observedAt, controlRevision);
         await this.startNodeIfRetryDue(nodeUuid);
 
         this.logger.warn(

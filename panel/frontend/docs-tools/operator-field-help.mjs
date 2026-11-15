@@ -1,10 +1,10 @@
 // Each tuple is RU, EN, FA, ZH. Keep field names aligned with the actual forms.
 export const operatorFieldHelp = {
     accessMode: [
-        'Режим «Закрыт» отклоняет запросы с HTTP 403 без перенаправления. Закрытие основного домена распространяется на все его CDN; закрытие отдельного CDN не затрагивает соседние адреса. Последний работающий основной домен нельзя закрыть или удалить, даже при наличии CDN. В карточке пользователя, QR и API ссылок показываются только доступные адреса: основные домены с перенаправлением или режимом только CDN скрыты. При удалении прежнего домена можно явно подтвердить перевод его пользователей на текущий домен по умолчанию. Привязка меняется и домен удаляется одной транзакцией; ключи, устройства, заморозка, сроки и квоты не меняются. Дочерние CDN сначала нужно перенести или удалить.',
-        'Closed mode returns HTTP 403 without redirection. Closing a primary closes all its CDNs; closing one CDN leaves siblings available. The last available primary cannot be closed or deleted, even when CDNs exist. User cards, QR codes and link APIs show only available addresses, hiding CDN-only and redirecting primary addresses. Deleting a former primary can explicitly move its users to the current default in the same transaction. Credentials, devices, frozen state, expiry dates and quotas are preserved. Move or remove child CDNs first.',
-        'حالت بسته بدون تغییر مسیر HTTP 403 برمی\u200cگرداند. بستن دامنه اصلی همه CDNهای آن را می\u200cبندد؛ بستن یک CDN بر بقیه اثری ندارد. آخرین دامنه اصلی فعال حتی با وجود CDN بسته یا حذف نمی\u200cشود. کارت کاربر، کد QR و API پیوندها فقط آدرس\u200cهای فعال را نمایش می\u200cدهند و دامنه اصلی محدود به CDN یا هدایت را پنهان می\u200cکنند. حذف دامنه قبلی با تأیید صریح، کاربران را در یک تراکنش به دامنه پیش\u200cفرض فعلی منتقل می\u200cکند. کلیدها، دستگاه\u200cها، انجماد، تاریخ انقضا و سهمیه\u200cها حفظ می\u200cشوند. ابتدا CDNهای وابسته را منتقل یا حذف کنید.',
-        '关闭模式返回 HTTP 403，不会重定向。关闭主域名将关闭其全部 CDN；关闭单个 CDN 不影响其他地址。即使存在 CDN，也不能关闭或删除最后一个可用主域名。用户卡片、二维码和链接 API 仅显示可用地址，隐藏仅限 CDN 或重定向的主域名。删除旧主域名时，可明确确认将其用户转至当前默认域名；转移和删除在同一事务中完成。凭据、设备、冻结状态、到期时间和限额保持不变。请先移动或删除其子 CDN。'
+        'Режим «Закрыт» отклоняет запросы с HTTP 403 без перенаправления. Закрытие основного домена распространяется на все его CDN; закрытие отдельного CDN не затрагивает соседние адреса. Последний работающий основной домен нельзя закрыть или удалить, даже при наличии CDN. В карточке пользователя, QR и API ссылок показываются только доступные адреса: основные домены с перенаправлением или режимом только CDN скрыты. При удалении прежнего домена можно явно подтвердить перевод его пользователей на текущий домен по умолчанию. После подтверждения пользователи переходят на выбранный домен; ключи, устройства, заморозка, сроки и квоты не меняются. Дочерние CDN сначала нужно перенести или удалить.',
+        'Closed mode returns HTTP 403 without redirection. Closing a primary closes all its CDNs; closing one CDN leaves siblings available. The last available primary cannot be closed or deleted, even when CDNs exist. User cards, QR codes and link APIs show only available addresses, hiding CDN-only and redirecting primary addresses. Deleting a former primary can explicitly move its users to the current default. Credentials, devices, frozen state, expiry dates and quotas are preserved. Move or remove child CDNs first.',
+        'حالت بسته بدون تغییر مسیر HTTP 403 برمی\u200cگرداند. بستن دامنه اصلی همه CDNهای آن را می\u200cبندد؛ بستن یک CDN بر بقیه اثری ندارد. آخرین دامنه اصلی فعال حتی با وجود CDN بسته یا حذف نمی\u200cشود. کارت کاربر، کد QR و API پیوندها فقط آدرس\u200cهای فعال را نمایش می\u200cدهند و دامنه اصلی محدود به CDN یا هدایت را پنهان می\u200cکنند. حذف دامنه قبلی با تأیید صریح، کاربران را به دامنه پیش\u200cفرض فعلی منتقل می\u200cکند. کلیدها، دستگاه\u200cها، انجماد، تاریخ انقضا و سهمیه\u200cها حفظ می\u200cشوند. ابتدا CDNهای وابسته را منتقل یا حذف کنید.',
+        '关闭模式返回 HTTP 403，不会重定向。关闭主域名将关闭其全部 CDN；关闭单个 CDN 不影响其他地址。即使存在 CDN，也不能关闭或删除最后一个可用主域名。用户卡片、二维码和链接 API 仅显示可用地址，隐藏仅限 CDN 或重定向的主域名。删除旧主域名时，可明确确认将其用户转至当前默认域名。凭据、设备、冻结状态、到期时间和限额保持不变。请先移动或删除其子 CDN。'
     ],
     redirectDomainUuid: [
         'CDN этого же основного домена для перенаправления. Пути подписок и геофайлов сохраняются; на сторонний домен перенаправить нельзя.',
@@ -252,6 +252,12 @@ export const operatorFieldHelp = {
         'عضویت اسکواد داخلی را با نام‌های فایل بازمی‌گرداند؛ اسکواد باید در پنل مقصد موجود باشد و نام‌های مفقود رد می‌شوند.',
         '按文件中的名称恢复内部小组成员关系；目标面板需存在同名小组，缺失的小组会跳过。'
     ],
+    controlAddresses: [
+        'До 65 уникальных IPv4, IPv6 или имён хостов для управления нодой. Включённые адреса проверяются по порядку. Сохранённые адреса можно переставлять и выключать; удалить или изменить их нельзя.',
+        'Up to 65 unique IPv4 addresses, IPv6 addresses or hostnames for node control. Enabled addresses are tried in order. Saved addresses can be reordered or disabled; they cannot be edited or deleted.',
+        'تا ۶۵ نشانی یکتای IPv4، IPv6 یا نام میزبان برای مدیریت نود. موارد روشن به ترتیب امتحان می‌شوند. نشانی ذخیره‌شده قابل جابه‌جایی یا خاموش کردن است، نه ویرایش یا حذف.',
+        '最多 65 个唯一 IPv4、IPv6 或主机名管理地址。按顺序尝试已启用地址。已保存地址可调整顺序或禁用，不能编辑或删除。'
+    ],
     proxyUrl: [
         'SOCKS-прокси для управляющих запросов панели к этой ноде, например socks5://user:pass@proxy.example.com:1080. Пустое поле означает прямое соединение. Это не прокси для трафика пользователей; реквизиты внутри URL храните как секрет.',
         'SOCKS proxy for panel control requests to this node, for example socks5://user:pass@proxy.example.com:1080. Leave empty for a direct connection. This does not proxy user traffic; keep embedded credentials private.',
@@ -285,8 +291,8 @@ export const operatorFieldHelp = {
     'brandingSettings.supportUrl': [
         'Ссылка поддержки на странице подписки. Укажите действующий адрес службы, к которой должны обращаться ваши пользователи.',
         'Support link on the subscription page. Enter the working address of the support service for your users.',
-        'پیوند پشتیبانی صفحه اشتراک؛ آدرس فعال پشتیبانی کاربران را وارد کنید.',
-        '订阅页面的支持链接，请填写用户可联系的有效支持地址。'
+        'مسیر اختیاری مشترک اشتراک مانند /api/sub که باید با تنظیمات صفحه و پروکسی مطابقت داشته باشد.',
+        '可选的公共订阅路径，例如 /api/sub，必须与页面及代理设置一致。'
     ],
     'baseSettings.metaTitle': [
         'Название страницы подписки во вкладке браузера и при отправке ссылки.',

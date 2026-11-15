@@ -1227,6 +1227,222 @@
           }
         ]
       }
+    },
+    {
+      "name": "Xera adaptive balanced direct",
+      "editorContract": true,
+      "config": {
+        "inbounds": [
+          {
+            "tag": "adaptive",
+            "port": 44001,
+            "protocol": "vless",
+            "settings": {
+              "clients": [],
+              "decryption": "none"
+            },
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "path": "/adaptive-contract",
+                "mode": "stream-auto",
+                "adaptive": {
+                  "mode": "balanced",
+                  "minStreams": 1,
+                  "maxStreams": 32
+                }
+              }
+            }
+          }
+        ],
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "tag": "direct"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera adaptive balanced extra",
+      "editorContract": true,
+      "config": {
+        "inbounds": [
+          {
+            "tag": "adaptive",
+            "port": 44001,
+            "protocol": "vless",
+            "settings": {
+              "clients": [],
+              "decryption": "none"
+            },
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "path": "/adaptive-contract",
+                "mode": "stream-auto",
+                "extra": {
+                  "adaptive": {
+                    "mode": "balanced",
+                    "minStreams": 1,
+                    "maxStreams": 32
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "tag": "direct"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera adaptive low-latency direct",
+      "editorContract": true,
+      "config": {
+        "inbounds": [
+          {
+            "tag": "adaptive",
+            "port": 44001,
+            "protocol": "vless",
+            "settings": {
+              "clients": [],
+              "decryption": "none"
+            },
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "path": "/adaptive-contract",
+                "mode": "stream-auto",
+                "adaptive": {
+                  "mode": "low-latency",
+                  "minStreams": 1,
+                  "maxStreams": 32
+                }
+              }
+            }
+          }
+        ],
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "tag": "direct"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera adaptive low-latency extra",
+      "editorContract": true,
+      "config": {
+        "inbounds": [
+          {
+            "tag": "adaptive",
+            "port": 44001,
+            "protocol": "vless",
+            "settings": {
+              "clients": [],
+              "decryption": "none"
+            },
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "path": "/adaptive-contract",
+                "mode": "stream-auto",
+                "extra": {
+                  "adaptive": {
+                    "mode": "low-latency",
+                    "minStreams": 1,
+                    "maxStreams": 32
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "tag": "direct"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera adaptive unstable-network direct",
+      "editorContract": true,
+      "config": {
+        "inbounds": [
+          {
+            "tag": "adaptive",
+            "port": 44001,
+            "protocol": "vless",
+            "settings": {
+              "clients": [],
+              "decryption": "none"
+            },
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "path": "/adaptive-contract",
+                "mode": "stream-auto",
+                "adaptive": {
+                  "mode": "unstable-network",
+                  "minStreams": 1,
+                  "maxStreams": 32
+                }
+              }
+            }
+          }
+        ],
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "tag": "direct"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera adaptive unstable-network extra",
+      "editorContract": true,
+      "config": {
+        "inbounds": [
+          {
+            "tag": "adaptive",
+            "port": 44001,
+            "protocol": "vless",
+            "settings": {
+              "clients": [],
+              "decryption": "none"
+            },
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "path": "/adaptive-contract",
+                "mode": "stream-auto",
+                "extra": {
+                  "adaptive": {
+                    "mode": "unstable-network",
+                    "minStreams": 1,
+                    "maxStreams": 32
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "tag": "direct"
+          }
+        ]
+      }
     }
   ],
   "invalid": [
@@ -3791,6 +4007,281 @@
               },
               "xeraHttpSettings": {
                 "path": "/policy/"
+              }
+            }
+          }
+        ],
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "tag": "direct"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera adaptive missing fields",
+      "editorContract": true,
+      "config": {
+        "inbounds": [
+          {
+            "tag": "adaptive",
+            "port": 44001,
+            "protocol": "vless",
+            "settings": {
+              "clients": [],
+              "decryption": "none"
+            },
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "path": "/adaptive-contract",
+                "mode": "stream-auto",
+                "adaptive": {}
+              }
+            }
+          }
+        ],
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "tag": "direct"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera adaptive missing bounds",
+      "editorContract": true,
+      "config": {
+        "inbounds": [
+          {
+            "tag": "adaptive",
+            "port": 44001,
+            "protocol": "vless",
+            "settings": {
+              "clients": [],
+              "decryption": "none"
+            },
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "path": "/adaptive-contract",
+                "mode": "stream-auto",
+                "adaptive": {
+                  "mode": "balanced"
+                }
+              }
+            }
+          }
+        ],
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "tag": "direct"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera adaptive zero lower bound",
+      "editorContract": true,
+      "config": {
+        "inbounds": [
+          {
+            "tag": "adaptive",
+            "port": 44001,
+            "protocol": "vless",
+            "settings": {
+              "clients": [],
+              "decryption": "none"
+            },
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "path": "/adaptive-contract",
+                "mode": "stream-auto",
+                "adaptive": {
+                  "mode": "balanced",
+                  "minStreams": 0,
+                  "maxStreams": 4
+                }
+              }
+            }
+          }
+        ],
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "tag": "direct"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera adaptive reversed bounds",
+      "editorContract": true,
+      "config": {
+        "inbounds": [
+          {
+            "tag": "adaptive",
+            "port": 44001,
+            "protocol": "vless",
+            "settings": {
+              "clients": [],
+              "decryption": "none"
+            },
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "path": "/adaptive-contract",
+                "mode": "stream-auto",
+                "adaptive": {
+                  "mode": "balanced",
+                  "minStreams": 4,
+                  "maxStreams": 3
+                }
+              }
+            }
+          }
+        ],
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "tag": "direct"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera adaptive excessive upper bound",
+      "editorContract": true,
+      "config": {
+        "inbounds": [
+          {
+            "tag": "adaptive",
+            "port": 44001,
+            "protocol": "vless",
+            "settings": {
+              "clients": [],
+              "decryption": "none"
+            },
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "path": "/adaptive-contract",
+                "mode": "stream-auto",
+                "adaptive": {
+                  "mode": "balanced",
+                  "minStreams": 1,
+                  "maxStreams": 33
+                }
+              }
+            }
+          }
+        ],
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "tag": "direct"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera adaptive fractional bound",
+      "editorContract": true,
+      "config": {
+        "inbounds": [
+          {
+            "tag": "adaptive",
+            "port": 44001,
+            "protocol": "vless",
+            "settings": {
+              "clients": [],
+              "decryption": "none"
+            },
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "path": "/adaptive-contract",
+                "mode": "stream-auto",
+                "adaptive": {
+                  "mode": "balanced",
+                  "minStreams": 1.5,
+                  "maxStreams": 4
+                }
+              }
+            }
+          }
+        ],
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "tag": "direct"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera adaptive unknown policy",
+      "editorContract": true,
+      "config": {
+        "inbounds": [
+          {
+            "tag": "adaptive",
+            "port": 44001,
+            "protocol": "vless",
+            "settings": {
+              "clients": [],
+              "decryption": "none"
+            },
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "path": "/adaptive-contract",
+                "mode": "stream-auto",
+                "adaptive": {
+                  "mode": "ai",
+                  "minStreams": 1,
+                  "maxStreams": 4
+                }
+              }
+            }
+          }
+        ],
+        "outbounds": [
+          {
+            "protocol": "freedom",
+            "tag": "direct"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Xera adaptive unknown adaptive field",
+      "editorContract": true,
+      "config": {
+        "inbounds": [
+          {
+            "tag": "adaptive",
+            "port": 44001,
+            "protocol": "vless",
+            "settings": {
+              "clients": [],
+              "decryption": "none"
+            },
+            "streamSettings": {
+              "network": "xera-http",
+              "xeraHttpSettings": {
+                "path": "/adaptive-contract",
+                "mode": "stream-auto",
+                "adaptive": {
+                  "mode": "balanced",
+                  "minStreams": 1,
+                  "maxStreams": 4,
+                  "future": true
+                }
               }
             }
           }

@@ -6,6 +6,7 @@ import {
     PasswordAuthSettingsSchema,
     BrandingSettingsSchema,
     NodeIpsSchema,
+    NodeControlAddressesSchema,
 } from '@libs/contracts/models';
 
 declare global {
@@ -15,6 +16,7 @@ declare global {
         type PasswordAuthSettings = z.infer<typeof PasswordAuthSettingsSchema>;
         type BrandingSettings = z.infer<typeof BrandingSettingsSchema>;
         type NodeIps = z.infer<typeof NodeIpsSchema>;
+        type NodeControlAddresses = z.infer<typeof NodeControlAddressesSchema>;
     }
 }
 

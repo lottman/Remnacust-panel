@@ -25,9 +25,13 @@ class NodeEvent {
     }
 }
 const keys = Object.fromEntries(
-    ['NODE_SYSTEM_INFO', 'NODE_SYSTEM_STATS', 'NODE_USERS_ONLINE', 'NODE_XRAY_UPTIME'].map(
-        (name) => [name, (uuid) => `${name}:${uuid}`],
-    ),
+    [
+        'NODE_SYSTEM_INFO',
+        'NODE_SYSTEM_STATS',
+        'NODE_USERS_ONLINE',
+        'NODE_XRAY_UPTIME',
+        'NODE_TELEMETRY_SNAPSHOT',
+    ].map((name) => [name, (uuid) => `${name}:${uuid}`]),
 );
 const { NodeHealthCheckQueueProcessor } = load(file, {
     ...mocks,

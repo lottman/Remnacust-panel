@@ -54,6 +54,7 @@ interface IProps<T extends UpdateNodeCommand.RequestBody> {
     handleClose: () => void
     handleSubmit: () => void
     isDataSubmitting: boolean
+    saveDisabled?: boolean
     node: GetNodeCommand.Response['response']
     nodeDetailsCard?: ReactNode
     nodeIntegrations: GetNodeIntegrationsCommand.Response['response']['nodeIntegrations']
@@ -105,6 +106,7 @@ export const BaseNodeForm = <T extends UpdateNodeCommand.RequestBody>(props: IPr
 
                     <NodeVitalsCard
                         cardVariants={cardVariants}
+                        disabled={isDataSubmitting}
                         form={form}
                         motionWrapper={MotionWrapper}
                         nodeIntegrations={nodeIntegrations}
@@ -115,8 +117,10 @@ export const BaseNodeForm = <T extends UpdateNodeCommand.RequestBody>(props: IPr
 
                     <NodeIpsCard
                         cardVariants={cardVariants}
+                        disabled={isDataSubmitting}
                         form={form}
                         motionWrapper={MotionWrapper}
+                        node={node}
                     />
 
                     <NodeConfigProfilesCard
@@ -157,6 +161,7 @@ export const BaseNodeForm = <T extends UpdateNodeCommand.RequestBody>(props: IPr
 
                         <NodeVitalsCard
                             cardVariants={cardVariants}
+                            disabled={isDataSubmitting}
                             form={form}
                             motionWrapper={MotionWrapper}
                             nodeIntegrations={nodeIntegrations}
@@ -198,8 +203,10 @@ export const BaseNodeForm = <T extends UpdateNodeCommand.RequestBody>(props: IPr
 
                         <NodeIpsCard
                             cardVariants={cardVariants}
+                            disabled={isDataSubmitting}
                             form={form}
                             motionWrapper={MotionWrapper}
+                            node={node}
                         />
 
                         <NodeTrackingAndBillingCard
@@ -245,7 +252,7 @@ export const BaseNodeForm = <T extends UpdateNodeCommand.RequestBody>(props: IPr
                 )}
                 <Button
                     color="teal"
-                    disabled={!form.isDirty() || !form.isTouched()}
+                    disabled={props.saveDisabled || !form.isDirty() || !form.isTouched()}
                     leftSection={<PiFloppyDiskDuotone size="16px" />}
                     loading={isDataSubmitting}
                     onClick={handleSubmit}

@@ -20,16 +20,19 @@ import {
 } from 'react-icons/pi'
 import { TbEdit, TbSearch, TbX } from 'react-icons/tb'
 
+import { routeEndpoint } from '@shared/_modals/nodes/edit-node-modal/node-connection-route'
 import { translateUiText as uiText } from '@shared/i18n/interface-text'
 import { NodeHealthBadge } from '@shared/ui/node-health/node-health'
-import { NodeIpsCompactView } from '@shared/ui/node-ips'
+import { NodeControlAddressesCompactView } from '@shared/ui/node-ips/node-control-addresses-compact-view'
 import {
     prettifyBytesUtil,
     prettySiBytesUtil,
     prettySiRealtimeBytesUtil
 } from '@shared/utils/bytes'
 import { faviconResolver } from '@shared/utils/misc'
+import { getPreferredNodeControlAddress } from '@shared/utils/node-control-addresses'
 import { NodeHealthLevel } from '@shared/utils/node-health'
+import { hasNodeMetric } from '@shared/utils/node-metric'
 import { formatDurationUtil } from '@shared/utils/time-utils'
 
 import { NodeStatusBadgeWidget } from '../node-status-badge'
@@ -231,7 +234,7 @@ export function getNodesTableColumns(
                     size="lg"
                     variant="outline"
                 >
-                    {usersOnline}
+                    {hasNodeMetric(usersOnline) ? usersOnline : '—'}
                 </Badge>
             )
         },
@@ -239,14 +242,31 @@ export function getNodesTableColumns(
         {
             accessor: 'address',
             sortable: true,
-            title: t('common.field.address'),
-            render: ({ address, port }) => `${address}:${port}`
+            title: t('node-control-addresses.preferred'),
+            render: (node) => {
+                const first = getPreferredNodeControlAddress(node)
+                return first ? <bdi>{routeEndpoint(first, node.port)}</bdi> : '—'
+            }
         },
         {
             accessor: 'ips',
             sortable: false,
             title: t('common.field.ip-addresses'),
-            render: ({ ips, address }) => <NodeIpsCompactView address={address} ips={ips} />
+            render: (node) => <NodeControlAddressesCompactView node={node} />
+        },
+        {
+            accessor: 'proxy',
+            sortable: false,
+            title: t('use-nodes-table-widget.proxy'),
+            render: ({ hasProxy, proxyUrl }) => (
+                <Badge color={(hasProxy ?? Boolean(proxyUrl)) ? 'teal' : 'gray'} variant="light">
+                    {t(
+                        (hasProxy ?? Boolean(proxyUrl))
+                            ? 'use-nodes-table-widget.proxy-enabled'
+                            : 'use-nodes-table-widget.proxy-disabled'
+                    )}
+                </Badge>
+            )
         },
         {
             accessor: 'trafficUsedBytes',
@@ -320,7 +340,8 @@ export function getNodesTableColumns(
             get title() {
                 return uiText('xray-uptime-ac0a1ea')
             },
-            render: ({ xrayUptime }) => (xrayUptime !== 0 ? formatDurationUtil(xrayUptime) : '-')
+            render: ({ xrayUptime }) =>
+                hasNodeMetric(xrayUptime) && xrayUptime > 0 ? formatDurationUtil(xrayUptime) : '—'
         },
         {
             accessor: 'versions.node',
@@ -499,9 +520,11 @@ export function getNodesTableColumns(
                 return uiText('rx-speed-6aaa2ac')
             },
             render: ({ system }) =>
-                system && system.stats.interface
+                system &&
+                system.stats.interface &&
+                hasNodeMetric(system.stats.interface.rxBytesPerSec)
                     ? prettySiRealtimeBytesUtil(system.stats.interface.rxBytesPerSec, true, true)
-                    : '-'
+                    : '—'
         },
         {
             accessor: 'system.stats.interface.txBytesPerSec',
@@ -510,9 +533,11 @@ export function getNodesTableColumns(
                 return uiText('tx-speed-2774f59')
             },
             render: ({ system }) =>
-                system && system.stats.interface
+                system &&
+                system.stats.interface &&
+                hasNodeMetric(system.stats.interface.txBytesPerSec)
                     ? prettySiRealtimeBytesUtil(system.stats.interface.txBytesPerSec, true, true)
-                    : '-'
+                    : '—'
         },
         {
             accessor: 'system.stats.interface.rxTotal',
@@ -551,6 +576,10 @@ export function getNodesTableColumns(
             accessor: 'actions',
             draggable: false,
             resizable: false,
+            toggleable: false,
+            pinned: 'right',
+            pinnable: false,
+            width: 64,
             titleStyle: {
                 backgroundColor:
                     'light-dark(var(--mantine-color-white), var(--mantine-color-dark-7))'
@@ -562,15 +591,16 @@ export function getNodesTableColumns(
                 }
             },
             title: (
-                <Group c="dimmed" gap={4} justify="flex-end" pr={4} wrap="nowrap">
-                    <TbEdit size={18} />
+                <Group c="dimmed" justify="center" wrap="nowrap">
+                    <TbEdit aria-label={t('common.action.edit')} size={18} />
                 </Group>
             ),
 
-            textAlign: 'right',
-            render: ({ uuid }) => (
-                <Group gap={4} justify="flex-end" wrap="nowrap">
+            textAlign: 'center',
+            render: ({ uuid, name }) => (
+                <Group justify="center" wrap="nowrap">
                     <ActionIcon
+                        aria-label={`${t('common.action.edit')}: ${name}`}
                         color="teal"
                         onClick={() => handleViewNode(uuid)}
                         size="md"

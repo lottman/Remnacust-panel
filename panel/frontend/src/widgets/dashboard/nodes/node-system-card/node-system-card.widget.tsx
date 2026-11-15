@@ -24,6 +24,7 @@ import {
     prettySiRealtimeBytesUtil
 } from '@shared/utils/bytes'
 import { copyScreenshotToClipboard } from '@shared/utils/copy-screenshot.util'
+import { hasNodeMetric } from '@shared/utils/node-metric'
 import { formatDurationUtil } from '@shared/utils/time-utils'
 
 import classes from './node-system-card.module.css'
@@ -77,7 +78,7 @@ export const NodeSystemCardWidget = memo((props: IProps) => {
     }, [node.system])
 
     const systemUptime = useMemo(() => {
-        if (!node.system) return null
+        if (!node.system || !hasNodeMetric(node.system.stats.uptime)) return '—'
         return formatDurationUtil(Math.floor(node.system.stats.uptime))
     }, [node.system])
 
@@ -88,8 +89,12 @@ export const NodeSystemCardWidget = memo((props: IProps) => {
 
         return {
             name: iface.interface,
-            rxSpeed: prettySiRealtimeBytesUtil(iface.rxBytesPerSec, true, true),
-            txSpeed: prettySiRealtimeBytesUtil(iface.txBytesPerSec, true, true),
+            rxSpeed: hasNodeMetric(iface.rxBytesPerSec)
+                ? prettySiRealtimeBytesUtil(iface.rxBytesPerSec, true, true)
+                : '—',
+            txSpeed: hasNodeMetric(iface.txBytesPerSec)
+                ? prettySiRealtimeBytesUtil(iface.txBytesPerSec, true, true)
+                : '—',
             rxTotal: prettySiBytesUtil(iface.rxTotal) || '0 B',
             txTotal: prettySiBytesUtil(iface.txTotal) || '0 B'
         }

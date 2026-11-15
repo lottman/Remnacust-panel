@@ -25,19 +25,19 @@ const sections = [
         [
             [
                 'Запуск и параллельные запросы',
-                'После запуска панели разные сборки геофайлов ожидают ограниченную очередь: до двух задач одновременно и до 32 принятых задач для каждой операции. Одинаковые запросы разделяют одну сборку. Кэш DAT ограничен 16 наборами и 32 MiB. Страница подписки ждёт ответ панели до 30 секунд и отменяет запрос при отключении клиента; ошибки доступа не кешируются. DAT скачиваются через отдельный пул из восьми соединений. Один процесс страницы принимает до 16 скачиваний, включая ожидающие: медленные файлы не занимают соединения запросов страницы и конфигураций. При перегрузке возвращается 503 с Retry-After: 2; повторите запрос позже.'
+                'После запуска панели первая подписка с геофайлами может готовиться дольше обычного. При большом числе запросов дождитесь завершения и повторите загрузку. Ответ 503 с Retry-After: 2 означает, что следующую попытку следует сделать не раньше чем через две секунды. Страница подписки ждёт ответ панели до 30 секунд. При ошибке доступа проверьте права и подключение страницы к панели.'
             ],
             [
                 'Startup and concurrent requests',
-                'After panel startup, different geofile builds wait in a bounded queue: two active tasks and up to 32 accepted tasks per operation. Identical requests share one build. The DAT cache retains at most 16 bundles and 32 MiB. The subscription page waits up to 30 seconds for the panel and cancels the request when the client disconnects; access failures are not cached. DAT downloads use a separate eight-connection pool. Each page process accepts up to 16 downloads including waiting requests, so slow files do not occupy page and configuration request connections. Overload returns 503 with Retry-After: 2; retry later.'
+                'After panel startup, the first subscription using geofiles may take longer to prepare. When many requests arrive, allow preparation to finish and retry. A 503 response with Retry-After: 2 means waiting at least two seconds before the next attempt. The subscription page waits up to 30 seconds for the panel. For an access error, check permissions and the page connection to the panel.'
             ],
             [
                 'راه‌اندازی و درخواست‌های هم‌زمان',
-                'پس از راه‌اندازی پنل، ساخت فایل‌های متفاوت در صف محدود منتظر می‌ماند: دو کار فعال و حداکثر ۳۲ کار پذیرفته‌شده برای هر عملیات. درخواست‌های یکسان یک ساخت مشترک دارند. کش DAT حداکثر ۱۶ مجموعه و ۳۲ MiB نگه می‌دارد. صفحه اشتراک تا ۳۰ ثانیه منتظر پنل می‌ماند و با قطع کلاینت درخواست را لغو می‌کند؛ خطاهای دسترسی کش نمی‌شوند. دانلود DAT از مخزن مستقل هشت اتصال استفاده می‌کند. هر فرایند صفحه حداکثر ۱۶ دانلود شامل درخواست‌های منتظر می‌پذیرد؛ فایل‌های کند اتصال درخواست‌های صفحه و پیکربندی را اشغال نمی‌کنند. هنگام بار زیاد، پاسخ 503 با Retry-After: 2 برمی‌گردد؛ بعداً دوباره تلاش کنید.'
+                'پس از راه‌اندازی پنل، آماده‌سازی نخستین اشتراک دارای فایل جغرافیایی ممکن است بیشتر طول بکشد. هنگام درخواست زیاد منتظر پایان آماده‌سازی بمانید و دوباره تلاش کنید. پاسخ 503 با Retry-After: 2 یعنی دست‌کم دو ثانیه تا تلاش بعدی صبر کنید. صفحه اشتراک تا ۳۰ ثانیه منتظر پنل می‌ماند. برای خطای دسترسی، مجوزها و اتصال صفحه به پنل را بررسی کنید.'
             ],
             [
                 '启动与并发请求',
-                '面板启动后，不同地理文件构建在有界队列中等待：每项操作最多同时运行两个任务、接受 32 个任务。相同请求共享一次构建。DAT 缓存最多保留 16 个集合和 32 MiB。订阅页面最多等待面板 30 秒，客户端断开时取消请求；访问失败不会被缓存。DAT 下载使用独立的八连接池。每个页面进程最多接受 16 个下载请求（包括等待中的请求），慢速文件不会占用页面和配置请求的连接。过载时返回 503 和 Retry-After: 2，请稍后重试。'
+                '面板启动后，首次准备含地理文件的订阅可能较慢。请求较多时，请等待准备完成后重试。503 响应及 Retry-After: 2 表示至少等待两秒再尝试。订阅页面最多等待面板 30 秒。出现访问错误时，请检查权限及订阅页面与面板的连接。'
             ]
         ]
     ],
@@ -177,19 +177,19 @@ sections.push([
     [
         [
             'Обновление и целостность файлов',
-            'Страница подписки передаёт DAT отдельно от JSON: предел JSON 16 MiB не ограничивает DAT, для которого действует предел 64 MiB. Прерванная загрузка не считается успешной. Ошибка EOF или отсутствующая категория может означать неполный либо старый локальный файл; после обновления панели обновите и отдельную страницу подписки, затем подписку в приложении. Сверяйте DAT с соответствующим .sha256. Одновременные запросы одного набора используют одну сборку, разные наборы остаются ограниченными по ресурсам. Массовое изменение хостов сохраняется в БД до ответа API; синхронизация правил нод выполняется отдельно. Карточки хостов перечитываются при открытии, а сохранение отправляет только изменённые поля, чтобы не вернуть старые значения после bulk. Некоторые массовые операции над пользователями используют фоновую очередь; это не означает, что все операции панели отложены.'
+            'Страница подписки передаёт DAT отдельно от JSON: предел JSON — 16 MiB, DAT — 64 MiB. Прерванная загрузка не считается успешной. Ошибка EOF или отсутствующая категория может означать неполный либо старый локальный файл. Используйте совместимые версии панели и отдельной страницы подписки, затем обновите подписку в приложении. Сверяйте DAT с соответствующим .sha256. После массового изменения хостов перечитайте результат и проверьте состояние нод: сохранение настроек и их применение на сервере выполняются отдельно.'
         ],
         [
             'Refresh and file integrity',
-            'The subscription page streams DAT separately from JSON: the 16 MiB JSON budget does not restrict DAT, which has a 64 MiB limit. Interrupted downloads are not successful. EOF or a missing category can indicate an incomplete or stale local file. Update both the panel and a separately installed subscription page, then refresh the subscription in the app. Compare DAT with its .sha256. Concurrent requests for the same bundle share one build; distinct work remains resource bounded. Bulk host updates commit to the database before the API response; node policy synchronization runs separately. Host editors fetch fresh data on open and save only changed fields to avoid restoring stale values after bulk updates. Some bulk user operations run in background queues; panel operations are not all deferred.'
+            'The subscription page transfers DAT separately from JSON: JSON has a 16 MiB limit and DAT a 64 MiB limit. Interrupted downloads are not successful. EOF or a missing category can indicate an incomplete or stale local file. Use compatible panel and separate subscription-page versions, then refresh the application subscription. Compare DAT with its .sha256. After bulk host changes, review the result and node status: saving settings and applying them on the server are separate stages.'
         ],
         [
             'به‌روزرسانی و صحت فایل‌ها',
-            'صفحه اشتراک DAT را جدا از JSON منتقل می‌کند: سقف JSON برابر 16 MiB است و DAT سقف مستقل 64 MiB دارد. دانلود ناقص موفق محسوب نمی‌شود. خطای EOF یا نبود دسته می‌تواند از فایل محلی ناقص یا قدیمی باشد. پنل و صفحه اشتراک مستقل را به‌روز کنید و سپس اشتراک برنامه را تازه‌سازی کنید. DAT را با .sha256 مقایسه کنید. درخواست‌های هم‌زمان یک بسته از یک ساخت مشترک استفاده می‌کنند و کارهای متفاوت محدود می‌مانند. تغییر گروهی میزبان پیش از پاسخ API در پایگاه داده ذخیره می‌شود؛ همگام‌سازی نود جداست. ویرایشگر هنگام باز شدن داده تازه می‌گیرد و فقط فیلدهای تغییرکرده را ذخیره می‌کند. برخی عملیات گروهی کاربران صف پس‌زمینه دارند، نه همه عملیات پنل.'
+            'صفحه اشتراک DAT را جدا از JSON منتقل می‌کند: سقف JSON برابر 16 MiB و DAT برابر 64 MiB است. دانلود ناقص موفق محسوب نمی‌شود. خطای EOF یا نبود دسته ممکن است از فایل محلی ناقص یا قدیمی باشد. نسخه سازگار پنل و صفحه اشتراک مستقل را به کار ببرید و سپس اشتراک برنامه را تازه کنید. DAT را با .sha256 مقایسه کنید. پس از تغییر گروهی هاست‌ها، نتیجه و وضعیت نود را بررسی کنید؛ ذخیره تنظیمات و اعمال آن‌ها در سرور دو مرحله جدا هستند.'
         ],
         [
             '更新与文件完整性',
-            '订阅页面将 DAT 与 JSON 分开传输：JSON 的 16 MiB 限制不再截断 DAT，DAT 有独立的 64 MiB 上限。中断的下载不算成功。EOF 或缺少分类可能表示本地文件不完整或过期。请同时更新面板和独立安装的订阅页面，再在客户端更新订阅，并将 DAT 与对应的 .sha256 比较。同一数据包的并发请求共用一次构建，不同构建仍受资源限制。批量修改主机在 API 返回前写入数据库，节点规则同步独立执行。主机编辑器打开时重新读取数据，只提交修改的字段，避免覆盖批量更新。部分用户批量操作使用后台队列，并非所有操作都排队。'
+            '订阅页面将 DAT 与 JSON 分开传输：JSON 上限为 16 MiB，DAT 上限为 64 MiB。中断下载不算成功。EOF 或缺少分类可能表示本地文件不完整或过期。请使用相互兼容的面板及独立订阅页面版本，再在应用中更新订阅，并将 DAT 与对应的 .sha256 比较。批量修改主机后，请检查结果和节点状态；保存设置与服务器应用设置是两个阶段。'
         ]
     ]
 ])

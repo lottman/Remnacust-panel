@@ -36,9 +36,9 @@ After saving, check the updated values in the detail view. If a connection still
 
 Autonomous policy does not stop merely because the panel is unreachable. A planned day requires an applied policy, persistent volumes, valid credentials and enough local credit for every user, host and tag limit. A user’s total remaining quota is distributed across nodes and is not the credit of each node. Subscription expiry, exhausted credit and quota-period boundaries still deny access. The panel must fund the next period after a reset; the current implementation does not fund it offline. CDN, DNS, proxy and node certificates must remain independent. Recreating a container requires persistent state directories. A core loaded through CUSTOM_CORE_URL also needs its source to be reachable. Blocks or freezes changed during the outage arrive after reconnection. A maintenance readiness check proves current state, not a guaranteed day of traffic.
 
-### Maintenance logs and long-running service
+### Maintenance logs
 
-Detailed CLI logs are /opt/remnacust/logs/installer-panel.log, installer-node.log and installer-subscription-page.log. Status checks use a separate log and retain the last update log. The next action for the same component replaces its previous log; a parallel invocation cannot erase an active log. Browser panel updates retain panel-update-<ID>.log, page operations retain page-<page ID>-<job ID>.log, and SSH node maintenance retains node-maintenance.log on that node. Failures show the path. Logs are root-only and never part of public subscriptions. Input and secret tracing are not recorded. APT confirmation is automatic; configuration questions remain interactive over SSH. Configuration caches are bounded by count and size; oversized entries bypass the local cache but remain available from the source. Completion, errors and disconnects release capacity when work settles. Original SQL histories match published Remnawave 3.0.0, 3.4.3 and 3.4.8; unknown or modified history stops migration before application changes.
+Installer logs are under /opt/remnacust/logs/: installer-panel.log, installer-node.log and installer-subscription-page.log. A failed operation shows its log path. The next action for the same component may replace its previous log, so save the file beforehand. Panel updates also retain panel-update-<ID>.log; SSH node maintenance retains node-maintenance.log on the node. Restrict log access. Before sharing logs with support, remove passwords, tokens, personal links and addresses. Complete package-maintenance prompts in an interactive SSH session; reboot the server separately when needed.
 
 ### Nodes while the panel is offline
 
@@ -50,25 +50,23 @@ Panel updates show eight stages, elapsed time and the last 24 events. Remaining 
 
 ### Browser refresh after an update
 
-After the build changes, open administrator tabs check the panel version and reload automatically. Data caches, view preferences and table state reset. Authentication, saved templates, history, the SSH vault and pending maintenance intents are preserved. An in-flight mutation is not interrupted. Visible tabs check every 45 seconds and when revisited; an unavailable panel is checked again after recovery. Server settings and user data are not cleared. Tabs from releases without this check need one initial page refresh. The upcoming update persists a local profile/template draft before reloading. If persistence fails, automatic reload is cancelled. Recovery is available in “History → Unsaved draft” and is never applied without your choice. Older open tabs without recovery can still lose text; copy it first.
+After an update, open tabs check the panel version and reload once the current action finishes. Saved users, settings and templates remain on the server. An older tab may need a manual refresh.
 
-### Supported operating systems and PostgreSQL
+Before maintenance, save editor text or a separate copy. If local draft recovery is available, open History → Unsaved draft and review the content before applying it. Recovery is never applied without your choice. Unsaved text is not a backup.
 
-Installer 1.2.141 accepts Ubuntu 22.04/24.04/26.04 LTS and Debian 12/13, amd64/arm64. Docker uses the official repository for the installed distribution. Interim Ubuntu releases and derivative distributions are not accepted automatically. The amd64 matrix checks real userspace, Bash, Python, OpenSSL and unit workflows; it does not replace kernel boot, systemd, firewall or arm64 tests.
+### Operating system and database
 
-All 195 migrations, quota, expiry and diagnostics scenarios were checked on PostgreSQL 14.24/15.19/16.15/17.11/18.6 as a non-superuser database owner. For new installations, choose a supported major version with current fixes. PostgreSQL 14 support ends on November 12, 2026; PostgreSQL 13 was not tested and is end-of-life. Major upgrades require a separate pg_upgrade or dump/restore. Do not open an old data volume with a new major image; verify the migration on a copy first.
+The installer supports Ubuntu 22.04/24.04/26.04 LTS and Debian 12/13 on amd64/arm64. Prebuilt-image installation needs Docker Engine and Compose v2; host Node.js and Go are unnecessary. Check the requirements of the installer release you select.
+
+Panel upgrades preserve the existing database and volume. For new installations, choose a supported PostgreSQL major version with current fixes. PostgreSQL 14 reached its scheduled end of support on November 12, 2026. Changing the database major version requires a separate pg_upgrade or dump/restore verified on a copy. Do not open an old volume with an image of another major version.
 
 ### Template freshness
 
 After saving a template, fetch a test user’s subscription and check it in the app. A profile already imported into an app needs its own subscription refresh. If an old configuration remains, check that the changes were applied, the intended template is selected and the client refreshed the subscription. A failed save keeps the last working version active. Do not clear the database or shared cache merely to refresh one subscription.
 
-### Network storage and cold caches
+### Storage and subscription speed
 
-Network-backed block storage does not by itself make a server incompatible. Read/write latency, available IOPS and durability of acknowledged writes matter. After PostgreSQL or the OS starts, some data is not yet in memory. Later improvement may be cache warming, but does not prove that queries are efficient. Compare cold and warm subscription latency, disk load and database waits. Do not clear a production database cache merely to test it.
-
-Concurrent reads of the same raw template share one query within an API process when the shared cache is available. Personal rendering, HWID and access checks are not shared. Identical geofile builds also share bounded work. Slow storage still limits throughput; adding database connections does not fix insufficient IOPS.
-
-PostgreSQL requires correct POSIX filesystem semantics and reliable fsync. NFS requires a hard mount and a server export that preserves fsync durability. Do not disable fsync for speed. blks_hit measures PostgreSQL cache hits, not the entire OS cache. Use pg_stat_database and pg_stat_activity on PostgreSQL 14/15; pg_stat_io is available from 16. Official requirements: https://www.postgresql.org/docs/current/creating-cluster.html
+The panel needs reliable storage with enough free space and read/write capacity. Network-backed block storage can be used when it provides durable reads and writes. Slow storage is especially noticeable after startup and when many subscriptions refresh together. Compare subscription response time, disk load, CPU and memory. If the slowdown persists, inspect the panel log. Do not clear the live database or disable durable writes to improve speed.
 
 ## First working connection
 
@@ -105,9 +103,9 @@ Home shows transferred traffic, current bandwidth, online users and nodes, accou
 
 Open a status card for details. If data has not appeared, wait for loading or refresh. A spinning icon indicates that the request is still in progress.
 
-### Home refresh and diagnostics
+### Refreshing Home
 
-The Home refresh button requests system/user statistics, bandwidth and panel health/runtime together. Another refresh is blocked while requests are pending. The database block and its automatic polling are removed from Home. Internal diagnostics remain administrator-only; see the API reference for access details. It never returns SQL text, addresses or keys. Its snapshot covers the current role and database, coalesces simultaneous requests and lasts up to 15 seconds per process. This cache does not change access, quotas or blocks.
+The Home refresh button requests user statistics, traffic and panel status again. Wait for loading to finish before refreshing again. An unavailable metric does not mean zero. If data does not appear, check panel availability and the error log.
 
 ## Creating and editing users
 
@@ -125,7 +123,7 @@ Before saving, check squads and subscription expiry. Then verify the status and 
 
 ### How expiry is checked
 
-The panel scheduler enqueues an expiry check every 30 seconds in USERS_WATCHDOG_QUEUE. Overdue ACTIVE and LIMITED users become EXPIRED and node access is synchronized. No extra crontab is needed. The scheduler, queue worker, Valkey and database must be running; stopping a worker delays execution. FROZEN users are excluded from expiry: the saved remainder is expireAt minus frozenAt, and activation computes a new expiry from the current time. No continuous database date rewrite is required. Scheduled traffic resets follow their own schedule and never unfreeze users.
+The panel checks subscription expiry automatically every 30 seconds. Overdue ACTIVE and LIMITED accounts become EXPIRED, then the access change is sent to nodes. No additional server schedule is required. Stopped panel services or a disconnected node can delay the state update. FROZEN preserves remaining lifetime; activation resumes the countdown from that remainder. Resetting traffic does not unfreeze the account.
 
 ### Freeze a subscription
 
@@ -137,7 +135,7 @@ Bulk freezing uses the selected deadline while retaining saved deadlines of alre
 
 ### Device subscription preview
 
-Select an already registered device, format and User-Agent in the device card and generate a preview. It uses the real generator and response rules without changing the device or connection history or creating access keys in the database. A blocked device receives no working access. The host list shows candidates; the generator performs final protocol and pool filtering. Configuration containing keys is hidden by default and returned only on explicit request, up to 2 MiB. Treat it as private and keep it out of public logs.
+Choose the format and User-Agent in an already registered device card, then generate a preview. It follows delivery rules without changing the device or connection history. A blocked device receives no working access. The host list shows candidates; the final selection depends on the format and pool. Configuration containing keys is hidden by default and available on explicit request, up to 2 MiB. Keep it private.
 
 ### Fields and controls
 
@@ -262,7 +260,7 @@ Name, country, tags and provider describe infrastructure. The profile and inboun
 
 ### Paused start queue
 
-Applying a profile in bulk does not pause the global start queue; operations are coordinated per node. An existing manual pause or one left by an older update is not automatically resumed. If jobs remain paused, confirm that maintenance is complete and resume the queue in Bull Board. Restarting the panel must not override an intentional administrative pause.
+If an administrator paused node starts, saved changes can wait for resumption. After maintenance, check the state and resume starts through the queue-management tool. Restarting the panel does not cancel an intentional pause. Ordinary bulk profile assignment does not require that pause; check the result on each node.
 
 ### Recovery after a core crash
 
@@ -270,15 +268,17 @@ After a confirmed crash of a compatible core, the agent restores the last privat
 
 ### Confirming node commands
 
-Start and stop operations for one node run sequentially. An outdated command must not overwrite a newer state or connection address. An unconfirmed stop retains its error and is retried up to five times, 30 seconds apart. A node disabled by an administrator is never automatically enabled after failure. Check connectivity and the log, then retry the action. An unavailable node can still be deleted from the panel. Bulk profile jobs run one at a time while retaining shared configuration preparation. Updating the Node image preserves the previously selected managed Core. Check the running version in Node tasks and update Core separately if needed, then refresh the client subscription. An outdated autoselect-limit warning clears after support and successful policy application are confirmed; a failed check never removes restrictions.
+After starting, stopping or assigning a profile, check the node's final status. An accepted action does not confirm application. An unconfirmed stop remains an error and is retried; an administrator-disabled node is not automatically enabled after failure. Check connectivity and logs before repeating an action.
+
+Updating the Node image preserves the previously selected managed core. Check the running version in node tasks, update Core separately when required, then refresh the subscription. An autoselect-limit warning clears after support and successful application are confirmed; a failed check does not remove restrictions.
 
 ### Xray settings
 
 Xray settings selects one core flavor for the entire panel. The default is the custom Remnacust core. Stock Xray supports standard protocols and transports. Users, freezing, subscriptions, geofiles and client-side autoselect work in both modes. Host/device limits, separate autoselect recipient accounting, destination access rules, inactive-access hosts, port plans and Xera HTTP require the custom core. Stock mode disables their controls and effective policies without deleting saved settings.
 
-Before switching to stock Xray, the panel checks active profiles, port plans and quota journals. Resolve the listed blockers; never delete accounting data or reserves merely to switch. Dual-core selection on a custom node requires an updated Node image; native Remnawave nodes retain baseline compatibility. Changes are queued and the scheduler retries delivery if the queue is temporarily unavailable. Selection does not prove every node applied it: check node status.
+Before switching to stock Xray, the panel checks active profiles, port plans and quota journals. Resolve the listed blockers; never delete accounting data or reserves merely to switch. Dual-core selection on a custom node requires an updated Node image; native Remnawave nodes retain baseline compatibility. Applying the change takes time; wait for the node results. Selection does not prove every node applied it: check node status.
 
-Switching cores restarts the core and may interrupt connections. Save editor changes first. An open editor refreshes on a mode change and loads the matching validator and schema. The global choice overrides the legacy geodata.core profile selector without rewriting the saved profile. Custom core version management is available only in custom mode.
+Switching cores restarts the core and may interrupt connections. Save editor changes first. After a mode change, the editor checks options for the selected core. The global mode overrides the previous profile choice without rewriting the saved profile. Custom core version management is available only in custom mode.
 
 ### Installation and certificates
 
@@ -286,9 +286,13 @@ SSH installation requires root or passwordless sudo; an existing empty directory
 
 ### Diagnostics and safe operations
 
-Diagnostics make a real mTLS request to the registered node and check Xray, user synchronization and port apply status. They do not verify the full client network path. Disabled nodes are not probed; manual probes are rate limited. Port edits are reviewed, then confirmed with a review hash and current revision: stale reviews are rejected. Success requires node ACK, not merely enqueueing. Errors allow restoring a previously applied revision without overwriting newer edits. Outages require three observations over at least 20 seconds; recovery requires two over 10 seconds. Never-connected installations do not generate outage alerts. Maintenance and operations suppress alerts; a manual 30-minute pause does not stop health checks. The install wizard uses the verified installer over SSH and confirms connectivity separately; existing directories are not overwritten. NET_ADMIN defaults off. When a main server IP is set, all incoming ports and ping accept only that source except SSH (22 and detected sshd ports). Rules cover Docker forwarding and IPv6, preserve outbound replies and never flush other firewall rules. This blocks external HTTP-01 renewals: use DNS-01 or externally managed certificates. Remove the guard with python3 /etc/remnacust-node-firewall/guard.py remove.
+Diagnostics check the registered node's protected connection, Xray, user synchronization and port application. Test the full client VPN connection separately. Disabled nodes are not contacted; manual checks are rate limited.
 
-Release checking (--check-release) does not run APT. Background component updates from the panel defer OS maintenance that requires SSH and record it in progress and the private log; that deferral alone does not block the component update. Maintain OS packages separately through an interactive SSH session and answer dpkg/debconf questions. --yes does not supply those answers; there is no automatic reboot.
+Review port changes before confirming. If settings change between review and confirmation, obtain a new preview. Success requires the node to confirm application. On failure, a previously applied configuration can be restored after checking the current state. Outage and recovery notifications require repeated observations. Maintenance and a manual 30-minute notification pause do not stop health checks.
+
+SSH installation requires root or passwordless sudo. Existing directories are not overwritten; connectivity is checked separately after installation. NET_ADMIN defaults off. A main-server IP restriction closes other incoming ports and ping except SSH. It also covers Docker but does not override provider rules. This is incompatible with public HTTP-01; use an appropriate certificate method. Remove only this restriction with python3 /etc/remnacust-node-firewall/guard.py remove.
+
+A component update from the panel can defer package maintenance requiring interactive SSH and record a notice in the log. Complete it separately; --yes does not answer package-configuration prompts. There is no automatic reboot.
 
 ### MPTCP and Linux kernel security
 
@@ -303,7 +307,6 @@ Xray v26.10.31 disables MPTCP by default; explicit streamSettings.sockopt.tcpMpt
 - **Note**: Administrator note about the object, not a routing/access configuration.
 - **Country**: Country code used for display/grouping. The flag does not change server location.
 - **Internal name**: Object display name. UUID remains a separate identifier.
-- **Address**: Reachable IP/domain used by the client or panel in this form’s context; separate from the display name.
 - **Node Port**: Port of the selected service. A host client port and node agent management port can differ.
 - **Plugin**: Plugin configuration assigned to the user. Check that its executor is configured on the required nodes.
 - **Integrations**: Assigned node integration configurations. Creating an integration and assigning it to a node are separate actions.
@@ -339,15 +342,17 @@ Compatible changes apply through the core without restarting its process. From N
 
 ### State and resources
 
-Open a node card to inspect connectivity, online users, CPU load, memory, networking and Xray information. Available metrics depend on the agent. A missing value does not mean zero load: check connectivity and refresh. Panel, node agent and Xray versions are listed separately under Documentation → Versions.
+Open a node card to check connectivity, online users, CPU, memory, networking and Xray state. Available metrics depend on the agent. A missing value does not mean zero load: check the observation time and refresh. Check the installed agent and running core versions on that node. Documentation → Versions describes the bundle and does not confirm that a remote node has already been updated.
 
 Host policies could not be applied. The new configuration has not yet been sent to the node; a running Xray keeps its previous configuration. Check the node connection and policy application errors. The panel will retry when the connection is restored or the error is resolved. The configured limits remain enabled.
 
-Update the node to Remnacust Node 1.1.1 with our Xray. This profile requires host isolation v2. Its limits and new connections will not work until the update. The running configuration is kept; after updating, the panel will apply the new one automatically.
+If the node card requires an update for host restrictions, update both the agent and running core to a compatible bundle. Updating the panel alone is insufficient. The previous configuration remains until support and successful application are confirmed; a connection error does not disable configured restrictions.
 
-Use MANAGEMENT or RESERVE roles for control addresses. OUTBOUND, BLOCKED and other roles do not make an address a control fallback candidate. Every candidate keeps the same configured node API port; other ports are not scanned. Use diagnostics to check connectivity: the panel backend sends an authenticated request to the node API. An open TCP port, a DNS answer or an old green status does not confirm it. Check the observation time and repeat the check after changing settings. The primary address and explicitly configured fallback IPs receive an authenticated API check. The administrator must enter only addresses of the same node: shared TLS/JWT credentials establish panel trust, not a unique node UUID. This check cannot distinguish another node using the same trusted keys or CA. No external address discovery is performed.
+Open the unified IP addresses list in the node form. Add an IPv4 address, IPv6 address or hostname without a scheme, port or path; the separate API port applies to every address. The list holds up to 65 unique addresses, including disabled entries. Use the switch to allow panel control and the arrows to set priority. A saved address cannot be edited or deleted: disable an unwanted entry and add the correct one. A new unsaved row can be discarded. Disabling every address makes node control unavailable.
 
-Proxy URL affects only the panel → node control channel, not user VPN traffic. The field is masked by default; reveal it to inspect or edit the URL. If SOCKS5 is configured, every candidate uses that same proxy. Changing the node IP cannot fix an unavailable shared proxy; there is no silent direct fallback. Explicitly leave Proxy URL empty to select a direct connection. Route status must not display the username, password or raw proxy URL. Node responses to API tokens, including wildcard tokens, return proxyUrl: null to avoid exposing SOCKS credentials. Administrator sessions retain the setting in the masked editor; route status does not expose the password. SOCKS5 username/password authentication under RFC 1929 sends the username and password to the proxy in plaintext. Use a trusted proxy over a private network or a protected tunnel. The Node API channel remains encrypted with mTLS; it does not encrypt the separate SOCKS5 handshake. [RFC 1929](https://www.rfc-editor.org/rfc/rfc1929.html#section-3).
+If the selected address becomes unavailable, the panel tries enabled addresses in list order. Disabled entries are not probed. Check the current control address, result and observation time in the node card. An open TCP port or ping reply alone does not confirm a working API connection. Enter only addresses of this same node. After upgrading, the previous primary and MANAGEMENT/RESERVE addresses are enabled; other known IPs remain saved but disabled. Enable them only after checking ownership and reachability. This switches the control channel; it does not move user VPN connections.
+
+Proxy URL configures SOCKS5 only for panel-to-node control. The field is masked by default; the proxy table column indicates configuration, not connection health. Every fallback address uses the same proxy. If the proxy fails, the panel shows the error and does not bypass it with a direct connection. To use a direct connection, explicitly clear the proxy setting and save. Credentials are available only to administrators; exclude them from logs and support messages. Use a trusted proxy on a protected network: standard SOCKS5 authentication sends the proxy username and password without its own encryption.
 
 For a running, connected node, yellow clock replaces the pulse icon three calendar days before the next payment. One day before, on the due date and when overdue, the clock is red. The date comes from the linked infrastructure billing record and uses UTC calendar days. Extending the billing date clears the warning. The clock never replaces disabled, connecting, disconnected, error or upgrade-required indicators. Without a billing date, the indicator stays unchanged.
 
@@ -357,7 +362,7 @@ The health log helps locate connection failures, application errors and restarts
 
 ### How node health is calculated
 
-Disabled, disconnected or still connecting nodes show 0/100. Missing active profile/inbounds or fresh running-Xray confirmation also gives zero. Once these prerequisites hold, each of four signals contributes 25 points: configuration, connection, running core and normal resources. Missing metrics never inflate the result. Cached metrics of disconnected nodes are not presented as current. Unknown data, memory pressure and sustained CPU load are listed separately. Resource cache lasts 30 seconds and Xray uptime 16 seconds; expiry removes confirmation without proving a core crash.
+Disabled, disconnected or connecting nodes show 0/100. Missing active profile/inbounds or fresh running-Xray confirmation also gives zero. Once these prerequisites hold, each of four signals contributes 25 points: configuration, connection, running core and normal resources. Missing metrics do not count as success. Check the observation time: old data from an unavailable node does not establish its current state. Unknown values, memory pressure and sustained CPU load are shown separately.
 
 ## Node SSH terminal
 
@@ -373,13 +378,13 @@ The SSH terminal supports administrative server work. Closing a tab does not gua
 
 - **Internal name**: Object display name. UUID remains a separate identifier.
 - **Country**: Country code used for display/grouping. The flag does not change server location.
-- **Domain or IP**: Reachable IP/domain used by the client or panel in this form’s context; separate from the display name.
 - **Node Port**: Port of the selected service. A host client port and node agent management port can differ.
+- **Proxy URL**: SOCKS proxy for panel control requests to this node, for example socks5://user:pass@proxy.example.com:1080. Leave empty for a direct connection. This does not proxy user traffic; keep embedded credentials private.
 - **Plugin**: Plugin configuration assigned to the user. Check that its executor is configured on the required nodes.
 - **Tags**: Object label array. Host tags also connect enabled policies; saving an empty array clears labels.
 - **Main server IP (optional)**: Only this IP can reach ports and ping; SSH remains public. Clients connect through the main server.
 - **Default**: The node will use its default outbound route.
-- **IP address**: Pick one of the node IPs or type any address
+- **IP address**: Choose a configured node IP or enter a literal IPv4 or IPv6 address. Hostnames are not supported.
 - **Interface**: Pick one of the node interfaces or type any name
 
 ## Node server optimization
@@ -506,38 +511,31 @@ Mihomo and sing-box templates provide field completion and structural validation
 
 ### Origin and place in a connection
 
-Xera HTTP is a fork of the XHTTP (SplitHTTP) transport from Xray-core, developed in Remnacust Core. It carries connection data in HTTP requests and responses. The original XHTTP implementation is in [Xray-core](https://github.com/XTLS/Xray-core/tree/v26.9.30/transport/internet/splithttp); our fork is in [xerahttp](https://github.com/lottman/Remnacust-core/tree/main/xray/transport/internet/xerahttp).
+Xera HTTP is a transport based on Xray-core XHTTP (SplitHTTP), developed in Remnacust Core. It carries data through HTTP requests and responses and requires support in both the node core and the user application.
 
-In a profile, VLESS specifies the connection protocol and user, Xera HTTP specifies the transport, and TLS or REALITY protects the connection. Thus protocol: "vless", streamSettings.network: "xera-http" and streamSettings.security: "tls" can be used together. When switching to Xera, do not replace protocol with xera-http; change the transport and its options inside streamSettings. TLS, the user UUID and routing retain their separate roles.
+In a profile, VLESS defines the connection protocol and user, Xera HTTP the transport, and TLS or REALITY the connection protection. Credentials and routing rules are separate settings.
 
-### Changes in the fork
+### Features and limits
 
-Xera is registered separately as network: "xera-http" with xeraHttpSettings. Standard XHTTP remains a separate transport. The fork includes stream-auto, customDownlinkPadding for data blocks, configuration validation and resource limits for sessions, upload queues, headers and blocks. Session identifiers use a cryptographic random generator and are checked for allowed characters and sufficient entropy.
+Xera HTTP and standard XHTTP are separate transport choices. Xera offers HTTP transfer modes, optional data padding and adaptive limits on concurrent requests. XHTTP support in a regular client does not add Xera support.
 
-Request padding xPaddingBytes and customDownlinkPadding serve different purposes: the latter pads transmitted data blocks and needs compatible processing on both ends. Shared XHTTP ancestry does not mean every XHTTP client understands these extensions. Speed and reliability depend on the network, mode, proxy and settings; the fork alone does not promise faster connections or guaranteed circumvention.
+HTTP request padding and additional data-block padding are separate settings. Both peers must support the extensions in use. Speed and stability depend on the network, selected mode and proxy; verify the result on your network.
 
 ### Compatibility
 
-Xera HTTP is an XHTTP fork in our Xray core. Both the node core and the client application core must support it. XHTTP support in a regular Xray build does not imply Xera support. Check that both builds accept network: "xera-http". Clone a working profile and test a separate host before changing it for all users.
+Xera HTTP requires compatible node and application cores. A regular Xray build supporting XHTTP may lack Xera support. Check the versions and capabilities of both peers. Clone a working profile and test a separate host before changing it for all users.
 
 ### Profile configuration
 
-Open JSON in a [profile](/dashboard/management/config-profiles) and set network: "xera-http" in the inbound streamSettings. Transport options belong in xeraHttpSettings. The example below is a streamSettings fragment, not a complete inbound: retain your tlsSettings, clients, port and other settings. TLS requires a valid certificate and a matching domain. For REALITY, use security: "reality" and your realitySettings.
+Open [profiles](/dashboard/management/config-profiles) and select a verified Xera HTTP profile for the installed core. Keep a working copy before making changes. TLS needs a valid certificate and matching domain; REALITY needs matching settings on both peers. The public address, port, path, Host and SNI must match the receiving server and proxy.
 
-```json
-{
-  "network": "xera-http",
-  "security": "tls",
-  "xeraHttpSettings": {
-    "path": "/connect",
-    "mode": "auto"
-  }
-}
-```
+The Adaptive Xera HTTP panel edits an existing transport in the profile. Select the intended inbound or outbound. For an inbound, the form sets client options in subscriptions for linked hosts; server request limits are configured separately. For an outbound, the options apply to that outgoing transport. Opening the form leaves manual configuration unchanged.
 
 ### Node, host and subscription
 
-Activate the inbound on a compatible node, permit it in an internal squad and link a [host](/dashboard/management/hosts). Set the public address, port and SNI on the host. Path and Host fields can override profile values for the client; they must match what the server or proxy accepts. Refresh a test user subscription. Xray JSON retains xeraHttpSettings; share links carry type=xera-http and xeraSettings. The client must understand this format. Sing-box, Clash and Mihomo generators skip these hosts because they do not support this transport.
+Activate the inbound on a compatible node, permit it in an internal squad and link a [host](/dashboard/management/hosts). Set the public address, port and SNI. Path and Host can override profile values for the client and must match the server or proxy. Refresh a test user subscription and check the settings actually imported.
+
+Use Xray JSON or a connection link supported by your Xera HTTP application. Standard clients without Xera are incompatible. Sing-box, Clash and Mihomo templates skip these hosts. Updating the panel alone does not add a transport to the client.
 
 ### Modes and HTTP proxies
 
@@ -566,65 +564,39 @@ With a nonzero budgetPercent and zero or omitted burstBytes, the core uses a 409
 
 ### Verify the result
 
-Validate JSON in the editor and save the profile. Database persistence and application on a node are separate stages: check the queue, node status and logs. Download the subscription again and compare network, path, mode and SNI in the client configuration. “Unknown transport” means the selected core does not support Xera. If the host is missing, check squads, access, filters and subscription format. For unstable connections, return to auto without additional padding and change one option at a time.
+Validate the configuration in the editor and save the profile. After saving, check that the node accepted the settings and operates without errors. Refresh the application subscription and check transport, path, mode and SNI. “Unknown transport” means the selected core lacks Xera support. If a host is missing from the subscription, check squads, access, filters and format.
 
-To migrate from XHTTP, clone the profile and host and keep the working configuration. Change streamSettings.network from xhttp to xera-http in the intended inbound and move verified xhttpSettings options to xeraHttpSettings. Do not change protocol, UUID, port or TLS/REALITY without a separate reason. Do not retain both settings blocks in the same variant. Renaming alone cannot give a standard XHTTP core Xera support: check both cores and the configuration the client actually imported. Start with the previous path and host, mode: "auto" and no new extensions. Verify connection, upload, download, reconnection and node logs before switching other users. To revert, use the saved XHTTP profile and refresh the subscription.
+When moving from XHTTP, test a profile copy on a separate host first. Retain the working variant for rollback. Start without extra extensions, then check connection, download, upload and reconnection. Change one setting at a time. For parallel testing, use another node or a free port: two inbounds cannot listen on the same address and port at once.
 
-For a parallel test, use a separate node or a free port. Two inbounds must not listen on the same address and port at the same time.
+### HTTP option compatibility
 
-### New wire profile and HTTP/2
+Check client and server core compatibility before updating. The obsolete xPaddingObfsMode, noGRPCHeader, noSSEHeader and repeat-x method are no longer accepted. Updating only one peer can break the connection. These format changes are independent of optional request adaptation.
 
-Update the client and server cores together. Remove xPaddingObfsMode, noGRPCHeader, noSSEHeader and xPaddingMethod: "repeat-x": these settings are rejected. Tokenish padding always applies to requests and accepted transport responses. Padding, session and sequence placement must match on both peers; legacy locations are not searched. uplinkHTTPMethod must also match. OPTIONS carrying Access-Control-Request-Method and Origin is a browser preflight; OPTIONS without that header can carry upload data.
+Path, service headers, data placement and HTTP method settings must match on both peers. Unsupported or conflicting options are rejected during validation. HTTP/2 and HTTP/3 server limits are configured separately from client minStreams and maxStreams. They do not define a browser fingerprint or ensure compatibility with every CDN.
 
-h2Params configures the HTTP/2 server, for example {"MaxConcurrentStreams":128,"MaxReadFrameSize":65536}. Unknown fields, prohibited ciphers and invalid sizes are rejected; timeouts are numeric nanoseconds. This does not configure a browser fingerprint for the HTTP/2 client.
-
-If h2Params.MaxReadFrameSize is unset or 0, our Xera and XHTTP HTTP/2 servers advertise a frame size of 16384 bytes (16 KiB). An explicit value, such as 65536, is preserved. This helps reduce the client-selected long-upload buffer when connecting directly to our server, but does not set a total memory limit. An external CDN advertises its own frame size; this default does not change it.
-
-For Xera HTTP/3, if streamSettings.finalmask.quicParams.maxIncomingStreams is unset or 0, the bidirectional QUIC stream limit per connection is 2 × effective serverMaxSessions + 256. serverMaxSessions belongs in xeraHttpSettings; when unset or 0, the session limit is 4096 and the stream limit is 8448. stream-up holds two long-running requests per session, stream-one uses one, and packet-up uses a downlink plus finite upload requests. Explicit maxIncomingStreams values, including 3 and -1, are preserved: -1 disables incoming bidirectional streams. When setting a manual limit, allow room for requests used by the selected mode; QUIC streams and sessions are counted separately.
-
-Headers follow the TLS ClientHello family; explicit values take priority. Unrecognized requests receive the same ordinary 404 response before session allocation or body reads. Padding and these responses do not replace TLS/REALITY or VLESS. uTLS does not mimic the entire browser HTTP/2/QUIC stack. An ISP cannot read HTTP inside HTTPS, but a CDN terminating TLS can. DPI indistinguishability is not guaranteed: comparative measurements on the target network are required.
-
-Service metadata HTTP header names must start with X-, contain 3–64 characters and avoid proxy headers. Session, sequence and padding keys sharing a placement must be distinct. Invalid or conflicting settings are rejected before starting the listener.
-
-Tokenish padding is now generated in one pass from random Base62 symbols with an exact HPACK Huffman-encoded size, without a deterministic repair suffix. This is the size of the padding value, not the complete HTTP request or TLS packet.
-
-When the server enables customDownlinkPadding, every request requires exactly one matching header/token marker and the client verifies the response acknowledgement. Missing, incorrect or repeated markers receive an ordinary 404 before body reads or session allocation; there is no unpadded fallback. Update both ends together. Browser Dialer does not support this extension, so CORS preflights are also rejected for it. Generate token from 32 random bytes encoded as base64url. The marker is shared by the profile and visible to a TLS-terminating CDN and profile users: it does not replace VLESS authorization or stop a participant who already knows it.
-
-The marker is static: disclosure permits request replay. A valid path, session ID and ordinary padding do not authenticate a user.
+Additional data padding requires matching settings on both peers and provides no automatic fallback to unpadded operation. Browser Dialer does not support this extension. The padding token is visible to profile users and a TLS-terminating CDN; it does not replace user authorization.
 
 ### Camouflage limits and measurement
 
-Encryption hides content, but not the server address, packet sizes, directions or timing. Matching HTTP headers alone does not reproduce browser behavior. TLS-in-TLS and The Parrot Is Dead describe limitations; results for other tunnels do not measure our Xera. FRONT studies cover traffic in a Tor model, so its settings cannot be transferred without measurements.
+Encryption protects content, while the server address, connection duration, packet sizes and timing remain observable. Matching HTTP headers alone does not make a connection indistinguishable from a browser. Choose a mode for your network and CDN limits, then check connectivity, latency and traffic use in your actual client.
 
-Evaluate passive classification and active requests separately. Compare ordinary HTTPS and Xera captures on the same network across workloads and session lengths; measure false positives, latency, traffic overhead, CPU and memory. H1/H2/H3 functional and race tests establish correctness, not DPI indistinguishability.
-
-[TLS-in-TLS, USENIX 2024](https://www.usenix.org/conference/usenixsecurity24/presentation/xue-fingerprinting) · [The Parrot Is Dead](https://dedis.cs.yale.edu/dissent/papers/parrot-abs/) · [FRONT](https://www.usenix.org/conference/usenixsecurity20/presentation/gong) · [Security Engineering, 20.4](https://www.cl.cam.ac.uk/archive/rja14/Papers/SEv3-ch20.pdf)
-
-Xera does not introduce background browsing. REALITY retains its existing fallback/spider: receiving an ordinary trusted certificate instead of REALITY authentication can trigger HTTPS requests to the configured server. This does not grant VPN access.
+Xera does not add background browsing or switch protocols during a connection. REALITY can make its own HTTPS requests after an unauthenticated connection; those requests do not confirm successful VPN access.
 
 ### Client HTTP/2 wire profile
 
-Core 1.1.21 selects the partial HTTP/2 profile only for matching Chrome 133 and 155 TLS profiles. Chrome 155 SETTINGS and their order, connection window and pseudoheader order were compared with official Chrome for Testing 155.0.8059.84 (revision 1697595). chrome and an empty fingerprint use this path while the pinned uTLS selects a supported version. Firefox, Safari and unverified Chrome versions retain standard H2. Full browser equivalence is not claimed. Generated User-Agent and Sec-CH-UA follow the ClientHello version, including GREASE and brand order; explicit headers are preserved.
+The fingerprint setting selects a supported client TLS profile. For supported Chrome profiles, Xera aligns part of its HTTP/2 behavior and generated User-Agent and Sec-CH-UA with that profile. Explicit headers remain unchanged; other profiles use standard HTTP/2 behavior.
 
-This is HTTP/2 behavior inside the protected connection, not new encryption. An ISP cannot read SETTINGS inside TLS; a TLS-terminating CDN can. Alignment removes one specific cross-layer mismatch, but does not hide the server address, session duration or application traffic patterns. Full DPI indistinguishability has not been established.
-
-TLS/REALITY, certificate verification, certificate pinning and ALPN checks remain in the existing Xray path. Redirects are not followed, changing HTTP authority in one transport is rejected, and POST requests are not automatically replayed after an error. Request cancellation, closure and connection reuse are supported. Each client transport permits at most four connections and 32 active HTTP requests per direction; waiting requests honor their own cancellation context.
-
-The path uses pinned fhttp v0.7.3. Tests compare actual transmitted frames with the stored capture fixture; they do not test an unknown classifier.
-
-Before HTTP/2 decoding, response boundaries are checked: frames cannot exceed the advertised 16 KiB; a header block is limited to 512 KiB and 32 frames and must complete within 10 seconds. An invalid CONTINUATION sequence closes the connection. The deadline is cleared after headers complete and does not limit data-transfer duration. This bounds excessive header processing without changing payloads or encryption.
-
-For verified Chrome 133/155 H2 profiles, the initial arithmetic TLS record-size ramp is disabled. Ready outbound bytes are combined in a bounded queue: up to 64 KiB pending and up to 64 KiB in the active write. It does not wait to fill a batch or add a collection delay; backpressure, errors, deadlines and graceful TLS closure are preserved. This concerns TLS records, not TCP segment boundaries.
+This adds no encryption and does not guarantee browser indistinguishability. A TLS-terminating CDN can see the HTTP exchange. After changing fingerprint, check the connection and CDN compatibility. An invalid response or header error can close the connection; do not disable certificate verification to connect.
 
 ### Checking options in the editor
 
-Node profiles and Xray subscription templates use the same transport schema. Completions also cover extra, customDownlinkPadding, xmux and downloadSettings. The editor checks supported values and bounds; WASM additionally runs the configuration builder. Valid JSON alone does not establish application support.
+The node-profile and Xray-template editors check supported options and bounds. A valid configuration does not establish application support. Selecting custom Core mode in the panel does not verify client core versions.
 
-Use a matching panel, node and core release. Updating the panel does not update the client application core. Schemas, WASM and its JavaScript have separate content-based URL versions, so unchanged assets do not require another download.
+Server h2Params and server resource limits remain on the node and are omitted from subscriptions. Shared transport options, adaptation and a separate download endpoint are retained for compatible clients. Manual extra settings remain available.
 
-h2Params and server resource limits stay on the node and are omitted from client subscriptions, including inside extra. Shared transport options and downloadSettings are preserved. xmux.hKeepAlivePeriod is in seconds: 0 selects the default, -1 disables idle probes, and positive values cannot exceed 604800. HTTP header names and values are checked before startup. Set Host through the separate host field.
+xmux.hKeepAlivePeriod is in seconds: 0 selects the default, -1 disables idle connection probes, and positive values cannot exceed 604800. HTTP headers are checked before startup; set Host through its separate field.
 
-Explicit TLS minVersion and maxVersion must be empty or 1.0, 1.1, 1.2 or 1.3; the minimum cannot exceed the maximum. A uTLS client also enforces these bounds. If the fingerprint or server cannot support the allowed range, the connection is rejected. ECH and HTTP/3 require TLS 1.3. Custom version bounds can change ClientHello, so standard browser-profile comparisons do not cover arbitrary modified settings.
+Explicit TLS minimum and maximum versions accept 1.0, 1.1, 1.2 or 1.3; the minimum cannot exceed the maximum. ECH and HTTP/3 require TLS 1.3. If the client or server cannot support the selected range, the connection is rejected. Changing TLS bounds can alter ClientHello; check compatibility after editing.
 
 ### Selecting a mode for the network
 
@@ -632,7 +604,7 @@ For direct TCP, use correctly configured REALITY and stream-auto. For a CDN term
 
 HTTP/3 needs a separate TLS profile with alpn: ["h3"] and reachable UDP. If UDP is blocked, use a separately reachable TCP HTTP/2 profile; an open stream is not migrated automatically. QUIC Initial does not hide SNI without actual ECH negotiation. Measurements in [China](https://gfw.report/publications/usenixsecurity25/en/) and [Russia in March–April 2026](https://www.petsymposium.org/foci/2026/foci-2026-0010.pdf) establish that HTTP/3 alone does not prevent name-based filtering.
 
-Test sustained upload and download, HTTPS inside the tunnel, idle recovery and reconnection. Padding cannot create a reachable route when an IP is blocked or a strict destination allowlist applies. Splitting HTTP requests also does not guarantee evasion of a whole-connection limit. Success on one network does not establish availability across providers. Sources were checked as of 14 November 2026; protection against an unknown AI classifier has not been demonstrated.
+Test sustained upload and download, HTTPS inside the tunnel, idle recovery and reconnection. Padding cannot create a reachable route when an IP is blocked or a strict destination allowlist applies. Splitting HTTP requests also does not guarantee evasion of a whole-connection limit. Success on one network does not establish availability across providers.
 
 ### Browser Dialer and ECH acquisition
 
@@ -647,6 +619,20 @@ ECH hides the inner ClientHello only when negotiation succeeds; the IP, outer SN
 Verify IPv4 and IPv6 separately. The address field accepts an IPv6 literal such as 2001:db8::1; URLs and address:port pairs need brackets: [2001:db8::1]:443. This is a reserved documentation address. SNI must match the TLS/REALITY configuration. A separate downloadSettings endpoint can also use IPv6.
 
 Core IPv6 support does not provision a host or Docker route or override operating-system restrictions. A reachable IPv6 address, route, listener and port are required. An AAAA record alone does not prove reachability. Select the appropriate IPv4/IPv6/all-addresses mode in autoselect and test the pool from the client network; a panel-side check does not replace a device check. IP family and exit country are different parameters: IPv6 neither establishes another country nor implies an absence of filtering.
+
+### Adaptive Xera HTTP concurrency
+
+In the profile editor, expand Adaptive Xera HTTP and select an existing transport. Choose Enable adaptation, then Balanced (balanced), Low latency (low-latency) or Unstable network (unstable-network). These are three congestion policies using measured HTTP responses, transfer progress and request waiting. Balanced is a starting point for testing; Low latency reacts more sensitively to rising delay, while Unstable network restores concurrency more cautiously after congestion.
+
+When adaptation is enabled, streamSettings.xeraHttpSettings.adaptive requires explicit mode, minStreams and maxStreams. The minimum and maximum must be integers from 1 to 32, with the minimum no greater than the maximum. The form offers 4 and 32. The initial limit of 8 is clamped into that range. The minimum is an admission floor and creates no requests while idle.
+
+Bounds apply to simultaneously active HTTP requests separately for each direction, destination and generation of transport settings. They do not specify physical TCP connection counts, users, sessions across all device apps or CPU load. Adjustment controls admission of new requests; requests already started are neither aborted nor replayed.
+
+Choose Apply to JSON, then save the profile separately. For inbound client settings, refresh the application subscription. Opening the form or choosing values alone does not rewrite manual JSON. Without adaptive, previous behavior is preserved; manual settings and extra remain available.
+
+The adaptation profile leaves the auto/stream-auto transfer mode, ALPN, padding and quota rules unchanged. Applying it requires Remnacust Core 1.1.22 or later in the client using the setting. Check the actual application core version; standard clients without Xera HTTP are incompatible.
+
+The profiles use measured feedback without AI training. Check responsiveness, data transfer and stability on your network. They cannot guarantee DPI invisibility, blocked-address reachability, compatibility with every CDN or an advantage on networks in Russia or China.
 
 ## Visual profile canvas
 
@@ -716,7 +702,7 @@ Under “For each user on this host”, set the quota in GiB and speed in Mbps. 
 
 ### Bulk actions and country search
 
-Enable, disable and delete return after the database commit; node policy delivery starts in the background and unavailable nodes are retried. A saved action does not mean a disconnected node already received it. Buttons show progress and the list updates after API acknowledgement. Cloning runs at most three requests at once; successful sources are deselected and failed sources remain for retry. Search flags by country name in RU/EN/FA/ZH or two-letter code independently of the UI language.
+After enabling, disabling or deleting, check the saved host state. An unavailable node receives the change after reconnecting; saving does not confirm application on a disconnected server. The button shows progress, then the list refreshes. In bulk cloning, successful sources are deselected and failed sources remain for retry. Search countries by RU/EN/FA/ZH names or two-letter codes independently of the interface language.
 
 ### Fields and controls
 
@@ -889,13 +875,19 @@ Ready-made datasets include published V2Fly and MetaCubeX GeoIP/GeoSite. Import 
 
 ### Priority and backup servers
 
-Priority: first available selects the first working server. For an exact order, choose Hosts and All selected hosts, then reorder them with the arrows. Multiple pool prefixes can also be reordered in the balancer. Tags and regex follow the main host list; random modes select a subset first. Failover and return to the primary follow health checks and affect new connections; existing connections are not migrated. Xray JSON is rendered as standard single-candidate leastPing balancers with a Loopback chain. Connections are blocked before the first successful probe and when every server is unavailable. An explicit fallbackTag is used last. Selecting priority in the GUI removes the generated fallback to the same pool and preserves custom fallbacks. Probe settings are preserved. Limits: 128 candidates per balancer and 256 per configuration. Routing scripts and conflicting broad selectors of other balancers are incompatible. Mihomo/Clash/Stash use native fallback in proxies order: explicit code members precede pool members. sing-box has no automatic strict priority mode in its configuration; selector is manual and URLTest uses latency. A full JSON/YAML subscription is required.
+Priority: first available selects the first working server. For an exact order, choose Hosts and All selected hosts, then reorder them with the arrows. Multiple pool prefixes can also be reordered in the balancer. Tags and regex follow the main host list; random modes select a subset first. Failover and return to the primary follow health checks and affect new connections; existing connections are not migrated. Connections are blocked before the first successful probe and when every server is unavailable. An explicit fallbackTag is used last. Selecting priority in the GUI removes the generated fallback to the same pool and preserves custom fallbacks. Probe settings are preserved. Limits: 128 candidates per balancer and 256 per configuration. Routing scripts and conflicting broad selectors of other balancers are incompatible. Mihomo/Clash/Stash use native fallback in proxies order: explicit code members precede pool members. sing-box has no automatic strict priority mode in its configuration; selector is manual and URLTest uses latency. A full JSON/YAML subscription is required.
 
-Use Server order to open the ordering dialog. Arrows move members and long lists are paginated. Select explicit hosts and all selected hosts for precise per-server order. Round robin rotates new connections; it does not retain the first server until failure. Use Priority: first available for failover. Explicit round-robin order is retained after native tag sorting, with up to 128 members per balancer and 256 per configuration. Save the template and refresh the subscription after changing the order.
+Use Server order to open the ordering dialog. Arrows move members and long lists are paginated. Select explicit hosts and all selected hosts for precise per-server order. Round robin rotates new connections; it does not retain the first server until failure. Use Priority: first available for failover. Explicit round-robin order is retained in the subscription, with up to 128 members per balancer and 256 per configuration. Save the template and refresh the subscription after changing the order.
 
 ### When to add the recipient host as proxy
 
 Also add the recipient host as proxy maps to remnawave.addVirtualHostAsOutbound. When enabled, the generator additionally builds a separate outbound tagged proxy from the recipient host’s address, port, transport and security settings. Autoselect does not require this switch; it does not enable TLS automatically. Leave it off for an Automatic placeholder representing a balancer. Real injectHosts pool members and the balancer remain in the configuration. Enable it only for a real additional connection supported by the client. A core may reject public VLESS without TLS/REALITY or VLESS encryption; Happ iOS proxy-based checks can report failed to build outbound config with tag proxy / vless without TLS. A successful ordinary test or another device does not validate this extra outbound. Disable the switch for a placeholder, or correct transport and security for a real host. Save the template and update the subscription in the app. The switch does not reconfigure servers or install certificates.
+
+### Distribute connections
+
+Choose Distribute connections to rotate new connections across available pool members. The client excludes servers that fail its HTTP check. This does not select by CPU, memory, user count or spare bandwidth. Existing long-lived connections keep their server, so equal numbers of new connections do not guarantee equal traffic volume.
+
+Xray uses roundRobin with HTTP checks. Before initial probe results, availability is unknown and a member can still be selected. Traffic is blocked when probes show every member is unavailable and no custom fallback is configured. An explicit fallback outbound is preserved. Mihomo, Clash and Stash use load-balance with round-robin. sing-box has no round-robin distribution here: this choice explicitly uses urltest, selecting an available server by HTTP response time. Probe-site reachability affects selection. Save the template and refresh the subscription after changing strategy; the app then updates its probe results without downloading the subscription again.
 
 ### Temporary delivery errors
 
@@ -931,7 +923,7 @@ In Subscription settings → Additional options, enable JSON at the base path, t
 
 ### Startup and concurrent requests
 
-After panel startup, different geofile builds wait in a bounded queue: two active tasks and up to 32 accepted tasks per operation. Identical requests share one build. The DAT cache retains at most 16 bundles and 32 MiB. The subscription page waits up to 30 seconds for the panel and cancels the request when the client disconnects; access failures are not cached. DAT downloads use a separate eight-connection pool. Each page process accepts up to 16 downloads including waiting requests, so slow files do not occupy page and configuration request connections. Overload returns 503 with Retry-After: 2; retry later.
+After panel startup, the first subscription using geofiles may take longer to prepare. When many requests arrive, allow preparation to finish and retry. A 503 response with Retry-After: 2 means waiting at least two seconds before the next attempt. The subscription page waits up to 30 seconds for the panel. For an access error, check permissions and the page connection to the panel.
 
 ### Removing a geofile from a template
 
@@ -961,7 +953,7 @@ No download animation is expected for a small subscription: its rules are alread
 
 ### Refresh and file integrity
 
-The subscription page streams DAT separately from JSON: the 16 MiB JSON budget does not restrict DAT, which has a 64 MiB limit. Interrupted downloads are not successful. EOF or a missing category can indicate an incomplete or stale local file. Update both the panel and a separately installed subscription page, then refresh the subscription in the app. Compare DAT with its .sha256. Concurrent requests for the same bundle share one build; distinct work remains resource bounded. Bulk host updates commit to the database before the API response; node policy synchronization runs separately. Host editors fetch fresh data on open and save only changed fields to avoid restoring stale values after bulk updates. Some bulk user operations run in background queues; panel operations are not all deferred.
+The subscription page transfers DAT separately from JSON: JSON has a 16 MiB limit and DAT a 64 MiB limit. Interrupted downloads are not successful. EOF or a missing category can indicate an incomplete or stale local file. Use compatible panel and separate subscription-page versions, then refresh the application subscription. Compare DAT with its .sha256. After bulk host changes, review the result and node status: saving settings and applying them on the server are separate stages.
 
 ### Editing library files
 
@@ -1006,6 +998,10 @@ Source pools and recipients are separate settings. Each remnawave.assignments en
 ### Geofile thresholds and categories
 
 The configurable inline threshold is 1–250,000 conditions, default 20,000, independently for each final host profile. An independent 900,000-byte budget includes formatting and StringList expansion. Exceeding either limit switches only that profile to DAT containing selected categories; smaller profiles stay inline. GeoSite and GeoIP are separate downloads; rule actions and order remain intact. Host profiles are never summed. Plain DIRECT/REJECT actions are not duplicated as direct/block; existing plain outbounds are reused without replacing custom outbound settings. Links are signed and earlier links remain supported. Preserve the entire backups/geofiles directory, including category selections, when migrating. Subscription and DAT URLs do not require a running VPN and use the public domain or configured CDN; HTTP 502, DNS and certificate failures require checking the external proxy and running subscription page. Download failure never becomes an empty successful dataset.
+
+### Opening a template
+
+The selected template text opens independently of the host list. While hosts are loading, you can continue editing text; host selection and host hints become available after loading. A failed host-list request does not replace the template with an empty document. Retry loading the list before changing a pool. If the template itself fails to load, retry from the error page instead of creating an empty replacement just to open the editor.
 
 ## Variables {{…}} in names and headers
 
@@ -1057,13 +1053,13 @@ Keep remarks concise. After variable substitution, long text may be shortened an
 
 On first connection, wait for capability checks and profile application. Native Remnawave and custom nodes can coexist, but extensions depend on the core actually running. Nodes sharing an inbound use a compatible mode; independent compatible inbounds retain extensions. Unknown capabilities keep the previous configuration and schedule another check. An unavailable node delays only related connections. Network errors do not remove configured restrictions.
 
-### Access lifetime and devices: UTC
+### Access lifetime and devices
 
-Access expiry and selected device timestamps use UTC independently of the PostgreSQL timezone. The update migrates access functions without changing stored dates, frozen lifetime or quotas. If a device is blocked or registered again after the list is opened, a stale bulk deletion preserves it.
+Access deadlines are stored in UTC; account for the interface timezone when selecting a date and time. Changing the server timezone does not extend a subscription. If a device is blocked or registered again after the list is opened, a stale bulk deletion preserves it. Refresh the list and check the selected devices before retrying.
 
 ### Subscription performance and compatibility
 
-Subscription delivery does not wait for node acknowledgements. Profiles appearing in an app do not prove that a server has applied them: check node health and configuration status. Use compatible panel and subscription-page versions. A confirmed native Remnawave node receives a baseline configuration: new host restrictions, destination rules and inactive-user exceptions are disabled on its inbounds. A custom node sharing such an inbound uses the same compatible baseline credentials; isolated compatible inbounds retain extensions. Older custom cores without autoselect recipient accounting use ordinary pool-server credentials and limits. Upgrade Node/Core and refresh the client subscription for separate recipient accounting. The panel displays compatibility mode. An unknown node or network failure alone never disables restrictions. Existing quota reserves and financial fences are not erased by a downgrade. Older subscription-page APIs remain compatible, and pages hiding connection keys skip unused link generation. This mode needs no new .env variables; the UTC access-expiry migration is described separately.
+Subscription delivery does not wait for node acknowledgements. Profiles appearing in an app do not prove that a server has applied them: check node health and configuration status. Use compatible panel and subscription-page versions. A confirmed native Remnawave node receives a baseline configuration: new host restrictions, destination rules and inactive-user exceptions are disabled on its inbounds. A custom node sharing such an inbound uses the same compatible baseline credentials; isolated compatible inbounds retain extensions. Older custom cores without autoselect recipient accounting use ordinary pool-server credentials and limits. Upgrade Node/Core and refresh the client subscription for separate recipient accounting. The panel displays compatibility mode. An unknown node or network failure alone never disables restrictions. Existing quota reserves and financial fences are not erased by a downgrade. Older subscription pages remain compatible. This mode needs no new .env variables.
 
 ### Technical update log
 
@@ -1085,21 +1081,19 @@ The profile-web-page-url header and {{SUBSCRIPTION_URL}} use the validated publi
 
 ### Subscription domain and .env
 
-The primary domain and SUB_PUBLIC_DOMAIN are synchronized both ways through the local installer service. The API checks .env at startup, when opening the list and every 30 seconds. Changing the primary address in the panel updates .env and the registered Compose without a restart. A hostname, HTTPS URL and safe path are supported. CDN domains remain in the registry. The domain list API requires panel 1.1.7.78 or later to avoid the authentication dependency error. Installer 1.2.113 or later is required; a missing service shows an unavailable status rather than a false confirmation. Concurrent file changes prevent overwrites. Configure DNS and certificates separately.
+The primary domain synchronizes with SUB_PUBLIC_DOMAIN through the installer service. If the service is unavailable or the file was edited concurrently, inspect the status and log, refresh the details and retry. DNS and certificates are configured separately. Keep the origin set to the primary domain, not its CDN address.
 
-Edit the primary domain and choose Open access, CDN only, or Redirect to CDN. Redirect sends direct GET/HEAD requests to a selected CDN belonging to the same primary, preserving the subscription key, /json, device paths, geofile paths and query parameters. The policy covers HTML, profiles, DAT and checksums. Keep the origin address and SUB_PUBLIC_DOMAIN on the primary domain; never replace them with the CDN hostname. Each primary supports only one CDN.
+Each primary supports one CDN. Choose public access, CDN only or redirection to its linked CDN. Redirection preserves paths and queries, including /json, devices and geofiles. An invalid CDN header returns 403; redirection returns 307. Closed denies the primary and its CDN. The last available primary cannot be closed or deleted.
 
-Update both the panel and our subscription page first. In Configure CDN, copy its individual header name and value into REQUEST headers in VK/Yandex. The CDN must overwrite that header, not append another value. Never put the key in response headers, public links or client settings. Retrieving a key requires domain write access or the specific credentials permission; list/read access does not disclose the key. A public UUID or legacy /cdn/ID selects a domain but cannot unlock a restricted origin. Every CDN has a separate name and key tied to this installation.
+In Configure CDN, copy the issued header name and value to CDN request headers. Overwrite the header rather than duplicating it. Keep it out of responses, public links and client apps. Before restricting the origin, check the page, normal subscription, /json and geofiles through the CDN.
 
-Test CDN HTML, the base link, /json and geofile downloads before restricting access. A CDN request without the correct key returns 403 instead of looping. Direct access returns 403 in CDN-only mode or an uncacheable 307 in redirect mode. Give clients the CDN link directly if they do not follow redirects. Changes may take up to five seconds across processes. Existing domains remain open after upgrade. Old pages work in open mode; restricted mode needs our updated page or direct CDN access to the panel subscription API with the same request header. This protects delivery; it does not hide network IPs or change VPN transports.
-
-Closed mode returns HTTP 403 without redirection. Closing a primary closes all its CDNs; closing one CDN leaves siblings available. The last available primary cannot be closed or deleted, even when CDNs exist. User cards, QR codes and link APIs show only available addresses, hiding CDN-only and redirecting primary addresses. Deleting a former primary can explicitly move its users to the current default in the same transaction. Credentials, devices, frozen state, expiry dates and quotas are preserved. Move or remove child CDNs first.
+Before deleting an old primary, remove or move its CDN and explicitly confirm transferring users to the current default domain. Credentials, devices, frozen lifetime, expiry and limits remain. Subscriptions already imported into apps must be migrated separately; retain the old DNS and certificate during transition.
 
 ### Subscription refresh and HWID
 
-Subscription delivery checks the user, device, registration policy and device limit in the database without waiting for nodes. Personal keys are delivered separately through persistent jobs with retries. If a node is unavailable, the subscription is still returned; a new connection on that node becomes usable after its key arrives. Known devices do not wait for the lock used to register new devices. Refreshing a known device does not resend keys to every node, but rechecks authorization: HWID blocks and registration restrictions remain enforced.
+A subscription can refresh even when the node control connection is unavailable. Personal keys are delivered separately; a new connection on that node works after its key arrives. Every refresh still checks user access, HWID blocks, registration rules and device count. Repeated refreshes do not remove restrictions.
 
-A website visit or curl request without device headers does not exercise the same path as Happ or INCY. Compare the same URL with the application User-Agent and HWID when diagnosing failures. Do not publish subscription URLs or HWIDs in public logs.
+Opening a web page or requesting without device headers differs from a Happ or INCY request. For diagnostics, compare the same URL, application User-Agent and HWID. Keep personal links and device identifiers private.
 
 ### Pages on this server
 
@@ -1132,7 +1126,7 @@ During page installation or migration, choose the local panel or another panel�
 - **Type**: Primary subscription domain or CDN address. A CDN must belong to a primary domain.
 - **Primary domain**: UUID of the primary domain associated with this CDN.
 - **Make the primary domain**: Use this primary domain for users without an explicit domain assignment.
-- **Primary domain access**: Closed mode returns HTTP 403 without redirection. Closing a primary closes all its CDNs; closing one CDN leaves siblings available. The last available primary cannot be closed or deleted, even when CDNs exist. User cards, QR codes and link APIs show only available addresses, hiding CDN-only and redirecting primary addresses. Deleting a former primary can explicitly move its users to the current default in the same transaction. Credentials, devices, frozen state, expiry dates and quotas are preserved. Move or remove child CDNs first.
+- **Primary domain access**: Closed mode returns HTTP 403 without redirection. Closing a primary closes all its CDNs; closing one CDN leaves siblings available. The last available primary cannot be closed or deleted, even when CDNs exist. User cards, QR codes and link APIs show only available addresses, hiding CDN-only and redirecting primary addresses. Deleting a former primary can explicitly move its users to the current default. Credentials, devices, frozen state, expiry dates and quotas are preserved. Move or remove child CDNs first.
 - **Redirect destination**: A CDN belonging to this primary domain. Redirects preserve subscription and geofile paths and cannot target unrelated domains.
 - **Subscription pages**: Manage local subscription pages on this server. Updates preserve settings and stopped pages remain stopped.
 
@@ -1463,7 +1457,11 @@ Node API responses exclude raw inbound settings and private keys. Use the profil
 
 ### User-management bots and permanent access
 
-The Users preset permits creating, editing, freezing/resuming users, resetting traffic, reading subscription keys and links, and bulk user operations. It is a fixed list of 30 users-resource scopes; HWID management and squad/domain catalogs require separate selection. It excludes panel settings, servers, backups and token administration. In the user API, set status FROZEN to freeze and ACTIVE to resume. Required scopes: users:update or users:write, plus users:by-id or users:read; users:* covers both. Expired accounts freeze with zero remaining time. When creating a token select No expiration: expiresInDays: null stores expireAt: null and signs a JWT without exp with an explicit permanent marker. No fabricated distant date is used. Every request checks deletion and current scopes in the database. Editing names/permissions preserves token value and expiry; create a replacement and delete the old token to change lifetime. The minimum subscription-page preset contains only system:metadata, subscriptions:subpage-config, subscription-page-configs:get and subscription-page-configs:list. Add users:by-username separately only for enabled Marzban legacy-link compatibility.
+The Users preset permits creating and editing users, freezing and resuming subscriptions, resetting traffic, obtaining keys and links, and bulk operations. HWID management and access to squad and domain catalogs are selected separately. It does not grant panel settings, servers, backups or token administration.
+
+When creating a token, select No expiration if it should remain valid until revoked. Deleting the token revokes access; permission changes affect subsequent requests. Editing the name and permissions preserves the token value and expiry. To change its lifetime, create a replacement and delete the old token after checking it.
+
+Use the separate minimal subscription-page preset for a subscription website. Add username lookup only for enabled Marzban legacy-link compatibility. Store the token on the website server, not in public links or browser code.
 
 ### Fields and controls
 
@@ -1482,15 +1480,7 @@ Enable “Reduce motion” if you prefer a calmer interface. The panel also resp
 
 ### Updating from the panel
 
-When a new version is available, the header version number uses the theme accent color. Click it to find Update below the support and GitHub buttons. For an older installation, run upgrade-panel with the new installer once to configure the update service.
-
-Starting an update blocks all open panel sessions. The installer checks the release, backs up the database and updates the applications while preserving keys, volumes and Compose settings. Nodes and existing Nginx/Caddy are not updated. Closing the browser does not stop the operation. After the applications restart, the page reloads. If the update fails, read the message and check panel-update-<identifier>.log in the installer logs directory before retrying.
-
-The update dialog shows the current stage out of eight, stage completion percentage, elapsed time and stages after the current one. The journal contains the 24 most recent step events and can be downloaded as JSON; full technical output remains in a private server file. Remaining time is estimated from a previous successful update, or remaining stages are shown when no history exists. During an API restart the dialog retains the last confirmed progress until reconnection; expected PANEL_UPDATING errors do not create notifications.
-
-Release checks (--check-release and checking for a new version in the panel) do not run APT, install packages or update applications. An SSH requirement for system package configuration must not stop a release check.
-
-During a background panel update, OS maintenance is deferred to a separate SSH session and recorded in progress and the private log; the available component update continues. This does not mean OS packages have been updated. Perform OS maintenance separately in an SSH terminal: the interactive CLI retains apt-get update and upgrade -y, while the operator answers actual dpkg/debconf questions. --yes does not choose package configuration answers. The installer never reboots the server automatically. Deferring OS maintenance does not turn a backup, migration or application update failure into success.
+The update dialog shows the current stage out of eight, stage completion percentage, elapsed time, remaining stages and the 24 most recent events. The technical-log button downloads a text .log containing up to 1 MiB of recent data; a truncated file includes a notice. The full log stays in a private server directory. Remaining time is estimated from a previous successful update; without history, the remaining stage count is shown. During a panel restart, the dialog retains its last state and waits for reconnection.
 
 ### Appearance reset
 

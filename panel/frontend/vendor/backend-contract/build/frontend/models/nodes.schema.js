@@ -4,6 +4,7 @@ exports.NodesSchema = void 0;
 const zod_1 = require("zod");
 const config_profile_inbounds_schema_1 = require("./config-profile-inbounds.schema");
 const infra_provider_schema_1 = require("./infra-provider.schema");
+const node_control_addresses_schema_1 = require("./node-control-addresses.schema");
 const node_ips_schema_1 = require("./node-ips.schema");
 const node_system_schema_1 = require("./node-system.schema");
 exports.NodesSchema = zod_1.z.object({
@@ -13,6 +14,9 @@ exports.NodesSchema = zod_1.z.object({
     address: zod_1.z.string(),
     port: zod_1.z.nullable(zod_1.z.int()),
     proxyUrl: zod_1.z.nullable(zod_1.z.string()),
+    hasProxy: zod_1.z.boolean().optional(),
+    controlAddresses: node_control_addresses_schema_1.NodeControlAddressesSchema.optional(),
+    controlRevision: zod_1.z.uuid().optional(),
     isConnected: zod_1.z.boolean(),
     isDisabled: zod_1.z.boolean(),
     isConnecting: zod_1.z.boolean(),

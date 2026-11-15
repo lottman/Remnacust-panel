@@ -1,5 +1,5 @@
 import { fromNanoToNumber } from '@common/utils/nano';
-import { TNodeIps } from '@libs/contracts/models';
+import { TNodeIps, TNodeControlAddresses } from '@libs/contracts/models';
 
 import { ConfigProfileInboundEntity } from '@modules/config-profiles/entities';
 import { InfraProviderEntity } from '@modules/infra-billing/entities';
@@ -14,6 +14,9 @@ export class NodeResponseModel {
     public address: string;
     public port: null | number;
     public proxyUrl: string | null;
+    public hasProxy: boolean;
+    public controlAddresses: TNodeControlAddresses;
+    public controlRevision: string;
     public isConnected: boolean;
     public isConnecting: boolean;
     public isDisabled: boolean;
@@ -55,6 +58,9 @@ export class NodeResponseModel {
         this.address = data.address;
         this.port = data.port;
         this.proxyUrl = data.proxyUrl;
+        this.hasProxy = !!data.proxyUrl;
+        this.controlAddresses = data.controlAddresses;
+        this.controlRevision = data.controlRevision;
         this.isConnected = data.isConnected;
         this.isConnecting = data.isConnecting;
         this.isDisabled = data.isDisabled;
@@ -86,7 +92,12 @@ export class NodeResponseModel {
         this.provider = data.provider;
         this.activePluginUuid = data.activePluginUuid;
 
-        const serving = data.isConnected && !data.isDisabled && !data.isConnecting;
+        const serving =
+            data.isConnected &&
+            !data.isDisabled &&
+            !data.isConnecting &&
+            (data.controlRevision === undefined ||
+                hotCache.controlRevision === data.controlRevision);
         this.system = serving ? hotCache.system : null;
         this.usersOnline = serving ? hotCache.onlineUsers : 0;
         this.versions = hotCache.versions;

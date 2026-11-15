@@ -15,6 +15,7 @@ import {
 } from '@shared/api/hooks'
 import { usePreventTableBackScroll } from '@shared/hooks'
 import { DataTableControls, LoadingScreen, sortRecords } from '@shared/ui'
+import { sortNodesByControlAddress } from '@shared/utils/node-control-addresses'
 import { getNodeHealth, NodeHealthLevel } from '@shared/utils/node-health'
 import { sToMs } from '@shared/utils/time-utils'
 
@@ -248,6 +249,10 @@ export const NodesDataTableWidget = memo((props: IProps) => {
                     (rank[getNodeHealth(a).level] - rank[getNodeHealth(b).level]) * direction ||
                     a.name.localeCompare(b.name)
             )
+        }
+
+        if (sortStatus.columnAccessor === 'address') {
+            return sortNodesByControlAddress(filtered, sortStatus.direction)
         }
 
         return sortRecords(filtered, sortStatus)

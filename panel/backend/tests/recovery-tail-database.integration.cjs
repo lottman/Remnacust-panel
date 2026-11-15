@@ -14,6 +14,12 @@ const closureReplays=[];
  await prisma.$queryRaw`SELECT xera_quarantine_restored_quotas()`;const generation=(await prisma.$queryRaw`SELECT generation FROM xera_quota_restore_state WHERE singleton`)[0].generation;
  for(const retained of [false,true]){
   const f=await fixture(generation,retained),beforeMoney=await money();
+  for(const service of [f.tail,f.closure]){
+   service.axios=new Proxy(service.axios,{get(target,key){
+    const value=target[key];
+    return typeof value==='function'?function(opts,...args){assert.equal(opts.uuid,f.node,'Tail and exposure requests must retain the authoritative node UUID');return value.call(target,opts,...args);}:value;
+   }});
+  }
   if(!retained)f.input.note='界'.repeat(2000);
   const ticket=()=>prisma.$queryRaw`SELECT next_sequence::text AS sequence,expected_core::text AS core,consumption_multiplier::text AS multiplier,committed_digest AS digest,pending_effects FROM xera_node_usage_streams WHERE node_uuid=${f.node}::uuid`;
   const before=await ticket();

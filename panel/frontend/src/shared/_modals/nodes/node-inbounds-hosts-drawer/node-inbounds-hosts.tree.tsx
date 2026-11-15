@@ -22,6 +22,7 @@ import { showModal } from '@shared/_modals/show-modal'
 import { CountryFlag } from '@shared/ui/get-country-flag'
 import { XrayLogo } from '@shared/ui/logos'
 import { SectionCard } from '@shared/ui/section-card'
+import { getConfiguredNodeAddresses } from '@shared/utils/node-control-addresses'
 
 type TopologyConfigProfile = GetConfigProfilesCommand.Response['response']['configProfiles'][number]
 type TopologyHost = GetHostsCommand.Response['response'][number]
@@ -105,7 +106,7 @@ export function NodeInboundsHostsTree(props: IProps) {
                 ],
                 label: node.name,
                 nodeProps: {
-                    address: node.address,
+                    address: getConfiguredNodeAddresses(node).join(' · '),
                     countryCode: node.countryCode,
                     kind: 'node' as const
                 },
@@ -200,7 +201,7 @@ export function NodeInboundsHostsTree(props: IProps) {
                 </Text>
 
                 {(meta?.kind === 'node' || meta?.kind === 'host') && (
-                    <Text c="dimmed" ff="monospace" size="xs" truncate="end">
+                    <Text c="dimmed" ff="monospace" size="xs" title={meta.address} truncate="end">
                         {meta.address}
                     </Text>
                 )}

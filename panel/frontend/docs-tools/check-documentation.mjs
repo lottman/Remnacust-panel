@@ -147,6 +147,18 @@ for (const language of languages) {
         ),
         'Internal implementation notes must not enter public help'
     )
+    assert.ok(
+        !/\b(?:Prisma|BullMQ|USERS_WATCHDOG_QUEUE|node_modules|Codex|ChatGPT)\b|\bQuotaRecovery[A-Za-z]*Service\b|src\/(?:modules|shared)\/|\.tsx?\b/i.test(
+            download
+        ),
+        'Developer architecture and agent notes belong in contributor documentation'
+    )
+    assert.ok(
+        !/(?:[A-Z]:[\\/]Users[\\/]|[A-Z]:[\\/]dedik[\\/]|\/home\/root\/|\/Users\/root\/)/i.test(
+            download
+        ),
+        'Private workspace paths must not enter public help'
+    )
 }
 assert.equal(manifest.articles, ids.length)
 assert.equal(

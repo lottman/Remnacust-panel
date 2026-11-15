@@ -1,80 +1,86 @@
-# Operations and connection-time selection
+# Operating the panel and nodes
 
-Autoselect separates two independent selections: **recipients** get a template; **pool members** are possible destinations. Neither selection grants a user access to another host. The Xray `all` pool delivers all eligible members, and its running balancer chooses destinations for new connections. `random` and `group` are legacy subscription-generation sampling modes. The connection-selection action converts them to `all` without changing the routing strategy. Native application formats use their own group behavior; a manual selector is not automatic.
+Use node status, the time of its last observation and a client connection together when checking a change. Saving settings confirms that the panel accepted them; successful application must also be confirmed by the node.
 
-## Assigning a specific autoselect
+## Control addresses and proxy
 
-The Autoselect tab groups each selection with its source pools and strategy. **Where to use autoselect** binds recipient hosts or tags to a specific balancer using `remnawave.assignments: [{ balancerTag, hosts, tags }]`. Direct host matches take precedence over tag matches. The host card's explicit template retains priority, and its matching assignment selects the default balancer within that template. Domain rules, DIRECT and REJECT remain in place. Existing `remnawave.assignTo` remains readable; the UI asks which selection it belongs to when editing it.
+Open the node form's **IP addresses** list. It accepts up to **65 unique IPv4 addresses, IPv6 addresses or hostnames**, including disabled entries. Enter the address without a scheme, port or path; every entry uses the node's separately configured API port.
 
-Pool errors identify the pool and a zero-based JSON path; clicking the path reveals the field in the code editor. Distinct prefixes such as `g` and `g-ru` are allowed. Identical prefixes and collisions with generated tags such as `g-2` must be corrected. Invalid code remains saveable as a draft and does not replace the active subscription.
+Enable an address to allow panel control through it. Arrows set priority, with the first enabled entry preferred. Saved addresses cannot be edited or deleted: disable an obsolete address and add the correct one. A new unsaved row can be discarded. Disabling every address makes control unavailable.
 
-Xray leastLoad `tolerance` is a failed-probe fraction: 0.01 means 1%, and 1 means 100%. It is not the number of servers. Finite values outside that range follow Xray's clamp behavior and are saved without a redundant warning.
+After upgrading, the previous primary and MANAGEMENT/RESERVE addresses are enabled. Other known IPs are retained but disabled. Confirm that an address belongs to the same node before enabling it.
 
-Source membership is refreshed with the subscription; the client chooses among delivered members for each new connection. The separate HAProxy stable-entry workflow and installer command have been removed. Existing user-managed infrastructure is not stopped by a source update.
+The panel tries enabled fallback addresses in list order. The node card shows the current control address and the last check result. A ping reply or open TCP port does not confirm a working authenticated node connection. Control failover does not migrate existing user VPN connections.
 
-## Template copies and editing
+**Proxy URL** affects only panel-to-node control. A configured SOCKS5 proxy applies to every fallback address. Proxy failure is shown as an error; there is no automatic direct bypass. To select a direct connection, explicitly clear the setting and save the form.
 
-Every editable subscription format has **Duplicate template** in its card menu. Creation copies the active content, draft, tags and shared geofile references in one database operation. Recipient assignments are cleared in the copy. API callers need both create and read access to copy an existing template.
+The proxy column indicates whether a proxy is configured, not whether it is healthy. Credentials remain masked in the editor. Keep proxy credentials private and use a trusted proxy over a protected network; standard SOCKS5 username/password authentication does not encrypt its own handshake.
 
-Changes are collapsed into one review panel. Autoselects open individually; connection probes and additional settings are grouped below them. Geofiles use a shared library and a separate upload section with computer/link sources. Save actions stay visible while scrolling.
+## Diagnostics and applying changes
 
-The system update journal follows new events, including when the retained event window is full. Scrolling up pauses following until the reader returns to the bottom. A new update starts following again.
+Node diagnostics distinguish the control connection, running Xray, user synchronization and configuration application. They do not verify the full client VPN path. Disabled nodes are not contacted; manual checks are rate limited.
 
-## Node source guard
+For port changes, review the proposed result and confirm it. If settings changed after review, obtain a fresh preview. A queued operation is still pending until the node confirms application. On failure, inspect the error before restoring a previously applied configuration.
 
-For a fresh node, `--panel-ip IP[/CIDR]` restricts **all incoming ports and echo ping** to the main server, except TCP SSH (22, the current SSH server port and ports discovered through `sshd -T`). Direct VPN clients must therefore enter through the main server. Docker forwarding is filtered too. Existing provider/UFW rules can still deny a connection: this feature never opens an upstream firewall or flushes another ruleset. Outgoing reply traffic, Docker-originated traffic and necessary IPv6 control traffic are preserved. Reapply the guard after manually adding new Docker bridges.
+A connected node API with a stopped core is not a working VPN node. Missing telemetry is unknown rather than zero. If required host policies cannot be applied, the previous working configuration remains and configured restrictions stay enabled. Update the agent and running core together when the node reports missing capabilities.
 
-The owned nftables table is `inet remnacust_node_guard`; the boot service restores it. Uninstalling a container does not remove this host security policy. To remove only this guard:
+Node-image updates can preserve a previously selected managed core. Check the running version separately and update Core when needed.
 
-```sh
-python3 /etc/remnacust-node-firewall/guard.py remove
-```
+## Connection selection
 
-HTTP-01 renewal from the public internet is incompatible with this strict source policy. Use DNS-01 or externally managed certificates. Never deploy this policy to an existing node without checking its gateway egress and SSH ports.
+Recipients receive a template; pool members are possible destinations. Neither selection grants access to another host. Pool membership refreshes with the subscription, while the client selects a server for new connections.
 
-## Diagnostics, reviewed apply and device preview
+| Strategy | Behavior |
+| --- | --- |
+| Lowest response time | Selects using HTTP response time through each pool member |
+| Distribute connections | Rotates new connections among available members; it does not measure server CPU or bandwidth |
+| Priority: first available | Uses the first working member in the configured order |
+| Manual selection | Lets the user select a member in the client |
 
-Node diagnostics issue a real mTLS request to the registered node. Results distinguish management transport, Xray, user synchronization and configuration application. They do not claim a complete client VPN test. Disabled nodes are not contacted, manual requests are rate limited, and transport errors are classified without returning private node exception text.
+Xray connection distribution uses roundRobin and HTTP observations. With no working member and no explicit custom fallback, traffic is blocked. An explicit fallback remains in effect. Mihomo, Clash and Stash use load-balance with round-robin. sing-box explicitly uses urltest instead; this is response-time selection and provides no round-robin distribution.
 
-Port changes use preview hashes and optimistic revisions. The confirmation endpoint rejects a changed profile or revision. Node ACK determines success, and rollback restores a previously applied snapshot against the current revision. Legacy programmatic save remains available for API compatibility.
+Existing streams keep their server. Equal connection counts do not guarantee equal byte volumes. A blocked probe website can exclude a server that could reach other destinations; choose a small response reachable through the entire pool.
 
-Incident confirmation requires three observations over 20 seconds; recovery needs two over 10 seconds. Redis serializes observations and leases pending notifications. Failed notification handoffs remain pending for another worker; normal repeats and stale observations are ignored. Delivery to multiple sinks is at-least-once after transport failure, not an exactly-once guarantee. Maintenance suppresses notifications, not health checks.
+Host assignments take precedence over tag assignments. A host's explicit template also retains priority. Keep domain rules, DIRECT and REJECT settings consistent with the intended access policy. See [autoselect](XRAY-AUTOSELECT.md).
 
-The device preview accepts only an existing registered device and executes production response rules and generators without registering the device, creating access identities or writing subscription history. Candidate hosts are labeled as candidates because generators perform final filtering. Configuration containing credentials is opt-in, private, no-store and limited to 2 MiB.
+## Template editing
 
-## Validation
+The selected template opens independently of the host list. Text editing can continue while hosts load. Host selection and host hints require the host list; retry its request before changing a pool if it failed. Failure to load the template itself shows an error and must not be treated as an empty template.
 
-### Backup inspection and template warnings
+A duplicate copies template content, draft, tags and geofile references, while clearing recipient assignments. Review the copy before assigning it to users.
 
-Panel backup ZIP files use AES password protection. After extraction, `database.dump` is a compressed PostgreSQL custom-format dump (`pg_dump --format=custom`), without another encryption layer. To inspect SQL without restoring a database, use PostgreSQL tools of the same major version as the dump producer or newer:
+Invalid JSON/YAML and incomplete selections can be saved as drafts. A draft with errors does not replace the active subscription. History retains the last 30 versions. Open an older version in the editor, inspect the difference and save to apply it; saving creates a new version.
 
-```sh
-pg_restore --list database.dump
-pg_restore --file=database.sql database.dump
-```
+After saving, fetch a test subscription and refresh it in the actual client. Updating the panel alone does not refresh a profile already imported into an application.
 
-The template editor preserves a finite numeric `leastLoad` tolerance in the saved template and subscription JSON. Xray clamps it internally when building the router settings; it does not rewrite the JSON. `0.01` means a 1% failed-probe threshold, `1` means 100%, and `0` disables this check. A saved value of `2` therefore remains `2` in the JSON while the core uses `1`. The editor preserves this native behavior without a redundant warning; invalid types and nonfinite values remain errors.
+## Storage and response time
 
-Snippet hover previews show the complete snippet JSON, including its array boundaries. Monaco's hover copy action copies that JSON without the introductory documentation or reference name. Ordinary schema documentation continues through the JSON language worker.
+Reliable storage needs enough free space, read/write capacity and durable writes. Network-backed block storage can be used when it meets those requirements.
 
-Network tests run in isolated Linux network namespaces, without altering the host or production firewall:
+Compare subscription response time, disk load, CPU and memory after startup and during concurrent refreshes. Cache warming can explain improvement after startup, but does not establish that persistent delays are resolved. Keep the database and its files intact while investigating. See [database operation](DATABASE-COMPATIBILITY.md).
 
-```sh
-sudo python3 ../Remnacust-installer/tests/test_node_firewall.py --network
-```
+## Freezing subscriptions
 
-They exercise real nftables input/forward filtering, preserved SSH and outbound replies, and quota boundary transitions. Backend tests cover host membership, explicit balancer assignments, template copies, source/port validation, shell injection, reviewed apply and read-only subscription preview. Redis tests cover leases, retries and stale ACKs.
+Freeze pauses normal access and preserves remaining subscription lifetime. Set a future automatic resume date before saving. The saved date is read-only during that freeze; an older frozen account without a deadline can receive one.
 
-## Downloading update diagnostics
+Manual activation resumes the remaining lifetime immediately. Automatic activation uses the scheduled deadline, including after panel downtime. Exhausted quota or lifetime does not grant access. Traffic resets do not unfreeze the account.
 
-Panel 1.1.7.91 and installer service 1.2.129 provide an authenticated technical log download for panel updates and subscription page operations. The browser button downloads `.log` output, not a JSON status summary. Only an interactive panel administrator can access the current job; API tokens cannot use this endpoint. Passwords and tokens are redacted from the download. Downloads are limited to the latest 1 MiB, with a truncation notice. The complete original remains in the root-only log directory until the next operation for that component or page.
+Deleting a registered device frees its registration slot. If new registration is allowed, it can register again. Use device blocking for a persistent prohibition. A disconnected node receives revocation when it reconnects; verify application when immediate revocation matters.
 
-`remnacust-panel-update.service` starts the local control API at boot. It does not automatically install a release when the server restarts. An explicit authenticated update request starts a separate worker. An interrupted worker is reported as failed rather than automatically repeating the operation.
+## Updates and logs
 
-# Frozen subscriptions
+Panel updates show stages, elapsed time and retained events. Remaining-time estimates require timing history. Closing the page does not cancel an update. Check the final result after the panel reconnects.
 
-Freeze a user to pause normal access and retain the exact remaining subscription lifetime. Activation resumes the saved remainder; an exhausted quota or zero remaining lifetime does not grant access. Extending a frozen subscription adds time, and editing its expiry sets the remainder from the time of that edit. Scheduled traffic resets still run. Bulk status changes synchronize device access through the per-user queue. The API reports `frozenAt`, `frozenRemainingMs`, and a projected `expireAt` for frozen users; export/import preserves the remaining duration. A periodic database rewrite is not required.
+Use the technical-log download for a **.log** file. The download retains the latest **1 MiB** with a truncation notice when needed; the complete original remains in the private server log directory until replaced. Keep local copies private and remove sensitive data before sharing them.
 
-## Quota tables
+Installer logs are under /opt/remnacust/logs/. A subsequent operation can replace the previous component log, so save it before retrying. Interactive system-package questions require SSH. A panel-initiated component update can defer package maintenance and record a notice; complete that maintenance separately. The server is not rebooted automatically.
 
-The `xera_quota_*` tables hold quota budgets and reservations, node state, usage deliveries, and recovery evidence and decisions. Some are accessed by database functions rather than directly by application code. Do not remove them based only on the object list or an empty current row count: backups, reconciliation and an interrupted recovery may still need them. Consolidation requires a versioned migration, compatibility checks and a tested rollback. Freezing a subscription adds a column to `users`; it does not add another quota table.
+See [installation](INSTALLER.md), [updates and node health](UPDATE-PROGRESS-AND-NODE-HEALTH.md), [backups](BACKUPS.md) and [node autonomy](NODE-AUTONOMY.md).
+
+## Restricted node access
+
+A node installed with a main-server source restriction accepts incoming ports and echo ping only from that source, except configured SSH access. Direct VPN clients must reach it through the intended gateway. Docker forwarding is covered; provider and existing firewall rules can still deny traffic.
+
+This restriction prevents public HTTP-01 renewal. Use the certificate method appropriate to that deployment and confirm SSH access before enabling it. Removing the container does not remove the host firewall policy. See the installer documentation before changing the guard.
+
+Technical API contracts and source checks for contributors are separate: [API](API.md) and [building](BUILDING.md).

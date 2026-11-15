@@ -19,7 +19,8 @@ const {frameDigest}=load(path.join(__dirname,'../src/common/host-policy/usage-re
 const banks=new QuotaBankRecoveryService(db,tx),service=new NativeQuotaRecoveryService(db,tx,banks);
 const actor=randomUUID(),node=randomUUID(),stream=randomUUID(),core=randomUUID(),key=randomUUID();let account,generation,frame;
 const hash=value=>crypto.createHash('sha256').update(value).digest('hex');
-const captures=new QuotaReceiptRecoveryService(db,tx,{usageArchive:async(_,request)=>{
+const captures=new QuotaReceiptRecoveryService(db,tx,{usageArchive:async(opts,request)=>{
+ assert.equal(opts.uuid,node,'Native recovery capture must retain the authoritative node UUID');
  const payload=Buffer.from(JSON.stringify({version:1,stream,acked:String(BigInt(frame.sequence)-1n),ackDigest:frame.sequence==='1'?'':'a'.repeat(64),pending:frame}));
  const original=Buffer.concat([Buffer.from('REMNACUST-USAGE-1\n'+hash(payload)+'\n'),payload]);
  const raw=Buffer.from(JSON.stringify({version:'remnacust-usage-archives-v1',...request,capturedAt:Date.now(),journal:{bytes:original.length,sha256:hash(original),data:original.toString('base64')}}));

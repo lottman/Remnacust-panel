@@ -18,9 +18,13 @@ class GetNodeByUuidQuery {
     }
 }
 const keys = Object.fromEntries(
-    ['NODE_SYSTEM_INFO', 'NODE_SYSTEM_STATS', 'NODE_USERS_ONLINE', 'NODE_XRAY_UPTIME'].map(
-        (name) => [name, (uuid) => `${name}:${uuid}`],
-    ),
+    [
+        'NODE_SYSTEM_INFO',
+        'NODE_SYSTEM_STATS',
+        'NODE_USERS_ONLINE',
+        'NODE_XRAY_UPTIME',
+        'NODE_TELEMETRY_SNAPSHOT',
+    ].map((name) => [name, (uuid) => `${name}:${uuid}`]),
 );
 const { NodeHealthCheckQueueProcessor } = load(file, {
     ...mocks,
@@ -155,6 +159,7 @@ test('an authenticated stopped core loses live metrics and retains configuration
                     keys.NODE_SYSTEM_STATS(current.data.nodeUuid),
                     keys.NODE_XRAY_UPTIME(current.data.nodeUuid),
                     keys.NODE_USERS_ONLINE(current.data.nodeUuid),
+                    keys.NODE_TELEMETRY_SNAPSHOT(current.data.nodeUuid),
                     `binding:${current.data.nodeUuid}`,
                 ],
             ]);
@@ -220,7 +225,7 @@ test('Stats 503 distinguishes cached API health from a confirmed stopped Core', 
         } else {
             assert.equal(f.writes.length, 1);
             assert.equal(f.writes[0].isConnected, false);
-            assert.equal(f.deleted[0].length, 4);
+            assert.equal(f.deleted[0].length, 5);
             assert.deepEqual(f.incidents, ['lost']);
         }
         assert.equal(f.starts.length, running ? 0 : 1);

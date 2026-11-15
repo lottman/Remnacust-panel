@@ -1,10 +1,5 @@
 # Remnacust Panel
 
-Configure the inline threshold under Geofiles: 1–250,000 addresses/conditions, default 20,000. Size and complexity safeguards remain and may switch delivery to DAT before the configured threshold. Manual Xray settings remain intact when automatic geofile delivery is disabled.
-
-Release **Panel/Page 1.1.7.125** belongs to Installer bundle **1.2.173**, with Node **1.1.36** and Core/WASM **1.1.21**. [Changes in this release](docs/releases/1.1.7.125.md). Installed servers require a separate update.
-
-
 [Русский](README.md) · [English](README.en.md)
 
 A Remnawave-based panel for managing VPN users, subscriptions, devices and Xray nodes. This repository contains the panel and a separate subscription website. The interface and built-in guide support RU/EN/FA/ZH.
@@ -33,18 +28,20 @@ docker compose up -d --no-build --pull never
 
 `restart` does not reload `.env`; recreate the container after changing its environment. Keep the original `APP_SECRET`, node keys and database credentials. Backups live under `backups/`, logs under `logs/`.
 
-## Stable versions
+## Component versions
 
-Matching bundle as of **November 13, 2026**. Components use separate version numbers.
+The bundle for this panel version. Components use separate version numbers; publishing a release does not update an installed server.
 
-| Component | Current stable release |
+| Component | Bundle version |
 | --- | --- |
-| Panel and subscription website | [1.1.7.125](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.125) |
-| Installer / Docker bundle | [1.2.173](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.173) |
-| Node agent | [1.1.36](https://github.com/lottman/Remnacust-node/releases/tag/v1.1.36) |
-| Core / editor validator | [1.1.21](https://github.com/lottman/Remnacust-core/releases/tag/v1.1.21), Xray v26.11.9 |
+| Panel and subscription website | [1.1.7.126](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.126) |
+| Installer / Docker bundle | [1.2.174](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.174) |
+| Node agent | [1.1.37](https://github.com/lottman/Remnacust-node/releases/tag/v1.1.37) |
+| Core / editor validator | [1.1.22](https://github.com/lottman/Remnacust-core/releases/tag/v1.1.22), Xray v26.11.9 |
 
 Use a matching bundle. Updating the panel does not automatically update remote Node, managed Core or the Linux kernel. Advanced limits depend on confirmed Node/Core capabilities, not just the displayed version. [Compatibility](docs/COMPATIBILITY.md).
+
+Find the running panel version in Build information and Documentation → Versions. Check installed agent and running Core versions in each node card. The bundle table describes the distribution: a previously selected managed core can remain active after a node-image update.
 
 ## Requirements
 
@@ -62,13 +59,13 @@ When sharing a server, leave headroom for all components. Panel/node requirement
 | --- | --- |
 | Installer 1.2.173 OS | Ubuntu 22.04 / 24.04 / 26.04 LTS and Debian 12 / 13; Linux amd64 or arm64 |
 | Containers | Docker Engine with a current Docker Compose v2 plugin; legacy `docker-compose` v1 is unsupported |
-| PostgreSQL | 14.24 / 15.19 / 16.15 / 17.11 / 18.6; 205 migrations; validation scope is listed in Compatibility |
+| PostgreSQL | For a new installation, use a supported major version with current fixes; this repository's Compose files use 18.7. See [database compatibility](docs/DATABASE-COMPATIBILITY.md) for the validation scope |
 | Prebuilt-image installation | Root, APT and GitHub/GHCR access, working DNS; no host Node.js or Go needed |
-| Building from source | Node.js 26.13 LTS; Go 1.27.4 separately for Core/editor |
+| Building from source | Node.js 26.13.1, pinned in CI; Go 1.27.4 separately for Core/editor |
 
 A separate minimum Engine or Compose minor version has not been established: use current official repository packages. The bundle selects database/cache images; installing those services directly on the host is normally unnecessary.
 
-PostgreSQL 14 support ends on **November 12, 2026**. For new installations use a supported major version with current fixes. Never open an old data volume with another PostgreSQL major version; migrate separately. [Database compatibility](docs/DATABASE-COMPATIBILITY.md) · [PostgreSQL policy](https://www.postgresql.org/support/versioning/).
+PostgreSQL 14 reached its scheduled end of support on **November 12, 2026**. Panel upgrades preserve the existing database image and volume, so your running database can differ from a new installation. Never open an old data volume with another PostgreSQL major version; migrate separately. [Database compatibility](docs/DATABASE-COMPATIBILITY.md) · [PostgreSQL policy](https://www.postgresql.org/support/versioning/).
 
 ## Installation
 
@@ -93,13 +90,31 @@ Add a separate website later with `sudo remnacust install-subscription-page`. It
 - Autoselect, geofile categories, DIRECT/REJECT and routes through configured groups.
 - Node health, statistics, sessions, backups and API tokens with individual permissions.
 
+Node control addresses share one list: IPv4, IPv6 and hostnames, up to 65 unique entries including disabled ones. Order sets priority, and a switch permits panel control through an address. Saved entries can be reordered or disabled; add a new address to correct an old one. The card shows the current control address. A configured SOCKS5 proxy applies to every fallback address; proxy failure never triggers a direct bypass. The proxy column shows configuration rather than connection health. [Node operation](docs/NODE-COMPATIBILITY.md).
+
+When every control address is off, the panel does not start or reconfigure the node through a hidden fallback. Concurrent changes to control settings are checked for conflicts: reload the form before saving again. Saved changes remain pending and are retried after a temporary delivery failure; check the resulting node state. Bulk profile and inbound assignments are saved together.
+
+Adaptive Xera HTTP offers Balanced (balanced), Low latency (low-latency) and Unstable network (unstable-network). They adjust concurrency using measured HTTP responses, data transfer and request waiting. When adaptive is present, all three fields are required: mode, minStreams and maxStreams. Integer bounds range from 1 to 32, with the minimum no greater than the maximum; the panel form offers 4/32. Limits count simultaneously active HTTP requests separately for each direction, destination and generation of transport settings. They do not count TCP connections or users, or distribute CPU load.
+
+Apply to JSON updates the draft; save the profile separately. For inbound client settings, then refresh the application subscription. Without adaptation, existing manual settings are preserved. Adjustment affects new requests only, without aborting or replaying requests already started. Clients need Remnacust Core 1.1.22 or later with Xera HTTP support. Profiles use measured feedback without AI training and cannot guarantee DPI invisibility or an advantage in any particular country.
+
+Manual JSON and extra, existing auto/stream-auto transfer modes, ALPN, padding and quotas are preserved.
+
+API management retains permission checks and administrator-only operation restrictions. Updates to the RU/EN/FA/ZH guide and security dependencies are prepared. [Panel/Page 1.1.7.126 changes](docs/releases/1.1.7.126.md).
+
 Standard Remnawave nodes and pages retain basic operation within their protocols and APIs. Advanced host/device restrictions and autoselect accounting require compatible custom Node/Core. Network failures or unknown compatibility do not authorize dropping configured restrictions. [Node compatibility](docs/NODE-COMPATIBILITY.md).
 
 ## Subscriptions, geofiles and CDN
 
+Template text remains editable while the host list is loading or unavailable. Tools that need hosts show their own loading or error state; failure to load the template itself requires retrying.
+
 Pool members and the hosts displaying an autoselect are configured separately. Select pool members by hosts or tags. Membership refreshes with the subscription; the client strategy selects a server for a new connection. Strategies vary by application and format. [Autoselect](docs/XRAY-AUTOSELECT.md).
 
+Distribute connections rotates new connections across available members without measuring CPU or spare bandwidth. Xray uses roundRobin with HTTP checks; Mihomo/Clash/Stash use load-balance with round-robin. sing-box explicitly uses urltest by HTTP response time and provides no round-robin distribution here. Existing connections keep their server.
+
 In additional subscription settings, enable base-path JSON and the geofile master switch (off by default). Then enable GEO separately from the template menu (⋯); the adjacent icon shows its state. New templates default to off. Upload a geofile from your computer or HTTPS into the shared library. Small sets are embedded into JSON; large sets can be delivered as combined DAT files to supported Happ/INCY clients. Full routing requires a JSON subscription: enable JSON on the base path or use `/json`. URI/Base64 cannot carry the complete ruleset. Save the template, then refresh the subscription in the application. [Geofiles](docs/GEOFILES.md).
+
+Configure the inline threshold under Geofiles: 1–250,000 addresses/conditions, default 20,000, evaluated separately for each final profile. Size and complexity safeguards may require DAT earlier. Manual Xray settings remain intact when automatic geofile delivery is disabled.
 
 Edit library files directly; presets are saved as copies with a new name. Add individual addresses below them and choose DIRECT, blocking or an existing VPN route.
 
@@ -115,7 +130,7 @@ sudo remnacust upgrade-node
 sudo remnacust upgrade-subscription-page --page-id ID
 ```
 
-Configuration and backups are saved before updates. The script updates system packages; package configuration questions require SSH. Before retrying a panel-initiated update, complete required package maintenance over SSH. The server is not rebooted automatically.
+Save configuration and an off-server backup before updating. Complete system-package maintenance that requires answers in an interactive SSH session; a component update from the panel can defer that stage and record a notice in its log. The server is not rebooted automatically.
 
 CLI logs: `/opt/remnacust/logs/installer-panel.log`, `installer-node.log`, `installer-subscription-page.log`. The next action for that component replaces its log. Failures display the path. Panel updates also retain `panel-update-<ID>.log`; keep the log directory private.
 
@@ -126,14 +141,12 @@ If a subscription temporarily fails to load, check logs, panel reachability, web
 ## Documentation
 
 - Guide: [RU](panel/frontend/public/documentation/guide-ru.md) · [EN](panel/frontend/public/documentation/guide-en.md) · [FA](panel/frontend/public/documentation/guide-fa.md) · [ZH](panel/frontend/public/documentation/guide-zh.md).
-- [Limits and speed](docs/HOST-LIMITS.md) · [API](docs/API.md) · [Compatibility](docs/COMPATIBILITY.md).
+- [Limits and speed](docs/HOST-LIMITS.md) · [Compatibility](docs/COMPATIBILITY.md) · [Autoselect](docs/XRAY-AUTOSELECT.md).
 - [Backups](docs/BACKUPS.md) · [User migration](docs/USER-MIGRATION.md) · [Node updates](docs/UPDATE-PROGRESS-AND-NODE-HEALTH.md).
-- [Development/building](docs/BUILDING.md) · [Subscription website](subscription-page/README.en.md) · [Release history](docs/releases).
+- [Subscription website](subscription-page/README.en.md) · [Subscription proxy on a separate server](docs/SUBSCRIPTION-PROXY.en.md).
 
-Release 1.1.7.113 fixes premature DAT downloads: the configured threshold (20,000 conditions by default) is evaluated separately for each final profile. Switching a large profile to DAT no longer switches smaller profiles. Independent safety budgets remain enforced. [Release changes](docs/releases/1.1.7.113.md). Installed servers require a separate update.
+For contributors and integrators: [CONTRIBUTING.md](CONTRIBUTING.md), [building and checks](docs/BUILDING.md), [API and permissions](docs/API.md), [release history](docs/releases). Technical references and historical validation are separate from the administrator guide.
 
 ## License and support
 
-AGPL-3.0 and Remnawave attribution are preserved. [NOTICE.md](NOTICE.md) · [Remnawave](https://github.com/remnawave) · [Project support](https://t.me/lottman).
-
-[Subscription proxy on a separate server](docs/SUBSCRIPTION-PROXY.en.md) · [Русский](docs/SUBSCRIPTION-PROXY.md)
+AGPL-3.0 and Remnawave attribution are preserved. Core, editor and third-party licenses are listed in [NOTICE.md](NOTICE.md). [Remnawave](https://github.com/remnawave) · [Project support](https://t.me/lottman).

@@ -229,6 +229,9 @@ model Nodes {
   notifyPercent           Int?    @default(0) @map("notify_percent")
   /// [NodeIps]
   ips                     Json    @default("[]") @map("ips")
+  /// [NodeControlAddresses]
+  controlAddresses        Json    @default("[]") @map("control_addresses")
+  controlRevision         String  @default(dbgenerated("gen_random_uuid()")) @map("control_revision") @db.Uuid
 
   providerUuid String? @map("provider_uuid") @db.Uuid
 

@@ -36,6 +36,7 @@ __exportStar(require("./last-connected-node.schema"), exports);
 __exportStar(require("./node-integration.schema"), exports);
 __exportStar(require("./node-plugin.schema"), exports);
 __exportStar(require("./node-ips.schema"), exports);
+__exportStar(require("./node-control-addresses.schema"), exports);
 __exportStar(require("./node-system.schema"), exports);
 __exportStar(require("./nodes.schema"), exports);
 __exportStar(require("./remnawave-settings"), exports);

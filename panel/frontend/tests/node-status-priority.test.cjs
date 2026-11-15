@@ -20,6 +20,8 @@ function load(file, mocks = {}) {
         if (Object.hasOwn(mocks, name)) return mocks[name]
         if (name === 'react') return pureReact
         if (name === '../node-status') return load('widgets/dashboard/nodes/node-status.ts')
+        if (name === '@shared/utils/node-metric') return load('shared/utils/node-metric.ts')
+        if (name === '@shared/utils/node-control-addresses') return load('shared/utils/node-control-addresses.ts')
         if (name.startsWith('@features/') && mocks.features) return mocks.features
         return require(name)
     } })
@@ -93,7 +95,7 @@ test('connected without finite positive uptime is limited; hardware telemetry is
         const result = widgets.full(node)
         assert.equal(result.props.children.props['aria-label'], 'xera-node-health.limited')
         assert.equal(result.props.children.props.color, 'blue')
-        assert.equal(result.props.label, 'xera-node-health.limited')
+        assert.equal(result.props.label, 'xera-node-health.limited-help')
         assert.equal(widgets.simple(node).props.children.props.color, 'blue')
     }
     assert.equal(health.getNodeHealth(base).level, 'limited')
@@ -164,7 +166,8 @@ test('node details icon follows disabled, connecting, diagnostics and limited re
         const result = NodeDetailsCardWidget.type({ node: { ...base, ...flags } })
         assert.equal(descendants(result).find(element => element.type === 'header').props.iconColor, color)
         if (color === 'blue') {
-            assert(content(result).includes('xera-node-health.limited'))
+            assert(content(result).includes('—'))
+            assert(!content(result).includes('0s'))
             assert(!content(result).includes('0s'))
             for (const invalid of ['NaNs', 'Infinitys', '-1s']) assert(!content(result).includes(invalid))
         }
@@ -175,7 +178,9 @@ test('limited badges and the status filter reuse the translated label and blue s
     const { getNodesTableColumns } = load('widgets/dashboard/nodes/nodes-datatable/use-nodes-table-widget.tsx', {
         '@shared/i18n/interface-text': { translateUiText: key => key },
         '@shared/ui/node-health/node-health': { NodeHealthBadge: 'health' },
-        '@shared/ui/node-ips': { NodeIpsCompactView: 'ips' }, '@shared/utils/bytes': {},
+        '@shared/ui/node-ips/node-control-addresses-compact-view': { NodeControlAddressesCompactView: 'ips' }, '@shared/utils/bytes': {},
+        '@shared/_modals/nodes/edit-node-modal/node-connection-route': load('shared/_modals/nodes/edit-node-modal/node-connection-route.ts'),
+        '@shared/utils/node-control-addresses': load('shared/utils/node-control-addresses.ts'),
         '@shared/utils/misc': {}, '@shared/utils/time-utils': {},
         '../node-status-badge': { NodeStatusBadgeWidget: 'status' }
     })
@@ -261,7 +266,8 @@ test('card stripe and uptime text distinguish confirmed, unconfirmed and offline
                 assert(!content(element).includes('design-ui.node-offline'))
             }
             if (expected === 'limited') {
-                assert(content(element).includes('xera-node-health.limited'))
+                assert(content(element).includes('—'))
+                assert(!content(element).includes('0s'))
                 assert(!content(element).includes('design-ui.node-offline'))
             }
         }

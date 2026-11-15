@@ -84,6 +84,7 @@
     "unknown-error": "Request failed with an unknown error."
   },
   "xera-node-health": {
+    "limited-help": "The panel has no fresh Xray uptime or some node measurements are unavailable. This does not prove that the VPN stopped. A dash means no measurement; a measured zero stays zero.",
     "title": "Node health",
     "healthy": "Healthy",
     "limited": "Limited data",
@@ -1523,7 +1524,10 @@
     "node-v": "Node V.",
     "provider": "Provider",
     "total-ram": "Total RAM",
-    "cpu-model": "CPU model"
+    "cpu-model": "CPU model",
+    "proxy": "Proxy",
+    "proxy-enabled": "Yes",
+    "proxy-disabled": "No"
   },
   "subpage-config-visual-editor": {
     "widget": {
@@ -1936,6 +1940,64 @@
       "note": "Note"
     }
   },
+  "xera-settings": {
+    "title": "Xera HTTP adaptive",
+    "target": "Existing Xera HTTP transport",
+    "inbounds": "Inbound client preferences",
+    "outbounds": "Outbound client transport",
+    "inbound-help": "Client preferences for host subscriptions generated from this inbound. Server request limits are configured separately.",
+    "outbound-help": "Client preferences for this outbound transport.",
+    "manual": "Manual transport settings remain unchanged until Apply.",
+    "enable": "Enable adaptive",
+    "mode": "Adaptive profile",
+    "mode-balanced": "Balanced",
+    "mode-low-latency": "Low latency",
+    "mode-unstable-network": "Unstable network",
+    "minimum": "Minimum active HTTP requests",
+    "maximum": "Maximum active HTTP requests",
+    "requests-help": "Per direction and destination in this transport configuration. Counts active HTTP requests; TCP connection counts can differ.",
+    "apply-help": "Apply writes adaptive settings into the JSON draft. Save the profile separately.",
+    "apply": "Apply in JSON",
+    "applied": "JSON draft updated. Save the profile to apply it.",
+    "requires-core": "Adaptive requires Remnacust Core 1.1.22 or newer in clients. The selected Core mode does not confirm client versions.",
+    "requires-custom": "Xera HTTP adaptive requires custom Core mode and Remnacust Core 1.1.22 or newer in clients.",
+    "mode-loading": "Reading the selected Core mode…",
+    "mode-error": "Core mode is unavailable. Visual Apply will be available after it is confirmed.",
+    "empty": "No existing Xera HTTP transport is available. Configure one in JSON to use this block.",
+    "invalid-json": "Fix parsing errors in the JSON draft before using these controls.",
+    "invalid-shape": "The configuration and transport settings must be JSON objects. Correct this section in JSON.",
+    "duplicate-keys": "Resolve duplicate object keys in JSON before using these controls.",
+    "invalid-adaptive": "Adaptive settings are incomplete or invalid. Correct them in JSON before editing visually.",
+    "invalid-bounds": "Use whole numbers from 1 to 32; minimum must not exceed maximum.",
+    "target-changed": "The selected transport changed. Select it again and retry.",
+    "document-changed": "The JSON draft changed. Review the current transport before applying again.",
+    "apply-failed": "Could not update the JSON draft. Review the editor and retry."
+  },
+  "node-control-addresses": {
+    "save-before-check": "Save connection changes before checking the saved management route.",
+    "conflict": "Connection settings changed elsewhere. Your edits are kept. Reloading connection settings replaces your address, port and proxy edits with the saved settings.",
+    "reload": "Replace my connection edits with saved settings",
+    "preferred": "First enabled address",
+    "add": "Add address",
+    "help": "The panel tries enabled addresses from top to bottom. Saved addresses stay in the list: disable them and add a new address to make a change.",
+    "proxy": "Configured SOCKS5 applies to every address. A proxy failure never falls back to a direct connection.",
+    "direct": "The panel uses a direct control connection.",
+    "all-off": "Panel management is off. This does not stop the VPN or the node core.",
+    "new": "New address",
+    "priority": "Priority {{index}}",
+    "toggle": "Use {{address}} for panel management",
+    "for-panel": "For panel",
+    "address": "Address {{index}}",
+    "placeholder": "IPv4, IPv6 or hostname",
+    "discard": "Discard new address {{address}}",
+    "up": "Move {{address}} up",
+    "down": "Move {{address}} down",
+    "max": "Maximum {{max}} retained addresses",
+    "required": "Enter an IP address or hostname.",
+    "invalid": "Enter a valid IPv4, IPv6 or hostname without protocol, port or path.",
+    "duplicate": "This address is already in the list. IPv6 spellings and hostname case are normalized.",
+    "invalid-list": "Use at most {{max}} unique addresses with a panel management toggle for each."
+  },
   "node-ips": {
     "primary-ip-description": "This is the main address. It is not shown in additional IP lists; its status is preserved.",
     "duplicate-ip-description": "This IP is already listed. Check its status or remove the duplicate.",
@@ -2048,7 +2110,7 @@
     "source-default": "Default",
     "default-placeholder": "Automatic",
     "default-description": "The node will use its default outbound route.",
-    "ip-description": "Pick one of the node IPs or type any address",
+    "ip-description": "Choose a configured node IP or enter a literal IPv4 or IPv6 address. Hostnames are not supported.",
     "interface-description": "Pick one of the node interfaces or type any name",
     "run": "Run check",
     "running": "Running geoCheck",
@@ -2064,6 +2126,8 @@
     }
   },
   "node-ssh": {
+    "host-not-configured": "Choose an IP address or hostname configured for this node.",
+    "management-off-hint": "Panel management is off for all addresses. You can still choose any configured address for this manual SSH session.",
     "title": "SSH terminal",
     "key-imported": "your key",
     "key-description-imported": "Signing uses the key you imported; it never leaves your browser. Make sure its public half is in authorized_keys on the server.",
@@ -2091,7 +2155,7 @@
     "key-description": "A dedicated key was generated for this node and never leaves your browser. Add the line below to authorized_keys on the server, then connect.",
     "authorized-keys": "authorized_keys entry",
     "host": "Host",
-    "host-hint": "Leave empty to use the node address",
+    "host-hint": "Choose a configured address. Leave empty to use the first enabled management address, or the first configured address when all are off.",
     "connect": "Connect",
     "hostkey-new-title": "Unknown host key",
     "hostkey-new-description": "This is the first time you connect to this host from this browser. Verify the fingerprint out of band before trusting it.",
@@ -2469,7 +2533,9 @@
       "A068": "You do not have permission for this action.",
       "A176": "A template of this type already has that name. Choose another name.",
       "A263": "To freeze this user, provide a future automatic resume date and time.",
-      "A264": "This freeze deadline has already been saved and cannot be changed. You can schedule a new freeze after activation."
+      "A264": "This freeze deadline has already been saved and cannot be changed. You can schedule a new freeze after activation.",
+      "A265": "A node can retain at most 65 control addresses. Disable saved addresses instead of replacing the list.",
+      "A266": "Connection settings changed. Reload the node before saving."
     },
     "statusCodes": {
       "A089_400": "LIMITED and EXPIRED are calculated automatically. Choose another status.",
@@ -3671,6 +3737,9 @@
     "sark": "Sark"
   },
   "autoselect": {
+    "strategy-loadBalance": "Distribute connections",
+    "load-balance-help": "New connections rotate across the available pool members. The client skips servers that fail its HTTP check. This does not measure CPU, memory or bandwidth; existing connections keep their server.",
+    "load-balance-singbox-help": "sing-box uses the urltest fallback: it selects an available server by HTTP response time. Round-robin connection distribution is not supported in this format.",
     "server-order": "Server order",
     "round-robin-summary": "New connections rotate through the servers. To use the next server only when the previous one is unavailable, choose Priority: first available.",
     "editing": "Editing",
@@ -4291,6 +4360,8 @@
     "remaining_many": "Due in {{count}} days"
   },
   "nodeErrors": {
+    "updatePending": "Settings saved. Application on the node is pending; the panel will retry the connection.",
+    "controlDisabled": "Node management is off: all addresses are disabled. A running VPN is not stopped.",
     "coreNotReady": "The node API is reachable, but Core is not ready yet. Wait for synchronization; if this continues, check the node logs.",
     "requestTimeout": "The node did not respond before the request deadline. Check its API reachability from the panel server.",
     "telemetryUnavailable": "The node API is reachable, but Xray statistics are unavailable. This does not confirm that the VPN stopped.",
@@ -4540,6 +4611,7 @@
     "clone-progress": "Cloning: {{done}} / {{total}}"
   },
   "operations": {
+    "result_managementDisabled": "Node management is off because all control addresses are disabled. A running VPN is not stopped.",
     "routeAttempts": "Attempts in this check",
     "routeTitle": "Management API route",
     "routeStatus_authenticated": "API answered",

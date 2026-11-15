@@ -82,6 +82,17 @@ export async function renderClientGroups(
     for (const group of groups) {
         const custom = group.remnawave as Record<string, unknown> | undefined;
         const { remnawave: _custom, ...clean } = group;
+        if (custom?.loadBalance !== undefined) {
+            if (typeof custom.loadBalance !== 'boolean')
+                throw new ClientPoolError('load-balance-strategy');
+            if (custom.loadBalance) {
+                if (clean.type !== (singbox ? 'urltest' : 'load-balance'))
+                    throw new ClientPoolError('load-balance-strategy');
+                if (!singbox && clean.strategy === undefined) clean.strategy = 'round-robin';
+                if (clean.url === undefined) clean.url = 'https://www.gstatic.com/generate_204';
+                if (clean.interval === undefined) clean.interval = singbox ? '5m' : 300;
+            }
+        }
         let members: string[] | undefined;
         try {
             members =

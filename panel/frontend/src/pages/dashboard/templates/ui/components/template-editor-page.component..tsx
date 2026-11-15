@@ -1,23 +1,24 @@
 import { ActionIcon, Group } from '@mantine/core'
-import { GetHostsCommand, GetSubscriptionTemplateCommand } from '@remnawave/backend-contract'
+import { GetSubscriptionTemplateCommand } from '@remnawave/backend-contract'
 import { SubscriptionTemplateEditorWidget } from '@widgets/dashboard/templates/subscription-template-editor'
 import { TbArrowBackUp } from 'react-icons/tb'
 import { useNavigate } from 'react-router'
 
 import { HelpActionIconShared } from '@shared/_modals/universal'
+import type { useGetHosts } from '@shared/api/hooks'
 import { ROUTES } from '@shared/constants'
 import { Page, PageHeaderShared } from '@shared/ui'
 import { getCoreLogoFromType } from '@shared/ui/get-core-logo-from-type'
 
 interface Props {
     editorType: 'json' | 'yaml'
-    hosts: GetHostsCommand.Response['response']
+    hostsQuery: ReturnType<typeof useGetHosts>
     template: GetSubscriptionTemplateCommand.Response['response']
     title: string
 }
 
 export const TemplateEditorPageComponent = (props: Props) => {
-    const { editorType, hosts, template, title } = props
+    const { editorType, hostsQuery, template, title } = props
     const navigate = useNavigate()
 
     let isHelpDrawerVisible = false
@@ -59,7 +60,7 @@ export const TemplateEditorPageComponent = (props: Props) => {
             <SubscriptionTemplateEditorWidget
                 key={template.uuid}
                 editorType={editorType}
-                hosts={hosts}
+                hostsQuery={hostsQuery}
                 template={template}
             />
         </Page>

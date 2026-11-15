@@ -1,10 +1,11 @@
+import { ERRORS } from '@contract/constants';
+
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 
 import { AxiosService } from '@common/axios';
 import { errorHandler } from '@common/helpers/error-handler.helper';
 import { RawCacheService } from '@common/raw-cache';
-import { ERRORS } from '@contract/constants';
 
 import { NodePortPlansService } from './node-port-plans.service';
 import { GetNodeByUuidQuery } from './queries/get-node-by-uuid/get-node-by-uuid.query';
@@ -48,22 +49,49 @@ export class NodeDiagnosticsService {
         else {
             const result = await this.axios.getSystemStats(node);
             routeBusy = !result.isOk && result.code === 'NODE_ROUTE_BUSY';
-            if (!result.isOk && result.code === ERRORS.NODE_ERROR_500_WITH_MSG.code) {
+            if (!result.isOk && result.code === 'NODE_ROUTE_DISABLED') {
+                checks.push({ id: 'connection', status: 'skipped', code: 'managementDisabled' });
+            } else if (
+                !result.isOk &&
+                (result.code === ERRORS.NODE_ERROR_500_WITH_MSG.code ||
+                    result.code === 'NODE_HTTP_503')
+            ) {
                 const health = await this.axios.getNodeHealth(node);
                 routeBusy = !health.isOk && health.code === 'NODE_ROUTE_BUSY';
                 if (health.isOk && health.response.isAlive === true) {
                     checks.push({ id: 'connection', status: 'passed', code: 'authenticated' });
-                    checks.push({ id: 'xray',
-                        status: health.response.xrayInternalStatusCached === true ? 'passed' : 'warning',
-                        code: health.response.xrayInternalStatusCached === true ? 'xrayRunning' : 'unsupported' });
+                    checks.push({
+                        id: 'xray',
+                        status:
+                            health.response.xrayInternalStatusCached === true
+                                ? 'passed'
+                                : health.response.xrayInternalStatusCached === false
+                                  ? 'failed'
+                                  : 'warning',
+                        code:
+                            health.response.xrayInternalStatusCached === true
+                                ? 'xrayRunning'
+                                : health.response.xrayInternalStatusCached === false
+                                  ? 'xrayMissing'
+                                  : 'unsupported',
+                    });
                     checks.push({ id: 'users', status: 'skipped', code: 'unsupported' });
-                } else checks.push({ id: 'connection', status: routeBusy ? 'warning' : 'failed',
-                    code: routeBusy ? 'busy' : transportFailure(health.isOk ? '' : health.message ?? '') });
+                } else
+                    checks.push({
+                        id: 'connection',
+                        status: routeBusy ? 'warning' : 'failed',
+                        code: routeBusy
+                            ? 'busy'
+                            : transportFailure(health.isOk ? '' : (health.message ?? '')),
+                    });
             } else if (!result.isOk)
                 checks.push({
                     id: 'connection',
                     status: result.code === 'NODE_ROUTE_BUSY' ? 'warning' : 'failed',
-                    code: result.code === 'NODE_ROUTE_BUSY' ? 'busy' : transportFailure(result.message ?? ''),
+                    code:
+                        result.code === 'NODE_ROUTE_BUSY'
+                            ? 'busy'
+                            : transportFailure(result.message ?? ''),
                 });
             else {
                 checks.push({ id: 'connection', status: 'passed', code: 'authenticated' });
@@ -116,7 +144,10 @@ export class NodeDiagnosticsService {
             });
         }
         const route = await this.axios.connectionRoute?.(node)?.catch(() => undefined);
-        const connectionRoute = routeBusy && route ? { ...route, status: 'unverified' as const, activeAddress: null } : route;
+        const connectionRoute =
+            routeBusy && route
+                ? { ...route, status: 'unverified' as const, activeAddress: null }
+                : route;
         return {
             nodeUuid: uuid,
             checkedAt: new Date().toISOString(),

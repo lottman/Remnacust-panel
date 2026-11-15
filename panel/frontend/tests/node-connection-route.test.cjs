@@ -83,9 +83,9 @@ function harness(language = 'en') {
             return require(name)
         }
     })
-    function render(uuid = 'node-a') {
+    function render(uuid = 'node-a', disabled = false) {
         cursor = refCursor = stateCursor = effectCursor = 0
-        tree = exports.NodeDiagnostics({ nodeUuid: uuid })
+        tree = exports.NodeDiagnostics({ nodeUuid: uuid, disabled })
         const html = markup(tree)
         for (const effect of effects) if (effect.pending) {
             effect.oldCleanup?.()
@@ -305,3 +305,34 @@ test('older diagnostics responses without connectionRoute still display their no
         assert.ok(!html.includes(h.translate('operations.routeInvalid')))
     } finally { h.close() }
 })
+
+test('mounting never probes and editing connection settings aborts a pending check and hides its report', async () => {
+    const h = harness()
+    try {
+        h.render()
+        assert.equal(h.requests.length, 0)
+        await h.click()
+        const pending = h.requests.at(-1)
+        const html = h.render('node-a', true)
+        assert.equal(pending.config.signal.aborted, true)
+        assert.ok(html.includes(h.translate('node-control-addresses.save-before-check')))
+        await h.flights.at(-1)
+        assert.ok(!h.render('node-a', true).includes('[2001:db8::10]:2222'))
+        h.render()
+        assert.equal(h.requests.length, 1)
+    } finally { h.close() }
+})
+
+for (const language of ['en', 'ru', 'fa', 'zh']) {
+    test(`${language}: management disabled diagnostics explain that a running VPN is retained`, async () => {
+        const h = harness(language)
+        try {
+            h.render(); await h.click()
+            await h.respond({ ...report(route({ status: 'disabled', activeAddress: null, attempts: [] })),
+                checks: [{ id: 'connection', status: 'skipped', code: 'managementDisabled' }] })
+            const html = h.render()
+            assert.ok(html.includes(h.translate('operations.result_managementDisabled')))
+            assert.ok(!html.includes('[2001:db8::10]:2222'))
+        } finally { h.close() }
+    })
+}

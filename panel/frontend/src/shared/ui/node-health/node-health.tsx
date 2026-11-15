@@ -23,10 +23,16 @@ export function NodeHealthBadge({ node }: { node: GetNodesCommand.Response['resp
 
     return (
         <Tooltip
-            label={t('xera-node-health.signal-coverage', {
-                checked: health.checkedSignals,
-                total: health.totalSignals
-            })}
+            label={
+                health.level === 'limited'
+                    ? t('xera-node-health.limited-help')
+                    : t('xera-node-health.signal-coverage', {
+                          checked: health.checkedSignals,
+                          total: health.totalSignals
+                      })
+            }
+            multiline
+            maw="min(300px, calc(100vw - 24px))"
         >
             <Badge color={healthColors[health.level]} size="sm" variant="light">
                 {t(`xera-node-health.${health.level}`)}

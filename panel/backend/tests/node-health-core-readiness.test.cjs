@@ -13,8 +13,9 @@ for (const match of fs.readFileSync(processor, 'utf8').matchAll(/from '([^']+)'/
     if (match[1].startsWith('@') || match[1].startsWith('.')) mocks[match[1]] = {};
 
 class UpdateNodeCommand {
-    constructor(value) {
+    constructor(value, expectedControlRevision) {
         this.value = value;
+        this.expectedControlRevision = expectedControlRevision;
     }
 }
 class GetNodeByUuidQuery {
@@ -23,9 +24,13 @@ class GetNodeByUuidQuery {
     }
 }
 const keys = Object.fromEntries(
-    ['NODE_SYSTEM_INFO', 'NODE_SYSTEM_STATS', 'NODE_USERS_ONLINE', 'NODE_XRAY_UPTIME'].map(
-        (name) => [name, (uuid) => `${name}:${uuid}`],
-    ),
+    [
+        'NODE_SYSTEM_INFO',
+        'NODE_SYSTEM_STATS',
+        'NODE_USERS_ONLINE',
+        'NODE_XRAY_UPTIME',
+        'NODE_TELEMETRY_SNAPSHOT',
+    ].map((name) => [name, (uuid) => `${name}:${uuid}`]),
 );
 const { NodeHealthCheckQueueProcessor } = load(processor, {
     ...mocks,
@@ -89,6 +94,11 @@ function fixture({
         {
             execute: async (command) => {
                 assert(command instanceof UpdateNodeCommand);
+                if (
+                    command.expectedControlRevision !== undefined &&
+                    state.controlRevision !== command.expectedControlRevision
+                )
+                    return { isOk: false, code: 'A266' };
                 trace.push('persist');
                 writes.push({ ...command.value });
                 Object.assign(state, command.value);
@@ -326,6 +336,112 @@ for (const [status, code] of [
         }
     });
 }
+
+test('actual inventory and bulk producer retain pending configuration after a failed enqueue and a connected poll', async () => {
+    const { NodesRepository } = load(
+        path.join(__dirname, '../src/modules/nodes/repositories/nodes.repository.ts'),
+        {
+            '@nestjs-cls/transactional': {
+                Transactional: () => (_target, _property, descriptor) => descriptor,
+            },
+            '@common/helpers/kysely/get-kysely-uuid': {},
+            '@common/helpers/kysely/values': {},
+            '../entities/nodes.entity': { NodesEntity: class {} },
+            '../nodes.converter': {},
+        },
+    );
+    const { QUEUES_NAMES } = load(path.join(__dirname, '../src/queue/queue.enum.ts'));
+    const { NodesQueuesService } = load(
+        path.join(__dirname, '../src/queue/_nodes/nodes-queues.service.ts'),
+        {
+            '@common/axios': {},
+            '@queue/queue.enum': { QUEUES_NAMES },
+            '@nestjs/bullmq': { InjectQueue: () => () => {} },
+            '@nestjs/common': { Injectable: () => (value) => value, Logger: class {} },
+        },
+    );
+    const faults = { start: true };
+    const f = fixture({ validStats: true, faults });
+    Object.assign(f.state, {
+        controlRevision: '11111111-1111-4111-8111-111111111111',
+        lastStatusMessage: '[NODE_UPDATE_PENDING]',
+        address: 'node.test',
+        port: 2222,
+        proxyUrl: null,
+    });
+    const repository = Object.create(NodesRepository.prototype);
+    let selected;
+    const query = {
+        select(fields) {
+            selected = fields;
+            return this;
+        },
+        where() {
+            return this;
+        },
+        async execute() {
+            return [Object.fromEntries(selected.map((field) => [field, f.state[field]]))];
+        },
+    };
+    repository.qb = {
+        kysely: {
+            selectFrom() {
+                return query;
+            },
+        },
+    };
+    const producer = Object.create(NodesQueuesService.prototype);
+    producer.nodeHealthCheckQueue = {
+        async addBulk(jobs) {
+            return jobs;
+        },
+    };
+    async function scheduledPoll() {
+        const [job] = await producer.checkNodeHealthBulk(
+            await repository.findEnabledNodesPartial(),
+        );
+        assert.equal(job.data.lastStatusMessage, '[NODE_UPDATE_PENDING]');
+        assert.equal(job.data.controlRevision, f.state.controlRevision);
+        assert.equal(job.data.connectionOpts.uuid, f.nodeUuid);
+        await f.worker.process({ ...job, timestamp: Date.now() });
+    }
+    await scheduledPoll();
+    assert.equal(f.state.isConnected, true);
+    assert.equal(f.calls.start, 1);
+    assert.equal(f.starts.length, 0);
+    faults.start = false;
+    await scheduledPoll();
+    assert.equal(f.calls.start, 2);
+    assert.deepEqual(f.starts, [{ nodeUuid: f.nodeUuid }]);
+    f.cache.set(f.retryKey, Date.now() + 60000);
+    await scheduledPoll();
+    assert.equal(f.calls.start, 2, 'pending configuration bypassed policy backoff');
+    const telemetry = f.cache.get(keys.NODE_TELEMETRY_SNAPSHOT(f.nodeUuid));
+    assert.equal(telemetry.controlRevision, f.state.controlRevision);
+    assert.equal(telemetry.xrayUptime, 120);
+});
+
+test('an old health job cannot change the edited state, evict fresh metrics or report a stale incident', async () => {
+    for (const options of [
+        { code: 'NETWORK_FAILURE', connected: true },
+        { cachedCore: false, connected: true },
+        { code: 'NODE_ROUTE_DISABLED', connected: true },
+        { validStats: true, connected: false },
+        { validStats: true, connected: true },
+    ]) {
+        const f = fixture(options);
+        f.state.controlRevision = '22222222-2222-4222-8222-222222222222';
+        f.job.data.controlRevision = '11111111-1111-4111-8111-111111111111';
+        await f.worker.process(f.job);
+        assert.deepEqual(f.writes, []);
+        assert.deepEqual(f.deleted, []);
+        assert.deepEqual(f.observations, []);
+        assert.deepEqual(f.events, []);
+        assert.deepEqual(f.starts, []);
+        const snapshot = f.cache.get(keys.NODE_TELEMETRY_SNAPSHOT(f.nodeUuid));
+        if (snapshot) assert.notEqual(snapshot.controlRevision, f.state.controlRevision);
+    }
+});
 
 test('valid Core stats recover a disconnected node with existing start and backoff rules', async () => {
     for (const retryAt of [undefined, Date.now() + 86_400_000, Date.now() - 60_000]) {

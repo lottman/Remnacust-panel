@@ -7,6 +7,58 @@ import { ClientPoolError } from './client-pool';
 type Config = Record<string, any>;
 export const MAX_PRIORITY_MEMBERS = 128;
 
+function materializeLoadBalance<T extends object>(input: T): T {
+    const source = input as Config;
+    const balances: Config[] = source.routing?.balancers ?? [];
+    if (!balances.some((item) => item.strategy?.settings?.remnacustLoadBalance !== undefined))
+        return input;
+    const config: Config = structuredClone(source);
+    const original: Config[] = config.outbounds ?? [];
+    const used = new Set([
+        ...original.map((item) => item.tag),
+        ...balances.map((item) => item.tag),
+        ...(config.inbounds ?? []).map((item: Config) => item.tag),
+    ]);
+    for (const [index, balance] of config.routing.balancers.entries()) {
+        const enabled = balance.strategy?.settings?.remnacustLoadBalance;
+        if (enabled === undefined) continue;
+        if (typeof enabled !== 'boolean' || (enabled && balance.strategy.type !== 'roundRobin'))
+            throw new ClientPoolError('load-balance-strategy');
+        delete balance.strategy.settings.remnacustLoadBalance;
+        if (!Object.keys(balance.strategy.settings).length) delete balance.strategy.settings;
+        if (!enabled) continue;
+        if (config.routing.script) throw new ClientPoolError('load-balance-routing-script');
+        if (
+            !Array.isArray(balance.selector) ||
+            !balance.selector.length ||
+            balance.selector.some((prefix: unknown) => typeof prefix !== 'string' || !prefix) ||
+            !original.some(
+                (outbound) =>
+                    typeof outbound.tag === 'string' &&
+                    balance.selector.some((prefix: string) => outbound.tag.startsWith(prefix)),
+            )
+        )
+            throw new ClientPoolError('load-balance-selector');
+        if (balance.fallbackTag) continue;
+        const tag =
+            'rc-balance-down-' +
+            createHash('sha256').update(`${index}:${balance.tag}`).digest('hex').slice(0, 16) +
+            '!';
+        if (
+            used.has(tag) ||
+            config.routing.balancers.some((other: Config) =>
+                other.selector?.some((prefix: string) => tag.startsWith(prefix)),
+            )
+        )
+            throw new ClientPoolError('load-balance-tag-conflict');
+        config.outbounds ??= [];
+        config.outbounds.push({ tag, protocol: 'blackhole' });
+        used.add(tag);
+        balance.fallbackTag = tag;
+    }
+    return config as T;
+}
+
 function materializeOrderedRoundRobin<T extends object>(input: T): T {
     const source = input as Config;
     if (
@@ -85,7 +137,7 @@ function materializeOrderedRoundRobin<T extends object>(input: T): T {
 }
 
 export function materializePriority<T extends object>(input: T): T {
-    const source = materializeOrderedRoundRobin(input) as Config;
+    const source = materializeOrderedRoundRobin(materializeLoadBalance(input)) as Config;
     if (!source.routing?.balancers?.some((item: Config) => item.strategy?.type === 'priority'))
         return source as T;
     if (source.routing.script) throw new ClientPoolError('priority-routing-script');

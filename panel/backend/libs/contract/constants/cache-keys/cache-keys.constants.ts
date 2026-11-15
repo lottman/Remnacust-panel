@@ -15,6 +15,7 @@ export const CACHE_KEYS = {
     NODE_USERS_ONLINE: (uuid: string) => `node_users_online:${uuid}`,
     NODE_VERSIONS: (uuid: string) => `node_versions:${uuid}`,
     NODE_XRAY_UPTIME: (uuid: string) => `node_xray_uptime:${uuid}`,
+    NODE_TELEMETRY_SNAPSHOT: (uuid: string) => `node_telemetry_snapshot:${uuid}`,
     RAW_INBOUND: (uuid: string) => `raw_inbound:${uuid}`,
     XRAY_JSON_TEMPLATE: (uuid: string) => `xray_json_template:${uuid}`,
     EXTERNAL_SQUAD_TEMPLATE_NAME: (uuid: string, type: TSubscriptionTemplateType) =>

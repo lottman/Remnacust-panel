@@ -388,7 +388,7 @@ export class QuotaRecoveryService {
             ReturnType<QuotaRecoveryReceiptService['acknowledgedQuiescenceSource']>
         > = null;
         if (prepared.basis.node && !prepared.basis.node.disabled) {
-            const nodeOpts = prepared.basis.node;
+            const nodeOpts = { ...prepared.basis.node, uuid: node };
             try {
                 const result = await this.axios.hostPolicy<unknown>(nodeOpts);
                 if (result.isOk) {

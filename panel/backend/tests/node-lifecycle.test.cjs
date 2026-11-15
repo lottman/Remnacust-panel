@@ -39,6 +39,7 @@ function fixture() {
         address: 'old.test',
         port: 3000,
         proxyUrl: null,
+        controlRevision: 'cccccccc-1111-4111-8111-111111111111',
         activeConfigProfileUuid: 'bbbbbbbb-1111-4111-8111-111111111111',
         activeInbounds: [{ tag: 'vless' }],
         isDisabled: true,
@@ -87,7 +88,7 @@ function fixture() {
         execute: async () => {
             assert.equal(active, true);
             assert(parts.join('').includes('FOR UPDATE'));
-            const [uuid, disabled, profile, address, port, proxy] = values;
+            const [uuid, disabled, profile, address, port, proxy, controlRevision] = values;
             const matches =
                 exists &&
                 uuid === node.uuid &&
@@ -95,7 +96,8 @@ function fixture() {
                 profile === node.activeConfigProfileUuid &&
                 address === node.address &&
                 port === node.port &&
-                proxy === node.proxyUrl;
+                proxy === node.proxyUrl &&
+                controlRevision === node.controlRevision;
             return { rows: matches ? [{ uuid }] : [] };
         },
     });
@@ -260,6 +262,23 @@ test('a newer stop generation survives an old acknowledgement', async () => {
     await f.processor.process(f.job(request));
     assert.equal(f.writes.length, 0);
     assert.equal((await f.deliveries.currentStopRequest(request)).generation, newer.generation);
+});
+
+test('canonical control ABA during a stop RPC cannot commit a stale disconnected acknowledgement', async () => {
+    const f = fixture();
+    const request = await f.deliveries.saveStopRequest(f.node.uuid, false);
+    f.node.controlAddresses = [{ address: 'a.test', enabled: true }];
+    f.axios.stopXray = async () => {
+        f.node.controlAddresses = [{ address: 'b.test', enabled: true }];
+        f.node.controlRevision = 'dddddddd-1111-4111-8111-111111111111';
+        f.node.controlAddresses = [{ address: 'a.test', enabled: true }];
+        f.node.controlRevision = 'eeeeeeee-1111-4111-8111-111111111111';
+        return { isOk: true, response: { isStopped: true } };
+    };
+    await f.processor.process(f.job(request));
+    assert.equal(f.writes.length, 0);
+    assert.equal(f.node.isConnected, true);
+    assert.equal(f.node.lastStatusMessage, 'previous');
 });
 
 test('delivery ownership serializes independent worker instances while allowing other nodes', async () => {

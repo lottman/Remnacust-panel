@@ -7,10 +7,10 @@ import type {
 } from '../ssh-terminal.types'
 
 import { Box, Button, Center, Loader } from '@mantine/core'
-import { GetNodeCommand } from '@remnawave/backend-contract'
+import { GetNodeCommand, normalizeNodeControlAddress } from '@remnawave/backend-contract'
 import { Terminal } from '@xterm/xterm'
 import { AnimatePresence, motion } from 'motion/react'
-import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react'
+import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbPlugConnected } from 'react-icons/tb'
 
@@ -21,6 +21,10 @@ import {
     OptimizationRunner,
     optimizationCommand
 } from '@shared/ui/forms/nodes/base-node-form/optimization-runner'
+import {
+    getConfiguredNodeAddresses,
+    getNodeSshDefaultAddress
+} from '@shared/utils/node-control-addresses'
 
 import type { INodeKeyInfo } from '@entities/ssh-vault'
 import { useSshVaultActions, useSshVaultStatus } from '@entities/ssh-vault'
@@ -53,11 +57,15 @@ export const SshSessionTab = (props: IProps) => {
     const [stage, setStage] = useState<TStage>('setup')
     const [connectStage, setConnectStage] = useState<TSshStage>('ticket')
     const [nodeKey, setNodeKey] = useState<INodeKeyInfo | null>(null)
-    const [target, setTarget] = useState<ISshTarget>({
-        host: node.address,
+    const configuredHosts = useMemo(
+        () => getConfiguredNodeAddresses(node),
+        [node.address, node.controlAddresses, node.ips]
+    )
+    const [target, setTarget] = useState<ISshTarget>(() => ({
+        host: getNodeSshDefaultAddress(node),
         port: 22,
         username: 'root'
-    })
+    }))
     const [hostKeyPrompt, setHostKeyPrompt] = useState<ISshHostKeyPrompt | null>(null)
     const [error, setError] = useState<null | string>(null)
     const [isImportingKey, setIsImportingKey] = useState(false)
@@ -101,8 +109,16 @@ export const SshSessionTab = (props: IProps) => {
     }, [size, stage, statusText, target, nodeUpgrade])
 
     const connect = useCallback(
-        async (nextTarget: ISshTarget) => {
+        async (requestedTarget: ISshTarget) => {
             teardown()
+            const host = normalizeNodeControlAddress(requestedTarget.host)
+            if (!host || !configuredHosts.includes(host)) {
+                setTarget(requestedTarget)
+                setError(t('node-ssh.host-not-configured'))
+                setStage('failed')
+                return
+            }
+            const nextTarget = { ...requestedTarget, host }
 
             const attempt = attemptRef.current
             const isStale = () => attempt !== attemptRef.current
@@ -226,7 +242,7 @@ export const SshSessionTab = (props: IProps) => {
             connectionRef.current = connection
             connection.open()
         },
-        [node.uuid, createTicket, vaultActions, teardown, t]
+        [node.uuid, configuredHosts, createTicket, vaultActions, teardown, t]
     )
 
     useEffect(() => {
@@ -313,8 +329,7 @@ export const SshSessionTab = (props: IProps) => {
                 <Box className={classes.screen}>
                     <ConnectionSetupScreen
                         initial={target}
-                        nodeAddress={node.address}
-                        nodeIps={node.ips}
+                        node={node}
                         nodeKey={nodeKey}
                         onConnect={(next) => void connect(next)}
                         onOpenKeyImport={() => setIsImportingKey(true)}

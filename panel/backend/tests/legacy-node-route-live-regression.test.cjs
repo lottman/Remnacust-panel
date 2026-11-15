@@ -153,7 +153,7 @@ test('exact published AxiosService discovers stock legacy nodes with strict mTLS
     }
     function client(row) {
         const memory = cache();
-        const registry = new NodeRouteRegistryService({ nodes: {
+        const registry = new NodeRouteRegistryService({ readRevision: async () => '11111111-1111-4111-8111-111111111111', nodes: {
             findMany: async () => [structuredClone(row)],
         } }, memory);
         let initialized = 0;

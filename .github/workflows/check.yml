@@ -63,7 +63,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           repository: lottman/Remnacust-node
-          ref: 13e0bd44380c79ad7563f438d7ff9362ba167b1d
+          ref: 4165675bfb6ce5ec576903b632b1206432242d5c
           path: node-repository
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
@@ -86,20 +86,24 @@ jobs:
       - run: node --test tests/*.test.cjs
       - name: Verify template cache generations across API workers
         run: node tests/subscription-template-cache-redis.integration.cjs
-      - name: Verify route inventory does not wait for the billing transaction pool
+      - name: Verify isolated route inventory and registered recovery identities
         env:
           REMNACUST_ROUTE_POOL_TEST_URL: postgresql://postgres@127.0.0.1:55439/rc_route_pool_ci
+          NODE_CONNECTION_IDENTITY_TEST_DATABASE_URL: postgresql://postgres@127.0.0.1:55439/remnacust_node_connection_identity_test
         run: |
           node - <<'NODE'
           const { Client } = require('pg');
           (async () => {
             const database = new Client({ connectionString: 'postgresql://postgres@127.0.0.1:55439/postgres' });
             await database.connect();
-            try { await database.query('CREATE DATABASE rc_route_pool_ci'); }
+            try {
+              await database.query('CREATE DATABASE rc_route_pool_ci');
+              await database.query('CREATE DATABASE remnacust_node_connection_identity_test');
+            }
             finally { await database.end(); }
           })().catch(error => { console.error(error); process.exitCode = 1; });
           NODE
-          node --test tests/node-route-pool.database.integration.cjs
+          node --test tests/node-route-pool.database.integration.cjs tests/node-connection-identity.test.cjs
       - name: Verify subscription domain access schema under a restricted owner
         env:
           DOMAIN_ACCESS_TEST_DATABASE_URL: postgresql://postgres@127.0.0.1:55439/postgres
@@ -132,7 +136,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           repository: lottman/Remnacust-core
-          ref: 1248215d28de7e08a8992d405c25d3b657a28e5a
+          ref: 8a2e1cc5fef327bc82e9f23da610fed5d121a766
           path: core-repository
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
         with:
@@ -147,6 +151,7 @@ jobs:
           python3 "$GITHUB_WORKSPACE/core-repository/tests/version.test.py" "$REMNACUST_AUTOPROBE_CORE"
           node tests/autoselect-http-probe.integration.cjs
           node tests/autoselect-http-probe.integration.cjs --burst
+          node tests/autoselect-load-balance.integration.cjs
       - name: Apply migrations to the disposable test database
         run: npm run migrate:deploy
         env:
@@ -495,6 +500,12 @@ jobs:
             }
           })().catch(error => { console.error(error); process.exitCode = 1; });
           NODE
+      - name: Verify canonical node addresses and committed control revisions
+        run: node --test tests/node-control-addresses.database.integration.cjs
+        env:
+          NODE_CONTROL_TEST_DATABASE_URL: ${{ env.DATABASE_URL }}
+          NODE_CONTROL_TEST_DISPOSABLE: '1'
+          NODE_CONTROL_TEST_REQUIRED: '1'
       - name: Verify geofile opt-in invariants and concurrent changes
         run: node --test tests/geofiles-opt-in.database.integration.cjs
         env:

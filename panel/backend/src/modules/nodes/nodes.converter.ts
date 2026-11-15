@@ -37,6 +37,8 @@ const entityToModel = (entity: NodesEntity): Nodes => {
         tags: entity.tags,
         integrationUuids: entity.integrationUuids,
         ips: entity.ips,
+        controlAddresses: entity.controlAddresses,
+        controlRevision: entity.controlRevision,
 
         activeConfigProfileUuid: entity.activeConfigProfileUuid,
         providerUuid: entity.providerUuid,

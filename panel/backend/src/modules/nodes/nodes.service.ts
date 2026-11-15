@@ -1,4 +1,3 @@
-import { rethrowXrayModeConflict } from '@common/xray-mode/xray-mode-conflict';
 import { ERRORS, EVENTS, NODES_BULK_ACTIONS } from '@contract/constants';
 import { Prisma } from '@prisma/client';
 
@@ -6,10 +5,11 @@ import { Injectable, Logger } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 
+import { NodeRouteRegistryService } from '@common/axios/node-route-registry.service';
 import { fail, ok, TResult } from '@common/types';
 import { atLeastOneDefined, mapDefined, wrapBigInt } from '@common/utils';
 import { toNano } from '@common/utils/nano';
-import { NodeRouteRegistryService } from '@common/axios/node-route-registry.service';
+import { rethrowXrayModeConflict } from '@common/xray-mode/xray-mode-conflict';
 
 import { NodeEvent } from '@integration-modules/notifications/interfaces';
 
@@ -27,6 +27,10 @@ import {
 } from './dtos';
 import { NodesEntity } from './entities';
 import { NodeResponseModel } from './models';
+import {
+    NodeControlAddressLimitError,
+    NodeControlRevisionConflictError,
+} from './node-control-addresses';
 import { NodesSystemCacheService } from './nodes-system-cache.service';
 import { NodesRepository } from './repositories/nodes.repository';
 
@@ -45,8 +49,11 @@ export class NodesService {
     ) {}
 
     private async invalidateRoutesAfterCommit(): Promise<void> {
-        try { await this.routeRegistry?.invalidate(); }
-        catch { this.logger.warn('Node saved; route cache refresh will retry'); }
+        try {
+            await this.routeRegistry?.invalidate();
+        } catch {
+            this.logger.warn('Node saved; route cache refresh will retry');
+        }
     }
 
     public async createNode(body: CreateNodeBodyDto): Promise<TResult<NodeResponseModel>> {
@@ -60,19 +67,25 @@ export class NodesService {
                 return configProfileResponse;
             }
             const inbounds = configProfileResponse.response.inbounds;
-            if (!configProfile.activeInbounds.every((uuid) =>
-                inbounds.some((inbound) => inbound.uuid === uuid),
-            )) {
+            if (
+                !configProfile.activeInbounds.every((uuid) =>
+                    inbounds.some((inbound) => inbound.uuid === uuid),
+                )
+            ) {
                 return fail(ERRORS.CONFIG_PROFILE_INBOUND_NOT_FOUND_IN_SPECIFIED_PROFILE);
             }
 
             const nodeEntity = new NodesEntity({
                 ...nodeData,
                 name: nodeData.name.trim(),
-                address: nodeData.address.trim(),
+                address: (nodeData.address ?? nodeData.controlAddresses![0].address).trim(),
                 isConnected: false,
                 isConnecting: false,
                 isDisabled: false,
+                lastStatusMessage:
+                    nodeData.controlAddresses?.some((row) => row.enabled) === false
+                        ? '[NODE_CONTROL_DISABLED]'
+                        : '[NODE_UPDATE_PENDING]',
                 trafficLimitBytes: wrapBigInt(nodeData.trafficLimitBytes),
                 consumptionMultiplier: mapDefined(nodeData.consumptionMultiplier, toNano),
                 nodeConsumptionMultiplier: mapDefined(nodeData.nodeConsumptionMultiplier, toNano),
@@ -80,23 +93,30 @@ export class NodesService {
             });
 
             // Prisma's nested write commits the node and all inbound links together.
-            const result = await this.nodesRepository.create(
-                nodeEntity,
-                [...new Set(configProfile.activeInbounds)],
-            );
+            const result = await this.nodesRepository.create(nodeEntity, [
+                ...new Set(configProfile.activeInbounds),
+            ]);
             // Creation is committed. An unavailable queue/cache must not turn it
             // into a failed create response and invite a duplicate-name retry.
             try {
                 await this.invalidateRoutesAfterCommit();
-                await this.nodesQueuesService.startNode({ nodeUuid: result.uuid });
+                if (result.controlAddresses?.some((row) => row.enabled) !== false)
+                    await this.nodesQueuesService.startNode({ nodeUuid: result.uuid });
             } catch {
-                this.logger.warn(`Node ${result.uuid} created; startup queue unavailable. Health checks will retry.`);
-                result.lastStatusMessage = 'Node created; startup is pending a health-check retry.';
+                this.logger.warn(
+                    `Node ${result.uuid} created; startup queue unavailable. Health checks will retry.`,
+                );
+                result.lastStatusMessage = '[NODE_UPDATE_PENDING]';
             }
             try {
-                this.eventEmitter.emit(EVENTS.NODE.CREATED, new NodeEvent(result, EVENTS.NODE.CREATED));
+                this.eventEmitter.emit(
+                    EVENTS.NODE.CREATED,
+                    new NodeEvent(result, EVENTS.NODE.CREATED),
+                );
             } catch {
-                this.logger.warn(`Node ${result.uuid} created; creation notification could not be emitted.`);
+                this.logger.warn(
+                    `Node ${result.uuid} created; creation notification could not be emitted.`,
+                );
             }
             const system = await this.nodesSystemCacheService.getOne(result.uuid).catch(() => ({
                 system: null,
@@ -257,7 +277,7 @@ export class NodesService {
 
     public async updateNode(body: UpdateNodeBodyDto): Promise<TResult<NodeResponseModel>> {
         try {
-            const { configProfile, ...nodeData } = body;
+            const { configProfile, controlRevision, ...nodeData } = body;
 
             const node = await this.nodesRepository.findByUUID(body.uuid);
             if (!node) {
@@ -268,73 +288,105 @@ export class NodesService {
                 const configProfileResponse = await this.queryBus.execute(
                     new GetConfigProfileByUuidQuery(configProfile.activeConfigProfileUuid),
                 );
+                if (!configProfileResponse.isOk) return configProfileResponse;
 
-                if (configProfileResponse.isOk) {
-                    const inbounds = configProfileResponse.response.inbounds;
+                const inbounds = configProfileResponse.response.inbounds;
 
-                    const areAllInboundsFromConfigProfile = configProfile.activeInbounds.every(
-                        (activeInboundUuid) =>
-                            inbounds.some((inbound) => inbound.uuid === activeInboundUuid),
-                    );
+                const areAllInboundsFromConfigProfile = configProfile.activeInbounds.every(
+                    (activeInboundUuid) =>
+                        inbounds.some((inbound) => inbound.uuid === activeInboundUuid),
+                );
 
-                    if (areAllInboundsFromConfigProfile) {
-                        await this.nodesRepository.removeInboundsFromNode(node.uuid);
-
-                        await this.nodesRepository.addInboundsToNode(
-                            node.uuid,
-                            configProfile.activeInbounds,
-                        );
-                    } else {
-                        return fail(ERRORS.CONFIG_PROFILE_INBOUND_NOT_FOUND_IN_SPECIFIED_PROFILE);
-                    }
+                if (!areAllInboundsFromConfigProfile) {
+                    return fail(ERRORS.CONFIG_PROFILE_INBOUND_NOT_FOUND_IN_SPECIFIED_PROFILE);
                 }
             }
 
-            const result = await this.nodesRepository.update({
-                ...nodeData,
-                name: nodeData.name ? nodeData.name.trim() : undefined,
-                address: nodeData.address ? nodeData.address.trim() : undefined,
-                trafficLimitBytes: wrapBigInt(nodeData.trafficLimitBytes),
-                consumptionMultiplier: mapDefined(nodeData.consumptionMultiplier, toNano),
-                nodeConsumptionMultiplier: mapDefined(nodeData.nodeConsumptionMultiplier, toNano),
-                activeConfigProfileUuid: configProfile?.activeConfigProfileUuid,
-            });
-            await this.invalidateRoutesAfterCommit();
-
-            if (!result) {
-                return fail(ERRORS.UPDATE_NODE_ERROR);
-            }
-
-            if (
+            const needsReconcile =
                 !node.isDisabled &&
                 atLeastOneDefined(
                     nodeData.integrationUuids,
                     nodeData.proxyUrl,
                     nodeData.port,
                     nodeData.address,
+                    nodeData.controlAddresses,
                     nodeData.activePluginUuid,
                     configProfile,
-                )
-            ) {
-                await this.nodesQueuesService.startNode({
-                    nodeUuid: result.uuid,
-                    force: nodeData.integrationUuids !== undefined,
-                });
+                );
+            const hasControlRoute =
+                (nodeData.controlAddresses ?? node.controlAddresses)?.some((row) => row.enabled) !==
+                false;
+            const result = await this.nodesRepository.update(
+                {
+                    ...nodeData,
+                    name: nodeData.name ? nodeData.name.trim() : undefined,
+                    address: nodeData.address ? nodeData.address.trim() : undefined,
+                    trafficLimitBytes: wrapBigInt(nodeData.trafficLimitBytes),
+                    consumptionMultiplier: mapDefined(nodeData.consumptionMultiplier, toNano),
+                    nodeConsumptionMultiplier: mapDefined(
+                        nodeData.nodeConsumptionMultiplier,
+                        toNano,
+                    ),
+                    activeConfigProfileUuid: configProfile?.activeConfigProfileUuid,
+                    ...(needsReconcile && hasControlRoute
+                        ? {
+                              isConnected: false,
+                              isConnecting: false,
+                              lastStatusMessage: '[NODE_UPDATE_PENDING]',
+                              lastStatusChange: new Date(),
+                          }
+                        : {}),
+                },
+                controlRevision,
+                configProfile?.activeInbounds,
+            );
+            await this.invalidateRoutesAfterCommit();
+
+            if (!result) {
+                return fail(ERRORS.UPDATE_NODE_ERROR);
             }
 
-            this.eventEmitter.emit(
-                EVENTS.NODE.MODIFIED,
-                new NodeEvent(result, EVENTS.NODE.MODIFIED),
-            );
+            if (needsReconcile && hasControlRoute) {
+                try {
+                    await this.nodesQueuesService.startNode({
+                        nodeUuid: result.uuid,
+                        force: nodeData.integrationUuids !== undefined,
+                    });
+                } catch {
+                    this.logger.warn(
+                        `Node ${result.uuid} saved; startup queue unavailable. Health checks will retry.`,
+                    );
+                }
+            }
+
+            try {
+                this.eventEmitter.emit(
+                    EVENTS.NODE.MODIFIED,
+                    new NodeEvent(result, EVENTS.NODE.MODIFIED),
+                );
+            } catch {
+                this.logger.warn(
+                    `Node ${result.uuid} saved; modification notification could not be emitted.`,
+                );
+            }
 
             return ok(
                 new NodeResponseModel(
                     result,
-                    await this.nodesSystemCacheService.getOne(result.uuid),
+                    await this.nodesSystemCacheService.getOne(result.uuid).catch(() => ({
+                        system: null,
+                        versions: null,
+                        xrayUptime: 0,
+                        onlineUsers: 0,
+                    })),
                 ),
             );
         } catch (error) {
             rethrowXrayModeConflict(error);
+            if (error instanceof NodeControlAddressLimitError)
+                return fail(ERRORS.NODE_CONTROL_ADDRESS_LIMIT);
+            if (error instanceof NodeControlRevisionConflictError)
+                return fail(ERRORS.NODE_CONTROL_REVISION_CONFLICT);
             if (
                 error instanceof Prisma.PrismaClientKnownRequestError &&
                 error.code === 'P2002' &&
@@ -527,19 +579,23 @@ export class NodesService {
                 return fail(ERRORS.CONFIG_PROFILE_INBOUND_NOT_FOUND_IN_SPECIFIED_PROFILE);
             }
 
-            await this.nodesRepository.updateMany(uuids, {
-                activeConfigProfileUuid: configProfile.activeConfigProfileUuid,
-            });
+            await this.nodesRepository.assignProfile(
+                uuids,
+                configProfile.activeConfigProfileUuid,
+                configProfile.activeInbounds,
+            );
             await this.invalidateRoutesAfterCommit();
 
-            await this.nodesRepository.removeInboundsFromNodes(uuids);
-
-            await this.nodesRepository.addInboundsToNodes(uuids, configProfile.activeInbounds);
-
-            await this.nodesQueuesService.startAllNodesByProfile({
-                profileUuid: configProfile.activeConfigProfileUuid,
-                emitter: 'bulkProfileModification',
-            }); // no need to restart all nodes
+            try {
+                await this.nodesQueuesService.startAllNodesByProfile({
+                    profileUuid: configProfile.activeConfigProfileUuid,
+                    emitter: 'bulkProfileModification',
+                });
+            } catch {
+                this.logger.warn(
+                    'Node profiles saved; startup queue unavailable. Health checks will retry.',
+                );
+            }
 
             return ok(true);
         } catch (error) {

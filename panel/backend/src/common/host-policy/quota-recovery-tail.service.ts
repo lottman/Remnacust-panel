@@ -112,7 +112,7 @@ export class QuotaRecoveryTailService {
         return (
             await sql<
                 INodeConnectionOpts & { id: string; instance: string | null }
-            >`SELECT n.id::text,n.address,n.port,n.proxy_url AS "proxyUrl",m.instance_uuid::text AS instance FROM nodes n
+            >`SELECT n.uuid,n.id::text,n.address,n.port,n.proxy_url AS "proxyUrl",m.instance_uuid::text AS instance FROM nodes n
             JOIN xera_quota_node_modes m ON m.node_uuid=n.uuid WHERE n.uuid=${node}::uuid AND NOT n.is_disabled`.execute(
                 this.db.kysely,
             )

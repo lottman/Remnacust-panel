@@ -4,12 +4,12 @@ import {
     Divider,
     Group,
     NumberInput,
+    PasswordInput,
     Popover,
     Select,
     Stack,
     TagsInput,
     Text,
-    TextInput,
     UnstyledButton
 } from '@mantine/core'
 import { UseFormReturnType } from '@mantine/form'
@@ -24,7 +24,7 @@ import {
     TbMapPin,
     TbPackage,
     TbSettings,
-    TbWorld
+    TbNetwork
 } from 'react-icons/tb'
 
 import { useGetNodePlugins, useGetNodesTags } from '@shared/api/hooks'
@@ -33,6 +33,7 @@ import { CopyableFieldShared } from '@shared/ui/copyable-field/copyable-field'
 import { FlagTextInput } from '@shared/ui/flag-picker/flag-picker'
 import { getLocalizedCountries } from '@shared/ui/forms/nodes/base-node-form/constants'
 import { SelectInfraProviderShared } from '@shared/ui/infra-billing/select-infra-provider/select-infra-provider.shared'
+import { NodeControlAddressesEditor } from '@shared/ui/node-ips/node-control-addresses-editor'
 import { TagInputPill } from '@shared/ui/tag-input-pill'
 
 import { CopyDockerComposeWidget } from './copy-docker-compose.widget'
@@ -71,7 +72,7 @@ export const CreateNodeStep1Connection = ({
     const handleNext = async () => {
         const nameErrors = form.validateField('name')
         const countryCodeErrors = form.validateField('countryCode')
-        const addressErrors = form.validateField('address')
+        const addressErrors = form.validateField('controlAddresses')
         const portErrors = form.validateField('port')
 
         if (
@@ -148,21 +149,8 @@ export const CreateNodeStep1Connection = ({
                         }}
                     />
 
+                    <NodeControlAddressesEditor form={form} key={form.key('controlAddresses')} />
                     <Group align="flex-start" gap="xs" w="100%">
-                        <TextInput
-                            key={form.key('address')}
-                            label={t('create-node-step-1-connection.domain-or-ip')}
-                            {...form.getInputProps('address')}
-                            leftSection={<TbWorld size={16} />}
-                            placeholder="192.168.1.1"
-                            required
-                            size="sm"
-                            styles={{
-                                label: { fontWeight: 500 }
-                            }}
-                            w="70%"
-                        />
-
                         <NumberInput
                             key={form.key('port')}
                             label={uiText('node-port-42b685c')}
@@ -179,7 +167,7 @@ export const CreateNodeStep1Connection = ({
                             styles={{
                                 label: { fontWeight: 500 }
                             }}
-                            w="25%"
+                            w="100%"
                         />
                     </Group>
 
@@ -226,6 +214,18 @@ export const CreateNodeStep1Connection = ({
 
                         <Popover.Dropdown>
                             <Stack gap="sm">
+                                <PasswordInput
+                                    key={form.key('proxyUrl')}
+                                    label={t('node-vitals.card.proxy-url')}
+                                    {...form.getInputProps('proxyUrl')}
+                                    description={t('node-vitals.card.proxy-url-description')}
+                                    leftSection={<TbNetwork size={16} />}
+                                    autoComplete="off"
+                                    visibilityToggleFocusable
+                                    visibilityToggleButtonProps={{
+                                        'aria-label': t('design-ui.toggle-password')
+                                    }}
+                                />
                                 <SelectInfraProviderShared
                                     selectedInfraProviderUuid={form.getValues().providerUuid}
                                     setSelectedInfraProviderUuid={(providerUuid) => {

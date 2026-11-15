@@ -12,9 +12,9 @@ import {
     syncHostPolicyForStart,
 } from '@common/host-policy/sync-host-policy-for-start';
 import { RawCacheService } from '@common/raw-cache';
-import { XrayModeService } from '@common/xray-mode/xray-mode.service';
 import { nodeReconciliationEnrollment } from '@common/utils/node-reconciliation';
 import { nodeSupportsPlugins } from '@common/utils/node-version';
+import { XrayModeService } from '@common/xray-mode/xray-mode.service';
 import { CACHE_KEYS, CACHE_KEYS_TTL } from '@libs/contracts/constants';
 
 import { ConfigProfileInboundEntity } from '@modules/config-profiles/entities';
@@ -96,7 +96,12 @@ export class StartAllNodesByProfileQueueProcessor extends WorkerHost {
                 return;
             }
 
-            const { response: nodes } = findNodesByCriteriaResult;
+            const nodes = findNodesByCriteriaResult.response.filter(
+                (node) =>
+                    node.controlAddresses === undefined ||
+                    node.controlAddresses.some((row) => row.enabled),
+            );
+            if (!nodes.length) return;
 
             return await this.hostPolicies.withCompatibilitySnapshot(
                 nodes.map((node) => node.uuid),
@@ -197,6 +202,7 @@ export class StartAllNodesByProfileQueueProcessor extends WorkerHost {
                             CACHE_KEYS.NODE_SYSTEM_STATS(node.uuid),
                             CACHE_KEYS.NODE_USERS_ONLINE(node.uuid),
                             CACHE_KEYS.NODE_XRAY_UPTIME(node.uuid),
+                            CACHE_KEYS.NODE_TELEMETRY_SNAPSHOT(node.uuid),
                         ]);
 
                         if (node.activeInbounds.length === 0) {
@@ -409,6 +415,7 @@ export class StartAllNodesByProfileQueueProcessor extends WorkerHost {
                         if (
                             !latest.isOk ||
                             latest.response.isDisabled ||
+                            latest.response.controlRevision !== node.controlRevision ||
                             latest.response.activeConfigProfileUuid !==
                                 node.activeConfigProfileUuid ||
                             latest.response.address !== node.address ||
@@ -525,10 +532,19 @@ export class StartAllNodesByProfileQueueProcessor extends WorkerHost {
                                 const current = await this.queryBus.execute(
                                     new GetNodeByUuidQuery(node.uuid),
                                 );
-                                if (!current.isOk || current.response.isDisabled) return;
+                                if (
+                                    !current.isOk ||
+                                    current.response.isDisabled ||
+                                    (current.response.controlAddresses !== undefined &&
+                                        !current.response.controlAddresses.some(
+                                            (row) => row.enabled,
+                                        ))
+                                )
+                                    return;
                                 if (
                                     current.response.activeConfigProfileUuid !==
                                         node.activeConfigProfileUuid ||
+                                    current.response.controlRevision !== node.controlRevision ||
                                     current.response.address !== node.address ||
                                     current.response.port !== node.port ||
                                     current.response.proxyUrl !== node.proxyUrl

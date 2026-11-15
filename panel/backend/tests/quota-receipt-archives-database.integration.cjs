@@ -14,6 +14,7 @@ const payload=Buffer.from(JSON.stringify({version:1,stream:I,acked:'1',ackDigest
 const valid=Buffer.concat([Buffer.from('REMNACUST-USAGE-1\n'+hash(payload)+'\n'),payload]);
 let original=valid,available=true,corruptNonce=false,gate=null,arrive=null,afterRPC=null,calls=0;
 const axios={usageArchive:async(opts,request)=>{
+ assert.equal(opts.uuid,N,'Archive capture must retain the authoritative node UUID');
  calls++;assert.equal(tx.isTransactionActive(),false);assert.equal(opts.address,'private-address');
  const intent=(await prisma.$queryRaw`SELECT actor_uuid,generation FROM xera_quota_receipt_requests WHERE request_id=${request.requestId}::uuid`)[0];assert.equal(intent.actor_uuid,A);assert.equal(intent.generation,request.generation);
  const pending=gate;if(pending){arrive();await pending;}
@@ -33,6 +34,7 @@ function suspend(){let release;gate=new Promise(resolve=>release=resolve);const 
  await prisma.$executeRaw`INSERT INTO users(id,username,short_uuid,expire_at,trojan_password,vless_uuid,ss_password) VALUES(901,'outbox-user','outbox-user',now(),'disposable-secret',${randomUUID()}::uuid,'disposable-secret')`;
  await prisma.$executeRaw`INSERT INTO user_traffic(id) VALUES(901)`;await quarantine();let gen=await generation();const money=await financial();
  const first=await service.capture(N,gen,A);assert.equal(first.state,'PRESENT');
+ assert.equal((await prisma.$queryRaw`SELECT metadata_digest FROM xera_quota_receipt_requests WHERE request_id=${first.requestId}::uuid`)[0].metadata_digest,'3f88121c0b5d80392c2ee4ca9bde60af8a644099951fa2694f0129be6d1eacfc','Adding transport UUID must preserve the legacy metadata fingerprint');
  let history=await service.history(N),entry=history.entries[0];assert.equal(entry.actorUuid,A);assert.equal(entry.metadata.stream,I);assert.equal(entry.metadata.pending.coreProcessId,oldCore);assert.equal(entry.metadata.pending.counters,2);assert.equal(entry.metadata.pending.sequence,'2');
  assert.deepEqual(gunzipSync((await service.download(N,first.requestId)).data),valid);assert.equal(await financial(),money);assert(!JSON.stringify(history).includes('private-'));
  for(let n=0;n<21;n++)await service.capture(N,gen,A);

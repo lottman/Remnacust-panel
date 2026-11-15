@@ -1,16 +1,16 @@
 [
   {
-    "id": "remnacust-core-1.1.21",
-    "build": "1.1.21",
-    "sourceCommit": "1248215d28de7e08a8992d405c25d3b657a28e5a",
+    "id": "remnacust-core-1.1.22",
+    "build": "1.1.22",
+    "sourceCommit": "8a2e1cc5fef327bc82e9f23da610fed5d121a766",
     "artifacts": {
       "amd64": {
-        "url": "https://github.com/lottman/Remnacust-core/releases/download/v1.1.21/remnacust-core-1.1.21-linux-amd64",
-        "sha256": "01f466f71a63339906d7d99bad297ea0c0363c41a88974a999eab843f08705a3"
+        "url": "https://github.com/lottman/Remnacust-core/releases/download/v1.1.22/remnacust-core-1.1.22-linux-amd64",
+        "sha256": "4e9e2aeb3aeea39d578157e10a4eba0b51e8f9072a98e3bdc5c59d7fb264d3eb"
       },
       "arm64": {
-        "url": "https://github.com/lottman/Remnacust-core/releases/download/v1.1.21/remnacust-core-1.1.21-linux-arm64",
-        "sha256": "7b484c858b6a61f4a2a120be66faf84fe1ded405283277be355c63a9dce89caf"
+        "url": "https://github.com/lottman/Remnacust-core/releases/download/v1.1.22/remnacust-core-1.1.22-linux-arm64",
+        "sha256": "df9f558b656fe9000e0bb9d587549da68e6e26fbca7588ac0cf8a0cd4e405dfb"
       }
     }
   }

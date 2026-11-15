@@ -5,8 +5,9 @@ const zod_1 = require("zod");
 const api_1 = require("../../api");
 const constants_1 = require("../../constants");
 const models_1 = require("../../models");
-const node_response_1 = require("./node.response");
+const node_control_addresses_schema_1 = require("../../models/node-control-addresses.schema");
 const socks_proxy_schema_1 = require("../../models/socks-proxy.schema");
+const node_response_1 = require("./node.response");
 var UpdateNodeCommand;
 (function (UpdateNodeCommand) {
     UpdateNodeCommand.url = api_1.REST_API.NODES.UPDATE;
@@ -17,9 +18,12 @@ var UpdateNodeCommand;
     });
     UpdateNodeCommand.RequestBodySchema = models_1.NodesSchema.pick({
         uuid: true,
-    }).extend({
+    })
+        .extend({
         name: zod_1.z.optional(zod_1.z.string().min(3).max(30)),
-        address: zod_1.z.optional(zod_1.z.string().min(2)),
+        address: node_control_addresses_schema_1.NodeControlAddressValueSchema.optional(),
+        controlAddresses: node_control_addresses_schema_1.NodeControlAddressesSchema.optional(),
+        controlRevision: zod_1.z.uuid().optional(),
         port: zod_1.z.optional(zod_1.z.number().min(1).max(65535)),
         proxyUrl: socks_proxy_schema_1.SocksProxyUrlSchema.nullish(),
         isTrafficTrackingActive: zod_1.z.optional(zod_1.z.boolean()),
@@ -54,6 +58,10 @@ var UpdateNodeCommand;
         integrationUuids: zod_1.z.optional(zod_1.z.array(zod_1.z.uuid()).max(20, 'Maximum 20 integrations')),
         note: zod_1.z.optional(zod_1.z.string().max(255).nullable()),
         ips: zod_1.z.optional(models_1.NodeIpsSchema),
+    })
+        .refine((value) => value.controlAddresses === undefined || value.controlRevision !== undefined, {
+        message: 'Reload the node connection settings before saving control addresses',
+        path: ['controlRevision'],
     });
     UpdateNodeCommand.ResponseSchema = node_response_1.NodeResponseSchema;
 })(UpdateNodeCommand || (exports.UpdateNodeCommand = UpdateNodeCommand = {}));

@@ -133,7 +133,7 @@ export class QuotaRecoveryReleaseService {
     }
     private async endpoint(node: string) {
         const row = (
-            await sql<INodeConnectionOpts>`SELECT address,port,proxy_url AS "proxyUrl" FROM nodes WHERE uuid=${node}::uuid AND NOT is_disabled FOR SHARE`.execute(
+            await sql<INodeConnectionOpts>`SELECT uuid,address,port,proxy_url AS "proxyUrl" FROM nodes WHERE uuid=${node}::uuid AND NOT is_disabled FOR SHARE`.execute(
                 this.db.kysely,
             )
         ).rows[0];

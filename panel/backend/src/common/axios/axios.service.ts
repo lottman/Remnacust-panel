@@ -7,6 +7,7 @@ import axios, {
     RawAxiosRequestHeaders,
 } from 'axios';
 import { createHash } from 'node:crypto';
+import http from 'node:http';
 import https from 'node:https';
 import { isIP } from 'node:net';
 import { promisify } from 'node:util';
@@ -42,8 +43,6 @@ import {
 
 import { TypedConfigService } from '@common/config/app-config/typed-config.service';
 import { RawCacheService } from '@common/raw-cache';
-import { XrayModeService } from '@common/xray-mode/xray-mode.service';
-import { customCoreConfigPaths, withCoreFlavor } from '@common/xray-mode/xray-mode-policy';
 import { prettyBytesUtil } from '@common/utils/bytes';
 import { deriveSni } from '@common/utils/certs';
 import { formatExecutionTime, getTime } from '@common/utils/get-elapsed-time';
@@ -53,6 +52,8 @@ import {
     nodeSupportsPlugins,
     nodeSupportsWrappedConfig,
 } from '@common/utils/node-version';
+import { customCoreConfigPaths, withCoreFlavor } from '@common/xray-mode/xray-mode-policy';
+import { XrayModeService } from '@common/xray-mode/xray-mode.service';
 
 import { GetNodeJwtCommand } from '@modules/keygen/commands/get-node-jwt';
 
@@ -97,12 +98,27 @@ import {
     INodeSystemStatsResponse,
 } from './axios.interfaces';
 import { MtlsSocksProxyAgent } from './mtls-agent';
-import { NodeControlRouteResolver, NodeRouteRegistry, NodeRouteBusyError, normalizeNodeAddress, nodeUsesLegacyHttp, routeCandidates, routeFailure,
-    type NodeRouteConfiguration, type ConnectionRoute } from './node-control-route';
+import {
+    NodeControlRouteResolver,
+    NodeRouteRegistry,
+    NodeRouteBusyError,
+    NodeRouteDisabledError,
+    normalizeNodeAddress,
+    nodeUsesLegacyHttp,
+    routeCandidates,
+    routeFailure,
+    routeRevision,
+    type NodeRouteConfiguration,
+    type ConnectionRoute,
+} from './node-control-route';
 
 const EMPTY_BODY: Readonly<Record<string, never>> = {};
 const MAX_NODE_ERROR_LENGTH = 2000;
 const ZSTD_HEADERS: RawAxiosRequestHeaders = { 'Content-Encoding': 'zstd' };
+
+type NodeCallResult<T> = TResult<T> & { nodeControlRevision?: string };
+type NodeVersionResult = NodeCallResult<string> & { strictPluginAck?: boolean };
+type NodeRequestOpts = INodeRequestOpts & { nodeControlRevision?: string };
 
 const zstdCompressAsync = promisify(zstdCompress);
 
@@ -142,10 +158,16 @@ export class AxiosService {
         string,
         { version: string; expires: number; strictPluginAck: boolean }
     >();
-    private readonly versionRequests = new Map<string, Promise<TResult<string>>>();
+    private readonly versionRequests = new Map<string, Promise<NodeVersionResult>>();
 
     private connectionKey(opts: INodeConnectionOpts): string {
-        return JSON.stringify([opts.address, opts.port, opts.proxyUrl]);
+        return JSON.stringify([opts.uuid, opts.address, opts.port, opts.proxyUrl]);
+    }
+
+    private versionKey(opts: INodeConnectionOpts, nodeControlRevision?: string): string {
+        return this.routeRegistry
+            ? JSON.stringify([opts.uuid, nodeControlRevision])
+            : this.connectionKey(opts);
     }
 
     private inboundTagsKey(opts: INodeConnectionOpts): string {
@@ -156,8 +178,10 @@ export class AxiosService {
         opts: INodeConnectionOpts,
         version: string,
         strictPluginAck?: boolean,
+        nodeControlRevision?: string,
     ): void {
-        const key = this.connectionKey(opts);
+        if (this.routeRegistry && !nodeControlRevision) return;
+        const key = this.versionKey(opts, nodeControlRevision);
         const previous = this.nodeVersions.get(key);
         this.nodeVersions.delete(key);
         if (this.nodeVersions.size >= 1000)
@@ -169,15 +193,52 @@ export class AxiosService {
         });
     }
 
-    private async getNodeVersion(opts: INodeConnectionOpts): Promise<TResult<string>> {
-        const key = this.connectionKey(opts);
+    private async readNodeControlRevision(
+        opts: INodeConnectionOpts,
+    ): Promise<TResult<string | undefined>> {
+        try {
+            const registered = await this.routeRegistry?.get(opts);
+            if (registered && (registered.isDisabled || routeCandidates(registered).length === 0))
+                throw new NodeRouteDisabledError();
+            return ok(registered && (registered.revision ?? routeRevision(registered)));
+        } catch (error) {
+            if (error instanceof NodeRouteBusyError || error instanceof NodeRouteDisabledError)
+                return { isOk: false, code: error.code, message: error.message };
+            return fail(
+                ERRORS.NODE_ERROR_WITH_MSG.withMessage(
+                    error instanceof Error
+                        ? error.message.slice(0, 500)
+                        : 'Node version context is unavailable',
+                ),
+            );
+        }
+    }
+
+    private async getNodeVersion(opts: INodeConnectionOpts): Promise<NodeVersionResult> {
+        const context = await this.readNodeControlRevision(opts);
+        if (!context.isOk) return context;
+        const nodeControlRevision = context.response;
+        const key = this.versionKey(opts, nodeControlRevision);
         const known = this.nodeVersions.get(key);
-        if (known && known.expires > Date.now()) return ok(known.version);
+        if (known && known.expires > Date.now())
+            return {
+                ...ok(known.version),
+                ...(nodeControlRevision && { nodeControlRevision }),
+                strictPluginAck: known.strictPluginAck,
+            };
         const existing = this.versionRequests.get(key);
         if (existing) return existing;
-        const request = this.getNodeHealth(opts)
-            .then((result): TResult<string> =>
-                result.isOk ? ok(result.response.nodeVersion) : result,
+        const request = this.getNodeHealth(opts, nodeControlRevision)
+            .then((result): NodeVersionResult =>
+                result.isOk
+                    ? {
+                          ...ok(result.response.nodeVersion),
+                          ...(result.nodeControlRevision && {
+                              nodeControlRevision: result.nodeControlRevision,
+                          }),
+                          strictPluginAck: result.response.pluginSyncAckSupported === true,
+                      }
+                    : result,
             )
             .finally(() => this.versionRequests.delete(key));
         this.versionRequests.set(key, request);
@@ -519,7 +580,9 @@ export class AxiosService {
     }
 
     private resolveAgent(proxyUrl: null | string, owner = 'unregistered'): https.Agent {
-        const key = createHash('sha256').update(JSON.stringify([owner, proxyUrl])).digest('hex');
+        const key = createHash('sha256')
+            .update(JSON.stringify([owner, proxyUrl]))
+            .digest('hex');
         const previous = this.nodeProxyAgents.get(owner);
         if (previous && previous !== key) {
             this.socksAgentCache.get(previous)?.destroy();
@@ -542,7 +605,8 @@ export class AxiosService {
             const oldest = this.socksAgentCache.keys().next().value!;
             this.socksAgentCache.get(oldest)?.destroy();
             this.socksAgentCache.delete(oldest);
-            for (const [node, agent] of this.nodeProxyAgents) if (agent === oldest) this.nodeProxyAgents.delete(node);
+            for (const [node, agent] of this.nodeProxyAgents)
+                if (agent === oldest) this.nodeProxyAgents.delete(node);
         }
         this.socksAgentCache.set(key, httpsAgent);
         this.nodeProxyAgents.set(owner, key);
@@ -592,8 +656,8 @@ export class AxiosService {
     }
 
     private async request<TResponse extends { response: unknown }>(
-        params: INodeRequestOpts,
-    ): Promise<TResult<TResponse['response']>> {
+        params: NodeRequestOpts,
+    ): Promise<NodeCallResult<TResponse['response']>> {
         const {
             label,
             opts,
@@ -610,6 +674,11 @@ export class AxiosService {
         } = params;
 
         const deadline = Date.now() + (timeout ?? 45_000);
+        const allowDisabled =
+            (label === 'STOP XRAY' && path === StopXrayCommand.url) ||
+            (label === 'NODE USAGE ARCHIVE' &&
+                method === 'post' &&
+                path === '/node/xray/usage-receipts/archive');
         let registered: NodeRouteConfiguration | undefined;
         let selected = opts;
         let dispatched = false;
@@ -621,22 +690,62 @@ export class AxiosService {
                     this.initialization = undefined;
                     throw error;
                 });
-                await this.initialization;
+                let initializationTimer: ReturnType<typeof setTimeout> | undefined;
+                try {
+                    await Promise.race([
+                        this.initialization,
+                        new Promise<never>((_resolve, reject) => {
+                            initializationTimer = setTimeout(
+                                () =>
+                                    reject(
+                                        new NodeRouteBusyError(
+                                            'Node credentials are temporarily unavailable',
+                                        ),
+                                    ),
+                                Math.max(1, deadline - Date.now()),
+                            );
+                        }),
+                    ]);
+                } finally {
+                    if (initializationTimer) clearTimeout(initializationTimer);
+                }
             }
             if (this.routeRegistry && !params.routeProbe) {
-                registered = await this.routeRegistry.get(opts);
+                registered = await this.routeRegistry.get(opts, Math.max(1, deadline - Date.now()));
+                if (
+                    params.nodeControlRevision !== undefined &&
+                    params.nodeControlRevision !==
+                        (registered.revision ?? routeRevision(registered))
+                )
+                    throw new NodeRouteBusyError('Node capabilities changed before dispatch');
                 this.nodeRoutes ??= new NodeControlRouteResolver(this.rawCacheService);
-                const shutdown = label === 'STOP XRAY' && path === StopXrayCommand.url;
-                if (registered.isDisabled && !shutdown) throw new Error('Node is disabled');
+                if (registered.isDisabled && !allowDisabled) throw new Error('Node is disabled');
                 const candidates = routeCandidates(registered);
-                selected = candidates.length === 1
-                    ? { ...registered, address: candidates[0] }
-                    : await this.nodeRoutes.select(registered, (candidate, budget) => this.probeRoute(candidate, budget), Math.max(1, deadline - Date.now()), shutdown);
-                if (!(await this.routeRegistry.isCurrent(registered, shutdown)))
-                    throw new NodeRouteBusyError('Node connection configuration changed before dispatch');
+                selected =
+                    candidates.length === 1
+                        ? { ...registered, address: candidates[0] }
+                        : await this.nodeRoutes.select(
+                              registered,
+                              (candidate, budget) => this.probeRoute(candidate, budget),
+                              Math.max(1, deadline - Date.now()),
+                              allowDisabled,
+                          );
+                if (
+                    !(await this.routeRegistry.isCurrent(
+                        registered,
+                        allowDisabled,
+                        Math.max(1, deadline - Date.now()),
+                    ))
+                )
+                    throw new NodeRouteBusyError(
+                        'Node connection configuration changed before dispatch',
+                    );
             }
             const url = this.getNodeUrl(selected.address, path, selected.port);
-            const httpsAgent = this.resolveAgent(selected.proxyUrl, registered?.uuid ?? opts.uuid ?? `${opts.address}:${opts.port}`);
+            const httpsAgent = this.resolveAgent(
+                selected.proxyUrl,
+                registered?.uuid ?? opts.uuid ?? `${opts.address}:${opts.port}`,
+            );
             let body: unknown = EMPTY_BODY;
             let headers: RawAxiosRequestHeaders | undefined;
 
@@ -646,7 +755,12 @@ export class AxiosService {
                 if (
                     useCompression &&
                     nodeSupportsCompression(
-                        this.nodeVersions.get(this.connectionKey(opts))?.version,
+                        this.nodeVersions.get(
+                            this.versionKey(
+                                registered ?? opts,
+                                registered && (registered.revision ?? routeRevision(registered)),
+                            ),
+                        )?.version,
                     )
                 ) {
                     const startTime = getTime();
@@ -674,8 +788,24 @@ export class AxiosService {
                 maxRedirects: 0,
                 ...(maxResponseBytes === undefined ? {} : { maxContentLength: maxResponseBytes }),
             };
+            if (selected.proxyUrl) {
+                const signal = config.signal as AbortSignal;
+                config.transport = {
+                    request: (
+                        options: http.RequestOptions,
+                        callback: (response: http.IncomingMessage) => void,
+                    ) => {
+                        const requestOptions = { ...options, signal, nodeControlSignal: signal };
+                        return (options.protocol === 'http:' ? http : https).request(
+                            requestOptions,
+                            callback,
+                        );
+                    },
+                };
+            }
             if (selected.proxyUrl && url.startsWith('http://')) config.httpAgent = httpsAgent;
-            if (Date.now() >= deadline) throw new Error('Node request deadline exceeded before dispatch');
+            if (Date.now() >= deadline)
+                throw new Error('Node request deadline exceeded before dispatch');
             dispatched = true;
 
             const response: AxiosResponse<TResponse> =
@@ -692,18 +822,55 @@ export class AxiosService {
                     ERRORS.NODE_ERROR_WITH_MSG.withMessage('Node returned an invalid API response'),
                 );
             }
-            if (registered && this.nodeRoutes) this.nodeRoutes.confirmed(registered, selected.address);
-            return ok(response.data.response);
+            if (
+                registered &&
+                this.routeRegistry &&
+                !(await this.routeRegistry.isCurrent(
+                    registered,
+                    allowDisabled,
+                    Math.max(1, deadline - Date.now()),
+                ))
+            )
+                throw new NodeRouteBusyError(
+                    'Node connection configuration changed during request',
+                );
+            if (registered && this.nodeRoutes)
+                this.nodeRoutes.confirmed(registered, selected.address);
+            return {
+                ...ok(response.data.response),
+                ...(registered && {
+                    nodeControlRevision: registered.revision ?? routeRevision(registered),
+                }),
+            };
         } catch (error) {
-            if (error instanceof NodeRouteBusyError) return { isOk: false, code: 'NODE_ROUTE_BUSY', message: error.message };
-            const optionalCapabilityReset = method === 'get' &&
-                ['/node/xray/host-policy', '/node/stats/runtime', '/node/xray/managed-core',
-                    '/node/xray/logs'].includes(path) && error instanceof AxiosError &&
-                !error.response && error.code === 'ECONNRESET';
-            if (dispatched && registered && this.nodeRoutes && error instanceof AxiosError &&
+            if (error instanceof NodeRouteBusyError || error instanceof NodeRouteDisabledError)
+                return { isOk: false, code: error.code, message: error.message };
+            const optionalCapabilityReset =
+                method === 'get' &&
+                [
+                    '/node/xray/host-policy',
+                    '/node/stats/runtime',
+                    '/node/xray/managed-core',
+                    '/node/xray/logs',
+                ].includes(path) &&
+                error instanceof AxiosError &&
+                !error.response &&
+                error.code === 'ECONNRESET';
+            if (
+                dispatched &&
+                registered &&
+                this.nodeRoutes &&
+                error instanceof AxiosError &&
                 !optionalCapabilityReset &&
-                (!error.response || error.response.status === 401 || error.response.status === 403)) {
-                await this.nodeRoutes.failed(registered, selected.address, routeFailure(error.code, error.response?.status)).catch(() => undefined);
+                (!error.response || error.response.status === 401 || error.response.status === 403)
+            ) {
+                await this.nodeRoutes
+                    .failed(
+                        registered,
+                        selected.address,
+                        routeFailure(error.code, error.response?.status),
+                    )
+                    .catch(() => undefined);
             }
             if (internalError) {
                 return this.failWithInternalError(label, error);
@@ -711,9 +878,12 @@ export class AxiosService {
 
             if (error instanceof AxiosError) {
                 if (error.code === 'ERR_CANCELED' && Date.now() >= deadline) {
-                    return { ...fail(ERRORS.NODE_ERROR_WITH_MSG.withMessage(
-                        'Node API request timed out',
-                    )), code: 'ETIMEDOUT' };
+                    return {
+                        ...fail(
+                            ERRORS.NODE_ERROR_WITH_MSG.withMessage('Node API request timed out'),
+                        ),
+                        code: 'ETIMEDOUT',
+                    };
                 }
                 if (logAxiosError) {
                     this.logger.error(`Error in Axios ${label} request: ${error.message}`);
@@ -754,21 +924,54 @@ export class AxiosService {
 
     private async probeRoute(opts: INodeConnectionOpts, timeout: number) {
         const deadline = Date.now() + timeout;
-        let result = await this.request<{ response: { isAlive?: unknown; nodeVersion?: unknown } }>({
-            label: 'GET NODE HEALTH', opts, path: GetNodeHealthCheckCommand.url,
-            method: 'get', timeout, routeProbe: true, logAxiosError: false, maxResponseBytes: 65536,
-        });
+        let result = await this.request<{ response: { isAlive?: unknown; nodeVersion?: unknown } }>(
+            {
+                label: 'GET NODE HEALTH',
+                opts,
+                path: GetNodeHealthCheckCommand.url,
+                method: 'get',
+                timeout,
+                routeProbe: true,
+                logAxiosError: false,
+                maxResponseBytes: 65536,
+            },
+        );
         if (!result.isOk && ['NODE_HTTP_404', 'NODE_HTTP_405'].includes(result.code ?? '')) {
             const legacy = await this.request<{ response: { isRunning?: unknown } }>({
-                label: 'GET LEGACY NODE STATUS', opts, path: '/node/xray/status', method: 'get',
-                timeout: Math.max(1, deadline - Date.now()), routeProbe: true, logAxiosError: false, maxResponseBytes: 65536,
+                label: 'GET LEGACY NODE STATUS',
+                opts,
+                path: '/node/xray/status',
+                method: 'get',
+                timeout: Math.max(1, deadline - Date.now()),
+                routeProbe: true,
+                logAxiosError: false,
+                maxResponseBytes: 65536,
             });
-            if (!legacy.isOk) return { healthy: false, code: routeFailure(legacy.code,
-                legacy.code?.startsWith('NODE_HTTP_') ? Number(legacy.code.slice(10)) : undefined) };
-            return { healthy: typeof legacy.response?.isRunning === 'boolean', code: 'invalid-response' as const };
+            if (!legacy.isOk)
+                return {
+                    healthy: false,
+                    code: routeFailure(
+                        legacy.code,
+                        legacy.code?.startsWith('NODE_HTTP_')
+                            ? Number(legacy.code.slice(10))
+                            : undefined,
+                    ),
+                };
+            return {
+                healthy: typeof legacy.response?.isRunning === 'boolean',
+                code: 'invalid-response' as const,
+            };
         }
-        if (!result.isOk) return { healthy: false, code: routeFailure(result.code,
-            result.code?.startsWith('NODE_HTTP_') ? Number(result.code.slice(10)) : undefined) };
+        if (!result.isOk)
+            return {
+                healthy: false,
+                code: routeFailure(
+                    result.code,
+                    result.code?.startsWith('NODE_HTTP_')
+                        ? Number(result.code.slice(10))
+                        : undefined,
+                ),
+            };
         return { healthy: result.response?.isAlive === true, code: 'invalid-response' as const };
     }
 
@@ -792,14 +995,23 @@ export class AxiosService {
         if (this.xrayModes) {
             const { mode } = await this.xrayModes.assertCurrent();
             if (mode === 'default' && customCoreConfigPaths(data.xrayConfig).length) {
-                return fail(ERRORS.NODE_ERROR_WITH_MSG.withMessage('The configuration requires custom Xray'));
+                return fail(
+                    ERRORS.NODE_ERROR_WITH_MSG.withMessage(
+                        'The configuration requires custom Xray',
+                    ),
+                );
             }
             data = {
                 ...data,
                 xrayConfig: withCoreFlavor(data.xrayConfig, mode),
                 internals: {
                     ...data.internals,
-                    hashes: { ...data.internals.hashes, emptyConfig: createHash('sha256').update(JSON.stringify([data.internals.hashes.emptyConfig, mode])).digest('hex') },
+                    hashes: {
+                        ...data.internals.hashes,
+                        emptyConfig: createHash('sha256')
+                            .update(JSON.stringify([data.internals.hashes.emptyConfig, mode]))
+                            .digest('hex'),
+                    },
                 },
             };
         }
@@ -807,6 +1019,7 @@ export class AxiosService {
             label: 'START XRAY',
             path: StartXrayCommand.url,
             opts,
+            nodeControlRevision: version.nodeControlRevision,
             data: nodeSupportsWrappedConfig(version.response) ? data : data.xrayConfig,
             compress: true,
             logAxiosError: false,
@@ -819,21 +1032,32 @@ export class AxiosService {
                 ERRORS.NODE_ERROR_WITH_MSG.withMessage('Node returned an invalid start response'),
             );
         }
-        if (!data.internals.forceRestart && !response.isStarted &&
+        if (
+            !data.internals.forceRestart &&
+            !response.isStarted &&
             typeof response.error === 'string' &&
-            response.error.includes('Global core settings changed; preserve current sessions')) {
+            response.error.includes('Global core settings changed; preserve current sessions')
+        ) {
             const [health, stats] = await Promise.all([
-                this.getNodeHealth(opts), this.getSystemStats(opts),
+                this.getNodeHealth(opts),
+                this.getSystemStats(opts),
             ]);
-            if (health.isOk && health.response.isAlive === true &&
+            if (
+                health.isOk &&
+                health.response.isAlive === true &&
                 health.response.xrayInternalStatusCached === true &&
-                stats.isOk && stats.response.xrayInfo !== null) {
-                response = { ...response, isStarted: true,
-                    version: health.response.xrayVersion ?? response.version };
+                stats.isOk &&
+                stats.response.xrayInfo !== null
+            ) {
+                response = {
+                    ...response,
+                    isStarted: true,
+                    version: health.response.xrayVersion ?? response.version,
+                };
             }
         }
         const actualVersion = response.nodeInformation?.version ?? version.response;
-        this.rememberVersion(opts, actualVersion ?? '');
+        this.rememberVersion(opts, actualVersion ?? '', undefined, result.nodeControlRevision);
         if (response.isStarted && !response.error) {
             const inbounds = data.xrayConfig.inbounds;
             if (Array.isArray(inbounds)) {
@@ -847,11 +1071,14 @@ export class AxiosService {
                 ]);
             }
         }
-        return ok({
-            ...response,
-            nodeInformation: { version: actualVersion || null },
-            system: response.system ?? null,
-        });
+        return {
+            ...result,
+            response: {
+                ...response,
+                nodeInformation: { version: actualVersion || null },
+                system: response.system ?? null,
+            },
+        };
     }
 
     public async stopXray(
@@ -865,13 +1092,21 @@ export class AxiosService {
         });
     }
 
-    public async getNodeHealth(opts: INodeConnectionOpts): Promise<
-        TResult<
+    public async getNodeHealth(
+        opts: INodeConnectionOpts,
+        nodeControlRevision?: string,
+    ): Promise<
+        NodeCallResult<
             GetNodeHealthCheckCommand.Response['response'] & {
                 profileGraphDeliverySupported?: boolean;
             }
         >
     > {
+        if (nodeControlRevision === undefined) {
+            const context = await this.readNodeControlRevision(opts);
+            if (!context.isOk) return context;
+            nodeControlRevision = context.response;
+        }
         let result = await this.request<{
             response: GetNodeHealthCheckCommand.Response['response'] & {
                 profileGraphDeliverySupported?: boolean;
@@ -880,6 +1115,7 @@ export class AxiosService {
             label: 'GET NODE HEALTH',
             path: GetNodeHealthCheckCommand.url,
             opts,
+            nodeControlRevision,
             method: 'get',
             logAxiosError: false,
             timeout: 15_000,
@@ -891,6 +1127,7 @@ export class AxiosService {
                 label: 'GET LEGACY NODE STATUS',
                 path: '/node/xray/status',
                 opts,
+                nodeControlRevision,
                 method: 'get',
                 logAxiosError: false,
                 timeout: 15_000,
@@ -903,12 +1140,15 @@ export class AxiosService {
                     ),
                 );
             }
-            result = ok({
-                isAlive: true,
-                xrayInternalStatusCached: legacy.response.isRunning,
-                xrayVersion: legacy.response.version,
-                nodeVersion: '',
-            });
+            result = {
+                ...legacy,
+                response: {
+                    isAlive: true,
+                    xrayInternalStatusCached: legacy.response.isRunning,
+                    xrayVersion: legacy.response.version,
+                    nodeVersion: '',
+                },
+            };
         }
         if (!result.isOk) return result;
         if (!result.response || typeof result.response.isAlive !== 'boolean') {
@@ -918,8 +1158,13 @@ export class AxiosService {
         }
         const version =
             typeof result.response.nodeVersion === 'string' ? result.response.nodeVersion : '';
-        this.rememberVersion(opts, version, result.response.pluginSyncAckSupported === true);
-        return ok({ ...result.response, nodeVersion: version });
+        this.rememberVersion(
+            opts,
+            version,
+            result.response.pluginSyncAckSupported === true,
+            result.nodeControlRevision,
+        );
+        return { ...result, response: { ...result.response, nodeVersion: version } };
     }
 
     public async getNodeXrayLogs(opts: INodeConnectionOpts): Promise<TResult<{ lines: string[] }>> {
@@ -1088,6 +1333,7 @@ export class AxiosService {
             label: 'ADD USER',
             path: AddUserCommand.url,
             opts,
+            nodeControlRevision: version.nodeControlRevision,
             data: userData,
             timeout: 20_000,
         });
@@ -1115,6 +1361,7 @@ export class AxiosService {
                 label: 'GET LEGACY INBOUND TAGS',
                 path: GetAllInboundsStatsCommand.url,
                 opts,
+                nodeControlRevision: version.nodeControlRevision,
                 data: { reset: false },
                 logAxiosError: false,
             });
@@ -1131,6 +1378,7 @@ export class AxiosService {
             label: 'DELETE LEGACY USER',
             path: RemoveUserCommand.url,
             opts,
+            nodeControlRevision: version.nodeControlRevision,
             data: { ...data, tags },
             logAxiosError: false,
             timeout: 20_000,
@@ -1203,6 +1451,7 @@ export class AxiosService {
             label: 'ADD USERS',
             path: AddUsersCommand.url,
             opts,
+            nodeControlRevision: version.nodeControlRevision,
             data,
             compress: true,
             timeout: 20_000,
@@ -1230,6 +1479,7 @@ export class AxiosService {
             label: 'DELETE USERS',
             path: RemoveUsersCommand.url,
             opts,
+            nodeControlRevision: version.nodeControlRevision,
             data,
             compress: true,
             internalError: true,
@@ -1270,7 +1520,7 @@ export class AxiosService {
         const version = await this.getNodeVersion(opts);
         if (!version.isOk) return version;
         if (!nodeSupportsPlugins(version.response)) {
-            if (data.plugin === null) return ok({ accepted: true });
+            if (data.plugin === null) return { ...version, response: { accepted: true } };
             return fail(
                 ERRORS.NODE_ERROR_WITH_MSG.withMessage(
                     'This node does not support plugins; Remnawave 2.7.0 or Remnacust 1.1.1 is required',
@@ -1281,6 +1531,7 @@ export class AxiosService {
             label: 'SYNC-NODE-PLUGINS',
             path: SyncCommand.url,
             opts,
+            nodeControlRevision: version.nodeControlRevision,
             data,
             compress: true,
             logAxiosError: false,
@@ -1291,9 +1542,13 @@ export class AxiosService {
             result.isOk &&
             result.response.accepted === false &&
             data.plugin === null &&
-            !this.nodeVersions.get(this.connectionKey(opts))?.strictPluginAck
+            !(
+                version.strictPluginAck ??
+                this.nodeVersions.get(this.versionKey(opts, result.nodeControlRevision))
+                    ?.strictPluginAck
+            )
         )
-            return ok({ accepted: true });
+            return { ...result, response: { accepted: true } };
         if (result.isOk && result.response.accepted !== true)
             return fail(
                 ERRORS.NODE_ERROR_WITH_MSG.withMessage(

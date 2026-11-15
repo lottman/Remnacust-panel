@@ -35,7 +35,7 @@ for (const name of ['xray.schema.json', 'xray.schema.cn.json']) {
         schema['x-remnacust-upstream']?.version !== 'v26.11.9' ||
         schema['x-remnacust-upstream']?.commit !== '676eaf66f8f05d4d558ee7a74b4736623d3feeb9' ||
         schema['x-remnacust-upstream']?.patchCommit !== null ||
-        schema['x-remnacust-upstream']?.coreVersion !== '1.1.21'
+        schema['x-remnacust-upstream']?.coreVersion !== '1.1.22'
     )
         throw new Error('Stale config schema')
 }
@@ -72,7 +72,7 @@ if (!globalThis.XrayParseConfig('{invalid json')) {
     throw new Error('Xray WASM accepted invalid JSON')
 }
 
-if (globalThis.XrayGetVersion() !== (stock ? '26.11.9' : '1.1.21')) {
+if (globalThis.XrayGetVersion() !== (stock ? '26.11.9' : '1.1.22')) {
     throw new Error(`Stale editor core: ${globalThis.XrayGetVersion()}`)
 }
 if (stock) {
@@ -164,6 +164,6 @@ for (const fixture of fixtures.invalid) {
 const schemaCases = await verifyXeraEditorSchemas(fixtures)
 
 console.log(
-    `Editor core 1.1.21 (upstream 26.11.9), ${fixtures.valid.length + fixtures.invalid.length} configuration fixtures and ${schemaCases} Monaco schema cases verified`
+    `Editor core 1.1.22 (upstream 26.11.9), ${fixtures.valid.length + fixtures.invalid.length} configuration fixtures and ${schemaCases} Monaco schema cases verified`
 )
 process.exit(0)

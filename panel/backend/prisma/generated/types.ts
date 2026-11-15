@@ -1,8 +1,7 @@
-import type { ColumnType } from 'kysely';
-export type Generated<T> =
-    T extends ColumnType<infer S, infer I, infer U>
-        ? ColumnType<S, I | undefined, U>
-        : ColumnType<T, T | undefined, T>;
+import type { ColumnType } from "kysely";
+export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
+  ? ColumnType<S, I | undefined, U>
+  : ColumnType<T, T | undefined, T>;
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
 export type Admin = {
@@ -258,6 +257,11 @@ export type Nodes = {
      * [NodeIps]
      */
     ips: Generated<object>;
+    /**
+     * [NodeControlAddresses]
+     */
+    controlAddresses: Generated<object>;
+    controlRevision: Generated<string>;
     providerUuid: string | null;
     viewPosition: Generated<number>;
     countryCode: Generated<string>;

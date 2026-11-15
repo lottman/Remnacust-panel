@@ -1335,4 +1335,14 @@ exports.ERRORS = {
         message: 'The saved automatic resume deadline cannot be changed while the user is frozen',
         httpCode: 409,
     },
+    NODE_CONTROL_ADDRESS_LIMIT: {
+        code: 'A265',
+        message: 'A node can retain at most 65 control addresses; disable existing addresses instead of replacing the list',
+        httpCode: 400,
+    },
+    NODE_CONTROL_REVISION_CONFLICT: {
+        code: 'A266',
+        message: 'Node connection settings changed; reload the node before saving',
+        httpCode: 409,
+    },
 };

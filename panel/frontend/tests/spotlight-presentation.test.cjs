@@ -27,12 +27,12 @@ const { NodeStatusBadgeWidget } = load('widgets/dashboard/nodes/node-status-badg
     '@shared/utils/node-policy-status': load('shared/utils/node-policy-status.ts')
 })
 const actions = []
-const addresses = load('shared/utils/node-addresses.ts')
+const addresses = load('shared/utils/node-control-addresses.ts')
 const { NodesSpotlightSearchWidget } = load('widgets/dashboard/nodes/nodes-spotlight-search/nodes-spotlight-search.widget.tsx', {
     '@shared/_modals/show-modal': { showModal: (...args) => actions.push(args) },
     '@shared/ui/universal-spotlight': { UniversalSpotlightContentShared: 'spotlight' },
     '../node-status-badge': { NodeStatusBadgeWidget },
-    '@shared/utils/node-addresses': addresses
+    '@shared/utils/node-control-addresses': addresses
 })
 const node = {
     uuid: '00000000-0000-4000-8000-000000000001', name: 'Example <node>', address: 'node.example.test',
@@ -106,5 +106,23 @@ test('real spotlight finds secondary IPv4 and IPv6 addresses without duplicating
     const missing = renderToStaticMarkup(React.createElement(MantineProvider, { env: 'test' },
         React.createElement(Spotlight, { actions: data, forceOpened: true, withinPortal: false, query: '203.0.113.99', nothingFound: 'No matching node', transitionProps: { duration: 0 } })))
     assert(missing.includes('No matching node'))
+    assert.deepEqual(original, before)
+})
+
+test('canonical disabled addresses are visible and searchable without being labelled authenticated', () => {
+    const original = { ...node, controlAddresses: [
+        { address: '2001:db8::99', enabled: true },
+        { address: 'disabled.example.test', enabled: false }
+    ], ips: [{ ip: '198.51.100.20', status: 'INBOUND' }] }
+    const before = structuredClone(original)
+    const data = NodesSpotlightSearchWidget({ nodes: [original] }).props.actions
+    for (const query of ['2001:db8::99', 'disabled.example.test', '198.51.100.20', node.address]) {
+        assert.ok(data[0].description.includes(query))
+        assert.ok(data[0].keywords.includes(query))
+        const html = renderToStaticMarkup(React.createElement(MantineProvider, { env: 'test' },
+            React.createElement(Spotlight, { actions: data, forceOpened: true, withinPortal: false, query, transitionProps: { duration: 0 } })))
+        assert.ok(html.includes('Example &lt;node&gt;'))
+    }
+    assert.ok(!data[0].description.includes('authenticated'))
     assert.deepEqual(original, before)
 })

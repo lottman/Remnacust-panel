@@ -6,7 +6,12 @@ export declare namespace UpdateNodeCommand {
     const RequestBodySchema: z.ZodObject<{
         uuid: z.ZodUUID;
         name: z.ZodOptional<z.ZodString>;
-        address: z.ZodOptional<z.ZodString>;
+        address: z.ZodOptional<z.ZodPipe<z.ZodString, z.ZodTransform<string, string>>>;
+        controlAddresses: z.ZodOptional<z.ZodArray<z.ZodObject<{
+            address: z.ZodPipe<z.ZodString, z.ZodTransform<string, string>>;
+            enabled: z.ZodBoolean;
+        }, z.core.$strip>>>;
+        controlRevision: z.ZodOptional<z.ZodUUID>;
         port: z.ZodOptional<z.ZodNumber>;
         proxyUrl: z.ZodOptional<z.ZodNullable<z.ZodString>>;
         isTrafficTrackingActive: z.ZodOptional<z.ZodBoolean>;
@@ -49,6 +54,12 @@ export declare namespace UpdateNodeCommand {
             address: z.ZodString;
             port: z.ZodNullable<z.ZodInt>;
             proxyUrl: z.ZodNullable<z.ZodString>;
+            hasProxy: z.ZodOptional<z.ZodBoolean>;
+            controlAddresses: z.ZodOptional<z.ZodArray<z.ZodObject<{
+                address: z.ZodPipe<z.ZodString, z.ZodTransform<string, string>>;
+                enabled: z.ZodBoolean;
+            }, z.core.$strip>>>;
+            controlRevision: z.ZodOptional<z.ZodUUID>;
             isConnected: z.ZodBoolean;
             isDisabled: z.ZodBoolean;
             isConnecting: z.ZodBoolean;

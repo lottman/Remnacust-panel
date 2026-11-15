@@ -360,9 +360,10 @@ export function observerFor(text: string, prefixes: string[], strategy: string):
 }
 
 export const needsProbes = (strategy: string) =>
-    ['leastPing', 'leastLoad', 'priority'].includes(strategy)
+    ['leastPing', 'leastLoad', 'priority', 'loadBalance'].includes(strategy)
 
 export const needsBalancerProbes = (balance: JsonObject) =>
+    balance.strategy?.settings?.remnacustLoadBalance === true ||
     needsProbes(balance.strategy?.type) ||
     (['random', 'roundRobin'].includes(balance.strategy?.type) &&
         typeof balance.fallbackTag === 'string' &&
@@ -371,6 +372,8 @@ export const needsBalancerProbes = (balance: JsonObject) =>
 export function setBalancerStrategy(text: string, index: number, strategy: string): string {
     const before = parseTemplate(text)
     const oldSelectors: string[] = before.routing.balancers[index].selector ?? []
+    const distribute = strategy === 'loadBalance'
+    if (distribute) strategy = 'roundRobin'
     let next = editTemplate(text, ['routing', 'balancers', index, 'strategy', 'type'], strategy)
     const previous = before.routing.balancers[index].strategy
     if (
@@ -385,10 +388,29 @@ export function setBalancerStrategy(text: string, index: number, strategy: strin
                 : undefined
         )
     if (
-        strategy === 'priority' &&
+        (strategy === 'priority' || distribute) &&
         oldSelectors.includes(before.routing.balancers[index].fallbackTag)
     )
         next = editTemplate(next, ['routing', 'balancers', index, 'fallbackTag'], undefined)
+    if (distribute) {
+        next = editTemplate(
+            next,
+            ['routing', 'balancers', index, 'strategy', 'settings', 'remnacustLoadBalance'],
+            true
+        )
+        for (const [poolIndex, pool] of poolsOf(before).entries())
+            if (
+                !pool.useHostRemarkAsTag &&
+                !pool.useHostTagAsTag &&
+                typeof pool.tagPrefix === 'string' &&
+                oldSelectors.some((prefix) => pool.tagPrefix!.startsWith(prefix))
+            )
+                next = editTemplate(
+                    next,
+                    ['remnawave', 'injectHosts', poolIndex],
+                    connectionPool(pool)
+                )
+    }
     const after = parseTemplate(next)
     if (needsBalancerProbes(after.routing.balancers[index]))
         return observerFor(next, oldSelectors, strategy)
@@ -783,6 +805,14 @@ export function validationPath(config: JsonObject): string | null {
         balanceTags.add(balancer.tag)
         if (!balancer.tag || !Array.isArray(balancer.selector) || !balancer.selector.length)
             return `routing.balancers.${index}`
+        const distribute = balancer.strategy?.settings?.remnacustLoadBalance
+        if (
+            distribute !== undefined &&
+            (typeof distribute !== 'boolean' ||
+                (distribute && balancer.strategy.type !== 'roundRobin'))
+        )
+            return `routing.balancers.${index}.strategy.settings.remnacustLoadBalance`
+        if (distribute && config.routing.script) return 'routing.script'
         if (balancer.strategy?.type === 'priority') {
             if (config.routing.script) return 'routing.script'
             if (balancer.selector.some((value: unknown) => typeof value !== 'string' || !value))

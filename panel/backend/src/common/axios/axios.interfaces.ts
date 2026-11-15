@@ -36,7 +36,7 @@ export type INodeSystemStatsResponse = Omit<
 };
 
 export interface INodeConnectionOpts {
-    uuid?: string;
+    uuid: string;
     address: string;
     port: number | null;
     proxyUrl: string | null;

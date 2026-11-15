@@ -14,13 +14,15 @@ module.exports = async ({prisma,db,tx,native,node,stream,core,generation,actor,d
  const status={applied:true,quotaRecoveryReceiptsSupported:true,quotaRecoveryPoliciesSupported:true,quotaFencesSupported:true,userQuotaRequired:true,quotaInstanceId:stream,policyRevision:'1',policyGeneration:randomUUID(),coreProcessId:core,quotaRecovery:{version:fence.version,record:fence}};
  let mode='lost',calls=[],entered,release;
  const axios={
-  hostPolicy:async()=>{assert.equal(tx.isTransactionActive(),false);return {isOk:true,response:structuredClone(status)};},
-  hostQuotaRecoveryPolicy:async(_,body)=>{
+  hostPolicy:async(opts)=>{assert.equal(opts.uuid,node,'Recovery status must retain the authoritative node UUID');assert.equal(tx.isTransactionActive(),false);return {isOk:true,response:structuredClone(status)};},
+  hostQuotaRecoveryPolicy:async(opts,body)=>{
+   assert.equal(opts.uuid,node,'Held policy delivery must retain the authoritative node UUID');
    assert.equal(tx.isTransactionActive(),false);
    status.policyRevision=body.policyRevision;status.policyGeneration=randomUUID();
    return {isOk:true,response:{requestId:body.requestId,coreProcessId:body.coreProcessId,instance:body.instance,policyRevision:body.policyRevision,policyGeneration:status.policyGeneration,quotaRecovery:structuredClone(status.quotaRecovery)}};
   },
-  usageRecoveryAck:async(_,body)=>{
+  usageRecoveryAck:async(opts,body)=>{
+   assert.equal(opts.uuid,node,'Receipt delivery must retain the authoritative node UUID');
    assert.equal(tx.isTransactionActive(),false);calls.push(structuredClone(body));
    const job=(await prisma.$queryRaw`SELECT source FROM xera_quota_recovery_receipt_jobs WHERE request_id=${body.requestId}::uuid`)[0];
    assert.equal(job.source.receipt.digest,ackSource.receipt.digest);

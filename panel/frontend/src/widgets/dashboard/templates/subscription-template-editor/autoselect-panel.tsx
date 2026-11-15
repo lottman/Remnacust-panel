@@ -499,7 +499,10 @@ function BalancerCard({
     edit: Edit
 }) {
     const { t } = useTranslation()
-    const strategy = balance.strategy?.type ?? 'random'
+    const strategy =
+        balance.strategy?.settings?.remnacustLoadBalance === true
+            ? 'loadBalance'
+            : (balance.strategy?.type ?? 'random')
     const values: string[] = Array.isArray(balance.selector) ? balance.selector : []
     const patch = (field: (string | number)[], value: unknown) =>
         edit((text) => editTemplate(text, ['routing', 'balancers', index, ...field], value))
@@ -532,12 +535,14 @@ function BalancerCard({
                     value={strategy}
                     allowDeselect={false}
                     data={[
+                        'loadBalance',
                         'random',
                         'roundRobin',
                         'leastPing',
                         'leastLoad',
                         'priority',
                         ...(![
+                            'loadBalance',
                             'random',
                             'roundRobin',
                             'leastPing',
@@ -555,6 +560,11 @@ function BalancerCard({
                     }
                 />
             </div>
+            {strategy === 'loadBalance' && (
+                <Text size="sm" c="dimmed">
+                    {t('autoselect.load-balance-help')}
+                </Text>
+            )}
             {strategy === 'leastPing' && (
                 <Text size="sm" c="dimmed">
                     {t('autoselect.response-time-help')}

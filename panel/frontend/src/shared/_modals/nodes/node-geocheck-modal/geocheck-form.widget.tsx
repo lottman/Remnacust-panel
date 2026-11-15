@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next'
 import { TbAffiliate, TbPlayerPlay, TbRoute, TbWorldSearch } from 'react-icons/tb'
 
 import { NodeIpStatusIcon, resolveNodeIpStatusMeta } from '@shared/ui/node-ips'
+import { getNodeLiteralIps, normalizeNodeLiteralIp } from '@shared/utils/node-control-addresses'
 
 type TSource = 'default' | 'interface' | 'ip'
 
@@ -31,9 +32,15 @@ export const GeocheckFormWidget = (props: IProps) => {
     const [ip, setIp] = useState('')
     const [networkInterface, setNetworkInterface] = useState('')
 
-    const ipOptions = useMemo(() => node.ips.map((item) => item.ip), [node.ips])
+    const ipOptions = useMemo(
+        () => getNodeLiteralIps(node),
+        [node.controlAddresses, node.address, node.ips]
+    )
     const ipStatuses = useMemo(
-        () => new Map(node.ips.map((item) => [item.ip, item.status])),
+        () =>
+            new Map(
+                node.ips.map((item) => [normalizeNodeLiteralIp(item.ip) ?? item.ip, item.status])
+            ),
         [node.ips]
     )
     const interfaceOptions = useMemo(() => node.system?.info.networkInterfaces ?? [], [node.system])
@@ -41,12 +48,14 @@ export const GeocheckFormWidget = (props: IProps) => {
     const value =
         source === 'ip' ? ip.trim() : source === 'interface' ? networkInterface.trim() : ''
 
-    const selectedIpStatus = ipStatuses.get(ip.trim())
-    const isDisabled = source !== 'default' && !value
+    const literalIp = normalizeNodeLiteralIp(ip)
+    const selectedIpStatus = literalIp ? ipStatuses.get(literalIp) : undefined
+    const isDisabled = source === 'ip' ? literalIp === null : source !== 'default' && !value
 
     const handleStart = () => {
+        if (isDisabled) return
         if (source === 'ip') {
-            onStart({ ip: value })
+            onStart({ ip: literalIp! })
             return
         }
 
@@ -84,6 +93,7 @@ export const GeocheckFormWidget = (props: IProps) => {
             {source === 'ip' && (
                 <Autocomplete
                     data={ipOptions}
+                    error={ip.trim() && !literalIp ? t('node-ips.invalid-ip') : undefined}
                     description={t('node-geocheck.ip-description')}
                     label={t('common.field.ip-address')}
                     leftSection={

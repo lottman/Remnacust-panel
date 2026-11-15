@@ -7,6 +7,7 @@ const ts = require('typescript');
 function harness(template, editorType = 'json') {
     const states = [], refs = [];
     const settings = { isSuccess: true, data: { geofilesSystemEnabled: true, serveJsonAtBaseSubscription: true } };
+    const hostsQuery = { data: [], isError: false };
     let stateIndex, refIndex;
     const recoveries = [];
     const components = new Proxy({}, { get: (_, name) => name });
@@ -18,7 +19,7 @@ function harness(template, editorType = 'json') {
                 return [states[index], value => { states[index] = value; }];
             },
             useRef(initial) { const index = refIndex++; return refs[index] ??= { current: initial }; },
-            useMemo: callback => callback(), useDeferredValue: value => value, useLayoutEffect() {},
+            useMemo: callback => callback(), useDeferredValue: value => value, useLayoutEffect() {}, Suspense: 'Suspense',
         },
         '@shared/api/hooks/subscription-settings/subscription-settings.query.hooks': { useGetSubscriptionSettings: () => settings },
         'react-i18next': { useTranslation: () => ({ t: key => key }) },
@@ -26,6 +27,13 @@ function harness(template, editorType = 'json') {
             Tabs: Object.assign(() => {}, { List: 'TabList', Tab: 'Tab', Panel: 'TabPanel' }) },
         '@shared/hooks/use-editor-recovery': { useEditorRecovery: () => ({ track() {}, saved: async (...args) => { recoveries.push(args); }, entry: null, status: 'ready' }) },
         '@shared/hooks': { usePseudoFullscreen: () => ({}), useViewportFillHeight: () => ({}) },
+        '@shared/ui/page-query-error': { hasPageQueryError: queries => queries.some(query => query.isError && query.data === undefined), PageQueryError: 'PageQueryError' },
+        '@shared/utils/lazy-with-recovery': { lazyWithRecovery: load => {
+            for (const [file, name] of [['client-autoselect-panel', 'ClientAutoselectPanel'], ['autoselect-panel', 'AutoselectPanel'], ['geofiles-panel', 'GeofilesPanel'], ['template-history', 'TemplateHistory']]) {
+                if (load.toString().includes('./' + file)) return name;
+            }
+            throw new Error('Unexpected lazy component');
+        } },
         '@shared/utils/setup-monaco/setup-suggest-monaco': { setupSuggestWidget() {} },
         './autoselect-model': { parseTemplate: JSON.parse, poolsOf: () => [], validationPath: config => config.error ?? null, templateChanges: () => [] },
         './client-template-model': { readClientTemplate: JSON.parse, geofileEditorShapeError: () => null, clientValidationPath: () => null },
@@ -50,12 +58,14 @@ function harness(template, editorType = 'json') {
     }
     function render() {
         stateIndex = refIndex = 0;
-        return elements(ref.exports.SubscriptionTemplateEditorWidget({ editorType, hosts: [], template }));
+        return elements(ref.exports.SubscriptionTemplateEditorWidget({ editorType, hostsQuery, template }));
     }
     return {
         render,
         recoveries,
         settings,
+        hostsQuery,
+        selectTab(value) { render().find(element => element.props?.keepMounted).props.onChange(value); },
         confirm(data, submitted) { return render().find(element => element.type === 'TemplateEditorActionsFeature').props.onSaved(data, submitted); },
         edit(value) { render().find(element => element.type === 'CodeEditor').props.onChange(value); },
         reveal() {
@@ -150,3 +160,31 @@ test('geofiles tab follows its confirmed template flag and preserves the unsaved
     assert(!tabs().includes('geofiles'));
     assert.equal(h.render().find(element => element.type === 'CodeEditor').props.value, '{"unsaved":"kept"}');
 });
+
+for (const type of ['XRAY_JSON', 'SINGBOX', 'MIHOMO', 'CLASH', 'STASH']) {
+    test(`${type}: auxiliary panels wait for first activation and hosts without losing editor text`, () => {
+        const h = harness({ ...template(), templateType: type, draftContent: '{}', geofilesEnabled: true });
+        assert.equal(h.render().find(element => element.props?.keepMounted).props.keepMountedMode, 'display-none');
+        const panels = () => h.render().filter(element => ['AutoselectPanel', 'ClientAutoselectPanel', 'GeofilesPanel', 'TemplateHistory'].includes(element.type));
+        assert.deepEqual(panels(), []);
+        h.hostsQuery.data = undefined;
+        h.edit('{"unsaved":true}');
+        h.selectTab('autoselect');
+        assert.deepEqual(panels(), []);
+        h.hostsQuery.isError = true;
+        assert(h.render().some(element => element.type === 'PageQueryError'));
+        assert.deepEqual(panels(), []);
+        h.hostsQuery.data = [];
+        h.hostsQuery.isError = false;
+        const name = type === 'XRAY_JSON' ? 'AutoselectPanel' : 'ClientAutoselectPanel';
+        assert.equal(panels()[0].type, name);
+        h.selectTab('code');
+        assert.equal(panels()[0].type, name);
+        assert.equal(h.render().find(element => element.type === 'CodeEditor').props.value, '{"unsaved":true}');
+        h.selectTab('geofiles');
+        assert(panels().some(element => element.type === 'GeofilesPanel'));
+        h.selectTab('history');
+        assert(panels().some(element => element.type === 'TemplateHistory' && element.props.draft === '{"unsaved":true}'));
+        assert(!panels().some(element => element.type === 'GeofilesPanel'));
+    });
+}

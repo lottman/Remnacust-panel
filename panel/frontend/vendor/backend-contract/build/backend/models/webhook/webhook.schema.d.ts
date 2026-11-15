@@ -190,6 +190,12 @@ export declare const RemnawaveWebhookNodeEvents: z.ZodObject<{
         address: z.ZodString;
         port: z.ZodNullable<z.ZodInt>;
         proxyUrl: z.ZodNullable<z.ZodString>;
+        hasProxy: z.ZodOptional<z.ZodBoolean>;
+        controlAddresses: z.ZodOptional<z.ZodArray<z.ZodObject<{
+            address: z.ZodPipe<z.ZodString, z.ZodTransform<string, string>>;
+            enabled: z.ZodBoolean;
+        }, z.core.$strip>>>;
+        controlRevision: z.ZodOptional<z.ZodUUID>;
         isConnected: z.ZodBoolean;
         isDisabled: z.ZodBoolean;
         isConnecting: z.ZodBoolean;
@@ -361,6 +367,12 @@ export declare const RemnawaveWebhookTorrentBlockerEvents: z.ZodObject<{
             address: z.ZodString;
             port: z.ZodNullable<z.ZodInt>;
             proxyUrl: z.ZodNullable<z.ZodString>;
+            hasProxy: z.ZodOptional<z.ZodBoolean>;
+            controlAddresses: z.ZodOptional<z.ZodArray<z.ZodObject<{
+                address: z.ZodPipe<z.ZodString, z.ZodTransform<string, string>>;
+                enabled: z.ZodBoolean;
+            }, z.core.$strip>>>;
+            controlRevision: z.ZodOptional<z.ZodUUID>;
             isConnected: z.ZodBoolean;
             isDisabled: z.ZodBoolean;
             isConnecting: z.ZodBoolean;
@@ -731,6 +743,12 @@ export declare const RemnawaveWebhookEventSchema: z.ZodDiscriminatedUnion<[z.Zod
         address: z.ZodString;
         port: z.ZodNullable<z.ZodInt>;
         proxyUrl: z.ZodNullable<z.ZodString>;
+        hasProxy: z.ZodOptional<z.ZodBoolean>;
+        controlAddresses: z.ZodOptional<z.ZodArray<z.ZodObject<{
+            address: z.ZodPipe<z.ZodString, z.ZodTransform<string, string>>;
+            enabled: z.ZodBoolean;
+        }, z.core.$strip>>>;
+        controlRevision: z.ZodOptional<z.ZodUUID>;
         isConnected: z.ZodBoolean;
         isDisabled: z.ZodBoolean;
         isConnecting: z.ZodBoolean;
@@ -898,6 +916,12 @@ export declare const RemnawaveWebhookEventSchema: z.ZodDiscriminatedUnion<[z.Zod
             address: z.ZodString;
             port: z.ZodNullable<z.ZodInt>;
             proxyUrl: z.ZodNullable<z.ZodString>;
+            hasProxy: z.ZodOptional<z.ZodBoolean>;
+            controlAddresses: z.ZodOptional<z.ZodArray<z.ZodObject<{
+                address: z.ZodPipe<z.ZodString, z.ZodTransform<string, string>>;
+                enabled: z.ZodBoolean;
+            }, z.core.$strip>>>;
+            controlRevision: z.ZodOptional<z.ZodUUID>;
             isConnected: z.ZodBoolean;
             isDisabled: z.ZodBoolean;
             isConnecting: z.ZodBoolean;

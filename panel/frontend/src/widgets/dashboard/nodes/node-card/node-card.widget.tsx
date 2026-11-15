@@ -25,6 +25,8 @@ import { XrayLogo } from '@shared/ui/logos'
 import { NodeHealthBadge } from '@shared/ui/node-health/node-health'
 import { ProviderTags } from '@shared/ui/provider-tags/provider-tags'
 import { prettifyBytesUtil, prettySiRealtimeBytesUtil } from '@shared/utils/bytes'
+import { getPreferredNodeControlAddress } from '@shared/utils/node-control-addresses'
+import { hasNodeMetric } from '@shared/utils/node-metric'
 import { nodeNeedsCustomUpgrade } from '@shared/utils/node-policy-status'
 import { getNodeResetDaysUtil, getXrayUptimeUtil } from '@shared/utils/time-utils'
 
@@ -91,6 +93,7 @@ export const NodeCardWidget = memo((props: IProps) => {
     const fallbackProgress = node.isTrafficTrackingActive && node.trafficLimitBytes === 0
 
     const connectionStatus = getNodeStatus(node)
+    const preferredAddress = getPreferredNodeControlAddress(node)
     const isOnline = connectionStatus === 'connected'
     const isConfigMissing =
         node.configProfile.activeConfigProfileUuid === null ||
@@ -138,16 +141,12 @@ export const NodeCardWidget = memo((props: IProps) => {
         return {
             ramPercentage,
             ramColor,
-            rxSpeed: prettySiRealtimeBytesUtil(
-                node.system.stats.interface.rxBytesPerSec,
-                true,
-                true
-            ),
-            txSpeed: prettySiRealtimeBytesUtil(
-                node.system.stats.interface.txBytesPerSec,
-                true,
-                true
-            ),
+            rxSpeed: hasNodeMetric(node.system.stats.interface.rxBytesPerSec)
+                ? prettySiRealtimeBytesUtil(node.system.stats.interface.rxBytesPerSec, true, true)
+                : null,
+            txSpeed: hasNodeMetric(node.system.stats.interface.txBytesPerSec)
+                ? prettySiRealtimeBytesUtil(node.system.stats.interface.txBytesPerSec, true, true)
+                : null,
             loadAvg,
             cpus
         }
@@ -155,9 +154,10 @@ export const NodeCardWidget = memo((props: IProps) => {
 
     const handleCopy = (e: React.MouseEvent) => {
         e.stopPropagation()
-        clipboard.copy(node.address)
+        if (preferredAddress === null) return
+        clipboard.copy(preferredAddress)
         notifications.show({
-            message: node.address,
+            message: preferredAddress,
             title: t('common.message.copied'),
             color: 'teal'
         })
@@ -218,7 +218,9 @@ export const NodeCardWidget = memo((props: IProps) => {
                                             size="lg"
                                             variant="outline"
                                         >
-                                            {node.usersOnline}
+                                            {hasNodeMetric(node.usersOnline)
+                                                ? node.usersOnline
+                                                : '—'}
                                         </Badge>
                                     </>
                                 )}
@@ -268,9 +270,13 @@ export const NodeCardWidget = memo((props: IProps) => {
                                         className={classes.addressText}
                                         onClick={handleCopy}
                                         size="sm"
-                                        title={node.address}
+                                        title={
+                                            preferredAddress
+                                                ? `${t('node-control-addresses.preferred')}: ${preferredAddress}`
+                                                : undefined
+                                        }
                                     >
-                                        {node.address}
+                                        {preferredAddress ?? '—'}
                                     </Text>
                                 </Flex>
                             </div>
@@ -340,9 +346,7 @@ export const NodeCardWidget = memo((props: IProps) => {
                                             size="sm"
                                             truncate
                                         >
-                                            {isOnline
-                                                ? getXrayUptimeUtil(node.xrayUptime)
-                                                : t('xera-node-health.limited')}
+                                            {isOnline ? getXrayUptimeUtil(node.xrayUptime) : '—'}
                                         </Text>
                                     </Flex>
                                 )}
@@ -533,7 +537,7 @@ export const NodeCardWidget = memo((props: IProps) => {
                                 size="lg"
                                 variant="outline"
                             >
-                                {node.usersOnline}
+                                {hasNodeMetric(node.usersOnline) ? node.usersOnline : '—'}
                             </Badge>
                         )}
 
@@ -581,9 +585,13 @@ export const NodeCardWidget = memo((props: IProps) => {
                                 className={classes.addressText}
                                 onClick={handleCopy}
                                 size="xs"
-                                title={node.address}
+                                title={
+                                    preferredAddress
+                                        ? `${t('node-control-addresses.preferred')}: ${preferredAddress}`
+                                        : undefined
+                                }
                             >
-                                {node.address}
+                                {preferredAddress ?? '—'}
                             </Text>
                         </Flex>
                         <Text
@@ -655,7 +663,7 @@ export const NodeCardWidget = memo((props: IProps) => {
                                 {isOnline
                                     ? getXrayUptimeUtil(node.xrayUptime)
                                     : connectionStatus === 'limited'
-                                      ? t('xera-node-health.limited')
+                                      ? '—'
                                       : t('design-ui.node-offline')}
                             </Text>
                         </Flex>

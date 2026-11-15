@@ -1364,5 +1364,15 @@ export declare const ERRORS: {
         readonly message: 'The saved automatic resume deadline cannot be changed while the user is frozen';
         readonly httpCode: 409;
     };
+    readonly NODE_CONTROL_ADDRESS_LIMIT: {
+        readonly code: 'A265';
+        readonly message: 'A node can retain at most 65 control addresses; disable existing addresses instead of replacing the list';
+        readonly httpCode: 400;
+    };
+    readonly NODE_CONTROL_REVISION_CONFLICT: {
+        readonly code: 'A266';
+        readonly message: 'Node connection settings changed; reload the node before saving';
+        readonly httpCode: 409;
+    };
 };
 //# sourceMappingURL=errors.d.ts.map

@@ -1,10 +1,10 @@
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
-import { Inject } from '@nestjs/common';
 import Redis, { Command as RedisCommand } from 'ioredis';
 import { sql } from 'kysely';
 import { randomUUID } from 'node:crypto';
 
+import { Inject } from '@nestjs/common';
 import { Injectable, Logger } from '@nestjs/common';
 
 import { TxKyselyService } from '@common/database';
@@ -39,7 +39,13 @@ export function isRetryableNodeFailure(value: unknown): boolean {
 }
 type NodeDeliveryState = Pick<
     NodesEntity,
-    'uuid' | 'isDisabled' | 'activeConfigProfileUuid' | 'address' | 'port' | 'proxyUrl'
+    | 'uuid'
+    | 'isDisabled'
+    | 'activeConfigProfileUuid'
+    | 'address'
+    | 'port'
+    | 'proxyUrl'
+    | 'controlRevision'
 >;
 
 export class PortPlanLeaseLostError extends Error {
@@ -174,7 +180,8 @@ export class PortPlanLeaseService {
                 AND is_disabled=${node.isDisabled}
                 AND active_config_profile_uuid IS NOT DISTINCT FROM ${node.activeConfigProfileUuid}::uuid
                 AND address=${node.address} AND port IS NOT DISTINCT FROM ${node.port}
-                AND proxy_url IS NOT DISTINCT FROM ${node.proxyUrl} FOR UPDATE`.execute(
+                AND proxy_url IS NOT DISTINCT FROM ${node.proxyUrl}
+                AND control_revision=${node.controlRevision}::uuid FOR UPDATE`.execute(
                 this.db.kysely,
             );
             if (!current.rows.length) return undefined;
@@ -237,7 +244,8 @@ export class PortPlanLeaseService {
                 ${
                     node
                         ? sql`AND is_disabled=${node.isDisabled} AND active_config_profile_uuid IS NOT DISTINCT FROM ${node.activeConfigProfileUuid}::uuid
-                    AND address=${node.address} AND port IS NOT DISTINCT FROM ${node.port} AND proxy_url IS NOT DISTINCT FROM ${node.proxyUrl}`
+                    AND address=${node.address} AND port IS NOT DISTINCT FROM ${node.port} AND proxy_url IS NOT DISTINCT FROM ${node.proxyUrl}
+                    AND control_revision=${node.controlRevision}::uuid`
                         : sql``
                 }
                 FOR UPDATE`.execute(this.db.kysely);

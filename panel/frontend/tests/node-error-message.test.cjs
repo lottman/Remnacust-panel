@@ -19,6 +19,8 @@ for(const language of ['en','ru','fa','zh']) test(language+': node diagnostics h
  assert.equal(message('[NODE_NATIVE_COMPATIBILITY]',t),locale.nodeErrors.nativeCompatibility);
  assert.equal(message('[NODE_LEGACY_AUTOSELECT]',t),locale.nodeErrors.legacyAutoselect);
  assert.equal(message('[NODE_CORE_NOT_READY]',t),locale.nodeErrors.coreNotReady);
+ assert.equal(message('[NODE_CONTROL_DISABLED]',t),locale.nodeErrors.controlDisabled);
+ assert.equal(message('[NODE_UPDATE_PENDING]',t),locale.nodeErrors.updatePending);
  const original='runtime apply failed: Inbound TCP-LAST changes its port or transport; create a separate port/tag and retain this listener';
  assert.equal(message(original,t),locale.nodeErrors.listenerChanged);
  assert.equal(message('ECONNREFUSED 127.0.0.1:2222',t),locale.nodeErrors.connectionRefused);

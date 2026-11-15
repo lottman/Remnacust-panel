@@ -11,11 +11,11 @@ import {
     syncHostPolicyForStart,
 } from '@common/host-policy/sync-host-policy-for-start';
 import { RawCacheService } from '@common/raw-cache';
-import { XrayModeService } from '@common/xray-mode/xray-mode.service';
 import { ok } from '@common/types';
 import { formatExecutionTime, getTime } from '@common/utils/get-elapsed-time';
 import { nodeReconciliationEnrollment } from '@common/utils/node-reconciliation';
 import { nodeSupportsPlugins } from '@common/utils/node-version';
+import { XrayModeService } from '@common/xray-mode/xray-mode.service';
 import { CACHE_KEYS, CACHE_KEYS_TTL, EVENTS } from '@libs/contracts/constants';
 
 import { NodeEvent } from '@integration-modules/notifications/interfaces';
@@ -63,9 +63,10 @@ export class NodeConfigurationService {
     ) {}
 
     async apply(payload: { nodeUuid: string; force?: boolean }) {
-        const work = () => this.leases.withLifecycle(payload.nodeUuid, (assert) =>
-            this.applyOwned(payload, assert),
-        );
+        const work = () =>
+            this.leases.withLifecycle(payload.nodeUuid, (assert) =>
+                this.applyOwned(payload, assert),
+            );
         return this.xrayModes ? this.xrayModes.withSnapshot(work) : work();
     }
 
@@ -109,7 +110,12 @@ export class NodeConfigurationService {
             const { response: node } = nodeCheckup;
             deliveryNode = node;
 
-            if (node.isDisabled) return;
+            if (
+                node.isDisabled ||
+                (node.controlAddresses !== undefined &&
+                    !node.controlAddresses.some((row) => row.enabled))
+            )
+                return;
             return await this.hostPolicies.withCompatibilitySnapshot([node.uuid], async () => {
                 const claimed = await this.leases.acquire(node.uuid);
                 if (claimed === 'busy') return;
@@ -120,6 +126,7 @@ export class NodeConfigurationService {
                     CACHE_KEYS.NODE_SYSTEM_STATS(nodeUuid),
                     CACHE_KEYS.NODE_USERS_ONLINE(nodeUuid),
                     CACHE_KEYS.NODE_XRAY_UPTIME(nodeUuid),
+                    CACHE_KEYS.NODE_TELEMETRY_SNAPSHOT(nodeUuid),
                 ]);
 
                 if (!lease && (node.activeInbounds.length === 0 || !node.activeConfigProfileUuid)) {
@@ -381,6 +388,7 @@ export class NodeConfigurationService {
                 if (
                     !currentNode.isOk ||
                     currentNode.response.isDisabled ||
+                    currentNode.response.controlRevision !== node.controlRevision ||
                     currentNode.response.activeConfigProfileUuid !== node.activeConfigProfileUuid ||
                     currentNode.response.address !== node.address ||
                     currentNode.response.port !== node.port ||

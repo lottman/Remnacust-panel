@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import { ConfigProfileInboundsSchema } from './config-profile-inbounds.schema';
 import { PartialInfraProviderSchema } from './infra-provider.schema';
+import { NodeControlAddressesSchema } from './node-control-addresses.schema';
 import { NodeIpsSchema } from './node-ips.schema';
 import { NodeSystemSchema } from './node-system.schema';
 
@@ -12,6 +13,9 @@ export const NodesSchema = z.object({
     address: z.string(),
     port: z.nullable(z.int()),
     proxyUrl: z.nullable(z.string()),
+    hasProxy: z.boolean().optional(),
+    controlAddresses: NodeControlAddressesSchema.optional(),
+    controlRevision: z.uuid().optional(),
     isConnected: z.boolean(),
     isDisabled: z.boolean(),
     isConnecting: z.boolean(),

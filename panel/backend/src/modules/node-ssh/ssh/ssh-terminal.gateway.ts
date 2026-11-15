@@ -1,11 +1,11 @@
 import { getClientIp } from '@kastov/request-ip';
-import { Inject } from '@nestjs/common';
 import { Redis } from 'ioredis';
 import { verify } from 'jsonwebtoken';
 import { IncomingMessage } from 'node:http';
 import { Duplex } from 'node:stream';
 import { WebSocket, WebSocketServer } from 'ws';
 
+import { Inject } from '@nestjs/common';
 import { Injectable, Logger, OnApplicationBootstrap, OnModuleDestroy } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
 import { QueryBus } from '@nestjs/cqrs';
@@ -26,6 +26,7 @@ import { KeygenService } from '@modules/keygen/keygen.service';
 import { NodesEntity } from '@modules/nodes/entities/nodes.entity';
 import { GetNodeByUuidQuery } from '@modules/nodes/queries/get-node-by-uuid/get-node-by-uuid.query';
 
+import { configuredNodeAddresses } from '../../nodes/node-control-addresses';
 import { IAdminIdentity, ISshCredentials } from '../interfaces';
 import { NodeSshService } from '../node-ssh.service';
 import { SshSession } from './ssh-session';
@@ -237,8 +238,8 @@ export class SshTerminalGateway implements OnApplicationBootstrap, OnModuleDestr
                     );
                 }
             },
-            allowedHosts: [node.address, ...node.ips.map((entry) => entry.ip)],
-            nodeAddress: node.address,
+            allowedHosts: configuredNodeAddresses(node),
+            nodeAddress: node.controlAddresses?.find((row) => row.enabled)?.address ?? node.address,
             nodePort: node.port,
             onClosed: () => {
                 clearInterval(authorizationTimer);

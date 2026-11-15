@@ -7,8 +7,7 @@ import {
     PasswordInput,
     Select,
     Stack,
-    Text,
-    TextInput
+    Text
 } from '@mantine/core'
 import { UseFormReturnType } from '@mantine/form'
 import {
@@ -28,8 +27,7 @@ import {
     TbNetwork,
     TbPackage,
     TbPlugConnected,
-    TbUserCheck,
-    TbWorld
+    TbUserCheck
 } from 'react-icons/tb'
 
 import { useUiText } from '@shared/i18n/interface-text'
@@ -45,6 +43,7 @@ import integrationsClasses from './integrations-select.module.css'
 interface IProps<T extends CreateNodeCommand.RequestBody | UpdateNodeCommand.RequestBody> {
     cardVariants: Variants
     form: UseFormReturnType<T>
+    disabled?: boolean
     motionWrapper: ForwardRefComponent<HTMLDivElement, HTMLMotionProps<'div'>>
     nodeIntegrations: GetNodeIntegrationsCommand.Response['response']['nodeIntegrations']
     nodePlugins: GetNodePluginsCommand.Response['response']['nodePlugins']
@@ -66,6 +65,7 @@ export const NodeVitalsCard = <
     )
     const {
         cardVariants,
+        disabled,
         form,
         motionWrapper,
         nodeIntegrations,
@@ -118,20 +118,8 @@ export const NodeVitalsCard = <
                         />
 
                         <Group gap="xs" grow justify="space-between" w="100%">
-                            <TextInput
-                                key={form.key('address')}
-                                label={t('common.field.address')}
-                                {...form.getInputProps('address')}
-                                leftSection={<TbWorld size={16} />}
-                                placeholder={t('base-node-form.e-g-example-com')}
-                                required
-                                styles={{
-                                    label: { fontWeight: 500 },
-                                    root: { flex: '1 1 70%' }
-                                }}
-                            />
-
                             <NumberInput
+                                disabled={disabled}
                                 key={form.key('port')}
                                 label={uiText('node-port-42b685c')}
                                 {...form.getInputProps('port')}
@@ -144,8 +132,7 @@ export const NodeVitalsCard = <
                                 placeholder="2222"
                                 required
                                 styles={{
-                                    label: { fontWeight: 500 },
-                                    root: { flex: '1 1 25%' }
+                                    label: { fontWeight: 500 }
                                 }}
                             />
                         </Group>
@@ -232,6 +219,7 @@ export const NodeVitalsCard = <
                         />
 
                         <PasswordInput
+                            disabled={disabled}
                             key={form.key('proxyUrl')}
                             label={t('node-vitals.card.proxy-url')}
                             {...form.getInputProps('proxyUrl')}

@@ -30,13 +30,11 @@ export function TemplateEditorPageConnector() {
     const hostsQuery = useGetHosts({ rQueryParams: { enabled: !!uuid && validType } })
 
     const { data: template, isLoading: isTemplateLoading } = subscriptionTemplateQuery
-    const { data: hosts, isLoading: isHostsLoading } = hostsQuery
-
-    const pageQueries = [subscriptionTemplateQuery, hostsQuery]
+    const pageQueries = [subscriptionTemplateQuery]
     if (!validType || !uuid) return <Navigate to={ROUTES.DASHBOARD.HOME} replace />
     if (hasPageQueryError(pageQueries)) return <PageQueryError queries={pageQueries} />
 
-    if (isTemplateLoading || isHostsLoading || !template || !hosts) {
+    if (isTemplateLoading || !template) {
         return <LoadingScreen />
     }
 
@@ -73,7 +71,7 @@ export function TemplateEditorPageConnector() {
     return (
         <TemplateEditorPageComponent
             editorType={editorType}
-            hosts={hosts}
+            hostsQuery={hostsQuery}
             template={template}
             title={title}
         />

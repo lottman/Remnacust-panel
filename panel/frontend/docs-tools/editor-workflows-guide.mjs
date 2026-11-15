@@ -71,19 +71,19 @@ const additions = [
         [
             [
                 'Массовые действия и поиск стран',
-                'Включение, отключение и удаление хостов завершаются после сохранения в БД; правила нод синхронизируются отдельно. Карточка перечитывает данные при открытии и сохраняет только изменённые поля. Поиск флагов понимает названия стран на всех четырёх языках и ISO-коды.'
+                'После включения, отключения или удаления проверьте сохранённое состояние хоста. Недоступная нода получит изменение после восстановления связи; сохранение не подтверждает применение на отключённом сервере. Кнопка показывает выполнение, затем список обновляется. При массовом клонировании успешные источники снимаются с выбора, а неудачные остаются для повтора. Страну можно найти по названию на RU/EN/FA/ZH или двухбуквенному коду независимо от языка интерфейса.'
             ],
             [
                 'Bulk actions and country search',
-                'Enable, disable and delete return after the database commit; node policy delivery starts in the background and unavailable nodes are retried. A saved action does not mean a disconnected node already received it. Buttons show progress and the list updates after API acknowledgement. Cloning runs at most three requests at once; successful sources are deselected and failed sources remain for retry. Search flags by country name in RU/EN/FA/ZH or two-letter code independently of the UI language.'
+                'After enabling, disabling or deleting, check the saved host state. An unavailable node receives the change after reconnecting; saving does not confirm application on a disconnected server. The button shows progress, then the list refreshes. In bulk cloning, successful sources are deselected and failed sources remain for retry. Search countries by RU/EN/FA/ZH names or two-letter codes independently of the interface language.'
             ],
             [
                 'عملیات گروهی و جستجوی کشور',
-                'فعال‌سازی، غیرفعال‌سازی و حذف پس از ثبت پایگاه داده پاسخ می‌دهند؛ ارسال سیاست به نودها در پس‌زمینه شروع و برای نودهای در دسترس‌نبوده تکرار می‌شود. ذخیره به معنی دریافت تغییر توسط نود قطع‌شده نیست. دکمه‌ها پیشرفت را نشان می‌دهند و فهرست پس از تأیید API به‌روز می‌شود. تکثیر حداکثر سه درخواست هم‌زمان دارد؛ منابع موفق از انتخاب خارج و موارد ناموفق برای تلاش مجدد باقی می‌مانند. پرچم‌ها را مستقل از زبان رابط با نام کشور در RU/EN/FA/ZH یا کد دوحرفی جستجو کنید.'
+                'پس از روشن، خاموش یا حذف کردن، وضعیت ذخیره‌شده میزبان را بررسی کنید. نود ناموجود پس از اتصال تغییر را می‌گیرد؛ ذخیره به معنی اعمال در سرور قطع‌شده نیست. دکمه پیشرفت را نشان می‌دهد و سپس فهرست تازه می‌شود. در تکثیر گروهی موارد موفق از انتخاب خارج و موارد ناموفق برای تکرار باقی می‌مانند. کشور با نام RU/EN/FA/ZH یا کد دوحرفی مستقل از زبان رابط پیدا می‌شود.'
             ],
             [
                 '批量操作与国家搜索',
-                '启用、禁用和删除在数据库提交后返回；节点策略在后台发送，并重试不可用节点。保存成功不表示已断开连接的节点已收到更改。按钮显示进度，列表在 API 确认后更新。克隆最多同时发送三个请求；成功来源取消选择，失败来源保留以便重试。国旗搜索支持 RU/EN/FA/ZH 国家名称或两字母代码，与界面语言无关。'
+                '启用、禁用或删除后，请核对主机保存后的状态。断开的节点重连后才收到变更，保存不代表它已经应用。按钮显示进度，操作结束后列表刷新。批量克隆时，成功条目取消选择，失败条目保留以便重试。国家可按 RU/EN/FA/ZH 名称或两字母代码搜索，不受界面语言限制。'
             ]
         ]
     ],

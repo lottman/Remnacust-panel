@@ -155,7 +155,7 @@ export class QuotaRecoveryReceiptService {
         return (
             await sql<
                 INodeConnectionOpts & { instance: string | null }
-            >`SELECT n.address,n.port,n.proxy_url AS "proxyUrl",m.instance_uuid::text AS instance
+            >`SELECT n.uuid,n.address,n.port,n.proxy_url AS "proxyUrl",m.instance_uuid::text AS instance
             FROM nodes n LEFT JOIN xera_quota_node_modes m ON m.node_uuid=n.uuid
             WHERE n.uuid=${node}::uuid AND NOT n.is_disabled`.execute(this.db.kysely)
         ).rows[0];

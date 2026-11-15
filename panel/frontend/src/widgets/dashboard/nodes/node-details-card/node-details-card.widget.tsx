@@ -45,6 +45,7 @@ import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SectionCard } from '@shared/ui/section-card'
 import { prettifyBytesUtil } from '@shared/utils/bytes'
 import { getNodeHealth } from '@shared/utils/node-health'
+import { hasNodeMetric } from '@shared/utils/node-metric'
 import { nodeNeedsCustomUpgrade } from '@shared/utils/node-policy-status'
 import { getNodeResetDaysUtil, getXrayUptimeUtil } from '@shared/utils/time-utils'
 
@@ -200,7 +201,7 @@ export const NodeDetailsCardWidget = memo((props: IProps) => {
                             <Tooltip
                                 label={t(
                                     connectionStatus === 'limited'
-                                        ? 'xera-node-health.limited'
+                                        ? 'xera-node-health.limited-help'
                                         : 'node-stats.card.represents-the-uptime-of-the-xray-core'
                                 )}
                             >
@@ -213,7 +214,7 @@ export const NodeDetailsCardWidget = memo((props: IProps) => {
                                     visibleFrom="sm"
                                 >
                                     {connectionStatus === 'limited'
-                                        ? t('xera-node-health.limited')
+                                        ? '—'
                                         : getXrayUptimeUtil(node.xrayUptime)}
                                 </Badge>
                             </Tooltip>
@@ -442,7 +443,7 @@ export const NodeDetailsCardWidget = memo((props: IProps) => {
                                     fw={600}
                                     size="sm"
                                 >
-                                    {node.usersOnline}
+                                    {hasNodeMetric(node.usersOnline) ? node.usersOnline : '—'}
                                 </Text>
                             </Group>
                         </Paper>

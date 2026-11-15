@@ -14,6 +14,7 @@ exports.CACHE_KEYS = {
     NODE_USERS_ONLINE: (uuid) => `node_users_online:${uuid}`,
     NODE_VERSIONS: (uuid) => `node_versions:${uuid}`,
     NODE_XRAY_UPTIME: (uuid) => `node_xray_uptime:${uuid}`,
+    NODE_TELEMETRY_SNAPSHOT: (uuid) => `node_telemetry_snapshot:${uuid}`,
     RAW_INBOUND: (uuid) => `raw_inbound:${uuid}`,
     XRAY_JSON_TEMPLATE: (uuid) => `xray_json_template:${uuid}`,
     EXTERNAL_SQUAD_TEMPLATE_NAME: (uuid, type) => `external_squad_template_name:${uuid}:${type}`,

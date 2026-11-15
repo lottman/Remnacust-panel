@@ -23,6 +23,7 @@ import { injectorJsonSchema } from './injector-json-schema'
 interface IJsonSchemaDocument {
     [key: string]: unknown
     properties?: Record<string, unknown>
+    anyOf?: IJsonSchemaDocument[]
 }
 
 export const getTemplateModelPath = (templateType: TSubscriptionTemplateType) =>
@@ -82,6 +83,8 @@ export const configureMonaco = async (
         }
 
         if (language === 'json') {
+            let completionHosts = hosts
+            let updateSchema: ((schema: IJsonSchemaDocument) => void) | undefined
             injectorCompletion?.dispose()
             injectorCompletion = monaco.languages.registerCompletionItemProvider('json', {
                 triggerCharacters: ['"', ':'],
@@ -100,7 +103,7 @@ export const configureMonaco = async (
                         ? model.getPositionAt(previous.offset + previous.length)
                         : position
                     return {
-                        suggestions: injectorCompletionValues(text, offset, hosts).map(
+                        suggestions: injectorCompletionValues(text, offset, completionHosts).map(
                             ({ value, detail }) => ({
                                 label: value,
                                 detail: detail === value ? undefined : detail,
@@ -118,18 +121,21 @@ export const configureMonaco = async (
                     }
                 }
             })
-            const hostUuids = hosts.map((h) => h.uuid)
-            const hostDescriptions = hosts.map(hostHoverMarkdown)
-
-            const schema = injectorJsonSchema(hostUuids, hostDescriptions, [
-                ...new Set(hosts.flatMap((host) => host.tags))
-            ])
-
-            registerJsonSchema({
-                fileMatch: ['subscription-template://*', getTemplateModelPath(templateType)],
-                schema,
-                uri: 'https://subscription-template-schema.json'
-            })
+            const updateHosts = (nextHosts: GetHostsCommand.Response['response']) => {
+                completionHosts = nextHosts
+                const schema = injectorJsonSchema(
+                    nextHosts.map((host) => host.uuid),
+                    nextHosts.map(hostHoverMarkdown),
+                    [...new Set(nextHosts.flatMap((host) => host.tags))]
+                )
+                registerJsonSchema({
+                    fileMatch: ['subscription-template://*', getTemplateModelPath(templateType)],
+                    schema,
+                    uri: 'https://subscription-template-schema.json'
+                })
+                updateSchema?.(schema)
+            }
+            updateHosts(hosts)
 
             if (templateType === SUBSCRIPTION_TEMPLATE_TYPE.XRAY_JSON) {
                 const xraySchema = await loadEditorSchema<IJsonSchemaDocument>(
@@ -140,22 +146,40 @@ export const configureMonaco = async (
                 const definitions = xraySchema.definitions as
                     | Record<string, IJsonSchemaDocument>
                     | undefined
+                const strategySettings = definitions?.StrategySettingsObject
+                if (strategySettings) {
+                    strategySettings.properties = {
+                        ...strategySettings.properties,
+                        remnacustLoadBalance: { type: 'boolean' },
+                        remnacustOrder: { type: 'boolean' }
+                    }
+                }
+                const strategyType = definitions?.StrategyObject?.properties?.type as
+                    | IJsonSchemaDocument
+                    | undefined
+                if (
+                    strategyType?.anyOf &&
+                    !strategyType.anyOf.some((option) => option.const === 'priority')
+                ) {
+                    strategyType.anyOf = [...strategyType.anyOf, { const: 'priority' }]
+                }
                 const root =
                     typeof xraySchema.$ref === 'string'
                         ? definitions?.[xraySchema.$ref.replace('#/definitions/', '')]
                         : xraySchema
 
                 if (!root) throw new Error('Xray schema root is unavailable')
-                root.properties = { ...root.properties, ...schema.properties }
-
-                registerJsonSchema({
-                    fileMatch: [
-                        getTemplateModelPath(templateType),
-                        `${getTemplateModelPath(templateType)}/*`
-                    ],
-                    schema: xraySchema,
-                    uri: 'https://subscription-template-xray-schema.json'
-                })
+                updateSchema = (schema) => {
+                    root.properties = { ...root.properties, ...schema.properties }
+                    registerJsonSchema({
+                        fileMatch: [
+                            getTemplateModelPath(templateType),
+                            `${getTemplateModelPath(templateType)}/*`
+                        ],
+                        schema: xraySchema,
+                        uri: 'https://subscription-template-xray-schema.json'
+                    })
+                }
             }
 
             if (templateType === SUBSCRIPTION_TEMPLATE_TYPE.SINGBOX) {
@@ -163,18 +187,22 @@ export const configureMonaco = async (
                     app.templateEditor.singboxJsonSchemaUrl
                 )
 
-                registerJsonSchema({
-                    fileMatch: [
-                        getTemplateModelPath(templateType),
-                        `${getTemplateModelPath(templateType)}/*`
-                    ],
-                    schema: {
-                        ...singboxSchema,
-                        properties: { ...singboxSchema.properties, ...schema.properties }
-                    },
-                    uri: 'https://singbox-schema.json'
-                })
+                updateSchema = (schema) => {
+                    registerJsonSchema({
+                        fileMatch: [
+                            getTemplateModelPath(templateType),
+                            `${getTemplateModelPath(templateType)}/*`
+                        ],
+                        schema: {
+                            ...singboxSchema,
+                            properties: { ...singboxSchema.properties, ...schema.properties }
+                        },
+                        uri: 'https://singbox-schema.json'
+                    })
+                }
             }
+            updateHosts(completionHosts)
+            return updateHosts
         }
     } catch (error) {
         consola.error(`Failed to configure Monaco ${language.toUpperCase()}:`, error)

@@ -1,10 +1,14 @@
 import { Nodes } from '@prisma/client';
 
-import { TNodeIps } from '@libs/contracts/models';
+import { TNodeIps, TNodeControlAddresses } from '@libs/contracts/models';
 
 import { ConfigProfileInboundEntity } from '@modules/config-profiles/entities';
 import { InfraProviderEntity } from '@modules/infra-billing/entities';
 
+import {
+    canonicalNodeControlAddresses,
+    legacyNodeControlAddresses,
+} from '../node-control-addresses';
 import { INodesWithResolvedInbounds } from '../repositories/nodes.repository';
 
 export class NodesEntity implements Nodes {
@@ -31,6 +35,8 @@ export class NodesEntity implements Nodes {
     public tags: string[];
     public integrationUuids: string[];
     public ips: TNodeIps;
+    public controlAddresses: TNodeControlAddresses;
+    public controlRevision: string;
     public consumptionMultiplier: bigint;
     public nodeConsumptionMultiplier: bigint;
     public createdAt: Date;
@@ -46,6 +52,10 @@ export class NodesEntity implements Nodes {
 
     constructor(node: Partial<INodesWithResolvedInbounds & Nodes>) {
         Object.assign(this, node);
+        this.controlAddresses =
+            node.controlAddresses === undefined
+                ? legacyNodeControlAddresses(node)
+                : canonicalNodeControlAddresses(node.controlAddresses);
 
         if (node.configProfileInboundsToNodes) {
             this.activeInbounds = node.configProfileInboundsToNodes.map(

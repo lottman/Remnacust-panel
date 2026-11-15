@@ -188,6 +188,7 @@ for (const format of ['XRAY_JSON', 'SINGBOX', 'MIHOMO', 'CLASH', 'STASH']) test(
         'react-i18next': { useTranslation: () => ({ t: key => key }) },
         './autoselect-model': { poolsOf: () => [], autoselectGroups: () => [], parseTemplate: JSON.parse, templateChanges: () => [], needsProbes: () => false },
         './client-template-model': load(path.join(root, 'client-template-model.ts')),
+        './client-autoselect-model': load(path.join(root, 'client-autoselect-model.ts')),
         './autoselect-panel.module.css': {},
         './autoselect-sources': load(path.join(root, 'autoselect-sources.ts')),
         './geofile-address-rules-panel': { GeofileAddressRules: 'ManualRules' },

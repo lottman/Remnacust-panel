@@ -26,6 +26,7 @@ import {
     clientPoolPreview,
     defaultAutoselectSources
 } from './autoselect-sources'
+import { setClientAutoselectStrategy } from './client-autoselect-model'
 import {
     addClientGroup,
     editClientTemplate,
@@ -229,63 +230,55 @@ export function ClientAutoselectPanel({
                                         />
                                         <Select
                                             label={t('autoselect.strategy')}
-                                            value={group.type}
+                                            value={
+                                                group.remnawave?.loadBalance === true
+                                                    ? 'loadBalance'
+                                                    : group.type
+                                            }
                                             allowDeselect={false}
                                             data={(sing
-                                                ? ['urltest', 'selector']
-                                                : ['url-test', 'fallback', 'load-balance', 'select']
+                                                ? ['loadBalance', 'urltest', 'selector']
+                                                : [
+                                                      'loadBalance',
+                                                      'url-test',
+                                                      'fallback',
+                                                      'load-balance',
+                                                      'select'
+                                                  ]
                                             ).map((value) => ({
                                                 value,
                                                 label:
-                                                    value === 'fallback'
-                                                        ? t('autoselect.strategy-priority')
-                                                        : t(`client-template.strategy-${value}`, {
-                                                              defaultValue: value
-                                                          })
+                                                    value === 'loadBalance'
+                                                        ? t('autoselect.strategy-loadBalance') +
+                                                          (sing ? ' → urltest' : '')
+                                                        : value === 'fallback'
+                                                          ? t('autoselect.strategy-priority')
+                                                          : t(`client-template.strategy-${value}`, {
+                                                                defaultValue: value
+                                                            })
                                             }))}
                                             onChange={(value) =>
                                                 value &&
-                                                edit(() => {
-                                                    let next = editClientTemplate(
+                                                edit(() =>
+                                                    setClientAutoselectStrategy(
                                                         text,
                                                         format,
-                                                        [key, index, 'type'],
+                                                        index,
                                                         value
                                                     )
-                                                    for (const property of [
-                                                        'url',
-                                                        'interval',
-                                                        'tolerance'
-                                                    ])
-                                                        next = editClientTemplate(
-                                                            next,
-                                                            format,
-                                                            [key, index, property],
-                                                            ['select', 'selector'].includes(value)
-                                                                ? undefined
-                                                                : property === 'url'
-                                                                  ? (group.url ??
-                                                                    'https://www.gstatic.com/generate_204')
-                                                                  : property === 'interval'
-                                                                    ? (group.interval ??
-                                                                      (sing ? '5m' : 300))
-                                                                    : (group.tolerance ?? 50)
-                                                        )
-                                                    if (
-                                                        value === 'fallback' &&
-                                                        group.lazy === undefined
-                                                    )
-                                                        next = editClientTemplate(
-                                                            next,
-                                                            format,
-                                                            [key, index, 'lazy'],
-                                                            false
-                                                        )
-                                                    return next
-                                                })
+                                                )
                                             }
                                         />
                                     </div>
+                                    {group.remnawave?.loadBalance === true && (
+                                        <Alert color="blue">
+                                            {t(
+                                                sing
+                                                    ? 'autoselect.load-balance-singbox-help'
+                                                    : 'autoselect.load-balance-help'
+                                            )}
+                                        </Alert>
+                                    )}
                                     {['urltest', 'url-test'].includes(group.type) && (
                                         <Text size="sm" c="dimmed">
                                             {t('autoselect.response-time-help')}

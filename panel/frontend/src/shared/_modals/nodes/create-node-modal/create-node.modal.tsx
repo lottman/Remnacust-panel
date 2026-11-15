@@ -15,6 +15,7 @@ import {
     useCreateNode,
     useGetNodeSecretKey
 } from '@shared/api/hooks'
+import { withNodeControlAddressesErrors } from '@shared/ui/node-ips/validate-node-control-addresses'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 
 import { CreateNodeStep1Connection } from './create-node-steps/create-node-step-1-connection'
@@ -42,7 +43,21 @@ export const CreateNodeModal = NiceModal.create(() => {
     const form = useForm<CreateNodeCommand.RequestBody>({
         name: 'create-node-form',
         mode: 'uncontrolled',
-        validate: schemaResolver(CreateNodeCommand.RequestBodySchema)
+        initialValues: {
+            name: '',
+            countryCode: 'XX',
+            isTrafficTrackingActive: false,
+            configProfile: { activeConfigProfileUuid: '', activeInbounds: [] },
+            controlAddresses: [{ address: '', enabled: true }],
+            port: 2222
+        },
+        onValuesChange: (values) => {
+            if (values.proxyUrl === '') form.setFieldValue('proxyUrl', null)
+        },
+        validate: withNodeControlAddressesErrors(
+            schemaResolver(CreateNodeCommand.RequestBodySchema),
+            { required: true }
+        )
     })
 
     const { mutate: createNode, isPending: isCreateNodePending } = useCreateNode({
@@ -53,8 +68,10 @@ export const CreateNodeModal = NiceModal.create(() => {
                     error.errorCode === 'A033'
                         ? 'name'
                         : error.errorCode === 'A034'
-                          ? 'address'
-                          : undefined
+                          ? 'controlAddresses'
+                          : error.errorCode === 'A265'
+                            ? 'controlAddresses'
+                            : undefined
                 if (!field) return
                 form.setFieldError(field, error.message)
                 setActiveStep(0)
@@ -76,8 +93,7 @@ export const CreateNodeModal = NiceModal.create(() => {
         createNode({
             variables: {
                 ...values,
-                name: values.name.trim(),
-                address: values.address.trim()
+                name: values.name.trim()
             }
         })
     }

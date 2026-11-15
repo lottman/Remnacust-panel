@@ -1,4 +1,7 @@
+import type { TNodeControlAddresses, TNodeIps } from '../../../../libs/contract/models';
+
 import { TransactionHost } from '@nestjs-cls/transactional';
+import { Transactional } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { Prisma } from '@prisma/client';
 import { sql } from 'kysely';
@@ -13,6 +16,10 @@ import { ICrud } from '@common/types/crud-port';
 
 import { NodesEntity } from '../entities/nodes.entity';
 import { IReorderNode } from '../interfaces';
+import {
+    reconcileNodeControlAddresses,
+    NodeControlRevisionConflictError,
+} from '../node-control-addresses';
 import { NodesConverter } from '../nodes.converter';
 import { IGetEnabledNodesPartialResponse } from '../queries/get-enabled-nodes-partial/get-enabled-nodes-partial.query';
 import { IGetOnlineNodesPartialResponse } from '../queries/get-online-nodes';
@@ -45,25 +52,35 @@ export class NodesRepository implements ICrud<NodesEntity> {
         private readonly nodesConverter: NodesConverter,
     ) {}
 
+    @Transactional()
     public async create(entity: NodesEntity, inboundUuids?: string[]): Promise<NodesEntity> {
         const model = this.nodesConverter.fromEntityToPrismaModel(entity);
         const result = await this.prisma.tx.nodes.create({
             data: {
                 ...model,
-                ...(inboundUuids?.length ? {
-                    configProfileInboundsToNodes: {
-                        createMany: {
-                            data: inboundUuids.map((configProfileInboundUuid) => ({
-                                configProfileInboundUuid,
-                            })),
-                        },
-                    },
-                } : {}),
+                ...(inboundUuids?.length
+                    ? {
+                          configProfileInboundsToNodes: {
+                              createMany: {
+                                  data: inboundUuids.map((configProfileInboundUuid) => ({
+                                      configProfileInboundUuid,
+                                  })),
+                              },
+                          },
+                      }
+                    : {}),
             },
             include: INCLUDE_RESOLVED_INBOUNDS,
         });
 
-        return new NodesEntity(result);
+        return new NodesEntity(
+            inboundUuids?.length
+                ? await this.prisma.tx.nodes.findUniqueOrThrow({
+                      where: { uuid: result.uuid },
+                      include: INCLUDE_RESOLVED_INBOUNDS,
+                  })
+                : result,
+        );
     }
 
     public async findConnectedNodes(): Promise<NodesEntity[]> {
@@ -125,7 +142,15 @@ export class NodesRepository implements ICrud<NodesEntity> {
     public async findEnabledNodesPartial(): Promise<IGetEnabledNodesPartialResponse[]> {
         const nodesList = await this.qb.kysely
             .selectFrom('nodes')
-            .select(['uuid', 'isConnected', 'address', 'port', 'proxyUrl'])
+            .select([
+                'uuid',
+                'isConnected',
+                'lastStatusMessage',
+                'controlRevision',
+                'address',
+                'port',
+                'proxyUrl',
+            ])
             .where('isDisabled', '=', false)
             .where('isConnecting', '=', false)
             .execute();
@@ -133,6 +158,8 @@ export class NodesRepository implements ICrud<NodesEntity> {
         return nodesList.map((value) => ({
             uuid: value.uuid,
             isConnected: value.isConnected,
+            lastStatusMessage: value.lastStatusMessage,
+            controlRevision: value.controlRevision,
             connectionOpts: {
                 uuid: value.uuid,
                 address: value.address,
@@ -201,22 +228,99 @@ export class NodesRepository implements ICrud<NodesEntity> {
         return new NodesEntity(result);
     }
 
-    public async update({ uuid, ...data }: Partial<NodesEntity>): Promise<NodesEntity> {
+    public async update(
+        { uuid, ...data }: Partial<NodesEntity>,
+        expectedRevision?: string,
+        inboundUuids?: string[],
+    ): Promise<NodesEntity> {
+        if (
+            inboundUuids !== undefined ||
+            expectedRevision !== undefined ||
+            data.controlAddresses !== undefined ||
+            data.address !== undefined ||
+            data.ips !== undefined
+        ) {
+            return this.updateControlAddresses({ uuid, ...data }, expectedRevision, inboundUuids);
+        }
+        return this.persistUpdate({ uuid, ...data }, inboundUuids);
+    }
+
+    @Transactional()
+    private async updateControlAddresses(
+        { uuid, ...data }: Partial<NodesEntity>,
+        expectedRevision?: string,
+        inboundUuids?: string[],
+    ): Promise<NodesEntity> {
+        const [before] = await this.prisma.tx.$queryRaw<
+            {
+                address: string;
+                ips: TNodeIps;
+                controlAddresses: TNodeControlAddresses;
+                controlRevision: string;
+            }[]
+        >`SELECT address, ips, control_addresses AS "controlAddresses", control_revision::text AS "controlRevision" FROM nodes
+            WHERE uuid = ${uuid}::uuid FOR UPDATE`;
+        if (before && expectedRevision !== undefined && before.controlRevision !== expectedRevision)
+            throw new NodeControlRevisionConflictError();
+        if (before) data.controlAddresses = reconcileNodeControlAddresses(before, data);
+        if (
+            data.controlAddresses !== undefined &&
+            !data.controlAddresses.some((row) => row.enabled)
+        ) {
+            data.isConnected = false;
+            data.isConnecting = false;
+            data.lastStatusMessage = '[NODE_CONTROL_DISABLED]';
+            data.lastStatusChange = new Date();
+        }
+        return this.persistUpdate({ uuid, ...data }, inboundUuids);
+    }
+
+    private async persistUpdate(
+        { uuid, ...data }: Partial<NodesEntity>,
+        inboundUuids?: string[],
+    ): Promise<NodesEntity> {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { provider, activeInbounds, ...prismaData } = data;
 
         const result = await this.prisma.tx.nodes.update({
             where: { uuid },
-            data: prismaData,
+            data: {
+                ...prismaData,
+                ...(inboundUuids === undefined
+                    ? {}
+                    : {
+                          configProfileInboundsToNodes: {
+                              deleteMany: {},
+                              ...(inboundUuids.length
+                                  ? {
+                                        createMany: {
+                                            data: [...new Set(inboundUuids)].map(
+                                                (configProfileInboundUuid) => ({
+                                                    configProfileInboundUuid,
+                                                }),
+                                            ),
+                                        },
+                                    }
+                                  : {}),
+                          },
+                      }),
+            },
             include: INCLUDE_RESOLVED_INBOUNDS,
         });
 
-        return new NodesEntity(result);
+        return new NodesEntity(
+            inboundUuids === undefined
+                ? result
+                : await this.prisma.tx.nodes.findUniqueOrThrow({
+                      where: { uuid },
+                      include: INCLUDE_RESOLVED_INBOUNDS,
+                  }),
+        );
     }
 
     public async findByCriteria(dto: Partial<NodesEntity>): Promise<NodesEntity[]> {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { tags, ips, integrationUuids, ...rest } = dto;
+        const { tags, ips, controlAddresses, integrationUuids, ...rest } = dto;
         const nodesList = await this.prisma.tx.nodes.findMany({
             where: rest,
             orderBy: {
@@ -240,7 +344,7 @@ export class NodesRepository implements ICrud<NodesEntity> {
 
     public async findFirstByCriteria(dto: Partial<NodesEntity>): Promise<NodesEntity | null> {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { tags, ips, integrationUuids, ...rest } = dto;
+        const { tags, ips, controlAddresses, integrationUuids, ...rest } = dto;
         const result = await this.prisma.tx.nodes.findFirst({
             where: rest,
             include: INCLUDE_RESOLVED_INBOUNDS,
@@ -451,6 +555,31 @@ export class NodesRepository implements ICrud<NodesEntity> {
         });
 
         return !!result;
+    }
+
+    @Transactional()
+    public async assignProfile(
+        uuids: string[],
+        profileUuid: string,
+        inboundUuids: string[],
+    ): Promise<void> {
+        const nodeUuids = [...new Set(uuids.map((uuid) => uuid.toLowerCase()))].sort();
+        const ids = nodeUuids.map((uuid) => Prisma.sql`${uuid}::uuid`);
+        if (!ids.length) return;
+        await this.prisma.tx
+            .$queryRaw`SELECT uuid FROM public.nodes WHERE uuid IN (${Prisma.join(ids)}) ORDER BY uuid FOR UPDATE`;
+        await this.updateMany(nodeUuids, { activeConfigProfileUuid: profileUuid });
+        await this.removeInboundsFromNodes(nodeUuids);
+        if (inboundUuids.length)
+            await this.addInboundsToNodes(nodeUuids, [
+                ...new Set(inboundUuids.map((uuid) => uuid.toLowerCase())),
+            ]);
+        await this.prisma.tx
+            .$executeRaw`UPDATE public.nodes SET is_connected = false, is_connecting = false,
+            last_status_change = clock_timestamp(), last_status_message = CASE WHEN EXISTS (
+                SELECT 1 FROM jsonb_array_elements(control_addresses) AS route WHERE route->'enabled' = 'true'::jsonb
+            ) THEN '[NODE_UPDATE_PENDING]' ELSE '[NODE_CONTROL_DISABLED]' END
+            WHERE uuid IN (${Prisma.join(ids)}) AND NOT is_disabled`;
     }
 
     public async getNodeIdByUuid(uuid: string): Promise<bigint | null> {

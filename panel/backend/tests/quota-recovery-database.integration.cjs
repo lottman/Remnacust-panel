@@ -11,13 +11,16 @@ const db={kysely:new k.Kysely({dialect:{createDriver:()=>new PrismaTxDriver(tx),
 const checkpoint=load(source('quota-journal-checkpoint.ts')),reports=load(source('quota-recovery-report.ts'));
 const {QuotaRecoveryService}=load(source('quota-recovery.service.ts'),{'@common/axios':{},'@common/database':{},'./quota-journal-checkpoint':checkpoint,'./quota-recovery-report':reports});
 const N='11111111-1111-4111-8111-111111111111',I='22222222-2222-4222-8222-222222222222',G='33333333-3333-4333-8333-333333333333',A='44444444-4444-4444-8444-444444444444';
+let expectedNode=N;const connectionIdentities=[];
+const requireNodeIdentity=opts=>{connectionIdentities.push({actual:opts.uuid,expected:expectedNode});assert.equal(opts.uuid,expectedNode,'Control requests must retain the authoritative node UUID');};
 let available=true,gate=null,arrive=null,requests=0,journals=0;
 const status={applied:true,quotaReservesSupported:true,quotaWatermarksSupported:true,quotaSnapshotsSupported:true,quotaInstanceId:I,quotaJournalSequence:'20',policyRevision:'10',coreProcessId:'55555555-5555-4555-8555-555555555555'};
 const journal={instance:I,sequence:20,policyRevision:'10',entries:[{id:G,group:'host:fixture',owner:'901',ceiling:'9223372036854775807',reserved:'9007199254740993',expiresAt:Date.parse('2030-01-01'),scale:100,prepared:false}],missingIds:[],nextAfter:null};
 const extras=Array.from({length:1000},(_,n)=>({...journal.entries[0],id:`00000000-0000-4000-8000-${String(n+1).padStart(12,'0')}`,group:'host:fixture-'+(n+1),ceiling:'1',reserved:'0'}));
 let alterSnapshot=null,afterFence=null;
-const axios={hostPolicy:async(opts,body)=>{requests++;assert.equal(body,undefined,'Inspection never delivers a policy');assert.equal(tx.isTransactionActive(),false,'No SQL transaction across node I/O');if(gate){arrive();await gate;}if(available==='throw')throw Error('private-transport-token');return available?{isOk:true,response:structuredClone(status)}:{isOk:false};},
+const axios={hostPolicy:async(opts,body)=>{requireNodeIdentity(opts);requests++;assert.equal(body,undefined,'Inspection never delivers a policy');assert.equal(tx.isTransactionActive(),false,'No SQL transaction across node I/O');if(gate){arrive();await gate;}if(available==='throw')throw Error('private-transport-token');return available?{isOk:true,response:structuredClone(status)}:{isOk:false};},
     hostQuotaRecoveryFence:async(opts,request)=>{
+        requireNodeIdentity(opts);
         assert.equal(tx.isTransactionActive(),false,'Pause I/O holds no database transaction');
         assert.equal(request.coreProcessId,status.coreProcessId);assert.equal(request.instance,I);
         const intents=await prisma.$queryRaw`SELECT actor_uuid,phase FROM xera_quota_recovery_actions WHERE request_id=${request.requestId}::uuid`;
@@ -29,13 +32,14 @@ const axios={hostPolicy:async(opts,body)=>{requests++;assert.equal(body,undefine
         return {isOk:true,response:{coreProcessId:status.coreProcessId,quotaRecovery:structuredClone(status.quotaRecovery)}};
     },
     hostQuotaSnapshot:async(opts,request)=>{
+        requireNodeIdentity(opts);
         journals++;assert.equal(tx.isTransactionActive(),false);assert.equal(request.generation,await generation());assert.match(request.requestId,/^[a-f0-9-]{36}$/);
         const payload={version:'remnacust-quota-snapshots-v1',...request,instance:I,sequence:20,checkpoint:19,retiredBefore:0,registrationsRequired:true,watermarksRequired:true,policyRevision:'10',coreProcessId:status.coreProcessId,capturedAt:Date.now(),entries:structuredClone([...extras,...journal.entries])};
         if(status.quotaRecovery)payload.recovery=structuredClone(status.quotaRecovery);
         alterSnapshot?.(payload);
         const raw=Buffer.from(JSON.stringify(payload));return {isOk:true,response:{version:payload.version,encoding:'gzip-base64',bytes:raw.length,sha256:require('node:crypto').createHash('sha256').update(raw).digest('hex'),data:require('node:zlib').gzipSync(raw).toString('base64')}};
     },
-    hostQuotaState:async(opts,request)=>{journals++;assert.deepEqual(request,{limit:500});assert.equal(tx.isTransactionActive(),false);return {isOk:true,response:structuredClone(journal)};}};
+    hostQuotaState:async(opts,request)=>{requireNodeIdentity(opts);journals++;assert.deepEqual(request,{limit:500});assert.equal(tx.isTransactionActive(),false);return {isOk:true,response:structuredClone(journal)};}};
 const service=new QuotaRecoveryService(db,tx,axios);
 const generation=async()=>String((await prisma.$queryRaw`SELECT generation FROM xera_quota_restore_state`)[0].generation);
 const quarantine=()=>prisma.$queryRaw`SELECT xera_quarantine_restored_quotas()`;
@@ -61,6 +65,7 @@ const suspend=()=>{let release;gate=new Promise(resolve=>release=resolve);const 
     SELECT ('00000000-0000-4000-8000-'||lpad(n::text,12,'0'))::uuid,'HOST','fixture-'||n,901,'2026-01-01',${N}::uuid,${I}::uuid,1,false FROM generate_series(1,1000)n`;
  await quarantine();let gen=await generation();const before=await financial();
  const checked=await service.check(N,gen,A);assert.deepEqual(checked.report.issues,[]);assert.equal(checked.report.nodeGrants,1001);assert.equal(checked.report.databaseGrants,'1001');assert.equal(await financial(),before);
+ assert.equal(Object.hasOwn((await service.basis(N)).node,'uuid'),false,'Transport identity must not change the persisted recovery basis');
  const current=await service.status();assert.equal(current.restore.reconciledAt,null);assert.equal(current.nodes.length,1);assert.deepEqual(current.nodes[0].report.issues,[]);
  assert.equal((await prisma.$queryRaw`SELECT actor_uuid FROM xera_quota_recovery_checks`)[0].actor_uuid,A);
  assert(!JSON.stringify(current).includes('private-'));await assert.rejects(prisma.$queryRaw`SELECT 1 FROM xera_assert_quota_restore_reconciled()`,/REQUIRES_RECONCILIATION/);
@@ -168,8 +173,10 @@ const suspend=()=>{let release;gate=new Promise(resolve=>release=resolve);const 
  await prisma.$executeRaw`INSERT INTO nodes(id,uuid,name,address,port) VALUES(902,${legacy}::uuid,'Registered before enrollment','127.0.0.1',2222)`;
  const registered=await service.status(),registeredTail=await service.status(registered.nextAfter);
  assert([...registered.nodes,...registeredTail.nodes].some(n=>n.uuid===legacy));
- available=false;const legacyCheck=await service.check(legacy,gen,A);available=true;
+ available=false;expectedNode=legacy;let legacyCheck;
+ try{legacyCheck=await service.check(legacy,gen,A);}finally{available=true;expectedNode=N;}
  assert(legacyCheck.report.issues.includes('NODE_UNAVAILABLE'));assert(!legacyCheck.report.issues.includes('NODE_REMOVED'));
  await assert.rejects(prisma.$queryRaw`SELECT 1 FROM xera_assert_quota_restore_reconciled()`,/REQUIRES_RECONCILIATION/);
  console.log('PASS registered nodes without financial history remain discoverable and inspectable after an early backup restore');
+ assert(connectionIdentities.length>0);for(const identity of connectionIdentities)assert.equal(identity.actual,identity.expected,'Identity failures must not be hidden as unavailable-node observations');
  }finally{await prisma.$disconnect();}})().catch(error=>{console.error(error);process.exitCode=1;});

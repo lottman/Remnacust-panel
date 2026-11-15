@@ -11,6 +11,7 @@ import {
     TSshServerMessage,
 } from '@libs/contracts/models';
 
+import { normalizeNodeControlAddress } from '../../../../libs/contract/models/node-control-addresses.schema';
 import { ISshSessionOptions } from '../interfaces';
 import { BrowserSshAgent } from './browser-ssh-agent';
 import { CoreSshTunnel } from './core-ssh-tunnel';
@@ -318,9 +319,14 @@ export class SshSession {
             return;
         }
 
-        const host = message.host.trim();
+        const host = normalizeNodeControlAddress(message.host);
 
-        if (!this.options.allowedHosts.includes(host)) {
+        if (
+            !host ||
+            !this.options.allowedHosts.some(
+                (allowed) => normalizeNodeControlAddress(allowed) === host,
+            )
+        ) {
             return this.fatal('Host does not belong to this node');
         }
 

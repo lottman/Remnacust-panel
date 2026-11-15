@@ -8,48 +8,97 @@ const { ERRORS } = require('../libs/contract/build/backend/constants/errors/erro
 
 const base = path.join(__dirname, '../src/modules/nodes');
 function aliases(file) {
-    return Object.fromEntries([...fs.readFileSync(file, 'utf8').matchAll(/from '([^']+)'/g)]
-        .filter(match => match[1].startsWith('@common/') || match[1].startsWith('@modules/') ||
-            match[1].startsWith('@queue/') || match[1].startsWith('@integration-'))
-        .map(match => [match[1], {}]));
+    return Object.fromEntries(
+        [...fs.readFileSync(file, 'utf8').matchAll(/from '([^']+)'/g)]
+            .filter(
+                (match) =>
+                    match[1].startsWith('@common/') ||
+                    match[1].startsWith('@modules/') ||
+                    match[1].startsWith('@queue/') ||
+                    match[1].startsWith('@integration-'),
+            )
+            .map((match) => [match[1], {}]),
+    );
 }
-class Entity { constructor(value) { Object.assign(this, value); } }
-class Response { constructor(node, system) { this.node = node; this.system = system; } }
+class Entity {
+    constructor(value) {
+        Object.assign(this, value);
+    }
+}
+class Response {
+    constructor(node, system) {
+        this.node = node;
+        this.system = system;
+    }
+}
 const serviceFile = path.join(base, 'nodes.service.ts');
 const { NodesService } = load(serviceFile, {
     ...aliases(serviceFile),
     '@contract/constants': { ERRORS, EVENTS: { NODE: { CREATED: 'node.created' } } },
-    '@common/types': { ok: response => ({ isOk: true, response }), fail: error => ({ isOk: false, ...error }) },
-    '@common/utils': { wrapBigInt: value => value == null ? value : BigInt(value), mapDefined: (v, fn) => v === undefined ? undefined : fn(v) },
-    '@common/utils/nano': { toNano: value => BigInt(value * 1e9) },
+    '@common/types': {
+        ok: (response) => ({ isOk: true, response }),
+        fail: (error) => ({ isOk: false, ...error }),
+    },
+    '@common/utils': {
+        wrapBigInt: (value) => (value == null ? value : BigInt(value)),
+        mapDefined: (v, fn) => (v === undefined ? undefined : fn(v)),
+        atLeastOneDefined: load(path.join(__dirname, '../src/common/utils/convert-type.ts'))
+            .atLeastOneDefined,
+    },
+    '@common/utils/nano': { toNano: (value) => BigInt(value * 1e9) },
     '@integration-modules/notifications/interfaces': { NodeEvent: Entity },
-    '@modules/config-profiles/queries/get-config-profile-by-uuid': { GetConfigProfileByUuidQuery: Entity },
-    './entities': { NodesEntity: Entity }, './models': { NodeResponseModel: Response },
-    './repositories/nodes.repository': {}, './nodes-system-cache.service': {}, './dtos': {},
+    '@modules/config-profiles/queries/get-config-profile-by-uuid': {
+        GetConfigProfileByUuidQuery: Entity,
+    },
+    './entities': { NodesEntity: Entity },
+    './models': { NodeResponseModel: Response },
+    './repositories/nodes.repository': {},
+    './nodes-system-cache.service': {},
+    './dtos': {},
 });
-const body = () => ({ name: '  new-node  ', address: '  node.example  ', configProfile: {
-    activeConfigProfileUuid: 'profile', activeInbounds: ['inbound'],
-} });
+const body = () => ({
+    name: '  new-node  ',
+    address: '  node.example  ',
+    configProfile: {
+        activeConfigProfileUuid: 'profile',
+        activeInbounds: ['inbound'],
+    },
+});
 function fixture() {
     const calls = [];
-    const repository = { create: async (entity, inbounds) => {
-        calls.push({ entity, inbounds }); return { ...entity, uuid: 'created' };
-    } };
+    const repository = {
+        create: async (entity, inbounds) => {
+            calls.push({ entity, inbounds });
+            return { ...entity, uuid: 'created' };
+        },
+    };
     const queues = { startNode: async () => {} };
-    const queries = { execute: async () => ({ isOk: true, response: { inbounds: [{ uuid: 'inbound' }] } }) };
-    const cache = { getOne: async () => ({ system: null, versions: null, xrayUptime: 0, onlineUsers: 0 }) };
+    const queries = {
+        execute: async () => ({ isOk: true, response: { inbounds: [{ uuid: 'inbound' }] } }),
+    };
+    const cache = {
+        getOne: async () => ({ system: null, versions: null, xrayUptime: 0, onlineUsers: 0 }),
+    };
     const events = { emit() {} };
     const service = new NodesService(repository, events, queues, queries, {}, cache);
     service.logger = { error() {}, warn() {} };
     return { service, repository, queues, queries, cache, events, calls };
 }
 
-test('DB flavor conflict is a clean HTTP409 and cannot enqueue a failed node create',async()=>{
-    const f=fixture();let queued=0;
-    f.repository.create=async()=>{throw {code:'P2010',meta:{code:'P0C01'}};};
-    f.queues.startNode=async()=>{queued++;};
-    await assert.rejects(f.service.createNode(body()),error=>error.getStatus()===409&&error.errorCode==='CUSTOM_XRAY_REQUIRED');
-    assert.equal(queued,0);
+test('DB flavor conflict is a clean HTTP409 and cannot enqueue a failed node create', async () => {
+    const f = fixture();
+    let queued = 0;
+    f.repository.create = async () => {
+        throw { code: 'P2010', meta: { code: 'P0C01' } };
+    };
+    f.queues.startNode = async () => {
+        queued++;
+    };
+    await assert.rejects(
+        f.service.createNode(body()),
+        (error) => error.getStatus() === 409 && error.errorCode === 'CUSTOM_XRAY_REQUIRED',
+    );
+    assert.equal(queued, 0);
 });
 
 test('missing profile or mismatched inbound cannot leave a node behind', async () => {
@@ -58,63 +107,183 @@ test('missing profile or mismatched inbound cannot leave a node behind', async (
         { isOk: false, ...ERRORS.GET_CONFIG_PROFILE_BY_UUID_ERROR },
         { isOk: true, response: { inbounds: [{ uuid: 'other' }] } },
     ]) {
-        const f = fixture(); f.queries.execute = async () => response;
+        const f = fixture();
+        f.queries.execute = async () => response;
         const result = await f.service.createNode(body());
-        assert.equal(result.isOk, false); assert.equal(f.calls.length, 0);
-        assert.equal(result.code, response.isOk
-            ? ERRORS.CONFIG_PROFILE_INBOUND_NOT_FOUND_IN_SPECIFIED_PROFILE.code : response.code);
+        assert.equal(result.isOk, false);
+        assert.equal(f.calls.length, 0);
+        assert.equal(
+            result.code,
+            response.isOk
+                ? ERRORS.CONFIG_PROFILE_INBOUND_NOT_FOUND_IN_SPECIFIED_PROFILE.code
+                : response.code,
+        );
     }
 });
 
 test('valid create normalizes fields and writes selected inbounds in the same operation', async () => {
-    const f = fixture(), input = body(); input.configProfile.activeInbounds.push('inbound');
+    const f = fixture(),
+        input = body();
+    input.configProfile.activeInbounds.push('inbound');
     assert.equal((await f.service.createNode(input)).isOk, true);
-    assert.equal(f.calls.length, 1); assert.equal(f.calls[0].entity.name, 'new-node');
+    assert.equal(f.calls.length, 1);
+    assert.equal(f.calls[0].entity.name, 'new-node');
     assert.equal(f.calls[0].entity.address, 'node.example');
     assert.deepEqual(f.calls[0].inbounds, ['inbound']);
 });
 
 test('committed create remains successful when queue, notification and cache are unavailable', async () => {
     const f = fixture();
-    f.queues.startNode = async () => { throw Error('queue unavailable'); };
-    f.events.emit = () => { throw Error('notification unavailable'); };
-    f.cache.getOne = async () => { throw Error('cache unavailable'); };
+    f.queues.startNode = async () => {
+        throw Error('queue unavailable');
+    };
+    f.events.emit = () => {
+        throw Error('notification unavailable');
+    };
+    f.cache.getOne = async () => {
+        throw Error('cache unavailable');
+    };
     const result = await f.service.createNode(body());
-    assert.equal(result.isOk, true); assert.equal(f.calls.length, 1);
-    assert.match(result.response.node.lastStatusMessage, /startup is pending/);
+    assert.equal(result.isOk, true);
+    assert.equal(f.calls.length, 1);
+    assert.equal(result.response.node.lastStatusMessage, '[NODE_UPDATE_PENDING]');
     assert.equal(result.response.system.system, null);
 });
 
 test('genuine name/address conflicts remain explicit; existing nodes are never overwritten', async () => {
-    for (const [field, expected] of [['name', 'A033'], ['address', 'A034']]) {
+    for (const [field, expected] of [
+        ['name', 'A033'],
+        ['address', 'A034'],
+    ]) {
         const f = fixture();
-        f.repository.create = async () => { throw new Prisma.PrismaClientKnownRequestError('conflict', {
-            code: 'P2002', clientVersion: '6.19.3', meta: { modelName: 'Nodes', target: [field] },
-        }); };
+        f.repository.create = async () => {
+            throw new Prisma.PrismaClientKnownRequestError('conflict', {
+                code: 'P2002',
+                clientVersion: '6.19.3',
+                meta: { modelName: 'Nodes', target: [field] },
+            });
+        };
         assert.equal((await f.service.createNode(body())).code, expected);
     }
 });
 test('route invalidation failure after committed create preserves successful response', async () => {
     const f = fixture();
-    f.service.routeRegistry = { invalidate: async () => { throw Error('cache unavailable'); } };
+    f.service.routeRegistry = {
+        invalidate: async () => {
+            throw Error('cache unavailable');
+        },
+    };
     const result = await f.service.createNode(body());
-    assert.equal(f.calls.length, 1); assert.equal(result.isOk, true);
+    assert.equal(f.calls.length, 1);
+    assert.equal(result.isOk, true);
 });
 
 test('repository sends one atomic nested write; it does not create inbound links afterwards', async () => {
     const file = path.join(base, 'repositories/nodes.repository.ts');
     const { NodesRepository } = load(file, {
-        ...aliases(file), '../entities/nodes.entity': { NodesEntity: Entity },
+        ...aliases(file),
+        '../entities/nodes.entity': { NodesEntity: Entity },
+        '@nestjs-cls/transactional': {
+            Transactional: () => (_target, _property, descriptor) => descriptor,
+        },
         '../nodes.converter': {},
     });
     let request;
-    const repository = new NodesRepository({ tx: { nodes: { create: async value => {
-        request = value; return { uuid: 'created' };
-    } } } }, {}, { fromEntityToPrismaModel: value => value });
-    await repository.create({ name: 'new-node' }, ['inbound']);
+    const repository = new NodesRepository(
+        {
+            tx: {
+                nodes: {
+                    create: async (value) => {
+                        request = value;
+                        return { uuid: 'created', controlRevision: 'before-links' };
+                    },
+                    findUniqueOrThrow: async ({ where }) => {
+                        assert.equal(where.uuid, 'created');
+                        return { uuid: 'created', controlRevision: 'after-links' };
+                    },
+                },
+            },
+        },
+        {},
+        { fromEntityToPrismaModel: (value) => value },
+    );
+    assert.equal(
+        (await repository.create({ name: 'new-node' }, ['inbound'])).controlRevision,
+        'after-links',
+    );
     assert.deepEqual(request.data.configProfileInboundsToNodes, {
         createMany: { data: [{ configProfileInboundUuid: 'inbound' }] },
     });
     await repository.create({ name: 'legacy-call' });
     assert.equal(request.data.configProfileInboundsToNodes, undefined);
+});
+
+test('committed bulk profile assignment keeps a successful save when its queue is unavailable', async () => {
+    const f = fixture();
+    const writes = [];
+    f.repository.assignProfile = async (...args) => writes.push(args);
+    f.repository.updateMany = async () => {};
+    f.repository.removeInboundsFromNodes = async () => {};
+    f.repository.addInboundsToNodes = async () => {};
+    f.queues.startAllNodesByProfile = async () => {
+        throw Error('queue unavailable');
+    };
+    const response = await f.service.profileModification({
+        uuids: ['node-a', 'node-b'],
+        configProfile: body().configProfile,
+    });
+    assert.equal(response.isOk, true);
+    assert.deepEqual(writes, [[['node-a', 'node-b'], 'profile', ['inbound']]]);
+    f.queries.execute = async () => ({ isOk: false, ...ERRORS.CONFIG_PROFILE_NOT_FOUND });
+    assert.equal(
+        (
+            await f.service.profileModification({
+                uuids: ['node-a'],
+                configProfile: body().configProfile,
+            })
+        ).isOk,
+        false,
+    );
+    assert.equal(writes.length, 1);
+});
+
+test('committed connection update stays successful with a durable retry state when queue, events and cache fail', async () => {
+    const f = fixture();
+    const saved = {
+        uuid: 'created',
+        name: 'existing',
+        address: 'node.example',
+        isDisabled: false,
+        isConnected: true,
+        isConnecting: false,
+        controlAddresses: [{ address: 'node.example', enabled: true }],
+    };
+    let writes = 0;
+    f.repository.findByUUID = async () => ({ ...saved });
+    f.repository.update = async (data) => {
+        writes++;
+        for (const [key, value] of Object.entries(data))
+            if (value !== undefined) saved[key] = value;
+        return { ...saved };
+    };
+    f.queues.startNode = async () => {
+        throw Error('queue unavailable');
+    };
+    f.events.emit = () => {
+        throw Error('events unavailable');
+    };
+    f.cache.getOne = async () => {
+        throw Error('cache unavailable');
+    };
+    const result = await f.service.updateNode({
+        uuid: saved.uuid,
+        controlAddresses: [{ address: '192.0.2.1', enabled: true }],
+    });
+    assert.equal(result.isOk, true);
+    assert.equal(writes, 1);
+    assert.deepEqual(saved.controlAddresses, [{ address: '192.0.2.1', enabled: true }]);
+    assert.equal(saved.isConnected, false);
+    assert.equal(saved.isConnecting, false);
+    assert.equal(saved.lastStatusMessage, '[NODE_UPDATE_PENDING]');
+    assert.equal(result.response.system.system, null);
 });

@@ -392,6 +392,7 @@ const cacheKeys = Object.fromEntries(
         'NODE_USERS_ONLINE',
         'NODE_XRAY_UPTIME',
         'NODE_VERSIONS',
+        'NODE_TELEMETRY_SNAPSHOT',
     ].map((name) => [name, (id) => `${name}:${id}`]),
 );
 const classMock = (name) =>
@@ -524,6 +525,7 @@ for (const version of ['1.0.0', '1.6.4', '2.6.1', '3.4.1'])
             activePluginUuid: null,
             isConnecting: false,
             isConnected: false,
+            controlRevision: '11111111-1111-4111-8111-111111111111',
             activeInbounds: [{ tag: 'vless', protocol: 'vless' }],
         };
         const { service, calls } = client(profile);
@@ -565,7 +567,7 @@ for (const version of ['1.0.0', '1.6.4', '2.6.1', '3.4.1'])
             startNode: async () => {},
             collectReports: async () => assert.fail('legacy nodes have no plugin reports'),
         };
-        const cache = { delMany: async () => {}, setMany: async () => {}, get: async () => null, set: async () => {} };
+        const cache = { delMany: async () => {}, setMany: async () => {}, get: async () => null, set: async () => {}, getString: async () => null, observeNodeIncident: async () => 0 };
         const policies = { syncNode: async () => {}, withCompatibilitySnapshot: async (_roots, work) => work() };
         const configurations = new NodeConfigurationService(
             service,
@@ -602,6 +604,7 @@ for (const version of ['1.0.0', '1.6.4', '2.6.1', '3.4.1'])
             queues,
             cache,
             { record: async (record) => records.push(record) },
+            queryBus,
         );
         await health.process({ data: { nodeUuid: uuid, connectionOpts: opts, isConnected: true } });
         assert.equal(records.at(-1).status, 'ok', JSON.stringify(records));
@@ -614,12 +617,14 @@ function pendingFixture() {
         ...opts, uuid:id, name:id, id:1, countryCode:'US', tags:[],
         integrationUuids:[], activeConfigProfileUuid:'profile', activePluginUuid:null,
         isConnecting:false, isConnected:true, activeInbounds:[{tag:'vless',protocol:'vless'}],
+        controlRevision:'11111111-1111-4111-8111-111111111111',
     }));
     const byId = new Map(nodes.map(node=>[node.uuid,node]));
     const values=new Map(), starts=[], queued=[], updates=[], planResults=[], failures=new Set(['pending']);
     let running=true, available=true, configReads=0;
     const cache={get:async key=>values.get(key)??null,set:async(key,value)=>values.set(key,value),
-        delMany:async keys=>keys.forEach(key=>values.delete(key)),setMany:async()=>{},setManyFenced:async()=>true};
+        delMany:async keys=>keys.forEach(key=>values.delete(key)),setMany:async()=>{},setManyFenced:async()=>true,
+        getString:async()=>null,observeNodeIncident:async()=>0};
     const commandBus={execute:async command=>{
         if(command instanceof RecordPortPlanResultCommand){planResults.push(command);return true;}
         updates.push(command.data);const node=byId.get(command.data.uuid);
@@ -654,7 +659,7 @@ function pendingFixture() {
         configReads:()=>configReads,
         single:new StartNodeProcessor(configurations),
         bulk:new StartAllNodesByProfileQueueProcessor(axios,policies,queues,queryBus,commandBus,cache,configurations,configurations.leases),
-        health:new NodeHealthCheckQueueProcessor(commandBus,{emit:()=>{}},axios,queues,cache,{record:async()=>{}}),
+        health:new NodeHealthCheckQueueProcessor(commandBus,{emit:()=>{}},axios,queues,cache,{record:async()=>{}},queryBus),
     };
 }
 
@@ -1363,4 +1368,40 @@ test('retryable node transport failures reject after status recording; permanent
     f.axios.startXray=async()=>({isOk:false,code:'INVALID_CONFIG',message:'invalid user configuration'});
     await f.single.process({data:{nodeUuid:'pending'}});
     assert.match(f.nodes[0].lastStatusMessage,/invalid user configuration/);
+});
+
+
+test('queued single delivery cannot restart or change status when every control address is disabled', async () => {
+    const f = pendingFixture();
+    f.failures.clear();
+    Object.assign(f.nodes[0], {
+        controlAddresses: [{ address: 'node.test', enabled: false }],
+        isConnected: false,
+        lastStatusMessage: '[NODE_CONTROL_DISABLED]',
+    });
+    await f.single.process({ data: { nodeUuid: 'pending' } });
+    assert.equal(f.configReads(), 0);
+    assert.deepEqual(f.starts, []);
+    assert.deepEqual(f.updates, []);
+    assert.equal(f.nodes[0].lastStatusMessage, '[NODE_CONTROL_DISABLED]');
+});
+
+test('bulk profile delivery skips disabled control addresses and still applies independent enabled nodes', async () => {
+    const f = pendingFixture();
+    f.failures.clear();
+    Object.assign(f.nodes[0], {
+        controlAddresses: [{ address: 'node.test', enabled: false }],
+        isConnected: false,
+        lastStatusMessage: '[NODE_CONTROL_DISABLED]',
+    });
+    await f.bulk.process({ name: 'start-profile', data: { profileUuid: 'profile' } });
+    assert.deepEqual(
+        f.starts.map((item) => item.node.uuid),
+        ['ordinary'],
+    );
+    assert.equal(
+        f.updates.some((item) => item.uuid === 'pending'),
+        false,
+    );
+    assert.equal(f.nodes[0].lastStatusMessage, '[NODE_CONTROL_DISABLED]');
 });

@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict'
+import { execFile } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { test } from 'node:test'
 import { fileURLToPath } from 'node:url'
+import { promisify } from 'node:util'
 
 import { TextDocument } from '../node_modules/monaco-editor/esm/external/vscode-languageserver-textdocument/lib/esm/main.js'
 import {
@@ -98,6 +100,16 @@ test('both localized schemas validate the shared native/WASM editor contract cas
         .filter((fixture) => fixture.editorContract).length
     assert.ok(count > 0)
     assert.equal(await verifyXeraEditorSchemas(fixtures), count * 2)
+})
+
+test('new adaptive schema help matches the selected editor language', () => {
+    for (const suffix of ['', '.cn']) {
+        const schema = JSON.parse(readFileSync(new URL(`../public/assets/xray.schema${suffix}.json`, import.meta.url), 'utf8'))
+        const definition = schema.definitions.RemnacustCoreXeraAdaptiveConfig
+        for (const entry of [definition, ...Object.values(definition.properties)]) {
+            assert.equal(/[\u4e00-\u9fff]/u.test(entry.description), suffix === '.cn')
+        }
+    }
 })
 
 for (const language of ['en', 'zh']) {
@@ -234,6 +246,165 @@ test('non-Xray JSON editors do not load or register the Xray transport schema', 
     assert.deepEqual(h.requests, ['/singbox.json'])
     assert.ok(h.registrations.some((item) => item.uri === 'https://singbox-schema.json'))
     assert.ok(!h.registrations.some((item) => item.uri.includes('xray-schema')))
+})
+
+for (const type of ['XRAY_JSON', 'SINGBOX']) {
+    test(`${type}: late hosts refresh completions and the existing schema without a new setup`, async () => {
+        const h = harness()
+        const updateHosts = await h.setup.configureMonaco(h.monaco, 'json', [], type)
+        const requests = [...h.requests]
+        const host = {
+            uuid: '00000000-0000-4000-8000-000000000002',
+            remark: 'Late host',
+            tags: ['late-tag'],
+            address: 'example.test',
+            port: 443,
+            sni: null,
+            path: null,
+            host: null,
+            isHidden: false,
+            isDisabled: false,
+            inbound: {}
+        }
+        const text = '{"remnawave":{"assignTo":{"hosts":[""]}}}'
+        const offset = text.indexOf('["') + 2
+        const complete = () =>
+            h.providers[0].provideCompletionItems(
+                {
+                    uri: {
+                        toString: () => `subscription-template://${type.toLowerCase()}/fixture`
+                    },
+                    getValue: () => text,
+                    getOffsetAt: () => offset,
+                    getPositionAt: (position) => ({ lineNumber: 1, column: position + 1 })
+                },
+                { lineNumber: 1, column: offset + 1 }
+            ).suggestions
+        assert(!complete().some((item) => item.label === host.uuid))
+        updateHosts([host])
+        assert(complete().some((item) => item.label === host.uuid))
+        assert.equal(h.providers.length, 1)
+        assert.deepEqual(h.requests, requests)
+        const registration = h.registrations.at(-1)
+        assert(JSON.stringify(registration.schema).includes(host.uuid))
+        if (type === 'XRAY_JSON') {
+            assert(registration.schema.definitions.RemnacustCoreXeraHTTPConfig)
+        }
+        updateHosts([])
+        assert(!complete().some((item) => item.label === host.uuid))
+        assert(!JSON.stringify(h.registrations.at(-1).schema).includes(host.uuid))
+        assert.deepEqual(h.errors, [])
+    })
+}
+
+const panelStrategies = [
+    { type: 'roundRobin', settings: { remnacustLoadBalance: true } },
+    { type: 'roundRobin', settings: { remnacustOrder: true } },
+    { type: 'priority' }
+]
+function panelStrategyConfig(strategy) {
+    return {
+        outbounds: [{ protocol: 'freedom', tag: 'pool' }],
+        routing: {
+            balancers: [{ tag: 'auto', selector: ['pool'], strategy }],
+            rules: [{ network: 'tcp,udp', balancerTag: 'auto' }]
+        }
+    }
+}
+for (const language of ['en', 'zh']) {
+    test(`${language}: template schema accepts panel distribution and priority intent with strict settings`, async () => {
+        const h = harness(language)
+        await h.setup.configureMonaco(h.monaco, 'json', [], 'XRAY_JSON')
+        const service = editorService(h.registrations)
+        const uri = 'subscription-template://xray_json/panel-intent'
+        const validate = async (strategy) => {
+            const document = editorDocument(panelStrategyConfig(strategy), uri)
+            return service.doValidation(document, service.parseJSONDocument(document))
+        }
+        for (const strategy of panelStrategies) {
+            assert.deepEqual(await validate(strategy), [], JSON.stringify(strategy))
+        }
+        for (const name of ['remnacustLoadBalance', 'remnacustOrder']) {
+            assert(
+                (await validate({ type: 'roundRobin', settings: { [name]: 'true' } })).length > 0
+            )
+        }
+        assert(
+            (await validate({ type: 'roundRobin', settings: { unexpectedPanelOption: true } }))
+                .length > 0
+        )
+        assert((await validate({ type: 'unknownStrategy' })).length > 0)
+        const raw = JSON.parse(
+            readFileSync(
+                new URL(
+                    `../public/assets/xray.schema${language === 'zh' ? '.cn' : ''}.json`,
+                    import.meta.url
+                )
+            )
+        )
+        assert.equal(
+            raw.definitions.StrategySettingsObject.properties.remnacustLoadBalance,
+            undefined
+        )
+        assert.equal(raw.definitions.StrategySettingsObject.properties.remnacustOrder, undefined)
+        assert(
+            !raw.definitions.StrategyObject.properties.type.anyOf.some(
+                (option) => option.const === 'priority'
+            )
+        )
+    })
+}
+
+test('panel strategy metadata is lowered before both shipped native/WASM validators', async () => {
+    const { materializePriority } = load(
+        fileURLToPath(
+            new URL(
+                '../../backend/src/modules/subscription-template/generators/priority-failover.ts',
+                import.meta.url
+            )
+        ),
+        {
+            './client-pool': { ClientPoolError: class ClientPoolError extends Error {} }
+        }
+    )
+    const sources = panelStrategies.map(panelStrategyConfig)
+    const original = structuredClone(sources)
+    const configs = sources.map((source) => materializePriority(source))
+    assert.deepEqual(sources, original)
+    for (const config of configs) {
+        assert(!JSON.stringify(config).includes('remnacustLoadBalance'))
+        assert(!JSON.stringify(config).includes('remnacustOrder'))
+        assert(config.routing.balancers.every((balance) => balance.strategy.type !== 'priority'))
+    }
+    const script = `
+        const fs = require('node:fs');
+        require('node:vm').runInThisContext(fs.readFileSync(process.argv[1], 'utf8'));
+        const go = new Go();
+        const ready = new Promise(resolve => { globalThis.onWasmInitialized = resolve; });
+        (async () => {
+            const wasm = await WebAssembly.instantiate(fs.readFileSync(process.argv[2]), go.importObject);
+            void go.run(wasm.instance);
+            await ready;
+            for (const config of JSON.parse(process.argv[3])) {
+                const error = globalThis.XrayParseConfig(JSON.stringify(config));
+                if (error) throw new Error(error);
+            }
+            process.exit(0);
+        })().catch(error => { console.error(error); process.exit(1); });
+    `
+    for (const name of ['main.wasm', 'default.wasm']) {
+        await promisify(execFile)(
+            process.execPath,
+            [
+                '-e',
+                script,
+                fileURLToPath(new URL('../public/assets/wasm_exec.js', import.meta.url)),
+                fileURLToPath(new URL(`../public/assets/${name}`, import.meta.url)),
+                JSON.stringify(configs)
+            ],
+            { timeout: 15_000, maxBuffer: 64 * 1024 }
+        )
+    }
 })
 
 test('planned runtime keepalive and header limits are reflected in direct and extra schemas', async () => {

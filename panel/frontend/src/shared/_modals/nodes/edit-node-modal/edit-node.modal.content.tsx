@@ -1,4 +1,4 @@
-import { Tabs, Text } from '@mantine/core'
+import { Alert, Button, Tabs, Text } from '@mantine/core'
 import { useForm, schemaResolver } from '@mantine/form'
 import { UpdateNodeCommand } from '@remnawave/backend-contract'
 import { NodeDetailsCardWidget } from '@widgets/dashboard/nodes/node-details-card'
@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { queryClient } from '@shared/api'
+import { RequestError } from '@shared/api/helpers/handler-request-error'
 import {
     configProfilesQueryKeys,
     nodesQueryKeys,
@@ -21,7 +22,9 @@ import { useUiText } from '@shared/i18n/interface-text'
 import { BaseNodeForm } from '@shared/ui/forms/nodes/base-node-form/base-node-form'
 import { LoaderModalShared } from '@shared/ui/loader-modal'
 import { withNodeIpsErrors } from '@shared/ui/node-ips'
+import { withNodeControlAddressesErrors } from '@shared/ui/node-ips/validate-node-control-addresses'
 
+import { getNodeConnectionValues, getNodeUpdateValues } from './node-form-state'
 import { NodeHealthHistory } from './node-health-history'
 import { NodePortPlans } from './node-port-plans'
 import { useNodePortPlan } from './node-port-plans.api'
@@ -38,6 +41,9 @@ export const EditNodeByUuidModalContent = (props: IProps) => {
     const { nodeUuid, onClose } = props
     const [activeTab, setActiveTab] = useState<string | null>('settings')
     const [portBusy, setPortBusy] = useState(false)
+    const [connectionConflict, setConnectionConflict] = useState(false)
+    const [reloadingConnection, setReloadingConnection] = useState(false)
+    const [reloadError, setReloadError] = useState(false)
     const portPlan = useNodePortPlan(nodeUuid)
 
     const isFormInitialized = useRef(false)
@@ -50,8 +56,8 @@ export const EditNodeByUuidModalContent = (props: IProps) => {
                 form.setFieldValue('proxyUrl', null)
             }
         },
-        validate: withNodeIpsErrors(
-            schemaResolver(UpdateNodeCommand.RequestBodySchema.omit({ uuid: true }))
+        validate: withNodeControlAddressesErrors(
+            withNodeIpsErrors(schemaResolver(UpdateNodeCommand.RequestBodySchema))
         )
     })
 
@@ -59,7 +65,7 @@ export const EditNodeByUuidModalContent = (props: IProps) => {
     const { data: nodePlugins } = useGetNodePlugins()
     const { data: nodeIntegrations } = useGetNodeIntegrations()
 
-    const { data: fetchedNode } = useGetNode({
+    const { data: fetchedNode, refetch: refetchNode } = useGetNode({
         route: {
             uuid: nodeUuid
         },
@@ -70,7 +76,15 @@ export const EditNodeByUuidModalContent = (props: IProps) => {
 
     const { mutate: updateNode, isPending: isUpdateNodePending } = useUpdateNode({
         mutationFns: {
-            onSuccess: async (data) => {
+            onError: (error) => {
+                if (error instanceof RequestError && error.errorCode === 'A266') {
+                    setConnectionConflict(true)
+                }
+                if (error instanceof RequestError && error.errorCode === 'A265') {
+                    form.setFieldError('controlAddresses', t('requestErrors.codes.A265'))
+                }
+            },
+            onSuccess: async (data, variables) => {
                 queryClient.setQueryData(
                     nodesQueryKeys.getNode({
                         uuid: nodeUuid
@@ -85,7 +99,18 @@ export const EditNodeByUuidModalContent = (props: IProps) => {
                     queryKey: configProfilesQueryKeys.getConfigProfiles.queryKey
                 })
 
-                form.resetDirty()
+                const connection = getNodeConnectionValues(data)
+                const initial = {
+                    ...form.getInitialValues(),
+                    ...variables.variables,
+                    ...connection
+                }
+                form.setInitialValues(initial)
+                for (const [field, value] of Object.entries(connection)) {
+                    form.setFieldValue(field, value as never)
+                }
+                form.resetDirty(initial)
+                setConnectionConflict(false)
             }
         }
     })
@@ -98,7 +123,7 @@ export const EditNodeByUuidModalContent = (props: IProps) => {
                 countryCode: fetchedNode.countryCode,
                 name: fetchedNode.name,
                 address: fetchedNode.address,
-                port: fetchedNode.port ?? undefined,
+                ...getNodeConnectionValues(fetchedNode),
                 isTrafficTrackingActive: fetchedNode.isTrafficTrackingActive ?? undefined,
                 trafficLimitBytes: fetchedNode.trafficLimitBytes ?? undefined,
                 trafficResetDay: fetchedNode.trafficResetDay ?? undefined,
@@ -108,7 +133,6 @@ export const EditNodeByUuidModalContent = (props: IProps) => {
                 tags: fetchedNode.tags ?? undefined,
                 integrationUuids: fetchedNode.integrationUuids ?? [],
                 ips: fetchedNode.ips ?? [],
-                proxyUrl: fetchedNode.proxyUrl ?? undefined,
                 configProfile: {
                     activeConfigProfileUuid:
                         fetchedNode.configProfile.activeConfigProfileUuid ?? '',
@@ -129,24 +153,34 @@ export const EditNodeByUuidModalContent = (props: IProps) => {
             return
         }
 
-        const changedValues = Object.fromEntries(
-            Object.entries(values).filter(([field]) => form.isDirty(field))
-        ) as Partial<UpdateNodeCommand.RequestBody>
-
         updateNode({
-            variables: {
-                ...changedValues,
-                uuid: fetchedNode.uuid,
-                ...(changedValues.configProfile !== undefined && {
-                    configProfile: {
-                        activeConfigProfileUuid:
-                            changedValues.configProfile.activeConfigProfileUuid,
-                        activeInbounds: changedValues.configProfile.activeInbounds ?? []
-                    }
-                })
-            }
+            variables: structuredClone(getNodeUpdateValues(values, (field) => form.isDirty(field)))
         })
     })
+
+    const reloadConnection = async () => {
+        setReloadingConnection(true)
+        setReloadError(false)
+        try {
+            const result = await refetchNode()
+            if (!result.data || result.isError) {
+                setReloadError(true)
+                return
+            }
+            const connection = getNodeConnectionValues(result.data)
+            const initial = { ...form.getInitialValues(), ...connection }
+            form.setInitialValues(initial)
+            for (const [field, value] of Object.entries(connection)) {
+                form.setFieldValue(field, value as never)
+            }
+            form.resetDirty(initial)
+            setConnectionConflict(false)
+        } catch {
+            setReloadError(true)
+        } finally {
+            setReloadingConnection(false)
+        }
+    }
 
     if (!fetchedNode || fetchedNode.uuid !== nodeUuid) {
         return (
@@ -179,12 +213,31 @@ export const EditNodeByUuidModalContent = (props: IProps) => {
                 </Text>
             )}
             <Tabs.Panel value="settings" pt="md">
+                {connectionConflict && (
+                    <Alert color="yellow" role="alert" mb="md">
+                        <Text size="sm">{t('node-control-addresses.conflict')}</Text>
+                        <Button
+                            mt="sm"
+                            variant="light"
+                            loading={reloadingConnection}
+                            onClick={reloadConnection}
+                        >
+                            {t('node-control-addresses.reload')}
+                        </Button>
+                    </Alert>
+                )}
+                {reloadError && (
+                    <Alert color="red" role="alert" mb="md">
+                        {t('operations.requestError')}
+                    </Alert>
+                )}
                 {secretKey && nodePlugins && nodeIntegrations ? (
                     <BaseNodeForm
                         form={form}
                         handleClose={onClose}
                         handleSubmit={handleSubmit}
-                        isDataSubmitting={isUpdateNodePending}
+                        isDataSubmitting={isUpdateNodePending || reloadingConnection}
+                        saveDisabled={connectionConflict}
                         node={fetchedNode}
                         portPlansEnabled={portPlan.data?.enabled ?? false}
                         onManagePorts={() => setActiveTab('ports')}

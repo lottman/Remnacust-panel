@@ -1,4 +1,5 @@
 import type { ISshTarget } from '../ssh-terminal.types'
+import type { GetNodeCommand } from '@remnawave/backend-contract'
 
 import {
     Autocomplete,
@@ -11,6 +12,7 @@ import {
     Text,
     TextInput
 } from '@mantine/core'
+import { normalizeNodeControlAddress } from '@remnawave/backend-contract'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbKey, TbPlugConnected, TbRefresh, TbServer, TbTerminal2 } from 'react-icons/tb'
@@ -20,20 +22,19 @@ import { NodeIpStatusIcon, resolveNodeIpStatusMeta } from '@shared/ui/node-ips'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { RefreshButton } from '@shared/ui/refresh-control'
 import { SectionCard } from '@shared/ui/section-card'
+import {
+    getConfiguredNodeAddresses,
+    getNodeControlAddresses,
+    getNodeSshDefaultAddress
+} from '@shared/utils/node-control-addresses'
 
 import { INodeKeyInfo } from '@entities/ssh-vault'
 
 import classes from '../NodeSshTerminal.module.css'
 
-export interface INodeIp {
-    ip: string
-    status: string
-}
-
 interface IProps {
     initial: ISshTarget
-    nodeAddress: string
-    nodeIps: INodeIp[]
+    node: GetNodeCommand.Response['response']
     nodeKey: INodeKeyInfo
     onConnect: (target: ISshTarget) => void
     onOpenKeyImport: () => void
@@ -41,12 +42,12 @@ interface IProps {
 }
 
 export const ConnectionSetupScreen = (props: IProps) => {
-    const { initial, nodeAddress, nodeIps, nodeKey, onConnect, onOpenKeyImport, onRegenerateKey } =
-        props
+    const { initial, node, nodeKey, onConnect, onOpenKeyImport, onRegenerateKey } = props
     const { t } = useTranslation()
+    const defaultHost = getNodeSshDefaultAddress(node)
 
     const [username, setUsername] = useState(initial.username)
-    const [host, setHost] = useState(initial.host === nodeAddress ? '' : initial.host)
+    const [host, setHost] = useState(initial.host)
     const [port, setPort] = useState<number>(initial.port)
 
     const [isBusy, setIsBusy] = useState(false)
@@ -61,16 +62,25 @@ export const ConnectionSetupScreen = (props: IProps) => {
     }
 
     const ipOptions = useMemo(
-        () => Array.from(new Set(nodeIps.map((item) => item.ip).filter(Boolean))),
-        [nodeIps]
+        () => getConfiguredNodeAddresses(node),
+        [node.controlAddresses, node.address, node.ips]
     )
 
     const ipStatuses = useMemo(
-        () => new Map(nodeIps.map((item) => [item.ip, item.status])),
-        [nodeIps]
+        () =>
+            new Map(
+                node.ips.map((item) => [
+                    normalizeNodeControlAddress(item.ip) ?? item.ip,
+                    item.status
+                ])
+            ),
+        [node.ips]
     )
 
-    const selectedIpStatus = ipStatuses.get(host.trim())
+    const selectedHost = normalizeNodeControlAddress(host.trim() || defaultHost)
+    const selectedIpStatus = selectedHost ? ipStatuses.get(selectedHost) : undefined
+    const hostAllowed = selectedHost !== null && ipOptions.includes(selectedHost)
+    const managementOff = !getNodeControlAddresses(node).some((entry) => entry.enabled)
 
     return (
         <SectionCard.Root w="75%" mx="auto">
@@ -142,6 +152,7 @@ export const ConnectionSetupScreen = (props: IProps) => {
                         <Autocomplete
                             comboboxProps={{ position: 'bottom-start', width: 320, zIndex: 500 }}
                             data={ipOptions}
+                            error={!hostAllowed ? t('node-ssh.host-not-configured') : undefined}
                             label={t('node-ssh.host')}
                             leftSection={
                                 selectedIpStatus ? (
@@ -151,7 +162,7 @@ export const ConnectionSetupScreen = (props: IProps) => {
                                 )
                             }
                             onChange={setHost}
-                            placeholder={nodeAddress}
+                            placeholder={defaultHost}
                             renderOption={({ option }) => {
                                 const status = ipStatuses.get(option.value) ?? 'UNKNOWN'
 
@@ -186,22 +197,28 @@ export const ConnectionSetupScreen = (props: IProps) => {
                         />
                         <Text c="dimmed" className={classes.targetHint} size="xs">
                             {t('node-ssh.host-hint')}
+                            {managementOff && (
+                                <Text component="span" display="block">
+                                    {t('node-ssh.management-off-hint')}
+                                </Text>
+                            )}
                         </Text>
                     </Box>
 
                     <Button
-                        disabled={!username.trim()}
+                        disabled={!username.trim() || !hostAllowed}
                         fullWidth
                         size="sm"
                         variant="soft"
                         leftSection={<TbPlugConnected size={16} />}
-                        onClick={() =>
+                        onClick={() => {
+                            if (!hostAllowed || !selectedHost || !username.trim()) return
                             onConnect({
-                                host: host.trim() || nodeAddress,
+                                host: selectedHost,
                                 port,
                                 username: username.trim()
                             })
-                        }
+                        }}
                     >
                         {t('node-ssh.connect')}
                     </Button>

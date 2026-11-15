@@ -2,7 +2,7 @@ import type { DocLanguage } from './documentation.types'
 
 import { ActionIcon, Box, Button, Group, Select } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
-import { createContext, useContext, type ReactNode } from 'react'
+import { createContext, useContext, useLayoutEffect, useRef, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbApi, TbBook2, TbDownload, TbLink, TbVersions } from 'react-icons/tb'
 import { Link, useLocation, useSearchParams } from 'react-router'
@@ -27,6 +27,64 @@ export function DocumentationLocale({ children }: { children: ReactNode }) {
 export function useDocumentationTranslation() {
     const language = useContext(DocumentationLanguage)
     return { ...useTranslation('remnawave', { lng: language }), language }
+}
+
+export function DocumentationIndex({ children }: { children: ReactNode }) {
+    const { t, language } = useDocumentationTranslation()
+    const ref = useRef<HTMLElement>(null)
+    useLayoutEffect(() => {
+        const element = ref.current
+        if (!element) return
+        let frame = 0
+        const viewport = window.visualViewport
+        const update = () => {
+            frame = 0
+            const viewportTop = viewport?.offsetTop ?? 0
+            const viewportBottom =
+                viewportTop + (viewport?.height ?? document.documentElement.clientHeight)
+            const height = Math.max(
+                0,
+                Math.floor(
+                    viewportBottom - Math.max(viewportTop, element.getBoundingClientRect().top) - 24
+                )
+            )
+            const value = height + 'px'
+            if (element.style.getPropertyValue('--documentation-index-height') !== value) {
+                element.style.setProperty('--documentation-index-height', value)
+            }
+        }
+        const schedule = () => {
+            if (!frame) frame = requestAnimationFrame(update)
+        }
+        const observer = new ResizeObserver(schedule)
+        observer.observe(element)
+        if (element.parentElement) observer.observe(element.parentElement)
+        window.addEventListener('scroll', schedule, { passive: true })
+        window.addEventListener('resize', schedule)
+        viewport?.addEventListener('resize', schedule)
+        viewport?.addEventListener('scroll', schedule)
+        update()
+        return () => {
+            cancelAnimationFrame(frame)
+            observer.disconnect()
+            window.removeEventListener('scroll', schedule)
+            window.removeEventListener('resize', schedule)
+            viewport?.removeEventListener('resize', schedule)
+            viewport?.removeEventListener('scroll', schedule)
+        }
+    }, [])
+    return (
+        <Box
+            component="nav"
+            className={classes.index}
+            dir={language === 'fa' ? 'rtl' : undefined}
+            aria-label={t('documentation.contents')}
+            ref={ref}
+            tabIndex={0}
+        >
+            {children}
+        </Box>
+    )
 }
 
 export function DocumentationHeader({ mode }: { mode: DocumentationMode }) {

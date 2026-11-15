@@ -14,7 +14,7 @@ const i18n = require('i18next')
 const profileUuid = '0587cad8-1305-4127-ab2a-7e10c0981280'
 const inboundUuid = '8b5b79c5-234d-41c9-ab46-435f5154671e'
 const hostUuid = '1e17ad03-10f3-490d-b5be-6a997b23d441'
-const profiles = [{ uuid: profileUuid, name: 'Profile', inbounds: [{ uuid: inboundUuid, port: 443 }] }]
+const profiles = [{ uuid: profileUuid, name: 'Profile', inbounds: [{ uuid: inboundUuid, profileUuid, tag: 'vless', port: 443 }] }]
 const validInbound = { configProfileUuid: profileUuid, configProfileInboundUuid: inboundUuid }
 const selectionMessage = 'Please select the config profile and inbound'
 i18n.init({ lng: 'en', initImmediate: false, resources: { en: { translation: {
@@ -30,6 +30,8 @@ function load(file, overrides = {}) {
         if (Object.hasOwn(overrides, name)) return overrides[name]
         if (name === './host-patch') return load('shared/_modals/hosts/edit-host-modal/host-patch.ts')
         if (name === '@shared/utils/misc/parse-json-field') return load('shared/utils/misc/parse-json-field.ts')
+        if (name === '@shared/utils/host-inbound') return load('shared/utils/host-inbound.ts')
+        if (name === '@shared/utils/misc/is') return load('shared/utils/misc/is.ts')
         if (name.endsWith('/validate-host-inbound')) return load('shared/ui/forms/hosts/base-host-form/validate-host-inbound.ts')
         if (name.endsWith('/domain-presets')) return load('shared/ui/forms/hosts/base-host-form/domain-presets.ts')
         if (name === '@shared/utils/destination-rule') return load('shared/utils/destination-rule.ts')
@@ -196,7 +198,7 @@ test('invalid selections are ignored; inbounds without a port preserve the expli
     result.picker.onSaveInbound(hostUuid, profileUuid)
     assert.equal(result.form.getValues().inbound, undefined)
     assert.equal(result.form.getValues().port, 1234)
-    const noPort = renderSelection({ port: 1234 }, [{ ...profiles[0], inbounds: [{ uuid: inboundUuid, port: null }] }])
+    const noPort = renderSelection({ port: 1234 }, [{ ...profiles[0], inbounds: [{ ...profiles[0].inbounds[0], port: null }] }])
     noPort.picker.onSaveInbound(inboundUuid, profileUuid)
     assert.equal(noPort.form.getValues().port, 1234)
 })

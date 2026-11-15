@@ -36,6 +36,7 @@ import {
     useBulkDisableHosts
 } from '@shared/api/hooks/hosts/hosts.mutation.hooks'
 import { useUiText } from '@shared/i18n/interface-text'
+import { resolveHostInbound } from '@shared/utils/host-inbound'
 
 import { useHostsActiveTag } from '@entities/dashboard/view-preferences-store'
 
@@ -151,8 +152,8 @@ export const MultiSelectHostsFeature = (props: IProps) => {
         if (isCloning) return
         const selectedIds = new Set(selectedHosts)
         const selected = (hosts ?? []).filter((host) => selectedIds.has(host.uuid))
-        const cloneableHosts = selected.filter(
-            (host) => host.inbound.configProfileInboundUuid && host.inbound.configProfileUuid
+        const cloneableHosts = selected.filter((host) =>
+            resolveHostInbound(host.inbound, configProfiles)
         )
         const danglingCount = selected.length - cloneableHosts.length
 

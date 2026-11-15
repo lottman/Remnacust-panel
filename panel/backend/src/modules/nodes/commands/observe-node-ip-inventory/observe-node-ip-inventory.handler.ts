@@ -8,6 +8,6 @@ export class ObserveNodeIpInventoryHandler implements ICommandHandler<ObserveNod
     constructor(private readonly inventory: NodeIpInventoryService) {}
 
     execute(command: ObserveNodeIpInventoryCommand) {
-        return this.inventory.observe(command.uuid, command.controlRevision, command.addresses);
+        return this.inventory.observe(command.uuid, command.controlRevision);
     }
 }

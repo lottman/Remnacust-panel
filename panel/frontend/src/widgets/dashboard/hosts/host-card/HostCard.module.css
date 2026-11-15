@@ -43,7 +43,7 @@
 }
 
 .danglingItem {
-    border: 1px solid light-dark(var(--mantine-color-gray-2), var(--mantine-color-red-3));
+    border: 1px solid light-dark(var(--mantine-color-red-6), var(--mantine-color-red-3));
 }
 
 .itemDragging {
@@ -329,7 +329,9 @@
 }
 .desktopContent {
     display: grid;
-    grid-template-columns: minmax(0, 1.8fr) minmax(100px, 0.8fr) auto;
+    grid-template-columns: minmax(0, 1.8fr) minmax(100px, 0.8fr) calc(
+            10.25rem * var(--mantine-scale)
+        );
     grid-template-rows: auto auto;
     gap: 6px 12px;
     align-items: center;
@@ -380,7 +382,7 @@
         text-align: start;
     }
     .desktopContent {
-        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-columns: minmax(0, 1fr) 70px;
     }
     .desktopContent .headerRow > :first-child {
         grid-column: 1 / -1;

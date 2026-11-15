@@ -27,7 +27,7 @@
 .index {
     position: sticky;
     top: 90px;
-    max-height: calc(100dvh - 124px);
+    max-height: min(calc(100dvh - 124px), var(--documentation-index-height, 100dvh));
     overflow: auto;
     overscroll-behavior: contain;
     padding-inline-end: 12px;
@@ -334,7 +334,7 @@
     .index {
         width: 100%;
         position: static;
-        max-height: 250px;
+        max-height: min(250px, var(--documentation-index-height, 250px));
         border: 1px solid var(--panel-border);
         border-radius: 10px;
         padding: 12px;

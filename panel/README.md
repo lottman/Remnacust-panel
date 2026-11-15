@@ -2,14 +2,14 @@
 
 # Remnacust Panel
 
-Выпуск **Panel/Page 1.1.7.128** входит в комплект Installer **1.2.176** с Node **1.1.38** и Core/WASM **1.1.22**. [Изменения выпуска](../docs/releases/1.1.7.128.md). Обновление установленного сервера выполняется отдельно.
+Выпуск **Panel/Page 1.1.7.129** входит в комплект Installer **1.2.177** с Node **1.1.38** и Core/WASM **1.1.22**. [Изменения выпуска](../docs/releases/1.1.7.129.md). Обновление установленного сервера выполняется отдельно.
 
 Панель управления пользователями, нодами и подписками. Для установки на VPS используйте готовые образы через установщик; Node.js и Go на сервере не нужны.
 
 | Стабильный компонент | Версия |
 | --- | --- |
-| [Panel и страница подписки](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.128) | 1.1.7.128 |
-| [Installer / комплект](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.176) | 1.2.176 |
+| [Panel и страница подписки](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.129) | 1.1.7.129 |
+| [Installer / комплект](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.177) | 1.2.177 |
 | [Node](https://github.com/lottman/Remnacust-node/releases/tag/v1.1.38) | 1.1.38 |
 | [Core / WASM](https://github.com/lottman/Remnacust-core/releases/tag/v1.1.22) | 1.1.22 |
 

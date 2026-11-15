@@ -137,10 +137,10 @@ test('manual SSH receives canonical IPv6/hostnames and retained addresses withou
         assert.deepEqual(sessionOptions.allowedHosts, [
             '2001:db8::1',
             'node.example.test',
-            'old.example.test',
             '192.0.2.3',
         ]);
         assert.equal(sessionOptions.nodeAddress, '2001:db8::1');
+        assert.equal(sessionOptions.allowedHosts.includes('old.example.test'), false);
         assert.equal(sessionOptions.allowedHosts.includes('unrelated.example.test'), false);
     } finally {
         global.setInterval = original;

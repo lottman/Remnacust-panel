@@ -1,5 +1,6 @@
 import { OptimisticSortingPlugin } from '@dnd-kit/dom/sortable'
 import { useSortable } from '@dnd-kit/react/sortable'
+import { githubDarkTheme } from '@json-edit-react/themes'
 import {
     ActionIcon,
     Badge,
@@ -23,7 +24,6 @@ import {
 import cx from 'clsx'
 import ColorHash from 'color-hash'
 import { JsonViewer } from 'json-edit-react'
-import { githubDarkTheme } from '@json-edit-react/themes'
 import { CSSProperties, memo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiNetwork, PiProhibit, PiPulse } from 'react-icons/pi'
@@ -47,6 +47,7 @@ import { XrayLogo } from '@shared/ui/logos'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { ProviderTags } from '@shared/ui/provider-tags/provider-tags'
 import { SingleRowOverflowList } from '@shared/ui/single-row-overflow-list'
+import { resolveHostInbound } from '@shared/utils/host-inbound'
 import { resolveCountryCode } from '@shared/utils/misc/resolve-country-code'
 
 import classes from './HostCard.module.css'
@@ -84,18 +85,15 @@ export const HostCardWidget = memo(function HostCardWidget(props: IProps) {
     const [isHovered, setIsHovered] = useState(false)
     const isMobile = useIsMobile()
 
-    const configProfile = configProfiles?.find(
-        (configProfile) => configProfile.uuid === item.inbound.configProfileUuid
-    )
+    const binding = resolveHostInbound(item.inbound, configProfiles)
+    const configProfile = binding?.profile
 
     const providers = item.nodes.flatMap((id) => {
         const provider = nodesByUuid.get(id)?.provider
         return provider ? [provider] : []
     })
 
-    const inboundTag = configProfile?.inbounds.find(
-        (inbound) => inbound.uuid === item.inbound.configProfileInboundUuid
-    )?.tag
+    const inboundTag = binding?.inbound.tag
 
     const sortable = useSortable({
         id: item.uuid,
@@ -260,8 +258,8 @@ export const HostCardWidget = memo(function HostCardWidget(props: IProps) {
                                     }}
                                     variant="transparent"
                                 >
-                                    {configProfile?.name || 'DANGLING'}
-                                    {item.inbound.configProfileInboundUuid && (
+                                    {binding?.profileLabel ?? uiText('dangling-1f52ec3')}
+                                    {item.inbound?.configProfileInboundUuid && (
                                         <>
                                             <span style={{ margin: '0 6px', opacity: 0.5 }}>›</span>
                                             <span>{inboundTag || 'UNKNOWN'}</span>
@@ -595,8 +593,8 @@ export const HostCardWidget = memo(function HostCardWidget(props: IProps) {
                                 }}
                                 variant="transparent"
                             >
-                                {configProfile?.name || 'DANGLING'}
-                                {item.inbound.configProfileInboundUuid && (
+                                {binding?.profileLabel ?? uiText('dangling-1f52ec3')}
+                                {item.inbound?.configProfileInboundUuid && (
                                     <>
                                         <span style={{ margin: '0 6px', opacity: 0.5 }}>›</span>
                                         <span>{inboundTag || 'UNKNOWN'}</span>

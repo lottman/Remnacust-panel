@@ -331,7 +331,7 @@ export class NodesRepository implements ICrud<NodesEntity> {
         addresses: string[];
         expectedControlRevision: string;
         expectedScanRevision: string | null;
-        mode: 'initial' | 'append' | 'refresh';
+        mode: 'initial' | 'scheduled' | 'refresh';
         now?: Date;
     }): Promise<NodesEntity> {
         const [before] = await this.prisma.tx.$queryRaw<
@@ -350,7 +350,7 @@ export class NodesRepository implements ICrud<NodesEntity> {
         });
         const now = input.now ?? new Date();
         const freshAutomatic =
-            input.mode === 'append' &&
+            input.mode === 'scheduled' &&
             ipInventory &&
             now.getTime() - ipInventory.scannedAt.getTime() < NODE_IP_SCAN_INTERVAL_MS;
         if (!(input.mode === 'initial' && ipInventory) && !freshAutomatic) {

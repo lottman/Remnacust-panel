@@ -34,8 +34,8 @@ The bundle for this panel version. Components use separate version numbers; publ
 
 | Component | Bundle version |
 | --- | --- |
-| Panel and subscription website | [1.1.7.128](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.128) |
-| Installer / Docker bundle | [1.2.176](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.176) |
+| Panel and subscription website | [1.1.7.129](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.129) |
+| Installer / Docker bundle | [1.2.177](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.177) |
 | Node agent | [1.1.38](https://github.com/lottman/Remnacust-node/releases/tag/v1.1.38) |
 | Core / editor validator | [1.1.22](https://github.com/lottman/Remnacust-core/releases/tag/v1.1.22), Xray v26.11.9 |
 
@@ -57,7 +57,7 @@ When sharing a server, leave headroom for all components. Panel/node requirement
 
 | Software | Requirement |
 | --- | --- |
-| Installer 1.2.173 OS | Ubuntu 22.04 / 24.04 / 26.04 LTS and Debian 12 / 13; Linux amd64 or arm64 |
+| Installer 1.2.177 OS | Ubuntu 22.04 / 24.04 / 26.04 LTS and Debian 12 / 13; Linux amd64 or arm64 |
 | Containers | Docker Engine with a current Docker Compose v2 plugin; legacy `docker-compose` v1 is unsupported |
 | PostgreSQL | For a new installation, use a supported major version with current fixes; this repository's Compose files use 18.7. See [database compatibility](docs/DATABASE-COMPATIBILITY.md) for the validation scope |
 | Prebuilt-image installation | Root, APT and GitHub/GHCR access, working DNS; no host Node.js or Go needed |
@@ -92,7 +92,9 @@ Add a separate website later with `sudo remnacust install-subscription-page`. It
 
 Node control addresses share one list: IPv4, IPv6 and hostnames, up to 65 unique entries including disabled ones. Order sets priority, and a switch permits panel control through an address. Saved entries can be reordered or disabled; add a new address to correct an old one. The card shows the current control address. A configured SOCKS5 proxy applies to every fallback address; proxy failure never triggers a direct bypass. The proxy column shows configuration rather than connection health. [Node operation](docs/NODE-COMPATIBILITY.md).
 
-The compact list marks its first enabled address with a purple Panel badge. Node 1.1.38 supplies assigned IPv4/IPv6 on the first successful node report. While the node is available, later checks append new IPs every 30 minutes, retaining the interval across panel restarts. Rescan IPs removes only disappeared addresses previously added by discovery; manual entries, surviving address order and disabled states are preserved.
+The compact list marks its first enabled address with a purple Panel badge. Node 1.1.38 supplies a complete assigned IPv4/IPv6 list on the first available API response, then at most once every 30 minutes, even when Core is not running. The interval survives panel restarts. Each complete successful scan adds new IPs and removes disappeared IPs previously discovered or confirmed by the node. Manual IPs never reported by the node and hostnames are retained; surviving rows keep their order and disabled state. Rescan IPs runs the same check immediately. Failed or incomplete responses retain the list. The node reports its operating-system interfaces: a provider-side detachment becomes visible after those interfaces change.
+
+A host is marked DANGLING if its profile or inbound is missing, or the inbound no longer belongs to that profile. Select a valid pair and save the host; cloning requires a valid binding. A disabled host or an unavailable node alone does not invalidate its binding.
 
 Geofiles have a master switch and a per-template setting. Standard datasets can use automatic refresh every 48 hours with a configurable interval; Update now checks the source without replacing an unchanged SHA-256. Standard categories remain available alongside custom ones. With the master switch enabled and full standard datasets available, a Happ subscription refresh restores standard files while preserving manual Routing/geodata. [Geofiles](docs/GEOFILES.md).
 
@@ -104,7 +106,7 @@ Apply to JSON updates the draft; save the profile separately. For inbound client
 
 Manual JSON and extra, existing auto/stream-auto transfer modes, ALPN, padding and quotas are preserved.
 
-API management retains permission checks and administrator-only operation restrictions. Updates to the RU/EN/FA/ZH guide and security dependencies are prepared. [Panel/Page 1.1.7.128 changes](docs/releases/1.1.7.128.md).
+API management retains permission checks and administrator-only operation restrictions. Updates to the RU/EN/FA/ZH guide and security dependencies are prepared. [Panel/Page 1.1.7.129 changes](docs/releases/1.1.7.129.md).
 
 Standard Remnawave nodes and pages retain basic operation within their protocols and APIs. Advanced host/device restrictions and autoselect accounting require compatible custom Node/Core. Network failures or unknown compatibility do not authorize dropping configured restrictions. [Node compatibility](docs/NODE-COMPATIBILITY.md).
 

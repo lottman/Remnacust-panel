@@ -17,8 +17,9 @@ import {
 } from '@shared/api/hooks'
 import { usePreventTableBackScroll } from '@shared/hooks'
 import { DataTableControls, LoadingScreen, sortRecords } from '@shared/ui'
-import { sToMs } from '@shared/utils/time-utils'
+import { resolveHostInbound } from '@shared/utils/host-inbound'
 import { matchesHostStatus } from '@shared/utils/host-status-filter'
+import { sToMs } from '@shared/utils/time-utils'
 
 import {
     type BooleanFilterValue,
@@ -104,9 +105,16 @@ export const HostsDataTableWidget = memo((props: IProps) => {
         const nodeNameByUuid = new Map<string, string>()
         const internalSquadNameByUuid = new Map<string, string>()
         const xrayTemplateNameByUuid = new Map<string, string>()
-        for (const profile of configProfiles ?? []) {
-            configProfileNameByUuid.set(profile.uuid, profile.name)
-            for (const inbound of profile.inbounds ?? []) {
+        for (const profile of Array.isArray(configProfiles) ? configProfiles : []) {
+            if (!profile || typeof profile.uuid !== 'string' || typeof profile.name !== 'string')
+                continue
+            configProfileNameByUuid.set(
+                profile.uuid,
+                profile.name.trim() ? profile.name : profile.uuid
+            )
+            for (const inbound of Array.isArray(profile.inbounds) ? profile.inbounds : []) {
+                if (!inbound || typeof inbound.uuid !== 'string' || typeof inbound.tag !== 'string')
+                    continue
                 inboundTagByUuid.set(inbound.uuid, inbound.tag)
             }
         }
@@ -120,6 +128,7 @@ export const HostsDataTableWidget = memo((props: IProps) => {
             xrayTemplateNameByUuid.set(template.uuid, template.name)
         }
         return {
+            configProfiles,
             configProfileNameByUuid,
             inboundTagByUuid,
             internalSquadNameByUuid,
@@ -198,7 +207,9 @@ export const HostsDataTableWidget = memo((props: IProps) => {
             if (failsSelectFilter) return false
 
             if (selectedStatuses.length > 0) {
-                const matchesStatus = selectedStatuses.some((status) => matchesHostStatus(host, status))
+                const matchesStatus = selectedStatuses.some((status) =>
+                    matchesHostStatus(host, status)
+                )
 
                 if (!matchesStatus) {
                     return false
@@ -241,6 +252,14 @@ export const HostsDataTableWidget = memo((props: IProps) => {
                 pinFirstColumn
                 pinLastColumn
                 records={filteredAndSortedHosts}
+                rowBackgroundColor={(host) =>
+                    resolveHostInbound(host.inbound, configProfiles)
+                        ? undefined
+                        : 'var(--mantine-color-red-light)'
+                }
+                rowColor={(host) =>
+                    resolveHostInbound(host.inbound, configProfiles) ? undefined : 'red.6'
+                }
                 selectedRecords={selectedRecords}
                 sortStatus={sortStatus}
                 storeColumnsKey={HOSTS_CACHE_KEY}

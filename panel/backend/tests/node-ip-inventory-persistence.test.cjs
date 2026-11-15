@@ -296,7 +296,7 @@ function defineTests() {
         assert.equal(f.host.isTransactionActive(), false);
     });
 
-    test('automatic append has a durable 30 minute gate and does not delete absent generated addresses', async () => {
+    test('automatic reconciliation has a durable 30 minute gate and retires detached addresses', async () => {
         const f = controlledRepository();
         const initial = await f.scan(['192.0.2.1', '2001:db8::1'], { mode: 'initial' });
         const baseline = f.snapshot();
@@ -305,24 +305,23 @@ function defineTests() {
             addresses: ['192.0.2.2'],
             expectedControlRevision: initial.controlRevision,
             expectedScanRevision: initial.ipInventory.revision,
-            mode: 'append',
+            mode: 'scheduled',
             now: after(30 * 60 * 1000 - 1),
         });
         assert.deepEqual(f.snapshot(), baseline);
-        const result = await f.scan(['192.0.2.2'], { mode: 'append', now: after(30 * 60 * 1000) });
+        const result = await f.scan(['192.0.2.2'], {
+            mode: 'scheduled',
+            now: after(30 * 60 * 1000),
+        });
         assert.deepEqual(
             result.controlAddresses.map((row) => row.address),
-            ['node.example.test', '192.0.2.1', '2001:db8::1', '192.0.2.2'],
+            ['node.example.test', '192.0.2.2'],
         );
-        assert.deepEqual(result.ipInventory.generatedAddresses, [
-            '192.0.2.1',
-            '2001:db8::1',
-            '192.0.2.2',
-        ]);
+        assert.deepEqual(result.ipInventory.generatedAddresses, ['192.0.2.2']);
         assert.deepEqual(result.ipInventory.addresses, ['192.0.2.2']);
     });
 
-    test('a recreated actual inventory service honors the saved scan timestamp and uses metadata without an extra node RPC', async () => {
+    test('a recreated inventory service honors the saved timestamp before requesting a complete inventory', async () => {
         const f = controlledRepository();
         let now = start;
         const repository = {
@@ -360,30 +359,32 @@ function defineTests() {
         const makeService = () =>
             new NodeIpInventoryService(
                 repository,
-                new Proxy(
-                    {},
-                    {
-                        get() {
-                            assert.fail('Background observation must not issue a node RPC');
+                {
+                    getNodeNetworkAddresses: async () => ({
+                        isOk: true,
+                        response: {
+                            complete: true,
+                            addresses:
+                                now.getTime() < after(1_800_000).getTime()
+                                    ? ['2001:db8::1']
+                                    : ['2001:db8::2'],
                         },
-                    },
-                ),
+                    }),
+                },
                 {},
             );
-        let result = await makeService().observe(f.uuid, f.snapshot().node.controlRevision, [
-            '2001:db8::1',
-        ]);
+        let result = await makeService().observe(f.uuid, f.snapshot().node.controlRevision);
         assert.equal(result.isOk, true);
         const before = f.snapshot();
         now = after(1_800_000 - 1);
-        result = await makeService().observe(f.uuid, before.node.controlRevision, ['2001:db8::2']);
+        result = await makeService().observe(f.uuid, before.node.controlRevision);
         assert.equal(result.isOk, true);
         assert.equal(result.response, null);
         assert.deepEqual(f.snapshot(), before);
         now = after(1_800_000);
-        result = await makeService().observe(f.uuid, before.node.controlRevision, ['2001:db8::2']);
+        result = await makeService().observe(f.uuid, before.node.controlRevision);
         assert.equal(result.isOk, true);
-        assert.deepEqual(f.snapshot().inventory.generatedAddresses, ['2001:db8::1', '2001:db8::2']);
+        assert.deepEqual(f.snapshot().inventory.generatedAddresses, ['2001:db8::2']);
         assert.deepEqual(f.snapshot().inventory.scannedAt, now);
     });
 
@@ -414,21 +415,21 @@ function defineTests() {
         assert.notEqual(f.snapshot().inventory.revision, before.inventory.revision);
     });
 
-    test('fresh append ignores a stale scan revision but still rejects a stale root control revision first', async () => {
+    test('fresh scheduled reconciliation ignores a stale scan revision but still rejects a stale root control revision first', async () => {
         const f = controlledRepository();
         await f.scan(['2001:db8::1']);
         const old = f.snapshot();
         await f.scan(['2001:db8::1'], { now: after(1000) });
         const current = f.snapshot();
         await f.scan(['2001:db8::2'], {
-            mode: 'append',
+            mode: 'scheduled',
             now: after(2000),
             expectedScanRevision: old.inventory.revision,
         });
         assert.deepEqual(f.snapshot(), current);
         await assert.rejects(
             f.scan(['2001:db8::2'], {
-                mode: 'append',
+                mode: 'scheduled',
                 now: after(2000),
                 expectedScanRevision: old.inventory.revision,
                 expectedControlRevision: randomUUID(),
@@ -438,7 +439,7 @@ function defineTests() {
         assert.deepEqual(f.snapshot(), current);
     });
 
-    for (const mode of ['append', 'refresh'])
+    for (const mode of ['scheduled', 'refresh'])
         test(`stale scan revision conflicts during due ${mode} even when control revision is unchanged`, async () => {
             const f = controlledRepository();
             await f.scan(['2001:db8::1']);
@@ -484,7 +485,7 @@ function defineTests() {
             controlAddresses: [{ address: 'node.example.test', enabled: false }],
         });
         await f.scan(['192.0.2.1'], { mode: 'initial' });
-        await f.scan(['2001:db8::1'], { mode: 'append', now: after(30 * 60 * 1000) });
+        await f.scan(['2001:db8::1'], { mode: 'scheduled', now: after(30 * 60 * 1000) });
         assert.equal(
             f.snapshot().node.controlAddresses.every((row) => !row.enabled),
             true,

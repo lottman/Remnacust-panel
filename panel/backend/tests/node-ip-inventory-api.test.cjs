@@ -284,12 +284,12 @@ test('a cache outage after a committed scan cannot become a false save failure',
     assert.equal(f.calls.writes.length, 1);
 });
 
-test('first authenticated telemetry initializes append mode without an additional node RPC', async () => {
+test('first authenticated telemetry schedules one complete authoritative address request', async () => {
     const f = fixture();
-    assert.equal((await f.service.observe(uuid, revision, ['2001:db8::1'])).isOk, true);
-    assert.equal(f.calls.requests, 0);
-    assert.equal(f.calls.writes[0].mode, 'append');
-    assert.deepEqual(f.calls.writes[0].addresses, ['2001:db8::1']);
+    assert.equal((await f.service.observe(uuid, revision)).isOk, true);
+    assert.equal(f.calls.requests, 1);
+    assert.equal(f.calls.writes[0].mode, 'scheduled');
+    assert.deepEqual(f.calls.writes[0].addresses, ['192.0.2.1', '2001:db8::1']);
 });
 
 test('the persisted thirty-minute interval survives a new service instance and expires at its boundary', async (t) => {
@@ -303,23 +303,69 @@ test('the persisted thirty-minute interval survives a new service instance and e
         addresses: [],
         generatedAddresses: [],
     };
-    assert.equal((await f.service.observe(uuid, revision, ['192.0.2.1'])).response, null);
+    assert.equal((await f.service.observe(uuid, revision)).response, null);
     const restarted = new NodeIpInventoryService(f.repository, f.axios, f.cache);
-    assert.equal((await restarted.observe(uuid, revision, ['192.0.2.1'])).response, null);
+    assert.equal((await restarted.observe(uuid, revision)).response, null);
     assert.equal(f.calls.writes.length, 0);
     clock += 10 * 60 * 1000;
-    assert.equal((await restarted.observe(uuid, revision, ['192.0.2.1'])).isOk, true);
+    assert.equal((await restarted.observe(uuid, revision)).isOk, true);
     assert.equal(f.calls.writes.length, 1);
-    assert.equal(f.calls.writes[0].mode, 'append');
-    assert.equal(f.calls.requests, 0);
+    assert.equal(f.calls.writes[0].mode, 'scheduled');
+    assert.equal(f.calls.requests, 1);
 });
 
-test('invalid automatic telemetry is rejected without even loading the mutable node row', async () => {
+test('invalid or incomplete automatic endpoint replies cannot change the saved inventory', async () => {
+    for (const response of [
+        {},
+        { complete: false, addresses: [] },
+        { complete: true, addresses: ['127.0.0.1'] },
+        { complete: true, addresses: ['https://node.test/'] },
+        { complete: true, addresses: ['::1'] },
+    ]) {
+        const f = fixture();
+        f.axios.getNodeNetworkAddresses = async () => ({ isOk: true, response });
+        assert.equal((await f.service.observe(uuid, revision)).code, 'A269');
+        assert.equal(f.calls.writes.length, 0);
+        assert.equal(f.node.ipInventory, null);
+    }
+});
+
+test('automatic unsupported scans back off while an explicit rescan can retry immediately', async (t) => {
+    let now = Date.parse('2026-11-15T10:00:00.000Z');
+    t.mock.method(Date, 'now', () => now);
     const f = fixture();
-    for (const value of [undefined, {}, ['127.0.0.1'], ['https://node.test/'], ['::1']])
-        assert.equal((await f.service.observe(uuid, revision, value)).code, 'A269');
-    assert.equal(f.calls.reads, 0);
+    f.axios.getNodeNetworkAddresses = async () => {
+        f.calls.requests++;
+        return { isOk: false, code: 'NODE_HTTP_404' };
+    };
+    assert.equal((await f.service.observe(uuid, revision)).code, 'A268');
+    assert.equal((await f.service.observe(uuid, revision)).response, null);
+    assert.equal(f.calls.requests, 1);
+    assert.equal((await f.service.rescan(uuid, revision)).code, 'A268');
+    assert.equal(f.calls.requests, 2);
+    now += 30 * 60 * 1000;
+    assert.equal((await f.service.observe(uuid, revision)).code, 'A268');
+    assert.equal(f.calls.requests, 3);
     assert.equal(f.calls.writes.length, 0);
+});
+
+test('transient scan failures retry after one minute without advancing successful-scan state', async (t) => {
+    let now = Date.parse('2026-11-15T10:00:00.000Z');
+    t.mock.method(Date, 'now', () => now);
+    const f = fixture();
+    f.axios.getNodeNetworkAddresses = async () => {
+        f.calls.requests++;
+        return { isOk: false, code: 'NODE_HTTP_503' };
+    };
+    assert.equal((await f.service.observe(uuid, revision)).code, 'A267');
+    now += 59_999;
+    assert.equal((await f.service.observe(uuid, revision)).response, null);
+    assert.equal(f.calls.requests, 1);
+    now++;
+    assert.equal((await f.service.observe(uuid, revision)).code, 'A267');
+    assert.equal(f.calls.requests, 2);
+    assert.equal(f.calls.writes.length, 0);
+    assert.equal(f.node.ipInventory, null);
 });
 
 test('the actual rescan endpoint requires an explicit node write scope and rejects read-only or missing identities', () => {

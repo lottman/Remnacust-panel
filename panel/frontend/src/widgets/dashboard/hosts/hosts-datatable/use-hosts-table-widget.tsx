@@ -1,9 +1,9 @@
 import { DataTableColumn } from '@kastov/mantine-datatable'
-import { ActionIcon, Group, MultiSelect, Stack, Text } from '@mantine/core'
+import { ActionIcon, Group, MultiSelect, Stack, Text, ThemeIcon, Tooltip } from '@mantine/core'
 import { GetHostsCommand } from '@remnawave/backend-contract'
 import { TFunction } from 'i18next'
 import { PiProhibit, PiPulse } from 'react-icons/pi'
-import { TbEdit, TbEye, TbEyeOff, TbSearch } from 'react-icons/tb'
+import { TbAlertTriangle, TbEdit, TbEye, TbEyeOff, TbSearch } from 'react-icons/tb'
 
 import {
     type BooleanFilterValue,
@@ -14,6 +14,7 @@ import {
     TextSearchFilter
 } from '@shared/ui'
 import { AlwaysAvailableHostBadge } from '@shared/ui/hosts/always-available-host-badge'
+import { type HostConfigProfiles, resolveHostInbound } from '@shared/utils/host-inbound'
 import { type HostStatusFilter as SharedHostStatusFilter } from '@shared/utils/host-status-filter'
 
 export type { BooleanFilterValue }
@@ -23,6 +24,7 @@ export type HostType = GetHostsCommand.Response['response'][number]
 export type HostStatusFilter = Exclude<SharedHostStatusFilter, 'all'>
 
 export interface HostTableContext {
+    configProfiles: HostConfigProfiles | undefined
     configProfileNameByUuid: Map<string, string>
     inboundTagByUuid: Map<string, string>
     internalSquadNameByUuid: Map<string, string>
@@ -146,7 +148,7 @@ export const HOST_SELECT_FIELDS: HostSelectFieldConfig[] = [
     {
         accessor: 'inbound.configProfileUuid',
         getValues: (host) =>
-            host.inbound.configProfileUuid ? [host.inbound.configProfileUuid] : [],
+            host.inbound?.configProfileUuid ? [host.inbound.configProfileUuid] : [],
         key: 'configProfile',
         label: (t) => t('use-nodes-table-widget.config-profile'),
         valueLabel: (value, context) => context.configProfileNameByUuid.get(value) ?? value
@@ -154,7 +156,7 @@ export const HOST_SELECT_FIELDS: HostSelectFieldConfig[] = [
     {
         accessor: 'inbound.configProfileInboundUuid',
         getValues: (host) =>
-            host.inbound.configProfileInboundUuid ? [host.inbound.configProfileInboundUuid] : [],
+            host.inbound?.configProfileInboundUuid ? [host.inbound.configProfileInboundUuid] : [],
         key: 'inbound',
         label: (t) => t('common.field.inbounds'),
         valueLabel: (value, context) => context.inboundTagByUuid.get(value) ?? value
@@ -357,6 +359,18 @@ function buildSelectColumn(
         ),
         filtering: (filters.selectFilters[cfg.key] ?? []).length > 0,
         render: (host) => {
+            if (cfg.key === 'configProfile' || cfg.key === 'inbound') {
+                const binding = resolveHostInbound(host.inbound, filters.context.configProfiles)
+                return binding ? (
+                    <EllipsisCell>
+                        {cfg.key === 'configProfile' ? binding.profileLabel : binding.inbound.tag}
+                    </EllipsisCell>
+                ) : (
+                    <Text c="red" size="sm">
+                        {t('interface.dangling-1f52ec3')}
+                    </Text>
+                )
+            }
             const labels = cfg
                 .getValues(host)
                 .map((value) => (cfg.valueLabel ? cfg.valueLabel(value, filters.context) : value))
@@ -457,25 +471,40 @@ function buildStatusColumn(t: TFunction, filters: HostsTableFilters): DataTableC
             />
         ),
         filtering: filters.selectedStatuses.length > 0,
-        render: ({ isDisabled, isHidden }) => (
+        render: (host) => (
             <>
-                {isDisabled && (
+                {!resolveHostInbound(host.inbound, filters.context.configProfiles) && (
+                    <Tooltip label={t('interface.dangling-1f52ec3')}>
+                        <ThemeIcon
+                            aria-label={t('interface.dangling-1f52ec3')}
+                            color="red"
+                            role="img"
+                            size="lg"
+                            variant="soft"
+                        >
+                            <TbAlertTriangle aria-hidden size={16} />
+                        </ThemeIcon>
+                    </Tooltip>
+                )}
+                {host.isDisabled && (
                     <ActionIcon color="gray" size="lg" style={{ flexShrink: 0 }} variant="soft">
                         <PiProhibit size={16} />
                     </ActionIcon>
                 )}
 
-                {!isDisabled && isHidden && (
+                {!host.isDisabled && host.isHidden && (
                     <ActionIcon color="violet" size="lg" style={{ flexShrink: 0 }} variant="soft">
                         <TbEyeOff size={16} />
                     </ActionIcon>
                 )}
 
-                {!isDisabled && !isHidden && (
-                    <ActionIcon color="teal" size="lg" style={{ flexShrink: 0 }} variant="soft">
-                        <PiPulse size={16} />
-                    </ActionIcon>
-                )}
+                {!host.isDisabled &&
+                    !host.isHidden &&
+                    resolveHostInbound(host.inbound, filters.context.configProfiles) && (
+                        <ActionIcon color="teal" size="lg" style={{ flexShrink: 0 }} variant="soft">
+                            <PiPulse size={16} />
+                        </ActionIcon>
+                    )}
             </>
         )
     }

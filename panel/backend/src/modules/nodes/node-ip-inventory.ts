@@ -33,23 +33,24 @@ export function planNodeIpInventory(
         ipInventory?: Pick<NodeIpInventoryState, 'addresses' | 'generatedAddresses'> | null;
     },
     input: unknown,
-    mode: 'initial' | 'append' | 'refresh',
+    mode: 'initial' | 'scheduled' | 'refresh',
 ) {
     const addresses = normalizeNodeIpInventory(input);
     const observed = new Set(addresses);
     const previous = NodeControlAddressesSchema.parse(before.controlAddresses);
-    const generated = new Set(
-        normalizeNodeIpInventory(before.ipInventory?.generatedAddresses ?? []),
-    );
+    const generated = new Set([
+        ...normalizeNodeIpInventory(before.ipInventory?.generatedAddresses ?? []),
+        ...normalizeNodeIpInventory(before.ipInventory?.addresses ?? []),
+    ]);
     const enabled = previous.some((row) => row.enabled);
     const controlAddresses = previous
         .filter(
-            (row) => mode !== 'refresh' || !generated.has(row.address) || observed.has(row.address),
+            (row) => mode === 'initial' || !generated.has(row.address) || observed.has(row.address),
         )
         .map((row) => ({ ...row }));
     const retained = new Set(controlAddresses.map((row) => row.address));
     const generatedAddresses = controlAddresses
-        .filter((row) => generated.has(row.address))
+        .filter((row) => generated.has(row.address) || observed.has(row.address))
         .map((row) => row.address);
     for (const address of addresses) {
         if (retained.has(address)) continue;
@@ -66,7 +67,7 @@ export function planNodeIpInventory(
         ]),
     );
     const retainedIps = [...statuses.keys()].filter(
-        (ip) => mode !== 'refresh' || !generated.has(ip) || observed.has(ip),
+        (ip) => mode === 'initial' || !generated.has(ip) || observed.has(ip),
     );
     const inventoryAddresses = [...new Set([...retainedIps, ...addresses])];
     if (inventoryAddresses.length > 64)

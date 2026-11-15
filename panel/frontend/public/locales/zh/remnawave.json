@@ -383,7 +383,7 @@
     "edit-host-modal": {
         "widget": {
             "edit-host": "编辑主机",
-            "dangling-host-cannot-be-cloned": "同名主机不能被克隆"
+            "dangling-host-cannot-be-cloned": "绑定无效的主机无法克隆"
         }
     },
     "create-node-modal": {
@@ -1983,8 +1983,8 @@
         "preferred": "首个启用地址",
         "panel": "面板",
         "rescan": "重新扫描 IP",
-        "discovery-help": "每 30 分钟的自动发现只添加新的 IPv4 和 IPv6 地址。手动重新扫描还会移除已消失的发现 IP。手动地址（包括主机名）、启用状态和优先顺序均保留。",
-        "rescan-description": "刷新发现的 IPv4 和 IPv6 地址。已消失的发现 IP 会被移除；手动添加的地址（包括主机名）会保留。",
+        "discovery-help": "API 可用时，每 30 分钟完整检查 IPv4/IPv6：添加新 IP，移除已消失且曾由节点确认的 IP。节点从未报告过的手动 IP 和主机名会保留。剩余行的顺序及开关状态不变。",
+        "rescan-description": "立即完整扫描 IPv4/IPv6。移除已消失且曾由节点确认的 IP。保留节点从未报告过的手动 IP、主机名，以及剩余行的顺序和开关状态。",
         "rescan-save-first": "重新扫描 IP 前，请先保存地址、端口或代理的更改。",
         "rescan-success": "IP 地址列表已刷新。",
         "rescan-last": "上次扫描：{{date}}",

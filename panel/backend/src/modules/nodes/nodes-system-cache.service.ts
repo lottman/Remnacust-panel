@@ -60,13 +60,8 @@ export class NodesSystemCacheService {
                   ? JSON.parse(rawStats as string)
                   : null;
 
-            const system =
-                !infoErr && rawInfo && stats
-                    ? {
-                          info: JSON.parse(rawInfo as string),
-                          stats,
-                      }
-                    : null;
+            const info = !infoErr && rawInfo && stats ? JSON.parse(rawInfo as string) : null;
+            const system = info !== null && stats ? { info, stats } : null;
 
             const versions = !versionsErr && rawVersions ? JSON.parse(rawVersions as string) : null;
             const xrayUptime = snapshot

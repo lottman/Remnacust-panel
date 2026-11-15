@@ -38,6 +38,7 @@ import { Page } from '@shared/ui/page'
 import { CompatibilityDocumentation } from './compatibility'
 import {
     DocumentationLocale,
+    DocumentationIndex,
     DocumentationHeader,
     DocumentationToolbar,
     useDocumentationTranslation
@@ -330,12 +331,7 @@ function DocumentationContentPage({ mode }: { mode: 'guide' | 'api' }) {
                         lang={language}
                         dir={language === 'fa' ? 'rtl' : 'ltr'}
                     >
-                        <Box
-                            component="nav"
-                            className={classes.index}
-                            dir={language === 'fa' ? 'rtl' : undefined}
-                            aria-label={t('documentation.contents')}
-                        >
+                        <DocumentationIndex>
                             <Text c="dimmed" size="xs" fw={600} mb="sm">
                                 {apiMode
                                     ? t('documentation.operations', {
@@ -471,7 +467,7 @@ function DocumentationContentPage({ mode }: { mode: 'guide' | 'api' }) {
                                     })}
                                 </>
                             )}
-                        </Box>
+                        </DocumentationIndex>
                         <Box className={classes.content}>
                             {!selectedValid ? (
                                 <Alert>{t('documentation.invalidLink')}</Alert>

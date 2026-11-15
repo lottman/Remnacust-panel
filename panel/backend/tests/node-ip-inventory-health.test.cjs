@@ -96,6 +96,7 @@ function fixture() {
         },
     };
     let scan = async () => ({ isOk: true, response: { ...state } });
+    const transport = { getSystemStats: async () => ({ isOk: true, response: stats }) };
     const worker = new NodeHealthCheckQueueProcessor(
         {
             execute: async (command) => {
@@ -109,7 +110,7 @@ function fixture() {
             },
         },
         { emitAsync: async () => {} },
-        { getSystemStats: async () => ({ isOk: true, response: stats }) },
+        transport,
         { startNode: async (value) => starts.push(value) },
         {
             observeNodeHealth: async () => 0,
@@ -139,6 +140,7 @@ function fixture() {
         stats,
         state,
         starts,
+        transport,
         set scan(value) {
             scan = value;
         },
@@ -165,7 +167,7 @@ test('actual scheduler producer carries scan time and a due successful health ch
     assert.equal(f.calls.length, 1);
     assert.equal(f.calls[0].uuid, id);
     assert.equal(f.calls[0].controlRevision, revision);
-    assert.deepEqual(f.calls[0].addresses, ['192.0.2.1', '2001:db8::1']);
+    assert.equal(f.calls[0].addresses, undefined);
     assert.ok(f.writes.some((row) => row.isConnected === true));
     assert.ok(f.telemetry.length);
 });
@@ -199,10 +201,40 @@ test('inventory storage failures retain normal health handling without clearing 
     assert.ok(f.telemetry.length);
 });
 
-test('legacy stats without complete address metadata cannot trigger a scan', async () => {
+test('missing telemetry inventory schedules a capability check rather than treating it as an empty scan', async () => {
     const f = fixture();
     delete f.stats.system.info;
     await f.run();
-    assert.equal(f.calls.length, 0);
+    assert.equal(f.calls.length, 1);
+    assert.equal(f.calls[0].addresses, undefined);
     assert.ok(f.writes.some((row) => row.isConnected === true));
+});
+
+test('API-alive Core-down health refreshes the due inventory independently of Xray', async () => {
+    const f = fixture();
+    f.transport.getSystemStats = async () => ({ isOk: false, code: 'NODE_HTTP_503' });
+    f.transport.getNodeHealth = async () => ({
+        isOk: true,
+        response: { isAlive: true, xrayInternalStatusCached: false },
+    });
+    await f.run();
+    assert.equal(f.calls.length, 1);
+    assert.equal(f.calls[0].addresses, undefined);
+    assert.ok(f.writes.some((row) => row.lastStatusMessage === '[NODE_CORE_NOT_READY]'));
+    assert.equal(f.starts.length, 1);
+});
+
+test('Core-down inventory route changes fence the preceding health result and restart intent', async () => {
+    const f = fixture();
+    f.transport.getSystemStats = async () => ({ isOk: false, code: 'NODE_HTTP_503' });
+    f.transport.getNodeHealth = async () => ({
+        isOk: true,
+        response: { isAlive: true, xrayInternalStatusCached: false },
+    });
+    f.scan = async () => ({ isOk: true, response: { ...f.state, controlRevision: next } });
+    await f.run();
+    assert.equal(f.calls.length, 1);
+    assert.equal(f.writes.length, 0);
+    assert.equal(f.telemetry.length, 0);
+    assert.equal(f.starts.length, 0);
 });

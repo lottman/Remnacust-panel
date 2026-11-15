@@ -103,6 +103,7 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
                     const health = await this.axios.getNodeHealth(connectionOpts);
                     if (!health.isOk && health.code === 'NODE_ROUTE_BUSY') return;
                     if (health.isOk && health.response.isAlive === true) {
+                        if (!(await this.observeInventory(job, controlRevision))) return;
                         if (
                             (await this.observeHealth(
                                 nodeUuid,
@@ -168,32 +169,7 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
 
                 switch (statResult.isOk) {
                     case true:
-                        if (
-                            controlRevision &&
-                            Array.isArray(statResult.response.system?.info?.ipAddresses) &&
-                            (job.data.ipScanAt == null ||
-                                Date.now() - job.data.ipScanAt >= NODE_IP_SCAN_INTERVAL_MS)
-                        ) {
-                            try {
-                                const scan = await this.commandBus.execute(
-                                    new ObserveNodeIpInventoryCommand(
-                                        nodeUuid,
-                                        controlRevision,
-                                        statResult.response.system.info.ipAddresses,
-                                    ),
-                                );
-                                if (
-                                    scan.isOk &&
-                                    scan.response &&
-                                    scan.response.controlRevision !== controlRevision
-                                )
-                                    return;
-                            } catch {
-                                this.logger.warn(
-                                    `Could not save IP inventory for node ${nodeUuid}`,
-                                );
-                            }
-                        }
+                        if (!(await this.observeInventory(job, controlRevision))) return;
                         return await this.handleConnectedNode(
                             connectionOpts,
                             nodeUuid,
@@ -256,6 +232,30 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
                 `Error handling "${NODES_JOB_NAMES.NODE_HEALTH_CHECK}" job: ${error}`,
             );
             return;
+        }
+    }
+
+    private async observeInventory(
+        job: Job<INodeHealthCheckPayload>,
+        controlRevision: string | undefined,
+    ): Promise<boolean> {
+        if (
+            !controlRevision ||
+            (job.data.ipScanAt != null && Date.now() - job.data.ipScanAt < NODE_IP_SCAN_INTERVAL_MS)
+        )
+            return true;
+        try {
+            const scan = await this.commandBus.execute(
+                new ObserveNodeIpInventoryCommand(job.data.nodeUuid, controlRevision),
+            );
+            return !(
+                scan.isOk &&
+                scan.response &&
+                scan.response.controlRevision !== controlRevision
+            );
+        } catch {
+            this.logger.warn(`Could not save IP inventory for node ${job.data.nodeUuid}`);
+            return true;
         }
     }
 

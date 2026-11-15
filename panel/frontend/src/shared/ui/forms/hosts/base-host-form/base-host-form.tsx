@@ -27,6 +27,7 @@ import { FlagTextInput } from '@shared/ui/flag-picker/flag-picker'
 import { TemplateInfoPopoverShared } from '@shared/ui/popovers'
 import { PopoverWithInfoShared } from '@shared/ui/popovers/popover-with-info'
 import { SectionCard } from '@shared/ui/section-card'
+import { resolveHostInbound } from '@shared/utils/host-inbound'
 
 import { HostLimitsAndRules } from './host-limits-and-rules'
 import { HostTemplateAssignments } from './host-template-assignments'
@@ -92,39 +93,23 @@ export const BaseHostForm = <
     const resolveSelectedRawInbound = () => {
         const { inbound } = form.getValues()
 
-        if (!inbound?.configProfileUuid || !inbound.configProfileInboundUuid) {
-            return undefined
-        }
-
-        return configProfiles
-            ?.find((configProfile) => configProfile.uuid === inbound.configProfileUuid)
-            ?.inbounds.find(
-                (profileInbound) => profileInbound.uuid === inbound.configProfileInboundUuid
-            )?.rawInbound
+        return resolveHostInbound(inbound, configProfiles)?.inbound.rawInbound
     }
 
     const isXhttpExtraButtonDisabled = () => {
         const { inbound } = form.getValues()
-
-        if (!inbound) {
-            return true
-        }
-
-        if (!configProfiles || !inbound.configProfileInboundUuid || !inbound.configProfileUuid) {
-            return true
-        }
-
-        return !configProfiles.some(
-            (configProfile) =>
-                configProfile.uuid === inbound.configProfileUuid &&
-                configProfile.inbounds.some((inbound) => inbound.network === 'xhttp')
-        )
+        const binding = resolveHostInbound(inbound, configProfiles)
+        return !binding || !binding.profile.inbounds.some((entry) => entry.network === 'xhttp')
     }
 
     const saveInbound = (inbound: string, configProfileUuid: string) => {
-        const selectedInbound = configProfiles
-            .find((profile) => profile.uuid === configProfileUuid)
-            ?.inbounds.find((item) => item.uuid === inbound)
+        const selectedInbound = resolveHostInbound(
+            {
+                configProfileUuid,
+                configProfileInboundUuid: inbound
+            },
+            configProfiles
+        )?.inbound
         if (!selectedInbound) return
 
         form.clearFieldError('inbound')
@@ -387,7 +372,7 @@ export const BaseHostForm = <
 
                     {!!hostUuid && (
                         <Group gap="xs">
-                            <CloneHostFeature hostUuid={hostUuid} />
+                            <CloneHostFeature configProfiles={configProfiles} hostUuid={hostUuid} />
                             <DeleteHostFeature hostUuid={hostUuid} />
                         </Group>
                     )}

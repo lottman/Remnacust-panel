@@ -8,7 +8,6 @@ export class ObserveNodeIpInventoryCommand extends Command<TResult<NodesEntity |
     constructor(
         public readonly uuid: string,
         public readonly controlRevision: string,
-        public readonly addresses: unknown,
     ) {
         super();
     }

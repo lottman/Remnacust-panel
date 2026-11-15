@@ -423,7 +423,7 @@ test(
             );
 
             await t.test(
-                'first append discovers IPv4/IPv6, durable due edge appends, and manual refresh deletes only generated addresses',
+                'complete scheduled checks reconcile assigned IPv4/IPv6 at the durable interval and preserve unconfirmed manual addresses',
                 async () => {
                     const address = `manual-${randomUUID()}.example.test`;
                     let node = await createNode({
@@ -434,7 +434,7 @@ test(
                         ],
                         ips: [{ ip: '192.0.2.50', status: 'OUTBOUND' }],
                     });
-                    node = await scan(node, ['192.0.2.1', '2001:0DB8::1'], { mode: 'append' });
+                    node = await scan(node, ['192.0.2.1', '2001:0DB8::1'], { mode: 'scheduled' });
                     assert.deepEqual(node.ipInventory.addresses, ['192.0.2.1', '2001:db8::1']);
                     assert.deepEqual(node.ipInventory.generatedAddresses, [
                         '192.0.2.1',
@@ -451,23 +451,19 @@ test(
                         addresses: ['192.0.2.2'],
                         expectedControlRevision: node.controlRevision,
                         expectedScanRevision: randomUUID(),
-                        mode: 'append',
+                        mode: 'scheduled',
                         now: after(1_800_000 - 1),
                     });
                     assert.deepEqual(await observe(node.uuid), before);
                     node = await scan(node, ['192.0.2.2'], {
-                        mode: 'append',
+                        mode: 'scheduled',
                         now: after(1_800_000),
                     });
                     assert.deepEqual(
                         node.controlAddresses.map((row) => row.address),
-                        [address, '192.0.2.50', '192.0.2.1', '2001:db8::1', '192.0.2.2'],
+                        [address, '192.0.2.50', '192.0.2.2'],
                     );
-                    assert.deepEqual(node.ipInventory.generatedAddresses, [
-                        '192.0.2.1',
-                        '2001:db8::1',
-                        '192.0.2.2',
-                    ]);
+                    assert.deepEqual(node.ipInventory.generatedAddresses, ['192.0.2.2']);
                     node = await scan(node, ['2001:db8::1']);
                     assert.deepEqual(node.controlAddresses, [
                         { address, enabled: true },
@@ -483,7 +479,7 @@ test(
             );
 
             await t.test(
-                'all-off state and existing manual IP provenance survive observation and empty refresh',
+                'all-off state stays off and previously confirmed manual IPs retire from an older inventory snapshot',
                 async () => {
                     const node = await createNode();
                     let disabled = await repository.update(
@@ -498,7 +494,7 @@ test(
                     assert.equal(disabled.isConnected, false);
                     assert.equal(disabled.isConnecting, false);
                     disabled = await scan(disabled, ['2001:db8::3'], {
-                        mode: 'append',
+                        mode: 'scheduled',
                         now: after(1_800_000),
                     });
                     assert.equal(
@@ -515,12 +511,15 @@ test(
                         controlAddresses: [{ address: '192.0.2.50', enabled: false }],
                     });
                     let observed = await scan(manual, ['192.0.2.50'], { mode: 'initial' });
-                    assert.deepEqual(observed.ipInventory.generatedAddresses, []);
+                    assert.deepEqual(observed.ipInventory.generatedAddresses, ['192.0.2.50']);
+                    await transactions.tx.nodeIpInventory.update({
+                        where: { nodeUuid: manual.uuid },
+                        data: { generatedAddresses: [] },
+                    });
                     observed = await scan(observed, []);
-                    assert.deepEqual(observed.controlAddresses, [
-                        { address: '192.0.2.50', enabled: false },
-                    ]);
-                    assert.deepEqual(observed.ips, [{ ip: '192.0.2.50', status: 'OUTBOUND' }]);
+                    assert.deepEqual(observed.controlAddresses, []);
+                    assert.deepEqual(observed.ips, []);
+                    assert.equal(observed.isConnected, false);
                 },
             );
 
@@ -549,7 +548,7 @@ test(
                 },
             );
 
-            for (const mode of ['refresh', 'append'])
+            for (const mode of ['refresh', 'scheduled'])
                 await t.test(
                     `concurrent ${mode} waits on the node row lock and rejects stale scan revision after same-root metadata commit`,
                     async (scope) => {
@@ -692,12 +691,28 @@ test(
                     assert.equal(node.ipInventory.generatedAddresses.length, 64);
                     assert.equal(node.ips.length, 64);
                     const before = await observe(node.uuid);
-                    for (const addresses of [Array(65).fill('192.0.2.1'), ['192.0.2.1']]) {
-                        await assert.rejects(
-                            scan(node, addresses, { mode: 'append', now: after(1_800_000) }),
-                        );
-                        assert.deepEqual(await observe(node.uuid), before);
-                    }
+                    await assert.rejects(
+                        scan(node, Array(65).fill('192.0.2.1'), {
+                            mode: 'scheduled',
+                            now: after(1_800_000),
+                        }),
+                    );
+                    assert.deepEqual(await observe(node.uuid), before);
+                    node = await scan(node, ['192.0.2.1'], {
+                        mode: 'scheduled',
+                        now: after(1_800_000),
+                    });
+                    assert.equal(node.controlAddresses.length, 2);
+                    assert.deepEqual(node.ipInventory.addresses, ['192.0.2.1']);
+                    const manual = await createNode({
+                        controlAddresses: Array.from({ length: 65 }, (_, i) => ({
+                            address: `manual-${i}.example.test`,
+                            enabled: true,
+                        })),
+                    });
+                    const manualBefore = await observe(manual.uuid);
+                    await assert.rejects(scan(manual, ['192.0.2.2']));
+                    assert.deepEqual(await observe(manual.uuid), manualBefore);
                     await prisma.nodes.delete({ where: { uuid: node.uuid } });
                     assert.equal(
                         await prisma.nodeIpInventory.findUnique({ where: { nodeUuid: node.uuid } }),

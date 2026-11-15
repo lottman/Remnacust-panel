@@ -5,6 +5,7 @@ import { TbAlertTriangle, TbChevronRight } from 'react-icons/tb'
 
 import { showModal } from '@shared/_modals/show-modal'
 import { XrayLogo } from '@shared/ui/logos'
+import { resolveHostInbound } from '@shared/utils/host-inbound'
 
 import classes from './host-select-inbound.module.css'
 import { IProps } from './interfaces'
@@ -20,10 +21,15 @@ export function HostSelectInboundFeature(props: IProps) {
 
     const { t } = useTranslation()
 
-    const activeProfile = configProfiles.find((profile) => profile.uuid === activeConfigProfileUuid)
-    const activeInbound = activeProfile?.inbounds.find(
-        (inbound) => inbound.uuid === activeConfigProfileInbound
+    const binding = resolveHostInbound(
+        {
+            configProfileUuid: activeConfigProfileUuid,
+            configProfileInboundUuid: activeConfigProfileInbound
+        },
+        configProfiles
     )
+    const activeProfile = binding?.profile
+    const activeInbound = binding?.inbound
 
     const hasInbound = !!(activeProfile && activeInbound)
 
@@ -72,7 +78,7 @@ export function HostSelectInboundFeature(props: IProps) {
                                 truncate
                             >
                                 {hasInbound
-                                    ? activeProfile.name
+                                    ? binding?.profileLabel
                                     : t('common.message.no-inbound-selected')}
                             </Text>
 

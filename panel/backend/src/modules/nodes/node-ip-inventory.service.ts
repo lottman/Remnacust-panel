@@ -13,7 +13,6 @@ import {
     NodeControlAddressLimitError,
     NodeControlRevisionConflictError,
 } from './node-control-addresses';
-import { normalizeNodeIpInventory } from './node-ip-inventory';
 import { NODE_IP_SCAN_INTERVAL_MS } from './node-ip-inventory.constants';
 import { NodesSystemCacheService } from './nodes-system-cache.service';
 import { NodesRepository } from './repositories/nodes.repository';
@@ -22,6 +21,7 @@ import { NodesRepository } from './repositories/nodes.repository';
 export class NodeIpInventoryService {
     private readonly logger = new Logger(NodeIpInventoryService.name);
     private readonly pending = new Map<string, Promise<TResult<NodesEntity>>>();
+    private readonly retryAt = new Map<string, number>();
 
     constructor(
         private readonly nodes: NodesRepository,
@@ -46,14 +46,7 @@ export class NodeIpInventoryService {
                 return fail(ERRORS.NODE_CONTROL_REVISION_CONFLICT);
             if (node.isDisabled || !node.controlAddresses.some((row) => row.enabled))
                 return fail(ERRORS.NODE_IP_SCAN_DISABLED);
-            const key = JSON.stringify([uuid, controlRevision]);
-            let pending = this.pending.get(key);
-            if (!pending) {
-                if (this.pending.size >= 64) return fail(ERRORS.NODE_IP_SCAN_BUSY);
-                pending = this.scan(node).finally(() => this.pending.delete(key));
-                this.pending.set(key, pending);
-            }
-            const result = await pending;
+            const result = await this.scanOnce(node, 'refresh');
             if (!result.isOk) return result;
             const cache = await this.systemCache.getOne(uuid).catch(() => ({
                 system: null,
@@ -67,7 +60,25 @@ export class NodeIpInventoryService {
         }
     }
 
-    private async scan(node: NodesEntity): Promise<TResult<NodesEntity>> {
+    private scanOnce(
+        node: NodesEntity,
+        mode: 'scheduled' | 'refresh',
+    ): Promise<TResult<NodesEntity>> {
+        const key = JSON.stringify([node.uuid, node.controlRevision, mode]);
+        const current = this.pending.get(key);
+        if (current) return current;
+        if (this.pending.size >= 64) return Promise.resolve(fail(ERRORS.NODE_IP_SCAN_BUSY));
+        const pending = this.scan(node, mode)
+            .catch((error) => this.failure(error))
+            .finally(() => this.pending.delete(key));
+        this.pending.set(key, pending);
+        return pending;
+    }
+
+    private async scan(
+        node: NodesEntity,
+        mode: 'scheduled' | 'refresh',
+    ): Promise<TResult<NodesEntity>> {
         const result = await this.axios.getNodeNetworkAddresses(node);
         if (!result.isOk) {
             if (['NODE_HTTP_404', 'NODE_HTTP_405', 'NODE_HTTP_501'].includes(result.code ?? ''))
@@ -86,21 +97,12 @@ export class NodeIpInventoryService {
                 addresses: inventory.data.response.addresses,
                 expectedControlRevision: node.controlRevision,
                 expectedScanRevision: node.ipInventory?.revision ?? null,
-                mode: 'refresh',
+                mode,
             }),
         );
     }
 
-    async observe(
-        uuid: string,
-        controlRevision: string,
-        addresses: unknown,
-    ): Promise<TResult<NodesEntity | null>> {
-        const inventory = GetNetworkAddressesCommand.ResponseSchema.safeParse({
-            response: { addresses, complete: true },
-        });
-        if (!inventory.success) return fail(ERRORS.NODE_IP_SCAN_INVALID);
-        const normalized = normalizeNodeIpInventory(inventory.data.response.addresses);
+    async observe(uuid: string, controlRevision: string): Promise<TResult<NodesEntity | null>> {
         try {
             const node = await this.nodes.findByUUID(uuid);
             if (!node) return fail(ERRORS.NODE_NOT_FOUND);
@@ -113,15 +115,25 @@ export class NodeIpInventoryService {
                 Date.now() - node.ipInventory.scannedAt.getTime() < NODE_IP_SCAN_INTERVAL_MS
             )
                 return ok(null);
-            return ok(
-                await this.nodes.applyIpScan({
-                    uuid,
-                    addresses: normalized,
-                    expectedControlRevision: controlRevision,
-                    expectedScanRevision: node.ipInventory?.revision ?? null,
-                    mode: 'append',
-                }),
-            );
+            const key = JSON.stringify([uuid, controlRevision]);
+            const now = Date.now();
+            if ((this.retryAt.get(key) ?? 0) > now) return ok(null);
+            const result = await this.scanOnce(node, 'scheduled');
+            if (result.isOk) {
+                this.retryAt.delete(key);
+            } else {
+                for (const [entry, until] of this.retryAt) {
+                    if (until <= now || this.retryAt.size >= 256) this.retryAt.delete(entry);
+                }
+                this.retryAt.set(
+                    key,
+                    now +
+                        (result.code === ERRORS.NODE_IP_SCAN_UNSUPPORTED.code
+                            ? NODE_IP_SCAN_INTERVAL_MS
+                            : 60_000),
+                );
+            }
+            return result;
         } catch (error) {
             return this.failure(error);
         }

@@ -1,6 +1,7 @@
 import consola from 'consola/browser'
 import { createContext, ReactNode, useEffect, useMemo, useState } from 'react'
 
+import { clearQueryClient } from '@shared/api/query-client'
 import { logoutEvents } from '@shared/emitters'
 import { resetAllStores } from '@shared/hocs/store-wrapper'
 
@@ -34,6 +35,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             setIsLoggedOut(true)
             setIsAuthenticated(false)
             removeToken()
+            clearQueryClient()
             resetAllStores()
         } finally {
             setIsLoggedOut(false)

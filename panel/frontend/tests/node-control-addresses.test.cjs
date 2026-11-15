@@ -204,7 +204,7 @@ test('manual consumers retain disabled addresses while geocheck keeps only liter
     const node = { address: 'legacy.example.test', controlAddresses: [address('disabled.example.test', false), address('[2001:DB8::2]')],
         ips: [{ ip: '2001:0db8:0:0:0:0:0:2', status: 'INBOUND' }, { ip: '192.0.2.8', status: 'RESERVE' }] }
     const before = structuredClone(node)
-    assert.deepEqual(helpers.getConfiguredNodeAddresses(node), ['disabled.example.test', '2001:db8::2', 'legacy.example.test', '192.0.2.8'])
+    assert.deepEqual(helpers.getConfiguredNodeAddresses(node), ['disabled.example.test', '2001:db8::2', '192.0.2.8'])
     assert.deepEqual(helpers.getNodeLiteralIps(node), ['2001:db8::2', '192.0.2.8'])
     assert.equal(helpers.getNodeSshDefaultAddress(node), '[2001:DB8::2]')
     assert.equal(helpers.normalizeNodeLiteralIp('node.example.test'), null)

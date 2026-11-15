@@ -41,7 +41,7 @@ export function getPreferredNodeControlAddress(node: NodeAddressSource): string 
 export function getConfiguredNodeAddresses(node: NodeAddressSource): string[] {
     const values = [
         ...(node.controlAddresses ?? []).map((entry) => entry.address),
-        node.address ?? '',
+        ...(node.controlAddresses == null ? [node.address ?? ''] : []),
         ...(node.ips ?? []).map((entry) => entry.ip)
     ]
     return [

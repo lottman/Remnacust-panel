@@ -2,13 +2,13 @@
 
 # Remnacust Subscription Page
 
-Subscription page **1.1.7.128** shows account information and instructions in a browser, and delivers panel-generated configuration to VPN clients. It can be installed separately without reinstalling the panel.
+Subscription page **1.1.7.129** shows account information and instructions in a browser, and delivers panel-generated configuration to VPN clients. It can be installed separately without reinstalling the panel.
 
-Bundle 1.2.176 includes Panel/Page 1.1.7.128, Node 1.1.38 and Core/WASM 1.1.22. [Release changes](../docs/releases/1.1.7.128.md).
+Bundle 1.2.177 includes Panel/Page 1.1.7.129, Node 1.1.38 and Core/WASM 1.1.22. [Release changes](../docs/releases/1.1.7.129.md).
 
 ## Server and installation
 
-Stable [Installer 1.2.176](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.176) uses prebuilt images and supports Ubuntu 22.04/24.04/26.04 LTS and Debian 12/13, Linux amd64/arm64.
+Stable [Installer 1.2.177](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.177) uses prebuilt images and supports Ubuntu 22.04/24.04/26.04 LTS and Debian 12/13, Linux amd64/arm64.
 
 For a standalone page, **1 CPU core and 1 GiB RAM** is a reasonable starting point. The exact minimum memory has not been measured; this is an initial recommendation, not a guarantee for every subscriber count, concurrent download rate or configuration size. Allow space for the Docker image and logs. If the same server runs the panel and database, follow the [panel requirements](../panel/README.en.md#server-and-ports).
 

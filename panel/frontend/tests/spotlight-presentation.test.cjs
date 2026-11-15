@@ -116,13 +116,20 @@ test('canonical disabled addresses are visible and searchable without being labe
     ], ips: [{ ip: '198.51.100.20', status: 'INBOUND' }] }
     const before = structuredClone(original)
     const data = NodesSpotlightSearchWidget({ nodes: [original] }).props.actions
-    for (const query of ['2001:db8::99', 'disabled.example.test', '198.51.100.20', node.address]) {
+    for (const query of ['2001:db8::99', 'disabled.example.test', '198.51.100.20']) {
         assert.ok(data[0].description.includes(query))
         assert.ok(data[0].keywords.includes(query))
         const html = renderToStaticMarkup(React.createElement(MantineProvider, { env: 'test' },
             React.createElement(Spotlight, { actions: data, forceOpened: true, withinPortal: false, query, transitionProps: { duration: 0 } })))
         assert.ok(html.includes('Example &lt;node&gt;'))
     }
+    assert.ok(!data[0].description.includes(node.address))
+    assert.ok(!data[0].keywords.includes(node.address))
+    const retired = renderToStaticMarkup(React.createElement(MantineProvider, { env: 'test' },
+        React.createElement(Spotlight, { actions: data, forceOpened: true, withinPortal: false,
+            query: node.address, nothingFound: 'Retired address is not configured',
+            transitionProps: { duration: 0 } })))
+    assert.ok(retired.includes('Retired address is not configured'))
     assert.ok(!data[0].description.includes('authenticated'))
     assert.deepEqual(original, before)
 })

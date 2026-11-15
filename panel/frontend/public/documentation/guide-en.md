@@ -89,6 +89,12 @@ Check squad membership, inbound activation on the node, host visibility/status, 
 
 The sidebar expands categories. On a phone the menu button opens navigation, which closes after choosing a page. Quick launch finds sections; open entity resolves a known user, node, host or profile by identifier. Documentation links preserve the selected article or API operation in the URL.
 
+### Long-open pages and signing in again
+
+If a list fails to load after device sleep or a lost connection, restore the network and select Retry. Unknown node metrics are shown without substituting zero values or a healthy state. If the session has expired, sign in again: previous lists are cleared and fetched with the new session permissions.
+
+A response-format mismatch requires checking that the interface and API versions belong together. Refresh the page after a panel update. Do not disable response validation or replace node keys because a list failed to display.
+
 ### Tables and recipients
 
 Use search, column filters, sorting, page size and column visibility. Row selection and table filtering are different concepts: review the recipient count before a bulk action. In limits, ALL targets all current entitled users of the scope, not just the visible page or search results.
@@ -258,9 +264,9 @@ On Hosts and Nodes, Ctrl+F, Cmd+F on macOS and F3 open panel search instead of b
 
 The compact IP list accepts IPv4, IPv6 and hostnames. The purple Panel badge marks the first enabled address, preferred for node management in list order. Each toggle permits the panel to use that address; arrows change priority. Saved manual addresses can be disabled or reordered. To correct one, add a new address and disable the old one: ordinary editing keeps saved rows.
 
-With Node 1.1.38, assigned IPv4 and IPv6 addresses are discovered when the panel first receives successful node information. While the node is available, new IPs are then appended no more often than once every 30 minutes after the last successful scan. Existing addresses remain. The interval survives a panel restart.
+With Node 1.1.38, the panel obtains the complete assigned IPv4/IPv6 inventory through a separate authenticated request that also works while Xray is stopped. Successful automatic checks use a 30-minute interval while the node API is available; the last successful check survives a panel restart. New IPs are added and disappeared addresses previously confirmed by the node are removed. A manually entered IP joins this reconciliation after the node confirms it. Manual IPs never confirmed by the node and hostnames are preserved. The inventory comes from the node OS network interfaces: provider-side changes appear after those interfaces are updated.
 
-The refresh icon button (Rescan IPs) requests a fresh list immediately. It removes only disappeared IPs previously added by discovery. Manual IPs and hostnames, the order of surviving rows and their disabled state are preserved. Save address, port or proxy changes first. A failed scan keeps the existing list; update an older Node agent or continue adding addresses manually.
+The refresh icon button (Rescan IPs) immediately runs the same reconciliation. Surviving row order and disabled states remain. Save address, port or proxy changes first. Failed, incomplete or stale responses do not clear saved addresses. An older agent without discovery support leaves the list intact; update Node or continue adding addresses manually. If a complete reply contains none of the previously confirmed addresses and no manual entries remain, the panel does not revive the old IP as a hidden fallback; add a reachable address manually.
 
 The interface keeps the last enabled management address on. Enable another address first when changing it. An existing all-disabled list can be repaired by enabling the required address.
 
@@ -693,6 +699,12 @@ Remark names a subscription connection. Address and port are the client endpoint
 Above the list, choose Enabled, Disabled, Visible or Hidden. Visible includes hosts with isHidden = false, including disabled hosts. Enabled includes hosts with isDisabled = false, including hidden hosts. The filter combines with the selected tag in card and table views. In card view, drag hosts within a tag; other records keep their positions. Save, copy and delete actions remain available at the bottom of the form while scrolling.
 
 On Hosts and Nodes, Ctrl+F, Cmd+F on macOS and F3 open panel search instead of browser find. Search works in card and table views and from ordinary form fields. Monaco keeps its own editor search. The override is removed when leaving these pages.
+
+### Host binding and the DANGLING state
+
+A host must reference an existing inbound of its selected profile. If the profile or inbound is removed, or the inbound no longer belongs to that profile, the card and table row receive a red highlight and a DANGLING badge. A disabled host or an unavailable node alone does not invalidate its binding.
+
+Open the host, select a valid profile and one of its inbounds, then save. Cloning is unavailable until the binding is repaired. The profile name is a display label and does not determine binding validity.
 
 ### Visibility and actions
 

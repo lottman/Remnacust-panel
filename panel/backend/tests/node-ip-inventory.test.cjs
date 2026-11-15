@@ -70,13 +70,16 @@ test('initialization never guesses provenance or deletes imported/manual legacy 
     assert.deepEqual(result.generatedAddresses, ['2001:db8::50']);
 });
 
-test('observing an existing manual address does not turn it into a removable generated address', () => {
+test('a manual address confirmed as assigned becomes removable when it later disappears', () => {
     const before = base();
     before.controlAddresses.push({ address: '192.0.2.50', enabled: true });
     const first = plan(before, ['192.0.2.50']);
-    assert.deepEqual(first.generatedAddresses, []);
+    assert.deepEqual(first.generatedAddresses, ['192.0.2.50']);
     const second = plan({ ...before, ...first, ipInventory: first }, []);
-    assert.ok(second.controlAddresses.some((entry) => entry.address === '192.0.2.50'));
+    assert.equal(
+        second.controlAddresses.some((entry) => entry.address === '192.0.2.50'),
+        false,
+    );
 });
 
 test('newly found addresses never reactivate management when every existing address is disabled', () => {
@@ -156,18 +159,18 @@ test('network scan planning does not mutate source arrays or retain caller-owned
     assert.deepEqual(addresses, ['192.0.2.1']);
 });
 
-test('automatic checks append new addresses and retain missing discovered addresses until explicit rescan', () => {
+test('automatic checks add new addresses and retire detached discovered addresses', () => {
     const before = base();
     before.controlAddresses.push({ address: '192.0.2.1', enabled: false });
     before.ips = [{ ip: '192.0.2.1', status: 'OUTBOUND' }];
     before.ipInventory = { addresses: ['192.0.2.1'], generatedAddresses: ['192.0.2.1'] };
-    const automatic = plan(before, ['2001:db8::2'], 'append');
-    assert.deepEqual(automatic.ips, [
-        { ip: '192.0.2.1', status: 'OUTBOUND' },
-        { ip: '2001:db8::2', status: 'INBOUND' },
-    ]);
-    assert.equal(automatic.controlAddresses[1].enabled, false);
-    assert.deepEqual(automatic.generatedAddresses, ['192.0.2.1', '2001:db8::2']);
+    const automatic = plan(before, ['2001:db8::2'], 'scheduled');
+    assert.deepEqual(automatic.ips, [{ ip: '2001:db8::2', status: 'INBOUND' }]);
+    assert.equal(
+        automatic.controlAddresses.some((entry) => entry.address === '192.0.2.1'),
+        false,
+    );
+    assert.deepEqual(automatic.generatedAddresses, ['2001:db8::2']);
     const refreshed = plan({ ...before, ...automatic, ipInventory: automatic }, ['2001:db8::2']);
     assert.equal(
         refreshed.controlAddresses.some((entry) => entry.address === '192.0.2.1'),

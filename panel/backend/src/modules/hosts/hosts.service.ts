@@ -401,6 +401,28 @@ export class HostsService {
                 return fail(ERRORS.HOST_NOT_FOUND);
             }
 
+            if (!host.configProfileUuid) {
+                return fail(ERRORS.CONFIG_PROFILE_NOT_FOUND);
+            }
+            if (!host.configProfileInboundUuid) {
+                return fail(ERRORS.CONFIG_PROFILE_INBOUND_NOT_FOUND_IN_SPECIFIED_PROFILE);
+            }
+            const profile = await this.queryBus.execute(
+                new GetConfigProfileByUuidQuery(host.configProfileUuid),
+            );
+            if (!profile.isOk) {
+                return fail(ERRORS.CONFIG_PROFILE_NOT_FOUND);
+            }
+            if (
+                !profile.response.inbounds.some(
+                    (inbound) =>
+                        inbound.uuid === host.configProfileInboundUuid &&
+                        inbound.profileUuid === host.configProfileUuid,
+                )
+            ) {
+                return fail(ERRORS.CONFIG_PROFILE_INBOUND_NOT_FOUND_IN_SPECIFIED_PROFILE);
+            }
+
             return ok(await this.cloneHostTransactional(host));
         } catch (error) {
             rethrowXrayModeConflict(error);

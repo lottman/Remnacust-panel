@@ -45,6 +45,9 @@
     min-height: 0;
     padding-inline: 12px;
 }
+.scrollArea :global(.mantine-ScrollArea-viewport) {
+    overscroll-behavior-y: contain;
+}
 .footerSection {
     padding: 16px 12px;
     border-top: 1px solid var(--panel-border);

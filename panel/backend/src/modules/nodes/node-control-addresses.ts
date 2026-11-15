@@ -19,7 +19,7 @@ export function configuredNodeAddresses(state: AddressState): string[] {
         ...new Set(
             [
                 ...(state.controlAddresses ?? []).map((row) => row.address),
-                state.address ?? '',
+                ...(state.controlAddresses == null ? [state.address ?? ''] : []),
                 ...(state.ips ?? []).map((row) => row.ip),
             ]
                 .map(normalizeNodeControlAddress)

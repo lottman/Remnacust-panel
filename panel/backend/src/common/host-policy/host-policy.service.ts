@@ -1239,7 +1239,12 @@ export class HostPolicyService {
                         )
                     ) {
                         const required = await this.configurationIsolation(node.uuid, quotaMode);
-                        if (required && (required.groups.size || required.hosts.size))
+                        if (
+                            required &&
+                            [...required.inboundTags.keys()].some((inbound) =>
+                                state.legacyInboundIds?.has(inbound),
+                            )
+                        )
                             throw Object.assign(
                                 new Error(
                                     'Legacy credentials cannot safely enforce the required host policy',

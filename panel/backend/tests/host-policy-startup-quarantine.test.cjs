@@ -62,6 +62,46 @@ function actual166() {
     return { ...f, owner, unrelated, bases, incoming, retryKey: hostPolicyRetryKey(f.node.uuid) };
 }
 
+test('a basic legacy shared inbound cannot veto an independent modern inbound quota', async () => {
+    const f = fixture();
+    f.state.peerAvailable = true;
+    const peerUuid = f.inventory[1].uuid;
+    const health = f.policies.axios.getNodeHealth;
+    f.policies.axios.getNodeHealth = async (...args) => {
+        const result = await health(...args);
+        return args[0].uuid === peerUuid && result.isOk
+            ? { ...result, response: { ...result.response, nodeVersion: '3.4.3' } }
+            : result;
+    };
+    const isolated = {
+        ...f.host,
+        uuid: '88888888-8888-4888-8888-888888888888',
+        inboundUuid: '99999999-9999-4999-8999-999999999999',
+        inboundTag: 'isolated',
+        boundNodes: [f.node.uuid],
+        userLimit: '1024',
+    };
+    f.state.extraHosts.push(isolated);
+    f.inventory[0].inbounds.push(isolated.inboundUuid);
+    f.node.activeInbounds.push({ uuid: isolated.inboundUuid, tag: 'isolated', protocol: 'vless' });
+    f.values.set(`xera:host-policy:stats:${f.node.uuid}`, true);
+    await f.run();
+    assert.equal(f.starts.length, 1, f.node.lastStatusMessage);
+    assert.deepEqual(f.posts[0].body.protectedInbounds, ['isolated']);
+    assert.equal(f.posts[0].body.groups[`host:${isolated.uuid}`].blockAll, false);
+    assert(!f.node.lastStatusMessage?.startsWith(HOST_POLICY_QUARANTINED));
+    f.host.userLimit = '2048';
+    await assert.rejects(
+        f.policies.withCompatibilitySnapshot([f.node.uuid], () => f.policies.syncNode(f.node)),
+        /Legacy credentials/,
+    );
+    assert.equal(
+        f.posts.length,
+        1,
+        'A real restriction on the legacy inbound still forbids release',
+    );
+});
+
 function assertPartial(f) {
     assert.equal(f.starts.length, 1, f.node.lastStatusMessage);
     assert.equal(f.starts[0].body.internals.forceRestart, false);

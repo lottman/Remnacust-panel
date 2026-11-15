@@ -11,6 +11,7 @@ module.exports = async ({
     transactions,
     DurableUsageService,
     QuotaCoordinatorService,
+    connection,
 }) => {
     const owner = '11111111-1111-4111-8111-111111111111';
     const source = '22222222-2222-4222-8222-222222222222';
@@ -73,7 +74,7 @@ module.exports = async ({
     const route = (o, s) =>
         routes.find((row) => row.owner_host_uuid === o && row.source_host_uuid === s).uuid;
     const policy = async () => {
-        await service.syncNode({ uuid: node });
+        await service.syncNode(await connection(node));
         return calls.at(-1).policy;
     };
     let wire = await policy();
@@ -177,7 +178,9 @@ module.exports = async ({
     assert.equal(await allowed(alias), false);
     assert.equal(await allowed(unlimited), true);
     await prisma.$executeRawUnsafe('UPDATE hosts SET is_disabled=false WHERE uuid=$1::uuid', owner);
-    await prisma.$executeRawUnsafe("UPDATE users SET status='FROZEN',frozen_until=(statement_timestamp() AT TIME ZONE 'UTC')+interval '1 day' WHERE id=901");
+    await prisma.$executeRawUnsafe(
+        "UPDATE users SET status='FROZEN',frozen_until=(statement_timestamp() AT TIME ZONE 'UTC')+interval '1 day' WHERE id=901",
+    );
     assert.equal(await allowed(alias), false);
     await prisma.$executeRawUnsafe("UPDATE users SET status='ACTIVE' WHERE id=901");
     await prisma.$executeRawUnsafe(
@@ -271,7 +274,9 @@ module.exports = async ({
             device_speed_limit_mbps=0,total_speed_limit_mbps=0 WHERE uuid=$1::uuid`,
             source2,
         );
-        await service.syncNode({ uuid: node2 });
+        await service.withCompatibilitySnapshot([node2], async () =>
+            service.syncNode(await connection(node2)),
+        );
         assert.deepEqual(
             calls.at(-1).policy.protectedInbounds,
             [],

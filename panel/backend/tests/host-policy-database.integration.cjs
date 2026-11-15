@@ -13,14 +13,16 @@ const scopes = load(path.join(__dirname, '../src/common/host-policy/host-policy-
 const identity = load(path.join(__dirname, '../src/common/utils/host-identity.ts'));
 const common = {
     '@common/database': {},
-        '@common/axios': {},
-        '@common/utils/bounded-work-queue': load(path.join(__dirname, '../src/common/utils/bounded-work-queue.ts')),
+    '@common/axios': {},
+    '@common/utils/bounded-work-queue': load(
+        path.join(__dirname, '../src/common/utils/bounded-work-queue.ts'),
+    ),
     '@common/raw-cache': {},
     '@common/config/app-config': {},
     '@common/config/app-config/typed-config.service': {},
     '@common/utils/host-identity': identity,
     './host-policy-scopes': scopes,
-        './quota-policy': load(path.join(__dirname, '../src/common/host-policy/quota-policy.ts')),
+    './quota-policy': load(path.join(__dirname, '../src/common/host-policy/quota-policy.ts')),
     './destination-rule': load(
         path.join(__dirname, '../src/common/host-policy/destination-rule.ts'),
     ),
@@ -68,11 +70,13 @@ const { CustomCamelCasePlugin, JSON_COLUMNS } = load(
     path.join(__dirname, '../src/common/database/camel-case.plugin.ts'),
 );
 async function main() {
-    const databaseUrl = process.env.HOST_POLICY_TEST_DATABASE_URL ?? 'postgresql://postgres@127.0.0.1:55439/postgres';
+    const databaseUrl =
+        process.env.HOST_POLICY_TEST_DATABASE_URL ??
+        'postgresql://postgres@127.0.0.1:55439/postgres';
     const target = new URL(databaseUrl);
     assert.equal(target.hostname, '127.0.0.1');
     assert.equal(target.port, '55439');
-    assert.ok(['/postgres','/remnacust_host_policy_test'].includes(target.pathname));
+    assert.ok(['/postgres', '/remnacust_host_policy_test'].includes(target.pathname));
     const prisma = new PrismaClient({
         datasourceUrl: databaseUrl,
     });
@@ -111,12 +115,26 @@ async function main() {
         createPipeline: () => {
             let remove, scan;
             return {
-                hscan: (key) => { scan = key; },
+                hscan: (key) => {
+                    scan = key;
+                },
                 hdel: (key, id) => {
                     remove = () => delete pending[key][id];
                 },
                 exec: async () => {
-                    if (scan) return [[null, ['0', Object.entries(pending[scan] ?? {}).flatMap(([id, value]) => [id, JSON.stringify(value)])]]];
+                    if (scan)
+                        return [
+                            [
+                                null,
+                                [
+                                    '0',
+                                    Object.entries(pending[scan] ?? {}).flatMap(([id, value]) => [
+                                        id,
+                                        JSON.stringify(value),
+                                    ]),
+                                ],
+                            ],
+                        ];
                     if (failAck) return [[new Error('connection lost')]];
                     remove();
                     return [[null, 1]];
@@ -125,13 +143,46 @@ async function main() {
         },
     };
     const calls = [];
+    const connection = async (uuid) =>
+        prisma.nodes.findUniqueOrThrow({
+            where: { uuid },
+            select: {
+                uuid: true,
+                address: true,
+                port: true,
+                proxyUrl: true,
+                controlRevision: true,
+                controlAddresses: true,
+                ips: true,
+            },
+        });
     const axios = {
+        getNodeHealth: async (node) => ({
+            isOk: true,
+            nodeControlRevision: node.controlRevision,
+            response: { nodeVersion: '1.1.38', isAlive: true },
+        }),
         hostPolicy: async (node, policy) => {
             calls.push({ node, policy });
-            if (!policy) return {isOk:true,response:{version:'xera-host-policy-v2',supported:true,
-                policyRevisionsSupported:true,deviceSpeedLimitsSupported:true,routedDeviceSpeedLimitsSupported:true,policyRevision:'0'}};
-            assert.equal(transactions.isTransactionActive(),false,'Revision delivery must follow the actual Prisma commit');
-            assert.match(policy.revision,/^[1-9][0-9]*$/);
+            if (!policy)
+                return {
+                    isOk: true,
+                    nodeControlRevision: node.controlRevision,
+                    response: {
+                        version: 'xera-host-policy-v2',
+                        supported: true,
+                        policyRevisionsSupported: true,
+                        deviceSpeedLimitsSupported: true,
+                        routedDeviceSpeedLimitsSupported: true,
+                        policyRevision: '0',
+                    },
+                };
+            assert.equal(
+                transactions.isTransactionActive(),
+                false,
+                'Revision delivery must follow the actual Prisma commit',
+            );
+            assert.match(policy.revision, /^[1-9][0-9]*$/);
             return { isOk: true, response: { version: 'xera-host-policy-v2', applied: true } };
         },
         addUser: async () => ({ isOk: true, response: { success: true } }),
@@ -145,10 +196,7 @@ async function main() {
             'CREATE TABLE IF NOT EXISTS xera_host_usage_receipts(id UUID PRIMARY KEY,node_id BIGINT REFERENCES nodes(id) ON DELETE CASCADE,created_at TIMESTAMPTZ DEFAULT now())',
         );
         const seed = fs
-            .readFileSync(
-                path.join(__dirname, 'fixtures/host-policy-seed.sql'),
-                'utf8',
-            )
+            .readFileSync(path.join(__dirname, 'fixtures/host-policy-seed.sql'), 'utf8')
             .split('DO $$ BEGIN')[0]
             .replace('BEGIN;', '');
         for (const statement of seed.split(';').filter((s) => s.trim()))
@@ -161,20 +209,40 @@ async function main() {
             { getOrThrow: () => 'test-secret' },
             transactions,
         );
-        await require('./legacy-node-database.cjs')({ prisma, service,
-            access: new HostAccessService(db, service, axios), cache, axios, calls });
+        await require('./legacy-node-database.cjs')({
+            prisma,
+            service,
+            access: new HostAccessService(db, service, axios),
+            cache,
+            axios,
+            calls,
+            connection,
+        });
         let releaseLock, locked;
-        const lockHeld = new Promise(resolve => { locked = resolve; });
-        const lockRelease = new Promise(resolve => { releaseLock = resolve; });
-        const competitor = prisma.$transaction(async tx => {
-            await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended('cccccccc-cccc-4ccc-8ccc-cccccccccccc',20260927))::text`;
-            locked();
-            await lockRelease;
-        }, { timeout: 15000 });
+        const lockHeld = new Promise((resolve) => {
+            locked = resolve;
+        });
+        const lockRelease = new Promise((resolve) => {
+            releaseLock = resolve;
+        });
+        const competitor = prisma.$transaction(
+            async (tx) => {
+                await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended('cccccccc-cccc-4ccc-8ccc-cccccccccccc',20260927))::text`;
+                locked();
+                await lockRelease;
+            },
+            { timeout: 15000 },
+        );
         await lockHeld;
         try {
-            await assert.rejects(service.applyNodePolicy({ uuid: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', address: '127.0.0.1', port: 2222 }),
-                { code: 'HOST_POLICY_BUSY' });
+            await assert.rejects(
+                service.applyNodePolicy({
+                    uuid: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+                    address: '127.0.0.1',
+                    port: 2222,
+                }),
+                { code: 'HOST_POLICY_BUSY' },
+            );
         } finally {
             releaseLock();
             await competitor;
@@ -234,11 +302,7 @@ async function main() {
             600n,
             'overlapping group only contains its own history',
         );
-        await service.syncNode({
-            uuid: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
-            address: '127.0.0.1',
-            port: 2222,
-        });
+        await service.syncNode(await connection('cccccccc-cccc-4ccc-8ccc-cccccccccccc'));
         const policy = calls.at(-1).policy;
         assert.equal(policy.groups['tag:alpha'].blockAll, false);
         assert.equal(policy.groups['tag:alpha'].blockedOwners['901'], true);
@@ -275,11 +339,7 @@ async function main() {
             '400',
             'quota factors must never rewrite raw traffic or compound',
         );
-        await service.syncNode({
-            uuid: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
-            address: '127.0.0.1',
-            port: 2222,
-        });
+        await service.syncNode(await connection('cccccccc-cccc-4ccc-8ccc-cccccccccccc'));
         assert.deepEqual(calls.at(-1).policy.groups['tag:alpha'].blockedOwners, { 902: true });
         await prisma.$executeRawUnsafe(
             "UPDATE hosts SET use_tag_traffic_limit=false,use_tag_speed_limit=false WHERE uuid='11111111-1111-4111-8111-111111111111'",
@@ -291,7 +351,7 @@ async function main() {
             'excluded host no longer contributes to shared quota; legacy history remains',
         );
         assert.equal(optedOut.find((g) => g.tag === 'beta').usedBytes, 0n);
-        await service.syncNode({ uuid: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc' });
+        await service.syncNode(await connection('cccccccc-cccc-4ccc-8ccc-cccccccccccc'));
         const isolated = calls.at(-1).policy.hosts['11111111111141118111111111111111'];
         assert(!isolated.groups.includes('tag:alpha'));
         assert(!isolated.groups.some((g) => g.startsWith('tag-host:')));
@@ -309,7 +369,7 @@ async function main() {
             false,
             'quota actions exclude users without participating hosts',
         );
-        await service.syncNode({ uuid: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc' });
+        await service.syncNode(await connection('cccccccc-cccc-4ccc-8ccc-cccccccccccc'));
         assert(
             !calls.at(-1).policy.groups['tag:alpha'],
             'empty quota membership produces no SQL IN () or accidental group block',
@@ -326,25 +386,73 @@ async function main() {
             "SELECT column_name FROM information_schema.columns WHERE table_name IN ('hosts','xera_host_tag_limits') AND column_name='total_traffic_limit_bytes'",
         );
         assert.equal(removed.length, 0, 'aggregate volume quota must not remain in the data model');
-        await require('./autoselect-quota-database.cjs')({ prisma, service, access, usage, calls, user,
-            db, transactions, DurableUsageService, QuotaCoordinatorService });
+        await require('./autoselect-quota-database.cjs')({
+            prisma,
+            service,
+            access,
+            usage,
+            calls,
+            user,
+            db,
+            transactions,
+            DurableUsageService,
+            QuotaCoordinatorService,
+            connection,
+        });
         const rollbackInactiveFixture = new Error('rollback inactive host fixture');
         try {
-            await prisma.$transaction(async tx => {
+            await prisma.$transaction(async (tx) => {
                 for (const status of ['FROZEN', 'LIMITED', 'DISABLED', 'EXPIRED']) {
-                    await tx.$executeRawUnsafe("UPDATE users SET status='ACTIVE',expire_at=now()+interval '2 days' WHERE id=901");
-                    await tx.$executeRawUnsafe("UPDATE users SET status=$1::text,frozen_until=CASE WHEN $1::text='FROZEN' THEN (statement_timestamp() AT TIME ZONE 'UTC')+interval '1 day' ELSE NULL END WHERE id=901", status);
-                    await tx.$executeRawUnsafe("UPDATE hosts SET always_available=true,only_when_inactive=true WHERE uuid='11111111-1111-4111-8111-111111111111'");
-                    assert.equal((await tx.$queryRawUnsafe("SELECT xera_host_user_allowed(901,'11111111-1111-4111-8111-111111111111') AS allowed"))[0].allowed, true, status);
-                    await tx.$executeRawUnsafe("UPDATE hosts SET always_available=false,only_when_inactive=false WHERE uuid='11111111-1111-4111-8111-111111111111'");
-                    assert.equal((await tx.$queryRawUnsafe("SELECT xera_host_user_allowed(901,'11111111-1111-4111-8111-111111111111') AS allowed"))[0].allowed, false, status + ' must not grant ordinary hosts');
+                    await tx.$executeRawUnsafe(
+                        "UPDATE users SET status='ACTIVE',expire_at=now()+interval '2 days' WHERE id=901",
+                    );
+                    await tx.$executeRawUnsafe(
+                        "UPDATE users SET status=$1::text,frozen_until=CASE WHEN $1::text='FROZEN' THEN (statement_timestamp() AT TIME ZONE 'UTC')+interval '1 day' ELSE NULL END WHERE id=901",
+                        status,
+                    );
+                    await tx.$executeRawUnsafe(
+                        "UPDATE hosts SET always_available=true,only_when_inactive=true WHERE uuid='11111111-1111-4111-8111-111111111111'",
+                    );
+                    assert.equal(
+                        (
+                            await tx.$queryRawUnsafe(
+                                "SELECT xera_host_user_allowed(901,'11111111-1111-4111-8111-111111111111') AS allowed",
+                            )
+                        )[0].allowed,
+                        true,
+                        status,
+                    );
+                    await tx.$executeRawUnsafe(
+                        "UPDATE hosts SET always_available=false,only_when_inactive=false WHERE uuid='11111111-1111-4111-8111-111111111111'",
+                    );
+                    assert.equal(
+                        (
+                            await tx.$queryRawUnsafe(
+                                "SELECT xera_host_user_allowed(901,'11111111-1111-4111-8111-111111111111') AS allowed",
+                            )
+                        )[0].allowed,
+                        false,
+                        status + ' must not grant ordinary hosts',
+                    );
                 }
-                await tx.$executeRawUnsafe("UPDATE hosts SET always_available=true,only_when_inactive=true WHERE uuid='11111111-1111-4111-8111-111111111111'");
+                await tx.$executeRawUnsafe(
+                    "UPDATE hosts SET always_available=true,only_when_inactive=true WHERE uuid='11111111-1111-4111-8111-111111111111'",
+                );
                 await tx.$executeRawUnsafe('DELETE FROM internal_squad_members WHERE user_id=901');
-                assert.equal((await tx.$queryRawUnsafe("SELECT xera_host_user_allowed(901,'11111111-1111-4111-8111-111111111111') AS allowed"))[0].allowed, false, 'exception hosts still require an inbound in the user squad');
+                assert.equal(
+                    (
+                        await tx.$queryRawUnsafe(
+                            "SELECT xera_host_user_allowed(901,'11111111-1111-4111-8111-111111111111') AS allowed",
+                        )
+                    )[0].allowed,
+                    false,
+                    'exception hosts still require an inbound in the user squad',
+                );
                 throw rollbackInactiveFixture;
             });
-        } catch (error) { if (error !== rollbackInactiveFixture) throw error; }
+        } catch (error) {
+            if (error !== rollbackInactiveFixture) throw error;
+        }
         await prisma.$executeRawUnsafe("UPDATE users SET status='EXPIRED' WHERE id=901");
         assert.equal(await access.synchronizeUser(901n), true);
         assert.deepEqual(
@@ -367,29 +475,44 @@ async function main() {
             null,
         );
         let releaseFirst, enterFirst;
-        const firstStarted = new Promise(resolve => { enterFirst=resolve; });
-        const release = new Promise(resolve => { releaseFirst=resolve; });
-        let secondEntered=false;
-        const firstSample=usage.collect(901n,async()=>{
-            enterFirst();await release;
-            return {isOk:true,response:{users:[]}};
+        const firstStarted = new Promise((resolve) => {
+            enterFirst = resolve;
         });
-        await Promise.race([firstStarted,firstSample]);
-        const secondSample=usage.collect(901n,async()=>{
-            secondEntered=true;
-            return {isOk:true,response:{users:[]}};
+        const release = new Promise((resolve) => {
+            releaseFirst = resolve;
         });
-        const samples=Promise.all([firstSample,secondSample]);
-        samples.catch(()=>{});
+        let secondEntered = false;
+        const firstSample = usage.collect(901n, async () => {
+            enterFirst();
+            await release;
+            return { isOk: true, response: { users: [] } };
+        });
+        await Promise.race([firstStarted, firstSample]);
+        const secondSample = usage.collect(901n, async () => {
+            secondEntered = true;
+            return { isOk: true, response: { users: [] } };
+        });
+        const samples = Promise.all([firstSample, secondSample]);
+        samples.catch(() => {});
         try {
-            await new Promise(resolve=>setTimeout(resolve,100));
-            assert.equal(secondEntered,false,'A stalled duplicate job must wait before resetting counters');
-        } finally {releaseFirst();}
-        const [firstCollected,secondCollected]=await samples;
-        assert.equal(secondEntered,true);
-        assert.ok(secondCollected.requestedAt>=firstCollected.requestedAt);
-        assert.ok(Number.isSafeInteger(firstCollected.requestedAt)&&firstCollected.requestedAt>0);
-        console.log('PASS: SQL serializes concurrent destructive stats reads and timestamps only committed samples');
+            await new Promise((resolve) => setTimeout(resolve, 100));
+            assert.equal(
+                secondEntered,
+                false,
+                'A stalled duplicate job must wait before resetting counters',
+            );
+        } finally {
+            releaseFirst();
+        }
+        const [firstCollected, secondCollected] = await samples;
+        assert.equal(secondEntered, true);
+        assert.ok(secondCollected.requestedAt >= firstCollected.requestedAt);
+        assert.ok(
+            Number.isSafeInteger(firstCollected.requestedAt) && firstCollected.requestedAt > 0,
+        );
+        console.log(
+            'PASS: SQL serializes concurrent destructive stats reads and timestamps only committed samples',
+        );
         console.log(
             'PASS: actual Prisma/Kysely transactions, SQL, scoped credentials, restart, revocation, usage replay, overlapping groups, per-host tag speeds, weighted user quotas, host overrides and preserved history',
         );

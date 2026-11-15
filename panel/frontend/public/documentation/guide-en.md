@@ -260,7 +260,9 @@ The compact IP list accepts IPv4, IPv6 and hostnames. The purple Panel badge mar
 
 With Node 1.1.38, assigned IPv4 and IPv6 addresses are discovered when the panel first receives successful node information. While the node is available, new IPs are then appended no more often than once every 30 minutes after the last successful scan. Existing addresses remain. The interval survives a panel restart.
 
-Rescan IPs requests a fresh list immediately. It removes only disappeared IPs previously added by discovery. Manual IPs and hostnames, the order of surviving rows and their disabled state are preserved. Save address, port or proxy changes first. A failed scan keeps the existing list; update an older Node agent or continue adding addresses manually.
+The refresh icon button (Rescan IPs) requests a fresh list immediately. It removes only disappeared IPs previously added by discovery. Manual IPs and hostnames, the order of surviving rows and their disabled state are preserved. Save address, port or proxy changes first. A failed scan keeps the existing list; update an older Node agent or continue adding addresses manually.
+
+The interface keeps the last enabled management address on. Enable another address first when changing it. An existing all-disabled list can be repaired by enabling the required address.
 
 ### The node is running but some hosts are blocked
 

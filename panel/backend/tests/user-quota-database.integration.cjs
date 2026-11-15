@@ -105,18 +105,20 @@ const reset=async(client,at=new Date())=>{
     });
     let acknowledged=false,body;
     const journal=require("./quota-registration-transport.cjs")(I1);
-    const policies=new HostPolicyService(policyDb,{hostPolicy:async(_node,value)=>{
+    const policies=new HostPolicyService(policyDb,{getNodeHealth:async(node)=>({isOk:true,nodeControlRevision:node.controlRevision,response:{nodeVersion:'1.1.38',isAlive:true}}),hostPolicy:async(node,value)=>{
+        const nodeControlRevision=node.controlRevision;
         assert.equal(transactionHost.isTransactionActive(),false,'Global quota HTTP must follow SQL commit');
-        if(!value)return {isOk:true,response:{supported:true,version:'xera-host-policy-v2',policyRevisionsSupported:true,policyRevision:body?.revision??'0',applied:true,userQuotaRequired:acknowledged,offlineReserves:'remnacust-quota-reserves-v1',quotaReservesSupported:true,quotaRegistrationsSupported:true,quotaWatermarksSupported:true,quotaJournalSequence:String(journal.sequence()),quotaFencesSupported:true,unreservedUsageSupported:true,quotaInstanceId:I1,coreIncarnationSupported:true,coreProcessId:I1,usageReceiptsSupported:true,userQuotaReservesSupported:true}};
-        body=value;journal.apply(value);return {isOk:true,response:{version:value.version,applied:true,userQuotaRequired:acknowledged}};
+        if(!value)return {isOk:true,nodeControlRevision,response:{supported:true,version:'xera-host-policy-v2',policyRevisionsSupported:true,policyRevision:body?.revision??'0',applied:true,userQuotaRequired:acknowledged,offlineReserves:'remnacust-quota-reserves-v1',quotaReservesSupported:true,quotaRegistrationsSupported:true,quotaWatermarksSupported:true,quotaJournalSequence:String(journal.sequence()),quotaFencesSupported:true,unreservedUsageSupported:true,quotaInstanceId:instances[node.uuid],coreIncarnationSupported:true,coreProcessId:instances[node.uuid],usageReceiptsSupported:true,userQuotaReservesSupported:true}};
+        body=value;journal.apply(value);return {isOk:true,nodeControlRevision,response:{version:value.version,applied:true,userQuotaRequired:acknowledged}};
     },hostQuotaState:journal.read},require('./host-policy-cache.cjs')(),{getOrThrow:()=> 'fixture-only'},transactionHost);
-    const node={uuid:N1,address:'127.0.0.1',port:1};
-    await assert.rejects(policies.syncNode(node),/mandatory global quota checkpoint/);
+    const connection=()=>db.nodes.findUniqueOrThrow({where:{uuid:N1},select:{uuid:true,address:true,port:true,proxyUrl:true,controlRevision:true,controlAddresses:true,ips:true}});
+    const syncNode=()=>policies.withCompatibilitySnapshot([N1],async()=>policies.syncNode(await connection()));
+    await assert.rejects(syncNode(),/mandatory global quota checkpoint/);
     assert.equal(body.userQuota,'remnacust-user-quota-reserves-v1');
     assert.equal(body.legacyQuotaMultipliers['user:global'],1000000000);
     assert.equal(body.groups['user:global'].reserves['902'],undefined);assert.ok(body.registrations.some(item=>item.owner==='902'&&item.action==='prepare'));
     assert.equal((await db.$queryRaw`SELECT count(*) AS n FROM xera_quota_node_epochs WHERE kind='USER' AND node_uuid=${N1}::uuid AND applied_revision IS NOT NULL`)[0].n,0n);
-    acknowledged=true;await policies.syncNode(node);
+    acknowledged=true;await syncNode();
     assert.equal((await db.$queryRaw`SELECT count(*) AS n FROM xera_quota_node_epochs WHERE kind='USER' AND node_uuid=${N1}::uuid AND applied_revision IS NOT NULL`)[0].n,2n);
     console.log('PASS actual Prisma/Kysely global policy rendering commits before HTTP and requires the native checkpoint ACK before marking delivery');
     await db.$disconnect();

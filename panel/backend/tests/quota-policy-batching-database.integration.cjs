@@ -278,9 +278,14 @@ async function main() {
     const service = new HostPolicyService(
         db,
         {
-            hostPolicy: async (_node, document) => {
+            hostPolicy: async (connection, document) => {
                 assert.equal(transactions.isTransactionActive(), false);
-                if (!document) return { isOk: true, response: caps };
+                if (!document)
+                    return {
+                        isOk: true,
+                        nodeControlRevision: connection.controlRevision,
+                        response: caps,
+                    };
                 sends.push(document);
                 return { isOk: true, response: { version: caps.version, staged: true } };
             },
@@ -297,7 +302,20 @@ async function main() {
         transactions,
     );
     service.scopes = async () => snapshot();
-    const node = { uuid: N, address: '127.0.0.1', port: 1 };
+    const readConnection = (uuid) =>
+        prisma.nodes.findUniqueOrThrow({
+            where: { uuid },
+            select: {
+                uuid: true,
+                address: true,
+                port: true,
+                proxyUrl: true,
+                controlRevision: true,
+                controlAddresses: true,
+                ips: true,
+            },
+        });
+    const node = await readConnection(N);
     resetQueries();
     await service.syncNode(node);
     assert.equal(
@@ -365,31 +383,60 @@ async function main() {
     service.axios.getNodeHealth = async (connection) => {
         assert.equal(transactions.isTransactionActive(), false);
         if (connection.uuid !== peer)
-            return { isOk: true, response: { nodeVersion: '1.1.11-remnacust', isAlive: true } };
+            return {
+                isOk: true,
+                nodeControlRevision: connection.controlRevision,
+                response: { nodeVersion: '1.1.38', isAlive: true },
+            };
         enteredPeer();
         await peerGate;
-        return { isOk: true, response: { nodeVersion: '2.5.1', isAlive: true } };
+        return {
+            isOk: true,
+            nodeControlRevision: connection.controlRevision,
+            response: { nodeVersion: '2.5.1', isAlive: true },
+        };
     };
     delete service.scopes;
-    const [connection] =
-        await prisma.$queryRaw`SELECT uuid,address,port,proxy_url AS "proxyUrl" FROM nodes WHERE uuid=${N}::uuid`;
+    const connection = await readConnection(N);
     const sentBeforeDiscovery = sends.length;
     const beforeDiscoveryMoney = await money();
     const discovery = service.withCompatibilitySnapshot([N], async () => {
-        await service.syncNode(connection);
         const state = await service.scopes(undefined, N, false, { identities: false });
         assert(state.legacyInboundIds.has('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'));
+        await assert.rejects(service.syncNode(connection), /Legacy credentials/);
     });
     await peerStarted;
     assert.equal(sends.length, sentBeforeDiscovery);
     releasePeer();
     await discovery;
+    assert.equal(
+        sends.length,
+        sentBeforeDiscovery,
+        'shared unsupported quotas cannot produce a successful policy',
+    );
+    assert.deepEqual(await money(), beforeDiscoveryMoney);
+
+    const baseline = 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeef';
+    await prisma.$executeRaw`DELETE FROM config_profile_inbounds_to_nodes WHERE node_uuid=${peer}::uuid`;
+    await prisma.$executeRaw`INSERT INTO config_profile_inbounds(uuid,profile_uuid,tag,type,raw_inbound)
+        VALUES(${baseline}::uuid,'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','native-baseline','vless','{"protocol":"vless","tag":"native-baseline"}')`;
+    await prisma.$executeRaw`INSERT INTO config_profile_inbounds_to_nodes(config_profile_inbound_uuid,node_uuid)
+        VALUES(${baseline}::uuid,${N}::uuid),(${baseline}::uuid,${peer}::uuid)`;
+    await prisma.$executeRaw`INSERT INTO hosts(uuid,remark,address,port,config_profile_uuid,config_profile_inbound_uuid)
+        VALUES('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee','baseline','example.test',443,'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',${baseline}::uuid)`;
+    await service.withCompatibilitySnapshot([N], async () => {
+        await service.syncNode(await readConnection(N));
+        const state = await service.scopes(undefined, N, false, { identities: false });
+        assert(state.legacyInboundIds.has(baseline));
+        assert(!state.legacyInboundIds.has('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'));
+    });
     assert.equal(sends.length, sentBeforeDiscovery + 1);
-    assert.deepEqual(sends.at(-1).protectedInbounds, []);
-    assert.deepEqual(sends.at(-1).groups, {});
+    assert.deepEqual(sends.at(-1).protectedInbounds, ['shared']);
+    assert(sends.at(-1).groups['host:' + H]);
+    assert(!sends.at(-1).protectedInbounds.includes('native-baseline'));
     assert.deepEqual(await money(), beforeDiscoveryMoney);
     console.log(
-        'PASS real inventory/scopes SQL discovers shared native peer before custom policy; financial reservations unchanged',
+        'PASS real inventory discovers native peer before policy; shared quotas reject while an independent modern quota remains protected; financial reservations unchanged',
     );
 }
 main()

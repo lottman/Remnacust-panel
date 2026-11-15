@@ -16,7 +16,14 @@ const remote=new Map([[N1,{instance:I1,core:C1,revision:'0',body:null,pending:nu
 let loseRegistrationProofOnce=true,lostRegistrationProof=0;
 let stalePolicyStatus=false,wrongPolicyInstance=false,failProofCommit=false,supersedeProof=false,loseExposureOnce=false;
 let unsupported=N2,missingUsage=false,unavailable=null,preflightGate=null,entered,deliveries=0,syncRequests=0,loseSampleOnce=N1,lostSamples=0,loseUnfenceOnce=true,lostDeliveries=0;
-const axios={hostPolicy:async(node,body)=>{
+const axios={getNodeHealth:async(node)=>{
+    const nodeControlRevision=node.controlRevision;
+    assert.equal(typeof nodeControlRevision,'string','Synthetic transport requires the captured DB control revision');
+    if(node.uuid===unavailable)return {isOk:false};
+    return {isOk:true,nodeControlRevision,response:{nodeVersion:'1.1.38',isAlive:true,xrayInternalStatusCached:true}};
+},hostPolicy:async(node,body)=>{
+    const nodeControlRevision=node.controlRevision;
+    assert.equal(typeof nodeControlRevision,'string','Synthetic transport requires the captured DB control revision');
     if(node.uuid===unavailable)return {isOk:false};
     if(preflightGate&&!body){entered();await preflightGate;}
     const state=remote.get(node.uuid);assert.ok(state,node.uuid);
@@ -52,7 +59,7 @@ const axios={hostPolicy:async(node,body)=>{
         state.journalSequence=(state.journalSequence??0)+1;state.revision=body.revision;state.body=body;state.awaitingProof=true;deliveries++;
         if(loseExposureOnce){loseExposureOnce=false;return {isOk:false};}
         if(loseUnfenceOnce && body.groups['user:global'].fenceAll!==true){loseUnfenceOnce=false;lostDeliveries++;return {isOk:false};}
-        return {isOk:true,response:{version:'xera-host-policy-v2',supported:true,applied:true,userQuotaRequired:true}};
+        return {isOk:true,nodeControlRevision,response:{version:'xera-host-policy-v2',supported:true,applied:true,userQuotaRequired:true}};
     }
     const proving=state.awaitingProof===true;state.awaitingProof=false;
     if(loseRegistrationProofOnce&&proving&&state.body.registrations?.some(item=>item.action==='prepare')){loseRegistrationProofOnce=false;lostRegistrationProof++;rejectCommit=true;}
@@ -67,7 +74,7 @@ const axios={hostPolicy:async(node,body)=>{
             await other.$executeRaw`UPDATE xera_quota_node_modes SET desired_revision=${revision.value}::bigint,desired_source=${proof.source},desired_policy=${JSON.stringify(proof.proof)}::jsonb WHERE node_uuid=${node.uuid}::uuid`;
         });
     }
-    return {isOk:true,response:{version:'xera-host-policy-v2',supported:true,applied:true,policyRevisionsSupported:true,policyRevision:stalePolicyStatus&&proving?'0':state.revision,
+    return {isOk:true,nodeControlRevision,response:{version:'xera-host-policy-v2',supported:true,applied:true,policyRevisionsSupported:true,policyRevision:stalePolicyStatus&&proving?'0':state.revision,
         quotaReservesSupported:node.uuid!==unsupported,quotaRegistrationsSupported:true,quotaWatermarksSupported:true,quotaJournalSequence:String(state.journalSequence??0),quotaFencesSupported:true,unreservedUsageSupported:!missingUsage,coreIncarnationSupported:true,usageReceiptsSupported:true,userQuotaReservesSupported:true,
         userQuotaRequired:!!state.body,coreProcessId:state.core,quotaInstanceId:wrongPolicyInstance&&proving?I2:state.instance,offlineReserves:state.body?.offlineReserves??null}};
 },hostQuotaState:async(node,request)=>{
@@ -96,6 +103,13 @@ const {DurableUsageService}=load(path.join(__dirname,'../src/common/host-policy/
 const {QuotaCutoverService}=load(path.join(__dirname,'../src/common/host-policy/quota-cutover.service.ts'),mocks);
 const {QuotaCoordinatorService}=load(path.join(__dirname,'../src/common/host-policy/quota-coordinator.service.ts'),{...mocks,'./host-policy.service':{HostPolicyService,HOST_POLICY_VERSION:'xera-host-policy-v2'}});
 const policies=new HostPolicyService(db,axios,cache,{getOrThrow:()=> 'fixture-secret-not-a-production-key'},tx);
+const connection=uuid=>prisma.nodes.findUniqueOrThrow({where:{uuid},select:{
+    uuid:true,address:true,port:true,proxyUrl:true,controlRevision:true,controlAddresses:true,ips:true,
+}});
+const syncPolicy=async node=>{
+    const current=await connection(node.uuid);
+    return policies.withCompatibilitySnapshot([node.uuid],()=>policies.syncNode(current));
+};
 policies.requestSync=()=>{syncRequests++;};
 const usage=new DurableUsageService(db,axios,tx,{getOrThrow:key=>key==='USER_USAGE_IGNORE_BELOW_BYTES'?0n:true});
 const effects={apply:async()=>{}};
@@ -231,7 +245,7 @@ const coordinateUntil=async(condition)=>{for(let step=0;step<30;step++){await se
     // Real renderer + SQL ledger + receipt processing, with only the node HTTP
     // transport replaced. Turning the base host limit off must retain its bank.
     await prisma.$executeRaw`UPDATE hosts SET user_traffic_limit_bytes=0,traffic_multiplier=1.5 WHERE uuid=${H}::uuid`;
-    const opts={uuid:N1,address:'127.0.0.1',port:2222,proxyUrl:null};await policies.syncNode(opts);
+    const opts=await connection(N1);await syncPolicy(opts);
     const body=remote.get(N1).body,hostGroup=body.groups['host:'+H];
     assert.equal(hostGroup.reserveRequired,undefined);assert.ok(hostGroup.unreservedAccounts['901']);
     assert.equal(body.hosts[H.replaceAll('-','')].quotaMultipliers['host:'+H],150);
@@ -243,19 +257,19 @@ const coordinateUntil=async(condition)=>{for(let step=0;step<30;step++){await se
     await usage.collect({nodeUuid:N1,nodeId:901n,opts,multiplier:'1500000000'},async()=>{});
     assert.equal((await pool()).baseline,original.baseline+6n);assert.equal((await pool()).nano,'6000000000');
     assert.equal((await prisma.$queryRaw`SELECT used_traffic_bytes AS n FROM user_traffic WHERE id=901`)[0].n,grossBefore+6n);
-    await policies.syncNode(opts);assert.equal(remote.get(N1).body.groups['host:'+H].unreservedAccounts['901'],account);
+    await syncPolicy(opts);assert.equal(remote.get(N1).body.groups['host:'+H].unreservedAccounts['901'],account);
     assert.equal((await pool()).baseline,original.baseline+6n,'Repeated rendering does not apply debt again');
     console.log('PASS base-quota-off policy retains the original account, commits its coefficient before HTTP and applies outside usage once');
     const sentBefore=deliveries;
     await prisma.$executeRaw`UPDATE hosts SET traffic_multiplier=2.25 WHERE uuid=${H}::uuid`;
-    rejectCommit=true;await assert.rejects(policies.syncNode(opts),/Simulated commit failure/);
+    rejectCommit=true;await assert.rejects(syncPolicy(opts),/Simulated commit failure/);
     assert.equal(deliveries,sentBefore,'A rolled-back price must never reach the node');
     assert.equal((await prisma.$queryRaw`SELECT count(*) AS n FROM xera_quota_usage_deliveries WHERE usage_account=${account}::uuid AND factor=225`)[0].n,0n);
-    await policies.syncNode(opts);
+    await syncPolicy(opts);
     assert.equal((await prisma.$queryRaw`SELECT count(*) AS n FROM xera_quota_usage_deliveries WHERE usage_account=${account}::uuid AND node_uuid=${N1}::uuid AND factor=225`)[0].n,1n);
     console.log('PASS a failed policy commit cannot send or persist a new outside-grant coefficient; retry commits it once');
-    const secondOpts={uuid:N2,address:'127.0.0.2',port:2222,proxyUrl:null};
-    await policies.syncNode(secondOpts);
+    const secondOpts=await connection(N2);
+    await syncPolicy(secondOpts);
     assert.equal(remote.get(N2).body.groups['host:'+H].unreservedAccounts['901'],account);
     const jointBefore=await pool(),jointGross=(await prisma.$queryRaw`SELECT used_traffic_bytes AS n FROM user_traffic WHERE id=901`)[0].n;
     for(const node of [N1,N2]){
@@ -273,27 +287,27 @@ const coordinateUntil=async(condition)=>{for(let step=0;step<30;step++){await se
 
     const policyProof=async()=> (await prisma.$queryRaw`SELECT desired_revision,applied_revision,desired_source,applied_source,applied_core,applied_at::text AS boundary,applied_policy FROM xera_quota_node_modes WHERE node_uuid=${N1}::uuid`)[0];
     const applied=await policyProof();assert.equal(applied.applied_revision,applied.desired_revision);assert.equal(applied.applied_source,applied.desired_source);assert.equal(applied.applied_core,C1);assert.equal(applied.applied_policy.scopes['host:'+H]['901'][0],'U');
-    await policies.syncNode(opts);assert.equal((await policyProof()).boundary,applied.boundary,'A refresh cannot move the stable debt boundary');
-    stalePolicyStatus=true;await assert.rejects(policies.syncNode(opts),/acknowledgement is incomplete/);stalePolicyStatus=false;
+    await syncPolicy(opts);assert.equal((await policyProof()).boundary,applied.boundary,'A refresh cannot move the stable debt boundary');
+    stalePolicyStatus=true;await assert.rejects(syncPolicy(opts),/acknowledgement is incomplete/);stalePolicyStatus=false;
     const stale=await policyProof();assert.ok(stale.desired_revision>stale.applied_revision);assert.equal(stale.boundary,applied.boundary);
-    wrongPolicyInstance=true;await assert.rejects(policies.syncNode(opts),/instance changed/);wrongPolicyInstance=false;
+    wrongPolicyInstance=true;await assert.rejects(syncPolicy(opts),/instance changed/);wrongPolicyInstance=false;
     assert.equal((await policyProof()).applied_revision,stale.applied_revision);
-    await policies.syncNode(opts);assert.equal((await policyProof()).boundary,applied.boundary);
-    const proofFailureSent=deliveries;failProofCommit=true;await assert.rejects(policies.syncNode(opts),/Simulated commit failure/);
+    await syncPolicy(opts);assert.equal((await policyProof()).boundary,applied.boundary);
+    const proofFailureSent=deliveries;failProofCommit=true;await assert.rejects(syncPolicy(opts),/Simulated commit failure/);
     assert.equal(deliveries,proofFailureSent+1,'The injected ACK commit failure must happen after node HTTP');
     const rolledBack=await policyProof();assert.ok(rolledBack.desired_revision>rolledBack.applied_revision);assert.equal(rolledBack.boundary,applied.boundary);
-    await policies.syncNode(opts);const recovered=await policyProof();assert.equal(recovered.applied_revision,recovered.desired_revision);assert.equal(recovered.boundary,applied.boundary);
+    await syncPolicy(opts);const recovered=await policyProof();assert.equal(recovered.applied_revision,recovered.desired_revision);assert.equal(recovered.boundary,applied.boundary);
     console.log('PASS desired/applied entitlement proof survives stale ACK, wrong instance and post-HTTP SQL rollback without a moving fence boundary');
-    supersedeProof=true;await assert.rejects(policies.syncNode(opts),/acknowledgement was superseded/);
+    supersedeProof=true;await assert.rejects(syncPolicy(opts),/acknowledgement was superseded/);
     const superseded=await policyProof();assert.equal(superseded.applied_revision,recovered.applied_revision);assert.ok(superseded.desired_revision>superseded.applied_revision);assert.equal(superseded.boundary,applied.boundary);
-    await policies.syncNode(opts);assert.equal((await policyProof()).applied_revision,(await policyProof()).desired_revision);
+    await syncPolicy(opts);assert.equal((await policyProof()).applied_revision,(await policyProof()).desired_revision);
     console.log('PASS another committed policy while the ACK is in flight cannot overwrite the newer desired entitlement proof');
 
 
 
     await prisma.$executeRaw`INSERT INTO xera_host_tag_limits(tag,user_traffic_limit_bytes) VALUES('alpha_beta',0)`;
     await prisma.$executeRaw`UPDATE hosts SET tags=array_append(tags,'alpha_beta') WHERE uuid=${H}::uuid`;
-    await policies.syncNode(opts);
+    await syncPolicy(opts);
     const nested=await k.sql`SELECT desired_policy,applied_policy FROM xera_quota_node_modes WHERE node_uuid=${N1}::uuid`.execute(db.kysely);
     assert.ok(nested.rows[0].desiredPolicy.scopes['tag:alpha_beta']);assert.ok(nested.rows[0].appliedPolicy.scopes['tag:alpha_beta']);assert.equal(nested.rows[0].appliedPolicy.scopes['tag:alphaBeta'],undefined);
     console.log('PASS actual SQL JSON mapping preserves opaque quota scope names in the durable proof');
@@ -367,7 +381,7 @@ const coordinateUntil=async(condition)=>{for(let step=0;step<30;step++){await se
     console.log('PASS an explicit RESET with a smaller cap releases online nodes immediately while offline old bounded credit remains committed');
 
     await prisma.$executeRaw`UPDATE hosts SET always_available=true WHERE uuid=${H}::uuid`;
-    await policies.syncNode(opts);await policies.syncNode(secondOpts);
+    await syncPolicy(opts);await syncPolicy(secondOpts);
     const recoveryScope={kind:'USER',key:'global',owner:'901'};
     assert.equal((await policyProof()).applied_policy.scopes['user:global']['901'][4],true);
     const recoveryAccount=remote.get(N1).body.groups['user:global'].unreservedAccounts['901'];
@@ -394,7 +408,7 @@ const coordinateUntil=async(condition)=>{for(let step=0;step<30;step++){await se
     await transfers.request(scope,[N1]);await transfers.advance(scope);await transfers.advance(scope);
     assert.equal((await transferState()).phase,'DRAINING');
     const held=await transferState();await transfers.request(scope,[N1,N2]);assert.notEqual((await transferState()).generation,held.generation);
-    unavailable=N2;await transfers.advance(scope);await policies.syncNode(opts);
+    unavailable=N2;await transfers.advance(scope);await syncPolicy(opts);
     assert.equal((await transferState()).phase,'PREFLIGHT');assert.equal(remote.get(N1).body.groups['host:'+H].fencedOwners['901'],true);
     unavailable=null;await advance('ACTIVE');
     console.log('PASS changing a target during a committed fence preserves the old admission barrier while the new preflight waits');
@@ -424,12 +438,12 @@ const coordinateUntil=async(condition)=>{for(let step=0;step<30;step++){await se
         VALUES(${neverDelivered}::uuid,'TAG',${registrationPool},901,current_date,${registrationEpoch}::uuid,${N1}::uuid,${I1}::uuid,100,clock_timestamp())`;
     await prisma.$executeRaw`INSERT INTO xera_quota_reserves(id,kind,key,user_id,window_start,budget_epoch,node_uuid,instance_uuid,ceiling_bytes,retired_at,registration_required)
         VALUES(${legacyMissing}::uuid,'TAG',${registrationPool},901,current_date,${registrationEpoch}::uuid,${N1}::uuid,${I1}::uuid,100,clock_timestamp(),false)`;
-    assert.ok(!remote.get(N1).ledger.has(neverDelivered));await policies.syncNode(opts);
+    assert.ok(!remote.get(N1).ledger.has(neverDelivered));await syncPolicy(opts);
     const cancelledProof=(await prisma.$queryRaw`SELECT closed_usage_bytes,registration_action,registered_revision,activation_revision FROM xera_quota_reserves WHERE id=${neverDelivered}::uuid`)[0];
     assert.equal(cancelledProof.closed_usage_bytes,0n);assert.equal(cancelledProof.registration_action,'cancel');assert.equal(cancelledProof.registered_revision,null);assert.equal(cancelledProof.activation_revision,null);
     assert.equal(remote.get(N1).ledger.get(neverDelivered).closed,true);
     assert.equal((await prisma.$queryRaw`SELECT closed_usage_bytes FROM xera_quota_reserves WHERE id=${legacyMissing}::uuid`)[0].closed_usage_bytes,null);
-    await policies.syncNode(opts);assert.equal((await prisma.$queryRaw`SELECT closed_usage_bytes FROM xera_quota_reserves WHERE id=${neverDelivered}::uuid`)[0].closed_usage_bytes,0n);
+    await syncPolicy(opts);assert.equal((await prisma.$queryRaw`SELECT closed_usage_bytes FROM xera_quota_reserves WHERE id=${neverDelivered}::uuid`)[0].closed_usage_bytes,0n);
     await assert.rejects(prisma.$executeRaw`UPDATE xera_quota_reserves SET registration_required=false WHERE id=${neverDelivered}::uuid`,/cannot be rewritten/);
     await assert.rejects(prisma.$executeRaw`UPDATE xera_quota_reserves SET registered_sequence=1 WHERE id=${neverDelivered}::uuid`,/constraint/);
     console.log('PASS never-delivered new credit closes through a durable zero tombstone while legacy missing credit and immutable SQL provenance remain protected');
@@ -439,19 +453,19 @@ const coordinateUntil=async(condition)=>{for(let step=0;step<30;step++){await se
     const exposureTag='exposure_restart';
     await prisma.$executeRaw`INSERT INTO xera_host_tag_limits(tag,user_traffic_limit_bytes) VALUES(${exposureTag},0)`;
     await prisma.$executeRaw`UPDATE hosts SET tags=array_append(tags,${exposureTag}) WHERE uuid=${H}::uuid`;
-    loseExposureOnce=true;await assert.rejects(policies.syncNode(opts),/изоляцией хостов/);
+    loseExposureOnce=true;await assert.rejects(syncPolicy(opts),/изоляцией хостов/);
     const exposedCore=remote.get(N1).core,unlimitedProof=await policyProof();
     assert.equal(unlimitedProof.applied_policy.scopes['tag:'+exposureTag],undefined,'A lost delivery ACK must not fabricate an applied proof');
     assert.equal(load(path.join(__dirname,'../src/common/host-policy/quota-policy-proof.ts')).quotaPolicyProof(remote.get(N1).body).proof.scopes['tag:'+exposureTag]['901'][0],'U');
     assert.equal((await prisma.$queryRaw`SELECT count(*) AS n FROM xera_quota_usage_exposures WHERE node_uuid=${N1}::uuid AND core_uuid=${exposedCore}::uuid AND kind='TAG' AND key=${exposureTag} AND user_id=901`)[0].n,1n);
     const exposedSource=load(path.join(__dirname,'../src/common/host-policy/quota-policy-proof.ts')).quotaPolicyProof(remote.get(N1).body).source;
     console.log('PASS losing the ACK of unlimited delivery preserves its committed potential debt even without any applied proof');
-    remote.get(N1).core='cf29ee68-a625-4160-9573-cc17de317a5d';await policies.syncNode(opts);
+    remote.get(N1).core='cf29ee68-a625-4160-9573-cc17de317a5d';await syncPolicy(opts);
     const restarted=await policyProof();assert.equal(restarted.applied_core,remote.get(N1).core);assert.notEqual(restarted.boundary,unlimitedProof.boundary);assert.equal(restarted.applied_source,exposedSource);
     const exposed=await prisma.$queryRaw`SELECT core_uuid FROM xera_quota_usage_exposures WHERE node_uuid=${N1}::uuid AND kind='TAG' AND key=${exposureTag} AND user_id=901`;
     assert.deepEqual(new Set(exposed.map(e=>e.core_uuid)),new Set([exposedCore,remote.get(N1).core]));
     await prisma.$executeRaw`UPDATE xera_host_tag_limits SET user_traffic_limit_bytes=1000 WHERE tag=${exposureTag}`;
-    await policies.syncNode(opts);await new Promise(resolve=>setTimeout(resolve,5));
+    await syncPolicy(opts);await new Promise(resolve=>setTimeout(resolve,5));
     await usage.collect({nodeUuid:N1,nodeId:901n,opts,multiplier:'1500000000'},async()=>{});
     const remaining=await prisma.$queryRaw`SELECT core_uuid FROM xera_quota_usage_exposures WHERE node_uuid=${N1}::uuid AND kind='TAG' AND key=${exposureTag} AND user_id=901`;
     assert.deepEqual(remaining.map(e=>e.core_uuid),[exposedCore],'A new zero frame clears only its own acknowledged barrier');
@@ -467,7 +481,7 @@ const coordinateUntil=async(condition)=>{for(let step=0;step<30;step++){await se
     const beforeRestoreDelivery=deliveries,beforeRestoreWire=structuredClone(remote.get(N1).body);
     await prisma.$queryRaw`SELECT xera_quarantine_restored_quotas()`;
     assert.equal((await coordinator().status()).phase,'RECOVERY');assert.equal(await coordinator().tick(),false);
-    await assert.rejects(policies.syncNode(opts),/RESTORE_REQUIRES_RECONCILIATION/);
+    await assert.rejects(syncPolicy(opts),/RESTORE_REQUIRES_RECONCILIATION/);
     await assert.rejects(prisma.$executeRaw`INSERT INTO xera_quota_reserves(kind,key,user_id,window_start,budget_epoch,node_uuid,instance_uuid,ceiling_bytes,retired_at)
         VALUES('TAG',${registrationPool},901,current_date,${registrationEpoch}::uuid,${N1}::uuid,${I1}::uuid,1,clock_timestamp())`,/RESTORE_REQUIRES_RECONCILIATION/);
     await assert.rejects(prisma.$executeRaw`UPDATE xera_quota_reserves SET ceiling_bytes=ceiling_bytes+1 WHERE id=${legacyMissing}::uuid`,/RESTORE_REQUIRES_RECONCILIATION/);

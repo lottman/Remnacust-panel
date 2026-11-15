@@ -282,15 +282,18 @@ const allocate = (db = prisma, roster = [N1, N2], debt = 100n) => db.$queryRaw`
         VALUES(901,${H}::uuid,'',NULL,'dddddddd-dddd-4ddd-8ddd-dddddddddddd')`;
     const journal=require('./quota-registration-transport.cjs')(INSTANCES[N2],10);
     let staged=true,lastBody,staleProof=false,coreProcess='12345678-1234-4234-8234-123456789abc';
-    const policies=new HostPolicyService(db,{hostPolicy:async(_node,body)=>{
+    const policies=new HostPolicyService(db,{getNodeHealth:async(node)=>({isOk:true,nodeControlRevision:node.controlRevision,response:{nodeVersion:'1.1.38',isAlive:true}}),hostPolicy:async(node,body)=>{
+        const nodeControlRevision=node.controlRevision;
         assert.equal(transactionHost.isTransactionActive(),false,'Node HTTP must follow SQL commit');
-        if(!body)return {isOk:true,response:{supported:true,version:'xera-host-policy-v2',policyRevisionsSupported:true,
+        if(!body)return {isOk:true,nodeControlRevision,response:{supported:true,version:'xera-host-policy-v2',policyRevisionsSupported:true,
             policyRevision:staleProof?'1':(lastBody?.revision??'102'),applied:!staged,offlineReserves:'remnacust-quota-reserves-v1',
-            quotaReservesSupported:true,quotaRegistrationsSupported:true,quotaWatermarksSupported:true,quotaJournalSequence:String(journal.sequence()),quotaFencesSupported:true,unreservedUsageSupported:true,quotaInstanceId:INSTANCES[N2],
+            quotaReservesSupported:true,quotaRegistrationsSupported:true,quotaWatermarksSupported:true,quotaJournalSequence:String(journal.sequence()),quotaFencesSupported:true,unreservedUsageSupported:true,quotaInstanceId:INSTANCES[node.uuid],
             coreIncarnationSupported:true,coreProcessId:coreProcess}};
-        lastBody=body;journal.apply(body);return {isOk:true,response:{version:body.version,staged,applied:!staged}};
+        lastBody=body;journal.apply(body);return {isOk:true,nodeControlRevision,response:{version:body.version,staged,applied:!staged}};
     },hostQuotaState:journal.read},require('./host-policy-cache.cjs')(),{getOrThrow:()=> 'test-only'},transactionHost);
-    await policies.syncNode({uuid:N2,address:'127.0.0.1',port:1});
+    const connection=()=>prisma.nodes.findUniqueOrThrow({where:{uuid:N2},select:{uuid:true,address:true,port:true,proxyUrl:true,controlRevision:true,controlAddresses:true,ips:true}});
+    const syncNode=()=>policies.withCompatibilitySnapshot([N2],async()=>policies.syncNode(await connection()));
+    await syncNode();
     assert.equal(lastBody.offlineReserves,'remnacust-quota-reserves-v1');
     const wireHost=lastBody.hosts[H.replaceAll('-','')];
     assert.equal(wireHost.allowedIdentities[credentials.username],true);
@@ -301,7 +304,7 @@ const allocate = (db = prisma, roster = [N1, N2], debt = 100n) => db.$queryRaw`
     const progress=()=>prisma.$queryRaw`SELECT desired_epoch,applied_epoch,desired_revision,applied_revision FROM xera_quota_node_epochs WHERE node_uuid=${N2}::uuid`;
     assert.ok((await progress())[0].desired_revision>(await progress())[0].applied_revision,
         'Staging a policy on a stopped core does not acknowledge its delivery');
-    staged=false;await policies.syncNode({uuid:N2,address:'127.0.0.1',port:1});
+    staged=false;await syncNode();
     const [appliedEpoch]=await progress();
     assert.equal(appliedEpoch.applied_revision,appliedEpoch.desired_revision);
     assert.equal(appliedEpoch.applied_epoch,secondEpoch);
@@ -317,7 +320,7 @@ const allocate = (db = prisma, roster = [N1, N2], debt = 100n) => db.$queryRaw`
     assert.equal(synchronization.appliedNodes,1);
     assert.equal(synchronization.unavailableNodes,1);
     assert.deepEqual(synchronization.pendingNodes,[{uuid:N3,name:'offline-node',unavailable:true}]);
-    staged=true;await policies.syncNode({uuid:N2,address:'127.0.0.1',port:1});
+    staged=true;await syncNode();
     assert.equal((await limits.synchronization('HOST',H)).appliedNodes,1,
         'A later staged policy for the same epoch must not make an already applied reset flicker back to pending');
     console.log('PASS limits UI progress distinguishes a live applied reset from an offline pending node');
@@ -335,29 +338,29 @@ const allocate = (db = prisma, roster = [N1, N2], debt = 100n) => db.$queryRaw`
     assert.equal(twoMonths.expires_at.getTime(),Date.UTC(calendar.anchor.getUTCFullYear(),calendar.anchor.getUTCMonth()+2,1),
         'A manual RESET after editing a period uses the new boundary, not the old pool expiry');
     assert.equal(twoMonths.ceiling_bytes,1200n,'ADD before first delivery increases the new epoch budget exactly once');
-    await policies.syncNode({uuid:N2,address:'127.0.0.1',port:1});
+    await syncNode();
     assert.equal(lastBody.groups['host:'+H].reserves['901'],undefined,
         'A changed period cannot reuse an old unexpired no-reset grant');
     assert.equal(lastBody.groups['host:'+H].reserves['902'],undefined);assert.ok(lastBody.registrations.some(item=>item.grant.id===twoMonths.id));
     console.log('PASS RESET recalculates an edited calendar boundary and ADD before first delivery preserves its full budget');
     await prisma.$executeRaw`UPDATE xera_quota_node_modes SET phase='FENCING',fenced_revision=NULL,fenced_at=NULL,fenced_source=NULL WHERE node_uuid=${N2}::uuid`;
-    await policies.syncNode({uuid:N2,address:'127.0.0.1',port:1});
+    await syncNode();
     const fence=async()=>(await prisma.$queryRaw`SELECT fenced_revision,fenced_at,fenced_source,fenced_core FROM xera_quota_node_modes WHERE node_uuid=${N2}::uuid`)[0];
     assert.equal((await fence()).fenced_at,null,'Staging a soft barrier is not a live drain acknowledgement');
     assert.equal(lastBody.groups['host:'+H].reserves['902'],undefined,
         'A staged fence cannot activate a grant whose registration was not acknowledged');assert.ok(lastBody.registrations.some(item=>item.grant.id===twoMonths.id));
     staged=false;staleProof=true;
-    await assert.rejects(policies.syncNode({uuid:N2,address:'127.0.0.1',port:1}),/QUOTA_JOURNAL_BEHIND_CHECKPOINT/);
+    await assert.rejects(syncNode(),/QUOTA_JOURNAL_BEHIND_CHECKPOINT/);
     assert.equal((await fence()).fenced_at,null,'An unrelated policy revision cannot prove the fence');
-    staleProof=false;await policies.syncNode({uuid:N2,address:'127.0.0.1',port:1});
+    staleProof=false;await syncNode();
     const fenced=await fence();assert.ok(fenced.fenced_at instanceof Date);assert.match(fenced.fenced_source,/^[a-f0-9]{64}$/);
     await new Promise(resolve=>setTimeout(resolve,3));
-    await policies.syncNode({uuid:N2,address:'127.0.0.1',port:1});
+    await syncNode();
     const repeatedFence=await fence();assert.equal(repeatedFence.fenced_at.getTime(),fenced.fenced_at.getTime());
     assert.ok(repeatedFence.fenced_revision>fenced.fenced_revision);
     console.log('PASS live fence proof is revision-bound, staging/stale ACK cannot advance it and repeated delivery preserves its drain boundary');
     await new Promise(resolve=>setTimeout(resolve,3));coreProcess='87654321-4321-4321-8321-cba987654321';
-    await policies.syncNode({uuid:N2,address:'127.0.0.1',port:1});
+    await syncNode();
     const fenceAfterRestart=await fence();assert.equal(fenceAfterRestart.fenced_core,coreProcess);
     assert.ok(fenceAfterRestart.fenced_at.getTime()>fenced.fenced_at.getTime(),
         'A new core incarnation cannot reuse a pre-restart stats drain boundary');

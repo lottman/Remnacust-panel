@@ -17,7 +17,7 @@ test('Monaco embedded sanitizer resolves to the patched runtime', async () => {
         const resolved = await server.pluginContainer.resolveId(specifier, importer)
         assert.equal(resolved?.id.replaceAll('\\', '/'), fileURLToPath(new URL('../src/shared/lib/monaco-dompurify.ts', import.meta.url)).replaceAll('\\', '/'))
         const module = await server.ssrLoadModule(resolved.id)
-        assert.equal(module.default.version, '3.4.17')
+        assert.equal(module.default.version, '3.4.18')
     } finally {
         await server.close()
     }

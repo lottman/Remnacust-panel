@@ -7,9 +7,7 @@ const src = fileURLToPath(new URL('../../../src/', import.meta.url))
 export default defineConfig({
     root: here,
     publicDir: fileURLToPath(new URL('../../../public/', import.meta.url)),
-    cacheDir: fileURLToPath(
-        new URL('../../../node_modules/.vite-node-wizard-fixture/', import.meta.url)
-    ),
+    cacheDir: here + '.vite-cache',
     plugins: [react()],
     define: { __EDITOR_ASSET_VERSIONS__: '{}' },
     resolve: {

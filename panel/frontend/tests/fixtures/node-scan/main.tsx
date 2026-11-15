@@ -25,7 +25,8 @@ import { useRescanNodeIps } from '../../../src/shared/api/hooks/nodes/nodes.muta
 import { theme } from '../../../src/shared/constants/theme/theme'
 import { NodeIpsCard } from '../../../src/shared/ui/forms/nodes/base-node-form/node-ips.card'
 
-const language = new URLSearchParams(location.search).get('lang') ?? 'en'
+const params = new URLSearchParams(location.search)
+const language = params.get('lang') ?? 'en'
 await i18next.init({
     lng: language,
     fallbackLng: 'en',
@@ -85,6 +86,14 @@ const refreshed = {
     ips: [{ ip: '2001:db8::30', status: 'OUTBOUND' }],
     ipScan: { addresses: ['2001:db8::30'], scannedAt: '2026-11-15T12:00:00.000Z' }
 }
+if (params.get('state') === 'all-off')
+    base.controlAddresses.forEach((entry) => {
+        entry.enabled = false
+    })
+if (params.get('state') === 'two-enabled')
+    base.controlAddresses.forEach((entry) => {
+        entry.enabled = true
+    })
 let mode = 'success'
 const calls: { url?: string; method?: string; data: unknown }[] = []
 instance.defaults.adapter = async (config) => {
@@ -218,7 +227,7 @@ function App() {
                 motionWrapper={'section' as never}
                 form={form}
                 node={node}
-                disabled={scan.isPending}
+                disabled={scan.isPending || params.has('locked')}
                 isRescanningIps={scan.isPending}
                 rescanDisabled={conflict}
                 onRescanIps={rescan}

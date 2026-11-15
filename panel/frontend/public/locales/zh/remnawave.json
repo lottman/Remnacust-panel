@@ -1998,6 +1998,7 @@
         "new": "新地址",
         "priority": "优先级 {{index}}",
         "toggle": "使用 {{address}} 进行面板管理",
+        "last-enabled": "禁用此管理地址前，请先启用另一个非空管理地址。",
         "for-panel": "用于面板",
         "address": "地址 {{index}}",
         "placeholder": "IPv4、IPv6 或主机名",

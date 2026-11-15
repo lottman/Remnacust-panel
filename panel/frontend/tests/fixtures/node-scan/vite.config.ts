@@ -7,7 +7,7 @@ const src = fileURLToPath(new URL('../../../src/', import.meta.url))
 export default defineConfig({
     root: here,
     publicDir: false,
-    cacheDir: here + '../../../node_modules/.vite-node-scan-fixture',
+    cacheDir: here + '.vite-cache',
     plugins: [react()],
     define: {
         __DOMAIN_BACKEND__: JSON.stringify('http://127.0.0.1:4348'),

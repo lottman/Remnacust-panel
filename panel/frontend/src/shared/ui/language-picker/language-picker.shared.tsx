@@ -1,5 +1,4 @@
 import { Menu, Text } from '@mantine/core'
-import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbLanguage } from 'react-icons/tb'
 
@@ -18,15 +17,10 @@ export function LanguagePicker() {
 
     const { i18n } = useTranslation()
 
-    useEffect(() => {
-        const savedLanguage = localStorage.getItem('i18nextLng')
-        if (savedLanguage) {
-            i18n.changeLanguage(savedLanguage)
-        }
-    }, [i18n])
-
     const changeLanguage = (value: string) => {
-        i18n.changeLanguage(value)
+        if (i18n.language !== value) {
+            void i18n.changeLanguage(value)
+        }
     }
 
     const items = data.map((item) => (

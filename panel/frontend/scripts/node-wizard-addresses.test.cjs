@@ -128,7 +128,7 @@ test('actual DOM events in isolated local Chrome', { skip: process.env.NODE_WIZA
     let server
     try { await fetch(url, { signal: AbortSignal.timeout(1500) }) }
     catch {
-        server = spawn(process.execPath, [path.join(root, 'node_modules/vite/bin/vite.js'), '--config', 'tests/fixtures/node-wizard/vite.config.ts', '--port', origin.port || '4347'], { cwd: root, stdio: 'ignore', windowsHide: true })
+        server = spawn(process.execPath, [path.join(root, 'node_modules/vite/bin/vite.js'), '--config', 'tests/fixtures/node-wizard/vite.config.ts', '--configLoader', 'runner', '--port', origin.port || '4347'], { cwd: root, stdio: 'ignore', windowsHide: true })
         t.after(() => server.kill())
         for (let attempt = 0; attempt < 100; attempt++) {
             try { if ((await fetch(url)).ok) break } catch {}

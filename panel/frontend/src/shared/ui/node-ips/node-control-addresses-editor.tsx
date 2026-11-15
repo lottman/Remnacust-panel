@@ -70,6 +70,7 @@ export function NodeControlAddressesEditor<
     const viaProxy = form.isDirty('proxyUrl') ? Boolean(proxyUrl) : (hasProxy ?? Boolean(proxyUrl))
     const full = items.length >= MAX_NODE_CONTROL_ADDRESSES
     const panelId = items.find((entry) => entry.enabled && entry.address.trim())?.id
+    const enabledAddresses = items.filter((entry) => entry.enabled && entry.address.trim()).length
     const commit = (next: EditableAddress[]) => {
         setItems(next)
         form.clearFieldError('controlAddresses')
@@ -161,6 +162,9 @@ export function NodeControlAddressesEditor<
                                 const label = item.address || t('node-control-addresses.new')
                                 const normalized = normalizeNodeAddress(item.address)
                                 const isPanelAddress = item.id === panelId
+                                const isLastEnabled = Boolean(
+                                    item.enabled && item.address.trim() && enabledAddresses === 1
+                                )
                                 const status =
                                     ips.find(
                                         (entry) => normalizeNodeAddress(entry.ip) === normalized
@@ -261,32 +265,55 @@ export function NodeControlAddressesEditor<
                                             value={item.address}
                                         />
                                         <Tooltip
-                                            label={t('node-control-addresses.toggle', {
-                                                address: label
-                                            })}
+                                            events={{ hover: true, focus: true, touch: true }}
+                                            label={
+                                                isLastEnabled
+                                                    ? t('node-control-addresses.last-enabled')
+                                                    : t('node-control-addresses.toggle', {
+                                                          address: label
+                                                      })
+                                            }
+                                            maw={300}
+                                            multiline
                                         >
-                                            <Switch
-                                                aria-label={t('node-control-addresses.toggle', {
-                                                    address: label
-                                                })}
-                                                checked={item.enabled}
-                                                disabled={disabled}
-                                                mt={8}
-                                                onChange={(event) => {
-                                                    const enabled = event.currentTarget.checked
-                                                    commit(
-                                                        !enabled && !isSaved && !item.address.trim()
-                                                            ? items.filter(
-                                                                  (entry) => entry.id !== item.id
-                                                              )
-                                                            : items.map((entry) =>
-                                                                  entry.id === item.id
-                                                                      ? { ...entry, enabled }
-                                                                      : entry
-                                                              )
-                                                    )
-                                                }}
-                                            />
+                                            <span
+                                                aria-label={
+                                                    isLastEnabled
+                                                        ? t('node-control-addresses.last-enabled')
+                                                        : undefined
+                                                }
+                                                style={{ display: 'inline-flex', marginTop: 8 }}
+                                                tabIndex={
+                                                    isLastEnabled && !disabled ? 0 : undefined
+                                                }
+                                            >
+                                                <Switch
+                                                    aria-label={t('node-control-addresses.toggle', {
+                                                        address: label
+                                                    })}
+                                                    checked={item.enabled}
+                                                    disabled={disabled || isLastEnabled}
+                                                    onChange={(event) => {
+                                                        const enabled = event.currentTarget.checked
+                                                        if (disabled || (!enabled && isLastEnabled))
+                                                            return
+                                                        commit(
+                                                            !enabled &&
+                                                                !isSaved &&
+                                                                !item.address.trim()
+                                                                ? items.filter(
+                                                                      (entry) =>
+                                                                          entry.id !== item.id
+                                                                  )
+                                                                : items.map((entry) =>
+                                                                      entry.id === item.id
+                                                                          ? { ...entry, enabled }
+                                                                          : entry
+                                                                  )
+                                                        )
+                                                    }}
+                                                />
+                                            </span>
                                         </Tooltip>
                                         <Stack gap={0}>
                                             <ActionIcon

@@ -1998,6 +1998,7 @@
     "new": "New address",
     "priority": "Priority {{index}}",
     "toggle": "Use {{address}} for panel management",
+    "last-enabled": "Enable another non-empty control address before disabling this one.",
     "for-panel": "For panel",
     "address": "Address {{index}}",
     "placeholder": "IPv4, IPv6 or hostname",

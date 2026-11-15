@@ -175,7 +175,7 @@ function card(form, node = original, extra = {}) {
     const { NodeIpsCard } = ref.exports
     const tree = elements(NodeIpsCard({ form, node, cardVariants: {}, motionWrapper: 'section', onRescanIps() {}, ...extra }))
     const editor = tree.find(item => item.type === 'editor')
-    return { tree, editor, action: elements(editor.props.rescanAction).find(item => item.type === mantine.Button) }
+    return { tree, editor, action: elements(editor.props.rescanAction).find(item => item.type === mantine.ActionIcon) }
 }
 
 test('scan action blocks unsaved routes, disabled nodes, all-off lists, missing revisions and pending operations', () => {
@@ -200,6 +200,7 @@ test('scan action blocks unsaved routes, disabled nodes, all-off lists, missing 
     form.setFieldValue('note', 'Unsaved description')
     assert.equal(card(form).action.props.disabled, false)
     assert.equal(card(form).action.props.type, 'button')
+    assert.equal(card(form).action.props['aria-label'], 'node-control-addresses.rescan')
 })
 
 test('last scan uses readonly server metadata and automatic/manual discovery help stays visible', () => {
@@ -252,7 +253,7 @@ test('real scan card, mutation, response parsing and cache merge in loopback Chr
     assert.ok(['127.0.0.1', 'localhost', '[::1]'].includes(origin.hostname))
     try { await fetch(url, { signal: AbortSignal.timeout(1500) }) }
     catch {
-        const server = spawn(process.execPath, [path.join(root, 'node_modules/vite/bin/vite.js'), '--config', 'tests/fixtures/node-scan/vite.config.ts', '--port', origin.port || '4348'], { cwd: root, stdio: 'ignore', windowsHide: true })
+        const server = spawn(process.execPath, [path.join(root, 'node_modules/vite/bin/vite.js'), '--config', 'tests/fixtures/node-scan/vite.config.ts', '--configLoader', 'runner', '--port', origin.port || '4348'], { cwd: root, stdio: 'ignore', windowsHide: true })
         t.after(() => server.kill())
         for (let attempt = 0; attempt < 100; attempt++) {
             try { if ((await fetch(url)).ok) break } catch {}
@@ -268,7 +269,7 @@ test('real scan card, mutation, response parsing and cache merge in loopback Chr
         await browser.navigate(target.href)
         await browser.waitFor('!!document.querySelector("[data-path=scan-form-note]")')
     }
-    const action = `[...document.querySelectorAll('button')].find(el => el.textContent.trim() === nodeWizardFixture.i18n.t('node-control-addresses.rescan'))`
+    const action = `[...document.querySelectorAll('button')].find(el => el.getAttribute('aria-label') === nodeWizardFixture.i18n.t('node-control-addresses.rescan'))`
     await t.test('one POST refreshes IPv6, cache and revision while preserving the description', async () => {
         await open()
         await browser.evaluate(`(() => {
@@ -293,7 +294,7 @@ test('real scan card, mutation, response parsing and cache merge in loopback Chr
     })
     await t.test('dirty address switch disables rescan and shows save-first guidance', async () => {
         await open()
-        await browser.evaluate('document.querySelector("input[role=switch]").click()')
+        await browser.evaluate('document.querySelectorAll("input[role=switch]")[1].click()')
         await browser.waitFor(`Boolean((${action}).disabled)`)
         await browser.evaluate(`(${action}).click()`)
         assert.equal(await browser.evaluate('nodeWizardFixture.snapshot().calls.length'), 0)

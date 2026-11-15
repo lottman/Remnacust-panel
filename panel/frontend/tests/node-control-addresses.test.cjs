@@ -109,16 +109,33 @@ test('hostname and IPv6 validation uses the backend schema and retains measured 
     assert.equal(validation.getNodeControlAddressesErrors([...full, address('extra.example.test')]).controlAddresses, 'node-control-addresses.invalid-list')
 })
 
-test('saved addresses have no remove control, stay readable and can all be disabled without changing the anchor or IP roles', () => {
+test('saved addresses have no remove control and the last enabled address is guarded without changing the anchor or IP roles', () => {
     const state = editor([address('192.0.2.1'), address('2001:db8::2')])
     assert.ok(state.inputs().every(item => item.props.readOnly))
     assert.ok(!state.control('node-control-addresses.discard'))
     state.toggles()[0].props.onChange({ currentTarget: { checked: false } })
+    assert.equal(state.toggles()[1].props.disabled, true)
     state.toggles()[1].props.onChange({ currentTarget: { checked: false } })
-    assert.deepEqual(state.values.controlAddresses, [address('192.0.2.1', false), address('2001:db8::2', false)])
-    assert.ok(state.render().some(item => item.props.children === 'node-control-addresses.all-off'))
+    assert.deepEqual(state.values.controlAddresses, [address('192.0.2.1', false), address('2001:db8::2')])
     assert.equal(state.values.address, state.before.address)
     assert.deepEqual(state.values.ips, state.before.ips)
+})
+
+test('legacy all-off stays off until explicitly enabled and blank drafts never bypass the final address guard', () => {
+    const state = editor([address('node.example.test', false)])
+    assert.equal(state.toggles()[0].props.disabled, false)
+    assert.ok(state.render().some(item => item.props.children === 'node-control-addresses.all-off'))
+    state.toggles()[0].props.onChange({ currentTarget: { checked: true } })
+    state.add()
+    assert.equal(state.toggles()[0].props.disabled, true)
+    assert.equal(state.toggles()[1].props.disabled, false)
+    state.toggles()[0].props.onChange({ currentTarget: { checked: false } })
+    assert.equal(state.values.controlAddresses[0].enabled, true)
+    state.toggles()[1].props.onChange({ currentTarget: { checked: false } })
+    assert.deepEqual(state.values.controlAddresses, [address('node.example.test')])
+    const locked = state.render({ disabled: true }).filter(item => item.type === mantine.Switch)
+    locked[0].props.onChange({ currentTarget: { checked: false } })
+    assert.deepEqual(state.values.controlAddresses, [address('node.example.test')])
 })
 
 test('keyboard reorder preserves each toggle and payload order; a draft matching a saved address remains editable', () => {

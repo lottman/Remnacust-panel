@@ -1,4 +1,4 @@
-import { Button, Stack, Text, Tooltip } from '@mantine/core'
+import { ActionIcon, Stack, Text, Tooltip } from '@mantine/core'
 import { UseFormReturnType } from '@mantine/form'
 import { CreateNodeCommand, GetNodeCommand, UpdateNodeCommand } from '@remnawave/backend-contract'
 import { ForwardRefComponent, HTMLMotionProps, Variants } from 'motion/react'
@@ -42,6 +42,9 @@ export const NodeIpsCard = <
     const connectionDirty = hasNodeConnectionChanges(form)
     const addresses = getNodeControlAddresses(node)
     const scanBlocked = node.isDisabled || !addresses.some((entry) => entry.enabled)
+    const scanDisabled = Boolean(
+        disabled || connectionDirty || scanBlocked || rescanDisabled || !node.controlRevision
+    )
     const scanHint = connectionDirty
         ? t('node-control-addresses.rescan-save-first')
         : rescanDisabled || !node.controlRevision
@@ -60,24 +63,29 @@ export const NodeIpsCard = <
                     ips={node.ips ?? []}
                     rescanAction={
                         onRescanIps && (
-                            <Tooltip label={scanHint}>
-                                <Button
-                                    disabled={
-                                        disabled ||
-                                        connectionDirty ||
-                                        scanBlocked ||
-                                        rescanDisabled ||
-                                        !node.controlRevision
-                                    }
-                                    loading={isRescanningIps}
-                                    leftSection={<TbRefresh size={16} />}
-                                    onClick={onRescanIps}
-                                    size="compact-sm"
-                                    type="button"
-                                    variant="light"
+                            <Tooltip
+                                events={{ hover: true, focus: true, touch: true }}
+                                label={scanHint}
+                                maw={300}
+                                multiline
+                            >
+                                <span
+                                    aria-label={t('node-control-addresses.rescan')}
+                                    style={{ display: 'inline-flex' }}
+                                    tabIndex={scanDisabled || isRescanningIps ? 0 : undefined}
                                 >
-                                    {t('node-control-addresses.rescan')}
-                                </Button>
+                                    <ActionIcon
+                                        aria-label={t('node-control-addresses.rescan')}
+                                        disabled={scanDisabled}
+                                        loading={isRescanningIps}
+                                        onClick={onRescanIps}
+                                        size="md"
+                                        type="button"
+                                        variant="light"
+                                    >
+                                        <TbRefresh size={16} />
+                                    </ActionIcon>
+                                </span>
                             </Tooltip>
                         )
                     }

@@ -421,12 +421,13 @@ const cases: Record<string, () => Promise<unknown>> = {
         }
         assert(
             form.getValues().controlAddresses!.length === 3 &&
-                form.getValues().controlAddresses!.every((entry: AddressEntry) => !entry.enabled),
-            'All-off toggles removed or revived addresses'
+                form.getValues().controlAddresses!.filter((entry: AddressEntry) => entry.enabled)
+                    .length === 1,
+            'The final enabled address was switched off or an address was removed'
         )
         assert(
-            root.textContent?.includes(t('node-control-addresses.all-off')),
-            'All-off help is hidden'
+            root.querySelector<HTMLInputElement>('input[type="checkbox"]:checked')?.disabled,
+            'The final enabled address is not natively disabled'
         )
         await click('node-control-addresses.add', root)
         await until(() => rows().length === 4, 'blank draft')
@@ -469,7 +470,7 @@ const cases: Record<string, () => Promise<unknown>> = {
             readonly: true,
             statusMetadata: true,
             reordered: true,
-            allOff: true,
+            lastEnabledProtected: true,
             noDelete: true,
             draftSwitches: true
         }

@@ -189,7 +189,6 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
                             configurationPending,
                             controlRevision,
                             attempts + 1,
-                            current.response.lastStatusMessage,
                         );
                     case false:
                         message = statResult.message ?? 'Unknown error';
@@ -324,7 +323,6 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
         configurationPending = false,
         controlRevision?: string,
         attempt = 1,
-        previousStatusMessage?: string | null,
     ) {
         if (
             (await this.observeHealth(nodeUuid, controlRevision, observedAt, attempt, true)) ===
@@ -370,20 +368,10 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
             return;
         }
 
-        if (
-            !isConnected ||
-            controlRevision !== undefined ||
-            previousStatusMessage === '[NODE_CORE_NOT_READY]'
-        ) {
+        if (!isConnected || controlRevision !== undefined) {
             const updated = await this.commandBus.execute(
                 this.healthUpdate(
-                    {
-                        uuid: nodeUuid,
-                        isConnected: true,
-                        ...(previousStatusMessage === '[NODE_CORE_NOT_READY]' && {
-                            lastStatusMessage: null,
-                        }),
-                    },
+                    { uuid: nodeUuid, isConnected: true },
                     controlRevision,
                     observedAt,
                     attempt,

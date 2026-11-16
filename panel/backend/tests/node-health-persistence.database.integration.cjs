@@ -186,6 +186,21 @@ test(
                     { observedAt: at, attempt },
                 ),
             );
+        const freshHealth = (node, at = 100, patch = {}) =>
+            handler.execute(
+                new runtime.UpdateNodeCommand(
+                    { uuid: node.uuid, isConnected: true, ...patch },
+                    node.controlRevision,
+                    { observedAt: at, attempt: 1 },
+                ),
+            );
+        const writeReason = (node, reason) =>
+            handler.execute(
+                new runtime.UpdateNodeCommand(
+                    { uuid: node.uuid, lastStatusMessage: reason },
+                    node.controlRevision,
+                ),
+            );
         const hookFor = (uuid) => ({ uuid, writes: [], transactions: [] });
         const track = (promise) => {
             const result = promise.then(
@@ -460,6 +475,152 @@ test(
                         assert.equal((await update(node, 100)).isOk, true);
                     },
                 );
+
+            await t.test(
+                'fresh healthy telemetry clears only the locked Core-not-ready marker',
+                async () => {
+                    const node = await makeNode();
+                    assert.equal((await writeReason(node, '[NODE_CORE_NOT_READY]')).isOk, true);
+                    const before = await observe(node.uuid);
+                    const result = await freshHealth(node);
+                    assert.equal(result.isOk, true);
+                    assert.equal(result.response.lastStatusMessage, null);
+                    const saved = await observe(node.uuid);
+                    assert.equal(saved.node.last_status_message, null);
+                    assert.equal(saved.node.control_revision, node.controlRevision);
+                    assert.equal(saved.watermark.healthy, true);
+                    assert.equal(saved.watermark.observed_at, 100);
+                    assert.equal(saved.epoch, before.epoch);
+                },
+            );
+
+            await t.test(
+                'same-R pending reasons written after the health snapshot survive fresh stats',
+                async () => {
+                    for (const reason of ['[HOST_POLICY_PENDING]', '[NODE_UPDATE_PENDING]']) {
+                        const node = await makeNode();
+                        assert.equal((await writeReason(node, '[NODE_CORE_NOT_READY]')).isOk, true);
+                        const staleSnapshot = await repository.findByUUID(node.uuid);
+                        assert.equal(staleSnapshot.lastStatusMessage, '[NODE_CORE_NOT_READY]');
+                        assert.equal((await writeReason(node, reason)).isOk, true);
+                        const before = await observe(node.uuid);
+                        assert.equal(before.node.control_revision, node.controlRevision);
+                        assert.equal((await freshHealth(staleSnapshot)).isOk, true);
+                        const saved = await observe(node.uuid);
+                        assert.equal(saved.node.last_status_message, reason);
+                        assert.equal(saved.node.is_connected, true);
+                        assert.equal(saved.node.control_revision, node.controlRevision);
+                        assert.equal(saved.epoch, before.epoch);
+                    }
+                },
+            );
+
+            await t.test(
+                'unhealthy observations and explicit reasons do not trigger automatic marker clearing',
+                async () => {
+                    for (const [patch, expected] of [
+                        [{ isConnected: false }, '[NODE_CORE_NOT_READY]'],
+                        [{ lastStatusMessage: '[HOST_POLICY_PENDING]' }, '[HOST_POLICY_PENDING]'],
+                        [{ lastStatusMessage: null }, null],
+                    ]) {
+                        const node = await makeNode();
+                        assert.equal((await writeReason(node, '[NODE_CORE_NOT_READY]')).isOk, true);
+                        assert.equal((await freshHealth(node, 100, patch)).isOk, true);
+                        const saved = await observe(node.uuid);
+                        assert.equal(saved.node.last_status_message, expected);
+                        assert.equal(saved.watermark.healthy, patch.isConnected !== false);
+                        assert.equal(saved.node.control_revision, node.controlRevision);
+                    }
+                },
+            );
+
+            for (const reason of ['[HOST_POLICY_PENDING]', '[NODE_UPDATE_PENDING]']) {
+                await t.test(
+                    `health waits on the actual locked ${reason} writer and preserves its commit`,
+                    async () => {
+                        const node = await makeNode();
+                        assert.equal((await writeReason(node, '[NODE_CORE_NOT_READY]')).isOk, true);
+                        const before = await observe(node.uuid);
+                        const writer = {
+                            ...hookFor(node.uuid),
+                            entered: deferred(),
+                            written: deferred(),
+                            release: deferred(),
+                        };
+                        const health = { ...hookFor(node.uuid), entered: deferred() };
+                        releases.push(writer.release);
+                        const writing = track(hooks.run(writer, () => writeReason(node, reason)));
+                        let reading;
+                        try {
+                            const holder = await gateOrFailure(writer.entered, writing);
+                            await gateOrFailure(writer.written, writing);
+                            reading = track(hooks.run(health, () => freshHealth(node)));
+                            const waiter = await gateOrFailure(health.entered, reading);
+                            assert.notEqual(holder.pid, waiter.pid);
+                            await waitForRowLock(observer, holder, waiter);
+                            assert.deepEqual(await observe(node.uuid), before);
+                        } finally {
+                            writer.release.resolve();
+                        }
+                        assert.equal((await writing).value.isOk, true);
+                        assert.equal((await reading).value.isOk, true);
+                        const saved = await observe(node.uuid);
+                        assert.equal(saved.node.last_status_message, reason);
+                        assert.equal(saved.node.is_connected, true);
+                        assert.equal(saved.node.control_revision, node.controlRevision);
+                        assert.equal(saved.watermark.healthy, true);
+                        assert.equal(saved.epoch, before.epoch);
+                        assert.equal(writer.writes.length, 1);
+                        assert.equal(health.writes.length, 1);
+                        assert.equal(health.writes[0].row.lastStatusMessage, reason);
+                        assert.deepEqual(health.writes[0].before, health.writes[0].after);
+                    },
+                );
+
+                await t.test(
+                    `actual ${reason} writer waits behind healthy clearing and wins after commit`,
+                    async () => {
+                        const node = await makeNode();
+                        assert.equal((await writeReason(node, '[NODE_CORE_NOT_READY]')).isOk, true);
+                        const before = await observe(node.uuid);
+                        const health = {
+                            ...hookFor(node.uuid),
+                            entered: deferred(),
+                            written: deferred(),
+                            release: deferred(),
+                        };
+                        const writer = { ...hookFor(node.uuid), entered: deferred() };
+                        releases.push(health.release);
+                        const reading = track(hooks.run(health, () => freshHealth(node)));
+                        let writing;
+                        try {
+                            const holder = await gateOrFailure(health.entered, reading);
+                            const cleared = await gateOrFailure(health.written, reading);
+                            assert.equal(cleared.lastStatusMessage, null);
+                            writing = track(hooks.run(writer, () => writeReason(node, reason)));
+                            const waiter = await gateOrFailure(writer.entered, writing);
+                            assert.notEqual(holder.pid, waiter.pid);
+                            await waitForRowLock(observer, holder, waiter);
+                            assert.deepEqual(await observe(node.uuid), before);
+                        } finally {
+                            health.release.resolve();
+                        }
+                        assert.equal((await reading).value.isOk, true);
+                        assert.equal((await writing).value.isOk, true);
+                        const saved = await observe(node.uuid);
+                        assert.equal(saved.node.last_status_message, reason);
+                        assert.equal(saved.node.is_connected, true);
+                        assert.equal(saved.node.control_revision, node.controlRevision);
+                        assert.equal(saved.watermark.healthy, true);
+                        assert.equal(saved.epoch, before.epoch);
+                        assert.equal(health.writes.length, 1);
+                        assert.equal(health.writes[0].row.lastStatusMessage, null);
+                        assert.equal(writer.writes.length, 1);
+                        assert.equal(writer.writes[0].row.lastStatusMessage, reason);
+                        assert.deepEqual(writer.writes[0].before, writer.writes[0].after);
+                    },
+                );
+            }
 
             await t.test(
                 'ordinary handler updates create no watermark; node deletion cascades committed observations',

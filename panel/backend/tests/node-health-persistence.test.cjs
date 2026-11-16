@@ -82,7 +82,9 @@ function controlledHealth() {
                     if (/FROM nodes[\s\S]*FOR UPDATE/.test(sql)) {
                         touch('root lock');
                         assert.equal(parameters[0], uuid);
-                        return [copy(draft.node)];
+                        const row = copy(draft.node);
+                        if (!/AS "lastStatusMessage"/.test(sql)) delete row.lastStatusMessage;
+                        return [row];
                     }
                     touch('watermark SQL');
                     assert.match(sql, /INSERT INTO xera_node_health_observations/);
@@ -173,6 +175,23 @@ function controlledHealth() {
             return stored.node.controlRevision;
         },
     };
+}
+
+function freshHealth(f, at = 100, patch = {}) {
+    return new f.UpdateNodeCommand(
+        { uuid: f.uuid, isConnected: true, ...patch },
+        f.snapshot().node.controlRevision,
+        { observedAt: at, attempt: 1 },
+    );
+}
+
+function writeReason(f, reason) {
+    return f.handler.execute(
+        new f.UpdateNodeCommand(
+            { uuid: f.uuid, lastStatusMessage: reason },
+            f.snapshot().node.controlRevision,
+        ),
+    );
 }
 
 function defineTests() {
@@ -324,6 +343,96 @@ function defineTests() {
         assert.equal(f.snapshot().watermark, null);
         assert.equal(f.snapshot().node.lastStatusMessage, '[MANUAL]');
     });
+
+    test('fresh healthy observation clears the currently locked Core-not-ready marker', async () => {
+        const f = controlledHealth();
+        assert.equal((await writeReason(f, '[NODE_CORE_NOT_READY]')).isOk, true);
+        const command = freshHealth(f);
+        const result = await f.handler.execute(command);
+        assert.equal(result.isOk, true);
+        assert.equal(result.response.lastStatusMessage, null);
+        assert.equal(f.snapshot().node.lastStatusMessage, null);
+        assert.equal(f.snapshot().node.controlRevision, command.expectedControlRevision);
+        assert.equal(f.snapshot().watermark.healthy, true);
+        assert.equal(Object.hasOwn(command.node, 'lastStatusMessage'), false);
+    });
+
+    test('same-revision pending reasons written after health preparation survive fresh telemetry', async () => {
+        for (const reason of ['[HOST_POLICY_PENDING]', '[NODE_UPDATE_PENDING]']) {
+            const f = controlledHealth();
+            assert.equal((await writeReason(f, '[NODE_CORE_NOT_READY]')).isOk, true);
+            const command = freshHealth(f);
+            assert.equal((await writeReason(f, reason)).isOk, true);
+            assert.equal(f.snapshot().node.controlRevision, command.expectedControlRevision);
+            assert.equal((await f.handler.execute(command)).isOk, true);
+            assert.equal(f.snapshot().node.lastStatusMessage, reason);
+            assert.equal(f.snapshot().node.isConnected, true);
+        }
+    });
+
+    test('unhealthy observations retain the Core marker and explicit health reasons are respected', async () => {
+        for (const [patch, expected] of [
+            [{ isConnected: false }, '[NODE_CORE_NOT_READY]'],
+            [{ lastStatusMessage: '[HOST_POLICY_PENDING]' }, '[HOST_POLICY_PENDING]'],
+            [{ lastStatusMessage: null }, null],
+        ]) {
+            const f = controlledHealth();
+            assert.equal((await writeReason(f, '[NODE_CORE_NOT_READY]')).isOk, true);
+            assert.equal((await f.handler.execute(freshHealth(f, 100, patch))).isOk, true);
+            assert.equal(f.snapshot().node.lastStatusMessage, expected);
+            assert.equal(f.snapshot().watermark.healthy, patch.isConnected !== false);
+        }
+    });
+
+    for (const reason of ['[HOST_POLICY_PENDING]', '[NODE_UPDATE_PENDING]']) {
+        test(`health queued behind a locked ${reason} writer reads its committed reason`, async () => {
+            const f = controlledHealth();
+            assert.equal((await writeReason(f, '[NODE_CORE_NOT_READY]')).isOk, true);
+            const command = freshHealth(f);
+            const writer = { written: deferred(), release: deferred() };
+            const waiter = { requested: deferred() };
+            const writing = f.hooks.run(writer, () => writeReason(f, reason));
+            let health;
+            try {
+                await writer.written.promise;
+                health = f.hooks.run(waiter, () => f.handler.execute(command));
+                await waiter.requested.promise;
+                assert.equal(f.snapshot().node.lastStatusMessage, '[NODE_CORE_NOT_READY]');
+                assert.equal(f.snapshot().watermark, null);
+            } finally {
+                writer.release.resolve();
+            }
+            assert.equal((await writing).isOk, true);
+            assert.equal((await health).isOk, true);
+            assert.equal(f.snapshot().node.lastStatusMessage, reason);
+            assert.equal(f.snapshot().node.controlRevision, command.expectedControlRevision);
+            assert.equal(f.snapshot().watermark.healthy, true);
+        });
+
+        test(`${reason} writer queued behind healthy marker clearing wins after commit`, async () => {
+            const f = controlledHealth();
+            assert.equal((await writeReason(f, '[NODE_CORE_NOT_READY]')).isOk, true);
+            const command = freshHealth(f);
+            const holder = { written: deferred(), release: deferred() };
+            const waiter = { requested: deferred() };
+            const health = f.hooks.run(holder, () => f.handler.execute(command));
+            let writing;
+            try {
+                const result = await holder.written.promise;
+                assert.equal(result.lastStatusMessage, null);
+                writing = f.hooks.run(waiter, () => writeReason(f, reason));
+                await waiter.requested.promise;
+                assert.equal(f.snapshot().node.lastStatusMessage, '[NODE_CORE_NOT_READY]');
+            } finally {
+                holder.release.resolve();
+            }
+            assert.equal((await health).isOk, true);
+            assert.equal((await writing).isOk, true);
+            assert.equal(f.snapshot().node.lastStatusMessage, reason);
+            assert.equal(f.snapshot().node.controlRevision, command.expectedControlRevision);
+            assert.equal(f.snapshot().watermark.healthy, true);
+        });
+    }
 
     test('database integration guards reject unsafe targets before constructing a client', () => {
         const filename = path.join(__dirname, 'node-health-persistence.database.integration.cjs');

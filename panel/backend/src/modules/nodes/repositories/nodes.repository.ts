@@ -269,8 +269,10 @@ export class NodesRepository implements ICrud<NodesEntity> {
             ![1, 2].includes(observation.attempt)
         )
             throw new NodeControlRevisionConflictError();
-        const [before] = await this.prisma.tx.$queryRaw<{ controlRevision: string }[]>`
-            SELECT control_revision::text AS "controlRevision" FROM nodes
+        const [before] = await this.prisma.tx.$queryRaw<
+            { controlRevision: string; lastStatusMessage: string | null }[]
+        >`
+            SELECT control_revision::text AS "controlRevision", last_status_message AS "lastStatusMessage" FROM nodes
             WHERE uuid = ${node.uuid}::uuid FOR UPDATE`;
         if (!before || before.controlRevision !== expectedRevision)
             throw new NodeControlRevisionConflictError();
@@ -292,7 +294,14 @@ export class NodesRepository implements ICrud<NodesEntity> {
                     AND NOT xera_node_health_observations.healthy AND EXCLUDED.healthy)
             RETURNING node_uuid::text AS "nodeUuid"`;
         if (!accepted.length) throw new NodeControlRevisionConflictError();
-        return this.updateControlAddresses(node, expectedRevision);
+        return this.updateControlAddresses(
+            node.isConnected === true &&
+                node.lastStatusMessage === undefined &&
+                before.lastStatusMessage === '[NODE_CORE_NOT_READY]'
+                ? { ...node, lastStatusMessage: null }
+                : node,
+            expectedRevision,
+        );
     }
 
     @Transactional()

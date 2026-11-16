@@ -285,20 +285,20 @@ test('a committed control revision change rejects successful stats from the olde
     assert.equal(attempts, 2);
 });
 
-test('fresh Core telemetry clears only the old Core-not-ready reason', async () => {
-    for (const message of [
-        '[NODE_CORE_NOT_READY]',
-        '[HOST_POLICY_PENDING]',
-        '[NODE_UPDATE_PENDING]',
-    ]) {
-        const f = fixture({ connected: true, validStats: true });
-        f.state.lastStatusMessage = message;
-        await poll(f);
-        assert.equal(
-            f.state.lastStatusMessage,
-            message === '[NODE_CORE_NOT_READY]' ? null : message,
-        );
-    }
+test('fresh telemetry does not overwrite a policy warning committed during the poll', async () => {
+    const f = fixture({ connected: true, validStats: true });
+    f.state.controlRevision = '00000000-0000-4000-8000-000000000002';
+    f.job.data.controlRevision = f.state.controlRevision;
+    f.state.lastStatusMessage = '[NODE_CORE_NOT_READY]';
+    const stats = f.worker.axios.getSystemStats;
+    f.worker.axios.getSystemStats = async (options) => {
+        f.state.lastStatusMessage = '[HOST_POLICY_PENDING]';
+        return stats(options);
+    };
+    await poll(f);
+    assert.equal(f.state.lastStatusMessage, '[HOST_POLICY_PENDING]');
+    assert.equal(f.state.isConnected, true);
+    assert(f.writes.every((row) => !Object.hasOwn(row, 'lastStatusMessage')));
 });
 
 function assertNoHealthyTelemetry(f) {

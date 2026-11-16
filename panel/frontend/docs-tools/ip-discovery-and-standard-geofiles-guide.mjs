@@ -1,6 +1,29 @@
 const sections = [
     {
         article: 'nodes',
+        id: 'node-core-readiness-recheck',
+        before: 'nodes-2',
+        translations: {
+            ru: {
+                title: 'Временная занятость ноды и состояние Core',
+                body: 'Краткая синхронизация может временно сделать статистику недоступной без остановки Core. Перед сбросом метрик панель повторно проверяет такую неготовность. Если свежая статистика получена, состояние подключения и метрики сохраняются без запуска Core заново. Повторно подтверждённая недоступность по-прежнему отображается как проблема. Успешная статистика очищает прежнее сообщение о неготовности Core, сохраняя отдельные предупреждения о политике доступа.'
+            },
+            en: {
+                title: 'Temporary node contention and Core readiness',
+                body: 'Brief synchronization can make statistics temporarily unavailable without stopping Core. The panel rechecks this readiness failure before clearing metrics. Fresh statistics preserve the connection state and metrics without queuing another Core start. Confirmed unavailability still appears as a problem. Successful statistics clear the old Core-not-ready reason while preserving separate access-policy warnings.'
+            },
+            fa: {
+                title: 'مشغول بودن موقت نود و آمادگی Core',
+                body: 'همگام‌سازی کوتاه ممکن است بدون توقف Core، آمار را موقتاً از دسترس خارج کند. پنل پیش از پاک کردن معیارها این وضعیت را دوباره بررسی می‌کند. دریافت آمار تازه، اتصال و معیارها را بدون درخواست راه‌اندازی مجدد Core حفظ می‌کند. عدم دسترسی تأییدشده همچنان به‌عنوان مشکل نمایش داده می‌شود. آمار موفق پیام قدیمی آماده نبودن Core را پاک می‌کند و هشدارهای مستقل سیاست دسترسی را نگه می‌دارد.'
+            },
+            zh: {
+                title: '节点短暂繁忙与 Core 就绪状态',
+                body: '短暂同步可能在 Core 未停止时使统计暂时不可用。面板会在清除指标前复查这种就绪失败。获取新统计后保留连接状态和指标，不会再次请求启动 Core。再次确认不可用时仍显示问题。统计恢复后清除旧的 Core 未就绪原因，同时保留独立的访问策略警告。'
+            }
+        }
+    },
+    {
+        article: 'nodes',
         id: 'node-delete-confirmation',
         before: 'nodes-2',
         translations: {

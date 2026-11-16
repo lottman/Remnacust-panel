@@ -260,6 +260,10 @@ In card view, nodes can be dragged with a tag selected. Only visible nodes are r
 
 On Hosts and Nodes, Ctrl+F, Cmd+F on macOS and F3 open panel search instead of browser find. Search works in card and table views and from ordinary form fields. Monaco keeps its own editor search. The override is removed when leaving these pages.
 
+### Temporary node contention and Core readiness
+
+Brief synchronization can make statistics temporarily unavailable without stopping Core. The panel rechecks this readiness failure before clearing metrics. Fresh statistics preserve the connection state and metrics without queuing another Core start. Confirmed unavailability still appears as a problem. Successful statistics clear the old Core-not-ready reason while preserving separate access-policy warnings.
+
 ### Deleting a node from the panel
 
 Deletion removes the node and its assignments from the panel. It does not remove the Docker container on the server. A success response means the record has already been deleted. If configuration delivery is in progress, wait for completion and retry: A272 means the record remains. A network or server error does not count as successful deletion.

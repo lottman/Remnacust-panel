@@ -1,5 +1,6 @@
 import { ERRORS } from '@contract/constants';
 import { Job } from 'bullmq';
+import { setTimeout } from 'node:timers/promises';
 
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
@@ -103,6 +104,15 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
                     const health = await this.axios.getNodeHealth(connectionOpts);
                     if (!health.isOk && health.code === 'NODE_ROUTE_BUSY') return;
                     if (health.isOk && health.response.isAlive === true) {
+                        if (
+                            statResult.code === 'NODE_HTTP_503' &&
+                            health.response.xrayInternalStatusCached === false &&
+                            attempts === 0
+                        ) {
+                            await setTimeout(1000);
+                            attempts++;
+                            continue;
+                        }
                         if (!(await this.observeInventory(job, controlRevision))) return;
                         if (
                             (await this.observeHealth(
@@ -179,6 +189,7 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
                             configurationPending,
                             controlRevision,
                             attempts + 1,
+                            current.response.lastStatusMessage,
                         );
                     case false:
                         message = statResult.message ?? 'Unknown error';
@@ -313,6 +324,7 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
         configurationPending = false,
         controlRevision?: string,
         attempt = 1,
+        previousStatusMessage?: string | null,
     ) {
         if (
             (await this.observeHealth(nodeUuid, controlRevision, observedAt, attempt, true)) ===
@@ -358,10 +370,20 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
             return;
         }
 
-        if (!isConnected || controlRevision !== undefined) {
+        if (
+            !isConnected ||
+            controlRevision !== undefined ||
+            previousStatusMessage === '[NODE_CORE_NOT_READY]'
+        ) {
             const updated = await this.commandBus.execute(
                 this.healthUpdate(
-                    { uuid: nodeUuid, isConnected: true },
+                    {
+                        uuid: nodeUuid,
+                        isConnected: true,
+                        ...(previousStatusMessage === '[NODE_CORE_NOT_READY]' && {
+                            lastStatusMessage: null,
+                        }),
+                    },
                     controlRevision,
                     observedAt,
                     attempt,
@@ -403,6 +425,7 @@ export class NodeHealthCheckQueueProcessor extends WorkerHost {
         await this.healthLog.record({
             nodeUuid,
             status: 'ok',
+            attempt,
             metrics: {
                 memoryUsed: stats.system?.stats.memoryUsed ?? null,
                 memoryTotal: stats.system

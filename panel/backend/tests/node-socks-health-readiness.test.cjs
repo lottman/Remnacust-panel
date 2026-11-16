@@ -460,7 +460,7 @@ test(
 
                 f.setCoreReady(false);
                 await f.poll();
-                assert.deepEqual(f.healthReplies, [true, false]);
+                assert.deepEqual(f.healthReplies, [true, false, false]);
                 assert.equal(
                     f.counts().tunnels,
                     1,
@@ -469,6 +469,8 @@ test(
                 assert.deepEqual(f.requests, [
                     GetNodeHealthCheckCommand.url,
                     GetSystemStatsCommand.url,
+                    GetSystemStatsCommand.url,
+                    GetNodeHealthCheckCommand.url,
                     GetSystemStatsCommand.url,
                     GetNodeHealthCheckCommand.url,
                 ]);

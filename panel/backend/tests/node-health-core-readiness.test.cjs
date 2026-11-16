@@ -34,6 +34,7 @@ const keys = Object.fromEntries(
 );
 const { NodeHealthCheckQueueProcessor } = load(processor, {
     ...mocks,
+    'node:timers/promises': { setTimeout: async (delay) => assert.equal(delay, 1000) },
     '@nestjs/common': {
         Logger: class {
             log() {}
@@ -225,6 +226,80 @@ async function poll(f) {
     );
     assert(f.calls.stats > 0);
 }
+
+test('temporary reset contention followed by fresh stats never clears live telemetry or restarts Core', async () => {
+    const f = fixture({ code: 'NODE_HTTP_503', connected: true, cachedCore: false });
+    const unavailable = f.worker.axios.getSystemStats;
+    let attempts = 0;
+    f.worker.axios.getSystemStats = async (options) =>
+        ++attempts === 1
+            ? unavailable(options)
+            : { isOk: true, response: { xrayInfo: { uptime: 4326 }, system: null } };
+    await poll(f);
+    assert.equal(f.state.isConnected, true);
+    assert.equal(
+        f.writes.some((row) => row.isConnected === false),
+        false,
+    );
+    assert.deepEqual(f.deleted, []);
+    assert.deepEqual(f.starts, []);
+    assert.equal(f.events.includes('lost'), false);
+    assert.equal(f.cache.get(keys.NODE_XRAY_UPTIME(f.nodeUuid)), 4326);
+    assert(f.records.some((record) => record.status === 'ok' && record.attempt === 2));
+    assert.equal(attempts, 2);
+});
+
+test('busy route admission during the contention retry leaves the node untouched', async () => {
+    const f = fixture({ code: 'NODE_HTTP_503', connected: true, cachedCore: false });
+    const unavailable = f.worker.axios.getSystemStats;
+    let attempts = 0;
+    f.worker.axios.getSystemStats = async (options) =>
+        ++attempts === 1 ? unavailable(options) : { isOk: false, code: 'NODE_ROUTE_BUSY' };
+    await f.worker.process(f.job);
+    assert.deepEqual(f.writes, []);
+    assert.deepEqual(f.deleted, []);
+    assert.deepEqual(f.starts, []);
+    assert.equal(attempts, 2);
+});
+
+test('a committed control revision change rejects successful stats from the older contention poll', async () => {
+    const f = fixture({ code: 'NODE_HTTP_503', connected: true, cachedCore: false });
+    const previous = '00000000-0000-4000-8000-000000000002';
+    const current = '00000000-0000-4000-8000-000000000003';
+    f.state.controlRevision = previous;
+    f.job.data.controlRevision = previous;
+    const before = [...f.cache.entries()];
+    const unavailable = f.worker.axios.getSystemStats;
+    let attempts = 0;
+    f.worker.axios.getSystemStats = async (options) => {
+        if (++attempts === 1) return unavailable(options);
+        f.state.controlRevision = current;
+        return { isOk: true, response: { xrayInfo: { uptime: 4326 }, system: null } };
+    };
+    await f.worker.process(f.job);
+    assert.equal(f.state.controlRevision, current);
+    assert.deepEqual(f.writes, []);
+    assert.deepEqual(f.deleted, []);
+    assert.deepEqual(f.starts, []);
+    assert.deepEqual([...f.cache.entries()], before);
+    assert.equal(attempts, 2);
+});
+
+test('fresh Core telemetry clears only the old Core-not-ready reason', async () => {
+    for (const message of [
+        '[NODE_CORE_NOT_READY]',
+        '[HOST_POLICY_PENDING]',
+        '[NODE_UPDATE_PENDING]',
+    ]) {
+        const f = fixture({ connected: true, validStats: true });
+        f.state.lastStatusMessage = message;
+        await poll(f);
+        assert.equal(
+            f.state.lastStatusMessage,
+            message === '[NODE_CORE_NOT_READY]' ? null : message,
+        );
+    }
+});
 
 function assertNoHealthyTelemetry(f) {
     assert.equal(

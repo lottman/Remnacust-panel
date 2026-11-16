@@ -1,7 +1,8 @@
 import '@mantine/core/styles.css'
+import '../../../src/global.css'
 import type { GetHostsCommand, TSubscriptionTemplateType } from '@remnawave/backend-contract'
 
-import { Button, Group, MantineProvider, Stack, Text } from '@mantine/core'
+import { Button, DirectionProvider, Group, Stack, Text } from '@mantine/core'
 import { ModalsProvider } from '@mantine/modals'
 import { QueryClientProvider, useQuery } from '@tanstack/react-query'
 import i18next from 'i18next'
@@ -9,12 +10,20 @@ import { createRoot } from 'react-dom/client'
 import { I18nextProvider } from 'react-i18next'
 
 import en from '../../../public/locales/en/remnawave.json'
+import fa from '../../../public/locales/fa/remnawave.json'
+import ru from '../../../public/locales/ru/remnawave.json'
+import zh from '../../../public/locales/zh/remnawave.json'
+import { PanelAppearanceProvider } from '../../../src/shared/ui/appearance/appearance'
 import { SubscriptionTemplateEditorWidget } from '../../../src/widgets/dashboard/templates/subscription-template-editor/subscription-template-editor.widget'
 import { queryClient } from './support'
 
+const language = new URLSearchParams(location.search).get('lang') ?? 'en'
 await i18next.init({
-    lng: 'en',
-    resources: { en: { translation: en } },
+    lng: language,
+    fallbackLng: 'en',
+    resources: Object.fromEntries(
+        Object.entries({ en, ru, fa, zh }).map(([key, value]) => [key, { translation: value }])
+    ),
     interpolation: { escapeValue: false }
 })
 type Hosts = GetHostsCommand.Response['response']
@@ -62,13 +71,15 @@ function App() {
     )
 }
 createRoot(document.getElementById('root')!).render(
-    <MantineProvider forceColorScheme="dark">
-        <ModalsProvider>
-            <I18nextProvider i18n={i18next}>
-                <QueryClientProvider client={queryClient}>
-                    <App />
-                </QueryClientProvider>
-            </I18nextProvider>
-        </ModalsProvider>
-    </MantineProvider>
+    <I18nextProvider i18n={i18next}>
+        <DirectionProvider initialDirection={language === 'fa' ? 'rtl' : 'ltr'}>
+            <PanelAppearanceProvider>
+                <ModalsProvider>
+                    <QueryClientProvider client={queryClient}>
+                        <App />
+                    </QueryClientProvider>
+                </ModalsProvider>
+            </PanelAppearanceProvider>
+        </DirectionProvider>
+    </I18nextProvider>
 )

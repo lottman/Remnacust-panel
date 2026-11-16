@@ -1,7 +1,6 @@
 .editor {
     min-width: 0;
-    max-width: 1200px;
-    margin-inline: auto;
+    width: 100%;
 }
 
 .conditions {
@@ -18,7 +17,17 @@
 }
 
 .preview {
-    border-inline-start: 3px solid var(--mantine-color-cyan-6);
+    border-inline-start: 3px solid var(--panel-accent, var(--mantine-primary-color-filled));
+}
+
+.sectionControl {
+    min-height: 72px;
+    font-weight: 600;
+}
+
+.sectionContent {
+    padding-inline: var(--mantine-spacing-md);
+    padding-bottom: var(--mantine-spacing-md);
 }
 
 .wrap {
@@ -32,7 +41,7 @@
     z-index: 2;
     background: var(--panel-surface);
     padding: var(--mantine-spacing-md);
-    border: 1px solid var(--mantine-color-default-border);
+    border: 1px solid var(--panel-border, var(--mantine-color-default-border));
     border-radius: var(--mantine-radius-md);
 }
 

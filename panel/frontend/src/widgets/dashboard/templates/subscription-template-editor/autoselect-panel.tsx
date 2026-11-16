@@ -21,6 +21,8 @@ import { useDeferredValue, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbArrowsShuffle, TbPlus, TbTrash } from 'react-icons/tb'
 
+import { HeadingIcon } from '@shared/ui/heading-icon'
+
 import {
     addBalancer,
     addPool,
@@ -798,9 +800,12 @@ export function AutoselectPanel({
             <Stack gap="md" className={styles.main}>
                 <Card withBorder p="md">
                     <Group justify="space-between" gap="sm">
-                        <div className={styles.sectionHeader}>
-                            <Title order={3}>{t('autoselect.title')}</Title>
-                        </div>
+                        <Group gap="md" wrap="nowrap" className={styles.sectionHeader}>
+                            <HeadingIcon>
+                                <TbArrowsShuffle size={24} />
+                            </HeadingIcon>
+                            <Title order={4}>{t('autoselect.title')}</Title>
+                        </Group>
                         <Button
                             leftSection={<TbPlus size={17} />}
                             onClick={() =>

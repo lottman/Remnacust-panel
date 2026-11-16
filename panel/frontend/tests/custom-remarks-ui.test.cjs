@@ -44,7 +44,7 @@ function source(relative) {
             if (id.startsWith('.')) target = path.resolve(path.dirname(filename), id);
             if (id.startsWith('@shared/')) target = path.join(src, 'shared', id.slice(8));
             if (id.startsWith('@widgets/')) target = path.join(src, 'widgets', id.slice(9));
-            if (target) return read(['.ts', '.tsx', ''].map(ext => target + ext).find(file => fs.existsSync(file)));
+            if (target) return read(['.ts', '.tsx', '/index.ts', '/index.tsx'].map(ext => target + ext).find(file => fs.existsSync(file)));
             return localRequire(id);
         }, module, module.exports);
         cache.set(filename, module.exports);

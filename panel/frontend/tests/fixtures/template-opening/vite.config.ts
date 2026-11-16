@@ -24,7 +24,7 @@ export default defineConfig({
                 replacement: here + 'support.tsx'
             },
             {
-                find: /^@shared\/ui(?:\/appearance\/appearance)?$/,
+                find: /^@shared\/ui$/,
                 replacement: here + 'support.tsx'
             },
             { find: /^@shared\/api$/, replacement: here + 'support.tsx' },
@@ -33,7 +33,7 @@ export default defineConfig({
                 replacement: here + 'support.tsx'
             },
             {
-                find: /^@shared\/api\/hooks\/subscription-settings\/subscription-settings.query.hooks$/,
+                find: /^@shared\/api\/hooks\/subscription-settings\/subscription-settings\.(?:query|mutation)\.hooks$/,
                 replacement: here + 'support.tsx'
             },
             {

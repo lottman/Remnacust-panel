@@ -14,6 +14,8 @@ import { useId, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbAdjustmentsHorizontal, TbChevronDown } from 'react-icons/tb'
 
+import { HeadingIcon } from '@shared/ui/heading-icon'
+
 import {
     applyXeraAdaptiveSettings,
     newXeraAdaptiveSettings,
@@ -206,7 +208,9 @@ export function XeraSettingsControl({ coreMode, editorReady, onApply, value }: I
             >
                 <Group justify="space-between" wrap="nowrap">
                     <Group gap="xs" wrap="nowrap">
-                        <TbAdjustmentsHorizontal aria-hidden size={18} />
+                        <HeadingIcon size={32}>
+                            <TbAdjustmentsHorizontal size={18} />
+                        </HeadingIcon>
                         <Text fw={600} size="sm">
                             {t('xera-settings.title')}
                         </Text>
@@ -224,7 +228,11 @@ export function XeraSettingsControl({ coreMode, editorReady, onApply, value }: I
                         gap="sm"
                         p="sm"
                         pt={0}
-                        style={{ maxHeight: 'min(28vh, 260px)', overflowY: 'auto' }}
+                        style={{
+                            maxHeight: 'min(28vh, 260px)',
+                            overflowY: 'auto',
+                            overscrollBehavior: 'contain'
+                        }}
                     >
                         <Text c="dimmed" size="xs">
                             {t(`xera-settings.${modeHint}`)}

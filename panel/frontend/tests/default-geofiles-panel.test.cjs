@@ -39,6 +39,7 @@ function fixture(language = 'en') {
             subscriptionSettingsQueryKeys: { getSubscriptionSettings: { queryKey: ['subscriptionSettings', 'getSubscriptionSettings'] } },
         },
         '@shared/ui/appearance/appearance': { usePanelReducedMotion: () => false },
+        '@shared/ui/heading-icon': { HeadingIcon: 'HeadingIcon' },
         '../../../templates/subscription-template-editor/geofile-presets': { geofilePresets: presets },
         '../../../templates/subscription-template-editor/geofile-refresh-settings': { GeofileRefreshSettings: 'RefreshSettings' },
     };

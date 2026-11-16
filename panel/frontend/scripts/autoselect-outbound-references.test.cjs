@@ -492,6 +492,8 @@ for (const language of ['en', 'ru', 'fa', 'zh'])
                 'Title'
             ]
             const mocks = {
+        '@shared/ui/heading-icon': { HeadingIcon: 'HeadingIcon' },
+        '@shared/ui/settings-card': { SettingsCardShared: { Container: 'Card', Header: 'SettingsHeader' } },
                 react: {
                     useState(initial) {
                         const index = stateIndex++

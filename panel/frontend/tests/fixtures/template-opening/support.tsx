@@ -15,6 +15,10 @@ export const useGetSubscriptionSettings = () => ({
     isSuccess: true,
     data: { geofilesSystemEnabled: true, serveJsonAtBaseSubscription: true }
 })
+export const subscriptionSettingsQueryKeys = {
+    getSubscriptionSettings: { queryKey: ['template-opening-settings'] }
+}
+export const useUpdateSubscriptionSettings = () => ({ isPending: false, mutate() {} })
 export const useEditorRecovery = () => ({
     entry: null,
     status: 'ready',

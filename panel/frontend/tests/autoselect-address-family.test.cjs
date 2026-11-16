@@ -96,6 +96,8 @@ function component(file, name, language) {
     };
     const accordion = Object.assign(() => null, { Item: 'Item', Control: 'Control', Panel: 'Panel' });
     const mocks = {
+        '@shared/ui/heading-icon': { HeadingIcon: 'HeadingIcon' },
+        '@shared/ui/settings-card': { SettingsCardShared: { Container: 'Card', Header: 'SettingsHeader' } },
         '@mantine/core': { ...Object.fromEntries(['Accordion', 'Alert', 'Badge', 'Button', 'Group', 'MultiSelect', 'NumberInput', 'Card', 'Select', 'Stack', 'Switch', 'Text', 'TextInput', 'Title', 'TagsInput'].map(n => [n, n])), Accordion: accordion },
         react: { useState: initial => [typeof initial === 'function' ? initial() : initial, () => {}], useMemo: fn => fn(), useDeferredValue: v => v },
         'react-i18next': { useTranslation: () => ({ t }) },

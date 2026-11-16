@@ -4,6 +4,7 @@ import { Accordion, Alert, Badge, Button, Group, Loader, Stack, Text } from '@ma
 import { useIsMutating, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { TbWorld } from 'react-icons/tb'
 
 import { instance } from '@shared/api'
 import {
@@ -15,6 +16,7 @@ import {
     useGetSubscriptionSettings
 } from '@shared/api/hooks/subscription-settings/subscription-settings.query.hooks'
 import { usePanelReducedMotion } from '@shared/ui/appearance/appearance'
+import { HeadingIcon } from '@shared/ui/heading-icon'
 
 import { geofilePresets } from '../../../templates/subscription-template-editor/geofile-presets'
 import { GeofileRefreshSettings } from '../../../templates/subscription-template-editor/geofile-refresh-settings'
@@ -183,7 +185,15 @@ export function DefaultGeofilesPanel() {
             transitionDuration={reducedMotion ? 0 : 200}
         >
             <Accordion.Item value="defaults">
-                <Accordion.Control>{t('geofiles.defaults-title')}</Accordion.Control>
+                <Accordion.Control
+                    icon={
+                        <HeadingIcon size={32}>
+                            <TbWorld size={20} />
+                        </HeadingIcon>
+                    }
+                >
+                    {t('geofiles.defaults-title')}
+                </Accordion.Control>
                 <Accordion.Panel>
                     {activated && <DefaultGeofilesContent active={opened === 'defaults'} />}
                 </Accordion.Panel>

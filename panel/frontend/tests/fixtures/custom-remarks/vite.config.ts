@@ -13,10 +13,6 @@ export default defineConfig({
             { find: /^@remnawave\/backend-contract$/, replacement: here + 'contract.ts' },
             { find: /^@shared\/api\/hooks$/, replacement: here + 'browser-support.ts' },
             { find: /^@shared\/hooks$/, replacement: here + 'browser-support.ts' },
-            {
-                find: /^@shared\/ui\/appearance\/appearance$/,
-                replacement: here + 'browser-support.ts'
-            },
             { find: '@shared', replacement: src + 'shared' },
             { find: '@widgets', replacement: src + 'widgets' },
             { find: '@entities', replacement: src + 'entities' },

@@ -19,6 +19,8 @@ import { TbDeviceFloppy, TbDevices2, TbListLetters, TbRestore, TbX } from 'react
 
 import { useUiText } from '@shared/i18n/interface-text'
 import { SubscriptionExtraRemarks } from '@shared/ui/forms/subscription-extra-remarks'
+import { HeadingIcon } from '@shared/ui/heading-icon'
+import { SettingsCardShared } from '@shared/ui/settings-card'
 
 import { ActiveExpiryRules } from './active-expiry-rules'
 import classes from './remarks-editor.module.css'
@@ -152,16 +154,16 @@ export function CustomRemarksEditor({
             }}
         >
             <Stack gap="lg">
-                <Group gap="sm">
-                    <TbListLetters size={24} />
-                    <Text fw={700} size="lg">
-                        {t('subscription-settings.widget.custom-remarks')}
+                <SettingsCardShared.Container>
+                    <SettingsCardShared.Header
+                        icon={<TbListLetters size={24} />}
+                        title={t('subscription-settings.widget.custom-remarks')}
+                        description={uiText('remarks-page-help')}
+                    />
+                    <Text c="dimmed" size="sm">
+                        {uiText('remarks-refresh-needed')}
                     </Text>
-                </Group>
-                <Text c="dimmed" size="sm">
-                    {uiText('remarks-page-help')}
-                </Text>
-                <Alert color="blue">{uiText('remarks-refresh-needed')}</Alert>
+                </SettingsCardShared.Container>
                 {!showRemarks && <Alert color="orange">{uiText('remarks-display-disabled')}</Alert>}
                 {hasRemoteRemarks(state) && (
                     <Alert color="orange" title={uiText('remarks-remote-title')}>
@@ -207,9 +209,19 @@ export function CustomRemarksEditor({
                                 value={sections}
                                 onChange={setSections}
                                 variant="separated"
+                                classNames={{
+                                    control: classes.sectionControl,
+                                    content: classes.sectionContent
+                                }}
                             >
                                 <Accordion.Item value="active">
-                                    <Accordion.Control icon={<PiClockCountdown size={22} />}>
+                                    <Accordion.Control
+                                        icon={
+                                            <HeadingIcon size={36}>
+                                                <PiClockCountdown size={22} />
+                                            </HeadingIcon>
+                                        }
+                                    >
                                         <Group gap="sm">
                                             <Text fw={600}>{uiText('remarks-active-title')}</Text>
                                             <Badge variant="light">{rules.length}</Badge>
@@ -229,7 +241,13 @@ export function CustomRemarksEditor({
                                     </Accordion.Panel>
                                 </Accordion.Item>
                                 <Accordion.Item value="statuses">
-                                    <Accordion.Control icon={<PiListChecks size={22} />}>
+                                    <Accordion.Control
+                                        icon={
+                                            <HeadingIcon size={36}>
+                                                <PiListChecks size={22} />
+                                            </HeadingIcon>
+                                        }
+                                    >
                                         {uiText('remarks-status-title')}
                                     </Accordion.Control>
                                     <Accordion.Panel>
@@ -281,7 +299,13 @@ export function CustomRemarksEditor({
                                     </Accordion.Panel>
                                 </Accordion.Item>
                                 <Accordion.Item value="devices">
-                                    <Accordion.Control icon={<TbDevices2 size={22} />}>
+                                    <Accordion.Control
+                                        icon={
+                                            <HeadingIcon size={36}>
+                                                <TbDevices2 size={22} />
+                                            </HeadingIcon>
+                                        }
+                                    >
                                         {uiText('remarks-devices-title')}
                                     </Accordion.Control>
                                     <Accordion.Panel>
@@ -330,7 +354,13 @@ export function CustomRemarksEditor({
                                     </Accordion.Panel>
                                 </Accordion.Item>
                                 <Accordion.Item value="options">
-                                    <Accordion.Control icon={<TbListLetters size={22} />}>
+                                    <Accordion.Control
+                                        icon={
+                                            <HeadingIcon size={36}>
+                                                <TbListLetters size={22} />
+                                            </HeadingIcon>
+                                        }
+                                    >
                                         {uiText('remarks-options-title')}
                                     </Accordion.Control>
                                     <Accordion.Panel>
@@ -447,7 +477,7 @@ export function CustomRemarksEditor({
                         </Button>
                         <Button
                             type="submit"
-                            color="teal"
+                            color="brand"
                             variant="soft"
                             leftSection={<TbDeviceFloppy />}
                             loading={pending}

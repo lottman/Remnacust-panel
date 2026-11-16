@@ -98,7 +98,7 @@ export const SubscriptionAdditionalOptionsWidget = (props: IProps) => {
                 <SettingsCardShared.Bottom>
                     <Group justify="flex-end">
                         <Button
-                            color="teal"
+                            color="brand"
                             loading={isPending}
                             size="md"
                             type="submit"

@@ -25,9 +25,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { isAxiosError } from 'axios'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { TbPencil, TbPlus, TbTrash } from 'react-icons/tb'
+import { TbPencil, TbPlus, TbTrash, TbWorld } from 'react-icons/tb'
 
 import { instance } from '@shared/api'
+import { SettingsCardShared } from '@shared/ui/settings-card'
 
 import { type JsonObject } from './autoselect-model'
 import styles from './autoselect-panel.module.css'
@@ -312,15 +313,14 @@ export function GeofilesPanel({
     ].filter((item) => typeof item.url === 'string')
     return (
         <Stack gap="md" className={styles.panel}>
-            <Card p="md">
-                <Title order={3}>{t('geofiles.title')}</Title>
-                <Text size="sm" c="dimmed" mt={4}>
-                    {t('geofiles.help')}
-                </Text>
-            </Card>
-            <Card p="md">
+            <SettingsCardShared.Container>
+                <SettingsCardShared.Header
+                    icon={<TbWorld size={24} />}
+                    title={t('geofiles.title')}
+                    description={t('geofiles.help')}
+                />
                 <GeofileInlineSettings />
-            </Card>
+            </SettingsCardShared.Container>
             {(error || filesQuery.isError) && (
                 <Alert color="red" withCloseButton onClose={() => setError(null)}>
                     {t(error ?? 'geofiles.operation-failed')}{' '}

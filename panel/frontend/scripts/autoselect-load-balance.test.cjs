@@ -117,6 +117,8 @@ function component(file, name, language) {
         react: { useState: initial => [typeof initial === 'function' ? initial() : initial, () => {}],
             useMemo: fn => fn(), useDeferredValue: value => value },
         'react-i18next': { useTranslation: () => ({ t }) },
+        '@shared/ui/heading-icon': { HeadingIcon: 'HeadingIcon' },
+        '@shared/ui/settings-card': { SettingsCardShared: { Container: 'Card', Header: 'SettingsHeader' } },
         './autoselect-panel.module.css': {}, './priority-order': { PriorityOrder: 'PriorityOrder' },
         './template-assignment-panel': { LegacyAssignments: 'LegacyAssignments', TemplateAssignmentPanel: 'TemplateAssignmentPanel' },
         './template-changes': { TemplateChanges: 'TemplateChanges' },

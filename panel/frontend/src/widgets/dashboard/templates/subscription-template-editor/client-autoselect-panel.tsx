@@ -12,12 +12,13 @@ import {
     Stack,
     Switch,
     Text,
-    TextInput,
-    Title
+    TextInput
 } from '@mantine/core'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { TbPlus, TbTrash } from 'react-icons/tb'
+import { TbArrowsShuffle, TbPlus, TbTrash } from 'react-icons/tb'
+
+import { SettingsCardShared } from '@shared/ui/settings-card'
 
 import { connectionPool, type JsonObject } from './autoselect-model'
 import styles from './autoselect-panel.module.css'
@@ -88,34 +89,33 @@ export function ClientAutoselectPanel({
     ]
     return (
         <Stack gap="md" className={styles.panel}>
-            <Card withBorder p="md">
-                <Group justify="space-between" gap="md">
-                    <div className={styles.sectionHeader}>
-                        <Title order={3}>{t('autoselect.title')}</Title>
-                        <Text size="sm" c="dimmed" mt={4}>
-                            {t('client-template.native-help')}
-                        </Text>
-                    </div>
-                    <Button
-                        leftSection={<TbPlus size={17} />}
-                        onClick={() =>
-                            edit(() => {
-                                const next = addClientGroup(
-                                    text,
-                                    format,
-                                    defaultAutoselectSources(hosts, format)
-                                )
-                                setOpened((current) => [
-                                    ...new Set([...current, String(all.length)])
-                                ])
-                                return next
-                            })
-                        }
-                    >
-                        {t('autoselect.create')}
-                    </Button>
-                </Group>
-            </Card>
+            <SettingsCardShared.Container>
+                <SettingsCardShared.Header
+                    icon={<TbArrowsShuffle size={24} />}
+                    title={t('autoselect.title')}
+                    description={t('client-template.native-help')}
+                    actions={
+                        <Button
+                            leftSection={<TbPlus size={17} />}
+                            onClick={() =>
+                                edit(() => {
+                                    const next = addClientGroup(
+                                        text,
+                                        format,
+                                        defaultAutoselectSources(hosts, format)
+                                    )
+                                    setOpened((current) => [
+                                        ...new Set([...current, String(all.length)])
+                                    ])
+                                    return next
+                                })
+                            }
+                        >
+                            {t('autoselect.create')}
+                        </Button>
+                    }
+                />
+            </SettingsCardShared.Container>
             {error && (
                 <Alert color="red" withCloseButton onClose={() => setError(false)}>
                     {t('autoselect.structure-error')}

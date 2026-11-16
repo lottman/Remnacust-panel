@@ -139,7 +139,7 @@ export function NodeControlAddressesEditor<
             <SectionCard.Section>
                 <Group justify="space-between" gap="sm">
                     <BaseOverlayHeader
-                        iconColor="cyan"
+                        iconColor="brand"
                         IconComponent={TbNetwork}
                         iconVariant="soft"
                         title={t('common.field.ip-addresses')}

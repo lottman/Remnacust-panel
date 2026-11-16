@@ -1,16 +1,7 @@
 import '@mantine/core/styles.css'
 import '@mantine/code-highlight/styles.css'
 import '../../../src/global.css'
-import {
-    Button,
-    DirectionProvider,
-    Drawer,
-    Group,
-    MantineProvider,
-    Stack,
-    Tabs,
-    Transition
-} from '@mantine/core'
+import { Button, DirectionProvider, Drawer, Group, Stack, Tabs, Transition } from '@mantine/core'
 import { ModalsProvider } from '@mantine/modals'
 import i18next from 'i18next'
 import { useState } from 'react'
@@ -22,7 +13,7 @@ import fa from '../../../public/locales/fa/remnawave.json'
 import ru from '../../../public/locales/ru/remnawave.json'
 import zh from '../../../public/locales/zh/remnawave.json'
 import { LocaleDirectionSync } from '../../../src/app/i18n/locale-direction-sync'
-import { theme } from '../../../src/shared/constants/theme/theme'
+import { PanelAppearanceProvider } from '../../../src/shared/ui/appearance/appearance'
 import { CustomRemarksEditor } from '../../../src/shared/ui/forms/custom-remarks/custom-remarks-editor'
 import {
     defaultRemarks,
@@ -39,9 +30,6 @@ await i18next.init({
     interpolation: { escapeValue: false }
 })
 
-document.documentElement.classList.add('panel-themed')
-document.documentElement.style.cssText =
-    '--panel-background:#0d1117;--panel-surface:#161b22;--panel-text:#c9d1d9;--panel-muted:#8b949e;--panel-border:#30363d;--panel-subtle:#21262d;--panel-elevated:#21262d;--panel-accent-text:#58a6ff'
 function App() {
     const [remote, setRemote] = useState<CustomRemarks>(defaultRemarks)
     const [squad, setSquad] = useState<CustomRemarks | null>(null)
@@ -140,12 +128,12 @@ const root = (browserWindow.remarksFixtureRoot ??= createRoot(document.getElemen
 root.render(
     <I18nextProvider i18n={i18next}>
         <DirectionProvider>
-            <MantineProvider theme={theme} forceColorScheme="dark">
+            <PanelAppearanceProvider>
                 <LocaleDirectionSync />
                 <ModalsProvider>
                     <App />
                 </ModalsProvider>
-            </MantineProvider>
+            </PanelAppearanceProvider>
         </DirectionProvider>
     </I18nextProvider>
 )

@@ -21,6 +21,8 @@ function harness(config, format, language = 'en', mobile = false) {
     const confirmations = [];
     const componentNames = ['Alert', 'Badge', 'Button', 'Card', 'Group', 'Modal', 'Pagination', 'Select', 'Stack', 'Text', 'Textarea', 'Title'];
     const mocks = {
+        '@shared/ui/heading-icon': { HeadingIcon: 'HeadingIcon' },
+        '@shared/ui/settings-card': { SettingsCardShared: { Container: 'Card', Header: 'SettingsHeader' } },
         react: {
             useState(initial) {
                 const index = stateIndex++;
@@ -183,6 +185,8 @@ for (const format of ['XRAY_JSON', 'SINGBOX', 'MIHOMO', 'CLASH', 'STASH']) test(
     const Accordion = Object.assign(() => {}, { Item: 'AccordionItem', Control: 'AccordionControl', Panel: 'AccordionPanel' });
     const components = ['Alert', 'TagsInput', 'Badge', 'Button', 'Group', 'MultiSelect', 'NumberInput', 'Card', 'Select', 'Stack', 'Switch', 'Text', 'TextInput', 'Title'];
     const mocks = {
+        '@shared/ui/heading-icon': { HeadingIcon: 'HeadingIcon' },
+        '@shared/ui/settings-card': { SettingsCardShared: { Container: 'Card', Header: 'SettingsHeader' } },
         react: { useState: initial => [typeof initial === 'function' ? initial() : initial, () => {}], useMemo: callback => callback(), useDeferredValue: value => value },
         '@mantine/core': { ...Object.fromEntries(components.map(name => [name, name])), Accordion },
         'react-i18next': { useTranslation: () => ({ t: key => key }) },

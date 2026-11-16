@@ -193,9 +193,16 @@ test('scan action blocks unsaved routes, disabled nodes, all-off lists, missing 
         { ...original, controlAddresses: original.controlAddresses.map(entry => ({ ...entry, enabled: false })) }]) {
         assert.equal(card(formFor(node), node).action.props.disabled, true)
     }
-    for (const extra of [{ disabled: true }, { rescanDisabled: true }, { disabled: true, isRescanningIps: true }]) {
+    for (const extra of [{ disabled: true }, { rescanDisabled: true }]) {
         assert.equal(card(formFor(), original, extra).action.props.disabled, true)
     }
+    let scanCalls = 0
+    const pending = card(formFor(), original, { disabled: true, isRescanningIps: true, onRescanIps: () => scanCalls++ }).action
+    assert.equal(pending.props.disabled, false)
+    assert.equal(pending.props['aria-disabled'], true)
+    assert.equal(pending.props['aria-busy'], true)
+    pending.props.onClick()
+    assert.equal(scanCalls, 0)
     const form = formFor()
     form.setFieldValue('note', 'Unsaved description')
     assert.equal(card(form).action.props.disabled, false)

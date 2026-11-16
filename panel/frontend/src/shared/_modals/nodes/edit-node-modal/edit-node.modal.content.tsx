@@ -293,11 +293,6 @@ export const EditNodeByUuidModalContent = (props: IProps) => {
                         {t('operations.requestError')}
                     </Alert>
                 )}
-                {ipScanError && (
-                    <Alert color="red" role="alert" mb="md">
-                        {ipScanError}
-                    </Alert>
-                )}
                 {secretKey && nodePlugins && nodeIntegrations ? (
                     <BaseNodeForm
                         form={form}
@@ -307,6 +302,7 @@ export const EditNodeByUuidModalContent = (props: IProps) => {
                             isUpdateNodePending || reloadingConnection || isRescanningIps
                         }
                         isRescanningIps={isRescanningIps}
+                        rescanError={ipScanError}
                         onRescanIps={handleRescanIps}
                         saveDisabled={connectionConflict}
                         node={fetchedNode}

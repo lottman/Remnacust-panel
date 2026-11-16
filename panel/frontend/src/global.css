@@ -628,6 +628,8 @@ html.panel-themed
     padding-inline-end: var(--input-padding-inline-end);
 }
 html.panel-themed :is(.mantine-TagsInput-input, .mantine-MultiSelect-input) {
+    display: flex;
+    align-items: center;
     padding-block: 5px;
 }
 html.panel-themed .mantine-Pill-root {

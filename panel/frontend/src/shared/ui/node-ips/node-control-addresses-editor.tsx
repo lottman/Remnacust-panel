@@ -64,6 +64,25 @@ export function NodeControlAddressesEditor<
         }))
     )
     const [addedId, setAddedId] = useState<string | null>(null)
+    const addresses = form.useWatchValue('controlAddresses') ?? []
+    if (
+        items.length !== addresses.length ||
+        items.some(
+            (entry, index) =>
+                entry.address !== addresses[index].address ||
+                entry.enabled !== addresses[index].enabled
+        )
+    ) {
+        setItems(
+            addresses.map((entry) => {
+                const existing = items.find(
+                    (item) =>
+                        normalizeNodeAddress(item.address) === normalizeNodeAddress(entry.address)
+                )
+                return existing ? { ...existing, ...entry } : withId(entry)
+            })
+        )
+    }
     const saved = new Set(savedAddresses.map((entry) => normalizeNodeAddress(entry.address)))
     const addressesDirty = form.isDirty('controlAddresses')
     const proxyUrl = form.useWatchValue('proxyUrl')

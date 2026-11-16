@@ -56,6 +56,7 @@ interface IProps<T extends UpdateNodeCommand.RequestBody> {
     isDataSubmitting: boolean
     isRescanningIps?: boolean
     onRescanIps?: () => void
+    rescanError?: string
     saveDisabled?: boolean
     node: GetNodeCommand.Response['response']
     nodeDetailsCard?: ReactNode
@@ -120,6 +121,7 @@ export const BaseNodeForm = <T extends UpdateNodeCommand.RequestBody>(props: IPr
                     <NodeIpsCard
                         isRescanningIps={props.isRescanningIps}
                         onRescanIps={props.onRescanIps}
+                        rescanError={props.rescanError}
                         rescanDisabled={props.saveDisabled}
                         cardVariants={cardVariants}
                         disabled={isDataSubmitting}
@@ -209,6 +211,7 @@ export const BaseNodeForm = <T extends UpdateNodeCommand.RequestBody>(props: IPr
                         <NodeIpsCard
                             isRescanningIps={props.isRescanningIps}
                             onRescanIps={props.onRescanIps}
+                            rescanError={props.rescanError}
                             rescanDisabled={props.saveDisabled}
                             cardVariants={cardVariants}
                             disabled={isDataSubmitting}
@@ -260,9 +263,14 @@ export const BaseNodeForm = <T extends UpdateNodeCommand.RequestBody>(props: IPr
                 )}
                 <Button
                     color="teal"
-                    disabled={props.saveDisabled || !form.isDirty() || !form.isTouched()}
+                    disabled={
+                        props.saveDisabled ||
+                        props.isRescanningIps ||
+                        !form.isDirty() ||
+                        !form.isTouched()
+                    }
                     leftSection={<PiFloppyDiskDuotone size="16px" />}
-                    loading={isDataSubmitting}
+                    loading={isDataSubmitting && !props.isRescanningIps}
                     onClick={handleSubmit}
                     size="md"
                     variant="soft"

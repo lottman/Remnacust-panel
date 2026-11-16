@@ -1,4 +1,4 @@
-import { ActionIcon, Stack, Text, Tooltip } from '@mantine/core'
+import { ActionIcon, Alert, Loader, Stack, Text, Tooltip } from '@mantine/core'
 import { UseFormReturnType } from '@mantine/form'
 import { CreateNodeCommand, GetNodeCommand, UpdateNodeCommand } from '@remnawave/backend-contract'
 import { ForwardRefComponent, HTMLMotionProps, Variants } from 'motion/react'
@@ -19,6 +19,7 @@ interface IProps<T extends CreateNodeCommand.RequestBody | UpdateNodeCommand.Req
     isRescanningIps?: boolean
     onRescanIps?: () => void
     rescanDisabled?: boolean
+    rescanError?: string
 }
 
 export const NodeIpsCard = <
@@ -76,22 +77,33 @@ export const NodeIpsCard = <
                                 >
                                     <ActionIcon
                                         aria-label={t('node-control-addresses.rescan')}
-                                        disabled={scanDisabled}
-                                        loading={isRescanningIps}
-                                        onClick={onRescanIps}
+                                        disabled={scanDisabled && !isRescanningIps}
+                                        aria-disabled={scanDisabled || isRescanningIps}
+                                        aria-busy={isRescanningIps}
+                                        onClick={() => {
+                                            if (!scanDisabled && !isRescanningIps) onRescanIps()
+                                        }}
                                         size="md"
                                         type="button"
                                         variant="light"
                                     >
-                                        <TbRefresh size={16} />
+                                        {isRescanningIps ? (
+                                            <Loader size={16} color="currentColor" />
+                                        ) : (
+                                            <TbRefresh size={16} />
+                                        )}
                                     </ActionIcon>
                                 </span>
                             </Tooltip>
                         )
                     }
-                    key={form.key('controlAddresses')}
                     savedAddresses={addresses}
                 />
+                {props.rescanError && (
+                    <Alert color="red" role="alert">
+                        {props.rescanError}
+                    </Alert>
+                )}
                 {onRescanIps && (
                     <Text c="dimmed" size="xs">
                         {t('node-control-addresses.discovery-help')}

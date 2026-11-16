@@ -5,6 +5,7 @@ import {
     Button,
     CopyButton,
     Group,
+    Menu,
     ScrollArea,
     Stack,
     Switch,
@@ -13,7 +14,12 @@ import {
     Tooltip
 } from '@mantine/core'
 import { UseFormReturnType } from '@mantine/form'
-import { CreateNodeCommand, UpdateNodeCommand } from '@remnawave/backend-contract'
+import {
+    CreateNodeCommand,
+    TNodeIp,
+    TNodeIpStatus,
+    UpdateNodeCommand
+} from '@remnawave/backend-contract'
 import { ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbArrowDown, TbArrowUp, TbCheck, TbCopy, TbNetwork, TbPlus } from 'react-icons/tb'
@@ -23,11 +29,13 @@ import { SectionCard } from '@shared/ui/section-card'
 import { normalizeNodeAddress } from '@shared/utils/node-addresses'
 import {
     MAX_NODE_CONTROL_ADDRESSES,
-    NodeControlAddress
+    NodeControlAddress,
+    normalizeNodeLiteralIp
 } from '@shared/utils/node-control-addresses'
 
 import { NodeIpStatusIcon } from './node-ip-status-icon'
-import { resolveNodeIpStatusMeta } from './node-ip-status.constants'
+import { NODE_IP_STATUSES_ORDER, resolveNodeIpStatusMeta } from './node-ip-status.constants'
+import { MAX_NODE_IPS } from './validate-node-ips'
 
 interface EditableAddress extends NodeControlAddress {
     id: string
@@ -38,7 +46,7 @@ interface IProps<T extends CreateNodeCommand.RequestBody | UpdateNodeCommand.Req
     disabled?: boolean
     form: UseFormReturnType<T>
     hasProxy?: boolean
-    ips?: readonly { ip: string; status: string }[]
+    ips?: readonly TNodeIp[]
     rescanAction?: ReactNode
     savedAddresses?: readonly NodeControlAddress[]
 }
@@ -65,6 +73,8 @@ export function NodeControlAddressesEditor<
     )
     const [addedId, setAddedId] = useState<string | null>(null)
     const addresses = form.useWatchValue('controlAddresses') ?? []
+    const formIps = form.useWatchValue('ips')
+    const addressIps = formIps === undefined ? ips : (formIps ?? [])
     if (
         items.length !== addresses.length ||
         items.some(
@@ -104,6 +114,25 @@ export function NodeControlAddressesEditor<
         const next = [...items]
         ;[next[index], next[index + direction]] = [next[index + direction], next[index]]
         commit(next)
+    }
+    const changeStatus = (address: string, status: TNodeIpStatus) => {
+        if (disabled) return
+        const ip = normalizeNodeLiteralIp(address)
+        if (!ip) return
+        const current = form.getValues().ips
+        let found = false
+        const next = (current === undefined ? ips : (current ?? [])).flatMap((entry) => {
+            if (normalizeNodeLiteralIp(entry.ip) !== ip) return [entry]
+            if (found) return []
+            found = true
+            return [{ ...entry, status }]
+        })
+        if (!found) {
+            if (next.length >= MAX_NODE_IPS) return
+            next.push({ ip, status })
+        }
+        form.clearFieldError('ips')
+        form.setFieldValue('ips', next as never, { forceUpdate: false })
     }
     return (
         <SectionCard.Root>
@@ -185,9 +214,16 @@ export function NodeControlAddressesEditor<
                                     item.enabled && item.address.trim() && enabledAddresses === 1
                                 )
                                 const status =
-                                    ips.find(
+                                    addressIps.find(
                                         (entry) => normalizeNodeAddress(entry.ip) === normalized
                                     )?.status ?? (isPanelAddress ? 'MANAGEMENT' : 'UNKNOWN')
+                                const literalIp = normalizeNodeLiteralIp(item.address)
+                                const statusFull =
+                                    addressIps.length >= MAX_NODE_IPS &&
+                                    !addressIps.some(
+                                        (entry) => normalizeNodeLiteralIp(entry.ip) === literalIp
+                                    )
+                                const statusMeta = resolveNodeIpStatusMeta(status)
                                 return (
                                     <Group
                                         component="li"
@@ -196,21 +232,85 @@ export function NodeControlAddressesEditor<
                                         gap={6}
                                         wrap="nowrap"
                                     >
-                                        <Tooltip
-                                            label={t(resolveNodeIpStatusMeta(status).labelKey)}
-                                        >
-                                            <span
-                                                aria-label={t(
-                                                    resolveNodeIpStatusMeta(status).labelKey
-                                                )}
+                                        {literalIp ? (
+                                            <Menu
+                                                position="bottom-start"
+                                                shadow="md"
+                                                width={220}
+                                                withinPortal
                                             >
-                                                <NodeIpStatusIcon
-                                                    status={status}
-                                                    size={36}
-                                                    iconSize={20}
-                                                />
-                                            </span>
-                                        </Tooltip>
+                                                <Menu.Target>
+                                                    <Tooltip
+                                                        label={
+                                                            statusFull
+                                                                ? t('node-ips.max-ips-reached', {
+                                                                      max: MAX_NODE_IPS
+                                                                  })
+                                                                : t(statusMeta.labelKey)
+                                                        }
+                                                    >
+                                                        <ActionIcon
+                                                            aria-label={t(
+                                                                'node-control-addresses.change-status',
+                                                                { address: label }
+                                                            )}
+                                                            color={statusMeta.color}
+                                                            disabled={disabled || statusFull}
+                                                            size={36}
+                                                            type="button"
+                                                            variant="soft"
+                                                        >
+                                                            <statusMeta.Icon size={20} />
+                                                        </ActionIcon>
+                                                    </Tooltip>
+                                                </Menu.Target>
+                                                <Menu.Dropdown>
+                                                    {NODE_IP_STATUSES_ORDER.map((value) => {
+                                                        const meta = resolveNodeIpStatusMeta(value)
+                                                        return (
+                                                            <Menu.Item
+                                                                key={value}
+                                                                leftSection={
+                                                                    <meta.Icon size={16} />
+                                                                }
+                                                                onClick={() =>
+                                                                    changeStatus(
+                                                                        item.address,
+                                                                        value
+                                                                    )
+                                                                }
+                                                            >
+                                                                <Text
+                                                                    fw={
+                                                                        value === status ? 700 : 400
+                                                                    }
+                                                                    size="sm"
+                                                                >
+                                                                    {t(meta.labelKey)}
+                                                                </Text>
+                                                            </Menu.Item>
+                                                        )
+                                                    })}
+                                                </Menu.Dropdown>
+                                            </Menu>
+                                        ) : (
+                                            <Tooltip
+                                                label={t('node-control-addresses.hostname-status')}
+                                                multiline
+                                                maw={300}
+                                            >
+                                                <span
+                                                    aria-label={t(statusMeta.labelKey)}
+                                                    tabIndex={0}
+                                                >
+                                                    <NodeIpStatusIcon
+                                                        status={status}
+                                                        size={36}
+                                                        iconSize={20}
+                                                    />
+                                                </span>
+                                            </Tooltip>
+                                        )}
                                         <TextInput
                                             aria-label={t('node-control-addresses.address', {
                                                 index: index + 1

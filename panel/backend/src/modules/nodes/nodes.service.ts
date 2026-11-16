@@ -32,6 +32,7 @@ import {
 import { NodesEntity } from './entities';
 import { NodeResponseModel } from './models';
 import {
+    canonicalNodeControlAddresses,
     NodeControlAddressLimitError,
     NodeControlRevisionConflictError,
 } from './node-control-addresses';
@@ -330,6 +331,11 @@ export class NodesService {
                 }
             }
 
+            const labelsWithUnchangedAddresses =
+                nodeData.ips !== undefined &&
+                nodeData.controlAddresses !== undefined &&
+                JSON.stringify(canonicalNodeControlAddresses(nodeData.controlAddresses)) ===
+                    JSON.stringify(canonicalNodeControlAddresses(node.controlAddresses));
             const needsReconcile =
                 !node.isDisabled &&
                 atLeastOneDefined(
@@ -337,7 +343,7 @@ export class NodesService {
                     nodeData.proxyUrl,
                     nodeData.port,
                     nodeData.address,
-                    nodeData.controlAddresses,
+                    labelsWithUnchangedAddresses ? undefined : nodeData.controlAddresses,
                     nodeData.activePluginUuid,
                     configProfile,
                 );

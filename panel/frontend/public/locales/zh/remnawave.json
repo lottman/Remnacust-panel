@@ -1980,6 +1980,8 @@
         "save-before-check": "检查已保存的管理路由前，请先保存连接更改。",
         "conflict": "连接设置已在其他位置更改。您的编辑仍保留在表单中。重新加载连接设置将以已保存的设置替换您的地址、端口和代理编辑。",
         "reload": "用已保存的设置替换我的连接编辑",
+        "change-status": "更改 IP {{address}} 的状态",
+        "hostname-status": "主机名显示管理角色。状态标签可分配给 IPv4 或 IPv6 地址。",
         "preferred": "首个启用地址",
         "panel": "面板",
         "rescan": "重新扫描 IP",
@@ -3977,6 +3979,7 @@
         "status_ERROR": "需要处理",
         "status_UNMANAGED": "单个配置",
         "saveSettings": "编辑端口分配前，请先保存或放弃当前设置。",
+        "managedReadOnly": "此节点正在使用已保存的独立端口方案。主配置受到保护，以免被意外替换。",
         "managedHint": "此节点按端口分配配置。请使用端口编辑器。",
         "manage": "管理端口"
     },

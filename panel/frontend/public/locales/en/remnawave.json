@@ -1980,6 +1980,8 @@
     "save-before-check": "Save connection changes before checking the saved management route.",
     "conflict": "Connection settings changed elsewhere. Your edits are kept. Reloading connection settings replaces your address, port and proxy edits with the saved settings.",
     "reload": "Replace my connection edits with saved settings",
+    "change-status": "Change IP status for {{address}}",
+    "hostname-status": "Hostnames show the management role. Status labels can be assigned to IPv4 or IPv6 addresses.",
     "preferred": "First enabled address",
     "panel": "Panel",
     "rescan": "Rescan IPs",
@@ -3977,6 +3979,7 @@
     "status_ERROR": "Needs attention",
     "status_UNMANAGED": "Single profile",
     "saveSettings": "Save or discard the current settings before editing port assignments.",
+    "managedReadOnly": "This node uses a saved plan for individual ports. Its primary profile is protected against accidental replacement.",
     "managedHint": "This node uses individual port assignments. Manage profiles in the ports editor.",
     "manage": "Manage ports"
   },

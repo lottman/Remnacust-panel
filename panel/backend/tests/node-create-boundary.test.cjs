@@ -293,3 +293,43 @@ test('committed connection update stays successful with a durable retry state wh
     assert.equal(saved.lastStatusMessage, '[NODE_UPDATE_PENDING]');
     assert.equal(result.response.system.system, null);
 });
+
+test('IP label saves retain the revision guard without restarting a node for unchanged management addresses', async () => {
+    for (const change of ['same', 'enabled', 'order']) {
+        const f = fixture();
+        const before = {
+            uuid: 'created',
+            name: 'existing',
+            address: 'node.example',
+            isDisabled: false,
+            isConnected: true,
+            isConnecting: false,
+            controlAddresses: [
+                { address: 'node.example', enabled: true },
+                { address: '2001:db8::2', enabled: false },
+            ],
+        };
+        const requested = structuredClone(before.controlAddresses);
+        if (change === 'enabled') requested[1].enabled = true;
+        if (change === 'order') requested.reverse();
+        const writes = [],
+            queued = [];
+        f.repository.findByUUID = async () => structuredClone(before);
+        f.repository.update = async (data, revision) => {
+            writes.push({ data, revision });
+            return { ...before, ...data };
+        };
+        f.queues.startNode = async (value) => queued.push(value);
+        const result = await f.service.updateNode({
+            uuid: before.uuid,
+            controlRevision: 'revision',
+            controlAddresses: requested,
+            ips: [{ ip: '2001:db8::2', status: 'MANAGEMENT' }],
+        });
+        assert.equal(result.isOk, true);
+        assert.equal(writes[0].revision, 'revision');
+        assert.deepEqual(writes[0].data.controlAddresses, requested);
+        assert.equal(queued.length, change === 'same' ? 0 : 1);
+        assert.equal(writes[0].data.isConnected, change === 'same' ? undefined : false);
+    }
+});

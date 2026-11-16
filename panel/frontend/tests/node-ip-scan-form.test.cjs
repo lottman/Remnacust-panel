@@ -44,6 +44,16 @@ function formFor(values = original) {
     return form
 }
 
+test('saving changed IP labels preserves the exact current management list with its revision', () => {
+    const form = formFor()
+    const ips = [{ ip: '192.0.2.20', status: 'OUTBOUND' }]
+    form.setFieldValue('ips', ips)
+    assert.equal(state.applyNodeIpScanResult(form, scanned), true)
+    const payload = state.getNodeUpdateValues(form.getValues(), field => form.isDirty(field))
+    assert.deepEqual(payload, {uuid: original.uuid, ips, controlAddresses: scanned.controlAddresses, controlRevision: scanned.controlRevision})
+    assert.equal(contract.UpdateNodeCommand.RequestBodySchema.safeParse(payload).success, true)
+})
+
 test('scan merges fresh connection data and roles while preserving dirty name and description', () => {
     const form = formFor()
     const serverBefore = structuredClone(scanned)

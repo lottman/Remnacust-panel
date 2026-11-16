@@ -33,10 +33,32 @@ test('compact node controls use accessible icons and protect the final enabled a
         await browser.waitFor('!!document.querySelector("[data-path=scan-form-note]")')
     }
     async function key(key, code = key) {
-        await browser.send('Input.dispatchKeyEvent', { type: 'keyDown', key, code, windowsVirtualKeyCode: key === 'Tab' ? 9 : 32 })
-        await browser.send('Input.dispatchKeyEvent', { type: 'keyUp', key, code, windowsVirtualKeyCode: key === 'Tab' ? 9 : 32 })
+        const windowsVirtualKeyCode = key === 'Tab' ? 9 : key === 'Enter' ? 13 : key === 'ArrowDown' ? 40 : 32
+        await browser.send('Input.dispatchKeyEvent', { type: 'keyDown', key, code, windowsVirtualKeyCode, ...(key === 'Enter' ? { text: '\r' } : {}) })
+        await browser.send('Input.dispatchKeyEvent', { type: 'keyUp', key, code, windowsVirtualKeyCode })
+    }
+    async function click(expression) {
+        const point = await browser.evaluate(`(() => { const element = ${expression}; element.scrollIntoView({block:'center'}); const r = element.getBoundingClientRect(); return {x:r.x+r.width/2,y:r.y+r.height/2}; })()`)
+        await browser.send('Input.dispatchMouseEvent', { type: 'mousePressed', button: 'left', clickCount: 1, ...point })
+        await browser.send('Input.dispatchMouseEvent', { type: 'mouseReleased', button: 'left', clickCount: 1, ...point })
     }
     for (const language of ['en', 'ru', 'fa', 'zh']) {
+        await t.test('IP status is selectable and independent of management permission (' + language + ')', async () => {
+            await open(language)
+            const before = await browser.evaluate('nodeWizardFixture.form().getValues().controlAddresses')
+            const control = `[...document.querySelectorAll('button')].find(el => el.getAttribute('aria-label') === nodeWizardFixture.i18n.t('node-control-addresses.change-status', {address:'192.0.2.20'}))`
+            await click(control)
+            await browser.waitFor('document.querySelectorAll("[role=menuitem]").length === 10')
+            await click(`[...document.querySelectorAll('[role=menuitem]')].find(el => el.textContent.trim() === nodeWizardFixture.i18n.t('node-ip-statuses.outbound'))`)
+            await browser.waitFor('nodeWizardFixture.form().getValues().ips[0].status === "OUTBOUND"')
+            assert.deepEqual(await browser.evaluate('nodeWizardFixture.form().getValues().controlAddresses'), before)
+            assert.equal(await browser.evaluate('nodeWizardFixture.form().isDirty("ips")'), true)
+            assert.equal(await browser.evaluate('document.body.textContent.includes(nodeWizardFixture.i18n.t("operations.diagnostics"))'), false)
+            await browser.evaluate(`(${action}).click()`)
+            await browser.waitFor('Boolean(nodeWizardFixture.snapshot().cached)')
+            assert.equal(await browser.evaluate('nodeWizardFixture.form().getValues().ips[0].status'), 'OUTBOUND')
+            assert.equal(await browser.evaluate('nodeWizardFixture.form().isDirty("ips")'), true)
+        })
         await t.test('icon-only scan has a translated name and keyboard tooltip (' + language + ')', async () => {
             await open(language)
             const button = await browser.evaluate(`(() => { const button = ${action}; return { text: button.textContent.trim(), label: button.getAttribute('aria-label'), expected: nodeWizardFixture.i18n.t('node-control-addresses.rescan') } })()`)
@@ -66,6 +88,21 @@ test('compact node controls use accessible icons and protect the final enabled a
             await browser.waitFor('document.querySelectorAll("input[role=switch]").length === 2')
         })
     }
+    await t.test('IPv6 role menu works with the keyboard and read-only mode disables role changes', async () => {
+        await open('en')
+        await browser.evaluate(`(${action}).click()`)
+        await browser.waitFor('Boolean(nodeWizardFixture.snapshot().cached)')
+        await browser.evaluate(`[...document.querySelectorAll('button')].find(el => el.getAttribute('aria-label') === nodeWizardFixture.i18n.t('node-control-addresses.change-status', {address:'2001:db8::30'})).focus()`)
+        await key(' ', 'Space')
+        await browser.waitFor('document.querySelectorAll("[role=menuitem]").length === 10')
+        await browser.waitFor('document.activeElement?.hasAttribute("data-autofocus")')
+        for (let index = 0; index < 6; index++) await key('ArrowDown')
+        assert.equal(await browser.evaluate('document.activeElement.textContent.trim()'), await browser.evaluate('nodeWizardFixture.i18n.t("node-ip-statuses.reserve")'))
+        await key('Enter')
+        await browser.waitFor('nodeWizardFixture.form().getValues().ips[0].status === "RESERVE"')
+        await open('en', { locked: '1' })
+        assert.equal(await browser.evaluate(`[...document.querySelectorAll('button')].find(el => el.getAttribute('aria-label') === nodeWizardFixture.i18n.t('node-control-addresses.change-status', {address:'192.0.2.20'})).disabled`), true)
+    })
     await t.test('multiple enabled addresses can be toggled until one remains; legacy all-off can be repaired', async () => {
         await open('en', { state: 'two-enabled' })
         await browser.evaluate('document.querySelector("input[role=switch]").click()')
@@ -88,9 +125,12 @@ test('compact node controls use accessible icons and protect the final enabled a
         assert.equal(await browser.evaluate(`(${action}).disabled`), true)
         assert.equal(await browser.evaluate('[...document.querySelectorAll("input[role=switch]")].every(el => el.disabled)'), true)
         await open()
+        await browser.evaluate('nodeWizardFixture.mode("hold")')
         await browser.evaluate(`(() => { const input = document.querySelector('[data-path=scan-form-note]'); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, 'Unsaved description'); input.dispatchEvent(new Event('input', {bubbles:true})); (${action}).click(); (${action}).click(); })()`)
         await browser.waitFor('nodeWizardFixture.snapshot().calls.length === 1')
-        assert.equal(await browser.evaluate(`(${action}).disabled`), true)
+        assert.equal(await browser.evaluate(`(${action}).getAttribute('aria-disabled')`), 'true')
+        assert.equal(await browser.evaluate(`(${action}).getAttribute('aria-busy')`), 'true')
+        await browser.evaluate('nodeWizardFixture.releaseRequest()')
         await browser.waitFor('Boolean(nodeWizardFixture.snapshot().cached)')
         assert.equal(await browser.evaluate('nodeWizardFixture.form().getValues().note'), 'Unsaved description')
         assert.equal(await browser.evaluate('nodeWizardFixture.snapshot().calls.length'), 1)

@@ -65,7 +65,6 @@ interface IProps<T extends UpdateNodeCommand.RequestBody> {
     nodeSystemCard?: ReactNode
     secretKey: GetNodeSecretKeyCommand.Response['response'] | undefined
     portPlansEnabled?: boolean
-    onManagePorts?: () => void
 }
 
 export const BaseNodeForm = <T extends UpdateNodeCommand.RequestBody>(props: IProps<T>) => {
@@ -132,7 +131,6 @@ export const BaseNodeForm = <T extends UpdateNodeCommand.RequestBody>(props: IPr
 
                     <NodeConfigProfilesCard
                         managed={props.portPlansEnabled}
-                        onManagePorts={props.onManagePorts}
                         cardVariants={cardVariants}
                         form={form}
                         motionWrapper={MotionWrapper}
@@ -202,7 +200,6 @@ export const BaseNodeForm = <T extends UpdateNodeCommand.RequestBody>(props: IPr
 
                         <NodeConfigProfilesCard
                             managed={props.portPlansEnabled}
-                            onManagePorts={props.onManagePorts}
                             cardVariants={cardVariants}
                             form={form}
                             motionWrapper={MotionWrapper}

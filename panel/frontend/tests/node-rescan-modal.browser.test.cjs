@@ -13,8 +13,11 @@ test('rescan preserves real EditNodeModal focus, content and scroll', {skip:proc
  const browser=await launchBrowser();t.after(()=>browser.close())
  for(const width of [1280,500]) for(const outcome of ['reject','resolve']) await t.test(width+' '+outcome,async()=>{
  await browser.send('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:width===500})
- await browser.navigate(url+'?lang=ru');await browser.evaluate('void nodeWizardFixture.open()')
+ await browser.navigate(url+'?lang=ru',60000);await browser.evaluate('void nodeWizardFixture.open()')
  await browser.waitFor('!!document.querySelector("[data-path=edit-node-form-name]")')
+ assert.equal(await browser.evaluate('document.querySelectorAll("[role=tab]").length'),2)
+ assert.equal(await browser.evaluate('[...document.querySelectorAll("[role=tab]")].some(el=>el.textContent.trim()===nodeWizardFixture.i18n.t("nodePorts.title"))'),false)
+ assert.equal(await browser.evaluate('document.body.textContent.includes(nodeWizardFixture.i18n.t("operations.diagnostics"))'),false)
  await browser.evaluate(`(()=>{const button=[...document.querySelectorAll('button')].find(e=>e.getAttribute('aria-label')===nodeWizardFixture.i18n.t('node-control-addresses.rescan'));window.scanButton=button;button.scrollIntoView({block:'center'});button.focus()})()`)
  await new Promise(r=>setTimeout(r,400))
  const measure=`(()=>{const b=window.scanButton;const body=document.querySelector('.mantine-Modal-body');const input=document.querySelector('[data-path="edit-node-form-controlAddresses.0.address"]');let opacity=1;for(let p=input;p;p=p.parentElement)opacity*=Number(getComputedStyle(p).opacity); const icon=b.querySelector('.mantine-Loader-root,svg');let visible=!!icon;for(let p=icon;p&&p!==b.parentElement;p=p.parentElement){const style=getComputedStyle(p);visible&&=style.visibility!=='hidden'&&style.display!=='none'&&Number(style.opacity)>0;}return {scroll:body.scrollTop,focus:document.activeElement===b,same:b.isConnected,opacity,iconVisible:visible,text:document.querySelector('[data-path="edit-node-form-name"]').value,top:b.getBoundingClientRect().top}})()`

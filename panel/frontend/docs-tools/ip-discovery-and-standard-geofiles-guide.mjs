@@ -1,6 +1,29 @@
 const sections = [
     {
         article: 'nodes',
+        id: 'nodes-ip-status-editor',
+        before: 'nodes-2',
+        translations: {
+            ru: {
+                title: "Статус IP и настройки ноды",
+                body: "Нажмите значок слева от IPv4 или IPv6, выберите статус и сохраните ноду. Это метка адреса: она не меняет порядок адресов, доступность VPN или тумблер управления из панели. Для имени хоста отображается роль управления; назначать ему IP-статус нельзя. Несохранённый статус сохраняется в форме при повторном поиске адресов.\n\nВ окне ноды доступны «Настройки» и «Здоровье и журнал». Выбирайте основной профиль в блоке конфигурации ядра. Если нода уже использует сохранённый план отдельных портов, основной профиль защищён от случайной замены. Состояние связи и ядра проверяется автоматически; соединение VPN с устройства проверяется отдельно."
+            },
+            en: {
+                title: "IP status and node settings",
+                body: "Select the icon to the left of an IPv4 or IPv6 address, choose a status and save the node. This is an address label: it does not change address priority, VPN availability or the panel-management switch. Hostnames display the management role and cannot be assigned an IP status. Unsaved status changes remain in the form when addresses are rescanned.\n\nThe node window contains Settings and Health and logs. Select the primary profile in Core configuration. If the node already uses a saved plan for individual ports, its primary profile is protected against accidental replacement. Connection and Core health are checked automatically; test VPN connectivity from the device separately."
+            },
+            fa: {
+                title: "وضعیت IP و تنظیمات نود",
+                body: "نماد سمت چپ آدرس IPv4 یا IPv6 را انتخاب کنید، وضعیت را تغییر دهید و نود را ذخیره کنید. این برچسب آدرس است و ترتیب آدرس‌ها، دسترسی VPN یا کلید مدیریت پنل را تغییر نمی‌دهد. نام میزبان نقش مدیریت را نشان می‌دهد و نمی‌توان به آن وضعیت IP اختصاص داد. تغییر ذخیره‌نشدهٔ وضعیت هنگام جستجوی دوبارهٔ آدرس‌ها در فرم باقی می‌ماند.\n\nپنجرهٔ نود شامل تنظیمات و سلامت و گزارش‌ها است. پروفایل اصلی را در پیکربندی Core انتخاب کنید. اگر نود از برنامهٔ ذخیره‌شدهٔ پورت‌های جداگانه استفاده کند، پروفایل اصلی در برابر جایگزینی ناخواسته محافظت می‌شود. اتصال و سلامت Core به‌طور خودکار بررسی می‌شوند؛ اتصال VPN دستگاه را جداگانه آزمایش کنید."
+            },
+            zh: {
+                title: "IP 状态与节点设置",
+                body: "选择 IPv4 或 IPv6 地址左侧的图标，选择状态后保存节点。这只是地址标签，不会改变地址优先级、VPN 可用性或面板管理开关。主机名显示管理角色，不能分配 IP 状态。重新扫描地址时，未保存的状态修改仍保留在表单中。\n\n节点窗口提供“设置”和“健康与日志”。在 Core 配置区域选择主配置。如果节点已经使用已保存的独立端口方案，主配置受到保护，以免被意外替换。连接和 Core 健康会自动检查；设备的 VPN 连接需要单独测试。"
+            },
+        }
+    },
+    {
+        article: 'nodes',
         id: 'node-core-readiness-recheck',
         before: 'nodes-2',
         translations: {

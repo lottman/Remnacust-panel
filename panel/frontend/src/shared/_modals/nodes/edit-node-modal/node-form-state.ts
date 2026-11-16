@@ -67,6 +67,9 @@ export function getNodeUpdateValues(
     const changed = Object.fromEntries(
         Object.entries(values).filter(([field]) => field !== 'controlRevision' && isDirty(field))
     ) as Partial<UpdateNodeCommand.RequestBody>
+    if (changed.ips !== undefined && values.controlAddresses !== undefined) {
+        changed.controlAddresses ??= values.controlAddresses
+    }
     return {
         ...changed,
         uuid: values.uuid,

@@ -1,5 +1,5 @@
 import { ShowConfigProfilesWithInboundsFeature } from '@features/ui/dashboard/nodes/show-config-profiles-with-inbounds'
-import { Button, Skeleton, Stack, Text } from '@mantine/core'
+import { Skeleton, Stack, Text } from '@mantine/core'
 import { UseFormReturnType } from '@mantine/form'
 import { CreateNodeCommand, UpdateNodeCommand } from '@remnawave/backend-contract'
 import { ForwardRefComponent, HTMLMotionProps, motion, Variants } from 'motion/react'
@@ -15,7 +15,6 @@ interface IProps<T extends CreateNodeCommand.RequestBody | UpdateNodeCommand.Req
     form: UseFormReturnType<T>
     motionWrapper: ForwardRefComponent<HTMLDivElement, HTMLMotionProps<'div'>>
     managed?: boolean
-    onManagePorts?: () => void
 }
 
 export const NodeConfigProfilesCard = <
@@ -59,7 +58,11 @@ export const NodeConfigProfilesCard = <
                         </Stack>
                     )}
 
-                    {props.managed&&<Stack gap="xs"><Text size="sm" c="dimmed">{t('nodePorts.managedHint')}</Text><Button disabled={form.isDirty()} variant="light" onClick={props.onManagePorts}>{t('nodePorts.manage')}</Button></Stack>}
+                    {props.managed && (
+                        <Text size="sm" c="dimmed">
+                            {t('nodePorts.managedReadOnly')}
+                        </Text>
+                    )}
                     {!props.managed && !isConfigProfilesLoading && configProfiles && (
                         <motion.div
                             animate={{ opacity: 1 }}

@@ -260,6 +260,12 @@ In card view, nodes can be dragged with a tag selected. Only visible nodes are r
 
 On Hosts and Nodes, Ctrl+F, Cmd+F on macOS and F3 open panel search instead of browser find. Search works in card and table views and from ordinary form fields. Monaco keeps its own editor search. The override is removed when leaving these pages.
 
+### IP status and node settings
+
+Select the icon to the left of an IPv4 or IPv6 address, choose a status and save the node. This is an address label: it does not change address priority, VPN availability or the panel-management switch. Hostnames display the management role and cannot be assigned an IP status. Unsaved status changes remain in the form when addresses are rescanned.
+
+The node window contains Settings and Health and logs. Select the primary profile in Core configuration. If the node already uses a saved plan for individual ports, its primary profile is protected against accidental replacement. Connection and Core health are checked automatically; test VPN connectivity from the device separately.
+
 ### Temporary node contention and Core readiness
 
 Brief synchronization can make statistics temporarily unavailable without stopping Core. The panel rechecks this readiness failure before clearing metrics. Fresh statistics preserve the connection state and metrics without queuing another Core start. Confirmed unavailability still appears as a problem. Successful statistics clear the old Core-not-ready reason while preserving separate access-policy warnings.
@@ -314,11 +320,9 @@ Switching cores restarts the core and may interrupt connections. Save editor cha
 
 SSH installation requires root or passwordless sudo; an existing empty directory is allowed. Failures show the stage and detailed logs remain on the server. With a panel-IP restriction and HTTP-01, TCP 80 opens temporarily for certificate validation and closes afterwards; a failed process cannot keep it open longer than 15 minutes. Renewal uses the same rule. External and provider firewalls need their own configuration. Use DNS-01 or an existing certificate to keep port 80 closed.
 
-### Diagnostics and safe operations
+### Node health and safe operations
 
-Diagnostics check the registered node's protected connection, Xray, user synchronization and port application. Test the full client VPN connection separately. Disabled nodes are not contacted; manual checks are rate limited.
-
-Review port changes before confirming. If settings change between review and confirmation, obtain a new preview. Success requires the node to confirm application. On failure, a previously applied configuration can be restored after checking the current state. Outage and recovery notifications require repeated observations. Maintenance and a manual 30-minute notification pause do not stop health checks.
+The Health and logs tab shows node connectivity, Core readiness and check history. Automatic health checks and notifications remain active. Test VPN connectivity from the device separately. Disabled nodes are not contacted.
 
 SSH installation requires root or passwordless sudo. Existing directories are not overwritten; connectivity is checked separately after installation. NET_ADMIN defaults off. A main-server IP restriction closes other incoming ports and ping except SSH. It also covers Docker but does not override provider rules. This is incompatible with public HTTP-01; use an appropriate certificate method. Remove only this restriction with python3 /etc/remnacust-node-firewall/guard.py remove.
 

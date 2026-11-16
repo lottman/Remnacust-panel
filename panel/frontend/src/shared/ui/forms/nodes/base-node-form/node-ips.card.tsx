@@ -5,7 +5,6 @@ import { ForwardRefComponent, HTMLMotionProps, Variants } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { TbRefresh } from 'react-icons/tb'
 
-import { NodeDiagnostics } from '@shared/_modals/nodes/edit-node-modal/node-diagnostics'
 import { hasNodeConnectionChanges } from '@shared/_modals/nodes/edit-node-modal/node-form-state'
 import { NodeControlAddressesEditor } from '@shared/ui/node-ips/node-control-addresses-editor'
 import { getNodeControlAddresses } from '@shared/utils/node-control-addresses'
@@ -123,11 +122,6 @@ export const NodeIpsCard = <
                               : t('node-control-addresses.rescan-never')}
                     </Text>
                 )}
-                <NodeDiagnostics
-                    disabled={disabled || connectionDirty}
-                    key={node.controlRevision ?? node.uuid}
-                    nodeUuid={node.uuid}
-                />
             </Stack>
         </MotionWrapper>
     )

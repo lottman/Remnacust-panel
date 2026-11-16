@@ -38,6 +38,7 @@ export const EditNodeModal = NiceModal.create((props: IProps) => {
     return (
         <Modal
             {...modalProps}
+            centered={false}
             size="1000px"
             yOffset={16}
             styles={{

@@ -95,9 +95,11 @@ if (params.get('state') === 'two-enabled')
         entry.enabled = true
     })
 let mode = 'success'
+let releaseRequest: (() => void) | undefined
 const calls: { url?: string; method?: string; data: unknown }[] = []
 instance.defaults.adapter = async (config) => {
     calls.push({ url: config.url, method: config.method, data: JSON.parse(config.data) })
+    if (mode === 'hold') await new Promise<void>((resolve) => { releaseRequest = resolve })
     await new Promise((resolve) => setTimeout(resolve, 200))
     const codes: Record<string, [number, string]> = {
         unsupported: [409, 'A268'],
@@ -236,6 +238,7 @@ function App() {
     )
 }
 const fixture = {
+    releaseRequest: () => { releaseRequest?.(); releaseRequest = undefined },
     mode: (value: string) => {
         mode = value
     },

@@ -75,7 +75,7 @@ async function launchBrowser() {
             do { if (await evaluate(expression)) return; await sleep(50) } while (Date.now() < until)
             throw new Error('Timed out waiting for: ' + expression + (consoleErrors.length ? '\n' + consoleErrors.join('\n') : ''))
         }
-        return { send, evaluate, waitFor, close, consoleErrors, navigate: async url => { await send('Page.navigate', { url }); await waitFor('!!window.nodeWizardFixture') } }
+        return { send, evaluate, waitFor, close, consoleErrors, navigate: async (url, readyTimeout) => { await send('Page.navigate', { url }); await waitFor('!!window.nodeWizardFixture', readyTimeout) } }
     } catch (error) { await close(); throw error }
 }
 module.exports = { launchBrowser }

@@ -33,7 +33,6 @@ import {
     resetNodeFormDirty
 } from './node-form-state'
 import { NodeHealthHistory } from './node-health-history'
-import { NodePortPlans } from './node-port-plans'
 import { useNodePortPlan } from './node-port-plans.api'
 import { cacheNodeAfterWrite } from './node-query-state'
 
@@ -48,7 +47,6 @@ export const EditNodeByUuidModalContent = (props: IProps) => {
 
     const { nodeUuid, onClose } = props
     const [activeTab, setActiveTab] = useState<string | null>('settings')
-    const [portBusy, setPortBusy] = useState(false)
     const [connectionConflict, setConnectionConflict] = useState(false)
     const [reloadingConnection, setReloadingConnection] = useState(false)
     const [reloadError, setReloadError] = useState(false)
@@ -147,7 +145,6 @@ export const EditNodeByUuidModalContent = (props: IProps) => {
             isUpdateNodePending ||
             isRescanningIps ||
             reloadingConnection ||
-            portBusy ||
             connectionConflict
         )
             return
@@ -259,21 +256,9 @@ export const EditNodeByUuidModalContent = (props: IProps) => {
     return (
         <Tabs keepMounted onChange={setActiveTab} value={activeTab}>
             <Tabs.List>
-                <Tabs.Tab value="settings" disabled={portBusy}>
-                    {uiText('settings-74a883a')}
-                </Tabs.Tab>
-                <Tabs.Tab value="ports" disabled={form.isDirty() || portBusy}>
-                    {t('nodePorts.title')}
-                </Tabs.Tab>
-                <Tabs.Tab value="health" disabled={portBusy}>
-                    {uiText('health-and-logs-abdf03a')}
-                </Tabs.Tab>
+                <Tabs.Tab value="settings">{uiText('settings-74a883a')}</Tabs.Tab>
+                <Tabs.Tab value="health">{uiText('health-and-logs-abdf03a')}</Tabs.Tab>
             </Tabs.List>
-            {form.isDirty() && activeTab === 'settings' && (
-                <Text size="xs" c="dimmed" mt="xs">
-                    {t('nodePorts.saveSettings')}
-                </Text>
-            )}
             <Tabs.Panel value="settings" pt="md">
                 {connectionConflict && (
                     <Alert color="yellow" role="alert" mb="md">
@@ -307,7 +292,6 @@ export const EditNodeByUuidModalContent = (props: IProps) => {
                         saveDisabled={connectionConflict}
                         node={fetchedNode}
                         portPlansEnabled={portPlan.data?.enabled ?? false}
-                        onManagePorts={() => setActiveTab('ports')}
                         nodeDetailsCard={<NodeDetailsCardWidget node={fetchedNode} />}
                         nodeIntegrations={nodeIntegrations.nodeIntegrations}
                         nodePlugins={nodePlugins.nodePlugins}
@@ -317,31 +301,6 @@ export const EditNodeByUuidModalContent = (props: IProps) => {
                 ) : (
                     <LoaderModalShared mih="50vh" />
                 )}
-            </Tabs.Panel>
-            <Tabs.Panel value="ports" pt="md">
-                <NodePortPlans
-                    nodeUuid={nodeUuid}
-                    active={activeTab === 'ports'}
-                    onBusyChange={setPortBusy}
-                    onSaved={(state) => {
-                        const configProfile = {
-                            activeConfigProfileUuid: state.profileUuid ?? '',
-                            activeInbounds: state.enabled
-                                ? state.bindings.map((b) => b.configProfileInboundUuid)
-                                : state.activeInbounds
-                        }
-                        const values = { ...form.getValues(), configProfile }
-                        form.setInitialValues({ ...form.getInitialValues(), configProfile })
-                        form.resetDirty(values)
-                        form.setFieldValue('configProfile', configProfile)
-                        queryClient.invalidateQueries({
-                            queryKey: nodesQueryKeys.getAllNodes.queryKey
-                        })
-                        queryClient.invalidateQueries({
-                            queryKey: nodesQueryKeys.getNode({ uuid: nodeUuid }).queryKey
-                        })
-                    }}
-                />
             </Tabs.Panel>
             <Tabs.Panel value="health">
                 {activeTab === 'health' && <NodeHealthHistory node={fetchedNode} />}

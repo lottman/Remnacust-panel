@@ -16,6 +16,10 @@ import { NodeEvent } from '@integration-modules/notifications/interfaces';
 import { GetConfigProfileByUuidQuery } from '@modules/config-profiles/queries/get-config-profile-by-uuid';
 
 import { NodesQueuesService } from '@queue/_nodes';
+import {
+    NodeDeliveryBusyError,
+    NodeDeliveryLostError,
+} from '@queue/_nodes/port-plan-lease.service';
 
 import {
     BulkNodesActionsBodyDto,
@@ -253,22 +257,46 @@ export class NodesService {
 
     public async deleteNode(uuid: string): Promise<TResult<boolean>> {
         try {
-            const node = await this.nodesRepository.findByUUID(uuid);
-            if (!node) {
-                return fail(ERRORS.NODE_NOT_FOUND);
-            }
+            return await this.nodesQueuesService.withNodeLifecycle(
+                uuid,
+                async (assertOwnership) => {
+                    const node = await this.nodesRepository.findByUUID(uuid);
+                    if (!node) {
+                        return fail(ERRORS.NODE_NOT_FOUND);
+                    }
 
-            await this.nodesQueuesService.stopNode({
-                nodeUuid: node.uuid,
-                isNeedToBeDeleted: true,
-            });
+                    await assertOwnership();
+                    const deleted = await this.nodesRepository.deleteByUUID(node.uuid);
+                    if (!deleted) {
+                        return fail(ERRORS.DELETE_NODE_ERROR);
+                    }
 
-            this.eventEmitter.emit(EVENTS.NODE.DELETED, new NodeEvent(node, EVENTS.NODE.DELETED));
+                    await this.invalidateRoutesAfterCommit();
 
-            await this.nodesSystemCacheService.delete(node.uuid);
+                    try {
+                        this.eventEmitter.emit(
+                            EVENTS.NODE.DELETED,
+                            new NodeEvent(node, EVENTS.NODE.DELETED),
+                        );
+                    } catch {
+                        this.logger.warn(
+                            `Node ${node.uuid} deleted; deletion notification could not be emitted.`,
+                        );
+                    }
+                    try {
+                        await this.nodesSystemCacheService.delete(node.uuid);
+                    } catch {
+                        this.logger.warn(
+                            `Node ${node.uuid} deleted; telemetry cache could not be cleared.`,
+                        );
+                    }
 
-            return ok(true);
+                    return ok(true);
+                },
+            );
         } catch (error) {
+            if (error instanceof NodeDeliveryBusyError || error instanceof NodeDeliveryLostError)
+                return fail(ERRORS.NODE_DELETE_BUSY);
             rethrowXrayModeConflict(error);
             this.logger.error(error);
             return fail(ERRORS.DELETE_NODE_ERROR);

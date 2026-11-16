@@ -260,6 +260,10 @@ In card view, nodes can be dragged with a tag selected. Only visible nodes are r
 
 On Hosts and Nodes, Ctrl+F, Cmd+F on macOS and F3 open panel search instead of browser find. Search works in card and table views and from ordinary form fields. Monaco keeps its own editor search. The override is removed when leaving these pages.
 
+### Deleting a node from the panel
+
+Deletion removes the node and its assignments from the panel. It does not remove the Docker container on the server. A success response means the record has already been deleted. If configuration delivery is in progress, wait for completion and retry: A272 means the record remains. A network or server error does not count as successful deletion.
+
 ### IP addresses and rescanning
 
 The compact IP list accepts IPv4, IPv6 and hostnames. The purple Panel badge marks the first enabled address, preferred for node management in list order. Each toggle permits the panel to use that address; arrows change priority. Saved manual addresses can be disabled or reordered. To correct one, add a new address and disable the old one: ordinary editing keeps saved rows.

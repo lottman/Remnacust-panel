@@ -1399,5 +1399,10 @@ export declare const ERRORS: {
         readonly message: 'Address discovery is temporarily busy; try again';
         readonly httpCode: 429;
     };
+    readonly NODE_DELETE_BUSY: {
+        readonly code: 'A272';
+        readonly message: 'Node configuration delivery is in progress; retry deletion after it completes';
+        readonly httpCode: 409;
+    };
 };
 //# sourceMappingURL=errors.d.ts.map

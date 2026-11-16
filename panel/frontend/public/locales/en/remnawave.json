@@ -2553,7 +2553,8 @@
       "A268": "IP discovery requires Remnacust Node 1.1.38 or later. Update the node agent and try again. Saved addresses are unchanged.",
       "A269": "The node returned an incomplete or invalid IP address list. Saved addresses are unchanged.",
       "A270": "Enable the node and at least one management address before rescanning IPs.",
-      "A271": "IP discovery is busy. Wait briefly and try again."
+      "A271": "IP discovery is busy. Wait briefly and try again.",
+      "A272": "The node is applying its configuration. Wait for it to finish, then retry deletion."
     },
     "statusCodes": {
       "A089_400": "LIMITED and EXPIRED are calculated automatically. Choose another status.",

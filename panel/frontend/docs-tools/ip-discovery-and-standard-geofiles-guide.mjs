@@ -1,5 +1,28 @@
 const sections = [
     {
+        article: 'nodes',
+        id: 'node-delete-confirmation',
+        before: 'nodes-2',
+        translations: {
+            ru: {
+                title: 'Удаление ноды из панели',
+                body: 'Удаление убирает ноду из панели и её привязки. Это не удаление Docker-контейнера на сервере. Подтверждение успеха означает, что запись уже удалена. Если нода применяет конфигурацию, дождитесь завершения и повторите удаление: сообщение A272 означает, что запись сохранена. Ошибка сети или сервера не считается успешным удалением.'
+            },
+            en: {
+                title: 'Deleting a node from the panel',
+                body: 'Deletion removes the node and its assignments from the panel. It does not remove the Docker container on the server. A success response means the record has already been deleted. If configuration delivery is in progress, wait for completion and retry: A272 means the record remains. A network or server error does not count as successful deletion.'
+            },
+            fa: {
+                title: 'حذف نود از پنل',
+                body: 'حذف، نود و اتصال‌های آن را از پنل برمی‌دارد و کانتینر Docker روی سرور را حذف نمی‌کند. پیام موفقیت یعنی رکورد حذف شده است. اگر پیکربندی در حال اعمال است، پس از پایان دوباره تلاش کنید؛ A272 یعنی رکورد هنوز باقی است. خطای شبکه یا سرور به معنی حذف موفق نیست.'
+            },
+            zh: {
+                title: '从面板删除节点',
+                body: '删除会移除面板中的节点记录及其关联，不会删除服务器上的 Docker 容器。成功响应表示记录已经删除。如果节点正在应用配置，请等待完成后重试；A272 表示记录仍然保留。网络或服务器错误不代表删除成功。'
+            }
+        }
+    },
+    {
         article: 'hosts',
         id: 'host-binding-readiness',
         before: 'hosts-2',

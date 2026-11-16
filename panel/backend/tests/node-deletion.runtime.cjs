@@ -8,6 +8,7 @@ module.exports = async function checkNodeDeletion({ request, prisma }) {
     const redis = new Redis({
         host: process.env.REDIS_HOST,
         port: Number(process.env.REDIS_PORT),
+        db: Number(process.env.REDIS_DB ?? '1'),
         maxRetriesPerRequest: 1,
         connectTimeout: 3000,
         keyPrefix: 'ioraw:',

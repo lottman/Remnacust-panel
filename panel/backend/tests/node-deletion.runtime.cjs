@@ -29,7 +29,7 @@ module.exports = async function checkNodeDeletion({ request, prisma }) {
             });
             const leaseKey = `remnacust:node-delivery:${uuid}`;
             const owner = crypto.randomUUID();
-            await redis.set(leaseKey, owner, 'PX', 60000);
+            await redis.set(leaseKey, owner, 'PX', isDisabled ? 1800 : 60000);
             try {
                 assert.equal(
                     (await request(`/api/nodes/${uuid}`, 'DELETE', undefined, false)).status,
@@ -37,18 +37,51 @@ module.exports = async function checkNodeDeletion({ request, prisma }) {
                 );
                 assert.ok(await prisma.nodes.findUnique({ where: { uuid } }));
                 assert.equal((await request(`/api/nodes/${uuid}`, 'GET')).status, 200);
-                const busy = await request(`/api/nodes/${uuid}`, 'DELETE');
-                assert.equal(busy.status, 409, JSON.stringify(busy.body));
-                assert.equal(busy.body.errorCode, 'A272');
-                assert.ok(await prisma.nodes.findUnique({ where: { uuid } }));
-                assert.equal(await redis.get(leaseKey), owner, 'Foreign lease must remain intact');
-                await redis.eval(
-                    "if redis.call('GET',KEYS[1])==ARGV[1] then return redis.call('DEL',KEYS[1]) end return 0",
-                    1,
-                    leaseKey,
-                    owner,
+                const intentKey = `remnacust:node-deleting:${uuid}`;
+                let completed = false;
+                const pending = request(`/api/nodes/${uuid}`, 'DELETE').then((result) => {
+                    completed = true;
+                    return result;
+                });
+                let intent;
+                for (let attempt = 0; attempt < 40; attempt++) {
+                    intent = await redis.get(intentKey);
+                    if (intent || completed) break;
+                    await new Promise((resolve) => setTimeout(resolve, 25));
+                }
+                assert.ok(intent, 'Deletion must register priority before waiting');
+                assert.equal(
+                    completed,
+                    false,
+                    'Deletion must wait without discarding the active owner',
                 );
-                const result = await request(`/api/nodes/${uuid}`, 'DELETE');
+                assert.ok(await prisma.nodes.findUnique({ where: { uuid } }));
+                assert.equal(
+                    await redis.get(leaseKey),
+                    owner,
+                    'Active delivery must keep ownership',
+                );
+                const competing = await request(`/api/nodes/${uuid}`, 'DELETE');
+                assert.equal(competing.status, 409);
+                assert.equal(competing.body.errorCode, 'A272');
+                assert.equal(
+                    await redis.get(intentKey),
+                    intent,
+                    'A second request must not clear the first intent',
+                );
+                if (!isDisabled)
+                    await redis.eval(
+                        "if redis.call('GET',KEYS[1])==ARGV[1] then return redis.call('DEL',KEYS[1]) end return 0",
+                        1,
+                        leaseKey,
+                        owner,
+                    );
+                const result = await pending;
+                assert.equal(
+                    await redis.get(intentKey),
+                    null,
+                    'Successful deletion clears priority',
+                );
                 assert.equal(result.status, 204, JSON.stringify(result.body));
                 assert.equal(
                     await prisma.nodes.findUnique({ where: { uuid } }),
@@ -73,6 +106,6 @@ module.exports = async function checkNodeDeletion({ request, prisma }) {
         await redis.quit();
     }
     process.stdout.write(
-        'PASS node deletion: authenticated API, busy delivery conflict, enabled/disabled unreachable nodes, immediate SQL commit and stale read rejection\n',
+        'PASS node deletion: authenticated API, deletion priority, concurrent conflict, active/expired delivery ownership, unreachable nodes, committed deletion and stale read rejection\n',
     );
 };

@@ -1311,8 +1311,19 @@ function lifecycleFixture() {
                 } else {
                     assert.equal(name, 'eval');
                     const [script, , key, owner] = args;
-                    reply = owners.get(key) === owner ? 1 : 0;
-                    if (reply && !script.includes('PEXPIRE')) owners.delete(key);
+                    if (script.includes('KEYS[2]')) {
+                        const [, , delivery, deleting, token, , deletionOwner] = args;
+                        const pending = owners.get(deleting);
+                        if (deletionOwner && pending !== deletionOwner) reply = -1;
+                        else if ((!deletionOwner && pending) || owners.has(delivery)) reply = null;
+                        else {
+                            owners.set(delivery, token);
+                            reply = 'OK';
+                        }
+                    } else {
+                        reply = owners.get(key) === owner ? 1 : 0;
+                        if (reply && !script.includes('PEXPIRE')) owners.delete(key);
+                    }
                 }
                 command.resolve(reply);
                 return command.promise;

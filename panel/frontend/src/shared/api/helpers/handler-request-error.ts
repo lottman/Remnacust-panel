@@ -103,7 +103,11 @@ function configValidationMessage(message: unknown): string {
 }
 
 /** Only public contract messages enter the UI; arbitrary server bodies can contain secrets. */
-export function getRequestErrorMessage(error: AxiosError): string {
+export function getRequestErrorMessage(
+    error: Pick<AxiosError, 'code'> & {
+        response?: Pick<NonNullable<AxiosError['response']>, 'data' | 'status'>
+    }
+): string {
     const errorData = error.response?.data
     const status = error.response?.status
     const data =
@@ -184,6 +188,16 @@ export class RequestError extends Error {
             typeof data.errorCode === 'string'
                 ? data.errorCode
                 : undefined
+        Object.defineProperty(this, 'message', {
+            configurable: true,
+            get: () =>
+                getRequestErrorMessage({
+                    code: this.code,
+                    ...(this.status === undefined
+                        ? {}
+                        : { response: { status: this.status, data: this.cause } })
+                })
+        })
     }
 }
 

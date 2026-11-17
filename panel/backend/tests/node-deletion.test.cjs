@@ -7,9 +7,16 @@ const { ERRORS } = require('../libs/contract/build/backend/constants/errors/erro
 
 const base = path.join(__dirname, '../src/modules/nodes');
 const queueRoot = path.join(__dirname, '../src/queue/_nodes');
-const leaseTypes = load(path.join(queueRoot, 'port-plan-lease.service.ts'), {
-    '@common/database': {},
-});
+const leaseTypes = load(
+    process.env.NODE_DELETE_BASELINE_FILE || path.join(queueRoot, 'port-plan-lease.service.ts'),
+    {
+        '@common/database': {},
+    },
+);
+if (process.env.NODE_DELETE_BASELINE_FILE)
+    leaseTypes.PortPlanLeaseService.prototype.withDeletion = function (uuid, work) {
+        return this.withLifecycle(uuid, work);
+    };
 const { NodesQueuesService } = load(path.join(queueRoot, 'nodes-queues.service.ts'), {
     '@common/axios': {},
     '@queue/queue.enum': load(path.join(queueRoot, '../queue.enum.ts')),
@@ -61,10 +68,29 @@ function ownershipFixture() {
             let result;
             if (command.name === 'set') {
                 assert.equal(command.args[2], 'PX');
-                assert.equal(Number(command.args[3]), 120000);
+                assert.equal(
+                    Number(command.args[3]),
+                    leaseKey.includes('node-deleting:') ? 240000 : 120000,
+                );
                 assert.equal(command.args[4], 'NX');
                 result = lease ? null : 'OK';
-                if (result) leases.set(leaseKey, { owner: second, expires: now + 120000 });
+                if (result)
+                    leases.set(leaseKey, { owner: second, expires: now + Number(command.args[3]) });
+            } else if (command.name === 'eval' && first.includes('KEYS[2]')) {
+                const [, , deliveryKey, deletionKey, deliveryOwner, duration, deletionOwner] =
+                    command.args;
+                const pending = leases.get(deletionKey);
+                const current = leases.get(deliveryKey);
+                if (current && current.expires <= now) leases.delete(deliveryKey);
+                if (deletionOwner && pending?.owner !== deletionOwner) result = -1;
+                else if ((!deletionOwner && pending) || leases.has(deliveryKey)) result = null;
+                else {
+                    leases.set(deliveryKey, {
+                        owner: deliveryOwner,
+                        expires: now + Number(duration),
+                    });
+                    result = 'OK';
+                }
             } else if (command.name === 'eval') {
                 result = lease?.owner === owner ? 1 : 0;
                 if (result && first.includes('PEXPIRE')) lease.expires = now + Number(ttl);
@@ -112,6 +138,7 @@ function fixture() {
         add: async () => assert.fail('Deletion must not enqueue a deferred stop intent'),
     }));
     const queues = new NodesQueuesService(...queueHandles, ownership.deliveries);
+    queues.withNodeLifecycle = (uuid, work) => ownership.deliveries.withDeletion(uuid, work, 0);
     const events = {
         emit: (event, payload) => {
             assert.equal(event, 'node.deleted');
@@ -222,7 +249,10 @@ test('occupied lifecycle ownership returns translated HTTP409 without deleting o
     assert.equal(f.rows.size, 1);
     assert.equal(f.leases.get(key).owner, 'foreign-owner');
     assert.deepEqual(f.calls, []);
-    assert.equal(f.commands.length, 1);
+    assert.equal(
+        [...f.leases.keys()].some((key) => key.includes('node-deleting:')),
+        false,
+    );
     f.leases.delete(key);
     assert.equal((await f.service.deleteNode(f.node.uuid)).isOk, true);
     assert.equal(f.rows.size, 0);
@@ -428,7 +458,11 @@ test('queued deletion exhausts retries behind a lifecycle owner even if diagnost
             sendCommand(command) {
                 const [first, , key, arg] = command.args;
                 let result;
-                if (command.name === 'set') result = null;
+                if (
+                    command.name === 'set' ||
+                    (command.name === 'eval' && first.includes('KEYS[2]'))
+                )
+                    result = null;
                 else if (command.name === 'get') result = saved.get(first) ?? null;
                 else if (first.includes('isNeedToBeDeleted')) {
                     saved.set(key, arg);
@@ -442,17 +476,21 @@ test('queued deletion exhausts retries behind a lifecycle owner even if diagnost
                 return command.promise;
             },
         };
-        const leaseTypes = load(path.join(queueRoot, 'port-plan-lease.service.ts'), {
-            ...mocks,
-            kysely: {
-                sql: (_parts, ...values) => ({
-                    execute: async () => {
-                        assert.equal(values[0], f.node.uuid);
-                        return { rows: stale || !f.rows.has(f.node.uuid) ? [] : [f.node] };
-                    },
-                }),
+        const leaseTypes = load(
+            process.env.NODE_DELETE_BASELINE_FILE ||
+                path.join(queueRoot, 'port-plan-lease.service.ts'),
+            {
+                ...mocks,
+                kysely: {
+                    sql: (_parts, ...values) => ({
+                        execute: async () => {
+                            assert.equal(values[0], f.node.uuid);
+                            return { rows: stale || !f.rows.has(f.node.uuid) ? [] : [f.node] };
+                        },
+                    }),
+                },
             },
-        });
+        );
         const deliveries = new leaseTypes.PortPlanLeaseService(
             { kysely: {} },
             { withTransaction: async (_options, work) => work() },
@@ -514,4 +552,56 @@ test('queued deletion exhausts retries behind a lifecycle owner even if diagnost
             undefined,
         );
     }
+});
+
+test('deletion waits for a real active delivery and prevents retry starvation without contacting the node', async () => {
+    const f = fixture();
+    f.queues.withNodeLifecycle = (uuid, work) => f.deliveries.withDeletion(uuid, work);
+    let release, entered;
+    const started = new Promise((resolve) => {
+        entered = resolve;
+    });
+    const gate = new Promise((resolve) => {
+        release = resolve;
+    });
+    const running = f.deliveries.withLifecycle(f.node.uuid, async (assert) => {
+        entered();
+        await gate;
+        await assert();
+    });
+    await started;
+    const deletion = f.service.deleteNode(f.node.uuid);
+    await new Promise((resolve) => setImmediate(resolve));
+    try {
+        assert.equal(f.rows.size, 1);
+        assert.equal(
+            [...f.leases.keys()].some((key) => key.includes('node-deleting:')),
+            true,
+        );
+        let extra = 0;
+        await assert.rejects(
+            f.deliveries.withLifecycle(f.node.uuid, async () => extra++),
+            leaseTypes.NodeDeliveryBusyError,
+        );
+        assert.equal(extra, 0);
+    } finally {
+        release();
+        await running;
+    }
+    assert.equal((await deletion).isOk, true);
+    assert.equal(f.rows.size, 0);
+    assert.equal(f.leases.size, 0);
+});
+
+test('an abandoned delivery expires while prioritized deletion waits and no remote connection is required', async () => {
+    const f = fixture();
+    f.queues.withNodeLifecycle = (uuid, work) => f.deliveries.withDeletion(uuid, work);
+    f.hold(f.node.uuid);
+    const deletion = f.service.deleteNode(f.node.uuid);
+    await new Promise((resolve) => setImmediate(resolve));
+    assert.equal(f.rows.size, 1);
+    f.advance(120001);
+    assert.equal((await deletion).isOk, true);
+    assert.equal(f.rows.size, 0);
+    assert.equal(f.leases.size, 0);
 });

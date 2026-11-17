@@ -64,6 +64,15 @@ function fixture() {
             if (command.name === 'set') {
                 result = redisValues.has(first) ? null : 'OK';
                 if (result) redisValues.set(first, count);
+            } else if (command.name === 'eval' && first.includes('KEYS[2]')) {
+                const [, , delivery, deleting, owner, , deletionOwner] = command.args;
+                const pending = redisValues.get(deleting);
+                if (deletionOwner && pending !== deletionOwner) result = -1;
+                else if ((!deletionOwner && pending) || redisValues.has(delivery)) result = null;
+                else {
+                    redisValues.set(delivery, owner);
+                    result = 'OK';
+                }
             } else if (command.name === 'get') result = redisValues.get(first) ?? null;
             else if (first.includes('PEXPIRE')) result = redisValues.get(key) === arg ? 1 : 0;
             else if (first.includes('generation==')) {

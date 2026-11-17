@@ -2559,7 +2559,7 @@
       "A269": "The node returned an incomplete or invalid IP address list. Saved addresses are unchanged.",
       "A270": "Enable the node and at least one management address before rescanning IPs.",
       "A271": "IP discovery is busy. Wait briefly and try again.",
-      "A272": "The node is applying its configuration. Wait for it to finish, then retry deletion."
+      "A272": "The panel is finishing a node management operation before deletion. Deletion does not require a connection to the node server. Retry if the operation has not finished yet."
     },
     "statusCodes": {
       "A089_400": "LIMITED and EXPIRED are calculated automatically. Choose another status.",

@@ -6,12 +6,12 @@ const vm = require('node:vm')
 const ts = require('typescript')
 const { ERRORS } = require('../../backend/libs/contract/build/backend/constants/errors/errors.js')
 const compiled = ts.transpileModule(
-    fs.readFileSync(path.join(__dirname, '../src/shared/api/helpers/handler-request-error.ts'), 'utf8'),
+    fs.readFileSync(process.env.REQUEST_ERROR_BASELINE_FILE || path.join(__dirname, '../src/shared/api/helpers/handler-request-error.ts'), 'utf8'),
     { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }
 ).outputText
 
 function handler(language) {
-    const locale = JSON.parse(fs.readFileSync(path.join(__dirname, '../public/locales', language, 'remnawave.json'), 'utf8'))
+    let locale = JSON.parse(fs.readFileSync(path.join(__dirname, '../public/locales', language, 'remnawave.json'), 'utf8'))
     const exports = {}
     vm.runInNewContext(compiled, {
         exports,
@@ -29,7 +29,7 @@ function handler(language) {
             throw Error(`Unexpected dependency: ${name}`)
         }
     })
-    return { handle: exports.handleRequestError, getMessage: exports.getRequestErrorMessage, RequestError: exports.RequestError, locale }
+    return { handle: exports.handleRequestError, getMessage: exports.getRequestErrorMessage, RequestError: exports.RequestError, locale, setLanguage(value) { locale = JSON.parse(fs.readFileSync(path.join(__dirname, '../public/locales', value, 'remnawave.json'), 'utf8')) } }
 }
 
 for (const language of ['en', 'ru', 'fa', 'zh']) {
@@ -208,4 +208,17 @@ test('query notifications and mutation errors share descriptions; unauthorized e
     maintenance.setPanelMaintenance(false)
     exports.errorHandler(new RequestError({ code: 'ERR_NETWORK' }), 'real-network')
     assert.equal(messages.length, 4)
+})
+
+
+test('deferred error notifications use the current locale without exposing server diagnostics', () => {
+    const h = handler('en');
+    const raw = { isAxiosError: true, response: { status: 409, data: { errorCode: 'A272', message: 'PRIVATE_SERVER_DIAGNOSTIC' } } };
+    const error = new h.RequestError(raw);
+    for (const language of ['ru', 'en', 'fa', 'zh']) {
+        h.setLanguage(language);
+        const locale = JSON.parse(fs.readFileSync(path.join(__dirname, '../public/locales', language, 'remnawave.json'), 'utf8'));
+        assert.equal(error.message, locale.requestErrors.codes.A272 + ' [A272]');
+        assert.ok(!error.message.includes('PRIVATE_SERVER_DIAGNOSTIC'));
+    }
 })

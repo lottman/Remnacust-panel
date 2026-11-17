@@ -113,7 +113,7 @@ export class NodesQueuesService implements OnApplicationBootstrap {
         nodeUuid: string,
         work: (assertOwnership: () => Promise<void>) => Promise<T>,
     ): Promise<T> {
-        return this.deliveries.withLifecycle(nodeUuid, work);
+        return this.deliveries.withDeletion(nodeUuid, work);
     }
 
     public async stopNode(payload: { nodeUuid: string; isNeedToBeDeleted: boolean }) {

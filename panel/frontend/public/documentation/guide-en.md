@@ -356,6 +356,10 @@ Enable/disable controls the node state in the panel. Restart reapplies Xray oper
 
 Selecting multiple nodes shows the changed fields in confirmation. Before switching profiles, verify certificates, listen addresses and ports on each server. After applying, inspect health on every selected node rather than only the first row.
 
+### Deleting an unreachable node
+
+Deleting the record does not require a connection to the node server. After confirmation, the panel waits for the current management operation and prevents new deliveries to this node. Waiting may take up to 130 seconds while an earlier lease expires. Wait for the result: success means the database record was deleted.
+
 ### Changing an active port
 
 Compatible changes apply through the core without restarting its process. From Node 1.1.21, an ordinary profile update with the exact native port-or-transport rejection validates the configuration and automatically restarts Xray only. Failed startup restores the previous private checkpoint and working configuration. Connections may briefly drop. Timeouts, unknown replies and damaged checkpoints do not authorize automatic restart. Strict requireLiveApply and managed port plans retain their contract: such a rejection never becomes a hidden full restart. Updating the container or core binary can also interrupt connections.

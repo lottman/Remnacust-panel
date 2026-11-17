@@ -3,6 +3,28 @@ const languages = ['ru', 'en', 'fa', 'zh']
 // Keep scope and units identical in all four operator guides.
 const sections = [
     [
+        'node-actions',
+        'node-delete-unreachable',
+        [
+            [
+                'Удаление недоступной ноды',
+                'Для удаления записи не требуется связь с сервером ноды. После подтверждения панель ждёт завершения текущей операции управления и не запускает новые доставки для этой ноды. Ожидание может занять до 130 секунд, если прежняя блокировка ещё не истекла. Дождитесь результата: успешное уведомление означает удаление записи из базы.'
+            ],
+            [
+                'Deleting an unreachable node',
+                'Deleting the record does not require a connection to the node server. After confirmation, the panel waits for the current management operation and prevents new deliveries to this node. Waiting may take up to 130 seconds while an earlier lease expires. Wait for the result: success means the database record was deleted.'
+            ],
+            [
+                'حذف نود غیرقابل دسترس',
+                'برای حذف رکورد نیازی به اتصال به سرور نود نیست. پس از تأیید، پنل منتظر پایان عملیات مدیریتی جاری می‌ماند و ارسال جدید برای این نود را متوقف می‌کند. انتظار برای پایان قفل قبلی ممکن است تا ۱۳۰ ثانیه طول بکشد. منتظر نتیجه بمانید: موفقیت یعنی رکورد از پایگاه داده حذف شده است.'
+            ],
+            [
+                '删除无法访问的节点',
+                '删除记录无需连接节点服务器。确认后，面板会等待当前管理操作结束，并阻止向该节点发送新的配置。等待旧锁到期可能需要最多 130 秒。请等待结果；成功通知表示数据库记录已删除。'
+            ]
+        ]
+    ],
+    [
         'hosts',
         'hosts-response-rule-inclusion',
         [

@@ -13,6 +13,10 @@ import type { NodesEntity } from '@modules/nodes/entities/nodes.entity';
 
 const DELIVERY_LEASE_MS = 120000;
 const DELIVERY_RENEW_MS = 20000;
+const DELETE_WAIT_MS = 130000;
+const DELETE_INTENT_MS = 240000;
+const ACQUIRE_DELIVERY = `local deleting=redis.call('GET',KEYS[2]); if ARGV[3]~='' and deleting~=ARGV[3] then return -1 end; if ARGV[3]=='' and deleting then return nil end; return redis.call('SET',KEYS[1],ARGV[1],'PX',ARGV[2],'NX')`;
+
 const DELIVERY_REDIS_TIMEOUT_MS = 5000;
 const RENEW_DELIVERY =
     "if redis.call('GET',KEYS[1])==ARGV[1] then return redis.call('PEXPIRE',KEYS[1],ARGV[2]) end return 0";
@@ -73,14 +77,59 @@ export class PortPlanLeaseService {
         return command.promise;
     }
 
-    async withLifecycle<T>(
+    withLifecycle<T>(
         nodeUuid: string,
         work: (assert: () => Promise<void>) => Promise<T>,
     ): Promise<T> {
+        return this.runLifecycle(nodeUuid, work);
+    }
+
+    async withDeletion<T>(
+        nodeUuid: string,
+        work: (assert: () => Promise<void>) => Promise<T>,
+        waitMs = DELETE_WAIT_MS,
+    ): Promise<T> {
+        const key = `remnacust:node-deleting:${nodeUuid}`;
+        const owner = randomUUID();
+        if ((await this.redisCommand('set', key, owner, 'PX', DELETE_INTENT_MS, 'NX')) !== 'OK')
+            throw new NodeDeliveryBusyError('Node deletion is already pending');
+        try {
+            return await this.runLifecycle(nodeUuid, work, owner, waitMs);
+        } finally {
+            await this.redisCommand('eval', RELEASE_DELIVERY, 1, key, owner).catch(() =>
+                this.logger.warn(`Node ${nodeUuid}: deletion ownership will expire`),
+            );
+        }
+    }
+
+    private async runLifecycle<T>(
+        nodeUuid: string,
+        work: (assert: () => Promise<void>) => Promise<T>,
+        deletionOwner = '',
+        waitMs = 0,
+    ): Promise<T> {
         const key = `remnacust:node-delivery:${nodeUuid}`;
         const owner = randomUUID();
-        if ((await this.redisCommand('set', key, owner, 'PX', DELIVERY_LEASE_MS, 'NX')) !== 'OK')
-            throw new NodeDeliveryBusyError('Node delivery is already running');
+        const deadline = performance.now() + waitMs;
+        for (;;) {
+            const acquired = await this.redisCommand(
+                'eval',
+                ACQUIRE_DELIVERY,
+                2,
+                key,
+                `remnacust:node-deleting:${nodeUuid}`,
+                owner,
+                DELIVERY_LEASE_MS,
+                deletionOwner,
+            );
+            if (acquired === 'OK') break;
+            if (acquired === -1) throw new NodeDeliveryLostError('Node deletion ownership changed');
+            if (!deletionOwner || performance.now() >= deadline)
+                throw new NodeDeliveryBusyError('Node management operation is still running');
+            await new Promise<void>((resolve) =>
+                setTimeout(resolve, Math.min(200, Math.max(0, deadline - performance.now()))),
+            );
+        }
         let lost = false;
         let renewal: Promise<void> | undefined;
         const assert = async () => {

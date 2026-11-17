@@ -78,6 +78,7 @@ export interface IResolveProxyConfigOptions {
         respondWithRemarks?: string[];
     };
     excludeHostsByTags?: ISRRContext['excludeHostsByTags'];
+    matchedRuleName?: ISRRContext['matchedRuleName'];
 }
 
 @Injectable()
@@ -104,6 +105,17 @@ export class ResolveProxyConfigService {
 
         if (subscriptionSettings === null) {
             return [];
+        }
+
+        if (options.matchedRuleName) {
+            options = {
+                ...options,
+                hosts: options.hosts.filter(
+                    (host) =>
+                        !host.includeInSrrRules?.length ||
+                        host.includeInSrrRules.includes(options.matchedRuleName!),
+                ),
+            };
         }
 
         const custom = !this.xrayModes || (await this.xrayModes.isCustom());

@@ -148,6 +148,7 @@ export declare namespace GetHostsCommand {
                     to: z.ZodString;
                 }, z.core.$strip>], "op">>>;
             }, z.core.$strip>;
+            includeInSrrRules: z.ZodDefault<z.ZodArray<z.ZodString>>;
             internalSquads: z.ZodObject<{
                 mode: z.ZodEnum<{
                     readonly EXCLUDE: 'EXCLUDE';

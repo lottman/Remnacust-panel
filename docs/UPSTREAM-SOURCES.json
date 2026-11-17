@@ -1,45 +1,45 @@
 {
-  "checkedAt": "2026-11-01T18:29:47.440233+00:00",
+  "checkedAt": "2026-11-17",
   "components": [
     {
       "component": "backend",
       "repository": "https://github.com/remnawave/backend",
-      "version": "3.4.7",
-      "commit": "52321390ac4efe04a610811446d87335f1d10a93",
-      "checkedAt": "2026-11-01T18:29:47.440233+00:00",
+      "version": "3.4.11",
+      "commit": "6853666801d6d1925b6aec55824106100485777a",
+      "checkedAt": "2026-11-17",
       "status": "integrated-and-released",
-      "ref": "refs/tags/3.4.7",
-      "tagEvidence": "https://api.github.com/repos/remnawave/backend/git/ref/tags/3.4.7",
-      "releaseEvidence": "https://github.com/remnawave/backend/releases/tag/3.4.7"
+      "ref": "refs/tags/3.4.11",
+      "tagEvidence": "https://api.github.com/repos/remnawave/backend/git/ref/tags/3.4.11",
+      "releaseEvidence": "https://github.com/remnawave/backend/releases/tag/3.4.11"
     },
     {
       "component": "frontend",
       "repository": "https://github.com/remnawave/frontend",
-      "version": "3.4.7",
-      "commit": "dcb1affbfc42793799caecee988fd20ac0a270b7",
-      "checkedAt": "2026-11-01T18:29:47.440233+00:00",
+      "version": "3.4.11",
+      "commit": "20fabab0d788af97273d646614c6b9980f6f29d1",
+      "checkedAt": "2026-11-17",
       "status": "integrated-and-released",
-      "ref": "refs/tags/3.4.7",
-      "tagEvidence": "https://api.github.com/repos/remnawave/frontend/git/ref/tags/3.4.7",
-      "releaseEvidence": "https://github.com/remnawave/frontend/releases/tag/3.4.7"
+      "ref": "refs/tags/3.4.11",
+      "tagEvidence": "https://api.github.com/repos/remnawave/frontend/git/ref/tags/3.4.11",
+      "releaseEvidence": "https://github.com/remnawave/frontend/releases/tag/3.4.11"
     },
     {
       "component": "node",
       "repository": "https://github.com/remnawave/node",
-      "version": "3.4.3",
-      "commit": "2ad154f8f1016c94c1872f337268af878af61b18",
-      "checkedAt": "2026-11-01T18:29:47.440233+00:00",
+      "version": "3.4.6",
+      "commit": "52d0f1c00c23bf99912687cb3b75faffb2d3bffb",
+      "checkedAt": "2026-11-17",
       "status": "integrated-and-released",
-      "ref": "refs/tags/3.4.3",
-      "tagEvidence": "https://api.github.com/repos/remnawave/node/git/ref/tags/3.4.3",
-      "releaseEvidence": "https://github.com/remnawave/node/releases/tag/3.4.3"
+      "ref": "refs/tags/3.4.6",
+      "tagEvidence": "https://api.github.com/repos/remnawave/node/git/ref/tags/3.4.6",
+      "releaseEvidence": "https://github.com/remnawave/node/releases/tag/3.4.6"
     },
     {
       "component": "subscription-page",
       "repository": "https://github.com/remnawave/subscription-page",
       "version": "8.0.1",
       "commit": "9045728e6e197a2581c6da40f4f92b170a8bad53",
-      "checkedAt": "2026-11-01T18:29:47.440233+00:00",
+      "checkedAt": "2026-11-17",
       "status": "integrated-and-released",
       "ref": "refs/tags/8.0.1",
       "tagEvidence": "https://api.github.com/repos/remnawave/subscription-page/git/ref/tags/8.0.1",
@@ -54,17 +54,17 @@
     {
       "component": "xray",
       "repository": "https://github.com/XTLS/Xray-core",
-      "version": "v26.10.31",
-      "commit": "a4a3dff5b20c2faae567b742c172c7b95e75c083",
-      "checkedAt": "2026-11-01T18:29:47.440233+00:00",
-      "status": "integrated",
-      "ref": "refs/tags/v26.10.31",
+      "version": "v26.11.9",
+      "commit": "676eaf66f8f05d4d558ee7a74b4736623d3feeb9",
+      "checkedAt": "2026-11-17",
+      "status": "integrated-and-released",
+      "ref": "refs/tags/v26.11.9",
       "prerelease": false,
-      "tagEvidence": "https://api.github.com/repos/XTLS/Xray-core/git/ref/tags/v26.10.31",
-      "releaseEvidence": "https://github.com/XTLS/Xray-core/releases/tag/v26.10.31"
+      "tagEvidence": "https://api.github.com/repos/XTLS/Xray-core/git/ref/tags/v26.11.9",
+      "releaseEvidence": "https://github.com/XTLS/Xray-core/releases/tag/v26.11.9"
     }
   ],
-  "releaseStatus": "verified-for-v1.2.119",
+  "releaseStatus": "verified-for-v1.2.178",
   "updatePolicy": "published-official-releases-only",
   "dependencySecurityUpdates": [
     {

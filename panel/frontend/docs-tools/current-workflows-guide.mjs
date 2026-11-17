@@ -3,6 +3,28 @@ const languages = ['ru', 'en', 'fa', 'zh']
 // Keep scope and units identical in all four operator guides.
 const sections = [
     [
+        'hosts',
+        'hosts-response-rule-inclusion',
+        [
+            [
+                'Хосты по правилу ответа подписки',
+                'В параметрах хоста выберите имена правил ответа подписки, для которых он должен выдаваться. Пустой список разрешает все правила. Имя должно точно совпадать с именем правила; для прямой выдачи используется RAW. После переименования правила обновите список хоста. Эта настройка не отменяет права сквадов, отключение хоста, квоты и ограничения формата. Отфильтрованный хост не возвращается через автовыбор. Сохраните изменения и обновите подписку в клиенте.'
+            ],
+            [
+                'Hosts by subscription response rule',
+                'In the host options, select response-rule names that may include this host. An empty list allows all rules. Names must match exactly; direct output uses RAW. Update the host list after renaming a rule. This setting never grants squad access or bypasses disabled hosts, quotas or format restrictions. Autoselect cannot restore a filtered host. Save and refresh the client subscription.'
+            ],
+            [
+                'میزبان‌ها بر اساس قانون پاسخ اشتراک',
+                'در گزینه‌های میزبان، نام قوانین پاسخ مجاز را انتخاب کنید. فهرست خالی همه قوانین را مجاز می‌کند. نام‌ها باید دقیقاً یکسان باشند؛ خروجی مستقیم از RAW استفاده می‌کند. پس از تغییر نام قانون، فهرست میزبان را به‌روز کنید. این تنظیم دسترسی گروه، غیرفعال بودن میزبان، سهمیه یا محدودیت قالب را دور نمی‌زند. انتخاب خودکار میزبان حذف‌شده را برنمی‌گرداند. ذخیره کنید و اشتراک کلاینت را تازه کنید.'
+            ],
+            [
+                '按订阅响应规则选择主机',
+                '在主机选项中选择允许包含该主机的响应规则名称。空列表允许所有规则。名称须完全匹配；直接输出使用 RAW。规则改名后请更新主机列表。该设置不会绕过小队权限、主机禁用状态、配额或格式限制。自动选择也不会重新加入被过滤的主机。保存后在客户端更新订阅。'
+            ]
+        ]
+    ],
+    [
         'subscription-settings',
         'subscription-settings-active-expiry-remarks',
         [

@@ -1,6 +1,6 @@
 {
   "name": "@remnacust/backend",
-  "version": "1.1.7.134",
+  "version": "1.1.7.135",
   "private": false,
   "description": "Remnacust Panel Backend",
   "homepage": "https://github.com/lottman/Remnacust-panel",
@@ -59,7 +59,7 @@
     "@nestjs/schedule": "12.0.4",
     "@nestjs/swagger": "12.1.2",
     "@nestjs/terminus": "12.1.0",
-    "@noble/curves": "^2.3.0",
+    "@noble/curves": "2.4.0",
     "@noble/post-quantum": "^0.7.1",
     "@peculiar/webcrypto": "2.0.0",
     "@peculiar/x509": "3.1.0",

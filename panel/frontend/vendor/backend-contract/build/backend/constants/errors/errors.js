@@ -1370,4 +1370,9 @@ exports.ERRORS = {
         message: 'Address discovery is temporarily busy; try again',
         httpCode: 429,
     },
+    NODE_DELETE_BUSY: {
+        code: 'A272',
+        message: 'Node configuration delivery is in progress; retry deletion after it completes',
+        httpCode: 409,
+    },
 };

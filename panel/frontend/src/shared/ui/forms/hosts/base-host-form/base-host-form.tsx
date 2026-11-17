@@ -60,6 +60,7 @@ export const BaseHostForm = <
         subscriptionTemplates,
         hostTags,
         removeRequiredFields,
+        responseRules = [],
         hostUuid
     } = props
 
@@ -83,6 +84,11 @@ export const BaseHostForm = <
         form.getInputProps('internalSquads.mode')
 
     const hostJsonFields = useMemo(() => getHostJsonFields(t), [t])
+
+    const srrRuleNames = useMemo(
+        () => [...new Set(responseRules.map((rule) => rule.name))],
+        [responseRules]
+    )
 
     const securityLayerLabels = {
         [SECURITY_LAYERS.TLS]: t('base-host-form.tls-transport-layer-security'),
@@ -229,6 +235,7 @@ export const BaseHostForm = <
         patternHoverCard,
         resolveSelectedRawInbound,
         securityLayerLabels,
+        srrRuleNames,
         subscriptionTemplates,
         tagsInputProps
     }

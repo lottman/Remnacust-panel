@@ -728,6 +728,10 @@ If the panel loses contact with a node, an authorized host remains in the subscr
 
 Select hosts, choose the fields to update and check the recipients. Selecting the tags field and leaving it empty clears tags; leaving the field unselected preserves existing tags. Record order determines subscription order except where shuffling is enabled. After changing an inbound, visibility or squad, refresh the subscription in a client and check that the intended connection is present.
 
+### Hosts by subscription response rule
+
+In the host options, select response-rule names that may include this host. An empty list allows all rules. Names must match exactly; direct output uses RAW. Update the host list after renaming a rule. This setting never grants squad access or bypasses disabled hosts, quotas or format restrictions. Autoselect cannot restore a filtered host. Save and refresh the client subscription.
+
 ### Restricted host latency
 
 An HTTP check must reach an allowed website through the host itself. In Allow only mode, the form shows a copyable URL for the first allowed domain. For Happ with a real Provider ID, the panel selects a common allowed URL for all delivered visible hosts, preserving a suitable configured URL and HTTP method. Explicit TCP and ICMP choices are unchanged. When no shared domain exists or only IP/CIDR destinations are allowed, it falls back to TCP; TCP confirms server reachability, not VPN authorization. In INCY, choose HTTP/INCY ping and this URL in subscription settings: ordinary HTTP headers cannot set its probe URL; automatic configuration requires INCY’s own Premium API. Website permissions are not widened and the check never goes through DIRECT. The website must respond to the selected HTTP method; redirects to a denied domain remain blocked.

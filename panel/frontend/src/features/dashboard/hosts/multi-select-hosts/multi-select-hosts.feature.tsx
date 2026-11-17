@@ -36,6 +36,7 @@ import {
     useBulkDisableHosts
 } from '@shared/api/hooks/hosts/hosts.mutation.hooks'
 import { useUiText } from '@shared/i18n/interface-text'
+import { filterByTag } from '@shared/ui/tag-filter-bar/filter-by-tag'
 import { resolveHostInbound } from '@shared/utils/host-inbound'
 
 import { useHostsActiveTag } from '@entities/dashboard/view-preferences-store'
@@ -111,7 +112,7 @@ export const MultiSelectHostsFeature = (props: IProps) => {
     const isBusy = isCloning || isDeleting || isEnabling || isDisabling
 
     const selectAllHosts = () => {
-        setSelectedHosts(hosts?.map((host) => host.uuid) || [])
+        setSelectedHosts(filterByTag(hosts ?? [], activeTag).map((host) => host.uuid))
     }
 
     const clearSelection = () => {

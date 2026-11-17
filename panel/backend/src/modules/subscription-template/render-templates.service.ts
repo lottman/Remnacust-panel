@@ -46,6 +46,7 @@ export class RenderTemplatesService {
             hostsOverrides,
             fallbackOptions,
             excludeHostsByTags: srrContext.excludeHostsByTags,
+            matchedRuleName: srrContext.matchedRuleName,
             activeExpiryPlan: params.activeExpiryPlan,
         });
         if (params.onResolvedHosts) {
@@ -181,6 +182,7 @@ export class RenderTemplatesService {
                     hostsOverrides,
                     fallbackOptions,
                     excludeHostsByTags: srrContext.excludeHostsByTags,
+                    matchedRuleName: srrContext.matchedRuleName,
                 };
                 let candidates: Promise<ResolvedProxyConfig[]> | undefined;
                 const autoselectCandidates = () =>
@@ -371,6 +373,7 @@ export class RenderTemplatesService {
             hostsOverrides,
             fallbackOptions,
             activeExpiryPlan: options.activeExpiryPlan,
+            matchedRuleName: 'RAW',
         });
     }
 }

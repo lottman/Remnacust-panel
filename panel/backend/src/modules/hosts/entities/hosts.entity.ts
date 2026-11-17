@@ -67,6 +67,7 @@ export class HostsEntity implements Hosts {
     }[];
 
     mapper: THostMapper;
+    includeInSrrRules: string[];
 
     internalSquadsMode: TInternalSquadsMode;
     internalSquads: {

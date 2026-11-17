@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-11-16T20:52:25.008Z",
-  "backendVersion": "1.1.7.134",
+  "generatedAt": "2026-11-17T12:42:27.991Z",
+  "backendVersion": "1.1.7.135",
   "coreVersion": "1.1.22",
-  "nodeVersion": "1.1.38",
-  "upstreamPanelVersion": "3.4.7",
+  "nodeVersion": "1.1.39",
+  "upstreamPanelVersion": "3.4.11",
   "upstreamBackendPatches": [
     {
       "commit": "dec0fcca4e47f13e835ebe7466dab68911d03273",
@@ -66,18 +66,18 @@
       }
     }
   ],
-  "upstreamBackendCommit": "52321390ac4efe04a610811446d87335f1d10a93",
-  "upstreamFrontendCommit": "dcb1affbfc42793799caecee988fd20ac0a270b7",
-  "upstreamNodeCommit": "2ad154f8f1016c94c1872f337268af878af61b18",
+  "upstreamBackendCommit": "6853666801d6d1925b6aec55824106100485777a",
+  "upstreamFrontendCommit": "20fabab0d788af97273d646614c6b9980f6f29d1",
+  "upstreamNodeCommit": "52d0f1c00c23bf99912687cb3b75faffb2d3bffb",
   "upstreamCorePatchCommit": null,
-  "upstreamNodeVersion": "3.4.3",
+  "upstreamNodeVersion": "3.4.6",
   "upstreamCoreVersion": "26.11.9",
   "upstreamCoreCommit": "676eaf66f8f05d4d558ee7a74b4736623d3feeb9",
   "upstreamCorePrerelease": false,
   "articles": 58,
   "endpoints": 249,
   "apiTokenEndpoints": 221,
-  "controls": 240,
-  "sourceFiles": 3971,
-  "specSha256": "72235cfd522897bac30d4d6eea69feb03b2487270751a83cae7442bccf9b0a2b"
+  "controls": 242,
+  "sourceFiles": 3974,
+  "specSha256": "bf015dbf07ac4685b3c5c9a929800572db8c2f538929b48a78d19ab794c321c8"
 }

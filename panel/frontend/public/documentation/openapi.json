@@ -20225,9 +20225,9 @@
     }
   },
   "info": {
-    "title": "Remnacust API v1.1.7.134",
+    "title": "Remnacust API v1.1.7.135",
     "description": "\nRemnacust manages Xray users, nodes, configuration profiles and subscriptions.\n\n## Resources\n* https://t.me/lottman\n* https://github.com/lottman/Remnacust-panel\n",
-    "version": "1.1.7.134",
+    "version": "1.1.7.135",
     "contact": {},
     "license": {
       "name": "AGPL-3.0",
@@ -38413,6 +38413,12 @@
             "title": "Host Mapper",
             "markdownDescription": "Rewrites the config generated for this host, per client type.\n\nOperations run **after** the generator has finished, so they can change or remove anything it produced.\n\nThe source for `copy` is the raw inbound of the config profile this host belongs to, or the host itself when the path starts with `$host.`.\n\n> `to` is never checked against the target client. A misspelled key is written exactly like a real one."
           },
+          "includeInSrrRules": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "internalSquads": {
             "type": "object",
             "properties": {
@@ -39813,6 +39819,13 @@
                 },
                 "title": "Host Mapper",
                 "markdownDescription": "Rewrites the config generated for this host, per client type.\n\nOperations run **after** the generator has finished, so they can change or remove anything it produced.\n\nThe source for `copy` is the raw inbound of the config profile this host belongs to, or the host itself when the path starts with `$host.`.\n\n> `to` is never checked against the target client. A misspelled key is written exactly like a real one."
+              },
+              "includeInSrrRules": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
               },
               "internalSquads": {
                 "type": "object",
@@ -41234,6 +41247,12 @@
             "title": "Host Mapper",
             "markdownDescription": "Rewrites the config generated for this host, per client type.\n\nOperations run **after** the generator has finished, so they can change or remove anything it produced.\n\nThe source for `copy` is the raw inbound of the config profile this host belongs to, or the host itself when the path starts with `$host.`.\n\n> `to` is never checked against the target client. A misspelled key is written exactly like a real one."
           },
+          "includeInSrrRules": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "internalSquads": {
             "type": "object",
             "properties": {
@@ -42633,6 +42652,13 @@
                   },
                   "title": "Host Mapper",
                   "markdownDescription": "Rewrites the config generated for this host, per client type.\n\nOperations run **after** the generator has finished, so they can change or remove anything it produced.\n\nThe source for `copy` is the raw inbound of the config profile this host belongs to, or the host itself when the path starts with `$host.`.\n\n> `to` is never checked against the target client. A misspelled key is written exactly like a real one."
+                },
+                "includeInSrrRules": {
+                  "default": [],
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
                 },
                 "internalSquads": {
                   "type": "object",
@@ -44159,6 +44185,12 @@
             },
             "title": "Host Mapper",
             "markdownDescription": "Rewrites the config generated for this host, per client type.\n\nOperations run **after** the generator has finished, so they can change or remove anything it produced.\n\nThe source for `copy` is the raw inbound of the config profile this host belongs to, or the host itself when the path starts with `$host.`.\n\n> `to` is never checked against the target client. A misspelled key is written exactly like a real one."
+          },
+          "includeInSrrRules": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "internalSquads": {
             "type": "object",

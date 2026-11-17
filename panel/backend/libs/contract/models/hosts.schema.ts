@@ -77,6 +77,7 @@ export const HostsSchema = z.object({
     xrayJsonTemplateUuid: z.uuid().nullable(),
     excludeFromSubscriptionTypes: z.array(z.enum(SUBSCRIPTION_TEMPLATE_TYPE)),
     mapper: HostMapperSchema,
+    includeInSrrRules: z.array(z.string()).default([]),
 
     internalSquads: z.object({
         mode: z.enum(INTERNAL_SQUADS_MODE),

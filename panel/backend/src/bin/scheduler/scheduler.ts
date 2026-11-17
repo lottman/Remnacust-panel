@@ -9,7 +9,6 @@ import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import timezone from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
-import { json } from 'express';
 import helmet from 'helmet';
 import { utilities as nestWinstonModuleUtilities, WinstonModule } from 'nest-winston';
 import { createLogger } from 'winston';
@@ -64,12 +63,11 @@ const logger = createLogger({
 
 async function bootstrap(): Promise<void> {
     const app = await NestFactory.create(SchedulerRootModule, {
+        bodyParser: false,
         logger: WinstonModule.createLogger({
             instance: logger,
         }),
     });
-
-    app.use(json({ limit: '100mb' }));
 
     const config = app.get(TypedConfigService);
 

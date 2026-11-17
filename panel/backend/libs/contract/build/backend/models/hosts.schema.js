@@ -71,6 +71,7 @@ exports.HostsSchema = zod_1.z.object({
     xrayJsonTemplateUuid: zod_1.z.uuid().nullable(),
     excludeFromSubscriptionTypes: zod_1.z.array(zod_1.z.enum(constants_1.SUBSCRIPTION_TEMPLATE_TYPE)),
     mapper: host_mapper_1.HostMapperSchema,
+    includeInSrrRules: zod_1.z.array(zod_1.z.string()).default([]),
     internalSquads: zod_1.z.object({
         mode: zod_1.z.enum(hosts_1.INTERNAL_SQUADS_MODE),
         squads: zod_1.z.array(zod_1.z.uuid()),

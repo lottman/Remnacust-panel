@@ -6,6 +6,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 
 import { TypedConfigService } from '@common/config/app-config';
+import { hasValidJwtIdentity } from '@common/utils/admin-session';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'registeredUserJWT') {
@@ -19,11 +20,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'registeredUserJWT')
     }
 
     async validate(JWTPrivatePayload: IJWTAuthPayload): Promise<IJWTAuthPayload> {
-        if (!JWTPrivatePayload || typeof JWTPrivatePayload !== 'object' ||
-            typeof JWTPrivatePayload.uuid !== 'string' || !JWTPrivatePayload.uuid ||
-            !(Number.isSafeInteger(JWTPrivatePayload.exp) ||
-                (JWTPrivatePayload.role === 'API' && JWTPrivatePayload.permanent === true &&
-                    JWTPrivatePayload.exp === undefined))) {
+        if (!hasValidJwtIdentity(JWTPrivatePayload)) {
             throw new UnauthorizedException();
         }
         return JWTPrivatePayload;

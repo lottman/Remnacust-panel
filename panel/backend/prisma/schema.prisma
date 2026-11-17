@@ -372,6 +372,7 @@ model Hosts {
   keepSniBlank                 Boolean  @default(false) @map("keep_sni_blank")
   excludeFromSubscriptionTypes String[] @default([]) @map("exclude_from_subscription_types")
   mapper                       Json     @default("{}") @map("mapper")
+  includeInSrrRules            String[] @default([]) @map("include_in_srr_rules")
   userTrafficLimitBytes        BigInt?  @map("user_traffic_limit_bytes")
   trafficLimitResetValue       Int      @default(0) @map("traffic_limit_reset_value")
   trafficLimitResetUnit        String   @default("DAYS") @map("traffic_limit_reset_unit")

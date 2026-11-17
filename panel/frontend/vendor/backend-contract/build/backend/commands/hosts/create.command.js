@@ -73,6 +73,7 @@ var CreateHostCommand;
             .optional(zod_1.z.array(zod_1.z.enum(constants_1.SUBSCRIPTION_TEMPLATE_TYPE)))
             .describe('Optional. Subscription types from which the host will be excluded from.'),
         mapper: models_1.HostMapperSchema.optional(),
+        includeInSrrRules: zod_1.z.optional(zod_1.z.array(zod_1.z.string())),
         internalSquads: models_1.HostInternalSquadsSchema.optional(),
     });
     CreateHostCommand.ResponseSchema = host_response_1.HostResponseSchema;

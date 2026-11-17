@@ -13,6 +13,7 @@ import {
     useGetHostTags,
     useGetInternalSquads,
     useGetNodes,
+    useGetSubscriptionSettings,
     useGetSubscriptionTemplates,
     useUpdateManyHosts
 } from '@shared/api/hooks'
@@ -43,6 +44,7 @@ export const EditManyHostsDrawer = NiceModal.create((props: IProps) => {
     const { data: internalSquads } = useGetInternalSquads()
     const { data: hostTags } = useGetHostTags()
 
+    const subscriptionSettingsQuery = useGetSubscriptionSettings()
     const form = useForm<UpdateManyHostsCommand.RequestBody>({
         name: 'edit-many-hosts-form',
         mode: 'uncontrolled',
@@ -199,6 +201,7 @@ export const EditManyHostsDrawer = NiceModal.create((props: IProps) => {
                     isBulkEdit
                     isSubmitting={isUpdateManyHostsPending}
                     nodes={nodes}
+                    responseRules={subscriptionSettingsQuery.data?.responseRules?.rules ?? []}
                     removeRequiredFields={true}
                     subscriptionTemplates={templates.templates}
                 />

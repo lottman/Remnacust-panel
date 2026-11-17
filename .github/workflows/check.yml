@@ -63,7 +63,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           repository: lottman/Remnacust-node
-          ref: 2de09aadf78d775b7cdd7e9f3e189b72601eb028
+          ref: 4af67cd70b4a64b783959ceef379904931d66d1d
           path: node-repository
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:

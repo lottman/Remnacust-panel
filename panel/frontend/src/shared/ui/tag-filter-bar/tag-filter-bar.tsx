@@ -3,10 +3,11 @@ import { useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbStack2, TbTag, TbTagOff } from 'react-icons/tb'
 
+import { NO_TAG } from './filter-by-tag'
 import classes from './tag-filter-bar.module.css'
 import { TagScroller } from './tag-scroller'
 
-export const NO_TAG = '__no_tag__'
+export { NO_TAG, filterByTag } from './filter-by-tag'
 
 interface ITaggable {
     tags?: null | string[]
@@ -125,14 +126,4 @@ export function TagFilterBar(props: IProps) {
             </Group>
         </TagScroller>
     )
-}
-
-export function filterByTag<T extends { tags?: null | string[] }>(
-    items: T[],
-    activeTag: null | string
-): T[] {
-    if (activeTag === null) return items
-    if (activeTag === NO_TAG) return items.filter((item) => (item.tags ?? []).length === 0)
-
-    return items.filter((item) => (item.tags ?? []).includes(activeTag))
 }

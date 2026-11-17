@@ -105,6 +105,7 @@ export type Hosts = {
     keepSniBlank: Generated<boolean>;
     excludeFromSubscriptionTypes: Generated<string[]>;
     mapper: Generated<object>;
+    includeInSrrRules: Generated<string[]>;
     userTrafficLimitBytes: bigint | null;
     trafficLimitResetValue: Generated<number>;
     trafficLimitResetUnit: Generated<string>;

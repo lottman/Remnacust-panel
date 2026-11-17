@@ -71,6 +71,7 @@ export class HostResponseModel {
 
     public excludeFromSubscriptionTypes: TSubscriptionTemplateType[];
     public mapper: THostMapper;
+    public includeInSrrRules: string[];
     public internalSquads: {
         mode: TInternalSquadsMode;
         squads: string[];
@@ -144,5 +145,6 @@ export class HostResponseModel {
         this.xrayJsonTemplateUuid = data.xrayJsonTemplateUuid;
         this.excludeFromSubscriptionTypes = data.excludeFromSubscriptionTypes;
         this.mapper = data.mapper;
+        this.includeInSrrRules = data.includeInSrrRules ?? [];
     }
 }

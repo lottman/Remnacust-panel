@@ -10,7 +10,7 @@ import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import timezone from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
-import { json, NextFunction, Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import { utilities as nestWinstonModuleUtilities, WinstonModule } from 'nest-winston';
@@ -24,6 +24,7 @@ import { JwtService } from '@nestjs/jwt';
 import { NestExpressApplication } from '@nestjs/platform-express';
 
 import { TypedConfigService } from '@common/config/app-config/typed-config.service';
+import { JwtDefaultGuard } from '@common/guards/jwt-guards/def-jwt-guard';
 import {
     proxyCheckMiddleware,
     getRealIp,
@@ -82,6 +83,7 @@ const logger = createLogger({
 
 async function bootstrap(): Promise<void> {
     const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+        bodyParser: false,
         logger: WinstonModule.createLogger({
             instance: logger,
         }),
@@ -125,8 +127,6 @@ async function bootstrap(): Promise<void> {
             },
         ),
     );
-    app.use('/api/sub/domains/access', json({ limit: '16kb' }));
-    app.use(boundedJsonParser(config.getOrThrow('APP_SECRET')));
 
     const helmetMiddleware = helmet({
         contentSecurityPolicy: {
@@ -197,6 +197,9 @@ async function bootstrap(): Promise<void> {
         methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
         credentials: false,
     });
+
+    const requestAuth = app.get(JwtDefaultGuard);
+    app.use(boundedJsonParser((request) => requestAuth.authenticateRequest(request)));
 
     app.useGlobalPipes(new ZodValidationPipe());
 

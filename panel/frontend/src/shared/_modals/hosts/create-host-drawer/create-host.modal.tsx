@@ -19,6 +19,7 @@ import {
     useGetHostTags,
     useGetInternalSquads,
     useGetNodes,
+    useGetSubscriptionSettings,
     useGetSubscriptionTemplates
 } from '@shared/api/hooks'
 import { BaseHostForm } from '@shared/ui/forms/hosts/base-host-form'
@@ -48,6 +49,7 @@ export const CreateHostDrawer = NiceModal.create(() => {
     const hostTagsQuery = useGetHostTags()
     const { data: hostTags } = hostTagsQuery
 
+    const subscriptionSettingsQuery = useGetSubscriptionSettings()
     const form = useForm<CreateHostCommand.RequestBody>({
         mode: 'uncontrolled',
         name: 'create-host-form',
@@ -171,6 +173,7 @@ export const CreateHostDrawer = NiceModal.create(() => {
                     internalSquads={internalSquads.internalSquads}
                     isSubmitting={isCreateHostPending}
                     nodes={nodes}
+                    responseRules={subscriptionSettingsQuery.data?.responseRules?.rules ?? []}
                     subscriptionTemplates={templates.templates}
                 />
             )}

@@ -9,6 +9,7 @@ import {
     useGetHostTags,
     useGetInternalSquads,
     useGetNodes,
+    useGetSubscriptionSettings,
     useGetSubscriptionTemplates,
     useUpdateHost
 } from '@shared/api/hooks'
@@ -39,6 +40,7 @@ export const EditHostDrawerContent = (props: IProps) => {
     const hostTagsQuery = useGetHostTags()
     const { data: hostTags } = hostTagsQuery
 
+    const subscriptionSettingsQuery = useGetSubscriptionSettings()
     const form = useForm<UpdateHostCommand.RequestBody>({
         name: 'edit-host-form',
         mode: 'uncontrolled',
@@ -112,6 +114,7 @@ export const EditHostDrawerContent = (props: IProps) => {
                 sockoptParams: stringifyJsonField(host.sockoptParams),
                 finalMask: stringifyJsonField(host.finalMask),
                 mapper: host.mapper,
+                includeInSrrRules: host.includeInSrrRules ?? [],
                 tags: host.tags ?? undefined,
                 isHidden: host.isHidden,
                 overrideSniFromAddress: host.overrideSniFromAddress,
@@ -159,6 +162,7 @@ export const EditHostDrawerContent = (props: IProps) => {
             internalSquads={internalSquads.internalSquads}
             isSubmitting={isUpdateHostPending}
             nodes={nodes}
+            responseRules={subscriptionSettingsQuery.data?.responseRules?.rules ?? []}
             hostUuid={host.uuid}
             subscriptionTemplates={templates.templates}
         />

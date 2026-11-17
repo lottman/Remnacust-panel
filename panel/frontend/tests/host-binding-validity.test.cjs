@@ -224,3 +224,39 @@ test('actual table profile/inbound/status cells show DANGLING only for invalid b
             element.props['aria-label'] === 'interface.dangling-1f52ec3'), name)
     }
 })
+
+
+test('actual select-all action respects active tags, untagged hosts and source order', () => {
+    const hosts = [{ ...host, tags: ['A'] }, { ...host, uuid: otherUuid, tags: ['B'] },
+        { ...host, uuid: profileUuid, tags: [] }, { ...host, uuid: inboundUuid, tags: ['A', 'B'] }]
+    for (const [tag, expected] of [[null, hosts.map(h => h.uuid)], ['A', [hostUuid, inboundUuid]],
+        ['B', [otherUuid, inboundUuid]], ['__no_tag__', [profileUuid]], ['missing', []]]) {
+        let selected
+        const hooks = { useCloneHost: () => ({ mutateAsync: async () => {} }), hostsQueryKeys: { getAllHosts: { queryKey: ['hosts'] } } }
+        for (const name of ['useBulkEnableHosts', 'useBulkDisableHosts', 'useBulkDeleteHosts']) hooks[name] = () => ({ isPending: false })
+        const { MultiSelectHostsFeature } = load('features/dashboard/hosts/multi-select-hosts/multi-select-hosts.feature.tsx', {
+            react: { ...React, useEffect() {}, useState: initial => [initial, () => {}] },
+            'react-i18next': translated, '@shared/i18n/interface-text': uiText,
+            '@tanstack/react-query': { useQueryClient: () => ({}) },
+            '@entities/dashboard/view-preferences-store': { useHostsActiveTag: () => tag },
+            '@shared/_modals/show-modal': {}, '@shared/api/hooks': hooks,
+            '@shared/api/hooks/hosts/hosts.mutation.hooks': hooks
+        })
+        const control = elements(MultiSelectHostsFeature({ configProfiles: [profile], hosts, selectedHosts: [hostUuid],
+            setSelectedHosts: value => { selected = value }, moveSelected() {} }))
+            .find(element => element.type === mantine.Tooltip && element.props.label === 'common.action.select-all')
+        assert.ok(control)
+        control.props.children.props.onClick()
+        assert.deepEqual(selected, expected, String(tag))
+    }
+})
+
+test('tree groups remain sorted while leaf order preserves the operator-defined order', () => {
+    const { buildTree } = load('shared/ui/tree-browser/build-tree.ts')
+    const input = ['Zulu', 'Alpha', 'folder2/Zulu', 'folder2/Alpha', 'folder1/second', 'folder1/first']
+    const tree = buildTree(input, value => value)
+    assert.deepEqual(tree.map(node => node.label), ['folder1', 'folder2', 'Zulu', 'Alpha'])
+    assert.deepEqual(tree[0].children.map(node => node.label), ['second', 'first'])
+    assert.deepEqual(tree[1].children.map(node => node.label), ['Zulu', 'Alpha'])
+    assert.deepEqual(input, ['Zulu', 'Alpha', 'folder2/Zulu', 'folder2/Alpha', 'folder1/second', 'folder1/first'])
+})

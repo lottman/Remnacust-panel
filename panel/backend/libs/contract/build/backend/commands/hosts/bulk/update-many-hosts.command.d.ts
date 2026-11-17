@@ -144,6 +144,7 @@ export declare namespace UpdateManyHostsCommand {
                 to: z.ZodString;
             }, z.core.$strip>], "op">>>;
         }, z.core.$strip>>>;
+        includeInSrrRules: z.ZodOptional<z.ZodOptional<z.ZodArray<z.ZodString>>>;
         internalSquads: z.ZodOptional<z.ZodOptional<z.ZodObject<{
             mode: z.ZodEnum<{
                 readonly EXCLUDE: 'EXCLUDE';

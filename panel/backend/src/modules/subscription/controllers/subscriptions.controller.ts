@@ -185,7 +185,7 @@ export class SubscriptionsController {
     ): Promise<GetRawSubscriptionByShortUuidResponseDto> {
         const result = await this.subscriptionService.getRawSubscriptionByShortUuid(
             shortUuid,
-            withDisabledHosts,
+            withDisabledHosts ?? false,
             extractHwidHeaders(request),
             userAgent,
             ip,

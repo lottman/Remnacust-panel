@@ -1,7 +1,7 @@
 import type { editor } from 'monaco-editor'
 
 import { TemplateEditorActionsFeature } from '@features/dashboard/subscription-templates/template-editor-actions'
-import { Alert, Box, Button, Paper, Tabs } from '@mantine/core'
+import { Alert, Box, Button, Group, Modal, Paper, Tabs } from '@mantine/core'
 import { Monaco } from '@monaco-editor/react'
 import { GetHostsCommand, GetSubscriptionTemplateCommand } from '@remnawave/backend-contract'
 import { decode } from '@stablelib/base64'
@@ -9,7 +9,14 @@ import clsx from 'clsx'
 import { findNodeAtLocation, parseTree } from 'jsonc-parser'
 import { Suspense, useDeferredValue, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { TbArrowsShuffle, TbCode, TbDatabaseImport, TbHistory } from 'react-icons/tb'
+import {
+    TbAlertTriangle,
+    TbArrowsShuffle,
+    TbCode,
+    TbDatabaseImport,
+    TbHistory
+} from 'react-icons/tb'
+import { useBeforeUnload, useBlocker } from 'react-router'
 
 import type { useGetHosts } from '@shared/api/hooks'
 import { useGetSubscriptionSettings } from '@shared/api/hooks/subscription-settings/subscription-settings.query.hooks'
@@ -18,6 +25,7 @@ import { useEditorRecovery } from '@shared/hooks/use-editor-recovery'
 import { fullscreenClasses, FullscreenToggleButton } from '@shared/ui'
 import { CodeEditor, editorClasses, EditorFooter } from '@shared/ui/code-editor'
 import { LoaderModalShared } from '@shared/ui/loader-modal/loader-model.shared'
+import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { hasPageQueryError, PageQueryError } from '@shared/ui/page-query-error'
 import { lazyWithRecovery as lazy } from '@shared/utils/lazy-with-recovery'
 import { preventBackScroll } from '@shared/utils/misc'
@@ -114,6 +122,20 @@ export function SubscriptionTemplateEditorWidget(props: Props) {
     const recovery = useEditorRecovery({ kind: 'template', id: template.uuid, baseline })
     const [value, setValue] = useState(() => baseline)
     const valueRef = useRef(value)
+    const persistedValue = useRef(baseline)
+    useLayoutEffect(() => {
+        persistedValue.current = baseline
+    }, [baseline])
+    const blocker = useBlocker(
+        ({ currentLocation, nextLocation }) =>
+            valueRef.current !== persistedValue.current &&
+            currentLocation.pathname !== nextLocation.pathname
+    )
+    useBeforeUnload((event) => {
+        if (valueRef.current === persistedValue.current) return
+        event.preventDefault()
+        event.returnValue = ''
+    })
     const setDraft = (next: string) => {
         valueRef.current = next
         setValue(next)
@@ -205,6 +227,32 @@ export function SubscriptionTemplateEditorWidget(props: Props) {
 
     return (
         <Box className={clsx(styles.container, isFullscreen && fullscreenClasses.overlay)}>
+            <Modal
+                centered
+                opened={blocker.state === 'blocked'}
+                onClose={() => blocker.reset?.()}
+                title={
+                    <BaseOverlayHeader
+                        iconColor="red"
+                        IconComponent={TbAlertTriangle}
+                        iconSize={20}
+                        iconVariant="soft"
+                        title={t('config-editor.widget.unsaved-changes')}
+                    />
+                }
+            >
+                {t(
+                    'config-editor.widget.your-changes-will-be-lost-if-you-leave-this-page-without-saving'
+                )}
+                <Group justify="flex-end" mt="md">
+                    <Button variant="light" onClick={() => blocker.reset?.()}>
+                        {t('config-editor.widget.stay')}
+                    </Button>
+                    <Button color="red" variant="soft" onClick={() => blocker.proceed?.()}>
+                        {t('config-editor.widget.leave')}
+                    </Button>
+                </Group>
+            </Modal>
             {hostsFailed && <PageQueryError queries={[hostsQuery]} />}
             <Tabs
                 value={activeTab}
@@ -421,11 +469,12 @@ export function SubscriptionTemplateEditorWidget(props: Props) {
                             showEditorTools={activeTab === 'code'}
                             onSaved={async (data, submitted) => {
                                 const next = templateSource(data, editorType)
-                                await recovery.saved(next, submitted).catch(() => {})
+                                persistedValue.current = next
                                 if (valueRef.current === submitted) {
                                     valueRef.current = next
                                     setValue(next)
                                 }
+                                await recovery.saved(next, submitted).catch(() => {})
                             }}
                         />
                         {activeTab !== 'code' && (

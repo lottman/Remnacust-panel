@@ -10,6 +10,11 @@ function harness(template, editorType = 'json') {
     const hostsQuery = { data: [], isError: false };
     let stateIndex, refIndex;
     const recoveries = [];
+    let checkNavigation, beforeUnload;
+    const blocker = { state: 'unblocked' };
+    let resetCount = 0, proceedCount = 0;
+    blocker.reset = () => { resetCount++; blocker.state = 'unblocked'; };
+    blocker.proceed = () => { proceedCount++; blocker.state = 'proceeding'; };
     const components = new Proxy({}, { get: (_, name) => name });
     const mocks = {
         react: {
@@ -22,8 +27,12 @@ function harness(template, editorType = 'json') {
             useMemo: callback => callback(), useDeferredValue: value => value, useLayoutEffect() {}, Suspense: 'Suspense',
         },
         '@shared/api/hooks/subscription-settings/subscription-settings.query.hooks': { useGetSubscriptionSettings: () => settings },
+        'react-router': {
+            useBlocker: predicate => { checkNavigation = predicate; return blocker; },
+            useBeforeUnload: handler => { beforeUnload = handler; },
+        },
         'react-i18next': { useTranslation: () => ({ t: key => key }) },
-        '@mantine/core': { ...Object.fromEntries(['Box', 'Alert', 'Button', 'Paper'].map(name => [name, name])),
+        '@mantine/core': { ...Object.fromEntries(['Box', 'Alert', 'Button', 'Group', 'Modal', 'Paper'].map(name => [name, name])),
             Tabs: Object.assign(() => {}, { List: 'TabList', Tab: 'Tab', Panel: 'TabPanel' }) },
         '@shared/hooks/use-editor-recovery': { useEditorRecovery: () => ({ track() {}, saved: async (...args) => { recoveries.push(args); }, entry: null, status: 'ready' }) },
         '@shared/hooks': { usePseudoFullscreen: () => ({}), useViewportFillHeight: () => ({}) },
@@ -65,6 +74,27 @@ function harness(template, editorType = 'json') {
         recoveries,
         settings,
         hostsQuery,
+        navigate(to) {
+            render();
+            blocker.state = checkNavigation?.({
+                currentLocation: { pathname: '/template/abc' }, nextLocation: { pathname: to },
+            }) ? 'blocked' : 'unblocked';
+            return render().find(element => element.type === 'Modal')?.props.opened === true;
+        },
+        stay() {
+            render().find(element => element.props?.children === 'config-editor.widget.stay').props.onClick();
+            return resetCount;
+        },
+        leave() {
+            render().find(element => element.props?.children === 'config-editor.widget.leave').props.onClick();
+            return proceedCount;
+        },
+        reload() {
+            render();
+            let prevented = false;
+            beforeUnload?.({ preventDefault() { prevented = true; } });
+            return prevented;
+        },
         selectTab(value) { render().find(element => element.props?.keepMounted).props.onChange(value); },
         confirm(data, submitted) { return render().find(element => element.type === 'TemplateEditorActionsFeature').props.onSaved(data, submitted); },
         edit(value) { render().find(element => element.type === 'CodeEditor').props.onChange(value); },
@@ -188,3 +218,31 @@ for (const type of ['XRAY_JSON', 'SINGBOX', 'MIHOMO', 'CLASH', 'STASH']) {
         assert(!panels().some(element => element.type === 'GeofilesPanel'));
     });
 }
+
+test('dirty templates confirm route exits and reload while keeping edits when staying', () => {
+    const h = harness(template());
+    assert.equal(h.navigate('/hosts'), false);
+    h.edit('{unfinished');
+    assert.equal(h.navigate('/template/abc'), false);
+    assert.equal(h.navigate('/hosts'), true);
+    assert.equal(h.stay(), 1);
+    assert.equal(h.render().find(element => element.type === 'CodeEditor').props.value, '{unfinished');
+    assert.equal(h.reload(), true);
+    assert.equal(h.navigate('/template/other'), true);
+    assert.equal(h.leave(), 1);
+});
+
+test('confirmed saves and explicit undo clear the leave warning but newer edits remain protected', async () => {
+    const data = template();
+    const h = harness(data);
+    const saved = '{ "saved": true }';
+    h.edit(saved);
+    await h.confirm({ ...data, draftContent: saved }, saved);
+    assert.equal(h.navigate('/hosts'), false);
+    assert.equal(h.reload(), false);
+    h.edit('{later');
+    await h.confirm({ ...data, draftContent: saved }, saved);
+    assert.equal(h.navigate('/hosts'), true);
+    h.edit(saved);
+    assert.equal(h.reload(), false);
+});

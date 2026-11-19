@@ -61,10 +61,16 @@ function fixture() {
     const rows = [original];
     let profileAvailable = true;
     let profileError;
+    let beforeLock;
     const repository = {
-        findByUUID: async (uuid) => rows.find((row) => row.uuid === uuid),
+        findByUUID: async (uuid) => {
+            const row = rows.find((row) => row.uuid === uuid);
+            return row && structuredClone(row);
+        },
         findAll: async () => rows,
-        lockPolicies: async () => writes.push('lock'),
+        lockPolicies: async () => {
+            await beforeLock?.();
+        },
         shiftViewPositionsAfter: async (position) => writes.push(['shift', position]),
         create: async (row) => {
             row.uuid = 'cloned';
@@ -101,6 +107,9 @@ function fixture() {
         profile,
         writes,
         rows,
+        beforeLock: (work) => {
+            beforeLock = work;
+        },
         missingProfile: () => {
             profileAvailable = false;
         },
@@ -160,4 +169,17 @@ test('profile lookup failure and unknown host never start clone writes', async (
     f.failProfile();
     assert.equal((await f.service.cloneHost('host')).code, contracts.ERRORS.CLONE_HOST_ERROR.code);
     assert.deepEqual(f.writes, []);
+});
+
+test('a waiting clone reads the position committed by the preceding clone', async () => {
+    const f = fixture();
+    f.beforeLock(async () => {
+        f.original.viewPosition += 1;
+    });
+
+    const result = await f.service.cloneHost('host');
+
+    assert.equal(result.isOk, true);
+    assert.equal(result.response.viewPosition, 4);
+    assert.deepEqual(f.writes[0], ['shift', 3]);
 });

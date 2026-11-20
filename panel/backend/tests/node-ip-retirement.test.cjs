@@ -62,7 +62,7 @@ test('scheduled complete inventory removes detached confirmed IPv4 and retains m
     assert.deepEqual(result.ips, [
         { ip: '2001:db8::1', status: 'OUTBOUND' },
         { ip: '198.51.100.5', status: 'RESERVE' },
-        { ip: '192.0.2.2', status: 'INBOUND' },
+        { ip: '192.0.2.2', status: 'UNKNOWN' },
     ]);
 });
 

@@ -30,8 +30,8 @@ test('initial discovery adds canonical IPv4 and IPv6 behind the manual managemen
     ]);
     assert.deepEqual(result.generatedAddresses, ['192.0.2.4', '2001:db8::4']);
     assert.deepEqual(result.ips, [
-        { ip: '192.0.2.4', status: 'INBOUND' },
-        { ip: '2001:db8::4', status: 'INBOUND' },
+        { ip: '192.0.2.4', status: 'UNKNOWN' },
+        { ip: '2001:db8::4', status: 'UNKNOWN' },
     ]);
 });
 
@@ -94,11 +94,20 @@ test('newly found addresses never reactivate management when every existing addr
 
 test('surviving address status and disabled state remain unchanged during refresh', () => {
     const before = base();
-    before.controlAddresses.push({ address: '2001:db8::1', enabled: false });
-    before.ips = [{ ip: '2001:0db8::1', status: 'OUTBOUND' }];
+    before.controlAddresses.push(
+        { address: '2001:db8::1', enabled: false },
+        { address: '192.0.2.8', enabled: true },
+    );
+    before.ips = [
+        { ip: '2001:0db8::1', status: 'OUTBOUND' },
+        { ip: '192.0.2.8', status: 'INBOUND' },
+    ];
     before.ipInventory = { generatedAddresses: ['2001:db8::1'], addresses: ['2001:db8::1'] };
-    const result = plan(before, ['2001:db8::1']);
-    assert.deepEqual(result.ips, [{ ip: '2001:db8::1', status: 'OUTBOUND' }]);
+    const result = plan(before, ['2001:db8::1', '192.0.2.8']);
+    assert.deepEqual(result.ips, [
+        { ip: '2001:db8::1', status: 'OUTBOUND' },
+        { ip: '192.0.2.8', status: 'INBOUND' },
+    ]);
     assert.equal(result.controlAddresses[1].enabled, false);
 });
 
@@ -165,7 +174,7 @@ test('automatic checks add new addresses and retire detached discovered addresse
     before.ips = [{ ip: '192.0.2.1', status: 'OUTBOUND' }];
     before.ipInventory = { addresses: ['192.0.2.1'], generatedAddresses: ['192.0.2.1'] };
     const automatic = plan(before, ['2001:db8::2'], 'scheduled');
-    assert.deepEqual(automatic.ips, [{ ip: '2001:db8::2', status: 'INBOUND' }]);
+    assert.deepEqual(automatic.ips, [{ ip: '2001:db8::2', status: 'UNKNOWN' }]);
     assert.equal(
         automatic.controlAddresses.some((entry) => entry.address === '192.0.2.1'),
         false,
@@ -176,5 +185,5 @@ test('automatic checks add new addresses and retire detached discovered addresse
         refreshed.controlAddresses.some((entry) => entry.address === '192.0.2.1'),
         false,
     );
-    assert.deepEqual(refreshed.ips, [{ ip: '2001:db8::2', status: 'INBOUND' }]);
+    assert.deepEqual(refreshed.ips, [{ ip: '2001:db8::2', status: 'UNKNOWN' }]);
 });

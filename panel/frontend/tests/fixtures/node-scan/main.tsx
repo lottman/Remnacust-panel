@@ -83,7 +83,7 @@ const refreshed = {
     ...base,
     controlRevision: '10000000-0000-4000-8000-000000000003',
     controlAddresses: [base.controlAddresses[0], { address: '2001:db8::30', enabled: false }],
-    ips: [{ ip: '2001:db8::30', status: 'OUTBOUND' }],
+    ips: [{ ip: '2001:db8::30', status: 'UNKNOWN' }],
     ipScan: { addresses: ['2001:db8::30'], scannedAt: '2026-11-15T12:00:00.000Z' }
 }
 if (params.get('state') === 'all-off')

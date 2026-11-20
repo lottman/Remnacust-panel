@@ -92,6 +92,7 @@ test('compact node controls use accessible icons and protect the final enabled a
         await open('en')
         await browser.evaluate(`(${action}).click()`)
         await browser.waitFor('Boolean(nodeWizardFixture.snapshot().cached)')
+        assert.deepEqual(await browser.evaluate('nodeWizardFixture.form().getValues().ips'), [{ ip: '2001:db8::30', status: 'UNKNOWN' }])
         await browser.evaluate(`[...document.querySelectorAll('button')].find(el => el.getAttribute('aria-label') === nodeWizardFixture.i18n.t('node-control-addresses.change-status', {address:'2001:db8::30'})).focus()`)
         await key(' ', 'Space')
         await browser.waitFor('document.querySelectorAll("[role=menuitem]").length === 10')

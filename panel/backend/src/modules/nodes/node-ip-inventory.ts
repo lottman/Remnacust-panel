@@ -76,7 +76,7 @@ export function planNodeIpInventory(
         );
     const ips: TNodeIps = inventoryAddresses.map((ip) => ({
         ip,
-        status: statuses.get(ip) ?? 'INBOUND',
+        status: statuses.get(ip) ?? 'UNKNOWN',
     }));
     return { addresses: [...addresses], controlAddresses, generatedAddresses, ips };
 }

@@ -475,7 +475,7 @@ function defineTests() {
         ]);
         assert.deepEqual(result.ips, [
             { ip: '192.0.2.50', status: 'OUTBOUND' },
-            { ip: '2001:db8::1', status: 'INBOUND' },
+            { ip: '2001:db8::1', status: 'UNKNOWN' },
         ]);
         assert.deepEqual(result.ipInventory.generatedAddresses, ['2001:db8::1']);
     });

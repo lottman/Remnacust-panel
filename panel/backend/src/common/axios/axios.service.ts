@@ -48,6 +48,7 @@ import { prettyBytesUtil } from '@common/utils/bytes';
 import { deriveSni } from '@common/utils/certs';
 import { formatExecutionTime, getTime } from '@common/utils/get-elapsed-time';
 import {
+    nodeLacksNetworkAddressInventory,
     nodeSupportsBulkUsers,
     nodeSupportsCompression,
     nodeSupportsPlugins,
@@ -1097,6 +1098,7 @@ export class AxiosService {
     public async getNodeHealth(
         opts: INodeConnectionOpts,
         nodeControlRevision?: string,
+        timeout = 15_000,
     ): Promise<
         NodeCallResult<
             GetNodeHealthCheckCommand.Response['response'] & {
@@ -1120,7 +1122,7 @@ export class AxiosService {
             nodeControlRevision,
             method: 'get',
             logAxiosError: false,
-            timeout: 15_000,
+            timeout,
         });
         if (!result.isOk && ['NODE_HTTP_404', 'NODE_HTTP_405'].includes(result.code ?? '')) {
             const legacy = await this.request<{
@@ -1132,7 +1134,7 @@ export class AxiosService {
                 nodeControlRevision,
                 method: 'get',
                 logAxiosError: false,
-                timeout: 15_000,
+                timeout,
             });
             if (!legacy.isOk) return legacy;
             if (!legacy.response || typeof legacy.response.isRunning !== 'boolean') {
@@ -1199,16 +1201,31 @@ export class AxiosService {
 
     public async getNodeNetworkAddresses(
         opts: INodeConnectionOpts,
+        nodeControlRevision: string,
     ): Promise<TResult<GetNetworkAddressesCommand.Response['response']>> {
-        return this.request<GetNetworkAddressesCommand.Response>({
+        const result = await this.request<GetNetworkAddressesCommand.Response>({
             label: 'GET NODE NETWORK ADDRESSES',
             path: GetNetworkAddressesCommand.url,
             opts,
+            nodeControlRevision,
             method: 'get',
             timeout: 5_000,
             maxResponseBytes: 65_536,
             logAxiosError: false,
         });
+        if (result.isOk || result.code !== 'ECONNRESET') return result;
+
+        const health = await this.getNodeHealth(opts, nodeControlRevision, 3_000);
+        if (!health.isOk)
+            return ['NODE_ROUTE_BUSY', 'NODE_ROUTE_DISABLED'].includes(health.code ?? '')
+                ? health
+                : result;
+        if (
+            health.response.isAlive &&
+            nodeLacksNetworkAddressInventory(health.response.nodeVersion)
+        )
+            return { ...result, code: 'NODE_NETWORK_ADDRESSES_UNSUPPORTED' };
+        return result;
     }
 
     public async getIpsList(

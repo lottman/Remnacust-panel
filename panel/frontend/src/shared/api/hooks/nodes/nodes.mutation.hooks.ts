@@ -87,17 +87,6 @@ export const useRescanNodeIps = createMutationHook({
                 message: i18next.t('node-control-addresses.rescan-success'),
                 color: 'teal'
             })
-        },
-        onError: (error) => {
-            notifications.show({
-                id: 'node-ip-scan-result',
-                title: i18next.t('common.message.error'),
-                message:
-                    error instanceof Error
-                        ? error.message
-                        : i18next.t('common.message.unknown-error'),
-                color: 'red'
-            })
         }
     }
 })

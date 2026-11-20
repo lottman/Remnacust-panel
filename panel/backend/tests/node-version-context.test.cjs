@@ -109,6 +109,52 @@ test(
     },
 );
 
+test('a legacy inventory socket reset is classified only after a current authenticated health reply', async (t) => {
+    const f = await fixture(t);
+    const node = f.members[0];
+    const scan = () => f.service.getNodeNetworkAddresses(f.opts, f.revision());
+    node.version = '3.4.2';
+
+    const data = await scan();
+    assert.deepEqual(data.response, { addresses: ['192.0.2.1', '2001:db8::1'], complete: true });
+    assert.deepEqual(
+        node.calls.map(({ path }) => path),
+        [contract.GetNetworkAddressesCommand.url],
+    );
+
+    node.inventoryReset = true;
+    const unsupported = await scan();
+    assert.equal(unsupported.code, 'NODE_NETWORK_ADDRESSES_UNSUPPORTED');
+    assert.equal(node.calls.at(-1).path, contract.GetNodeHealthCheckCommand.url);
+
+    node.version = '1.1.39-remnacust';
+    assert.equal((await scan()).code, 'ECONNRESET');
+    node.version = '1.1.39';
+    assert.equal((await scan()).code, 'ECONNRESET');
+    node.version = '3.4.7';
+    assert.equal((await scan()).code, 'ECONNRESET');
+    node.version = '3.4.2-custom';
+    assert.equal((await scan()).code, 'ECONNRESET');
+    node.version = '3.4.2+custom';
+    assert.equal((await scan()).code, 'ECONNRESET');
+    node.version = '1.1.37-remnacust';
+    assert.equal((await scan()).code, 'NODE_NETWORK_ADDRESSES_UNSUPPORTED');
+
+    node.version = '3.4.2';
+    node.healthStatus = 401;
+    assert.equal((await scan()).code, 'ECONNRESET');
+});
+
+test('a reset cannot be classified using a different control revision or node', async (t) => {
+    const f = await fixture(t);
+    const originalRevision = f.revision();
+    f.members[0].inventoryReset = true;
+    f.members[0].inventoryHook = () => f.commit(f.members[1]);
+    const result = await f.service.getNodeNetworkAddresses(f.opts, originalRevision);
+    assert.equal(result.code, 'NODE_ROUTE_BUSY');
+    assert.equal(f.members[1].calls.length, 0);
+});
+
 async function fixture(t) {
     const members = ['127.0.0.1', '127.0.0.2'].map((address) => ({
         address,
@@ -117,6 +163,8 @@ async function fixture(t) {
         healthStatus: 200,
         calls: [],
         healthHook: undefined,
+        inventoryHook: undefined,
+        inventoryReset: false,
     }));
     const servers = [];
     let port;
@@ -145,6 +193,17 @@ async function fixture(t) {
                     await member.healthHook?.();
                     res.statusCode = member.healthStatus;
                     res.end(JSON.stringify({ response }));
+                } else if (req.url === contract.GetNetworkAddressesCommand.url) {
+                    member.inventoryHook?.();
+                    if (member.inventoryReset) {
+                        req.socket.destroy();
+                        return;
+                    }
+                    res.end(
+                        JSON.stringify({
+                            response: { addresses: ['192.0.2.1', '2001:db8::1'], complete: true },
+                        }),
+                    );
                 } else if (req.url === '/node/xray/status') {
                     res.end(
                         JSON.stringify({ response: { isRunning: true, version: 'fixture-core' } }),

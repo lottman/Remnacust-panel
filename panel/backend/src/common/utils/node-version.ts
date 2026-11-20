@@ -18,3 +18,16 @@ export const nodeSupportsCompression = (version: unknown): boolean =>
 export const nodeSupportsWrappedConfig = nodeSupportsCompression;
 export const nodeSupportsBulkUsers = (version: unknown): boolean =>
     nodeSupportsFeature(version, '2.5.0');
+
+export function nodeLacksNetworkAddressInventory(version: string): boolean {
+    const parsed = semver.parse(version);
+    if (!parsed) return false;
+    if (parsed.prerelease.includes('remnacust'))
+        return semver.lt(`${parsed.major}.${parsed.minor}.${parsed.patch}`, '1.1.38');
+    return (
+        parsed.major === 3 &&
+        parsed.prerelease.length === 0 &&
+        parsed.build.length === 0 &&
+        semver.lte(parsed, '3.4.6')
+    );
+}

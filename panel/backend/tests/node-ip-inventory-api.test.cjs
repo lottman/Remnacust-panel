@@ -104,7 +104,9 @@ function fixture() {
         },
     };
     const axios = {
-        getNodeNetworkAddresses: async () => {
+        getNodeNetworkAddresses: async (requestedNode, expectedRevision) => {
+            assert.equal(requestedNode.uuid, node.uuid);
+            assert.equal(expectedRevision, node.controlRevision);
             calls.requests++;
             return {
                 isOk: true,
@@ -177,7 +179,12 @@ test('stale UI revisions and deleted nodes are rejected before any node request'
 });
 
 test('unsupported optional endpoints retain all saved addresses', async () => {
-    for (const code of ['NODE_HTTP_404', 'NODE_HTTP_405', 'NODE_HTTP_501']) {
+    for (const code of [
+        'NODE_HTTP_404',
+        'NODE_HTTP_405',
+        'NODE_HTTP_501',
+        'NODE_NETWORK_ADDRESSES_UNSUPPORTED',
+    ]) {
         const f = fixture();
         f.axios.getNodeNetworkAddresses = async () => ({ isOk: false, code });
         assert.equal((await f.service.rescan(uuid, revision)).code, 'A268');
@@ -189,6 +196,7 @@ test('transport/auth/proxy failures and route backoff cannot clear the inventory
     for (const [code, expected] of [
         ['NODE_PROXY_UNAVAILABLE', 'A267'],
         ['NODE_HTTP_401', 'A267'],
+        ['ECONNRESET', 'A267'],
         ['CERT_HAS_EXPIRED', 'A267'],
         ['ETIMEDOUT', 'A267'],
         ['NODE_ROUTE_BUSY', 'A271'],

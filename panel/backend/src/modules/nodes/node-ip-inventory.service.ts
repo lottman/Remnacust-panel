@@ -79,9 +79,16 @@ export class NodeIpInventoryService {
         node: NodesEntity,
         mode: 'scheduled' | 'refresh',
     ): Promise<TResult<NodesEntity>> {
-        const result = await this.axios.getNodeNetworkAddresses(node);
+        const result = await this.axios.getNodeNetworkAddresses(node, node.controlRevision);
         if (!result.isOk) {
-            if (['NODE_HTTP_404', 'NODE_HTTP_405', 'NODE_HTTP_501'].includes(result.code ?? ''))
+            if (
+                [
+                    'NODE_HTTP_404',
+                    'NODE_HTTP_405',
+                    'NODE_HTTP_501',
+                    'NODE_NETWORK_ADDRESSES_UNSUPPORTED',
+                ].includes(result.code ?? '')
+            )
                 return fail(ERRORS.NODE_IP_SCAN_UNSUPPORTED);
             if (result.code === 'NODE_ROUTE_BUSY') return fail(ERRORS.NODE_IP_SCAN_BUSY);
             if (result.code === 'NODE_ROUTE_DISABLED') return fail(ERRORS.NODE_IP_SCAN_DISABLED);

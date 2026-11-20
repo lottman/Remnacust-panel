@@ -320,7 +320,8 @@ test('real scan card, mutation, response parsing and cache merge in loopback Chr
     for (const language of ['en', 'ru', 'fa', 'zh']) await t.test('unsupported node retains addresses and has localized guidance (' + language + ')', async () => {
         await open(language)
         await browser.evaluate(`nodeWizardFixture.mode('unsupported'); (${action}).click()`)
-        await browser.waitFor('document.body.textContent.includes(nodeWizardFixture.i18n.t("requestErrors.codes.A268"))')
+        await browser.waitFor('document.querySelector("[role=alert]")?.textContent.includes(nodeWizardFixture.i18n.t("requestErrors.codes.A268"))')
+        assert.equal(await browser.evaluate('document.querySelectorAll(".mantine-Notification-root").length'), 0)
         const result = await browser.evaluate('nodeWizardFixture.snapshot()')
         assert.equal(result.values.controlRevision, original.controlRevision)
         assert.equal(result.values.controlAddresses.length, 2)

@@ -2561,7 +2561,7 @@
       "A270": "Enable the node and at least one management address before rescanning IPs.",
       "A271": "IP discovery is busy. Wait briefly and try again.",
       "A272": "The panel is finishing a node management operation before deletion. Deletion does not require a connection to the node server. Retry if the operation has not finished yet.",
-      "A273": "Enable another control address before removing the last enabled address."
+      "A273": "Turn on another address for panel access before removing this one."
     },
     "statusCodes": {
       "A089_400": "LIMITED and EXPIRED are calculated automatically. Choose another status.",

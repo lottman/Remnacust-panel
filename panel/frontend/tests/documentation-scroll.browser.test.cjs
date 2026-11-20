@@ -90,6 +90,27 @@ test('documentation scroll input remains inside its intended pane in real Chrome
     }
     for (const width of [1280, 390]) {
         for (const language of ['en', 'fa']) {
+            await run('OpenAPI download offers JSON and YAML', width, language, async () => {
+                await open(width, language, 'api')
+                const trigger = '[data-panel-page-header] button[aria-haspopup="menu"]'
+                await evaluate(`document.querySelector(${JSON.stringify(trigger)}).focus()`)
+                await key(' ', 32)
+                await browser.waitFor('document.querySelectorAll("[role=menu] a[download]").length === 2')
+                const downloads = await evaluate(`[...document.querySelectorAll('[role=menu] a[download]')].map(link => ({
+                    label: link.textContent.trim(),
+                    name: link.download,
+                    path: new URL(link.href).pathname
+                }))`)
+                assert.deepEqual(downloads, [
+                    { label: 'JSON', name: 'openapi.json', path: '/documentation/openapi.json' },
+                    { label: 'YAML', name: 'openapi.yaml', path: '/documentation/openapi.yaml' }
+                ])
+                const yamlResponse = await fetch(new URL(downloads[1].path, url))
+                assert.equal(yamlResponse.status, 200)
+                assert.match(await yamlResponse.text(), /^openapi: 3\./)
+                await key('Escape', 27)
+                await browser.waitFor(`document.querySelector(${JSON.stringify(trigger)}).getAttribute('aria-expanded') === 'false'`)
+            })
             await run('keyboard focus scrolls only the documentation index', width, language, async () => {
                 await open(width, language)
                 const count = await evaluate('document.querySelectorAll(' + JSON.stringify(index + ' a') + ').length')

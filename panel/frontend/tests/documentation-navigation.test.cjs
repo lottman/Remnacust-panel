@@ -41,6 +41,13 @@ test('all documentation modes retain the selected language in every tab and expo
             assert.ok(html.includes('aria-label="' + language + ':documentation.language"'))
             assert.equal((html.match(/aria-current="page"/g) ?? []).length, 1)
             assert.ok(html.includes(language + ':documentation.title'))
+            if (mode === 'api') {
+                assert.ok(html.includes('aria-haspopup="menu"'))
+                assert.ok(html.includes(language + ':documentation.downloadSpec'))
+            } else {
+                const file = mode === 'versions' ? 'manifest.json' : `guide-${language}.md`
+                assert.ok(html.includes(`href="/documentation/${file}"`))
+            }
         }
     }
 })

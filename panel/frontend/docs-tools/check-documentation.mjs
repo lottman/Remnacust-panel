@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
+import { parse } from 'yaml'
 
 import { getCompatibilityVersions } from './component-versions.mjs'
 import { panelArticleIds, panelFieldArticleIds } from './production-guide.mjs'
@@ -17,6 +18,11 @@ const variables = read('variables.json')
 const catalog = read('catalog.json')
 const api = read('api.json')
 const spec = read('openapi.json')
+assert.deepEqual(
+    parse(fs.readFileSync(path.join(output, 'openapi.yaml'), 'utf8')),
+    spec,
+    'OpenAPI YAML must match the JSON download'
+)
 const manifest = read('manifest.json')
 const packageVersion = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8')).version
 for (const [field, version] of Object.entries(getCompatibilityVersions(root)))

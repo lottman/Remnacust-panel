@@ -2,6 +2,7 @@ import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
 import ts from 'typescript'
+import { stringify } from 'yaml'
 
 import { getCompatibilityVersions } from './component-versions.mjs'
 import { fieldDescriptions } from './field-descriptions.mjs'
@@ -57,6 +58,10 @@ fs.writeFileSync(
     )
 )
 fs.writeFileSync(path.join(output, 'openapi.json'), JSON.stringify(spec, null, 2) + '\n')
+fs.writeFileSync(
+    path.join(output, 'openapi.yaml'),
+    stringify(spec, { blockQuote: false, doubleQuotedAsJSON: true, lineWidth: 0 })
+)
 const variableSource = fs.readFileSync(
     path.join(backend, 'src/common/utils/templates/template-variables.ts'),
     'utf8'

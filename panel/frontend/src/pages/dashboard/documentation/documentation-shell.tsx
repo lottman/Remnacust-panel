@@ -1,10 +1,10 @@
 import type { DocLanguage } from './documentation.types'
 
-import { ActionIcon, Box, Button, Group, Select } from '@mantine/core'
+import { ActionIcon, Box, Button, Group, Menu, Select } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
 import { createContext, useContext, useLayoutEffect, useRef, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { TbApi, TbBook2, TbDownload, TbLink, TbVersions } from 'react-icons/tb'
+import { TbApi, TbBook2, TbChevronDown, TbDownload, TbLink, TbVersions } from 'react-icons/tb'
 import { Link, useLocation, useSearchParams } from 'react-router'
 
 import { ROUTES } from '@shared/constants'
@@ -91,12 +91,8 @@ export function DocumentationHeader({ mode }: { mode: DocumentationMode }) {
     const { t, language } = useDocumentationTranslation()
     const location = useLocation()
     const [params] = useSearchParams()
-    const download =
-        mode === 'api'
-            ? 'openapi.json'
-            : mode === 'versions'
-              ? 'manifest.json'
-              : `guide-${language}.md`
+    const downloadBase = `${import.meta.env.BASE_URL}documentation/`
+    const download = mode === 'versions' ? 'manifest.json' : `guide-${language}.md`
     const copyLink = async () => {
         const url = new URL(window.location.href)
         url.pathname = location.pathname
@@ -115,20 +111,45 @@ export function DocumentationHeader({ mode }: { mode: DocumentationMode }) {
             icon={<TbBook2 size={24} />}
             actions={
                 <Group gap="xs">
-                    <Button
-                        component="a"
-                        href={`${import.meta.env.BASE_URL}documentation/${download}`}
-                        download
-                        leftSection={<TbDownload size={16} />}
-                        variant="default"
-                        size="sm"
-                    >
-                        {mode === 'api'
-                            ? t('documentation.downloadSpec')
-                            : mode === 'versions'
-                              ? t('documentation.downloadVersions')
-                              : t('documentation.download')}
-                    </Button>
+                    {mode === 'api' ? (
+                        <Menu position="bottom-end" shadow="md">
+                            <Menu.Target>
+                                <Button
+                                    leftSection={<TbDownload size={16} />}
+                                    rightSection={<TbChevronDown size={14} />}
+                                    size="sm"
+                                    variant="default"
+                                >
+                                    {t('documentation.downloadSpec')}
+                                </Button>
+                            </Menu.Target>
+                            <Menu.Dropdown>
+                                {(['json', 'yaml'] as const).map((format) => (
+                                    <Menu.Item
+                                        key={format}
+                                        component="a"
+                                        href={`${downloadBase}openapi.${format}`}
+                                        download={`openapi.${format}`}
+                                    >
+                                        {format.toUpperCase()}
+                                    </Menu.Item>
+                                ))}
+                            </Menu.Dropdown>
+                        </Menu>
+                    ) : (
+                        <Button
+                            component="a"
+                            href={`${downloadBase}${download}`}
+                            download
+                            leftSection={<TbDownload size={16} />}
+                            size="sm"
+                            variant="default"
+                        >
+                            {mode === 'versions'
+                                ? t('documentation.downloadVersions')
+                                : t('documentation.download')}
+                        </Button>
+                    )}
                     <ActionIcon
                         aria-label={t('documentation.permalink')}
                         variant="default"

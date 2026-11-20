@@ -25,6 +25,8 @@ test('compact node controls use accessible icons and protect the final enabled a
     const browser = await launchBrowser()
     t.after(() => browser.close())
     const action = `[...document.querySelectorAll('button')].find(el => el.getAttribute('aria-label') === nodeWizardFixture.i18n.t('node-control-addresses.rescan') || el.textContent.trim() === nodeWizardFixture.i18n.t('node-control-addresses.rescan'))`
+    const addressMenu = (address) => `[...document.querySelectorAll('button')].find(el => el.getAttribute('aria-label') === nodeWizardFixture.i18n.t('node-control-addresses.actions', {address:${JSON.stringify(address)}}))`
+    const remove = (address) => `[...document.querySelectorAll('[role=menuitem]')].find(el => el.getAttribute('aria-label') === nodeWizardFixture.i18n.t('node-control-addresses.remove', {address:${JSON.stringify(address)}}))`
     async function open(language = 'en', params = {}) {
         const target = new URL(url)
         target.searchParams.set('lang', language)
@@ -33,7 +35,7 @@ test('compact node controls use accessible icons and protect the final enabled a
         await browser.waitFor('!!document.querySelector("[data-path=scan-form-note]")')
     }
     async function key(key, code = key) {
-        const windowsVirtualKeyCode = key === 'Tab' ? 9 : key === 'Enter' ? 13 : key === 'ArrowDown' ? 40 : 32
+        const windowsVirtualKeyCode = ({ Tab: 9, Enter: 13, Escape: 27, ArrowDown: 40 })[key] ?? 32
         await browser.send('Input.dispatchKeyEvent', { type: 'keyDown', key, code, windowsVirtualKeyCode, ...(key === 'Enter' ? { text: '\r' } : {}) })
         await browser.send('Input.dispatchKeyEvent', { type: 'keyUp', key, code, windowsVirtualKeyCode })
     }
@@ -46,9 +48,11 @@ test('compact node controls use accessible icons and protect the final enabled a
         await t.test('IP status is selectable and independent of management permission (' + language + ')', async () => {
             await open(language)
             const before = await browser.evaluate('nodeWizardFixture.form().getValues().controlAddresses')
-            const control = `[...document.querySelectorAll('button')].find(el => el.getAttribute('aria-label') === nodeWizardFixture.i18n.t('node-control-addresses.change-status', {address:'192.0.2.20'}))`
-            await click(control)
-            await browser.waitFor('document.querySelectorAll("[role=menuitem]").length === 10')
+            await click(addressMenu('192.0.2.20'))
+            await browser.waitFor('document.querySelectorAll("[role=menuitem]").length === 11')
+            const roleColors = await browser.evaluate(`[...document.querySelectorAll('[role=menuitem]')].slice(0, 2).map(el => getComputedStyle(el.querySelector('svg')).color)`)
+            assert.notEqual(roleColors[0], roleColors[1])
+            assert.equal(await browser.evaluate(`document.querySelectorAll('[role=menuitem]')[10] === ${remove('192.0.2.20')}`), true)
             await click(`[...document.querySelectorAll('[role=menuitem]')].find(el => el.textContent.trim() === nodeWizardFixture.i18n.t('node-ip-statuses.outbound'))`)
             await browser.waitFor('nodeWizardFixture.form().getValues().ips[0].status === "OUTBOUND"')
             assert.deepEqual(await browser.evaluate('nodeWizardFixture.form().getValues().controlAddresses'), before)
@@ -90,8 +94,13 @@ test('compact node controls use accessible icons and protect the final enabled a
     }
     await t.test('manual remove drops a saved row and keeps the sole management route', async () => {
         await open('ru')
-        const remove = (address) => `[...document.querySelectorAll('button')].find(button => button.getAttribute('aria-label') === nodeWizardFixture.i18n.t('node-control-addresses.remove', {address:${JSON.stringify(address)}}))`
+        await click(addressMenu('manual.example.test'))
+        await browser.waitFor(`Boolean(${remove('manual.example.test')})`)
         assert.equal(await browser.evaluate(`(${remove('manual.example.test')}).disabled`), true)
+        await key('Escape')
+        await browser.waitFor(`!(${remove('manual.example.test')})`)
+        await click(addressMenu('192.0.2.20'))
+        await browser.waitFor(`Boolean(${remove('192.0.2.20')})`)
         await click(remove('192.0.2.20'))
         await browser.waitFor('nodeWizardFixture.form().getValues().controlAddresses.length === 1')
         assert.equal(await browser.evaluate('nodeWizardFixture.form().isDirty("controlAddresses")'), true)
@@ -105,16 +114,16 @@ test('compact node controls use accessible icons and protect the final enabled a
         await browser.evaluate(`(${action}).click()`)
         await browser.waitFor('Boolean(nodeWizardFixture.snapshot().cached)')
         assert.deepEqual(await browser.evaluate('nodeWizardFixture.form().getValues().ips'), [{ ip: '2001:db8::30', status: 'UNKNOWN' }])
-        await browser.evaluate(`[...document.querySelectorAll('button')].find(el => el.getAttribute('aria-label') === nodeWizardFixture.i18n.t('node-control-addresses.change-status', {address:'2001:db8::30'})).focus()`)
+        await browser.evaluate(`(${addressMenu('2001:db8::30')}).focus()`)
         await key(' ', 'Space')
-        await browser.waitFor('document.querySelectorAll("[role=menuitem]").length === 10')
+        await browser.waitFor('document.querySelectorAll("[role=menuitem]").length === 11')
         await browser.waitFor('document.activeElement?.hasAttribute("data-autofocus")')
         for (let index = 0; index < 6; index++) await key('ArrowDown')
         assert.equal(await browser.evaluate('document.activeElement.textContent.trim()'), await browser.evaluate('nodeWizardFixture.i18n.t("node-ip-statuses.reserve")'))
         await key('Enter')
         await browser.waitFor('nodeWizardFixture.form().getValues().ips[0].status === "RESERVE"')
         await open('en', { locked: '1' })
-        assert.equal(await browser.evaluate(`[...document.querySelectorAll('button')].find(el => el.getAttribute('aria-label') === nodeWizardFixture.i18n.t('node-control-addresses.change-status', {address:'192.0.2.20'})).disabled`), true)
+        assert.equal(await browser.evaluate(`(${addressMenu('192.0.2.20')}).disabled`), true)
     })
     await t.test('multiple enabled addresses can be toggled until one remains; legacy all-off can be repaired', async () => {
         await open('en', { state: 'two-enabled' })

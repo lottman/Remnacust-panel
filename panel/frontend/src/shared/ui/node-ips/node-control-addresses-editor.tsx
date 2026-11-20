@@ -33,7 +33,6 @@ import {
     normalizeNodeLiteralIp
 } from '@shared/utils/node-control-addresses'
 
-import { NodeIpStatusIcon } from './node-ip-status-icon'
 import { NODE_IP_STATUSES_ORDER, resolveNodeIpStatusMeta } from './node-ip-status.constants'
 import { MAX_NODE_IPS } from './validate-node-ips'
 
@@ -232,46 +231,72 @@ export function NodeControlAddressesEditor<
                                         gap={6}
                                         wrap="nowrap"
                                     >
-                                        {literalIp ? (
-                                            <Menu
-                                                position="bottom-start"
-                                                shadow="md"
-                                                width={220}
-                                                withinPortal
-                                            >
-                                                <Menu.Target>
-                                                    <Tooltip
-                                                        label={
-                                                            statusFull
-                                                                ? t('node-ips.max-ips-reached', {
-                                                                      max: MAX_NODE_IPS
-                                                                  })
-                                                                : t(statusMeta.labelKey)
-                                                        }
+                                        <Menu
+                                            middlewares={{ flip: true, shift: true, size: true }}
+                                            position="bottom-start"
+                                            shadow="md"
+                                            width={220}
+                                            withinPortal
+                                        >
+                                            <Menu.Target>
+                                                <Tooltip
+                                                    label={
+                                                        !literalIp && normalized
+                                                            ? t(
+                                                                  'node-control-addresses.hostname-status'
+                                                              )
+                                                            : t(statusMeta.labelKey)
+                                                    }
+                                                    maw={300}
+                                                    multiline
+                                                    events={{
+                                                        hover: true,
+                                                        focus: true,
+                                                        touch: false
+                                                    }}
+                                                >
+                                                    <ActionIcon
+                                                        aria-label={t(
+                                                            'node-control-addresses.actions',
+                                                            {
+                                                                address: label
+                                                            }
+                                                        )}
+                                                        color={statusMeta.color}
+                                                        disabled={disabled}
+                                                        size={36}
+                                                        type="button"
+                                                        variant="soft"
                                                     >
-                                                        <ActionIcon
-                                                            aria-label={t(
-                                                                'node-control-addresses.change-status',
-                                                                { address: label }
-                                                            )}
-                                                            color={statusMeta.color}
-                                                            disabled={disabled || statusFull}
-                                                            size={36}
-                                                            type="button"
-                                                            variant="soft"
-                                                        >
-                                                            <statusMeta.Icon size={20} />
-                                                        </ActionIcon>
-                                                    </Tooltip>
-                                                </Menu.Target>
-                                                <Menu.Dropdown>
-                                                    {NODE_IP_STATUSES_ORDER.map((value) => {
+                                                        <statusMeta.Icon size={20} />
+                                                    </ActionIcon>
+                                                </Tooltip>
+                                            </Menu.Target>
+                                            <Menu.Dropdown style={{ overflowY: 'auto' }}>
+                                                {literalIp && statusFull && (
+                                                    <Menu.Label>
+                                                        {t('node-ips.max-ips-reached', {
+                                                            max: MAX_NODE_IPS
+                                                        })}
+                                                    </Menu.Label>
+                                                )}
+                                                {literalIp &&
+                                                    NODE_IP_STATUSES_ORDER.map((value) => {
                                                         const meta = resolveNodeIpStatusMeta(value)
                                                         return (
                                                             <Menu.Item
                                                                 key={value}
+                                                                aria-current={
+                                                                    value === status || undefined
+                                                                }
+                                                                disabled={disabled || statusFull}
                                                                 leftSection={
-                                                                    <meta.Icon size={16} />
+                                                                    <meta.Icon
+                                                                        size={16}
+                                                                        style={{
+                                                                            color: `var(--mantine-color-${meta.color}-5)`
+                                                                        }}
+                                                                    />
                                                                 }
                                                                 onClick={() =>
                                                                     changeStatus(
@@ -291,26 +316,34 @@ export function NodeControlAddressesEditor<
                                                             </Menu.Item>
                                                         )
                                                     })}
-                                                </Menu.Dropdown>
-                                            </Menu>
-                                        ) : (
-                                            <Tooltip
-                                                label={t('node-control-addresses.hostname-status')}
-                                                multiline
-                                                maw={300}
-                                            >
-                                                <span
-                                                    aria-label={t(statusMeta.labelKey)}
-                                                    tabIndex={0}
+                                                {literalIp && <Menu.Divider />}
+                                                {isLastEnabled && (
+                                                    <Menu.Label>
+                                                        {t('node-control-addresses.last-enabled')}
+                                                    </Menu.Label>
+                                                )}
+                                                <Menu.Item
+                                                    aria-label={t('node-control-addresses.remove', {
+                                                        address: label
+                                                    })}
+                                                    color="red"
+                                                    disabled={disabled || isLastEnabled}
+                                                    leftSection={<TbTrash size={16} />}
+                                                    onClick={() => {
+                                                        if (disabled || isLastEnabled) return
+                                                        commit(
+                                                            items.filter(({ id }) => id !== item.id)
+                                                        )
+                                                    }}
                                                 >
-                                                    <NodeIpStatusIcon
-                                                        status={status}
-                                                        size={36}
-                                                        iconSize={20}
-                                                    />
-                                                </span>
-                                            </Tooltip>
-                                        )}
+                                                    {t(
+                                                        literalIp
+                                                            ? 'node-ips.remove-ip'
+                                                            : 'common.action.remove'
+                                                    )}
+                                                </Menu.Item>
+                                            </Menu.Dropdown>
+                                        </Menu>
                                         <TextInput
                                             aria-label={t('node-control-addresses.address', {
                                                 index: index + 1
@@ -432,35 +465,6 @@ export function NodeControlAddressesEditor<
                                                         )
                                                     }}
                                                 />
-                                            </span>
-                                        </Tooltip>
-                                        <Tooltip
-                                            label={
-                                                isLastEnabled
-                                                    ? t('node-control-addresses.last-enabled')
-                                                    : t('node-control-addresses.remove', {
-                                                          address: label
-                                                      })
-                                            }
-                                        >
-                                            <span>
-                                                <ActionIcon
-                                                    aria-label={t('node-control-addresses.remove', {
-                                                        address: label
-                                                    })}
-                                                    color="red"
-                                                    disabled={disabled || isLastEnabled}
-                                                    onClick={() =>
-                                                        commit(
-                                                            items.filter(({ id }) => id !== item.id)
-                                                        )
-                                                    }
-                                                    size={26}
-                                                    type="button"
-                                                    variant="subtle"
-                                                >
-                                                    <TbTrash size={15} />
-                                                </ActionIcon>
                                             </span>
                                         </Tooltip>
                                         <Stack gap={0}>

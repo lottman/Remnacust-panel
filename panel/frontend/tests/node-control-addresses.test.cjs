@@ -50,7 +50,6 @@ function editor(initial, saved = initial, ips = [{ ip: '198.51.100.2', status: '
         '@shared/ui/overlays/base-overlay-header': { BaseOverlayHeader: 'header' },
         '@shared/ui/section-card': { SectionCard: { Root: 'section', Section: 'section' } },
         '@shared/utils/node-control-addresses': helpers,
-        './node-ip-status-icon': { NodeIpStatusIcon: 'status-icon' },
         './node-ip-status.constants': load('shared/ui/node-ips/node-ip-status.constants.ts'),
         './validate-node-ips': { MAX_NODE_IPS: 64 },
         '@shared/utils/node-addresses': load('shared/utils/node-addresses.ts')
@@ -76,7 +75,7 @@ test('canonical addresses are authoritative, including empty lists and a disable
 
 test('the status icon offers editable IP roles without changing panel routing', () => {
     const state = editor([address('198.51.100.2')])
-    assert.ok(state.control('node-control-addresses.change-status'), 'IP status must have an interactive control')
+    assert.ok(state.control('node-control-addresses.actions'), 'IP status must have an interactive control')
     const outbound = state.render().find(item => item.type === mantine.Menu.Item && item.key === 'OUTBOUND')
     assert.ok(outbound, 'status options must remain available in the unified editor')
     outbound.props.onClick()
@@ -84,7 +83,7 @@ test('the status icon offers editable IP roles without changing panel routing', 
     assert.deepEqual(state.values.controlAddresses, state.before.controlAddresses)
     assert.equal(state.values.address, state.before.address)
     const reopened = editor(state.values.controlAddresses, state.values.controlAddresses, state.values.ips)
-    assert.ok(reopened.control('node-control-addresses.change-status'))
+    assert.ok(reopened.control('node-control-addresses.actions'))
 })
 
 test('IPv6 aliases share one saved status and unrelated metadata remains untouched', () => {
@@ -101,25 +100,32 @@ test('IPv6 aliases share one saved status and unrelated metadata remains untouch
     assert.deepEqual(state.values.controlAddresses, state.before.controlAddresses)
 })
 
-test('manual IPs acquire status metadata while hostnames retain an explanatory role icon', () => {
+test('manual IPs acquire status metadata while hostnames provide removal only', () => {
     const state = editor([address('192.0.2.1'), address('manual.example.test')], [], [])
     state.render().find(item => item.type === mantine.Menu.Item && item.key === 'MANAGEMENT').props.onClick()
     assert.deepEqual(state.values.ips, [{ ip: '192.0.2.1', status: 'MANAGEMENT' }])
-    assert.equal(state.render().filter(item => item.type === mantine.Menu.Target).length, 1)
+    assert.equal(state.render().filter(item => item.type === mantine.Menu.Target).length, 2)
+    assert.equal(state.render().filter(item => item.type === mantine.Menu.Item && item.key !== null).length, 10)
     assert.ok(state.render().some(item => item.props.label === 'node-control-addresses.hostname-status'))
+    state.control('node-control-addresses.remove' + 'manual.example.test').props.onClick()
+    assert.deepEqual(state.values.controlAddresses, [address('192.0.2.1')])
 })
 
 test('status edits obey busy and metadata-capacity guards and existing statuses remain editable at capacity', () => {
     const ips = Array.from({ length: 64 }, (_, index) => ({ ip: `198.51.100.${index + 1}`, status: 'INBOUND' }))
-    const state = editor([address('192.0.2.1')], [], ips)
-    assert.equal(state.control('node-control-addresses.change-status').props.disabled, true)
-    state.render().find(item => item.type === mantine.Menu.Item && item.key === 'OUTBOUND').props.onClick()
+    const state = editor([address('192.0.2.1', false), address('panel.example.test')], [], ips)
+    assert.equal(state.control('node-control-addresses.actions').props.disabled, false)
+    const unavailable = state.render().find(item => item.type === mantine.Menu.Item && item.key === 'OUTBOUND')
+    assert.equal(unavailable.props.disabled, true)
+    unavailable.props.onClick()
     assert.deepEqual(state.values.ips, ips)
+    state.control('node-control-addresses.remove192.0.2.1').props.onClick()
+    assert.deepEqual(state.values.controlAddresses, [address('panel.example.test')])
     const existing = editor([address(ips[0].ip)], [], ips)
     const locked = existing.render({ disabled: true })
     locked.find(item => item.type === mantine.Menu.Item && item.key === 'OUTBOUND').props.onClick()
     assert.deepEqual(existing.values.ips, ips)
-    assert.equal(existing.control('node-control-addresses.change-status').props.disabled, false)
+    assert.equal(existing.control('node-control-addresses.actions').props.disabled, false)
     existing.render().find(item => item.type === mantine.Menu.Item && item.key === 'OUTBOUND').props.onClick()
     assert.equal(existing.values.ips[0].status, 'OUTBOUND')
     assert.equal(existing.values.ips.length, 64)

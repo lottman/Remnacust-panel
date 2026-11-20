@@ -1996,7 +1996,7 @@
     "rescan-never": "IP addresses have not been scanned yet.",
     "proxy-invalid": "Enter a SOCKS5 URL: socks5://host:port or socks5://user:password@host:port. Use a port from 1 to 65535, without a path or query. Leave empty for a direct connection.",
     "add": "Add address",
-    "help": "The panel tries enabled addresses from top to bottom. Disable an address with its switch. To change a saved address, disable it and add a new one. Switch off an empty new row to discard it.",
+    "help": "The panel tries enabled addresses in order. The switch controls panel connectivity. The role is a label. Once saved, a removed address stays out of future scans. Add it manually to restore it.",
     "proxy": "Configured SOCKS5 applies to every address. A proxy failure never falls back to a direct connection.",
     "direct": "The panel uses a direct control connection.",
     "all-off": "Panel management is off. This does not stop the VPN or the node core.",
@@ -2007,6 +2007,7 @@
     "for-panel": "For panel",
     "address": "Address {{index}}",
     "placeholder": "IPv4, IPv6 or hostname",
+    "remove": "Remove address {{address}}",
     "discard": "Discard new address {{address}}",
     "up": "Move {{address}} up",
     "down": "Move {{address}} down",
@@ -2559,7 +2560,8 @@
       "A269": "The node returned an incomplete or invalid IP address list. Saved addresses are unchanged.",
       "A270": "Enable the node and at least one management address before rescanning IPs.",
       "A271": "IP discovery is busy. Wait briefly and try again.",
-      "A272": "The panel is finishing a node management operation before deletion. Deletion does not require a connection to the node server. Retry if the operation has not finished yet."
+      "A272": "The panel is finishing a node management operation before deletion. Deletion does not require a connection to the node server. Retry if the operation has not finished yet.",
+      "A273": "Enable another control address before removing the last enabled address."
     },
     "statusCodes": {
       "A089_400": "LIMITED and EXPIRED are calculated automatically. Choose another status.",

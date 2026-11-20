@@ -88,6 +88,18 @@ test('compact node controls use accessible icons and protect the final enabled a
             await browser.waitFor('document.querySelectorAll("input[role=switch]").length === 2')
         })
     }
+    await t.test('manual remove drops a saved row and keeps the sole management route', async () => {
+        await open('ru')
+        const remove = (address) => `[...document.querySelectorAll('button')].find(button => button.getAttribute('aria-label') === nodeWizardFixture.i18n.t('node-control-addresses.remove', {address:${JSON.stringify(address)}}))`
+        assert.equal(await browser.evaluate(`(${remove('manual.example.test')}).disabled`), true)
+        await click(remove('192.0.2.20'))
+        await browser.waitFor('nodeWizardFixture.form().getValues().controlAddresses.length === 1')
+        assert.equal(await browser.evaluate('nodeWizardFixture.form().isDirty("controlAddresses")'), true)
+        assert.deepEqual(await browser.evaluate('nodeWizardFixture.form().getValues().controlAddresses'), [
+            { address: 'manual.example.test', enabled: true }
+        ])
+    })
+
     await t.test('IPv6 role menu works with the keyboard and read-only mode disables role changes', async () => {
         await open('en')
         await browser.evaluate(`(${action}).click()`)

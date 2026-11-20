@@ -4,6 +4,7 @@ import { NODES_ROUTES, REST_API } from '../../api';
 import { getEndpointDetails } from '../../constants';
 import { NodeIpsSchema, NodesSchema } from '../../models';
 import {
+    NODE_CONTROL_ADDRESS_LIMIT,
     NodeControlAddressesSchema,
     NodeControlAddressValueSchema,
 } from '../../models/node-control-addresses.schema';
@@ -26,6 +27,12 @@ export namespace UpdateNodeCommand {
             name: z.optional(z.string().min(3).max(30)),
             address: NodeControlAddressValueSchema.optional(),
             controlAddresses: NodeControlAddressesSchema.optional(),
+            removedControlAddresses: z
+                .array(NodeControlAddressValueSchema)
+                .min(1)
+                .max(NODE_CONTROL_ADDRESS_LIMIT)
+                .refine((rows) => new Set(rows).size === rows.length)
+                .optional(),
             controlRevision: z.uuid().optional(),
             port: z.optional(z.number().min(1).max(65535)),
             proxyUrl: SocksProxyUrlSchema.nullish(),
@@ -79,6 +86,18 @@ export namespace UpdateNodeCommand {
             {
                 message: 'Reload the node connection settings before saving control addresses',
                 path: ['controlRevision'],
+            },
+        )
+        .refine(
+            ({ controlAddresses, removedControlAddresses }) =>
+                removedControlAddresses === undefined ||
+                (controlAddresses !== undefined &&
+                    controlAddresses.every(
+                        ({ address }) => !removedControlAddresses.includes(address),
+                    )),
+            {
+                message: 'Removed addresses must be excluded from the updated control address list',
+                path: ['removedControlAddresses'],
             },
         );
 

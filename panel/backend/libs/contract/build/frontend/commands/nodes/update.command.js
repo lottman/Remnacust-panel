@@ -23,6 +23,12 @@ var UpdateNodeCommand;
         name: zod_1.z.optional(zod_1.z.string().min(3).max(30)),
         address: node_control_addresses_schema_1.NodeControlAddressValueSchema.optional(),
         controlAddresses: node_control_addresses_schema_1.NodeControlAddressesSchema.optional(),
+        removedControlAddresses: zod_1.z
+            .array(node_control_addresses_schema_1.NodeControlAddressValueSchema)
+            .min(1)
+            .max(node_control_addresses_schema_1.NODE_CONTROL_ADDRESS_LIMIT)
+            .refine((rows) => new Set(rows).size === rows.length)
+            .optional(),
         controlRevision: zod_1.z.uuid().optional(),
         port: zod_1.z.optional(zod_1.z.number().min(1).max(65535)),
         proxyUrl: socks_proxy_schema_1.SocksProxyUrlSchema.nullish(),
@@ -62,6 +68,12 @@ var UpdateNodeCommand;
         .refine((value) => value.controlAddresses === undefined || value.controlRevision !== undefined, {
         message: 'Reload the node connection settings before saving control addresses',
         path: ['controlRevision'],
+    })
+        .refine(({ controlAddresses, removedControlAddresses }) => removedControlAddresses === undefined ||
+        (controlAddresses !== undefined &&
+            controlAddresses.every(({ address }) => !removedControlAddresses.includes(address))), {
+        message: 'Removed addresses must be excluded from the updated control address list',
+        path: ['removedControlAddresses'],
     });
     UpdateNodeCommand.ResponseSchema = node_response_1.NodeResponseSchema;
 })(UpdateNodeCommand || (exports.UpdateNodeCommand = UpdateNodeCommand = {}));

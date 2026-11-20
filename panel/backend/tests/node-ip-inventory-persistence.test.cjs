@@ -88,6 +88,7 @@ function controlledRepository(patch = {}, inventory = null) {
             ...copy(patch),
         },
         inventory: copy(inventory),
+        suppressed: [],
         epoch: randomUUID(),
     };
     const hooks = new AsyncLocalStorage();
@@ -116,6 +117,30 @@ function controlledRepository(patch = {}, inventory = null) {
                     assert.match(strings.join('?'), /FROM nodes[\s\S]*FOR UPDATE/);
                     assert.equal(selected, uuid);
                     return [copy(draft.node)];
+                },
+                nodeSuppressedAddress: {
+                    async findMany({ where }) {
+                        touch('suppressed read');
+                        assert.equal(where.nodeUuid, uuid);
+                        return draft.suppressed.map((address) => ({ address }));
+                    },
+                    async createMany({ data }) {
+                        touch('suppressed write');
+                        assert.ok(data.every((row) => row.nodeUuid === uuid));
+                        draft.suppressed = [
+                            ...new Set([
+                                ...draft.suppressed,
+                                ...data.map(({ address }) => address),
+                            ]),
+                        ];
+                    },
+                    async deleteMany({ where }) {
+                        touch('suppressed clear');
+                        assert.equal(where.nodeUuid, uuid);
+                        draft.suppressed = draft.suppressed.filter(
+                            (address) => !where.address.in.includes(address),
+                        );
+                    },
                 },
                 nodeIpInventory: {
                     async findUnique({ where }) {
@@ -291,7 +316,14 @@ function defineTests() {
         assert.equal(new Set(f.events.map((event) => event.id)).size, 1);
         assert.deepEqual(
             f.events.map((event) => event.operation),
-            ['lock', 'inventory read', 'node write', 'inventory write', 'final refetch'],
+            [
+                'lock',
+                'inventory read',
+                'suppressed read',
+                'node write',
+                'inventory write',
+                'final refetch',
+            ],
         );
         assert.equal(f.host.isTransactionActive(), false);
     });
@@ -478,6 +510,89 @@ function defineTests() {
             { ip: '2001:db8::1', status: 'UNKNOWN' },
         ]);
         assert.deepEqual(result.ipInventory.generatedAddresses, ['2001:db8::1']);
+    });
+
+    test('manual removal clears its role, survives scans, and explicit re-add restores discovery', async () => {
+        const f = controlledRepository();
+        const ip = '2001:db8::20';
+        const node = await f.scan([ip], { mode: 'initial' });
+        const retained = node.controlAddresses.filter(({ address }) => address !== ip);
+        const removed = await f.repository.update(
+            { uuid: f.uuid, controlAddresses: retained },
+            node.controlRevision,
+            undefined,
+            [ip],
+        );
+        assert.deepEqual(removed.controlAddresses, retained);
+        assert.deepEqual(removed.ips, []);
+        assert.deepEqual(f.snapshot().suppressed, [ip]);
+        assert.notEqual(removed.controlRevision, node.controlRevision);
+
+        const rescanned = await f.scan(['2001:0DB8::20', '192.0.2.10']);
+        assert.equal(
+            rescanned.controlAddresses.some(({ address }) => address === ip),
+            false,
+        );
+        assert.deepEqual(rescanned.ips, [{ ip: '192.0.2.10', status: 'UNKNOWN' }]);
+
+        await f.repository.update(
+            {
+                uuid: f.uuid,
+                controlAddresses: [...rescanned.controlAddresses, { address: ip, enabled: false }],
+                ips: [...rescanned.ips, { ip, status: 'OUTBOUND' }],
+            },
+            rescanned.controlRevision,
+        );
+        assert.deepEqual(f.snapshot().suppressed, []);
+        const restored = await f.scan([ip, '192.0.2.10']);
+        assert.deepEqual(
+            restored.ips.find((row) => row.ip === ip),
+            { ip, status: 'OUTBOUND' },
+        );
+        assert.equal(
+            restored.controlAddresses.find(({ address }) => address === ip).enabled,
+            false,
+        );
+    });
+
+    test('stale removal, last-enabled removal and a failed transaction leave addresses and suppression intact', async () => {
+        const f = controlledRepository({
+            controlAddresses: [
+                { address: 'node.example.test', enabled: true },
+                { address: '192.0.2.1', enabled: false },
+            ],
+        });
+        const before = f.snapshot();
+        await assert.rejects(
+            f.repository.update(
+                { uuid: f.uuid, controlAddresses: before.node.controlAddresses.slice(1) },
+                before.node.controlRevision,
+                undefined,
+                ['node.example.test'],
+            ),
+            (error) => error instanceof f.NodeLastControlAddressError,
+        );
+        await assert.rejects(
+            f.repository.update(
+                { uuid: f.uuid, controlAddresses: before.node.controlAddresses.slice(0, 1) },
+                randomUUID(),
+                undefined,
+                ['192.0.2.1'],
+            ),
+            (error) => error instanceof f.NodeControlRevisionConflictError,
+        );
+        await assert.rejects(
+            f.hooks.run({ rollback: true }, () =>
+                f.repository.update(
+                    { uuid: f.uuid, controlAddresses: before.node.controlAddresses.slice(0, 1) },
+                    before.node.controlRevision,
+                    undefined,
+                    ['192.0.2.1'],
+                ),
+            ),
+            /Injected transaction rollback/,
+        );
+        assert.deepEqual(f.snapshot(), before);
     });
 
     test('all-off management remains off through initial discovery, append and empty manual refresh', async () => {

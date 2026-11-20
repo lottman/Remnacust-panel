@@ -34,8 +34,9 @@ export function planNodeIpInventory(
     },
     input: unknown,
     mode: 'initial' | 'scheduled' | 'refresh',
+    suppressed: ReadonlySet<string> = new Set(),
 ) {
-    const addresses = normalizeNodeIpInventory(input);
+    const addresses = normalizeNodeIpInventory(input).filter((address) => !suppressed.has(address));
     const observed = new Set(addresses);
     const previous = NodeControlAddressesSchema.parse(before.controlAddresses);
     const generated = new Set([

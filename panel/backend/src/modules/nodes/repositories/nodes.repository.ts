@@ -16,11 +16,13 @@ import { getKyselyUuid } from '@common/helpers/kysely/get-kysely-uuid';
 import { values } from '@common/helpers/kysely/values';
 import { ICrud } from '@common/types/crud-port';
 
+import { normalizeNodeControlAddress } from '../../../../libs/contract/models/node-control-addresses.schema';
 import { NodesEntity } from '../entities/nodes.entity';
 import { IReorderNode } from '../interfaces';
 import {
     reconcileNodeControlAddresses,
     NodeControlRevisionConflictError,
+    NodeLastControlAddressError,
 } from '../node-control-addresses';
 import { planNodeIpInventory } from '../node-ip-inventory';
 import { NODE_IP_SCAN_INTERVAL_MS } from '../node-ip-inventory.constants';
@@ -242,15 +244,22 @@ export class NodesRepository implements ICrud<NodesEntity> {
         { uuid, ...data }: Partial<NodesEntity>,
         expectedRevision?: string,
         inboundUuids?: string[],
+        removedControlAddresses?: string[],
     ): Promise<NodesEntity> {
         if (
+            removedControlAddresses !== undefined ||
             inboundUuids !== undefined ||
             expectedRevision !== undefined ||
             data.controlAddresses !== undefined ||
             data.address !== undefined ||
             data.ips !== undefined
         ) {
-            return this.updateControlAddresses({ uuid, ...data }, expectedRevision, inboundUuids);
+            return this.updateControlAddresses(
+                { uuid, ...data },
+                expectedRevision,
+                inboundUuids,
+                removedControlAddresses,
+            );
         }
         return this.persistUpdate({ uuid, ...data }, inboundUuids);
     }
@@ -309,6 +318,7 @@ export class NodesRepository implements ICrud<NodesEntity> {
         { uuid, ...data }: Partial<NodesEntity>,
         expectedRevision?: string,
         inboundUuids?: string[],
+        removedControlAddresses?: string[],
     ): Promise<NodesEntity> {
         const [before] = await this.prisma.tx.$queryRaw<
             {
@@ -321,7 +331,51 @@ export class NodesRepository implements ICrud<NodesEntity> {
             WHERE uuid = ${uuid}::uuid FOR UPDATE`;
         if (before && expectedRevision !== undefined && before.controlRevision !== expectedRevision)
             throw new NodeControlRevisionConflictError();
-        if (before) data.controlAddresses = reconcileNodeControlAddresses(before, data);
+        if (
+            removedControlAddresses?.length &&
+            (!before || !expectedRevision || !data.controlAddresses)
+        )
+            throw new NodeControlRevisionConflictError();
+        if (before && uuid) {
+            const previous = new Set(before.controlAddresses.map(({ address }) => address));
+            const requested = data.controlAddresses?.map(({ address }) => address) ?? [];
+            const removed = new Set(removedControlAddresses ?? []);
+            if (
+                [...removed].some(
+                    (address) => !previous.has(address) || requested.includes(address),
+                )
+            )
+                throw new NodeControlRevisionConflictError();
+            if (data.address) {
+                const primary = normalizeNodeControlAddress(data.address);
+                if (primary && removed.has(primary)) throw new NodeControlRevisionConflictError();
+            }
+            data.controlAddresses = reconcileNodeControlAddresses(before, data, removed);
+            const restored = data.controlAddresses
+                .map(({ address }) => address)
+                .filter((address) => !previous.has(address));
+            if (removed.size) {
+                if (
+                    before.controlAddresses.some(
+                        ({ address, enabled }) => enabled && removed.has(address),
+                    ) &&
+                    !data.controlAddresses.some(({ enabled }) => enabled)
+                )
+                    throw new NodeLastControlAddressError();
+                data.ips = (data.ips ?? before.ips).filter(
+                    ({ ip }) => !removed.has(normalizeNodeControlAddress(ip) ?? ip),
+                );
+                await this.prisma.tx.nodeSuppressedAddress.createMany({
+                    data: [...removed].map((address) => ({ nodeUuid: uuid, address })),
+                    skipDuplicates: true,
+                });
+            }
+            if (restored.length) {
+                await this.prisma.tx.nodeSuppressedAddress.deleteMany({
+                    where: { nodeUuid: uuid, address: { in: restored } },
+                });
+            }
+        }
         if (
             data.controlAddresses !== undefined &&
             !data.controlAddresses.some((row) => row.enabled)
@@ -365,10 +419,15 @@ export class NodesRepository implements ICrud<NodesEntity> {
         if (!(input.mode === 'initial' && ipInventory) && !freshAutomatic) {
             if ((ipInventory?.revision ?? null) !== input.expectedScanRevision)
                 throw new NodeControlRevisionConflictError();
+            const suppressed = await this.prisma.tx.nodeSuppressedAddress.findMany({
+                where: { nodeUuid: input.uuid },
+                select: { address: true },
+            });
             const planned = planNodeIpInventory(
                 { ...before, ipInventory },
                 input.addresses,
                 input.mode,
+                new Set(suppressed.map(({ address }) => address)),
             );
             if (
                 JSON.stringify(before.ips) !== JSON.stringify(planned.ips) ||

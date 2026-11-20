@@ -96,18 +96,23 @@ export const EditNodeByUuidModalContent = (props: IProps) => {
                 })
 
                 const connection = getNodeConnectionValues(data)
+                const { removedControlAddresses, ...savedFields } = variables.variables ?? {}
+                const ips = removedControlAddresses?.length ? (data.ips ?? []) : undefined
                 const initial = {
                     ...form.getInitialValues(),
-                    ...variables.variables,
-                    ...connection
+                    ...savedFields,
+                    ...connection,
+                    ...(ips !== undefined && { ips })
                 }
                 form.setInitialValues(initial)
                 for (const [field, value] of Object.entries(connection)) {
                     form.setFieldValue(field, value as never)
                 }
+                if (ips !== undefined) form.setFieldValue('ips', ips)
                 resetNodeFormDirty(form, initial, [
                     ...Object.keys(connection),
-                    ...Object.keys(variables.variables ?? {})
+                    ...Object.keys(savedFields),
+                    ...(ips === undefined ? [] : ['ips'])
                 ])
                 setConnectionConflict(false)
             }
@@ -211,7 +216,11 @@ export const EditNodeByUuidModalContent = (props: IProps) => {
             connectionOperation.current = 'save'
             updateNode({
                 variables: structuredClone(
-                    getNodeUpdateValues(values, (field) => form.isDirty(field))
+                    getNodeUpdateValues(
+                        values,
+                        (field) => form.isDirty(field),
+                        form.getInitialValues().controlAddresses
+                    )
                 )
             })
         })()

@@ -13,6 +13,7 @@ type AddressState = {
 
 export class NodeControlAddressLimitError extends Error {}
 export class NodeControlRevisionConflictError extends Error {}
+export class NodeLastControlAddressError extends Error {}
 
 export function configuredNodeAddresses(state: AddressState): string[] {
     return [
@@ -66,6 +67,7 @@ export function legacyNodeControlAddresses(state: AddressState): TNodeControlAdd
 export function reconcileNodeControlAddresses(
     before: AddressState,
     patch: AddressState,
+    removed: ReadonlySet<string> = new Set(),
 ): TNodeControlAddresses {
     const previous =
         before.controlAddresses === undefined
@@ -77,7 +79,7 @@ export function reconcileNodeControlAddresses(
         const merged = [
             ...requested,
             ...previous
-                .filter((row) => !addresses.has(row.address))
+                .filter((row) => !addresses.has(row.address) && !removed.has(row.address))
                 .map((row) => ({ ...row, enabled: false })),
         ];
         if (merged.length > NODE_CONTROL_ADDRESS_LIMIT) throw new NodeControlAddressLimitError();

@@ -22,7 +22,7 @@ import {
 } from '@remnawave/backend-contract'
 import { ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { TbArrowDown, TbArrowUp, TbCheck, TbCopy, TbNetwork, TbPlus } from 'react-icons/tb'
+import { TbArrowDown, TbArrowUp, TbCheck, TbCopy, TbNetwork, TbPlus, TbTrash } from 'react-icons/tb'
 
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SectionCard } from '@shared/ui/section-card'
@@ -432,6 +432,35 @@ export function NodeControlAddressesEditor<
                                                         )
                                                     }}
                                                 />
+                                            </span>
+                                        </Tooltip>
+                                        <Tooltip
+                                            label={
+                                                isLastEnabled
+                                                    ? t('node-control-addresses.last-enabled')
+                                                    : t('node-control-addresses.remove', {
+                                                          address: label
+                                                      })
+                                            }
+                                        >
+                                            <span>
+                                                <ActionIcon
+                                                    aria-label={t('node-control-addresses.remove', {
+                                                        address: label
+                                                    })}
+                                                    color="red"
+                                                    disabled={disabled || isLastEnabled}
+                                                    onClick={() =>
+                                                        commit(
+                                                            items.filter(({ id }) => id !== item.id)
+                                                        )
+                                                    }
+                                                    size={26}
+                                                    type="button"
+                                                    variant="subtle"
+                                                >
+                                                    <TbTrash size={15} />
+                                                </ActionIcon>
                                             </span>
                                         </Tooltip>
                                         <Stack gap={0}>

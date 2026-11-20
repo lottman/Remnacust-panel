@@ -255,6 +255,7 @@ model Nodes {
   healthLogs                   NodeHealthLogs[]
   optimization                 XeraNodeOptimization?
   ipInventory                  NodeIpInventory?
+  suppressedAddresses          NodeSuppressedAddress[]
 
   activeConfigProfile ConfigProfiles? @relation(fields: [activeConfigProfileUuid], references: [uuid], onDelete: SetNull)
   provider            InfraProviders? @relation(fields: [providerUuid], references: [uuid], onDelete: SetNull)
@@ -273,6 +274,15 @@ model NodeIpInventory {
   node               Nodes    @relation(fields: [nodeUuid], references: [uuid], onDelete: Cascade, onUpdate: Cascade)
 
   @@map("xera_node_ip_inventory")
+}
+
+model NodeSuppressedAddress {
+  nodeUuid String @map("node_uuid") @db.Uuid
+  address  String @db.VarChar(253)
+  node     Nodes  @relation(fields: [nodeUuid], references: [uuid], onDelete: Cascade, onUpdate: Cascade)
+
+  @@id([nodeUuid, address])
+  @@map("xera_node_suppressed_addresses")
 }
 
 model XeraNodeOptimization {

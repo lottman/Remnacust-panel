@@ -1369,6 +1369,11 @@ export declare const ERRORS: {
         readonly message: 'Node address list exceeds the supported limit; saved addresses were retained';
         readonly httpCode: 400;
     };
+    readonly NODE_LAST_CONTROL_ADDRESS: {
+        readonly code: 'A273';
+        readonly message: 'Enable another control address before removing the last enabled address.';
+        readonly httpCode: 400;
+    };
     readonly NODE_CONTROL_REVISION_CONFLICT: {
         readonly code: 'A266';
         readonly message: 'Node connection settings changed; reload the node before saving';

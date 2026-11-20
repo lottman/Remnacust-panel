@@ -350,3 +350,21 @@ test('real scan card, mutation, response parsing and cache merge in loopback Chr
         else assert.ok(result.values.controlAddresses.every(entry => !entry.enabled))
     })
 })
+
+test('saving deletion explicitly removes only omitted saved addresses and keeps the revision', () => {
+    const controlAddresses = original.controlAddresses.slice(0, 1)
+    const payload = state.getNodeUpdateValues(
+        { ...original, controlAddresses }, field => field === 'controlAddresses', original.controlAddresses
+    )
+    assert.deepEqual(payload, {
+        uuid: original.uuid,
+        controlAddresses,
+        controlRevision: original.controlRevision,
+        removedControlAddresses: ['192.0.2.20']
+    })
+    const restoreBeforeSave = state.getNodeUpdateValues(
+        { ...original, controlAddresses: original.controlAddresses.map(entry => ({...entry, enabled: true})) },
+        field => field === 'controlAddresses', original.controlAddresses
+    )
+    assert.equal(restoreBeforeSave.removedControlAddresses, undefined)
+})

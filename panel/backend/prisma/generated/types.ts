@@ -278,6 +278,10 @@ export type Nodes = {
     createdAt: Generated<Timestamp>;
     updatedAt: Generated<Timestamp>;
 };
+export type NodeSuppressedAddress = {
+    nodeUuid: string;
+    address: string;
+};
 export type NodesUsageHistory = {
     nodeUuid: string;
     downloadBytes: bigint;
@@ -527,6 +531,7 @@ export type DB = {
     xeraNodeHealthLogs: NodeHealthLogs;
     xeraNodeIpInventory: NodeIpInventory;
     xeraNodeOptimization: XeraNodeOptimization;
+    xeraNodeSuppressedAddresses: NodeSuppressedAddress;
     xeraQuotaUsage: XeraQuotaUsage;
     xeraSessionRecordings: SessionRecording;
     xeraXraySettings: XraySettings;

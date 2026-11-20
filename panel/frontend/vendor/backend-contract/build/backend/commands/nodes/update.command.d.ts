@@ -11,6 +11,7 @@ export declare namespace UpdateNodeCommand {
             address: z.ZodPipe<z.ZodString, z.ZodTransform<string, string>>;
             enabled: z.ZodBoolean;
         }, z.core.$strip>>>;
+        removedControlAddresses: z.ZodOptional<z.ZodArray<z.ZodPipe<z.ZodString, z.ZodTransform<string, string>>>>;
         controlRevision: z.ZodOptional<z.ZodUUID>;
         port: z.ZodOptional<z.ZodNumber>;
         proxyUrl: z.ZodOptional<z.ZodNullable<z.ZodString>>;

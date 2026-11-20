@@ -35,6 +35,7 @@ import {
     canonicalNodeControlAddresses,
     NodeControlAddressLimitError,
     NodeControlRevisionConflictError,
+    NodeLastControlAddressError,
 } from './node-control-addresses';
 import { NodesSystemCacheService } from './nodes-system-cache.service';
 import { NodesRepository } from './repositories/nodes.repository';
@@ -306,7 +307,7 @@ export class NodesService {
 
     public async updateNode(body: UpdateNodeBodyDto): Promise<TResult<NodeResponseModel>> {
         try {
-            const { configProfile, controlRevision, ...nodeData } = body;
+            const { configProfile, controlRevision, removedControlAddresses, ...nodeData } = body;
 
             const node = await this.nodesRepository.findByUUID(body.uuid);
             if (!node) {
@@ -373,6 +374,7 @@ export class NodesService {
                 },
                 controlRevision,
                 configProfile?.activeInbounds,
+                removedControlAddresses,
             );
             await this.invalidateRoutesAfterCommit();
 
@@ -421,6 +423,8 @@ export class NodesService {
                 return fail(ERRORS.NODE_CONTROL_ADDRESS_LIMIT);
             if (error instanceof NodeControlRevisionConflictError)
                 return fail(ERRORS.NODE_CONTROL_REVISION_CONFLICT);
+            if (error instanceof NodeLastControlAddressError)
+                return fail(ERRORS.NODE_LAST_CONTROL_ADDRESS);
             if (
                 error instanceof Prisma.PrismaClientKnownRequestError &&
                 error.code === 'P2002' &&

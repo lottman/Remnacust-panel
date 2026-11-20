@@ -1340,6 +1340,11 @@ export const ERRORS = {
         message: 'Node address list exceeds the supported limit; saved addresses were retained',
         httpCode: 400,
     },
+    NODE_LAST_CONTROL_ADDRESS: {
+        code: 'A273',
+        message: 'Enable another control address before removing the last enabled address.',
+        httpCode: 400,
+    },
     NODE_CONTROL_REVISION_CONFLICT: {
         code: 'A266',
         message: 'Node connection settings changed; reload the node before saving',

@@ -1,7 +1,14 @@
 import { UseFormReturnType } from '@mantine/form'
-import { GetNodeCommand, UpdateNodeCommand } from '@remnawave/backend-contract'
+import {
+    GetNodeCommand,
+    normalizeNodeControlAddress,
+    UpdateNodeCommand
+} from '@remnawave/backend-contract'
 
-import { getNodeControlAddresses } from '@shared/utils/node-control-addresses'
+import {
+    getNodeControlAddresses,
+    type NodeControlAddress
+} from '@shared/utils/node-control-addresses'
 
 export function hasNodeConnectionChanges(
     form: Pick<UseFormReturnType<UpdateNodeCommand.RequestBody>, 'isDirty'>
@@ -62,7 +69,8 @@ export function getNodeConnectionValues(node: GetNodeCommand.Response['response'
 
 export function getNodeUpdateValues(
     values: UpdateNodeCommand.RequestBody,
-    isDirty: (field: string) => boolean
+    isDirty: (field: string) => boolean,
+    initialAddresses: readonly NodeControlAddress[] = []
 ): UpdateNodeCommand.RequestBody {
     const changed = Object.fromEntries(
         Object.entries(values).filter(([field]) => field !== 'controlRevision' && isDirty(field))
@@ -70,8 +78,17 @@ export function getNodeUpdateValues(
     if (changed.ips !== undefined && values.controlAddresses !== undefined) {
         changed.controlAddresses ??= values.controlAddresses
     }
+    const kept = new Set(
+        changed.controlAddresses?.map(({ address }) => normalizeNodeControlAddress(address))
+    )
+    const removedControlAddresses = isDirty('controlAddresses')
+        ? initialAddresses
+              .map(({ address }) => normalizeNodeControlAddress(address))
+              .filter((address): address is string => address !== null && !kept.has(address))
+        : []
     return {
         ...changed,
+        ...(removedControlAddresses.length > 0 && { removedControlAddresses }),
         uuid: values.uuid,
         ...((changed.controlAddresses !== undefined ||
             changed.port !== undefined ||

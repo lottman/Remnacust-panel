@@ -282,7 +282,7 @@ With Node 1.1.38, the panel obtains the complete assigned IPv4/IPv6 inventory th
 
 The refresh icon button (Rescan IPs) immediately runs the same reconciliation. Surviving row order and disabled states remain. Save address, port or proxy changes first. Failed, incomplete or stale responses do not clear saved addresses. An older agent without discovery support leaves the list intact; update Node or continue adding addresses manually. If a complete reply contains none of the previously confirmed addresses and no manual entries remain, the panel does not revive the old IP as a hidden fallback; add a reachable address manually.
 
-The interface keeps the last enabled management address on. Enable another address first when changing it. An existing all-disabled list can be repaired by enabling the required address.
+The interface keeps the last enabled management address on. You can edit an address with its switch on. The replacement takes effect when you save. Enable another address before removing or switching off the last enabled row. An existing all-disabled list can be repaired by enabling the required address.
 
 ### The node is running but some hosts are blocked
 

@@ -167,14 +167,16 @@ test('hostname and IPv6 validation uses the backend schema and retains measured 
     assert.equal(validation.getNodeControlAddressesErrors([...full, address('extra.example.test')]).controlAddresses, 'node-control-addresses.invalid-list')
 })
 
-test('saved addresses have no remove control and the last enabled address is guarded without changing the anchor or IP roles', () => {
+test('saved addresses can be replaced in place and the last enabled address stays guarded', () => {
     const state = editor([address('192.0.2.1'), address('2001:db8::2')])
-    assert.ok(state.inputs().every(item => item.props.readOnly))
+    assert.ok(state.inputs().every(item => !item.props.readOnly))
     assert.ok(!state.control('node-control-addresses.discard'))
+    state.inputs()[0].props.onChange({ currentTarget: { value: '192.0.2.30' } })
+    assert.deepEqual(state.values.controlAddresses, [address('192.0.2.30'), address('2001:db8::2')])
     state.toggles()[0].props.onChange({ currentTarget: { checked: false } })
     assert.equal(state.toggles()[1].props.disabled, true)
     state.toggles()[1].props.onChange({ currentTarget: { checked: false } })
-    assert.deepEqual(state.values.controlAddresses, [address('192.0.2.1', false), address('2001:db8::2')])
+    assert.deepEqual(state.values.controlAddresses, [address('192.0.2.30', false), address('2001:db8::2')])
     assert.equal(state.values.address, state.before.address)
     assert.deepEqual(state.values.ips, state.before.ips)
 })
@@ -203,7 +205,7 @@ test('keyboard reorder preserves each toggle and payload order; a draft matching
     state.add()
     const draft = state.inputs().at(-1)
     draft.props.onChange({ currentTarget: { value: '192.0.2.1' } })
-    assert.equal(state.inputs().at(-1).props.readOnly, false)
+    assert.ok(!state.inputs().at(-1).props.readOnly)
     assert.equal(state.inputs().at(-1).props.autoFocus, true)
     assert.ok(!state.control('node-control-addresses.discard'))
     state.toggles().at(-1).props.onChange({ currentTarget: { checked: false } })
@@ -247,14 +249,14 @@ test('preferred endpoint sorting follows enabled priority and keeps legacy ancho
     assert.equal(helpers.getPreferredNodeControlAddress({ ...nodes[0], controlAddresses: [] }), null)
 })
 
-test('acknowledging an unchanged save locks a new address without relying on a keyed remount', () => {
+test('an address remains editable after a save without a keyed remount', () => {
     const state = editor([address('192.0.2.1')])
     state.add()
     state.inputs().at(-1).props.onChange({ currentTarget: { value: '2001:db8::20' } })
-    assert.equal(state.inputs().at(-1).props.readOnly, false)
+    assert.ok(!state.inputs().at(-1).props.readOnly)
     state.markSaved()
     const tree = state.render({ savedAddresses: state.values.controlAddresses })
-    assert.ok(tree.filter(item => item.type === mantine.TextInput).every(item => item.props.readOnly))
+    assert.ok(tree.filter(item => item.type === mantine.TextInput).every(item => !item.props.readOnly))
     assert.ok(!tree.some(item => item.props['aria-label']?.startsWith('node-control-addresses.discard')))
 })
 

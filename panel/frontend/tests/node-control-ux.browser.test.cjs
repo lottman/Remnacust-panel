@@ -109,6 +109,20 @@ test('compact node controls use accessible icons and protect the final enabled a
         ])
     })
 
+    await t.test('a saved control address can be typed over while its switch is on', async () => {
+        await open('ru', { state: 'two-enabled' })
+        const input = 'input[data-path="scan-form-controlAddresses.1.address"]'
+        await browser.evaluate(`document.querySelector(${JSON.stringify(input)}).select()`)
+        assert.equal(await browser.evaluate(`document.querySelector(${JSON.stringify(input)}).readOnly`), false)
+        await browser.send('Input.insertText', { text: '2001:db8::25' })
+        await browser.waitFor('nodeWizardFixture.form().getValues().controlAddresses[1].address === "2001:db8::25"')
+        assert.deepEqual(await browser.evaluate('nodeWizardFixture.form().getValues().controlAddresses'), [
+            { address: 'manual.example.test', enabled: true },
+            { address: '2001:db8::25', enabled: true }
+        ])
+        assert.equal(await browser.evaluate('nodeWizardFixture.form().isDirty("controlAddresses")'), true)
+    })
+
     await t.test('IPv6 role menu works with the keyboard and read-only mode disables role changes', async () => {
         await open('en')
         await browser.evaluate(`(${action}).click()`)

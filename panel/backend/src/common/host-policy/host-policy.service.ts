@@ -226,7 +226,9 @@ export class HostPolicyService {
         }
         let snapshot: CompatibilitySnapshot;
         try {
-            snapshot = current ?? (await this.prepareCompatibilitySnapshot(roots));
+            snapshot =
+                current ??
+                (await this.prepareCompatibilitySnapshot(roots, purpose === 'configuration'));
             const strictUnavailable = snapshot.strictUnavailable ?? snapshot.unavailable;
             const strictClassification = snapshot.strictClassification ?? {
                 key: snapshot.key,
@@ -447,6 +449,7 @@ export class HostPolicyService {
     }
     private async prepareCompatibilitySnapshot(
         roots: readonly string[],
+        refreshRoots: boolean,
     ): Promise<CompatibilitySnapshot> {
         const nodes = await sql<PolicyConnection & { inbounds: string[] }>`
             SELECT n.uuid,n.address,n.port,n.proxy_url AS "proxyUrl",
@@ -481,7 +484,7 @@ export class HostPolicyService {
                         if (remaining <= 0)
                             throw new Error('Capability discovery budget exhausted');
                         const value = await Promise.race([
-                            this.discoverCapabilities(node),
+                            this.discoverCapabilities(node, refreshRoots && rootIds.has(node.uuid)),
                             new Promise<never>((_resolve, reject) => {
                                 timer = setTimeout(
                                     () =>

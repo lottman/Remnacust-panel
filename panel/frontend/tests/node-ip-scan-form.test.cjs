@@ -369,3 +369,16 @@ test('saving deletion explicitly removes only omitted saved addresses and keeps 
     )
     assert.equal(restoreBeforeSave.removedControlAddresses, undefined)
 })
+
+test('replacing the sole enabled address saves one revision-protected update without switching it off', () => {
+    const controlAddresses = [{ address: '2001:db8::25', enabled: true }, original.controlAddresses[1]]
+    const payload = state.getNodeUpdateValues(
+        { ...original, controlAddresses }, field => field === 'controlAddresses', original.controlAddresses
+    )
+    assert.deepEqual(payload, {
+        uuid: original.uuid,
+        controlAddresses,
+        controlRevision: original.controlRevision,
+        removedControlAddresses: ['node.example.test']
+    })
+})

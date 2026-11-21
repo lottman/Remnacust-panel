@@ -372,7 +372,6 @@ export function NodeControlAddressesEditor<
                                                 )
                                             }}
                                             placeholder={t('node-control-addresses.placeholder')}
-                                            readOnly={isSaved}
                                             leftSection={
                                                 <CopyButton value={item.address.trim()}>
                                                     {({ copied, copy }) => (

@@ -139,6 +139,9 @@ async function fixture(t) {
         swap: () => {
             version = '1.1.38-remnacust';
         },
+        restoreStock: () => {
+            version = '3.4.6';
+        },
         expireProof: () => {
             nativeProof().checkedAt = Date.now() - 60_001;
         },
@@ -166,52 +169,66 @@ test('same-revision image swap: system stats retain old version, explicit health
     assert.equal(f.node.controlRevision, f.originalRevision);
 });
 
-test('same-revision native-to-custom configuration refreshes START version but temporarily skips policy discovery', async (t) => {
+test('same-revision native-to-custom startup refreshes the target proof and stages policy before START', async (t) => {
     const f = await fixture(t);
     await f.warm();
     f.swap();
     await f.run();
     assert.equal(f.starts.length, 1, f.node.lastStatusMessage);
-    assert.equal(f.posts.length, 0);
-    assert.equal(f.calls.filter((call) => call.path === '/node/xray/host-policy').length, 0);
+    assert.equal(f.posts.length, 1);
+    const policy = f.calls.findIndex(
+        (call) => call.path === '/node/xray/host-policy' && call.method === 'POST',
+    );
+    assert.ok(policy >= 0);
+    assert.ok(policy < f.calls.findIndex((call) => call.path === contract.StartXrayCommand.url));
     assert.equal((await f.service.getNodeVersion(f.node)).response, '1.1.38-remnacust');
     const start = f.calls.find((call) => call.path === contract.StartXrayCommand.url);
     assert.equal(start.encoding, 'zstd');
     assert(start.body.xrayConfig);
     assert(start.body.internals);
     assert.equal(f.node.controlRevision, f.originalRevision);
-    f.expireProof();
-    await f.run();
-    assert.equal(f.starts.length, 2, f.node.lastStatusMessage);
-    assert.equal(f.posts.length, 1);
     assert.equal(f.nativeProof().native, false);
     assert.equal(f.values.get(`remnacust:node-compatibility:${f.node.uuid}`), null);
 });
 
-test('same-revision native proof takes compatibility path for a quota host until expiry, then closes missing-statistics quota', async (t) => {
+test('same-revision native-to-custom startup closes missing-statistics quota on the first attempt', async (t) => {
     const f = await fixture(t);
     f.host.userLimit = '1024';
     await f.warm();
     f.swap();
     await f.run();
     assert.equal(f.starts.length, 1, f.node.lastStatusMessage);
-    assert.equal(f.posts.length, 0);
-    f.expireProof();
-    await f.run();
-    assert.equal(f.starts.length, 2, f.node.lastStatusMessage);
     assert.equal(f.posts.length, 1);
     assert.equal(f.posts[0].body.groups[`host:${f.host.uuid}`].blockAll, true);
     assert.equal(Object.hasOwn(f.posts[0].body, 'offlineReserves'), false);
 });
 
-test('native proof expiry between configuration snapshot and policy sync produces one pending attempt and recovers on retry', async (t) => {
+test('same-revision rollback to stock refreshes the target proof before sending configuration', async (t) => {
+    const f = await fixture(t);
+    f.swap();
+    await f.run();
+    assert.equal(f.nativeProof().native, false);
+    f.restoreStock();
+    await f.run();
+    assert.equal(f.starts.length, 2, f.node.lastStatusMessage);
+    assert.equal(f.posts.length, 1);
+    assert.equal(f.nativeProof().native, true);
+    assert.equal(f.node.controlRevision, f.originalRevision);
+});
+
+test('a second image change during startup still fails closed and recovers on retry', async (t) => {
     const f = await fixture(t);
     await f.warm();
     f.swap();
     const health = f.service.getNodeHealth.bind(f.service);
+    let expire = true;
     f.service.getNodeHealth = async (...args) => {
         const result = await health(...args);
-        if (f.nativeProof()?.native === true) f.expireProof();
+        if (expire && f.nativeProof()?.native === false) {
+            expire = false;
+            f.expireProof();
+            f.restoreStock();
+        }
         return result;
     };
     const failures = [];
@@ -233,6 +250,6 @@ test('native proof expiry between configuration snapshot and policy sync produce
     assert.match(failures[0].message, /host policy compatibility changed after discovery/);
     await f.run();
     assert.equal(f.starts.length, 1, f.node.lastStatusMessage);
-    assert.equal(f.posts.length, 1);
-    assert.equal(f.nativeProof().native, false);
+    assert.equal(f.posts.length, 0);
+    assert.equal(f.nativeProof().native, true);
 });

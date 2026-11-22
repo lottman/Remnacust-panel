@@ -1,4 +1,7 @@
 {
+  "nodesRefresh": {
+    "completed": "Node data refreshed."
+  },
   "backups": {
     "delivery-success": "Backup sent to Telegram",
     "delivery-failed": "Could not send backup. Check the bot token, chat ID and Telegram connectivity.",

@@ -1,9 +1,10 @@
+import { notifications } from '@mantine/notifications'
+import { useTranslation } from 'react-i18next'
+
 import {
     useGetConfigProfiles,
     useGetNodePlugins,
     useGetNodes,
-    useGetNodesTags,
-    useGetNodeSecretKey,
     useGetNodeIntegrations
 } from '@shared/api/hooks'
 import { hasPageQueryError, PageQueryError } from '@shared/ui/page-query-error'
@@ -11,13 +12,11 @@ import { hasPageQueryError, PageQueryError } from '@shared/ui/page-query-error'
 import NodesPageComponent from '../components/nodes.page.component'
 
 export function NodesPageConnector() {
+    const { t } = useTranslation()
     const nodesQuery = useGetNodes({ rQueryParams: { refetchOnMount: 'always' } })
     const nodePluginsQuery = useGetNodePlugins()
     const nodeIntegrationsQuery = useGetNodeIntegrations()
     const configProfilesQuery = useGetConfigProfiles()
-
-    useGetNodeSecretKey()
-    useGetNodesTags()
 
     const { data: nodes, isLoading } = nodesQuery
     const { data: nodePlugins } = nodePluginsQuery
@@ -32,6 +31,22 @@ export function NodesPageConnector() {
             nodes={nodes}
             nodePlugins={nodePlugins}
             nodeIntegrations={nodeIntegrations}
+            onRefresh={async () => {
+                const results = await Promise.allSettled(
+                    pageQueries.map((query) => query.refetch({ cancelRefetch: false }))
+                )
+                if (
+                    results.every(
+                        (result) => result.status === 'fulfilled' && result.value.isSuccess
+                    )
+                ) {
+                    notifications.show({
+                        id: 'nodes-refresh',
+                        message: t('nodesRefresh.completed'),
+                        color: 'teal'
+                    })
+                }
+            }}
         />
     )
 }

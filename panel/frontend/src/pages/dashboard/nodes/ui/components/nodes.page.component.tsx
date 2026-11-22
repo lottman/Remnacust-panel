@@ -29,7 +29,7 @@ import { IProps } from './interfaces'
 
 export default function NodesPageComponent(props: IProps) {
     usePageSearchShortcut()
-    const { nodes, isLoading, nodePlugins, nodeIntegrations } = props
+    const { nodes, isLoading, nodePlugins, nodeIntegrations, onRefresh } = props
 
     const { t } = useTranslation()
 
@@ -97,6 +97,9 @@ export default function NodesPageComponent(props: IProps) {
                             <PageHeaderShared
                                 actions={
                                     <NodesHeaderActionButtonsFeature
+                                        isLoading={isLoading}
+                                        nodes={nodes}
+                                        onRefresh={onRefresh}
                                         setViewMode={setNodesViewMode}
                                         viewMode={viewMode}
                                     />

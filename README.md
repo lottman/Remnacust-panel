@@ -34,7 +34,7 @@ docker compose up -d --no-build --pull never
 
 | Компонент | Версия комплекта |
 | --- | --- |
-| Панель и сайт подписки | [1.1.7.135](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.135) |
+| Панель и сайт подписки | [1.1.7.140](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.140) |
 | Установщик / Docker-комплект | [1.2.178](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.178) |
 | Агент ноды | [1.1.39](https://github.com/lottman/Remnacust-node/releases/tag/v1.1.39) |
 | Core / валидатор редактора | [1.1.22](https://github.com/lottman/Remnacust-core/releases/tag/v1.1.22), Xray v26.11.9 |

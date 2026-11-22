@@ -34,7 +34,7 @@ The bundle for this panel version. Components use separate version numbers; publ
 
 | Component | Bundle version |
 | --- | --- |
-| Panel and subscription website | [1.1.7.135](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.135) |
+| Panel and subscription website | [1.1.7.140](https://github.com/lottman/Remnacust-panel/releases/tag/v1.1.7.140) |
 | Installer / Docker bundle | [1.2.178](https://github.com/lottman/Remnacust-installer/releases/tag/v1.2.178) |
 | Node agent | [1.1.39](https://github.com/lottman/Remnacust-node/releases/tag/v1.1.39) |
 | Core / editor validator | [1.1.22](https://github.com/lottman/Remnacust-core/releases/tag/v1.1.22), Xray v26.11.9 |

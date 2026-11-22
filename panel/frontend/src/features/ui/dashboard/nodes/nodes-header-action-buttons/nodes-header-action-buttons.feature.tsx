@@ -1,3 +1,5 @@
+import type { GetNodesCommand } from '@remnawave/backend-contract'
+
 import { CoreManagementFeature } from '@features/dashboard/nodes/core-management/core-management.feature'
 import { ActionIcon, ActionIconGroup, Group, Menu, Stack, Tooltip } from '@mantine/core'
 import { modals } from '@mantine/modals'
@@ -19,7 +21,7 @@ import {
 } from 'react-icons/tb'
 
 import { showModal } from '@shared/_modals/show-modal'
-import { useGetNodes, useRestartAllNodes } from '@shared/api/hooks'
+import { useRestartAllNodes } from '@shared/api/hooks'
 import { useIsMobile } from '@shared/hooks'
 import { ActionCardShared } from '@shared/ui'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
@@ -32,12 +34,15 @@ import {
 } from '@entities/dashboard/view-preferences-store'
 
 interface IProps {
+    isLoading: boolean
+    nodes: GetNodesCommand.Response['response'] | undefined
+    onRefresh: () => Promise<void>
     setViewMode: (viewMode: NODES_VIEW_MODE) => void
     viewMode: NODES_VIEW_MODE
 }
 
 export const NodesHeaderActionButtonsFeature = (props: IProps) => {
-    const { setViewMode, viewMode } = props
+    const { isLoading, nodes = [], onRefresh, setViewMode, viewMode } = props
     const isMobile = useIsMobile()
     const cardColumns = useNodesCardColumns()
     const { setNodesCardColumns } = useViewPreferencesStoreActions()
@@ -50,12 +55,6 @@ export const NodesHeaderActionButtonsFeature = (props: IProps) => {
         cardColumns === 2 ? 'layoutActions.oneCardPerRow' : 'layoutActions.twoCardsPerRow'
     )
 
-    const {
-        data: nodes = [],
-        isLoading: isGetNodesPending,
-        refetch: refetchNodes,
-        isPending
-    } = useGetNodes()
     const { mutate: restartAllNodes, isPending: isRestartAllNodesPending } = useRestartAllNodes()
 
     const openRestartAllNodesModal = () => {
@@ -78,7 +77,7 @@ export const NodesHeaderActionButtonsFeature = (props: IProps) => {
                         )}
                         icon={<TbAlertCircle size={22} />}
                         iconColor="red"
-                        isLoading={isPending}
+                        isLoading={isRestartAllNodesPending}
                         onClick={() => {
                             restartAllNodes({
                                 variables: {
@@ -97,7 +96,7 @@ export const NodesHeaderActionButtonsFeature = (props: IProps) => {
                         )}
                         icon={<TbRocket size={22} />}
                         iconColor="teal"
-                        isLoading={isPending}
+                        isLoading={isRestartAllNodesPending}
                         onClick={() => {
                             restartAllNodes({
                                 variables: {
@@ -121,8 +120,8 @@ export const NodesHeaderActionButtonsFeature = (props: IProps) => {
                 <Tooltip label={t('common.action.update')}>
                     <RefreshActionIcon
                         aria-label={t('common.action.update')}
-                        loading={isGetNodesPending || isPending}
-                        onClick={() => refetchNodes()}
+                        loading={isLoading}
+                        onClick={onRefresh}
                         size={44}
                         color="gray"
                         variant="subtle"
@@ -301,8 +300,8 @@ export const NodesHeaderActionButtonsFeature = (props: IProps) => {
                 <Tooltip label={t('common.action.update')} withArrow>
                     <RefreshActionIcon
                         aria-label={t('common.action.update')}
-                        loading={isGetNodesPending || isPending}
-                        onClick={() => refetchNodes()}
+                        loading={isLoading}
+                        onClick={onRefresh}
                         size={44}
                         variant="soft"
                     >

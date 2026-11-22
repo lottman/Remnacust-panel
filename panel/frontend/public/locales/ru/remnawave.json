@@ -1,4 +1,7 @@
 {
+  "nodesRefresh": {
+    "completed": "Данные нод обновлены."
+  },
     "backups": {
         "delivery-success": "Копия отправлена в Telegram",
         "delivery-failed": "Не удалось отправить копию. Проверьте токен бота, ID чата и доступность Telegram.",

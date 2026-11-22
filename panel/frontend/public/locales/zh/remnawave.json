@@ -1,4 +1,7 @@
 {
+  "nodesRefresh": {
+    "completed": "节点数据已刷新。"
+  },
     "backups": {
         "delivery-success": "备份已发送到 Telegram",
         "delivery-failed": "无法发送备份。请检查机器人令牌、聊天 ID 和 Telegram 连接。",

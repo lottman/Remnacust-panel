@@ -15,7 +15,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { TbCpu, TbShieldCheck } from 'react-icons/tb'
+import { TbCpu } from 'react-icons/tb'
 
 import { instance } from '@shared/api/axios'
 import {
@@ -219,12 +219,9 @@ export function XraySettingsPage() {
                             <SectionCard.Root>
                                 <SectionCard.Section>
                                     <Stack gap="md">
-                                        <Group gap="sm">
-                                            <TbShieldCheck size={22} />
-                                            <Title order={4}>
-                                                {t('xray-settings.features-title' as never)}
-                                            </Title>
-                                        </Group>
+                                        <Title order={4}>
+                                            {t('xray-settings.features-title' as never)}
+                                        </Title>
                                         <Text size="sm" c="dimmed">
                                             {t('xray-settings.base-features' as never)}
                                         </Text>

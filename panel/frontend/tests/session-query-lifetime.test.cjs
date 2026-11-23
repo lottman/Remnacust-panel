@@ -103,8 +103,8 @@ async function fixture(t, schema = responseSchema) {
     const { queryClient: client } = clientModule
     const errors = load('src/shared/api/helpers/handler-request-error.ts', {
         '@remnawave/backend-contract': contract,
-        i18next: translate,
-        'consola/browser': { consola: { log() {} } }
+        '../api-response': apiResponse,
+        i18next: translate
     })
     const { createUrl } = load('src/shared/api/helpers/create-url.ts')
     const notices = []

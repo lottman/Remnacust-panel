@@ -12,7 +12,7 @@ import { ProfileRelations } from './profile-relations'
 
 export const ConfigPageComponent = (props: Props) => {
     const { t } = useTranslation()
-    const { configProfiles } = props
+    const { configProfiles, isRefreshing, onRefresh } = props
 
     const configProfileCount = configProfiles?.length ?? 0
 
@@ -22,6 +22,8 @@ export const ConfigPageComponent = (props: Props) => {
                 actions={
                     <ConfigProfilesHeaderActionButtonsFeature
                         configProfileCount={configProfileCount}
+                        isRefreshing={isRefreshing}
+                        onRefresh={onRefresh}
                     />
                 }
                 icon={<XrayLogo size={24} />}

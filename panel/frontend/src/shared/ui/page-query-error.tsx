@@ -1,8 +1,11 @@
 import { Alert, Button, Stack } from '@mantine/core'
 import { useTranslation } from 'react-i18next'
 
+import { getSafeRequestErrorMessage } from '@shared/api/helpers/handler-request-error'
+
 type PageQuery = {
     data: unknown
+    error?: unknown
     isError: boolean
     isFetching: boolean
     refetch: () => Promise<unknown>
@@ -15,10 +18,15 @@ export function hasPageQueryError(queries: readonly PageQuery[]) {
 export function PageQueryError({ queries }: { queries: readonly PageQuery[] }) {
     const { t } = useTranslation()
     const failedQueries = queries.filter((query) => query.isError && query.data === undefined)
+    const messages = new Set(failedQueries.map((query) => getSafeRequestErrorMessage(query.error)))
 
     return (
         <Stack gap="sm" role="alert">
-            <Alert color="red">{t('common.message.unknown-error')}</Alert>
+            {[...messages].map((message) => (
+                <Alert key={message} color="red">
+                    {message}
+                </Alert>
+            ))}
             <Button
                 loading={failedQueries.some((query) => query.isFetching)}
                 onClick={() => void Promise.all(failedQueries.map((query) => query.refetch()))}

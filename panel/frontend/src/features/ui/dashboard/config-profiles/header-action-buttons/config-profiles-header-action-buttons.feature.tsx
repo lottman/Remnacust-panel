@@ -5,27 +5,20 @@ import { useNavigate } from 'react-router'
 
 import { showModal } from '@shared/_modals/show-modal'
 import { HelpActionIconShared } from '@shared/_modals/universal'
-import { queryClient } from '@shared/api'
-import { QueryKeys, useGetConfigProfiles } from '@shared/api/hooks'
 import { RefreshActionIcon } from '@shared/ui/refresh-control'
 import { UniversalSpotlightActionIconShared } from '@shared/ui/universal-spotlight'
 
 interface IProps {
     configProfileCount: number
+    isRefreshing: boolean
+    onRefresh: () => Promise<unknown>
 }
 
 export const ConfigProfilesHeaderActionButtonsFeature = (props: IProps) => {
-    const { configProfileCount } = props
-    const { isFetching } = useGetConfigProfiles()
+    const { configProfileCount, isRefreshing, onRefresh } = props
     const { t } = useTranslation()
 
     const navigate = useNavigate()
-
-    const handleUpdate = async () => {
-        await queryClient.refetchQueries({
-            queryKey: QueryKeys.configProfiles.getConfigProfiles.queryKey
-        })
-    }
 
     return (
         <Group grow preventGrowOverflow={false} wrap="wrap">
@@ -50,8 +43,8 @@ export const ConfigProfilesHeaderActionButtonsFeature = (props: IProps) => {
             <ActionIconGroup>
                 <Tooltip label={t('common.action.update')} withArrow>
                     <RefreshActionIcon
-                        loading={isFetching}
-                        onClick={handleUpdate}
+                        loading={isRefreshing}
+                        onClick={onRefresh}
                         size="input-md"
                         variant="soft"
                     >

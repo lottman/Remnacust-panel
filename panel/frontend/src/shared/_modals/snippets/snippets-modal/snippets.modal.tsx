@@ -15,6 +15,7 @@ import { useGetSnippets } from '@shared/api/hooks'
 import { useIsMobile } from '@shared/hooks'
 import { LoaderModalShared } from '@shared/ui/loader-modal'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { hasPageQueryError, PageQueryError } from '@shared/ui/page-query-error'
 import { RefreshActionIcon } from '@shared/ui/refresh-control'
 
 export const SnippetsModal = NiceModal.create(() => {
@@ -24,7 +25,10 @@ export const SnippetsModal = NiceModal.create(() => {
     const { t } = useTranslation()
     const isMobile = useIsMobile()
 
-    const { data: snippets, isLoading, isRefetching, refetch } = useGetSnippets()
+    const snippetsQuery = useGetSnippets()
+    const { data: snippets, isLoading, isRefetching, refetch } = snippetsQuery
+    const queries = [snippetsQuery]
+    const loadFailed = hasPageQueryError(queries)
 
     const handleCreateModal = () => {
         modals.open({
@@ -61,7 +65,9 @@ export const SnippetsModal = NiceModal.create(() => {
         >
             {isLoading && <LoaderModalShared mih="240px" />}
 
-            {!isLoading && (
+            {loadFailed && <PageQueryError queries={queries} />}
+
+            {snippets && (
                 <Stack gap="md">
                     <Box h={isMobile ? undefined : 'min(62vh, 560px)'}>
                         <SnippetsGridWidget snippets={snippets} />

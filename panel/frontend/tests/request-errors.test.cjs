@@ -5,6 +5,8 @@ const path = require('node:path')
 const vm = require('node:vm')
 const ts = require('typescript')
 const { ERRORS } = require('../../backend/libs/contract/build/backend/constants/errors/errors.js')
+const { z, ZodError } = require('zod')
+const compilerOptions = { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 }
 const compiled = ts.transpileModule(
     fs.readFileSync(process.env.REQUEST_ERROR_BASELINE_FILE || path.join(__dirname, '../src/shared/api/helpers/handler-request-error.ts'), 'utf8'),
     { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }
@@ -13,23 +15,32 @@ const compiled = ts.transpileModule(
 function handler(language) {
     let locale = JSON.parse(fs.readFileSync(path.join(__dirname, '../public/locales', language, 'remnawave.json'), 'utf8'))
     const exports = {}
+    const i18n = { __esModule: true, default: { t(key, values = {}) {
+        const value = key.split('.').reduce((part, name) => part?.[name], locale) ?? values.defaultValue
+        assert.equal(typeof value, 'string', `${language}: ${key}`)
+        return value.replace(/\{\{(\w+)\}\}/g, (_, name) => String(values[name] ?? ''))
+    } } }
+    const apiResponse = {}
+    vm.runInNewContext(ts.transpileModule(fs.readFileSync(path.join(__dirname, '../src/shared/api/api-response.ts'), 'utf8'), { compilerOptions }).outputText, {
+        exports: apiResponse, Error, require: () => i18n
+    })
     vm.runInNewContext(compiled, {
         exports,
         Error,
         require(name) {
             if (name === 'axios') return { isAxiosError: error => error?.isAxiosError === true }
             if (name === '@remnawave/backend-contract') return { ERRORS }
-            if (name === 'consola/browser') return { consola: { log() {}, error() {} } }
-            if (name === 'zod') return { ZodError: class extends Error {} }
-            if (name === 'i18next') return { __esModule: true, default: { t(key, values = {}) {
-                const value = key.split('.').reduce((part, name) => part?.[name], locale) ?? values.defaultValue
-                assert.equal(typeof value, 'string', `${language}: ${key}`)
-                return value.replace(/\{\{(\w+)\}\}/g, (_, name) => String(values[name] ?? ''))
-            } } }
+            if (name === 'zod') return { ZodError }
+            if (name === 'i18next') return i18n
+            if (name === '../api-response') return apiResponse
             throw Error(`Unexpected dependency: ${name}`)
         }
     })
-    return { handle: exports.handleRequestError, getMessage: exports.getRequestErrorMessage, RequestError: exports.RequestError, locale, setLanguage(value) { locale = JSON.parse(fs.readFileSync(path.join(__dirname, '../public/locales', value, 'remnawave.json'), 'utf8')) } }
+    return {
+        handle: exports.handleRequestError, getMessage: exports.getRequestErrorMessage,
+        safeMessage: exports.getSafeRequestErrorMessage, RequestError: exports.RequestError, apiResponse, locale,
+        setLanguage(value) { locale = JSON.parse(fs.readFileSync(path.join(__dirname, '../public/locales', value, 'remnawave.json'), 'utf8')) }
+    }
 }
 
 for (const language of ['en', 'ru', 'fa', 'zh']) {
@@ -124,8 +135,30 @@ for (const language of ['en', 'ru', 'fa', 'zh']) {
         assert.throws(()=>handle(original),error=>error.message===locale.requestErrors.unknown && error.cause===original)
         const wrapped=new RequestError({response:{status:409,data:{errorCode:'A113'}}})
         assert.throws(()=>handle(wrapped),error=>error===wrapped)
-        const invalid=new Error('PRIVATE_HTML');invalid.name='ApiResponseError'
-        assert.throws(()=>handle(invalid),error=>error.message===locale.requestErrors.invalidResponse && error.cause===invalid)
+    })
+    test(`${language}: unreadable and schema-invalid API replies retain distinct safe errors`, () => {
+        const { handle, safeMessage, apiResponse, locale } = handler(language)
+        const { parseApiResponse, ApiResponseError } = apiResponse
+        const payloadMessage = locale.requestErrors.invalidPayload + ' [INVALID_API_RESPONSE]'
+        const contractMessage = locale.requestErrors.invalidResponse + ' [INVALID_API_CONTRACT]'
+        for (const payload of ['<html>PRIVATE_PROXY_BODY</html>', '{"response":', null, 23]) {
+            assert.throws(() => parseApiResponse(payload), error => {
+                assert.ok(error instanceof ApiResponseError)
+                assert.equal(safeMessage(error), payloadMessage)
+                assert.throws(() => handle(error), wrapped => wrapped === error)
+                return true
+            })
+        }
+        assert.equal(parseApiResponse('', 202), undefined)
+        const parsed = z.object({ response: z.object({ name: z.number() }) })
+            .safeParse(parseApiResponse('{"response":{"name":"PRIVATE_CONFIG"}}'))
+        assert.equal(safeMessage(parsed.error), contractMessage)
+        assert.throws(() => handle(parsed.error), error => {
+            assert.equal(error.message, contractMessage)
+            assert.equal(safeMessage(error), contractMessage)
+            assert.equal(error.cause, parsed.error)
+            return true
+        })
     })
     test(`${language}: malformed, HTML and unknown responses stay safe and useful`, () => {
         const { getMessage, locale } = handler(language)
@@ -172,7 +205,7 @@ test('actual backend Xray validation reasons are translated on every interface l
 })
 
 test('query notifications and mutation errors share descriptions; unauthorized errors remain suppressed', () => {
-    const { getMessage, RequestError } = handler('ru')
+    const { safeMessage, RequestError, apiResponse, locale } = handler('ru')
     const messages = []
     const maintenance = require('../../backend/tests/load-typescript.cjs')(path.join(__dirname, '../src/shared/utils/panel-maintenance.ts'))
     const exports = {}
@@ -181,9 +214,8 @@ test('query notifications and mutation errors share descriptions; unauthorized e
         if (name === '@mantine/notifications') return { notifications: { show: message => messages.push(message) } }
         if (name === 'axios') return { isAxiosError: error => error?.isAxiosError === true }
         if (name === 'i18next') return { __esModule: true, default: { t: key => key } }
-        if (name === 'zod') return { ZodError: class extends Error {} }
-        if (name === '../api-response') return { ApiResponseError: class extends Error {} }
-        if (name === '../helpers/handler-request-error') return { getRequestErrorMessage: getMessage, RequestError }
+        if (name === '../api-response') return apiResponse
+        if (name === '../helpers/handler-request-error') return { getSafeRequestErrorMessage: safeMessage, RequestError }
         if (name === '@shared/utils/panel-maintenance') return maintenance
         throw Error(name)
     } })
@@ -208,6 +240,12 @@ test('query notifications and mutation errors share descriptions; unauthorized e
     maintenance.setPanelMaintenance(false)
     exports.errorHandler(new RequestError({ code: 'ERR_NETWORK' }), 'real-network')
     assert.equal(messages.length, 4)
+    exports.errorHandler(new apiResponse.ApiResponseError(), 'profiles')
+    exports.errorHandler(z.object({ response: z.number() }).safeParse({}).error, 'profiles')
+    assert.equal(messages[4].id, 'api-response-unavailable')
+    assert.equal(messages[4].message, locale.requestErrors.invalidPayload + ' [INVALID_API_RESPONSE]')
+    assert.equal(messages[5].id, 'profiles')
+    assert.equal(messages[5].message, locale.requestErrors.invalidResponse + ' [INVALID_API_CONTRACT]')
 })
 
 

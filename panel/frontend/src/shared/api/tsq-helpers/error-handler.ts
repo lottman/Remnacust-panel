@@ -1,12 +1,11 @@
 import { notifications } from '@mantine/notifications'
 import { isAxiosError } from 'axios'
 import i18n from 'i18next'
-import { ZodError } from 'zod'
 
 import { isExpectedPanelUpdateError } from '@shared/utils/panel-maintenance'
 
 import { ApiResponseError } from '../api-response'
-import { getRequestErrorMessage, RequestError } from '../helpers/handler-request-error'
+import { getSafeRequestErrorMessage, RequestError } from '../helpers/handler-request-error'
 
 const BYPASS_ERROR_STATUSES = [401]
 
@@ -21,19 +20,13 @@ export function errorHandler(error: unknown, operationId: string) {
         return
     }
 
-    const message =
-        error instanceof ZodError || error instanceof ApiResponseError
-            ? i18n.t('requestErrors.invalidResponse')
-            : isAxiosError(error)
-              ? getRequestErrorMessage(error)
-              : error instanceof RequestError
-                ? error.message
-                : i18n.t('requestErrors.unknown')
-
     notifications.show({
-        id: error instanceof ApiResponseError ? 'api-response-unavailable' : operationId,
+        id:
+            error instanceof ApiResponseError && error.code === 'INVALID_API_RESPONSE'
+                ? 'api-response-unavailable'
+                : operationId,
         title: i18n.t('common.message.error'),
-        message,
+        message: getSafeRequestErrorMessage(error),
         color: 'red'
     })
 }

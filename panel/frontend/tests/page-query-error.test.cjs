@@ -16,6 +16,10 @@ function load(relative, imports) {
 const helper = load('shared/ui/page-query-error.tsx', name => {
     if (name === '@mantine/core') return { Stack: 'stack', Alert: 'alert', Button: 'button' }
     if (name === 'react-i18next') return { useTranslation: () => ({ t: key => key }) }
+    if (name === '@shared/api/helpers/handler-request-error') return {
+        getSafeRequestErrorMessage: error => error?.code === 'INVALID_API_RESPONSE'
+            ? 'requestErrors.invalidPayload' : 'requestErrors.unknown'
+    }
 })
 
 function query(overrides = {}) {
@@ -30,13 +34,17 @@ test('retry targets failed queries only, localizes the error and never exposes i
     assert.equal(helper.hasPageQueryError([cached]), false)
     const element = helper.PageQueryError({ queries: [failed, cached] })
     assert.equal(element.props.role, 'alert')
-    assert.equal(element.props.children[0].props.children, 'common.message.unknown-error')
+    assert.equal(element.props.children[0][0].props.children, 'requestErrors.unknown')
     const button = element.props.children[1]
     assert.equal(button.props.children, 'common.action.try-again')
     button.props.onClick()
     await Promise.resolve()
     assert.equal(calls, 1)
     assert.equal(helper.PageQueryError({ queries: [{ ...failed, isFetching: true }] }).props.children[1].props.loading, true)
+    const invalid = { ...failed, error: { code: 'INVALID_API_RESPONSE', message: 'private body' } }
+    const alerts = helper.PageQueryError({ queries: [invalid, invalid, failed] }).props.children[0]
+    assert.equal(alerts.length, 2)
+    assert.equal(alerts[0].props.children, 'requestErrors.invalidPayload')
 })
 
 const pages = [
@@ -65,7 +73,10 @@ function render(relative, exported, state, params = { type: 'XRAY_JSON', uuid: '
     const options = []
     const page = new Proxy({ __esModule: true }, { get: (object, key) => key in object ? object[key] : key })
     const module = load('pages/dashboard/' + relative, name => {
-        if (name === '@shared/api/hooks') return new Proxy({}, { get: () => option => { options.push(option); return state } })
+        if (name === '@shared/api/hooks') return new Proxy({}, { get: (_, hook) => option => {
+            options.push(option)
+            return typeof state === 'function' ? state(hook) : state
+        } })
         if (name === '@shared/ui/page-query-error') return helper
         if (name === '@shared/ui' || name === '@shared/ui/loading-screen') return { LoadingScreen: 'loading' }
         if (name === 'react-i18next') return { useTranslation: () => ({ t: key => key }) }
@@ -77,6 +88,22 @@ function render(relative, exported, state, params = { type: 'XRAY_JSON', uuid: '
     })
     return { element: module[exported](), options }
 }
+
+test('profile list loads without snippets and refreshes its existing query', async () => {
+    let reloads = 0
+    const hooks = []
+    const result = render('config-profiles/connectors/config-profiles.page.connector.tsx',
+        'ConfigProfilesPageConnector', hook => {
+            hooks.push(hook)
+            if (hook === 'useGetSnippets') return query({ isError: true })
+            return query({ data, isFetching: true, refetch: async () => reloads++ })
+        })
+    assert.deepEqual(hooks, ['useGetConfigProfiles'])
+    assert.equal(result.element.type, 'ConfigPageComponent')
+    assert.equal(result.element.props.isRefreshing, true)
+    await result.element.props.onRefresh()
+    assert.equal(reloads, 1)
+})
 
 for (const [relative, exported] of pages) {
     test(`${exported}: terminal failure offers retry; success and stale data remain usable`, () => {

@@ -20,7 +20,7 @@ for (const language of ['en', 'ru', 'fa', 'zh']) {
         const locale = JSON.parse(fs.readFileSync(path.join(__dirname, '../public/locales', language, 'remnawave.json'), 'utf8'))
         const translation = { t: key => key.split('.').reduce((entry, name) => entry[name], locale) }
         const { handleRequestError } = load('helpers/handler-request-error.ts', {
-            i18next: translation, 'consola/browser': { consola: { log() {}, error() {} } }
+            i18next: translation, '../api-response': load('api-response.ts', { i18next: translation })
         })
         let options, networkCalls = 0, response = { response: { name: 'Valid response' } }
         const { createMutationHook } = load('tsq-helpers/create-mutation-hook.ts', {
@@ -46,7 +46,7 @@ for (const language of ['en', 'ru', 'fa', 'zh']) {
         assert.equal(networkCalls, 1)
         response = { response: { name: 123 } }
         await assert.rejects(options.mutationFn({ variables }), error => {
-            assert.equal(error.message, locale.requestErrors.invalidResponse)
+            assert.equal(error.message, locale.requestErrors.invalidResponse + ' [INVALID_API_CONTRACT]')
             assert.ok(error.cause instanceof ZodError)
             assert.ok(!error.message.includes('pattern'))
             return true

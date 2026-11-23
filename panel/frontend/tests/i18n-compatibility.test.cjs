@@ -79,6 +79,7 @@ async function initialize(language, translations = dictionaries) {
     await initialized
     const errors = loadSource('src/shared/api/helpers/handler-request-error.ts', {
         i18next: instance,
+        '../api-response': loadSource('src/shared/api/api-response.ts', { i18next: instance }),
         '@remnawave/backend-contract': { ERRORS }
     })
     return { instance, requests, ...errors }

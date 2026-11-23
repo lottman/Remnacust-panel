@@ -1,8 +1,9 @@
 import { ERRORS } from '@remnawave/backend-contract'
 import { AxiosError, isAxiosError } from 'axios'
-import { consola } from 'consola/browser'
 import i18n from 'i18next'
 import { ZodError } from 'zod'
+
+import { ApiResponseError, getApiResponseErrorMessage } from '../api-response'
 
 const errorCatalog = new Map(
     Object.values(ERRORS).map((entry) => [`${entry.code}:${entry.httpCode}`, entry.code])
@@ -201,22 +202,23 @@ export class RequestError extends Error {
     }
 }
 
+export function getSafeRequestErrorMessage(error: unknown): string {
+    if (error instanceof RequestError || error instanceof ApiResponseError) return error.message
+    if (isAxiosError(error)) return getRequestErrorMessage(error)
+    if (error instanceof ZodError) return getApiResponseErrorMessage('INVALID_API_CONTRACT')
+    return i18n.t('requestErrors.unknown')
+}
+
 /** Handle request errors */
 export function handleRequestError(error: unknown): never {
     if (isAxiosError(error)) {
         throw new RequestError(error)
     }
 
-    if (error instanceof RequestError) throw error
+    if (error instanceof RequestError || error instanceof ApiResponseError) throw error
 
-    if (
-        error instanceof ZodError ||
-        (error instanceof Error && error.name === 'ApiResponseError')
-    ) {
-        throw new Error(i18n.t('requestErrors.invalidResponse'), { cause: error })
-    }
-
-    consola.log(error)
+    if (error instanceof ZodError)
+        throw new ApiResponseError('INVALID_API_CONTRACT', { cause: error })
 
     throw new Error(i18n.t('requestErrors.unknown'), { cause: error })
 }
